@@ -1,0 +1,18 @@
+ignore:
+  - "tasks/**/tests/**"
+  - "modules/**/tests/**"
+  - "tasks/common/runners/**"
+  - "modules/runners/**"
+  - "modules/util/include/perf_test_util.hpp"
+  - "modules/util/include/func_test_util.hpp"
+  - "modules/util/src/func_test_util.cpp"
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 95%
+        threshold: 5%

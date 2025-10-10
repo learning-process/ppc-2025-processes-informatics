@@ -1,0 +1,15 @@
+[submodule "3rdparty/googletest"]
+	path = 3rdparty/googletest
+	url = https://github.com/google/googletest
+[submodule "3rdparty/onetbb"]
+	path = 3rdparty/onetbb
+	url = https://github.com/uxlfoundation/oneTBB
+[submodule "3rdparty/stb"]
+	path = 3rdparty/stb
+	url = https://github.com/nothings/stb
+[submodule "3rdparty/json"]
+	path = 3rdparty/json
+	url = https://github.com/nlohmann/json
+[submodule "3rdparty/libenvpp"]
+	path = 3rdparty/libenvpp
+	url = https://github.com/ph3at/libenvpp
