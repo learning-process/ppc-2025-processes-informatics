@@ -1,0 +1,167 @@
+on:
+  workflow_call:
+
+jobs:
+  msvc-build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/setup-windows-toolchain
+      - name: CMake configure
+        shell: bash
+        run: >
+          cmake -S . -B build -G Ninja -D CMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+          -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_INSTALL_PREFIX=install
+      - name: Build project
+        shell: bash
+        run: |
+          cmake --build build --config ${{ matrix.build_type }} --parallel -- --quiet
+      - name: Install project
+        run: |
+          cmake --build build --target install -- --quiet
+      - name: Archive installed package
+        uses: ./.github/actions/archive-install
+        with:
+          path: install
+          name: ${{ matrix.build_type == 'Debug' && 'windows-msvc-debug-install' || 'windows-msvc-install' }}
+      - name: Show ccache stats
+        shell: bash
+        run: ccache --show-stats
+  msvc-test:
+    needs:
+      - msvc-build
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-windows-toolchain
+      - name: Download installed package
+        uses: actions/download-artifact@v5
+        with:
+          name: windows-msvc-install
+      - name: Extract installed package
+        run: Expand-Archive -Path .\windows-msvc-install.zip -DestinationPath . -Force
+        shell: pwsh
+      - name: Run func tests (MPI)
+        run: scripts/run_tests.py --running-type="processes" --counts 1 2 3 4
+        env:
+          PPC_NUM_THREADS: 1
+      - name: Run tests (threads)
+        run: scripts/run_tests.py --running-type="threads" --counts 1 2 3 4
+        env:
+          PPC_NUM_PROC: 1
+  msvc-test-extended:
+    needs:
+      - msvc-test
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-windows-toolchain
+      - name: Download installed package
+        uses: actions/download-artifact@v5
+        with:
+          name: windows-msvc-install
+      - name: Extract installed package
+        run: Expand-Archive -Path .\windows-msvc-install.zip -DestinationPath . -Force
+        shell: pwsh
+      - name: Run tests (threads extended)
+        run: scripts/run_tests.py --running-type="threads" --counts 5 7 11 13
+        env:
+          PPC_NUM_PROC: 1
+  clang-build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: ./.github/actions/setup-windows-toolchain
+      - name: Setup LLVM
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "20.1.4"
+      - name: CMake configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -D CMAKE_C_COMPILER=clang-cl -D CMAKE_CXX_COMPILER=clang-cl
+          -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=install
+          -D CMAKE_PREFIX_PATH="C:/Program Files/LLVM"
+        env:
+          CC: clang-cl
+          CXX: clang-cl
+      - name: Build project
+        run: |
+          cmake --build build --config Release --parallel
+        env:
+          CC: clang-cl
+          CXX: clang-cl
+      - name: Install project
+        run: |
+          cmake --install build
+      - name: Archive installed package
+        uses: ./.github/actions/archive-install
+        with:
+          path: install
+          name: windows-clang-install
+      - name: Show ccache stats
+        shell: bash
+        run: ccache --show-stats
+  clang-test:
+    needs:
+      - clang-build
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-windows-toolchain
+      - name: Download installed package
+        uses: actions/download-artifact@v5
+        with:
+          name: windows-clang-install
+      - name: Extract installed package
+        run: Expand-Archive -Path .\windows-clang-install.zip -DestinationPath . -Force
+        shell: pwsh
+      - name: Run tests (threads)
+        run: scripts/run_tests.py --running-type="threads" --counts 1 2 3 4
+        env:
+          PPC_NUM_PROC: 1
+  clang-test-extended:
+    needs:
+      - clang-test
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-windows-toolchain
+      - name: Download installed package
+        uses: actions/download-artifact@v5
+        with:
+          name: windows-clang-install
+      - name: Extract installed package
+        run: Expand-Archive -Path .\windows-clang-install.zip -DestinationPath . -Force
+        shell: pwsh
+      - name: Run tests (threads extended)
+        run: scripts/run_tests.py --running-type="threads" --counts 5 7 11 13
+        env:
+          PPC_NUM_PROC: 1
