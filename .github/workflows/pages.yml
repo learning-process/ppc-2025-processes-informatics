@@ -1,0 +1,132 @@
+name: Pages
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pages: write
+
+jobs:
+  build-doxygen-xml:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y doxygen
+      - name: Run Doxygen
+        run: doxygen Doxyfile
+      - name: Upload Doxygen documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-documentation-xml
+          path: xml
+  build-sphinx:
+    runs-on: ubuntu-24.04
+    needs:
+      - build-doxygen-xml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y doxygen
+      - name: Install dependencies
+        run: |
+          python3 -m pip install -r docs/requirements.txt
+      - name: Download artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: doxygen-documentation-xml
+          path: xml
+      - name: Configure project
+        run: >
+          cmake -S . -B build -D USE_DOCS=ON
+      - name: Build i18n
+        run: |
+          cmake --build build -t docs_gettext -- --quiet
+          cmake --build build -t docs_update -- --quiet
+      - name: Build documentation
+        run: |
+          cmake --build build -t docs_html -- --quiet
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sphinx-documentation
+          path: ./build/docs/_build/html
+  build-scoreboard:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          python3 -m pip install -r requirements.txt
+          python3 -m pip install -r scoreboard/requirements.txt
+      - name: Download performance data
+        uses: actions/download-artifact@v5
+        with:
+          name: perf-stat
+      - name: Extract performance data
+        run: |
+          mkdir -p build/perf_stat_dir
+          unzip -o perf-stat.zip -d .
+      - name: CMake configure
+        run: |
+          cmake -S . -B build -DUSE_SCOREBOARD=ON
+      - name: CMake build
+        run: |
+          cmake --build build --parallel -- --quiet
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scoreboard
+          path: ./build/scoreboard/html/
+  deploy-pages:
+    if: github.ref == 'refs/heads/master'
+    needs:
+      - build-sphinx
+      - build-scoreboard
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+    concurrency:
+      group: github-pages-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: sphinx-documentation
+          path: ./
+      - name: Download artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: scoreboard
+          path: ./scoreboard/
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: cov-report
+          path: ./coverage/
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
