@@ -1,11 +1,5 @@
 #include "guseva_a_matrix_sums/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <ranges>
-#include <vector>
-
-#include "guseva_a_matrix_sums/common/include/common.hpp"
-
 namespace guseva_a_matrix_sums {
 
 GusevaAMatrixSumsSEQ::GusevaAMatrixSumsSEQ(const InType &in) {
@@ -27,8 +21,8 @@ bool GusevaAMatrixSumsSEQ::PreProcessingImpl() {
 bool GusevaAMatrixSumsSEQ::RunImpl() {
   auto &matrix = std::get<2>(GetInput());
   auto &columns = std::get<1>(GetInput());
-  for (const auto& [column, x] : GetOutput() | std::views::enumerate) {
-    const auto& arr = matrix | std::ranges::views::drop(column) | std::views::stride(columns);
+  for (const auto &[column, x] : GetOutput() | std::views::enumerate) {
+    const auto &arr = matrix | std::ranges::views::drop(column) | std::views::stride(columns);
     x = std::reduce(arr.begin(), arr.end(), 0.0);
   }
   return true;

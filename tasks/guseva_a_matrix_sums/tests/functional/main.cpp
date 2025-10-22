@@ -2,13 +2,11 @@
 #include <stb/stb_image.h>
 
 #include <array>
+#include <cstdint>
 #include <random>
 #include <string>
-#include <tuple>
-#include <vector>
 
 #include "guseva_a_matrix_sums/common/include/common.hpp"
-#include "guseva_a_matrix_sums/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
 #define EPSILON 10e-12
@@ -22,7 +20,7 @@ class GusevaARunFuncTestsProcessesSEQ : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  protected:
-  void SetUp() override {
+  static void SetUp() override {
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
@@ -47,7 +45,7 @@ class GusevaARunFuncTestsProcessesSEQ : public ppc::util::BaseRunFuncTests<InTyp
     expected_data_.assign(expected.begin(), expected.end());
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  static bool CheckTestOutputData(OutType &output_data) final {
     // std::cout << "\n===================================\nINPUT\n";
     // int n = 0;
     // for (const auto &i : std::get<2>(input_data_)) {

@@ -15,11 +15,11 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
     input_data_ = kCount_;
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) const final {
     return input_data_ == output_data;
   }
 
-  InType GetTestInputData() final {
+  [[nodiscard]] InType GetTestInputData() const final {
     return input_data_;
   }
 };

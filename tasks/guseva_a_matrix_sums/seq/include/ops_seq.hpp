@@ -13,11 +13,10 @@ class GusevaAMatrixSumsSEQ : public BaseTask {
   explicit GusevaAMatrixSumsSEQ(const InType &in);
 
  private:
-
   bool ValidationImpl() override;
-  bool PreProcessingImpl() override;
-  bool RunImpl() override;
-  bool PostProcessingImpl() override;
+  static bool PreProcessingImpl() override;
+  static bool RunImpl() override;
+  static bool PostProcessingImpl() override;
 };
 
 }  // namespace guseva_a_matrix_sums

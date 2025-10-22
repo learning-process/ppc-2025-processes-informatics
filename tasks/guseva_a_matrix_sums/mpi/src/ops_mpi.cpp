@@ -2,12 +2,6 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
-
-#include "example_processes/common/include/common.hpp"
-#include "util/include/util.hpp"
-
 namespace nesterov_a_test_task_processes {
 
 NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
