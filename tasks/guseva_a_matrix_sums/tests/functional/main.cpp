@@ -7,6 +7,7 @@
 #include <string>
 
 #include "guseva_a_matrix_sums/common/include/common.hpp"
+#include "guseva_a_matrix_sums/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
 #define EPSILON 10e-12
@@ -20,15 +21,15 @@ class GusevaARunFuncTestsProcessesSEQ : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  protected:
-  static void SetUp() override {
+  void SetUp() override {
     std::random_device rd;
     std::mt19937_64 gen(rd());
 
     std::uniform_real_distribution<double> dist_double(0.0, 100.0);
     std::uniform_int_distribution<int> dist_int(1, 300);
 
-    uint32_t rows = 2;     // dist_int(gen);
-    uint32_t columns = 3;  // dist_int(gen);
+    uint32_t rows = dist_int(gen);
+    uint32_t columns = dist_int(gen);
     std::vector<double> matrix;
     matrix.reserve(static_cast<uint64_t>(rows) * columns);
     for (uint32_t i = 0; i < rows * columns; i++) {
@@ -45,7 +46,7 @@ class GusevaARunFuncTestsProcessesSEQ : public ppc::util::BaseRunFuncTests<InTyp
     expected_data_.assign(expected.begin(), expected.end());
   }
 
-  static bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     // std::cout << "\n===================================\nINPUT\n";
     // int n = 0;
     // for (const auto &i : std::get<2>(input_data_)) {
@@ -97,7 +98,7 @@ const std::array<TestType, 10> kTestParam = {"1", "2", "3", "4", "5", "6", "7", 
 const auto kTestTasksList =
     std::tuple_cat(/*ppc::util::AddFuncTask<GusevaARunFuncTestsProcessesMPI, InType>(kTestParam,
                       PPC_SETTINGS_example_processes),*/
-                   ppc::util::AddFuncTask<GusevaAMatrixSumsSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+                   ppc::util::AddFuncTask<guseva_a_matrix_sums::GusevaAMatrixSumsSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

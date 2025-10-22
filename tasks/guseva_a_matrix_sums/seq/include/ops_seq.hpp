@@ -14,9 +14,9 @@ class GusevaAMatrixSumsSEQ : public BaseTask {
 
  private:
   bool ValidationImpl() override;
-  static bool PreProcessingImpl() override;
-  static bool RunImpl() override;
-  static bool PostProcessingImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
 };
 
 }  // namespace guseva_a_matrix_sums
