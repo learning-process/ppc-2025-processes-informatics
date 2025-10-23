@@ -1,6 +1,5 @@
 #include "guseva_a_matrix_sums/seq/include/ops_seq.hpp"
 
-#include <ranges>
 
 namespace guseva_a_matrix_sums {
 

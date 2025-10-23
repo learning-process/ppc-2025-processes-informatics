@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-#include "guseva_a_matrix_sums/common/include/common.hpp"
-
 namespace guseva_a_matrix_sums {
 
 GusevaAMatrixSumsMPI::GusevaAMatrixSumsMPI(const InType &in) : rank_(0) {
@@ -31,10 +29,8 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
   uint32_t rows = 0;
   uint32_t columns = 0;
   std::vector<double> matrix;
-  int rank = 0;
   int wsize = 0;
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &wsize);
 
   if (rank_ == 0) {
@@ -45,13 +41,6 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
 
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  //   std::print(std::cout, "\n\n[RANK {}] {} {}\n\nMINE ROWS", rank, rows, columns);
-
-  //   std::cout << "\n\n";
-  //   for (const auto &it : matrix) {
-  //     std::cout << it << ", ";
-  //   }
-  //   std::cout << "\n\n";
 
   uint32_t rows_per_proc = rows / wsize;
   uint32_t remainder = rows % wsize;
@@ -74,22 +63,11 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
         displs[i] += counts.back();
       }
     }
-
-    // std::cout << "\n\n DISPLS:    ";
-    // for (const auto &i : displs) {
-    //   std::cout << i << ' ';
-    // }
-    // std::cout << "\n\n";
-
-    // std::cout << "\n\n COUNTS:    ";
-    // for (const auto &i : counts) {
-    //   std::cout << i << ' ';
-    // }
-    // std::cout << "\n\n";
   }
 
-  uint32_t start_row = (rank * rows_per_proc) + std::min(static_cast<uint32_t>(rank), remainder);
-  uint32_t end_row = ((rank + 1) * rows_per_proc) + std::min(static_cast<uint32_t>(rank + 1), remainder);
+  uint32_t start_row = (rank_ * rows_per_proc) + std::min(static_cast<uint32_t>(rank_), remainder);
+  uint32_t end_row = ((rank_ + 1) * rows_per_proc) + std::min(static_cast<uint32_t>(rank_ + 1), remainder);
+
   uint32_t start_pos = start_row * columns;
   uint32_t end_pos = end_row * columns;
 
@@ -101,16 +79,10 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
     local_sums[i % columns] += slice[i];
   }
 
-  std::cout << "\n\n" << "Local Sums: ";
-  for (const auto &it : local_sums) {
-    std::cout << it << " ";
-  }
-  std::cout << "\n\n";
-
   std::vector<double> global_sums(columns, 0);
   MPI_Reduce(local_sums.data(), global_sums.data(), static_cast<int>(columns), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (rank == 0) {
+  if (rank_ == 0) {
     GetOutput().assign(global_sums.begin(), global_sums.end());
   }
 
