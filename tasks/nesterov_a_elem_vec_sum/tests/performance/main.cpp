@@ -7,7 +7,7 @@
 
 namespace nesterov_a_elem_vec_sum {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class NesterovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
 
@@ -24,7 +24,7 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
+TEST_P(NesterovAElemVecSumPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -33,8 +33,8 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = NesterovAElemVecSumPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, NesterovAElemVecSumPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace nesterov_a_elem_vec_sum
