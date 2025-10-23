@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/learning-process/ppc-2025-processes-informatics/graph/badge.svg?token=qCOtqeFyIz)](https://codecov.io/gh/learning-process/ppc-2025-processes-informatics)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/learning-process/ppc-2025-processes-informatics/badge)](https://scorecard.dev/viewer/?uri=github.com/learning-process/ppc-2025-processes-informatics)
 
-# Parallel Programming Course
+# Parallel Programming Courseс
 
 Welcome to the Parallel Programming Course!
 
