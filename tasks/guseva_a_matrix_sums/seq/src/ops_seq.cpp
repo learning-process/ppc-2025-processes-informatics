@@ -1,6 +1,5 @@
 #include "guseva_a_matrix_sums/seq/include/ops_seq.hpp"
 
-
 namespace guseva_a_matrix_sums {
 
 GusevaAMatrixSumsSEQ::GusevaAMatrixSumsSEQ(const InType &in) {
