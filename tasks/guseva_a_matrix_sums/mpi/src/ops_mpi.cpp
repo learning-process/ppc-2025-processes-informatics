@@ -1,66 +1,124 @@
-// #include "example_processes/mpi/include/ops_mpi.hpp"
+#include "guseva_a_matrix_sums/mpi/include/ops_mpi.hpp"
 
-// #include <mpi.h>
+#include <mpi.h>
 
-// namespace nesterov_a_test_task_processes {
+#include "guseva_a_matrix_sums/common/include/common.hpp"
 
-// NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
-//   SetTypeOfTask(GetStaticTypeOfTask());
-//   GetInput() = in;
-//   GetOutput() = 0;
-// }
+namespace guseva_a_matrix_sums {
 
-// bool NesterovATestTaskMPI::ValidationImpl() {
-//   return (GetInput() > 0) && (GetOutput() == 0);
-// }
+GusevaAMatrixSumsMPI::GusevaAMatrixSumsMPI(const InType &in) : rank_(0) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = {};
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+}
 
-// bool NesterovATestTaskMPI::PreProcessingImpl() {
-//   GetOutput() = 2 * GetInput();
-//   return GetOutput() > 0;
-// }
+bool GusevaAMatrixSumsMPI::ValidationImpl() {
+  return (rank_ != 0) || ((static_cast<uint64_t>(std::get<0>(GetInput())) * std::get<1>(GetInput()) ==
+                           std::get<2>(GetInput()).size()) &&
+                          (GetOutput().empty()));
+}
 
-// bool NesterovATestTaskMPI::RunImpl() {
-//   auto input = GetInput();
-//   if (input == 0) {
-//     return false;
-//   }
+bool GusevaAMatrixSumsMPI::PreProcessingImpl() {
+  if (rank_ != 0) {
+    return true;
+  }
+  GetOutput().resize(std::get<1>(GetInput()), 0.0);
+  return true;
+}
 
-//   for (InType i = 0; i < GetInput(); i++) {
-//     for (InType j = 0; j < GetInput(); j++) {
-//       for (InType k = 0; k < GetInput(); k++) {
-//         std::vector<InType> tmp(i + j + k, 1);
-//         GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-//         GetOutput() -= i + j + k;
-//       }
-//     }
-//   }
+bool GusevaAMatrixSumsMPI::RunImpl() {
+  uint32_t rows = 0;
+  uint32_t columns = 0;
+  std::vector<double> matrix;
+  int rank = 0;
+  int wsize = 0;
 
-//   const int num_threads = ppc::util::GetNumThreads();
-//   GetOutput() *= num_threads;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &wsize);
 
-//   int rank = 0;
-//   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank_ == 0) {
+    rows = std::get<0>(GetInput());
+    columns = std::get<1>(GetInput());
+    matrix = std::get<2>(GetInput());
+  }
 
-//   if (rank == 0) {
-//     GetOutput() /= num_threads;
-//   } else {
-//     int counter = 0;
-//     for (int i = 0; i < num_threads; i++) {
-//       counter++;
-//     }
+  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  //   std::print(std::cout, "\n\n[RANK {}] {} {}\n\nMINE ROWS", rank, rows, columns);
 
-//     if (counter != 0) {
-//       GetOutput() /= counter;
-//     }
-//   }
+  //   std::cout << "\n\n";
+  //   for (const auto &it : matrix) {
+  //     std::cout << it << ", ";
+  //   }
+  //   std::cout << "\n\n";
 
-//   MPI_Barrier(MPI_COMM_WORLD);
-//   return GetOutput() > 0;
-// }
+  uint32_t rows_per_proc = rows / wsize;
+  uint32_t remainder = rows % wsize;
 
-// bool NesterovATestTaskMPI::PostProcessingImpl() {
-//   GetOutput() -= GetInput();
-//   return GetOutput() > 0;
-// }
+  std::vector<int> displs(wsize, 0);
+  std::vector<int> counts;
+  counts.reserve(wsize);
 
-// }  // namespace nesterov_a_test_task_processes
+  if (rank_ == 0) {
+    rows = std::get<0>(GetInput());
+    columns = std::get<1>(GetInput());
+    matrix = std::get<2>(GetInput());
+    for (int rnk = 0; rnk < wsize; rnk++) {
+      uint32_t start_row = (rnk * rows_per_proc) + std::min(static_cast<uint32_t>(rnk), remainder);
+      uint32_t end_row = ((rnk + 1) * rows_per_proc) + std::min(static_cast<uint32_t>(rnk + 1), remainder);
+      uint32_t start_pos = start_row * columns;
+      uint32_t end_pos = end_row * columns;
+      counts.push_back(static_cast<int>(end_pos - start_pos));
+      for (int i = rnk + 1; i < wsize; i++) {
+        displs[i] += counts.back();
+      }
+    }
+
+    // std::cout << "\n\n DISPLS:    ";
+    // for (const auto &i : displs) {
+    //   std::cout << i << ' ';
+    // }
+    // std::cout << "\n\n";
+
+    // std::cout << "\n\n COUNTS:    ";
+    // for (const auto &i : counts) {
+    //   std::cout << i << ' ';
+    // }
+    // std::cout << "\n\n";
+  }
+
+  uint32_t start_row = (rank * rows_per_proc) + std::min(static_cast<uint32_t>(rank), remainder);
+  uint32_t end_row = ((rank + 1) * rows_per_proc) + std::min(static_cast<uint32_t>(rank + 1), remainder);
+  uint32_t start_pos = start_row * columns;
+  uint32_t end_pos = end_row * columns;
+
+  std::vector<double> slice(end_pos - start_pos, 0);
+  MPI_Scatterv(matrix.data(), counts.data(), displs.data(), MPI_DOUBLE, slice.data(),
+               static_cast<int>(end_pos - start_pos), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  std::vector<double> local_sums(columns, 0);
+  for (uint32_t i = 0; i < end_pos - start_pos; i++) {
+    local_sums[i % columns] += slice[i];
+  }
+
+  std::cout << "\n\n" << "Local Sums: ";
+  for (const auto &it : local_sums) {
+    std::cout << it << " ";
+  }
+  std::cout << "\n\n";
+
+  std::vector<double> global_sums(columns, 0);
+  MPI_Reduce(local_sums.data(), global_sums.data(), static_cast<int>(columns), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    GetOutput().assign(global_sums.begin(), global_sums.end());
+  }
+
+  return true;
+}
+
+bool GusevaAMatrixSumsMPI::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace guseva_a_matrix_sums
