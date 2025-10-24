@@ -1,13 +1,22 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
+#include <cstddef>
+#include <fstream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+
+#include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 #include "sizov_d_string_mismatch_count/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
 
-class SizovRunFuncTestsMismatch : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType& test_param) {
     return test_param;
@@ -22,7 +31,8 @@ class SizovRunFuncTestsMismatch : public ppc::util::BaseRunFuncTests<InType, Out
       throw std::runtime_error("Cannot open strings.txt");
     }
 
-    std::string a, b;
+    std::string a;
+    std::string b;
     std::getline(file, a);
     std::getline(file, b);
     file.close();
@@ -47,7 +57,9 @@ class SizovRunFuncTestsMismatch : public ppc::util::BaseRunFuncTests<InType, Out
   bool CheckTestOutputData(OutType& output_data) override {
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (!is_valid_ || rank != 0) return true;
+    if (!is_valid_ || rank != 0) {
+      return true;
+    }
     return output_data == expected_result_;
   }
 
@@ -59,20 +71,20 @@ class SizovRunFuncTestsMismatch : public ppc::util::BaseRunFuncTests<InType, Out
 
 namespace {
 
-TEST_P(SizovRunFuncTestsMismatch, CompareStringsFromFile) {
+TEST_P(SizovDRunFuncTestsStringMismatchCount, CompareStringsFromFile) {
   ExecuteTest(GetParam());
 }
 
 const std::array<TestType, 1> kTestParam = {"default"};
 
 const auto kTaskList = std::tuple_cat(
-    ppc::util::AddFuncTask<StringMismatchCountParallelMPI, InType>(kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
-    ppc::util::AddFuncTask<StringMismatchCountSequential, InType>(kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
+    ppc::util::AddFuncTask<SizovDStringMismatchCountMPI, InType>(kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
+    ppc::util::AddFuncTask<SizovDStringMismatchCountSEQ, InType>(kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
-const auto kTestName = SizovRunFuncTestsMismatch::PrintFuncTestName<SizovRunFuncTestsMismatch>;
+const auto kTestName = SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
 
-INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovRunFuncTestsMismatch, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovDRunFuncTestsStringMismatchCount, kGtestValues, kTestName);
 
 }  // namespace
 }  // namespace sizov_d_string_mismatch_count

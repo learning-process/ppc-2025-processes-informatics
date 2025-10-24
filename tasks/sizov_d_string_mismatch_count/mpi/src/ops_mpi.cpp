@@ -1,31 +1,36 @@
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 
-#include <algorithm>
+#include <mpi.h>     
 
-#include <mpi.h>
+#include <string>
+#include <string_view>
+#include <cstddef>    
+
+#include "sizov_d_string_mismatch_count/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
-StringMismatchCountParallelMPI::StringMismatchCountParallelMPI(const InType& input) {
+SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(const InType& input) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = input;
   GetOutput() = 0;
 }
 
-bool StringMismatchCountParallelMPI::ValidationImpl() {
+bool SizovDStringMismatchCountMPI::ValidationImpl() {
   const auto& input = GetInput();
   const auto& a = std::get<0>(input);
   const auto& b = std::get<1>(input);
   return !a.empty() && a.size() == b.size();
 }
 
-bool StringMismatchCountParallelMPI::PreProcessingImpl() {
+bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
   const auto& input = GetInput();
   str_a_ = std::get<0>(input);
   str_b_ = std::get<1>(input);
   return true;
 }
 
-bool StringMismatchCountParallelMPI::RunImpl() {
+bool SizovDStringMismatchCountMPI::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -36,7 +41,7 @@ bool StringMismatchCountParallelMPI::RunImpl() {
 
   const int base = total_size / size;
   const int remainder = total_size % size;
-  const int start = rank * base + std::min(rank, remainder);
+  const int start = (rank * base) + std::min(rank, remainder);
   const int local_size = base + (rank < remainder ? 1 : 0);
 
   std::string_view local_a(str_a_.data() + start, local_size);
@@ -56,7 +61,7 @@ bool StringMismatchCountParallelMPI::RunImpl() {
   return true;
 }
 
-bool StringMismatchCountParallelMPI::PostProcessingImpl() {
+bool SizovDStringMismatchCountMPI::PostProcessingImpl() {
   return true;
 }
 }  // namespace sizov_d_string_mismatch_count
