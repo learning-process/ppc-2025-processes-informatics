@@ -1,12 +1,17 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>     
+#include <string>      
+#include <tuple>       
+
+#include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 #include "sizov_d_string_mismatch_count/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace sizov_d_string_mismatch_count {
 
-class SizovRunPerfTestsMismatch : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     std::string a(1'000'000, 'a');
     std::string b = a;
@@ -33,16 +38,16 @@ class SizovRunPerfTestsMismatch : public ppc::util::BaseRunPerfTests<InType, Out
 };
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, StringMismatchCountParallelMPI, StringMismatchCountSequential>(
+    ppc::util::MakeAllPerfTasks<InType, SizovDStringMismatchCountMPI, SizovDStringMismatchCountSEQ>(
         PPC_SETTINGS_sizov_d_string_mismatch_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = SizovRunPerfTestsMismatch::CustomPerfTestName;
+const auto kPerfTestName = SizovDRunPerfTestsStringMismatchCount::CustomPerfTestName;
 
-TEST_P(SizovRunPerfTestsMismatch, RunPerfModes) {
+TEST_P(SizovDRunPerfTestsStringMismatchCount, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(RunPerf, SizovRunPerfTestsMismatch, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsStringMismatchCount, kGtestValues, kPerfTestName);
 
 }  // namespace sizov_d_string_mismatch_count

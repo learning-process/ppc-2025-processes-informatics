@@ -3,31 +3,27 @@
 #include <string>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace sizov_d_string_mismatch_count {
 
-class StringMismatchCountSequential : public BaseTask {
+class SizovDStringMismatchCountSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit StringMismatchCountSequential(const InType& input);
-  ~StringMismatchCountSequential() override = default;
-
-  StringMismatchCountSequential(const StringMismatchCountSequential&) = delete;
-  StringMismatchCountSequential& operator=(const StringMismatchCountSequential&) = delete;
-
- protected:
-  bool ValidationImpl() override;
-  bool PreProcessingImpl() override;
-  bool RunImpl() override;
-  bool PostProcessingImpl() override;
+  explicit SizovDStringMismatchCountSEQ(const InType& input);
 
  private:
   std::string str_a_;
   std::string str_b_;
   int result_ = 0;
+
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
 };
 
 }  // namespace sizov_d_string_mismatch_count

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <tuple>
+
 #include "task/include/task.hpp"
 
 namespace sizov_d_string_mismatch_count {
