@@ -10,7 +10,8 @@
 #include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
-SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(const InType &input) {
+SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(
+    const InType &input) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = input;
   GetOutput() = 0;
@@ -56,14 +57,13 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
     }
   }
 
-  MPI_Reduce(&local_result, &global_result_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_result, &global_result_, 1, MPI_INT, MPI_SUM, 0,
+             MPI_COMM_WORLD);
   MPI_Bcast(&global_result_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   GetOutput() = global_result_;
   return true;
 }
 
-bool SizovDStringMismatchCountMPI::PostProcessingImpl() {
-  return true;
-}
-}  // namespace sizov_d_string_mismatch_count
+bool SizovDStringMismatchCountMPI::PostProcessingImpl() { return true; }
+} // namespace sizov_d_string_mismatch_count

@@ -8,7 +8,8 @@
 
 namespace sizov_d_string_mismatch_count {
 
-SizovDStringMismatchCountSEQ::SizovDStringMismatchCountSEQ(const InType &input) {
+SizovDStringMismatchCountSEQ::SizovDStringMismatchCountSEQ(
+    const InType &input) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = input;
   GetOutput() = 0;
@@ -44,4 +45,4 @@ bool SizovDStringMismatchCountSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace sizov_d_string_mismatch_count
+} // namespace sizov_d_string_mismatch_count
