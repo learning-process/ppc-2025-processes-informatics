@@ -8,14 +8,14 @@
 namespace sizov_d_string_mismatch_count {
 
 class SizovDStringMismatchCountSEQ : public BaseTask {
-public:
+ public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit SizovDStringMismatchCountSEQ(const InType &input);
+  explicit SizovDStringMismatchCountSEQ(const InType& input);
 
-private:
+ private:
   std::string str_a_;
   std::string str_b_;
   int result_ = 0;
@@ -26,4 +26,4 @@ private:
   bool PostProcessingImpl() override;
 };
 
-} // namespace sizov_d_string_mismatch_count
+}  // namespace sizov_d_string_mismatch_count
