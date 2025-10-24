@@ -18,7 +18,7 @@ namespace sizov_d_string_mismatch_count {
 
 class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType& test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     return test_param;
   }
 
@@ -54,7 +54,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
     return input_data_;
   }
 
-  bool CheckTestOutputData(OutType& output_data) override {
+  bool CheckTestOutputData(OutType &output_data) override {
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (!is_valid_ || rank != 0) {
@@ -77,9 +77,10 @@ TEST_P(SizovDRunFuncTestsStringMismatchCount, CompareStringsFromFile) {
 
 const std::array<TestType, 1> kTestParam = {"default"};
 
-const auto kTaskList = std::tuple_cat(
-    ppc::util::AddFuncTask<SizovDStringMismatchCountMPI, InType>(kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
-    ppc::util::AddFuncTask<SizovDStringMismatchCountSEQ, InType>(kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
+const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<SizovDStringMismatchCountMPI, InType>(
+                                          kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
+                                      ppc::util::AddFuncTask<SizovDStringMismatchCountSEQ, InType>(
+                                          kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
 const auto kTestName = SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;

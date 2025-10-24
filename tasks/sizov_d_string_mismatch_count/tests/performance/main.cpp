@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>     
-#include <string>      
-#include <tuple>       
+#include <cstddef>
+#include <string>
+#include <tuple>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
@@ -28,7 +28,7 @@ class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests
     return input_data_;
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return output_data == expected_result_;
   }
 
