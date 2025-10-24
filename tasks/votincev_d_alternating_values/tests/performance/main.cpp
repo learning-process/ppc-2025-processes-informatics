@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
+#include "util/include/perf_test_util.hpp"
 #include "votincev_d_alternating_values/common/include/common.hpp"
 #include "votincev_d_alternating_values/mpi/include/ops_mpi.hpp"
 #include "votincev_d_alternating_values/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 
 namespace votincev_d_alternating_values {
 
@@ -29,7 +29,8 @@ TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VotincevDAlternatingValuesMPI, VotincevDAlternatingValuesSEQ>(PPC_SETTINGS_votincev_d_alternating_values);
+    ppc::util::MakeAllPerfTasks<InType, VotincevDAlternatingValuesMPI, VotincevDAlternatingValuesSEQ>(
+        PPC_SETTINGS_votincev_d_alternating_values);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

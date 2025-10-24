@@ -12,11 +12,11 @@
 #include <utility>
 #include <vector>
 
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 #include "votincev_d_alternating_values/common/include/common.hpp"
 #include "votincev_d_alternating_values/mpi/include/ops_mpi.hpp"
 #include "votincev_d_alternating_values/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace votincev_d_alternating_values {
 
@@ -27,6 +27,7 @@ class VotincevDAlternatingValuesFuncTests : public ppc::util::BaseRunFuncTests<I
   }
 
  protected:
+    // считываем/генерируем данные
   void SetUp() override {
     int width = -1;
     int height = -1;
@@ -70,9 +71,10 @@ TEST_P(VotincevDAlternatingValuesFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<VotincevDAlternatingValuesMPI, InType>(kTestParam, PPC_SETTINGS_votincev_d_alternating_values),
-                   ppc::util::AddFuncTask<VotincevDAlternatingValuesSEQ, InType>(kTestParam, PPC_SETTINGS_votincev_d_alternating_values));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VotincevDAlternatingValuesMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_votincev_d_alternating_values),
+                                           ppc::util::AddFuncTask<VotincevDAlternatingValuesSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_votincev_d_alternating_values));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -5,16 +5,15 @@
 #include <numeric>
 #include <vector>
 
-#include "votincev_d_alternating_values/common/include/common.hpp"
 #include "util/include/util.hpp"
+#include "votincev_d_alternating_values/common/include/common.hpp"
 
 namespace votincev_d_alternating_values {
 
-
 // это у всех одинаковое
 VotincevDAlternatingValuesMPI::VotincevDAlternatingValuesMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask()); // установка типа задачи
-  GetInput() = in; 
+  SetTypeOfTask(GetStaticTypeOfTask());  // установка типа задачи
+  GetInput() = in;
   GetOutput() = 0;
 }
 
@@ -68,7 +67,6 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   MPI_Barrier(MPI_COMM_WORLD);
   return GetOutput() > 0;
 }
-
 
 // данные возвращаем в удобном формате (для себя)
 bool VotincevDAlternatingValuesMPI::PostProcessingImpl() {

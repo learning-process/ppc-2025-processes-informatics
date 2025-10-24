@@ -3,8 +3,8 @@
 #include <numeric>
 #include <vector>
 
-#include "votincev_d_alternating_values/common/include/common.hpp"
 #include "util/include/util.hpp"
+#include "votincev_d_alternating_values/common/include/common.hpp"
 
 namespace votincev_d_alternating_values {
 
