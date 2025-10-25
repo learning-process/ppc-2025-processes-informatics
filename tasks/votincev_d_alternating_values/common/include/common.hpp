@@ -7,9 +7,9 @@
 
 namespace votincev_d_alternating_values {
 
-using InType = int;  // std::vector<double>
+using InType = std::vector<double>;  // std::vector<double>
 using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using TestType = std::vector<double>;  // std::vector<double>
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace votincev_d_alternating_values

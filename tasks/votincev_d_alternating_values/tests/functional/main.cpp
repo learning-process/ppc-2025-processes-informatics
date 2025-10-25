@@ -22,37 +22,33 @@ namespace votincev_d_alternating_values {
 
 class VotincevDAlternatingValuesFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  // чтобы тесты по названию не пересекались
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    std::string strV = "Vector: ";
+    for (int i = 0; i < test_param.size(); i++) {
+      strV += std::to_string(test_param[i]);
+      strV += " ";
+    }
+    strV += "\n";
+
+    return strV;
   }
 
  protected:
   // считываем/генерируем данные
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_votincev_d_alternating_values, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
+    int sz = swaps_count + 1;
+    std::vector<double> v(sz);
+    int swapper = 1;
+    for (int i = 0; i < sz; i++) {
+      v.push_back(i * swapper);  // 0 -1 2 -3 4 -5...
+      swapper *= -1;
     }
-
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = v;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == swaps_count;
   }
 
   InType GetTestInputData() final {
@@ -60,16 +56,17 @@ class VotincevDAlternatingValuesFuncTests : public ppc::util::BaseRunFuncTests<I
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType swaps_count = 400000;  // добавил
 };
 
 namespace {
 
-TEST_P(VotincevDAlternatingValuesFuncTests, MatmulFromPic) {
+TEST_P(VotincevDAlternatingValuesFuncTests, CountSwapsFromGenerator) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 1> kTestParam = {std::vector<double>{0, -1, 2, -3}};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VotincevDAlternatingValuesMPI, InType>(
                                                kTestParam, PPC_SETTINGS_votincev_d_alternating_values),
@@ -80,6 +77,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = VotincevDAlternatingValuesFuncTests::PrintFuncTestName<VotincevDAlternatingValuesFuncTests>;
 
+// запускаем параметрически тест
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, VotincevDAlternatingValuesFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace

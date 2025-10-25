@@ -12,11 +12,19 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    int sz = kCount_ + 1;
+    std::vector<double> v(sz);
+    int swapper = 1;
+    for (int i = 0; i < sz; i++) {
+      v.push_back(i * swapper);  // 0 -1 2 -3 4 -5...
+      swapper *= -1;
+    }
+
+    input_data_ = v;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data == kCount_;
   }
 
   InType GetTestInputData() final {
