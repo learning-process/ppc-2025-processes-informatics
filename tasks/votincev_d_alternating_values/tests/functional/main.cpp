@@ -27,7 +27,7 @@ class VotincevDAlternatingValuesFuncTests : public ppc::util::BaseRunFuncTests<I
   }
 
  protected:
-    // считываем/генерируем данные
+  // считываем/генерируем данные
   void SetUp() override {
     int width = -1;
     int height = -1;
