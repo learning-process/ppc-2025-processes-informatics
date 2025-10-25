@@ -20,7 +20,7 @@
 
 namespace krykov_e_word_count {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -34,7 +34,7 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     std::vector<uint8_t> img;
     // Read image
     {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_SETTINGS_krykov_e_word_count, "pic.jpg");
+      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_krykov_e_word_count, "pic.jpg");
       auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
       if (data == nullptr) {
         throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
@@ -64,7 +64,7 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(KrykovEWordCountFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -76,9 +76,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName = KrykovEWordCountFuncTests::PrintFuncTestName<KrykovEWordCountFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KrykovEWordCountFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
