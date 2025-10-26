@@ -1,31 +1,31 @@
-#include "example_processes/mpi/include/ops_mpi.hpp"
+#include "shkrebko_m_count_char_freq/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
 #include <numeric>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
+#include "shkrebko_m_count_char_freq/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace shkrebko_m_count_char_freq {
 
-NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
+ShkrebkoMCountCharFreqMPI::ShkrebkoMCountCharFreqMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskMPI::ValidationImpl() {
+bool ShkrebkoMCountCharFreqMPI::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskMPI::PreProcessingImpl() {
+bool ShkrebkoMCountCharFreqMPI::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::RunImpl() {
+bool ShkrebkoMCountCharFreqMPI::RunImpl() {
   auto input = GetInput();
   if (input == 0) {
     return false;
@@ -64,9 +64,9 @@ bool NesterovATestTaskMPI::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::PostProcessingImpl() {
+bool ShkrebkoMCountCharFreqMPI::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
 
-}  // namespace nesterov_a_test_task_processes
+}  // namespace shkrebko_m_count_char_freq
