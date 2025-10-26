@@ -22,22 +22,23 @@ namespace spichek_d_dot_product_of_vectors {
 class SpichekDDotProductOfVectorsRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    const auto& [vectors, description] = test_param;
+    return description;
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);  // Используем первый параметр как размер векторов
+    input_data_ = std::get<0>(params);  // Получаем пару векторов
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Для скалярного произведения векторов [1,2,...,n] • [1,2,...,n]
-    // результат должен быть равен сумме квадратов: 1² + 2² + ... + n²
-    InType n = input_data_;
-    InType expected_result = 0;
-    for (InType i = 1; i <= n; i++) {
-        expected_result += i * i;
+    const auto& [vector1, vector2] = input_data_;
+    
+    // Вычисляем ожидаемый результат
+    int expected_result = 0;
+    for (size_t i = 0; i < vector1.size(); ++i) {
+        expected_result += vector1[i] * vector2[i];
     }
     
     return (output_data == expected_result);
@@ -48,7 +49,7 @@ class SpichekDDotProductOfVectorsRunFuncTestsProcesses : public ppc::util::BaseR
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
@@ -57,11 +58,11 @@ TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, DotProductTest) {
   ExecuteTest(GetParam());
 }
 
-// Тестовые параметры: (размер_вектора, описание)
+// Тестовые параметры: ((вектор1, вектор2), описание)
 const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(3, "vector_size_3"), 
-    std::make_tuple(5, "vector_size_5"), 
-    std::make_tuple(7, "vector_size_7")
+    std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, std::vector<int>{4, 5, 6}), "vectors_3"),
+    std::make_tuple(std::make_pair(std::vector<int>{1, 0, -1, 2}, std::vector<int>{2, 3, 4, -1}), "vectors_4_with_negatives"),
+    std::make_tuple(std::make_pair(std::vector<int>{5, 5, 5}, std::vector<int>{2, 2, 2}), "constant_vectors")
 };
 
 const auto kTestTasksList =
