@@ -8,16 +8,23 @@
 namespace spichek_d_dot_product_of_vectors {
 
 class SpichekDDotProductOfVectorsRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const InType kVectorSize_ = 1000;  // Больший размер для производительности
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_ = kVectorSize_;
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
-  }
+bool CheckTestOutputData(OutType &output_data) final {
+    InType n = input_data_;
+    InType expected_result = 0;
+    
+    for (InType i = 1; i <= n; i++) {
+        expected_result += i * i;
+    }
+    
+    return (output_data == expected_result);
+}
 
   InType GetTestInputData() final {
     return input_data_;

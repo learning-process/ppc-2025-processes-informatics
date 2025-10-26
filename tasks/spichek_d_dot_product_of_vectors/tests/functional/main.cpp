@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
@@ -28,30 +27,20 @@ class SpichekDDotProductOfVectorsRunFuncTestsProcesses : public ppc::util::BaseR
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_spichek_d_dot_product_of_vectors, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);  // Используем первый параметр как размер векторов
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    // Для скалярного произведения векторов [1,2,...,n] • [1,2,...,n]
+    // результат должен быть равен сумме квадратов: 1² + 2² + ... + n²
+    InType n = input_data_;
+    InType expected_result = 0;
+    for (InType i = 1; i <= n; i++) {
+        expected_result += i * i;
+    }
+    
+    return (output_data == expected_result);
   }
 
   InType GetTestInputData() final {
@@ -64,11 +53,16 @@ class SpichekDDotProductOfVectorsRunFuncTestsProcesses : public ppc::util::BaseR
 
 namespace {
 
-TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, DotProductTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+// Тестовые параметры: (размер_вектора, описание)
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(3, "vector_size_3"), 
+    std::make_tuple(5, "vector_size_5"), 
+    std::make_tuple(7, "vector_size_7")
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SpichekDDotProductOfVectorsMPI, InType>(kTestParam, PPC_SETTINGS_spichek_d_dot_product_of_vectors),
@@ -78,7 +72,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = SpichekDDotProductOfVectorsRunFuncTestsProcesses::PrintFuncTestName<SpichekDDotProductOfVectorsRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, SpichekDDotProductOfVectorsRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(DotProductTests, SpichekDDotProductOfVectorsRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -19,41 +19,44 @@ bool SpichekDDotProductOfVectorsSEQ::ValidationImpl() {
 }
 
 bool SpichekDDotProductOfVectorsSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  // Инициализация или подготовка данных перед выполнением
+  // Для скалярного произведения векторов можно инициализировать векторы здесь
+  GetOutput() = 0;  // Сбрасываем выходное значение
+  return true;
 }
 
 bool SpichekDDotProductOfVectorsSEQ::RunImpl() {
+  //std::cout << "SEQ RunImpl START: input=" << GetInput() << std::endl;
+  
   if (GetInput() == 0) {
+    //std::cout << "SEQ RunImpl: input is 0, returning false" << std::endl;
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
+  InType n = GetInput();
+  //std::cout << "SEQ RunImpl: n=" << n << std::endl;
+  
+  // Вычисляем скалярное произведение напрямую без создания векторов
+  InType dot_product = 0;
+  for (InType i = 1; i <= n; ++i) {
+    dot_product += i * i;  // [1,2,...,n] • [1,2,...,n] = 1² + 2² + ... + n²
+    
+    // Отладочный вывод каждые 100000 итераций
+    //if (i % 100000 == 0) {
+    // std::cout << "SEQ RunImpl: i=" << i << ", dot_product=" << dot_product << std::endl;
+    //}
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  // Сохраняем результат
+  GetOutput() = dot_product;
+  //std::cout << "SEQ RunImpl END: output=" << GetOutput() << std::endl;
 
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
   return GetOutput() > 0;
 }
 
 bool SpichekDDotProductOfVectorsSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
+  // Постобработка результата (если нужна)
+  // В данном случае просто проверяем валидность результата
   return GetOutput() > 0;
 }
 
