@@ -79,7 +79,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
     }
 
     for (size_t j = startId + 1; j < v.size(); j++) {
-      if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0) && (v[j] < 0)) {
+      if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0 && v[j] < 0)) {
         allSwaps++;
       }
     }
