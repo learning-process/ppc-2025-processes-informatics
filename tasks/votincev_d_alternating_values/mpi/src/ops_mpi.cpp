@@ -79,7 +79,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
     }
 
     for (size_t j = startId + 1; j < v.size(); j++) {
-      if (((v[j - 1] < 0) && (v[j] >= 0)) || ((v[j - 1] >= 0) && (v[j] < 0))) {
+      if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0) && (v[j] < 0)) {
         allSwaps++;
       }
     }
@@ -106,7 +106,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
 
       int swapCount = 0;
       for (size_t j = 1; j < vectData.size(); j++) {
-        if (vectData[j - 1] < 0 && vectData[j] >= 0 || vectData[j - 1] >= 0 && vectData[j] < 0) {
+        if ((vectData[j - 1] < 0 && vectData[j] >= 0) || (vectData[j - 1] >= 0 && vectData[j] < 0)) {
           swapCount++;
         }
       }
