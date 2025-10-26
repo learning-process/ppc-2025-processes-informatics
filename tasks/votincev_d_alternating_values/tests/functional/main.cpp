@@ -22,23 +22,14 @@ namespace votincev_d_alternating_values {
 
 class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  // пока что Test Type == std::tuple<int, std::string>
-  // test_param надо обязательно юзать!
-  // изменил на std::string
   static std::string PrintTestParam(const TestType &test_param) {
-    // std::string strV;
-    // for (int i = 0; i < test_param.size(); i++) {
-    //   strV += std::to_string(test_param[i]);
-    //   strV += "_";
-    // }
-    // strV += "\n";
     return test_param;
   }
 
  protected:
   // считываем/генерируем данные
   void SetUp() override {
-    int sz = expectedRes + 1;  // 5
+    int sz = expectedRes + 1;
     std::vector<double> v;
     int swapper = 1;
     for (int i = 0; i < sz; i++) {
@@ -73,7 +64,11 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
 
  private:
   InType input_data_;
-  OutType expectedRes = 4;  // добавил
+  OutType expectedRes = 10000000;
+  // 100
+  // 10000
+  // 1000000
+  // 10000000
 };
 
 namespace {

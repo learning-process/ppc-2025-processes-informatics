@@ -29,17 +29,9 @@ bool VotincevDAlternatingValuesMPI::PreProcessingImpl() {
 }
 
 bool VotincevDAlternatingValuesMPI::RunImpl() {
-  // ----------
-  // if(ProcRank == 0) {
-  //   for (size_t j = 1; j < v.size(); j++) {
-  //     if (v[j - 1] < 0 && v[j] >= 0 || v[j - 1] >= 0 && v[j] < 0) {
-  //       allSwaps++;
-  //     }
-  //   }
-  // }
-  // ----------
+  double start_time = 0, end_time = 0;
 
-  // v = GetInput();  // напишу в начало на всякий (проверка)
+  start_time = MPI_Wtime();
   int allSwaps = 0;
   // получаю кол-во процессов
   int ProcessN;
@@ -64,12 +56,11 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
 
       partSize++;  // цепляем правого соседа, 0-й будет последним - поэтому он будет последний кусок считать
 
-      // отправляем всем процессам их размер
-      MPI_Send(&partSize, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+      // Вместо пересылки данных - пересылаем индексы начала и конца
+      int indices[2] = {startId, startId + partSize};
+      MPI_Send(indices, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
       // std::cout << "Id: " << startId << '\n';
 
-      // отправлем всем прцоессам их кусок вектора
-      MPI_Send(v.data() + startId, partSize, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
       startId += partSize - 1;
 
       // вычисляю для последнего
@@ -97,16 +88,22 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
 
   for (int i = 1; i < ProcessN; i++) {
     if (ProcRank == i) {
-      std::vector<double> vectData;
-      // отправляю partSize процессам кроме последнего
-      MPI_Recv(&partSize, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      // получаем индексы вместо данных
+      int indices[2];
+      MPI_Recv(indices, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      vectData.resize(partSize);
-      MPI_Recv(vectData.data(), partSize, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      int start_index = indices[0];
+      int end_index = indices[1];
+
+      // корректируем конечный индекс если нужно
+      if (end_index > v.size()) {
+        end_index = v.size();
+      }
 
       int swapCount = 0;
-      for (size_t j = 1; j < vectData.size(); j++) {
-        if ((vectData[j - 1] < 0 && vectData[j] >= 0) || (vectData[j - 1] >= 0 && vectData[j] < 0)) {
+      // обрабатываем свой диапазон из глобального вектора v
+      for (int j = start_index + 1; j < end_index; j++) {
+        if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0 && v[j] < 0)) {
           swapCount++;
         }
       }
@@ -116,8 +113,8 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
-  // только 0 процесс имеет право устанавливать значение
-  // так как сам складывает значения
+  end_time = MPI_Wtime();
+
   if (ProcRank == 0) {
     // отправляем всем процессам корректный результат
     for (int i = 1; i < ProcessN; i++) {
@@ -134,8 +131,10 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
     }
   }
   MPI_Barrier(MPI_COMM_WORLD);
-  // GetOutput() = allSwaps;
-  // std::cout << "From RunImpl allswaps:_" << allSwaps << "\n";
+  if (ProcRank == 0) {
+    std::cout << "MPI_was_working_" << (end_time - start_time) << "\n";
+  }
+
   return true;
 }
 

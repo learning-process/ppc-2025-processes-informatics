@@ -24,13 +24,19 @@ bool VotincevDAlternatingValuesSEQ::PreProcessingImpl() {
 }
 
 bool VotincevDAlternatingValuesSEQ::RunImpl() {
-  // v = GetInput();  // напишу в начало на всякий (проверка)
+  auto start_time = std::chrono::high_resolution_clock::now();
+
   int allSwaps = 0;
   for (size_t j = 1; j < v.size(); j++) {
     if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0 && v[j] < 0)) {
       allSwaps++;
     }
   }
+
+  auto end_time = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+
+  std::cout << "SEQ_was_working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
   GetOutput() = allSwaps;
   return true;
 }
