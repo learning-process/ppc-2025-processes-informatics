@@ -11,16 +11,16 @@ namespace levonychev_i_min_val_rows_matrix {
 LevonychevIMinValRowsMatrixSEQ::LevonychevIMinValRowsMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  //GetOutput() = 0;
+  // GetOutput() = 0;
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
-  if (GetInput().empty()){
+  if (GetInput().empty()) {
     return false;
   }
   size_t row_length = GetInput()[0].size();
-  for (size_t i = 1; i < GetInput().size(); ++i){
-    if (GetInput()[i].size() != row_length){
+  for (size_t i = 1; i < GetInput().size(); ++i) {
+    if (GetInput()[i].size() != row_length) {
       return false;
     }
   }

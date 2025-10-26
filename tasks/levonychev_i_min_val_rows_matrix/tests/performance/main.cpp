@@ -29,7 +29,8 @@ TEST_P(LevonychevIMinValRowsMatrixPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LevonychevIMinValRowsMatrixMPI, LevonychevIMinValRowsMatrixSEQ>(PPC_SETTINGS_levonychev_i_min_val_rows_matrix);
+    ppc::util::MakeAllPerfTasks<InType, LevonychevIMinValRowsMatrixMPI, LevonychevIMinValRowsMatrixSEQ>(
+        PPC_SETTINGS_levonychev_i_min_val_rows_matrix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
