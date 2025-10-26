@@ -39,7 +39,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   // }
   // ----------
 
-  v = GetInput();  // напишу в начало на всякий (проверка)
+  // v = GetInput();  // напишу в начало на всякий (проверка)
   int allSwaps = 0;
   // получаю кол-во процессов
   int ProcessN;
@@ -79,7 +79,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
     }
 
     for (size_t j = startId + 1; j < v.size(); j++) {
-      if (v[j - 1] < 0 && v[j] >= 0 || v[j - 1] >= 0 && v[j] < 0) {
+      if (((v[j - 1] < 0) && (v[j] >= 0)) || ((v[j - 1] >= 0) && (v[j] < 0))) {
         allSwaps++;
       }
     }
