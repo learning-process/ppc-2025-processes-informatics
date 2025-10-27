@@ -47,11 +47,9 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   std::vector<int> local_vec1, local_vec2;
 
   if (rank == 0) {
-    // Root процесс уже имеет данные
     local_vec1 = vector1;
     local_vec2 = vector2;
   } else {
-    // Другие процессы выделяют память
     local_vec1.resize(vector_size);
     local_vec2.resize(vector_size);
   }
@@ -60,7 +58,6 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   MPI_Bcast(local_vec1.data(), vector_size, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(local_vec2.data(), vector_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Теперь все процессы имеют полные копии векторов
   // Вычисляем свою часть скалярного произведения
   size_t chunk_size = n / size;
   size_t start = rank * chunk_size;
@@ -72,12 +69,10 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   }
 
   int global_dot_product = 0;
-  MPI_Reduce(&local_dot_product, &global_dot_product, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_dot_product, &global_dot_product, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  // Только root процесс устанавливает результат
-  if (rank == 0) {
-    GetOutput() = global_dot_product;
-  }
+  // ВСЕ процессы устанавливают результат
+  GetOutput() = global_dot_product;
 
   return true;
 }
