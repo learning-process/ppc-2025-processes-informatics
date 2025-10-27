@@ -7,7 +7,7 @@
 
 namespace krykov_e_word_count {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
 
@@ -24,17 +24,17 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
+TEST_P(KrykovEWordCountPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrykovEWordCountMPI, KrykovEWordCountSEQ>(PPC_SETTINGS_krykov_e_word_count);
+    ppc::util::MakeAllPerfTasks<InType, KrykovEWordCountMPI, KrykovEWordCountSEQ>(PPC_SETTINGS_example_processes);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = KrykovEWordCountPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KrykovEWordCountPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace krykov_e_word_count
