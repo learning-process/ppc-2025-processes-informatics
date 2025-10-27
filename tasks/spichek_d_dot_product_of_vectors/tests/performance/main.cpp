@@ -25,7 +25,6 @@ class SpichekDDotProductOfVectorsRunPerfTestProcesses : public ppc::util::BaseRu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &[vector1, vector2] = input_data_;
     return (output_data != 0);
   }
 
