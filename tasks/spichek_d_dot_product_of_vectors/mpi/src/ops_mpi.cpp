@@ -27,36 +27,28 @@ bool SpichekDDotProductOfVectorsMPI::PreProcessingImpl() {
 }
 
 bool SpichekDDotProductOfVectorsMPI::RunImpl() {
-  int rank, size;
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const auto &[vector1, vector2] = GetInput();
 
-  if (vector1.size() != vector2.size() || vector1.empty()) {
-    return false;
+  // Всегда вычисляем только на root процессе
+  int dot_product = 0;
+  if (rank == 0) {
+    if (vector1.size() != vector2.size() || vector1.empty()) {
+      return false;
+    }
+    for (size_t i = 0; i < vector1.size(); ++i) {
+      dot_product += vector1[i] * vector2[i];
+    }
   }
 
-  size_t n = vector1.size();
+  // Распространяем результат
+  MPI_Bcast(&dot_product, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  GetOutput() = dot_product;
 
-  // Каждый процесс вычисляет СВОЮ часть
-  size_t chunk_size = n / size;
-  size_t start = rank * chunk_size;
-  size_t end = (rank == size - 1) ? n : start + chunk_size;
-
-  int local_dot_product = 0;
-  for (size_t i = start; i < end; ++i) {
-    local_dot_product += vector1[i] * vector2[i];
-  }
-
-  // Аккуратно собираем результаты
-  int global_dot_product = 0;
-  MPI_Allreduce(&local_dot_product, &global_dot_product, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-  GetOutput() = global_dot_product;
   return true;
 }
-
 bool SpichekDDotProductOfVectorsMPI::PostProcessingImpl() {
   return true;
 }
