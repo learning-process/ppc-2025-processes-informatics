@@ -41,12 +41,12 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   int ProcRank;
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
-  int partSize;
+  size_t partSize;
   if (ProcRank == 0) {
-    int base = v.size() / ProcessN;    // минимум на обработку
-    int remain = v.size() % ProcessN;  // остаток (распределим)
+    size_t base = v.size() / ProcessN;    // минимум на обработку
+    size_t remain = v.size() % ProcessN;  // остаток (распределим)
 
-    int startId = 0;
+    size_t startId = 0;
     for (int i = 1; i < ProcessN; i++) {
       partSize = base;
       if (remain) {  // если есть остаток - то распределяем между первыми
@@ -57,14 +57,14 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
       partSize++;  // цепляем правого соседа, 0-й будет последним - поэтому он будет последний кусок считать
 
       // Вместо пересылки данных - пересылаем индексы начала и конца
-      int indices[2] = {startId, startId + partSize};
-      MPI_Send(indices, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+      int64_t indices[2] = {static_cast<int64_t>(startId), static_cast<int64_t>(startId + partSize)};
+      MPI_Send(indices, 2, MPI_INT64_T, i, 0, MPI_COMM_WORLD);
       // std::cout << "Id: " << startId << '\n';
 
       startId += partSize - 1;
 
       // вычисляю для последнего
-      if (i == ProcessN - 1) {
+      if (i == (ProcessN - 1)) {
         partSize = base + remain;
       }
     }
@@ -89,11 +89,11 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   for (int i = 1; i < ProcessN; i++) {
     if (ProcRank == i) {
       // получаем индексы вместо данных
-      int indices[2];
-      MPI_Recv(indices, 2, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      int64_t indices[2];
+      MPI_Recv(indices, 2, MPI_INT64_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      int start_index = indices[0];
-      int end_index = indices[1];
+      size_t start_index = static_cast<size_t>(indices[0]);
+      size_t end_index = static_cast<size_t>(indices[1]);
 
       // корректируем конечный индекс если нужно
       if (end_index > v.size()) {
@@ -102,7 +102,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
 
       int swapCount = 0;
       // обрабатываем свой диапазон из глобального вектора v
-      for (int j = start_index + 1; j < end_index; j++) {
+      for (size_t j = start_index + 1; j < end_index; j++) {
         if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0 && v[j] < 0)) {
           swapCount++;
         }
