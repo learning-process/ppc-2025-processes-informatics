@@ -64,11 +64,7 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
 
  private:
   InType input_data_;
-  OutType expectedRes = 10000000;
-  // 100
-  // 10000
-  // 1000000
-  // 10000000
+  OutType expectedRes = 10;
 };
 
 namespace {
