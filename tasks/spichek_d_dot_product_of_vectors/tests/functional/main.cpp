@@ -22,7 +22,7 @@ namespace spichek_d_dot_product_of_vectors {
 class SpichekDDotProductOfVectorsRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const auto& [vectors, description] = test_param;
+    const auto &[vectors, description] = test_param;
     return description;
   }
 
@@ -33,14 +33,14 @@ class SpichekDDotProductOfVectorsRunFuncTestsProcesses : public ppc::util::BaseR
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto& [vector1, vector2] = input_data_;
-    
+    const auto &[vector1, vector2] = input_data_;
+
     // Вычисляем ожидаемый результат
     int expected_result = 0;
     for (size_t i = 0; i < vector1.size(); ++i) {
-        expected_result += vector1[i] * vector2[i];
+      expected_result += vector1[i] * vector2[i];
     }
-    
+
     return (output_data == expected_result);
   }
 
@@ -61,19 +61,22 @@ TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, DotProductTest) {
 // Тестовые параметры: ((вектор1, вектор2), описание)
 const std::array<TestType, 3> kTestParam = {
     std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, std::vector<int>{4, 5, 6}), "vectors_3"),
-    std::make_tuple(std::make_pair(std::vector<int>{1, 0, -1, 2}, std::vector<int>{2, 3, 4, -1}), "vectors_4_with_negatives"),
-    std::make_tuple(std::make_pair(std::vector<int>{5, 5, 5}, std::vector<int>{2, 2, 2}), "constant_vectors")
-};
+    std::make_tuple(std::make_pair(std::vector<int>{1, 0, -1, 2}, std::vector<int>{2, 3, 4, -1}),
+                    "vectors_4_with_negatives"),
+    std::make_tuple(std::make_pair(std::vector<int>{5, 5, 5}, std::vector<int>{2, 2, 2}), "constant_vectors")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<SpichekDDotProductOfVectorsMPI, InType>(kTestParam, PPC_SETTINGS_spichek_d_dot_product_of_vectors),
-                   ppc::util::AddFuncTask<SpichekDDotProductOfVectorsSEQ, InType>(kTestParam, PPC_SETTINGS_spichek_d_dot_product_of_vectors));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SpichekDDotProductOfVectorsMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_spichek_d_dot_product_of_vectors),
+                                           ppc::util::AddFuncTask<SpichekDDotProductOfVectorsSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_spichek_d_dot_product_of_vectors));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SpichekDDotProductOfVectorsRunFuncTestsProcesses::PrintFuncTestName<SpichekDDotProductOfVectorsRunFuncTestsProcesses>;
+const auto kPerfTestName = SpichekDDotProductOfVectorsRunFuncTestsProcesses::PrintFuncTestName<
+    SpichekDDotProductOfVectorsRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(DotProductTests, SpichekDDotProductOfVectorsRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(DotProductTests, SpichekDDotProductOfVectorsRunFuncTestsProcesses, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 

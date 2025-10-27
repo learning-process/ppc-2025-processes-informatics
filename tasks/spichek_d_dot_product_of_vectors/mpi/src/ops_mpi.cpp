@@ -17,7 +17,7 @@ SpichekDDotProductOfVectorsMPI::SpichekDDotProductOfVectorsMPI(const InType &in)
 }
 
 bool SpichekDDotProductOfVectorsMPI::ValidationImpl() {
-  const auto& [vector1, vector2] = GetInput();
+  const auto &[vector1, vector2] = GetInput();
   return (!vector1.empty()) && (vector1.size() == vector2.size()) && (GetOutput() == 0);
 }
 
@@ -31,30 +31,26 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const auto& [vector1, vector2] = GetInput();
-  
+  const auto &[vector1, vector2] = GetInput();
+
   if (vector1.size() != vector2.size() || vector1.empty()) {
     return false;
   }
 
   size_t n = vector1.size();
 
-  // ОПТИМИЗИРОВАННОЕ РАСПРЕДЕЛЕНИЕ ДЛЯ БОЛЬШИХ ДАННЫХ
   size_t chunk_size = n / size;
   size_t start = rank * chunk_size;
   size_t end = (rank == size - 1) ? n : start + chunk_size;
 
-  // ВЫЧИСЛЕНИЕ ЛОКАЛЬНОЙ ЧАСТИ
   int local_dot_product = 0;
   for (size_t i = start; i < end; ++i) {
     local_dot_product += vector1[i] * vector2[i];
   }
 
-  // СБОР РЕЗУЛЬТАТОВ (ОПТИМИЗИРОВАННО)
   int global_dot_product = 0;
   MPI_Allreduce(&local_dot_product, &global_dot_product, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-  
-  // Allreduce уже гарантирует, что все процессы имеют правильное значение
+
   GetOutput() = global_dot_product;
 
   return true;

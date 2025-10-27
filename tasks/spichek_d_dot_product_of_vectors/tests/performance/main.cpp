@@ -11,27 +11,21 @@ class SpichekDDotProductOfVectorsRunPerfTestProcesses : public ppc::util::BaseRu
   InType input_data_{};
 
   void SetUp() override {
-    // СОЗДАЕМ БОЛЬШИЕ ВЕКТОРЫ ДЛЯ ТЕСТИРОВАНИЯ (10 миллионов элементов)
-    const size_t VECTOR_SIZE = 100000000;  // 100 миллионов
-    
+    const size_t VECTOR_SIZE = 100000000;
+
     std::vector<int> vector1(VECTOR_SIZE);
     std::vector<int> vector2(VECTOR_SIZE);
-    
-    // Заполняем векторы (это займет некоторое время)
+
     for (size_t i = 0; i < VECTOR_SIZE; ++i) {
-        vector1[i] = static_cast<int>(i % 1000) + 1;  // Значения от 1 до 1000
-        vector2[i] = static_cast<int>((i * 2) % 1000) + 1; // Разные значения
+      vector1[i] = static_cast<int>(i % 1000) + 1;
+      vector2[i] = static_cast<int>((i * 2) % 1000) + 1;
     }
-    
+
     input_data_ = std::make_pair(vector1, vector2);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto& [vector1, vector2] = input_data_;
-    
-    // Для больших векторов не будем проверять точное значение в тестах,
-    // так как это займет много времени. Просто проверяем, что результат не нулевой.
-    // В реальном коде можно выборочно проверить часть вычислений.
+    const auto &[vector1, vector2] = input_data_;
     return (output_data != 0);
   }
 
@@ -45,7 +39,8 @@ TEST_P(SpichekDDotProductOfVectorsRunPerfTestProcesses, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SpichekDDotProductOfVectorsMPI, SpichekDDotProductOfVectorsSEQ>(PPC_SETTINGS_spichek_d_dot_product_of_vectors);
+    ppc::util::MakeAllPerfTasks<InType, SpichekDDotProductOfVectorsMPI, SpichekDDotProductOfVectorsSEQ>(
+        PPC_SETTINGS_spichek_d_dot_product_of_vectors);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

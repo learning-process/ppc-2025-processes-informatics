@@ -15,7 +15,7 @@ SpichekDDotProductOfVectorsSEQ::SpichekDDotProductOfVectorsSEQ(const InType &in)
 }
 
 bool SpichekDDotProductOfVectorsSEQ::ValidationImpl() {
-  const auto& [vector1, vector2] = GetInput();
+  const auto &[vector1, vector2] = GetInput();
   return (!vector1.empty()) && (vector1.size() == vector2.size()) && (GetOutput() == 0);
 }
 
@@ -25,13 +25,12 @@ bool SpichekDDotProductOfVectorsSEQ::PreProcessingImpl() {
 }
 
 bool SpichekDDotProductOfVectorsSEQ::RunImpl() {
-  const auto& [vector1, vector2] = GetInput();
-  
+  const auto &[vector1, vector2] = GetInput();
+
   if (vector1.size() != vector2.size() || vector1.empty()) {
     return false;
   }
 
-  // Вычисляем скалярное произведение для любых векторов
   int dot_product = 0;
   for (size_t i = 0; i < vector1.size(); ++i) {
     dot_product += vector1[i] * vector2[i];
