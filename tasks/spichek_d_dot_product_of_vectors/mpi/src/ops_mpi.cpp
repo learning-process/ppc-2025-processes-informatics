@@ -32,12 +32,23 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
 
   const auto &[vector1, vector2] = GetInput();
 
-  // Всегда вычисляем только на root процессе
-  int dot_product = 0;
+  // Сначала проверяем валидность данных на всех процессах
+  int is_valid = 1;
   if (rank == 0) {
     if (vector1.size() != vector2.size() || vector1.empty()) {
-      return false;
+      is_valid = 0;
     }
+  }
+  MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (!is_valid) {
+    GetOutput() = 0;
+    return false;
+  }
+
+  // Вычисляем на root процессе
+  int dot_product = 0;
+  if (rank == 0) {
     for (size_t i = 0; i < vector1.size(); ++i) {
       dot_product += vector1[i] * vector2[i];
     }
@@ -49,6 +60,7 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
 
   return true;
 }
+
 bool SpichekDDotProductOfVectorsMPI::PostProcessingImpl() {
   return true;
 }
