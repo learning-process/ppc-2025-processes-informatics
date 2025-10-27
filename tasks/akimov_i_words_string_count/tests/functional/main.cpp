@@ -20,7 +20,7 @@
 
 namespace akimov_i_words_string_count {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class AkimovIWordsStringCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -64,7 +64,7 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(AkimovIWordsStringCountFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -76,9 +76,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName = AkimovIWordsStringCountFuncTests::PrintFuncTestName<AkimovIWordsStringCountFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, AkimovIWordsStringCountFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
