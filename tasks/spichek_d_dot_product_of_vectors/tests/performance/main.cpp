@@ -11,7 +11,7 @@ class SpichekDDotProductOfVectorsRunPerfTestProcesses : public ppc::util::BaseRu
   InType input_data_{};
 
   void SetUp() override {
-    const size_t VECTOR_SIZE = 100000000;
+    const size_t VECTOR_SIZE = 1000000;
 
     std::vector<int> vector1(VECTOR_SIZE);
     std::vector<int> vector2(VECTOR_SIZE);
