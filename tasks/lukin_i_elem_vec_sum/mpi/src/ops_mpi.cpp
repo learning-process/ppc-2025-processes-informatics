@@ -17,56 +17,91 @@ LukinIElemVecSumMPI::LukinIElemVecSumMPI(const InType &in) {
 }
 
 bool LukinIElemVecSumMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto& vec = GetInput();
+  return !vec.empty();
 }
 
 bool LukinIElemVecSumMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  vector_to_count = GetInput();
+
+  elem_vec_sum = 0;
+
+  return true;
 }
 
 bool LukinIElemVecSumMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
+  int sum = 0;
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
+  int proc_count = 0;
+  int rank = -1;
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
+  int part = 0;
+
+  std::vector<int> sendcounts(proc_count);
+  std::vector<int> offsets(proc_count);
+
+  if(rank == 0)
+  {
+    const int vec_size = vector_to_count.size();
+
+    part = vec_size / proc_count;
+    const int reminder = vec_size % proc_count;
+
+    if(part == 0)
+    {
+      sum = std::accumulate(vector_to_count.begin(), vector_to_count.end(), 0);
+      elem_vec_sum = sum;
+      return true;
     }
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+    for(int i = 0;i < proc_count;i++)
+    {
+      sendcounts[i] = (i != proc_count - 1) ? part : part + reminder;
+      offsets[i] = (i == 0) ? 0 : offsets[i - 1] + sendcounts[i - 1];
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  MPI_Bcast(&part, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if(part == 0)
+  {
+    return true;
+  }
+
+  MPI_Bcast(sendcounts.data(), proc_count, MPI_INT, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(offsets.data(), proc_count, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> local_vec(sendcounts[rank]);
+
+  MPI_Scatterv
+  (
+    vector_to_count.data(), 
+    sendcounts.data(), offsets.data(), 
+    MPI_INT, 
+    local_vec.data(), 
+    sendcounts[rank],
+    MPI_INT, 
+    0, 
+    MPI_COMM_WORLD
+  );
+
+  int local_sum = std::accumulate(local_vec.begin(),local_vec.end(),0);
+
+  MPI_Reduce(&local_sum, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(&sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  elem_vec_sum = sum;
+
+  return true;
 }
 
 bool LukinIElemVecSumMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = elem_vec_sum;
+  return true;
 }
 
 }  // namespace lukin_i_elem_vec_sum

@@ -7,7 +7,7 @@
 
 namespace lukin_i_elem_vec_sum {
 
-using InType = int;
+using InType = std::vector<int>;
 using OutType = int;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;

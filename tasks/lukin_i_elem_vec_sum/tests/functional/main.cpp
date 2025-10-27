@@ -28,30 +28,17 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
+    input_data_ = std::vector<int>(10);
+    for(int i = 0;i < input_data_.size();i++)
     {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lukin_i_elem_vec_sum, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+      input_data_[i] = i;
+    }//{0,1,2,3,4,5,6,7,8,9}
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    expected_result = std::accumulate(input_data_.begin(),input_data_.end(),0);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return (output_data == expected_result);
   }
 
   InType GetTestInputData() final {
@@ -59,16 +46,17 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_result = 0;
 };
 
 namespace {
 
-TEST_P(LukinIRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};//idk
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LukinIElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_lukin_i_elem_vec_sum),
@@ -78,7 +66,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = LukinIRunFuncTestsProcesses::PrintFuncTestName<LukinIRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, LukinIRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ElemVecTests, LukinIRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
