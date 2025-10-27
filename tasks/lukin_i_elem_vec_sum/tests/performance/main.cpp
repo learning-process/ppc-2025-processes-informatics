@@ -15,8 +15,8 @@ class LukinIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, Ou
   OutType expected_result;
 
   void SetUp() override {
-    input_data_ = std::vector<int>(vec_size,vec_value);
-    expected_result = vec_size*vec_value;
+    input_data_ = std::vector<int>(vec_size, vec_value);
+    expected_result = vec_size * vec_value;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

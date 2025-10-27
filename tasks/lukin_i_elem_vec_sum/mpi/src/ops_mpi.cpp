@@ -17,7 +17,7 @@ LukinIElemVecSumMPI::LukinIElemVecSumMPI(const InType &in) {
 }
 
 bool LukinIElemVecSumMPI::ValidationImpl() {
-  const auto& vec = GetInput();
+  const auto &vec = GetInput();
   return !vec.empty();
 }
 
@@ -43,30 +43,26 @@ bool LukinIElemVecSumMPI::RunImpl() {
   std::vector<int> sendcounts(proc_count);
   std::vector<int> offsets(proc_count);
 
-  if(rank == 0)
-  {
+  if (rank == 0) {
     const int vec_size = vector_to_count.size();
 
     part = vec_size / proc_count;
     const int reminder = vec_size % proc_count;
 
-    if(part == 0)
-    {
+    if (part == 0) {
       sum = std::accumulate(vector_to_count.begin(), vector_to_count.end(), 0);
       elem_vec_sum = sum;
       return true;
     }
 
-    for(int i = 0;i < proc_count;i++)
-    {
+    for (int i = 0; i < proc_count; i++) {
       sendcounts[i] = (i != proc_count - 1) ? part : part + reminder;
       offsets[i] = (i == 0) ? 0 : offsets[i - 1] + sendcounts[i - 1];
     }
   }
 
   MPI_Bcast(&part, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if(part == 0)
-  {
+  if (part == 0) {
     return true;
   }
 
@@ -76,19 +72,10 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   std::vector<int> local_vec(sendcounts[rank]);
 
-  MPI_Scatterv
-  (
-    vector_to_count.data(), 
-    sendcounts.data(), offsets.data(), 
-    MPI_INT, 
-    local_vec.data(), 
-    sendcounts[rank],
-    MPI_INT, 
-    0, 
-    MPI_COMM_WORLD
-  );
+  MPI_Scatterv(vector_to_count.data(), sendcounts.data(), offsets.data(), MPI_INT, local_vec.data(), sendcounts[rank],
+               MPI_INT, 0, MPI_COMM_WORLD);
 
-  int local_sum = std::accumulate(local_vec.begin(),local_vec.end(),0);
+  int local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
 
   MPI_Reduce(&local_sum, &sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 

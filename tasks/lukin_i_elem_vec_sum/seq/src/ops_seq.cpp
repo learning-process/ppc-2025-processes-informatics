@@ -15,7 +15,7 @@ LukinIElemVecSumSEQ::LukinIElemVecSumSEQ(const InType &in) {
 }
 
 bool LukinIElemVecSumSEQ::ValidationImpl() {
-  const auto& vec = GetInput();
+  const auto &vec = GetInput();
   return !vec.empty();
 }
 
@@ -28,8 +28,7 @@ bool LukinIElemVecSumSEQ::PreProcessingImpl() {
 }
 
 bool LukinIElemVecSumSEQ::RunImpl() {
-  for(const auto& elem : vector_to_count)
-  {
+  for (const auto &elem : vector_to_count) {
     elem_vec_sum += elem;
   }
   return true;
