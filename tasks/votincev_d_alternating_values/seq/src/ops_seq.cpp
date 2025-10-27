@@ -24,7 +24,7 @@ bool VotincevDAlternatingValuesSEQ::PreProcessingImpl() {
 }
 
 bool VotincevDAlternatingValuesSEQ::RunImpl() {
-  auto start_time = std::chrono::high_resolution_clock::now();
+  // auto start_time = std::chrono::high_resolution_clock::now();
 
   int allSwaps = 0;
   for (size_t j = 1; j < v.size(); j++) {
@@ -33,10 +33,10 @@ bool VotincevDAlternatingValuesSEQ::RunImpl() {
     }
   }
 
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+  // auto end_time = std::chrono::high_resolution_clock::now();
+  // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
 
-  std::cout << "SEQ_was_working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
+  // std::cout << "SEQ_was_working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
   GetOutput() = allSwaps;
   return true;
 }

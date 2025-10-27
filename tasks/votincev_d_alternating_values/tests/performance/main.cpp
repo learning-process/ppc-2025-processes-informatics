@@ -9,7 +9,7 @@ namespace votincev_d_alternating_values {
 
 class VotincevDAlternatigValuesRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
-  const int kCount_ = 10000;
+  const int kCount_ = 1000000;
   // 100
   // 10000
   // 1000000
