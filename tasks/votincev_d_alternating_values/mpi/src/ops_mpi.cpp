@@ -120,6 +120,8 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
     GetOutput() = allSwaps;
   }
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   // MPI_Barrier(MPI_COMM_WORLD);
   // end_time = MPI_Wtime();
   // MPI_Barrier(MPI_COMM_WORLD);
