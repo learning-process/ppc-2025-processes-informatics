@@ -29,7 +29,7 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
  protected:
   void SetUp() override {
     input_data_ = std::vector<int>(10);
-    for (int i = 0; i < input_data_.size(); i++) {
+    for (size_t i = 0; i < input_data_.size(); i++) {
       input_data_[i] = i;
     }  //{0,1,2,3,4,5,6,7,8,9}
 
