@@ -47,7 +47,6 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   std::vector<int> local_vec1(vector_size);
   std::vector<int> local_vec2(vector_size);
 
-  // Root процесс копирует данные, остальные получат через Bcast
   if (rank == 0) {
     local_vec1 = vector1;
     local_vec2 = vector2;
@@ -57,24 +56,19 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   MPI_Bcast(local_vec1.data(), vector_size, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(local_vec2.data(), vector_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Теперь все процессы имеют одинаковые данные
-  // Вычисляем свою часть скалярного произведения
+  // Простое распределение (как в исходном коде)
   size_t chunk_size = vector_size / size;
-  size_t remainder = vector_size % size;
-
-  size_t start = rank * chunk_size + std::min<size_t>(rank, remainder);
-  size_t end = start + chunk_size + (rank < remainder ? 1 : 0);
+  size_t start = rank * chunk_size;
+  size_t end = (rank == size - 1) ? vector_size : start + chunk_size;
 
   int local_dot_product = 0;
   for (size_t i = start; i < end; ++i) {
     local_dot_product += local_vec1[i] * local_vec2[i];
   }
 
-  // Собираем результаты со всех процессов
   int global_dot_product = 0;
   MPI_Allreduce(&local_dot_product, &global_dot_product, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  // Все процессы устанавливают результат
   GetOutput() = global_dot_product;
 
   return true;
