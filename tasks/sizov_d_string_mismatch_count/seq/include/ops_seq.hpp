@@ -13,7 +13,7 @@ class SizovDStringMismatchCountSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit SizovDStringMismatchCountSEQ(const InType& input);
+  explicit SizovDStringMismatchCountSEQ(const InType &input);
 
  private:
   std::string str_a_;
