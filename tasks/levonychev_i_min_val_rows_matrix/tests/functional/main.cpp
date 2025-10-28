@@ -23,36 +23,17 @@ namespace levonychev_i_min_val_rows_matrix {
 class LevonychevIMinValRowsMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(std::get<0>(test_param)) + "____" + std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
-    // int width = -1;
-    // int height = -1;
-    // int channels = -1;
-    // std::vector<uint8_t> img;
-    // // Read image
-    // {
-    //   std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_levonychev_i_min_val_rows_matrix, "pic.jpg");
-    //   auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-    //   if (data == nullptr) {
-    //     throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-    //   }
-    //   img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-    //   stbi_image_free(data);
-    //   if (std::cmp_not_equal(width, height)) {
-    //     throw std::runtime_error("width != height: ");
-    //   }
-    // }
-
-    // TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    // input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    output_data_ = {1, 4, 7};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    //return (input_data_ == output_data);
-    return output_data.size() == input_data_.size();
+    return output_data == output_data_;
   }
 
   InType GetTestInputData() final {
@@ -60,13 +41,13 @@ class LevonychevIMinValRowsMatrixFuncTests : public ppc::util::BaseRunFuncTests<
   }
 
  private:
-  //InType input_data_ = 0;
-  InType input_data_ = std::vector<std::vector<double>>(0);
+  InType input_data_;
+  OutType output_data_;
 };
 
 namespace {
 
-TEST_P(LevonychevIMinValRowsMatrixFuncTests, MatmulFromPic) {
+TEST_P(LevonychevIMinValRowsMatrixFuncTests, MinValRowsMatrix) {
   ExecuteTest(GetParam());
 }
 
@@ -82,7 +63,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName =
     LevonychevIMinValRowsMatrixFuncTests::PrintFuncTestName<LevonychevIMinValRowsMatrixFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, LevonychevIMinValRowsMatrixFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MinValRowsMatrixTests, LevonychevIMinValRowsMatrixFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

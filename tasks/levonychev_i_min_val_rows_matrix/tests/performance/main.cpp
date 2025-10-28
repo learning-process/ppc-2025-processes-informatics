@@ -12,7 +12,7 @@ class LevonychevIMinValRowsMatrixPerfTests : public ppc::util::BaseRunPerfTests<
   InType input_data_{};
 
   void SetUp() override {
-    //input_data_ = kCount_;
+    // input_data_ = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

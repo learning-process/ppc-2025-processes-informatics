@@ -11,6 +11,7 @@ namespace levonychev_i_min_val_rows_matrix {
 LevonychevIMinValRowsMatrixSEQ::LevonychevIMinValRowsMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
+  GetOutput().resize(in.size());
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {

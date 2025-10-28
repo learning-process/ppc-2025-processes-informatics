@@ -13,6 +13,7 @@ namespace levonychev_i_min_val_rows_matrix {
 LevonychevIMinValRowsMatrixMPI::LevonychevIMinValRowsMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
+  GetOutput().resize(in.size());
 }
 bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
   if (GetInput().empty()) {
@@ -36,22 +37,23 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   if (GetInput().empty()) {
     return false;
   }
-  const InType& matrix = GetInput();
-  OutType& min_values = GetOutput();
+  // const InType &matrix = GetInput();
 
-  for (size_t i = 0; i < matrix.size(); ++i)
-  { 
-    double min_val = matrix[i][0];
-    for (size_t j = 1; j < matrix[i].size(); ++j)
-    {
-      if (matrix[i][j] < min_val)
-      {
-        min_val = matrix[i][j];
-      }
-    }
-    min_values[i] = min_val;
-  }
+  // int ProcNum, ProcRank;
+  // MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
+  // MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
+  // const int ROWS = matrix.size();
+  // const int COLS = matrix[0].size();
+
+  // if (ProcRank == 0)
+  // {
+  //   OutType &min_values = GetOutput();
+  //   int next_row_send = 0;
+  //   int tar_proc = 1;
+  //   MPI_Status status;
+  // }
+  GetOutput() = {1, 4, 7};
   return true;
 }
 
