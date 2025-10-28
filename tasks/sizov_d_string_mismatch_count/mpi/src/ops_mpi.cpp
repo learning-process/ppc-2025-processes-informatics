@@ -1,13 +1,12 @@
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 
+#include <algorithm>
 #include <mpi.h>
 
-#include <cstddef>
 #include <string>
 #include <string_view>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
 SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(const InType &input) {
