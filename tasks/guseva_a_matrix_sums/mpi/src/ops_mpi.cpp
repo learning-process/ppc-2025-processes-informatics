@@ -42,8 +42,6 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::print(std::cout, "\nOPS_MPI INFO\n Input size: {}x{}", rows, columns);
-
   uint32_t rows_per_proc = rows / wsize;
   uint32_t remainder = rows % wsize;
 
@@ -83,10 +81,8 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
 
   std::vector<double> global_sums(columns, 0);
   MPI_Reduce(local_sums.data(), global_sums.data(), static_cast<int>(columns), MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if (rank_ == 0) {
-    GetOutput().assign(global_sums.begin(), global_sums.end());
-  }
+  MPI_Bcast(global_sums.data(), static_cast<int>(columns), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  GetOutput().assign(global_sums.begin(), global_sums.end());
 
   return true;
 }

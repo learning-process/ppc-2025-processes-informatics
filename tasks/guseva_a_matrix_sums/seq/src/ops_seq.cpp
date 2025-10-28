@@ -21,26 +21,17 @@ bool GusevaAMatrixSumsSEQ::PreProcessingImpl() {
 bool GusevaAMatrixSumsSEQ::RunImpl() {
   auto &matrix = std::get<2>(GetInput());
   auto &columns = std::get<1>(GetInput());
-  // #if defined(__APPLE__) && defined(__clang__)
   auto &rows = std::get<0>(GetInput());
-  // std::print(std::cout, "\nVer. SEQ\nTest case: {} {}\nState: start RunImpl", rows, columns);
   for (uint32_t i = 0; i < rows; i++) {
     for (uint32_t j = 0; j < columns; j++) {
       GetOutput()[j] += matrix[(i * columns) + j];
     }
   }
-  // std::print(std::cout, "\nVer. SEQ\nTest case: {} {}\nState: end RunImpl", rows, columns);
-  // #else
-  //   for (const auto &[column, x] : GetOutput() | std::views::enumerate) {
-  //     const auto &arr = matrix | std::ranges::views::drop(column) | std::views::stride(columns);
-  //     x = std::reduce(arr.begin(), arr.end(), 0.0);
-  //   }
-  // #endif
   return true;
 }
 
 bool GusevaAMatrixSumsSEQ::PostProcessingImpl() {
-  return GetOutput().size() > 0;
+  return true;
 }
 
 }  // namespace guseva_a_matrix_sums
