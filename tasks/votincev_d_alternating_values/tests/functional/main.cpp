@@ -29,7 +29,7 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
  protected:
   // считываем/генерируем данные
   void SetUp() override {
-    int sz = expectedRes + 1;
+    int sz = expectedRes + 1;  // чтобы чередований было ровно expectedRes
     std::vector<double> v;
     int swapper = 1;
     for (int i = 0; i < sz; i++) {
@@ -40,26 +40,10 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // 0-й процесс генерирует результат
-    // остальные - выполняют работу
-    // если будут процессы 1,2 ... сравнивать результат с корректным
-    // то всегда будет неверно
-    // поэтому можно или сделать как Дмитрий Сизов
-    // (только 0й процесс сравнивает на корректность, остальные возвращают true)
-    // или можно сделать как я:
-    // 0й процесс в RunImpl распределяет выходные данные между остальными
-    // остальные делают GetOutput() = выходной_результат
-    // мой способ - хуже в плане производительности
-    // но лучше в плане "честности"
-    // (можно ведь написать огромный нерабочий код и выставить как рабочий)
-    // (в моем случае если код не рабочий,то он не рабочий, у него нет выхода)
-    // но мой код ломается на 20 процессах
-    // значит это не оптимально
-
-    // спец значения для всех процессов кроме 0
-    if (output_data == -1) {
-      return true;
-    }
+    // спец значения для всех процессов 1,2 ... N-1
+    // if (output_data == -1) {
+    //   return true;
+    // }
 
     // 0й процесс должен вернуть правильный результат
     return output_data == expectedRes;

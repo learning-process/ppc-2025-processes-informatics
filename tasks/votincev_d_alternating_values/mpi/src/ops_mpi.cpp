@@ -122,31 +122,21 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
 
   MPI_Barrier(MPI_COMM_WORLD);
 
-  // MPI_Barrier(MPI_COMM_WORLD);
-  // end_time = MPI_Wtime();
-  // MPI_Barrier(MPI_COMM_WORLD);
-  // if (ProcRank == 0) {
-  //   std::cout << "MPI_was_working_" << (end_time - start_time) << "\n";
-  // }
-
-  //------- процесс 0й должен делиться правильным результатом с другими
-  //------- но это усложняет работу и может приводить к ошибкам
-  // if (ProcRank == 0) {
-  //   // отправляем всем процессам корректный результат
-  //   for (int i = 1; i < ProcessN; i++) {
-  //     MPI_Send(&allSwaps, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-  //   }
-  //   // сами устанавливаем значение
-  //   GetOutput() = allSwaps;
-  // }
-  // for (int i = 1; i < ProcessN; i++) {
-  //   if (ProcRank == i) {
-  //     int allSw;
-  //     MPI_Recv(&allSw, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  //     GetOutput() = allSw;
-  //   }
-  // }
-  //---------------------------------------
+  if (ProcRank == 0) {
+    // отправляем всем процессам корректный результат
+    for (int i = 1; i < ProcessN; i++) {
+      MPI_Send(&allSwaps, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+    }
+    // сами устанавливаем значение
+    GetOutput() = allSwaps;
+  }
+  for (int i = 1; i < ProcessN; i++) {
+    if (ProcRank == i) {
+      int allSw;
+      MPI_Recv(&allSw, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      GetOutput() = allSw;
+    }
+  }
 
   return true;
 }
