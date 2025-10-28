@@ -27,34 +27,52 @@ bool LukinIElemVecSumMPI::PreProcessingImpl() {
 
 bool LukinIElemVecSumMPI::RunImpl() {
   auto &input = GetInput();
-  const int vec_size = input.size();
+  int vec_size = static_cast<int>(input.size());
 
   int proc_count, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::vector<int> sendcounts(proc_count, 0);
-  std::vector<int> offsets(proc_count, 0);
+  MPI_Bcast(&vec_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   const int part = vec_size / proc_count;
   const int reminder = vec_size % proc_count;
 
-  for (int i = 0; i < proc_count; i++) {
-    sendcounts[i] = part + (i < reminder ? 1 : 0);
-    offsets[i] = (i == 0) ? 0 : sendcounts[i - 1] + offsets[i - 1];
+  if (proc_count > vec_size) {
+    int global_sum = 0;
+    if (rank == 0) {
+      global_sum = std::accumulate(input.begin(), input.end(), 0);
+    }
+    MPI_Bcast(&global_sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    GetOutput() = global_sum;
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
   }
 
-  std::vector<int> local_vec(sendcounts[rank]);
+  int local_size = (rank != proc_count - 1) ? part : part + reminder;
+  std::vector<int> local_vector(local_size);
 
-  MPI_Scatterv(input.data(), sendcounts.data(), offsets.data(), MPI_INT, local_vec.data(), sendcounts[rank], MPI_INT, 0,
-               MPI_COMM_WORLD);
+  if (rank == 0) {
+    for (int i = 0; i < local_size; i++) {
+      local_vector[i] = input[i];
+    }
+    for (int i = 1; i < proc_count; i++) {
+      int send_size = (i != proc_count - 1) ? part : part + reminder;
+      MPI_Send(input.data() + i * part, send_size, MPI_INT, i, 0, MPI_COMM_WORLD);
+    }
+  } else {
+    MPI_Recv(local_vector.data(), local_size, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
 
-  int local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
+  int local_sum = 0;
+  if (local_size != 0) {
+    local_sum = std::accumulate(local_vector.begin(), local_vector.end(), 0);
+  }
+
   int global_sum = 0;
-  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = global_sum;
-
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
