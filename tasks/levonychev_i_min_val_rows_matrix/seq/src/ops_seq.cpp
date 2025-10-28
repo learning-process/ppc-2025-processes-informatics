@@ -11,7 +11,6 @@ namespace levonychev_i_min_val_rows_matrix {
 LevonychevIMinValRowsMatrixSEQ::LevonychevIMinValRowsMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  // GetOutput() = 0;
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
@@ -36,34 +35,24 @@ bool LevonychevIMinValRowsMatrixSEQ::RunImpl() {
   if (GetInput().empty()) {
     return false;
   }
+  const InType &matrix = GetInput();
+  OutType &min_values = GetOutput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  for (size_t i = 0; i < matrix.size(); ++i) {
+    double min_val = matrix[i][0];
+    for (size_t j = 1; j < matrix[i].size(); ++j) {
+      if (matrix[i][j] < min_val) {
+        min_val = matrix[i][j];
       }
     }
+    min_values[i] = min_val;
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return GetInput().size() == GetOutput().size();
 }
 
 }  // namespace levonychev_i_min_val_rows_matrix
