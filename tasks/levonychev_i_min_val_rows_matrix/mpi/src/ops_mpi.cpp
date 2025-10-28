@@ -19,12 +19,12 @@ bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
   if (GetInput().empty()) {
     return false;
   }
-  size_t row_length = GetInput()[0].size();
-  for (size_t i = 1; i < GetInput().size(); ++i) {
-    if (GetInput()[i].size() != row_length) {
-      return false;
-    }
-  }
+  // size_t row_length = GetInput()[0].size();
+  // for (size_t i = 1; i < GetInput().size(); ++i) {
+  //   if (GetInput()[i].size() != row_length) {
+  //     return false;
+  //   }
+  // }
   return true;
 }
 
@@ -37,12 +37,15 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   if (GetInput().empty()) {
     return false;
   }
+  const InType &matrix = GetInput();
+  OutType &min_values = GetOutput();
+
   int ProcNum, ProcRank;
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
-  const int ROWS = GetInput().size();
-  const int COLS = GetInput()[0].size();
+  const int ROWS = matrix.size();
+  const int COLS = matrix[0].size();
 
   if (ProcRank == 0) {
     int target_proc = 1;
@@ -50,7 +53,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
       if (target_proc == ProcNum) {
         target_proc = 1;
       }
-      MPI_Send(GetInput()[i].data(), COLS, MPI_DOUBLE, target_proc, i, MPI_COMM_WORLD);
+      MPI_Send(matrix[i].data(), COLS, MPI_DOUBLE, target_proc, i, MPI_COMM_WORLD);
       target_proc++;
     }
 
@@ -88,16 +91,16 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
     for (int i = 0; i < ROWS; ++i) {
       MPI_Recv(&rec_min_val, 1, MPI_DOUBLE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
       int row_index = status.MPI_TAG;
-      GetOutput()[row_index] = rec_min_val;
+      min_values[row_index] = rec_min_val;
     }
     // Возможно так нельзя, но не проходят тесты для процессов 1 - 3
     for (int i = 1; i < ProcNum; ++i) {
-      MPI_Send(GetOutput().data(), ROWS, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
+      MPI_Send(min_values.data(), ROWS, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
     }
   }
   if (ProcRank > 0) {
     MPI_Status status;
-    MPI_Recv(GetOutput().data(), ROWS, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    MPI_Recv(min_values.data(), ROWS, MPI_DOUBLE, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
   }
   // GetOutput() = {1, 4, 7};
   return true;
