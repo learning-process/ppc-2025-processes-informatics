@@ -24,7 +24,7 @@ bool LukinIElemVecSumSEQ::PreProcessingImpl() {
 }
 
 bool LukinIElemVecSumSEQ::RunImpl() {
-  const auto& vec = GetInput();
+  const auto &vec = GetInput();
   int sum = 0;
   for (const auto &elem : vec) {
     sum += elem;
