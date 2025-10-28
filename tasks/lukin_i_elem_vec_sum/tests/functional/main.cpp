@@ -23,16 +23,12 @@ namespace lukin_i_elem_vec_sum {
 class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    input_data_ = std::vector<int>(10);
-    for (size_t i = 0; i < input_data_.size(); i++) {
-      input_data_[i] = i;
-    }  //{0,1,2,3,4,5,6,7,8,9}
-
+    input_data_ = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     expected_result = std::accumulate(input_data_.begin(), input_data_.end(), 0);
   }
 
@@ -46,7 +42,7 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
  private:
   InType input_data_;
-  OutType expected_result = 0;
+  OutType expected_result;
 };
 
 namespace {
@@ -55,8 +51,7 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"),
-                                            std::make_tuple(7, "7")};  // idk
+const std::array<TestType, 1> kTestParam = {"FixVector"};  // idk
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LukinIElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_lukin_i_elem_vec_sum),

@@ -35,6 +35,7 @@ bool LukinIElemVecSumMPI::RunImpl() {
   int proc_count, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
   if (proc_count == 1) {
     GetOutput() = std::accumulate(GetInput().begin(), GetInput().end(), 0);
     return true;
