@@ -8,7 +8,7 @@
 namespace levonychev_i_min_val_rows_matrix {
 
 class LevonychevIMinValRowsMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  // const int kCount_ = 100;
   InType input_data_{};
 
   void SetUp() override {
