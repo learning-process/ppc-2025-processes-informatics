@@ -1,8 +1,8 @@
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 
-#include <algorithm>
 #include <mpi.h>
 
+#include <algorithm>
 #include <string>
 #include <string_view>
 

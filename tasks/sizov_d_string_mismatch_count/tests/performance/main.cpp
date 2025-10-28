@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
