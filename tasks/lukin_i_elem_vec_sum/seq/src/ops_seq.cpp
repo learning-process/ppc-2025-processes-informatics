@@ -20,22 +20,20 @@ bool LukinIElemVecSumSEQ::ValidationImpl() {
 }
 
 bool LukinIElemVecSumSEQ::PreProcessingImpl() {
-  vector_to_count = GetInput();
-
-  elem_vec_sum = 0;
-
   return true;
 }
 
 bool LukinIElemVecSumSEQ::RunImpl() {
-  for (const auto &elem : vector_to_count) {
-    elem_vec_sum += elem;
+  const auto& vec = GetInput();
+  int sum = 0;
+  for (const auto &elem : vec) {
+    sum += elem;
   }
+  GetOutput() = sum;
   return true;
 }
 
 bool LukinIElemVecSumSEQ::PostProcessingImpl() {
-  GetOutput() = elem_vec_sum;
   return true;
 }
 
