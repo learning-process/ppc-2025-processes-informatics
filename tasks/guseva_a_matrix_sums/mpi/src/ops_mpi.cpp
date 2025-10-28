@@ -42,6 +42,8 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  std::print(std::cout, "\nOPS_MPI INFO\n Input size: {}x{}", rows, columns);
+
   uint32_t rows_per_proc = rows / wsize;
   uint32_t remainder = rows % wsize;
 
