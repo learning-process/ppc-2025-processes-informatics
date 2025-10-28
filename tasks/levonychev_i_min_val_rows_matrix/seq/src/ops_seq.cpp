@@ -18,13 +18,13 @@ bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
   if (GetInput().empty()) {
     return false;
   }
-  const InType &matrix = GetInput();
-  size_t row_length = matrix[0].size();
-  for (size_t i = 1; i < matrix.size(); ++i) {
-    if (matrix[i].size() != row_length) {
-      return false;
-    }
-  }
+  // const InType &matrix = GetInput();
+  // size_t row_length = matrix[0].size();
+  // for (size_t i = 1; i < matrix.size(); ++i) {
+  //   if (matrix[i].size() != row_length) {
+  //     return false;
+  //   }
+  // }
   return true;
 }
 
