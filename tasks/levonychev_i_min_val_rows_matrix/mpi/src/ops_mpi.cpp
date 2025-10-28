@@ -12,7 +12,10 @@ namespace levonychev_i_min_val_rows_matrix {
 
 LevonychevIMinValRowsMatrixMPI::LevonychevIMinValRowsMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  for (size_t i = 0; i < in.size(); ++i) {
+    GetInput().push_back(in[i]);
+  }
+  // GetInput() = in;
   GetOutput().resize(in.size());
 }
 bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
