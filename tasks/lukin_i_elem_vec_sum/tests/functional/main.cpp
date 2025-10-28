@@ -28,8 +28,8 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    input_data_ = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    expected_result = std::accumulate(input_data_.begin(), input_data_.end(), 0);
+    input_data_ = std::vector<int>(vec_size, vec_value);
+    expected_result = vec_size * vec_value;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -42,6 +42,10 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
  private:
   InType input_data_;
+
+  const int vec_size = 100;
+  const int vec_value = 1;
+
   OutType expected_result;
 };
 
