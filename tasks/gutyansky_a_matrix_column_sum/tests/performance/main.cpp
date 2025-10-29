@@ -29,7 +29,8 @@ TEST_P(GutyanskyAMatrixColumnSumPerfTest, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GutyanskyAMatrixColumnSumMPI, GutyanskyAMatrixColumnSumSEQ>(PPC_SETTINGS_gutyansky_a_matrix_column_sum);
+    ppc::util::MakeAllPerfTasks<InType, GutyanskyAMatrixColumnSumMPI, GutyanskyAMatrixColumnSumSEQ>(
+        PPC_SETTINGS_gutyansky_a_matrix_column_sum);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
