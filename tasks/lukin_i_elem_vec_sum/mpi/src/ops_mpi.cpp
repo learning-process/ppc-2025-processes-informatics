@@ -31,7 +31,7 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   MPI_Bcast(&vec_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int proc_count, rank;
+  int proc_count = -1, rank = -1;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 

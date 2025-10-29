@@ -32,13 +32,13 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     int vec_size = static_cast<int>(std::get<0>(params));
-    input_data_ = std::vector<int>(vec_size, vec_value);
+    input_data_ = std::vector<int>(vec_size, 1);
 
-    expected_result = vec_size * vec_value;
+    expected = vec_size;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (output_data == expected_result);
+    return expected == output_data;
   }
 
   InType GetTestInputData() final {
@@ -46,11 +46,8 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_;
-
-  const int vec_value = 1;
-
-  OutType expected_result;
+  InType input_data_{};
+  OutType expected = 0;
 };
 
 namespace {

@@ -11,8 +11,8 @@ class LukinIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, Ou
   const int vec_size = 1000000;
   const int vec_value = 1;
 
-  InType input_data_;
-  OutType expected_result;
+  InType input_data_{};
+  OutType expected_result = 0;
 
   void SetUp() override {
     input_data_ = std::vector<int>(vec_size, vec_value);
