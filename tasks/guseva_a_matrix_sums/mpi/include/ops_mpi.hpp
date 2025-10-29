@@ -1,24 +1,24 @@
-// #pragma once
+#pragma once
 
-// #include "guseva_a_matrix_sums/common/include/common.hpp"
-// #include "task/include/task.hpp"
+#include "guseva_a_matrix_sums/common/include/common.hpp"
+#include "task/include/task.hpp"
 
-// namespace guseva_a_matrix_sums {
+namespace guseva_a_matrix_sums {
 
-// class GusevaAMatrixSumsMPI : public BaseTask {
-//  public:
-//   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-//     return ppc::task::TypeOfTask::kMPI;
-//   }
-//   explicit GusevaAMatrixSumsMPI(const InType &in);
+class GusevaAMatrixSumsMPI : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+  explicit GusevaAMatrixSumsMPI(const InType &in);
 
-//  private:
-//   bool ValidationImpl() override;
-//   bool PreProcessingImpl() override;
-//   bool RunImpl() override;
-//   bool PostProcessingImpl() override;
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
 
-//   int rank_;
-// };
+  int rank_;
+};
 
-// }  // namespace guseva_a_matrix_sums
+}  // namespace guseva_a_matrix_sums

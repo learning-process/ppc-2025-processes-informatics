@@ -14,6 +14,7 @@ bool GusevaAMatrixSumsSEQ::ValidationImpl() {
 }
 
 bool GusevaAMatrixSumsSEQ::PreProcessingImpl() {
+  GetOutput().clear();
   GetOutput().resize(std::get<1>(GetInput()), 0.0);
   return true;
 }

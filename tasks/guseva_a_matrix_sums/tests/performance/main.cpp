@@ -1,40 +1,81 @@
-// #include <gtest/gtest.h>
+#include <gtest/gtest.h>
 
-// #include "example_processes/common/include/common.hpp"
-// #include "example_processes/mpi/include/ops_mpi.hpp"
-// #include "example_processes/seq/include/ops_seq.hpp"
-// #include "util/include/perf_test_util.hpp"
+#include "guseva_a_matrix_sums/common/include/common.hpp"
+#include "guseva_a_matrix_sums/mpi/include/ops_mpi.hpp"
+#include "guseva_a_matrix_sums/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
-// namespace nesterov_a_test_task_processes {
+#define EPSILON 10e-12
 
-// class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-//   const int kCount_ = 100;
-//   InType input_data_{};
+namespace guseva_a_matrix_sums {
 
-//   void SetUp() override {
-//     input_data_ = kCount_;
-//   }
+class GusevaAMatrixSumsRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  InType input_data_{0, 0, {}};
+  OutType expected_data_;
 
-//   bool CheckTestOutputData(OutType &output_data) const final {
-//     return input_data_ == output_data;
-//   }
+  void SetUp() override {
+    std::string input_data_source = ppc::util::GetAbsoluteTaskPath(PPC_ID_guseva_a_matrix_sums, "perf/input.txt");
+    std::string expected_data_source = ppc::util::GetAbsoluteTaskPath(PPC_ID_guseva_a_matrix_sums, "perf/expected.txt");
 
-//   [[nodiscard]] InType GetTestInputData() const final {
-//     return input_data_;
-//   }
-// };
+    std::ifstream file(input_data_source);
+    uint32_t rows = 0;
+    uint32_t columns = 0;
+    std::vector<double> inp;
+    std::vector<double> exp;
+    file >> rows;
+    file >> columns;
+    int num = 0;
+    while (file >> num) {
+      inp.push_back(num);
+    }
+    file.close();
+    file = std::ifstream(expected_data_source);
+    file >> columns;
+    while (file >> num) {
+      exp.push_back(num);
+    }
+    file.close();
 
-// TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
-//   ExecuteTest(GetParam());
-// }
+    input_data_ = InType(rows, columns, inp);
+    expected_data_ = OutType(exp);
+  }
 
-// const auto kAllPerfTasks =
-//     ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskMPI, NesterovATestTaskSEQ>(PPC_SETTINGS_example_processes);
+  bool CheckTestOutputData(OutType &output_data) final {
+    // std::print(std::cout, "\n\n\n {} {} \n\n", expected_data_.size(), output_data.size());
+    // for (const auto &it : expected_data_) {
+    //   std::cout << it << " ";
+    // }
+    // std::cout << '\n';
+    // for (const auto &it : output_data) {
+    //   std::cout << it << " ";
+    // }
+    if (output_data.size() != expected_data_.size()) {
+      return false;
+    }
+    for (uint32_t i = 0; i < expected_data_.size(); i++) {
+      if (std::abs(output_data[i] - expected_data_[i]) > EPSILON) {
+        return false;
+      }
+    }
+    return true;
+  }
 
-// const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+  [[nodiscard]] InType GetTestInputData() final {
+    return input_data_;
+  }
+};
 
-// const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+TEST_P(GusevaAMatrixSumsRunPerfTestProcesses, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
-// INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GusevaAMatrixSumsMPI, GusevaAMatrixSumsSEQ>(PPC_SETTINGS_guseva_a_matrix_sums);
 
-// }  // namespace nesterov_a_test_task_processes
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = GusevaAMatrixSumsRunPerfTestProcesses::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(GusevaPerf, GusevaAMatrixSumsRunPerfTestProcesses, kGtestValues, kPerfTestName);
+
+}  // namespace guseva_a_matrix_sums
