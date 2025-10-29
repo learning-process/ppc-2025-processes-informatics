@@ -23,12 +23,17 @@ namespace lukin_i_elem_vec_sum {
 class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return test_param;
+    std::string test_name = std::get<1>(test_param);
+    return test_name;
   }
 
  protected:
   void SetUp() override {
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    int vec_size = static_cast<int>(std::get<0>(params));
     input_data_ = std::vector<int>(vec_size, vec_value);
+
     expected_result = vec_size * vec_value;
   }
 
@@ -43,7 +48,6 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
  private:
   InType input_data_;
 
-  const int vec_size = 100;
   const int vec_value = 1;
 
   OutType expected_result;
@@ -55,7 +59,9 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {"FixVector"};  // idk
+const std::array<TestType, 4> kTestParam = {
+    std::make_tuple(2, "vec_size_less_than_proc_count"), std::make_tuple(4, "vec_size_equal_to_proc_count"),
+    std::make_tuple(15, "vec_size_greater_than_proc_count"), std::make_tuple(10000, "big_vector")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LukinIElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_lukin_i_elem_vec_sum),

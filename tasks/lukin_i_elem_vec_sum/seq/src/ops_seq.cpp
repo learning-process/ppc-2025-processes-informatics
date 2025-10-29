@@ -29,6 +29,7 @@ bool LukinIElemVecSumSEQ::RunImpl() {
   for (const auto &elem : vec) {
     sum += elem;
   }
+
   GetOutput() = sum;
   return true;
 }
