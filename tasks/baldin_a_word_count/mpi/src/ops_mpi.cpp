@@ -28,10 +28,12 @@ bool BaldinAWordCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  //написать auto input = GetInput();
+  // написать auto input = GetInput();
 
   if (GetInput().size() == 0) {
-    if (rank == 0) GetOutput() = 0;
+    if (rank == 0) {
+      GetOutput() = 0;
+    }
     return true;
   }
 
@@ -41,21 +43,21 @@ bool BaldinAWordCountMPI::RunImpl() {
       bool in_word = false;
       for (char c : GetInput()) {
         if (std::isalnum(c) || c == '-' || c == '_') {
-            if (!in_word) {
-                in_word = true;
-                count++;
-            }
+          if (!in_word) {
+            in_word = true;
+            count++;
+          }
         } else {
-            in_word = false;
+          in_word = false;
         }
       }
       GetOutput() = count;
     }
-    MPI_Bcast(static_cast<void*>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
-  
+
   std::vector<int> send_counts(world_size), displs(world_size);
   int part = (GetInput().size() + world_size - 1) / world_size;
 
@@ -67,22 +69,24 @@ bool BaldinAWordCountMPI::RunImpl() {
   }
 
   std::vector<char> local_buf(part + 1);
-  MPI_Scatterv(GetInput().data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(GetInput().data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   int local_cnt = 0;
   bool in_word = false;
   for (int i = 0; i < part; i++) {
-      if (isalnum(local_buf[i]) || local_buf[i] == '-' || local_buf[i] == '_') {
-          if (!in_word) {
-              in_word = true;
-              local_cnt++;
-          }
-      } else {
-          in_word = false;
+    if (isalnum(local_buf[i]) || local_buf[i] == '-' || local_buf[i] == '_') {
+      if (!in_word) {
+        in_word = true;
+        local_cnt++;
       }
+    } else {
+      in_word = false;
+    }
   }
-  if ((isalnum(local_buf[part - 1]) || local_buf[part - 1] == '-' || local_buf[part - 1] == '_') && (isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
-      local_cnt--;
+  if ((isalnum(local_buf[part - 1]) || local_buf[part - 1] == '-' || local_buf[part - 1] == '_') &&
+      (isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
+    local_cnt--;
   }
 
   int global_cnt = 0;
@@ -92,10 +96,9 @@ bool BaldinAWordCountMPI::RunImpl() {
     GetOutput() = global_cnt;
   }
 
-  MPI_Bcast(static_cast<void*>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
-  
 }
 
 bool BaldinAWordCountMPI::PostProcessingImpl() {

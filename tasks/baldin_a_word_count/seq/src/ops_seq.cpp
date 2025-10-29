@@ -23,14 +23,14 @@ bool BaldinAWordCountSEQ::RunImpl() {
   int count = 0;
   bool in_word = false;
   for (char c : GetInput()) {
-      if (std::isalnum(c) || c == '-' || c == '_') {
-          if (!in_word) {
-              in_word = true;
-              count++;
-          }
-      } else {
-          in_word = false;
+    if (std::isalnum(c) || c == '-' || c == '_') {
+      if (!in_word) {
+        in_word = true;
+        count++;
       }
+    } else {
+      in_word = false;
+    }
   }
 
   GetOutput() = count;

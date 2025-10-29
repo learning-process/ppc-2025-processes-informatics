@@ -1,5 +1,5 @@
-
 #include <gtest/gtest.h>
+
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -12,13 +12,13 @@
 namespace baldin_a_word_count {
 
 class BaldinAWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-private:
+ private:
   InType input_data;
   OutType expected_output{};
 
   void SetUp() override {
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_baldin_a_word_count, "book-war-and-peace.txt");
-    
+
     std::ifstream file(abs_path);
     if (!file.is_open()) {
       throw std::runtime_error("File reading error");
@@ -32,14 +32,14 @@ private:
     int count = 0;
     bool in_word = false;
     for (char c : input_data) {
-        if (std::isalnum(c) || c == '-' || c == '_') {
-            if (!in_word) {
-                in_word = true;
-                count++;
-            }
-        } else {
-            in_word = false;
+      if (std::isalnum(c) || c == '-' || c == '_') {
+        if (!in_word) {
+          in_word = true;
+          count++;
         }
+      } else {
+        in_word = false;
+      }
     }
     expected_output = count;
   }
