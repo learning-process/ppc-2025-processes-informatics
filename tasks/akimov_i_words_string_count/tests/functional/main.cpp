@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
+#include <mpi.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -20,7 +18,7 @@
 
 namespace akimov_i_words_string_count {
 
-class AkimovIWordsStringCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class AkimovIWordsStringCountFromFileFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -28,47 +26,73 @@ class AkimovIWordsStringCountFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_akimov_i_words_string_count, "words.txt");
+
+    std::ifstream file(abs_path, std::ios::in | std::ios::binary);
+    if (!file.is_open()) {
+      throw std::runtime_error("Cannot open words.txt at path: " + abs_path);
+    }
+
+    std::string content;
     {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_akimov_i_words_string_count, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
+      std::ostringstream ss;
+      ss << file.rdbuf();
+      content = ss.str();
+    }
+    file.close();
+
+    for (char &c : content) {
+      if (c == '\n' || c == '\r' || c == '\t') {
+        c = ' ';
       }
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
-  }
+    input_data_ = InType(content.begin(), content.end());
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    is_valid_ = !content.empty();
+
+    expected_result_ = 0;
+    if (is_valid_) {
+      bool in_word = false;
+      for (char c : content) {
+        if (c != ' ' && !in_word) {
+          in_word = true;
+          ++expected_result_;
+        } else if (c == ' ' && in_word) {
+          in_word = false;
+        }
+      }
+    }
+
+    (void)std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
 
+  bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (!is_valid_ || rank != 0) {
+      return true;
+    }
+    return output_data == expected_result_;
+  }
+
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_result_ = 0;
+  bool is_valid_ = true;
 };
 
 namespace {
 
-TEST_P(AkimovIWordsStringCountFuncTests, MatmulFromPic) {
+TEST_P(AkimovIWordsStringCountFromFileFuncTests, CountWordsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 1> kTestParam = {std::make_tuple(0, std::string("default"))};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<AkimovIWordsStringCountMPI, InType>(kTestParam, PPC_SETTINGS_akimov_i_words_string_count),
@@ -76,9 +100,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = AkimovIWordsStringCountFuncTests::PrintFuncTestName<AkimovIWordsStringCountFuncTests>;
+const auto kFuncTestName = AkimovIWordsStringCountFromFileFuncTests::PrintTestParam;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, AkimovIWordsStringCountFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CountFromFile, AkimovIWordsStringCountFromFileFuncTests, kGtestValues);
 
 }  // namespace
 

@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "akimov_i_words_string_count/common/include/common.hpp"
 #include "akimov_i_words_string_count/mpi/include/ops_mpi.hpp"
 #include "akimov_i_words_string_count/seq/include/ops_seq.hpp"
@@ -8,20 +12,30 @@
 namespace akimov_i_words_string_count {
 
 class AkimovIWordsStringCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
-
+ protected:
   void SetUp() override {
-    input_data_ = kCount_;
-  }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    const std::size_t words = 1'000'000;
+    std::string s;
+    s.reserve(words * 5);
+    for (std::size_t i = 0; i < words; ++i) {
+      s += "word";
+      if (i + 1 != words) s += ' ';
+    }
+    input_data_ = InType(s.begin(), s.end());
+    expected_result_ = static_cast<int>(words);
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return output_data == expected_result_;
+  }
+
+ private:
+  InType input_data_;
+  OutType expected_result_ = 0;
 };
 
 TEST_P(AkimovIWordsStringCountPerfTests, RunPerfModes) {
@@ -29,7 +43,8 @@ TEST_P(AkimovIWordsStringCountPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AkimovIWordsStringCountMPI, AkimovIWordsStringCountSEQ>(PPC_SETTINGS_akimov_i_words_string_count);
+    ppc::util::MakeAllPerfTasks<InType, AkimovIWordsStringCountMPI, AkimovIWordsStringCountSEQ>(
+        PPC_SETTINGS_akimov_i_words_string_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

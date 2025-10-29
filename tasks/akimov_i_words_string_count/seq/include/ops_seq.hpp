@@ -17,6 +17,10 @@ class AkimovIWordsStringCountSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  InType input_buffer_;
+  int word_count_ = 0;
+  int space_count_ = 0;
 };
 
 }  // namespace akimov_i_words_string_count

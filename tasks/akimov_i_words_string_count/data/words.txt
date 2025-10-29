@@ -1,0 +1,11 @@
+  This is a sample line with leading and trailing spaces.  
+Multiple   spaces    here
+	Tabs	and	spaces	mixed
+Newlines
+are
+also
+handled
+Punctuation! Isn't it counted? Yes.
+Русские слова тоже считаются
+
+End.

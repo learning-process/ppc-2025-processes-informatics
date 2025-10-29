@@ -1,7 +1,7 @@
 #include "akimov_i_words_string_count/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <numeric>
-#include <vector>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -15,46 +15,44 @@ AkimovIWordsStringCountSEQ::AkimovIWordsStringCountSEQ(const InType &in) {
 }
 
 bool AkimovIWordsStringCountSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return (!GetInput().empty()) && (GetOutput() == 0);
 }
 
 bool AkimovIWordsStringCountSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  input_buffer_ = GetInput();
+  word_count_ = 0;
+  space_count_ = 0;
+  return true;
 }
 
 bool AkimovIWordsStringCountSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  if (input_buffer_.empty()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (char c : input_buffer_) {
+    if (c == ' ') {
+      ++space_count_;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  bool in_word = false;
+  word_count_ = 0;
+  for (char c : input_buffer_) {
+    if (c != ' ' && !in_word) {
+      in_word = true;
+      ++word_count_;
+    } else if (c == ' ' && in_word) {
+      in_word = false;
+    }
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool AkimovIWordsStringCountSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = word_count_;
+  return true;
 }
 
 }  // namespace akimov_i_words_string_count
