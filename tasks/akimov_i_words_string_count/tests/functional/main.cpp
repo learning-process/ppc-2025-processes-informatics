@@ -94,9 +94,9 @@ TEST_P(AkimovIWordsStringCountFromFileFuncTests, CountWordsFromFile) {
 
 const std::array<TestType, 1> kTestParam = {std::make_tuple(0, std::string("default"))};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<AkimovIWordsStringCountMPI, InType>(kTestParam, PPC_SETTINGS_akimov_i_words_string_count),
-                   ppc::util::AddFuncTask<AkimovIWordsStringCountSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_words_string_count));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<AkimovIWordsStringCountMPI, InType>(kTestParam, PPC_SETTINGS_akimov_i_words_string_count),
+    ppc::util::AddFuncTask<AkimovIWordsStringCountSEQ, InType>(kTestParam, PPC_SETTINGS_akimov_i_words_string_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

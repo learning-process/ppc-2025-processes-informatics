@@ -19,7 +19,9 @@ class AkimovIWordsStringCountPerfTests : public ppc::util::BaseRunPerfTests<InTy
     s.reserve(words * 5);
     for (std::size_t i = 0; i < words; ++i) {
       s += "word";
-      if (i + 1 != words) s += ' ';
+      if (i + 1 != words) {
+        s += ' ';
+      }
     }
     input_data_ = InType(s.begin(), s.end());
     expected_result_ = static_cast<int>(words);
@@ -42,9 +44,8 @@ TEST_P(AkimovIWordsStringCountPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, AkimovIWordsStringCountMPI, AkimovIWordsStringCountSEQ>(
-        PPC_SETTINGS_akimov_i_words_string_count);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, AkimovIWordsStringCountMPI, AkimovIWordsStringCountSEQ>(
+    PPC_SETTINGS_akimov_i_words_string_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

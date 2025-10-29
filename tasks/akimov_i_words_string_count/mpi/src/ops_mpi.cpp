@@ -3,9 +3,9 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstring>
 #include <numeric>
 #include <vector>
-#include <cstring>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -62,7 +62,6 @@ bool AkimovIWordsStringCountMPI::PreProcessingImpl() {
     for (int proc = 0; proc < size; ++proc) {
       int count = base + ((proc < remainder) ? 1 : 0);
       if (count == 0) {
-
       } else if (proc == 0) {
         std::memcpy(local_buffer_.data(), input_buffer_.data() + offset, static_cast<std::size_t>(count));
       } else {
@@ -74,7 +73,6 @@ bool AkimovIWordsStringCountMPI::PreProcessingImpl() {
     if (my_count > 0) {
       MPI_Recv(local_buffer_.data(), my_count, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     } else {
-
     }
   }
 
