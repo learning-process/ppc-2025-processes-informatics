@@ -58,8 +58,8 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   std::vector<int> local_vec(sendcounts[rank]);
 
-  MPI_Scatterv(input.data(), sendcounts.data(), offsets.data(), MPI_INT, local_vec.data(),
-               sendcounts[rank], MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(input.data(), sendcounts.data(), offsets.data(), MPI_INT, local_vec.data(), sendcounts[rank], MPI_INT, 0,
+               MPI_COMM_WORLD);
 
   int local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
   int global_sum = 0;
