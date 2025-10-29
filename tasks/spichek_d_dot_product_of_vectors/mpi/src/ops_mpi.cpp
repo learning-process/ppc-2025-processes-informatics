@@ -18,7 +18,8 @@ SpichekDDotProductOfVectorsMPI::SpichekDDotProductOfVectorsMPI(const InType &in)
 
 bool SpichekDDotProductOfVectorsMPI::ValidationImpl() {
   const auto &[vector1, vector2] = GetInput();
-  return (!vector1.empty()) && (vector1.size() == vector2.size()) && (GetOutput() == 0);
+  // Важно: разрешаем пустые векторы, чтобы все процессы участвовали в MPI-вызовах.
+  return (vector1.size() == vector2.size());
 }
 
 bool SpichekDDotProductOfVectorsMPI::PreProcessingImpl() {
@@ -33,35 +34,42 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
 
   const auto &[vector1, vector2] = GetInput();
 
+  // Локальный размер (0 если данных нет или размеры не совпадают)
   int local_size =
       (!vector1.empty() && !vector2.empty() && vector1.size() == vector2.size()) ? static_cast<int>(vector1.size()) : 0;
 
+  // Узнаём максимальный размер у всех процессов
   int max_size = 0;
   MPI_Allreduce(&local_size, &max_size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
-  long long local_dot = 0;
-  if (max_size > 0 && local_size > 0) {
-    size_t n = vector1.size();
-    size_t chunk_size = n / size;
-    size_t start = rank * chunk_size;
-    size_t end = (rank == size - 1) ? n : start + chunk_size;
+  // Если у всех нет данных — результат 0
+  if (max_size == 0) {
+    GetOutput() = 0;
+    return true;
+  }
 
-    for (size_t i = start; i < end; ++i) {
+  // Корректное разделение с учётом остатка
+  const size_t n = static_cast<size_t>(max_size);
+  const size_t base_chunk = n / static_cast<size_t>(size);
+  const size_t remainder = n % static_cast<size_t>(size);
+  const size_t start = static_cast<size_t>(rank) * base_chunk + std::min(static_cast<size_t>(rank), remainder);
+  const size_t end = start + base_chunk + (static_cast<size_t>(rank) < remainder ? 1 : 0);
+
+  long long local_dot = 0;
+  if (local_size > 0) {
+    const size_t local_n = vector1.size();
+    const size_t real_start = std::min(start, local_n);
+    const size_t real_end = std::min(end, local_n);
+    for (size_t i = real_start; i < real_end; ++i) {
       local_dot += static_cast<long long>(vector1[i]) * static_cast<long long>(vector2[i]);
     }
   }
 
   long long global_dot = 0;
-
   MPI_Allreduce(&local_dot, &global_dot, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-  if (max_size == 0) {
-    GetOutput() = 0;
-  } else {
-    GetOutput() = static_cast<OutType>(global_dot);
-  }
+  GetOutput() = static_cast<OutType>(global_dot);
 
-  MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
