@@ -10,54 +10,45 @@ namespace levonychev_i_min_val_rows_matrix {
 
 LevonychevIMinValRowsMatrixSEQ::LevonychevIMinValRowsMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  for (size_t i = 0; i < in.size(); ++i) {
-    GetInput().push_back(in[i]);
-  }
-  // GetInput() = in;
-  GetOutput().resize(in.size());
+  GetInput() = in;
+  GetOutput().resize(std::get<1>(in));
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
-  if (GetInput().empty()) {
+  if (std::get<0>(GetInput()).size() == 0 || std::get<1>(GetInput()) == 0 || std::get<2>(GetInput()) == 0) {
     return false;
   }
-  // const InType &matrix = GetInput();
-  // size_t row_length = matrix[0].size();
-  // for (size_t i = 1; i < matrix.size(); ++i) {
-  //   if (matrix[i].size() != row_length) {
-  //     return false;
-  //   }
-  // }
+  if (std::get<0>(GetInput()).size() != std::get<1>(GetInput()) * std::get<2>(GetInput())) {
+    return false;
+  }
   return true;
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::PreProcessingImpl() {
-  GetOutput().resize(GetInput().size());
+  GetOutput().resize(std::get<1>(GetInput()));
   return true;
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::RunImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
-  const InType &matrix = GetInput();
-  OutType &min_values = GetOutput();
+  const std::vector<double> &matrix = std::get<0>(GetInput());
+  const int ROWS = std::get<1>(GetInput());
+  const int COLS = std::get<2>(GetInput());
 
-  for (size_t i = 0; i < matrix.size(); ++i) {
-    double min_val = matrix[i][0];
-    for (size_t j = 1; j < matrix[i].size(); ++j) {
-      if (matrix[i][j] < min_val) {
-        min_val = matrix[i][j];
+  for (int i = 0; i < ROWS; ++i) {
+    double min_val = matrix[COLS * i];
+    for (int j = 1; j < COLS; ++j) {
+      if (matrix[COLS * i + j] < min_val) {
+        min_val = matrix[COLS * i + j];
       }
     }
-    min_values[i] = min_val;
+    GetOutput()[i] = min_val;
   }
 
   return true;
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::PostProcessingImpl() {
-  return GetInput().size() == GetOutput().size();
+  return GetOutput().size() == std::get<1>(GetInput());
 }
 
 }  // namespace levonychev_i_min_val_rows_matrix

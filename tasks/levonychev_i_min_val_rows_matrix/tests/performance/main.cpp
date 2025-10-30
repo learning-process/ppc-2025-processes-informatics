@@ -16,7 +16,7 @@ class LevonychevIMinValRowsMatrixPerfTests : public ppc::util::BaseRunPerfTests<
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.size() == input_data_.size();
+    return output_data.size() == std::get<0>(input_data_).size();
   }
 
   InType GetTestInputData() final {
