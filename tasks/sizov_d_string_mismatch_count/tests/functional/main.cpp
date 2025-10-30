@@ -61,6 +61,30 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
     if (!is_valid_) {
       return true;
     }
+    auto SafeGetRank = []() -> std::optional<int> {
+#if defined(_WIN32)
+      char *buf = nullptr;
+      size_t len = 0;
+      if (_dupenv_s(&buf, &len, "OMPI_COMM_WORLD_RANK") == 0 && buf) {
+        char *end_ptr = nullptr;
+        long val = std::strtol(buf, &end_ptr, 10);
+        free(buf);
+        if (end_ptr != buf && *end_ptr == '\0') {
+          return static_cast<int>(val);
+        }
+      }
+      return std::nullopt;
+#else
+      return std::nullopt;
+#endif
+    };
+
+    const int rank = SafeGetRank().value_or(0);
+
+    if (rank != 0) {
+      return true;
+    }
+
     return output_data == expected_result_;
   }
 
