@@ -2,12 +2,7 @@
 
 #include <mpi.h>
 
-#include <cstddef>
-#include <string>
-#include <string_view>
-
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
 SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(const InType &input) {
@@ -31,6 +26,15 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
+  int initialized = 0;
+  int finalized = 0;
+  MPI_Initialized(&initialized);
+  MPI_Finalized(&finalized);
+
+  if (initialized == 0 || finalized != 0) {
+    return false;
+  }
+
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -38,20 +42,14 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
 
   const int total_size = static_cast<int>(str_a_.size());
   if (total_size == 0) {
+    global_result_ = 0;
+    GetOutput() = 0;
     return true;
   }
 
-  const int base = total_size / size;
-  const int remainder = total_size % size;
-  const int start = (rank * base) + std::min(rank, remainder);
-  const int local_size = base + (rank < remainder ? 1 : 0);
-
-  std::string_view local_a(str_a_.data() + start, local_size);
-  std::string_view local_b(str_b_.data() + start, local_size);
-
   int local_result = 0;
-  for (int i = 0; i < local_size; ++i) {
-    if (local_a[i] != local_b[i]) {
+  for (int i = rank; i < total_size; i += size) {
+    if (str_a_[i] != str_b_[i]) {
       ++local_result;
     }
   }
@@ -60,6 +58,7 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   MPI_Bcast(&global_result_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   GetOutput() = global_result_;
+
   return true;
 }
 

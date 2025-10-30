@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -24,7 +26,8 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 
  protected:
   void SetUp() override {
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
+    std::string abs_path;
+    abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {
@@ -42,7 +45,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 
     expected_result_ = 0;
     if (is_valid_) {
-      for (size_t i = 0; i < a.size(); ++i) {
+      for (std::size_t i = 0; i < a.size(); ++i) {
         if (a[i] != b[i]) {
           ++expected_result_;
         }
@@ -55,11 +58,23 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (!is_valid_ || rank != 0) {
+    // Если входные данные некорректны — просто возвращаем true,
+    // чтобы тест считался успешно пройденным.
+    if (!is_valid_) {
       return true;
     }
+
+    // В функциональных тестах rank не влияет на результат:
+    // проверка корректности выполняется только для одного "главного" процесса.
+    // Поэтому просто считаем, что rank == 0.
+    const int rank = 0;
+
+    // Проверяем результат только для главного процесса.
+    if (rank != 0) {
+      return true;
+    }
+
+    // Сравниваем полученный результат с ожидаемым.
     return output_data == expected_result_;
   }
 
@@ -85,7 +100,8 @@ const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<SizovDStringMismatc
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
 const auto kTestName = SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
 
-INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovDRunFuncTestsStringMismatchCount, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovDRunFuncTestsStringMismatchCount, kGtestValues,
+                         kTestName);  // NOLINT
 
 }  // namespace
 }  // namespace sizov_d_string_mismatch_count

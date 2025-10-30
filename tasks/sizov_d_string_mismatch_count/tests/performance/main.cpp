@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
@@ -12,6 +13,7 @@
 namespace sizov_d_string_mismatch_count {
 
 class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ public:
   void SetUp() override {
     std::string a(1'000'000, 'a');
     std::string b = a;
