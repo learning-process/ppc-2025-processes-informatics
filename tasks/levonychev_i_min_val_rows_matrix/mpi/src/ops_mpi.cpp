@@ -61,35 +61,19 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
     std::cout << j << ' ';
   }
   std::cout << std::endl;
-
-  if (ProcRank == 0) {
-    for (int i = 0; i < local_count_of_rows; ++i) {
-      global_min_values[i] = local_min_values[i];
-    }
+  std::vector<int> recvcounts(ProcNum);
+  std::vector<int> displs(ProcNum);
+  for (int i = 0; i < ProcNum; ++i) {
+    recvcounts[i] = ROWS / ProcNum;
   }
+  recvcounts[recvcounts.size() - 1] += ROWS % ProcNum;
 
-  bool send = false;
-  for (int i = 1; i < ProcNum; ++i) {
-    if (!send && ProcRank != 0) {
-      MPI_Send(&local_count_of_rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-      MPI_Send(local_min_values.data(), local_count_of_rows, MPI_DOUBLE, 0, ProcRank, MPI_COMM_WORLD);
-      send = true;
-    }
-    if (ProcRank == 0) {
-      std::vector<double> other_local_min_values;
-      MPI_Status status_buf;
-      MPI_Status status_size;
-      int count;
-      MPI_Recv(&count, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status_size);
-      other_local_min_values.resize(count);
-      MPI_Recv(other_local_min_values.data(), count, MPI_DOUBLE, status_size.MPI_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-               &status_buf);
-      int proc_rank_source = status_buf.MPI_SOURCE;
-      for (int j = 0; j < count; ++j) {
-        global_min_values[j + (ROWS / ProcNum) * proc_rank_source] = other_local_min_values[j];
-      }
-    }
+  for (int i = 0; i < ProcNum; ++i) {
+    displs[i] = (ROWS / ProcNum) * i;
   }
+  MPI_Gatherv(local_min_values.data(), local_count_of_rows, MPI_DOUBLE, global_min_values.data(), recvcounts.data(),
+              displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
   MPI_Bcast(global_min_values.data(), global_min_values.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
   std::cout << ProcRank << ": ";
   for (auto i : global_min_values) {
