@@ -29,7 +29,7 @@ class BaldinAWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     input_data = buffer.str();
     file.close();
 
-    int count = 0;
+    size_t count = 0;
     bool in_word = false;
     for (char c : input_data) {
       if (std::isalnum(c) || c == '-' || c == '_') {
