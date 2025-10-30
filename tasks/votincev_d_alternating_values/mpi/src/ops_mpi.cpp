@@ -65,7 +65,7 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
 
       // Вместо пересылки данных - пересылаем индексы начала и конца
       int indices[2] = {startId, startId + partSize};
-      MPI_Send(indices, 2, MPI_INT, i, 0, MPI_COMM_WORLD);
+      MPI_Send(&indices[0], 2, MPI_INT, i, 0, MPI_COMM_WORLD);
 
       startId += partSize - 1;
 
@@ -121,11 +121,17 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
+  // end_time = MPI_Wtime();
+  // if (ProcRank == 0) {
+  //   std::cout << "MPI_was_working:" << (end_time - start_time) << "\n";
+  // }
 
   MPI_Bcast(&allSwaps, 1, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = allSwaps;
   MPI_Barrier(MPI_COMM_WORLD);
 
+  // ========== пересылка, но не через Bcast
+  //
   // if (ProcRank == 0) {
   //   // отправляем всем процессам корректный результат
   //   for (int i = 1; i < ProcessN; i++) {
@@ -141,6 +147,8 @@ bool VotincevDAlternatingValuesMPI::RunImpl() {
   //     GetOutput() = allSw;
   //   }
   // }
+  //
+  // ========== пересылка, но не через Bcast
 
   return true;
 }

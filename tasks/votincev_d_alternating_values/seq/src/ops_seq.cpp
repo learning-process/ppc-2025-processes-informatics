@@ -35,7 +35,6 @@ bool VotincevDAlternatingValuesSEQ::RunImpl() {
 
   // auto end_time = std::chrono::high_resolution_clock::now();
   // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-
   // std::cout << "SEQ_was_working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
 
   GetOutput() = allSwaps;
