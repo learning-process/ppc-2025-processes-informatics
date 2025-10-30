@@ -11,17 +11,17 @@ class PapulinaYRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   const int kCount_ = 10000000;
   const std::string s = "abcdabcd";
   InType input_data_{};
-  OutType expectedResult = 0;
+  OutType expectedResult_ = 0;
 
   void SetUp() override {
     for (int i = 0; i < kCount_; i++) {
       input_data_ += s;
     }
-    expectedResult = kCount_ * s.size();
+    expectedResult_ = kCount_ * s.size();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return expectedResult == output_data;
+    return expectedResult_ == output_data;
   }
 
   InType GetTestInputData() final {
