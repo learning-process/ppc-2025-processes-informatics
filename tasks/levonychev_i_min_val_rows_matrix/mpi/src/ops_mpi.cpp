@@ -34,13 +34,13 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   const std::vector<double> &matrix = std::get<0>(GetInput());
   const int ROWS = std::get<1>(GetInput());
   const int COLS = std::get<2>(GetInput());
+  std::cout << "ROWS = " << ROWS << ", COLS = " << COLS << std::endl;
   OutType &global_min_values = GetOutput();
   int ProcNum, ProcRank;
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
-
   int local_count_of_rows = ROWS / ProcNum;
-  if ((ROWS % ProcNum != 0) && (ProcRank == ProcNum - 1)) {
+  if ((ProcRank == ProcNum - 1)) {
     local_count_of_rows += (ROWS % ProcNum);
   }
 
@@ -56,7 +56,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
     }
     local_min_values[i] = min_value;
   }
-  std::cout << ProcRank << "__" << local_count_of_rows << ": ";
+  std::cout << ProcRank << "/" << ProcNum << "__" << local_count_of_rows << ": ";
   for (auto j : local_min_values) {
     std::cout << j << ' ';
   }
