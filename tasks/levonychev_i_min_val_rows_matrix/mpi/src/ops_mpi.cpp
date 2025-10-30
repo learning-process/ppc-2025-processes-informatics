@@ -13,7 +13,7 @@ namespace levonychev_i_min_val_rows_matrix {
 LevonychevIMinValRowsMatrixMPI::LevonychevIMinValRowsMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput().resize(std::get<1>(in));
+  GetOutput() = {};
 }
 bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
   if (std::get<0>(GetInput()).size() == 0 || std::get<1>(GetInput()) == 0 || std::get<2>(GetInput()) == 0) {
@@ -36,6 +36,9 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   const int COLS = std::get<2>(GetInput());
   std::cout << "ROWS = " << ROWS << ", COLS = " << COLS << std::endl;
   OutType &global_min_values = GetOutput();
+  if (global_min_values.size() != ROWS) {
+    global_min_values.resize(ROWS);
+  }
   int ProcNum, ProcRank;
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
