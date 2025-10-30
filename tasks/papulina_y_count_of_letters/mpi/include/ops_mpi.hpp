@@ -19,6 +19,8 @@ class PapulinaYCountOfLettersMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
   int CountOfLetters(const char *s, const int &n);
+
+  int procNum_ = 0;
 };
 
 }  // namespace papulina_y_count_of_letters

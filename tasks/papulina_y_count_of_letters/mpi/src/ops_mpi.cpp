@@ -14,6 +14,7 @@ PapulinaYCountOfLettersMPI::PapulinaYCountOfLettersMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
 }
 int PapulinaYCountOfLettersMPI::CountOfLetters(const char *s, const int &n) {
   int k = 0;
@@ -26,7 +27,7 @@ int PapulinaYCountOfLettersMPI::CountOfLetters(const char *s, const int &n) {
   return k;
 }
 bool PapulinaYCountOfLettersMPI::ValidationImpl() {
-  return true;
+  return procNum_ > 0;
 }
 
 bool PapulinaYCountOfLettersMPI::PreProcessingImpl() {
@@ -34,13 +35,11 @@ bool PapulinaYCountOfLettersMPI::PreProcessingImpl() {
 }
 
 bool PapulinaYCountOfLettersMPI::RunImpl() {
-  int procNum_ = 0;
   int procRank = 0;
   int result = 0;
   std::string partOfString = "";  // части строки, которая будет обрабатываться потоком
   unsigned int len = 0;           // предполагаемая длина обрабатываемой части
   unsigned int trueLen = 0;       // реальная длина обрабатываемой части
-  MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
   MPI_Comm_rank(MPI_COMM_WORLD, &procRank);
 
   if (procRank == 0) {
