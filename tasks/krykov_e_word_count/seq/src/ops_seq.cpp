@@ -1,7 +1,8 @@
 #include "krykov_e_word_count/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <string>
 
 #include "krykov_e_word_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -15,46 +16,44 @@ KrykovEWordCountSEQ::KrykovEWordCountSEQ(const InType &in) {
 }
 
 bool KrykovEWordCountSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return (GetOutput() == 0);
 }
 
 bool KrykovEWordCountSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput() = 0;
+  return true;
 }
 
 bool KrykovEWordCountSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  const std::string &text = GetInput();
+  if (text.empty()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  bool in_word = false;
+  int word_count = 0;
+
+  for (char c : text) {
+    if (std::isspace(c) || std::ispunct(c)) {
+      if (in_word) {
+        word_count++;
+        in_word = false;
       }
+    } else {
+      in_word = true;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+  if (in_word) {
+    word_count++;
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = word_count;
+  return GetOutput() >= 0;
 }
 
 bool KrykovEWordCountSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return GetOutput() >= 0;
 }
 
 }  // namespace krykov_e_word_count

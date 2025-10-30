@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "krykov_e_word_count/common/include/common.hpp"
 #include "krykov_e_word_count/mpi/include/ops_mpi.hpp"
 #include "krykov_e_word_count/seq/include/ops_seq.hpp"
@@ -8,15 +10,24 @@
 namespace krykov_e_word_count {
 
 class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const std::size_t kRepeatCount_ = 1000;
   InType input_data_{};
+  OutType expected_result_;
 
   void SetUp() override {
-    input_data_ = kCount_;
+  std::string base_text = "word ";
+  input_data_ = "";
+  for (int i = 0; i < kRepeatCount_; i++) {
+    input_data_ += base_text;
   }
 
+  // Правильно вычисляем ожидаемое количество слов
+  // В base_text 10 слов, повторенных kRepeatCount_ раз
+  expected_result_ = kRepeatCount_;
+}
+
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data == expected_result_;
   }
 
   InType GetTestInputData() final {
@@ -29,7 +40,7 @@ TEST_P(KrykovEWordCountPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrykovEWordCountMPI, KrykovEWordCountSEQ>(PPC_SETTINGS_example_processes);
+    ppc::util::MakeAllPerfTasks<InType, KrykovEWordCountMPI, KrykovEWordCountSEQ>(PPC_SETTINGS_krykov_e_word_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

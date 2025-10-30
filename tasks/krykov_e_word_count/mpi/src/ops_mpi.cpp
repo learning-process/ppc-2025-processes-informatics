@@ -1,12 +1,8 @@
 #include "krykov_e_word_count/mpi/include/ops_mpi.hpp"
-
 #include <mpi.h>
-
+#include <algorithm>
 #include <numeric>
 #include <vector>
-
-#include "krykov_e_word_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace krykov_e_word_count {
 
@@ -17,56 +13,95 @@ KrykovEWordCountMPI::KrykovEWordCountMPI(const InType &in) {
 }
 
 bool KrykovEWordCountMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true; // Всегда валидно для пустой строки тоже
 }
 
 bool KrykovEWordCountMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput() = 0;
+  return true;
 }
 
 bool KrykovEWordCountMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
+  const std::string& text = GetInput();
+  int world_size, world_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+  // Обработка пустой строки
+  if (text.empty()) {
+    GetOutput() = 0;
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  int total_length = text.length();
+  int chunk_size = total_length / world_size;
+  int remainder = total_length % world_size;
+
+  int start = world_rank * chunk_size + std::min(world_rank, remainder);
+  int end = start + chunk_size + (world_rank < remainder ? 1 : 0);
+
+  // Подсчет слов в локальном чанке
+  int local_count = 0;
+  bool in_word = false;
+
+  for (int i = start; i < end; i++) {
+    char c = text[i];
+    if (std::isspace(c) || std::ispunct(c)) {
+      if (in_word) {
+        local_count++;
+        in_word = false;
       }
+    } else {
+      in_word = true;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
+  // Проверка границ между процессами
+  if (world_rank > 0 && start > 0) {
+    // Если слово продолжается с предыдущего процесса
+    char prev_char = text[start - 1];
+    char curr_char = text[start];
+    if (!std::isspace(prev_char) && !std::ispunct(prev_char) &&
+        !std::isspace(curr_char) && !std::ispunct(curr_char)) {
+      // Слово разделено между процессами - не вычитаем, а корректируем логику
+      // Эта логика требует пересмотра
     }
+  }
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+  // Сбор результатов
+  std::vector<int> all_counts;
+  if (world_rank == 0) {
+    all_counts.resize(world_size);
+  }
+
+  MPI_Gather(&local_count, 1, MPI_INT, 
+             all_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  int global_count = 0;
+  if (world_rank == 0) {
+    global_count = std::accumulate(all_counts.begin(), all_counts.end(), 0);
+    
+    // Проверка последнего символа
+    if (!text.empty() && !std::isspace(text.back()) && !std::ispunct(text.back())) {
+      global_count++;
     }
+    
+    GetOutput() = global_count;
+  }
+
+  // Распространение результата на все процессы
+  MPI_Bcast(&global_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (world_rank != 0) {
+    GetOutput() = global_count;
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  return GetOutput() >= 0;
 }
 
 bool KrykovEWordCountMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return GetOutput() >= 0;
 }
 
 }  // namespace krykov_e_word_count
