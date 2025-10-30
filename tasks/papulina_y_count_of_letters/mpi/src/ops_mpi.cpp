@@ -34,7 +34,7 @@ bool PapulinaYCountOfLettersMPI::PreProcessingImpl() {
 }
 
 bool PapulinaYCountOfLettersMPI::RunImpl() {
-   int procNum_ = 0;
+  int procNum_ = 0;
   int procRank = 0;
   int result = 0;
   std::string partOfString = "";  // части строки, которая будет обрабатываться потоком
