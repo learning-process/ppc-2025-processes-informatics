@@ -16,7 +16,8 @@ PapulinaYCountOfLettersSEQ::PapulinaYCountOfLettersSEQ(const InType &in) {
 int PapulinaYCountOfLettersSEQ::CountOfLetters() {
   int k = 0;
   for (size_t i = 0; i < GetInput().size(); i++) {
-    if (isalpha(GetInput()[i])) {
+    char c = GetInput()[i];
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
       k++;
     }
   }

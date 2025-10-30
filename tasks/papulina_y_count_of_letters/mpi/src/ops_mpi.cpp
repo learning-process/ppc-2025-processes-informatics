@@ -18,7 +18,8 @@ PapulinaYCountOfLettersMPI::PapulinaYCountOfLettersMPI(const InType &in) {
 int PapulinaYCountOfLettersMPI::CountOfLetters(const char *s, const int &n) {
   int k = 0;
   for (int i = 0; i < n; i++) {
-    if (isalpha(s[i])) {
+    char c = GetInput()[i];
+    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
       k++;
     }
   }
@@ -41,10 +42,13 @@ bool PapulinaYCountOfLettersMPI::RunImpl() {
   unsigned int trueLen = 0;       // реальная длина обрабатываемой части
   MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
   MPI_Comm_rank(MPI_COMM_WORLD, &procRank);
+
   if (procRank == 0) {
     std::string s = GetInput();
+
     len = s.size() / procNum_;
     MPI_Bcast(&len, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+
     for (int i = 1; i < procNum_; i++) {
       int begin = i * len;
       int end = (i == procNum_ - 1) ? s.size() : begin + len;  // таким образом, если потоков, сильно больше, чем
