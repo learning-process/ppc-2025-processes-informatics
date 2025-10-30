@@ -41,16 +41,13 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const int total_size = static_cast<int>(str_a_.size());
-  if (total_size == 0) {
-    global_result_ = 0;
-    GetOutput() = 0;
-    return true;
-  }
 
   int local_result = 0;
-  for (int i = rank; i < total_size; i += size) {
-    if (str_a_[i] != str_b_[i]) {
-      ++local_result;
+  if(total_size > 0) {
+    for (int i = rank; i < total_size; i += size) {
+      if (str_a_[i] != str_b_[i]) {
+        ++local_result;
+      }
     }
   }
 
