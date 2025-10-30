@@ -75,7 +75,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   MPI_Gatherv(local_min_values.data(), local_count_of_rows, MPI_DOUBLE, global_min_values.data(), recvcounts.data(),
               displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(global_min_values.data(), global_min_values.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(global_min_values.data(), ROWS, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   std::cout << ProcRank << ": ";
   for (auto i : global_min_values) {
     std::cout << i << ' ';
