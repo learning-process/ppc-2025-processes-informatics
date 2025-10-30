@@ -15,7 +15,7 @@ PapulinaYCountOfLettersSEQ::PapulinaYCountOfLettersSEQ(const InType &in) {
 }
 int PapulinaYCountOfLettersSEQ::CountOfLetters() {
   int k = 0;
-  for (site_t i = 0; i < GetInput().size(); i++) {
+  for (size_t i = 0; i < GetInput().size(); i++) {
     if (isalpha(GetInput()[i])) {
       k++;
     }
