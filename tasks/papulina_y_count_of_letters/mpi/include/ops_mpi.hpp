@@ -7,7 +7,6 @@
 namespace papulina_y_count_of_letters {
 
 class PapulinaYCountOfLettersMPI : public BaseTask {
-  int procNum_ = 0;
 
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
