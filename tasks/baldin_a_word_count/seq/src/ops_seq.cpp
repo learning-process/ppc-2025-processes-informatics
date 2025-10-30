@@ -20,9 +20,10 @@ bool BaldinAWordCountSEQ::PreProcessingImpl() {
 }
 
 bool BaldinAWordCountSEQ::RunImpl() {
-  int count = 0;
+  std::string &input = GetInput();
+  size_t count = 0;
   bool in_word = false;
-  for (char c : GetInput()) {
+  for (char c : input) {
     if (std::isalnum(c) || c == '-' || c == '_') {
       if (!in_word) {
         in_word = true;

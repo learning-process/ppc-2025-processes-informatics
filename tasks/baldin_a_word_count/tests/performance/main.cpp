@@ -14,7 +14,7 @@ namespace baldin_a_word_count {
 class BaldinAWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data;
-  OutType expected_output{};
+  OutType expected_output;
 
   void SetUp() override {
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_baldin_a_word_count, "book-war-and-peace.txt");
