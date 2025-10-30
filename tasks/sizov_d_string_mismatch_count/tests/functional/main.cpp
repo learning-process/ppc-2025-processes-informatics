@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -19,6 +19,17 @@
 
 namespace sizov_d_string_mismatch_count {
 
+inline int GetMpiRankReallySafe() {
+  int initialized = 0;
+  MPI_Initialized(&initialized);
+  if (!initialized) {
+    return 0;
+  }
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  return rank;
+}
+
 class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -27,11 +38,16 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 
  protected:
   void SetUp() override {
-    std::string abs_path;
-    abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
+
+    // отладка: кто пытается открыть файл
+    int rank = GetMpiRankReallySafe();
+    std::cerr << "[test][rank " << rank << "] trying to open: " << abs_path << std::endl;
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {
+      // покажем в логе CI, что именно случилось
+      std::cerr << "[test][rank " << rank << "] FAILED to open file\n";
       throw std::runtime_error("Cannot open strings.txt");
     }
 
@@ -62,13 +78,14 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
     if (!is_valid_) {
       return true;
     }
+
     auto safe_get_rank = []() -> std::optional<int> {
 #ifdef _WIN32
       char *buf = nullptr;
-      int64_t len = 0;
+      size_t len = 0;
       if (_dupenv_s(&buf, &len, "OMPI_COMM_WORLD_RANK") == 0 && buf) {
         char *end_ptr = nullptr;
-        int64_t val = std::strtol(buf, &end_ptr, 10);
+        size_t val = std::strtol(buf, &end_ptr, 10);
         free(buf);
         if (end_ptr != buf && *end_ptr == '\0') {
           return static_cast<int>(val);
