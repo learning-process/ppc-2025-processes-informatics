@@ -17,8 +17,7 @@ LukinIElemVecSumMPI::LukinIElemVecSumMPI(const InType &in) {
 }
 
 bool LukinIElemVecSumMPI::ValidationImpl() {
-  const auto &vec = GetInput();
-  return !vec.empty();
+  return true;
 }
 
 bool LukinIElemVecSumMPI::PreProcessingImpl() {
@@ -28,6 +27,11 @@ bool LukinIElemVecSumMPI::PreProcessingImpl() {
 bool LukinIElemVecSumMPI::RunImpl() {
   std::vector<int> input = GetInput();
   const int vec_size = static_cast<int>(input.size());
+
+  if (vec_size == 0) {
+    GetOutput() = 0;
+    return true;
+  }
 
   int proc_count, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);

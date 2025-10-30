@@ -15,8 +15,7 @@ LukinIElemVecSumSEQ::LukinIElemVecSumSEQ(const InType &in) {
 }
 
 bool LukinIElemVecSumSEQ::ValidationImpl() {
-  const auto &vec = GetInput();
-  return !vec.empty();
+  return true;
 }
 
 bool LukinIElemVecSumSEQ::PreProcessingImpl() {
@@ -24,9 +23,16 @@ bool LukinIElemVecSumSEQ::PreProcessingImpl() {
 }
 
 bool LukinIElemVecSumSEQ::RunImpl() {
-  const auto &vec = GetInput();
+  std::vector<int> input = GetInput();
+  const int vec_size = static_cast<int>(input.size());
+
+  if (vec_size == 0) {
+    GetOutput() = 0;
+    return true;
+  }
+
   int sum = 0;
-  for (const auto &elem : vec) {
+  for (const auto &elem : input) {
     sum += elem;
   }
 

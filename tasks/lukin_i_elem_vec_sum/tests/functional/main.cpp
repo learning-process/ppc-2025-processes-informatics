@@ -56,9 +56,35 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(2, "vec_size_less_than_proc_count"), std::make_tuple(4, "vec_size_equal_to_proc_count"),
-    std::make_tuple(15, "vec_size_greater_than_proc_count"), std::make_tuple(10000, "big_vector")};
+const std::array<TestType, 29> kTestParam = {std::make_tuple(0, "empty_vector"),
+                                             std::make_tuple(1, "single_element"),
+                                             std::make_tuple(2, "two_elements"),
+                                             std::make_tuple(3, "small_odd"),
+                                             std::make_tuple(4, "small_even"),
+                                             std::make_tuple(7, "prime_small"),
+                                             std::make_tuple(8, "power_of_two_small"),
+                                             std::make_tuple(15, "medium_odd"),
+                                             std::make_tuple(16, "power_of_two_medium"),
+                                             std::make_tuple(31, "prime_medium"),
+                                             std::make_tuple(32, "power_of_two_large"),
+                                             std::make_tuple(50, "round_number_medium"),
+                                             std::make_tuple(63, "odd_boundary"),
+                                             std::make_tuple(64, "power_of_two_boundary"),
+                                             std::make_tuple(100, "round_number_large"),
+                                             std::make_tuple(127, "prime_large"),
+                                             std::make_tuple(255, "odd_large"),
+                                             std::make_tuple(256, "power_of_two_xlarge"),
+                                             std::make_tuple(1000, "large_round"),
+                                             std::make_tuple(1023, "very_large_odd"),
+                                             std::make_tuple(10000, "extreme_size"),
+                                             std::make_tuple(16384, "large_power_of_two"),
+                                             std::make_tuple(32767, "max_typical_odd"),
+                                             std::make_tuple(50000, "large_arbitrary"),
+                                             std::make_tuple(99999, "large_odd_arbitrary"),
+                                             std::make_tuple(100000, "very_large_round"),
+                                             std::make_tuple(131072, "huge_power_of_two"),
+                                             std::make_tuple(500000, "huge_arbitrary"),
+                                             std::make_tuple(1000000, "million_elements")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LukinIElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_lukin_i_elem_vec_sum),
