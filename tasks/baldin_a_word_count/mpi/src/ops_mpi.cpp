@@ -62,18 +62,16 @@ bool BaldinAWordCountMPI::RunImpl() {
   }
 
   int total_len = static_cast<int>(input.size());
-  int part = total_len / world_size;
+  int rem = total_len % world_size;
+  input.append(world_size - rem + 1, ' ');
+  int part = input.size() / world_size;
 
   std::vector<int> send_counts(world_size), displs(world_size);
 
   if (rank == 0) {
     int offset = 0;
     for (int i = 0; i < world_size; i++) {
-      if (i < world_size - 1) {
-        send_counts[i] = part + 1;
-      } else {
-        send_counts[i] = total_len - offset;
-      }
+      send_counts[i] = part + 1;
       displs[i] = offset;
       offset += part;
     }
@@ -87,16 +85,14 @@ bool BaldinAWordCountMPI::RunImpl() {
   //   std::cout << '\n';
   // }
 
-  int recv_count = (rank == world_size - 1) ? total_len - part * (world_size - 1) : part + 1;
+  std::vector<char> local_buf(part + 1);
 
-  std::vector<char> local_buf(recv_count);
-
-  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), recv_count, MPI_CHAR, 0,
+  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0,
                MPI_COMM_WORLD);
 
   size_t local_cnt = 0;
   bool in_word = false;
-  for (int i = 0; i < static_cast<int>(local_buf.size()); i++) {
+  for (int i = 0; i < part; i++) {
     if (std::isalnum(local_buf[i]) || local_buf[i] == '-' || local_buf[i] == '_') {
       if (!in_word) {
         in_word = true;
@@ -106,14 +102,17 @@ bool BaldinAWordCountMPI::RunImpl() {
       in_word = false;
     }
   }
-  if (rank != world_size - 1) {
-    if ((std::isalnum(local_buf[part - 1]) || local_buf[part - 1] == '-' || local_buf[part - 1] == '_' ||
-         std::isspace(local_buf[part - 1])) &&
-        (std::isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
-      local_cnt--;
-    }
+
+  if (in_word && (std::isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
+    local_cnt--;
   }
 
+  // std::cout << "RANK: " << rank << ' ' << local_cnt << '\n';
+  // for (int i = 0; i < part; i++) {
+  //   std::cout << local_buf[i];
+  // }
+
+  std::cout << '\n';
   size_t global_cnt = 0;
   MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
