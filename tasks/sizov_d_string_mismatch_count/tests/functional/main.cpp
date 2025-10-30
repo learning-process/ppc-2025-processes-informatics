@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -61,13 +62,13 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
     if (!is_valid_) {
       return true;
     }
-    auto SafeGetRank = []() -> std::optional<int> {
-#if defined(_WIN32)
+    auto safe_get_rank = []() -> std::optional<int> {
+#ifdef _WIN32
       char *buf = nullptr;
-      size_t len = 0;
+      int64_t len = 0;
       if (_dupenv_s(&buf, &len, "OMPI_COMM_WORLD_RANK") == 0 && buf) {
         char *end_ptr = nullptr;
-        long val = std::strtol(buf, &end_ptr, 10);
+        int64_t val = std::strtol(buf, &end_ptr, 10);
         free(buf);
         if (end_ptr != buf && *end_ptr == '\0') {
           return static_cast<int>(val);
@@ -79,7 +80,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 #endif
     };
 
-    const int rank = SafeGetRank().value_or(0);
+    const int rank = safe_get_rank().value_or(0);
 
     if (rank != 0) {
       return true;
