@@ -40,7 +40,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
   int local_count_of_rows = ROWS / ProcNum;
-  if ((ProcRank == ProcNum - 1)) {
+  if (ProcRank == (ProcNum - 1)) {
     local_count_of_rows += (ROWS % ProcNum);
   }
 
