@@ -58,25 +58,11 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    // Если входные данные некорректны — просто возвращаем true,
-    // чтобы тест считался успешно пройденным.
-    if (!is_valid_) {
-      return true;
-    }
-
-    // В функциональных тестах rank не влияет на результат:
-    // проверка корректности выполняется только для одного "главного" процесса.
-    // Поэтому просто считаем, что rank == 0.
-    const int rank = 0;
-
-    // Проверяем результат только для главного процесса.
-    if (rank != 0) {
-      return true;
-    }
-
-    // Сравниваем полученный результат с ожидаемым.
-    return output_data == expected_result_;
+  if (!is_valid_) {
+    return true;
   }
+  return output_data == expected_result_;
+}
 
  private:
   InType input_data_;
