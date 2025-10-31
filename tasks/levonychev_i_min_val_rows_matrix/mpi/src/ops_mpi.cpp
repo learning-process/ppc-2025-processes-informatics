@@ -71,13 +71,17 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   std::cout << std::endl;
   std::vector<int> recvcounts(ProcNum);
   std::vector<int> displs(ProcNum);
-  for (int i = 0; i < ProcNum; ++i) {
-    recvcounts[i] = ROWS / ProcNum;
-  }
-  recvcounts[recvcounts.size() - 1] += ROWS % ProcNum;
+  int current_displacement = 0;
 
   for (int i = 0; i < ProcNum; ++i) {
-    displs[i] = (ROWS / ProcNum) * i;
+    int count_i = ROWS / ProcNum;
+    if (i == (ProcNum - 1)) {
+      count_i += ROWS % ProcNum;
+    }
+    recvcounts[i] = count_i;
+
+    displs[i] = current_displacement;
+    current_displacement += count_i;
   }
   MPI_Barrier(new_comm);
   MPI_Gatherv(local_min_values.data(), local_count_of_rows, MPI_DOUBLE, global_min_values.data(), recvcounts.data(),
