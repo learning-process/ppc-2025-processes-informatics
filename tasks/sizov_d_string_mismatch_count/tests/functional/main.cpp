@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iostream>  // для cerr
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -19,10 +20,10 @@
 
 namespace sizov_d_string_mismatch_count {
 
-inline int GetMpiRankReallySafe() {
+inline int static GetMpiRankReallySafe() {
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (!initialized) {
+  if (initialized == 0) {
     return 0;
   }
   int rank = 0;
@@ -40,13 +41,11 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   void SetUp() override {
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
 
-    // отладка: кто пытается открыть файл
     int rank = GetMpiRankReallySafe();
-    std::cerr << "[test][rank " << rank << "] trying to open: " << abs_path << std::endl;
+    std::cerr << "[test][rank " << rank << "] trying to open: " << abs_path << "\n";
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {
-      // покажем в логе CI, что именно случилось
       std::cerr << "[test][rank " << rank << "] FAILED to open file\n";
       throw std::runtime_error("Cannot open strings.txt");
     }

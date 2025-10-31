@@ -30,15 +30,16 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 bool SizovDStringMismatchCountMPI::RunImpl() {
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (!initialized) {
+  if (initialized == 0) {
     return false;
   }
 
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  std::cerr << "[Rank " << rank << "] Start RunImpl, size=" << size << "\n";
+  std::cerr << "[Rank " << rank << "] Start RunImpl, size = " << size << "\n";
 
   const int total_size = static_cast<int>(str_a_.size());
   int local_result = 0;
@@ -60,7 +61,7 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
 
   GetOutput() = global_result;
 
-  std::cerr << "[Rank " << rank << "] End RunImpl local=" << local_result << " global=" << global_result << "\n";
+  std::cerr << "[Rank " << rank << "] End RunImpl local = " << local_result << " global = " << global_result << "\n";
 
   MPI_Barrier(MPI_COMM_WORLD);
 
