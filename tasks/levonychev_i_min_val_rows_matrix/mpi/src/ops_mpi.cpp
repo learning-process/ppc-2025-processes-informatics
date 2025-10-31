@@ -47,13 +47,25 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   MPI_Comm_size(new_comm, &ProcNum);
   MPI_Comm_rank(new_comm, &ProcRank);
 
-  int local_count_of_rows = ROWS / ProcNum;
-  if (ProcRank == (ProcNum - 1)) {
-    local_count_of_rows += (ROWS % ProcNum);
+  int local_count_of_rows;
+  int start_id;
+  if (ROWS < ProcNum) {
+    if (ProcRank < ROWS) {
+      local_count_of_rows = 1;
+      start_id = ProcRank * COLS;
+    } else {
+      local_count_of_rows = 0;
+      start_id = 0;
+    }
+  } else {
+    local_count_of_rows = ROWS / ProcNum;
+    if (ProcRank == (ProcNum - 1)) {
+      local_count_of_rows += (ROWS % ProcNum);
+    }
+    start_id = ProcRank * (ROWS / ProcNum) * COLS;
   }
 
   std::vector<double> local_min_values(local_count_of_rows);
-  const int start_id = ProcRank * (ROWS / ProcNum) * COLS;
   for (int i = 0; i < local_count_of_rows; ++i) {
     const int start_row_id = start_id + COLS * i;
     double min_value = matrix[start_row_id];
@@ -74,19 +86,26 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   int current_displacement = 0;
 
   for (int i = 0; i < ProcNum; ++i) {
-    int count_i = ROWS / ProcNum;
-    if (i == (ProcNum - 1)) {
-      count_i += ROWS % ProcNum;
+    int count_i;
+    if (ROWS < ProcNum) {
+      if (i < ROWS) {
+        count_i = 1;
+      } else {
+        count_i = 0;
+      }
+    } else {
+      count_i = ROWS / ProcNum;
+      if (i == (ProcNum - 1)) {
+        count_i += ROWS % ProcNum;
+      }
     }
     recvcounts[i] = count_i;
 
     displs[i] = current_displacement;
     current_displacement += count_i;
   }
-  // MPI_Barrier(new_comm);
   MPI_Gatherv(local_min_values.data(), local_count_of_rows, MPI_DOUBLE, global_min_values.data(), recvcounts.data(),
               displs.data(), MPI_DOUBLE, 0, new_comm);
-  // MPI_Barrier(new_comm);
   MPI_Bcast(global_min_values.data(), ROWS, MPI_DOUBLE, 0, new_comm);
   std::cout << ProcRank << ": ";
   for (auto i : global_min_values) {
