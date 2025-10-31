@@ -43,7 +43,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
   MPI_Comm new_comm;
-  MPI_Comm_dup(MPI_COMM_WORLD, &new_comm);
+  MPI_Comm_split(MPI_COMM_WORLD, ROWS * (COLS + 1), ProcRank, &new_comm);
   MPI_Comm_size(new_comm, &ProcNum);
   MPI_Comm_rank(new_comm, &ProcRank);
 
