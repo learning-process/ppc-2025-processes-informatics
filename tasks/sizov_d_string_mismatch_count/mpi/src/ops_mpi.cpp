@@ -2,7 +2,9 @@
 
 #include <mpi.h>
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 
@@ -29,8 +31,10 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
-  bool mpi_ready = false;
+  using namespace std::chrono;
+  int rank = 0, size = 1;
 
+  bool mpi_ready = false;
   try {
     int initialized = 0;
     MPI_Initialized(&initialized);
@@ -43,24 +47,31 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
 
   // ---------- SEQ fallback ----------
   if (!mpi_ready) {
-    std::cerr << "[RunImpl][seq-fallback] MPI not initialized, running locally\n";
+    std::cerr << "[MPI][fallback][thread " << std::this_thread::get_id()
+              << "] MPI not initialized, running sequentially\n";
+
+    auto start_time = high_resolution_clock::now();
     int local_result = 0;
     for (int i = 0; i < total_size; ++i) {
       if (str_a_[i] != str_b_[i]) {
         ++local_result;
       }
     }
+    auto end_time = high_resolution_clock::now();
+    double elapsed_ms = duration_cast<microseconds>(end_time - start_time).count() / 1000.0;
+
     GetOutput() = local_result;
+    std::cerr << "[MPI][fallback] Done, result=" << local_result << " | time=" << elapsed_ms << " ms\n";
     return true;
   }
 
   // ---------- MPI mode ----------
-  int rank = 0;
-  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  std::cerr << "[Rank " << rank << "] Start RunImpl (MPI), size=" << size << ", len=" << total_size << "\n";
+  std::cerr << "[Rank " << rank << "] Start RunImpl (MPI): size=" << size << " len=" << total_size << "\n";
+
+  auto start_time = high_resolution_clock::now();
 
   int local_result = 0;
   for (int i = rank; i < total_size; i += size) {
@@ -73,9 +84,14 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  auto end_time = high_resolution_clock::now();
+  double elapsed_ms = duration_cast<microseconds>(end_time - start_time).count() / 1000.0;
+
   GetOutput() = global_result;
 
-  std::cerr << "[Rank " << rank << "] End RunImpl → local=" << local_result << ", global=" << global_result << "\n";
+  std::cerr << "[Rank " << rank << "] End RunImpl → local=" << local_result << ", global=" << global_result
+            << ", time=" << elapsed_ms << " ms\n";
+
   return true;
 }
 
