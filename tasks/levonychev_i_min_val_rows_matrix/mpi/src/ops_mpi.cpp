@@ -42,6 +42,11 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   int ProcNum, ProcRank;
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
+  MPI_Comm new_comm;
+  MPI_Comm_dup(MPI_COMM_WORLD, &new_comm);
+  MPI_Comm_size(new_comm, &ProcNum);
+  MPI_Comm_rank(new_comm, &ProcRank);
+
   int local_count_of_rows = ROWS / ProcNum;
   if (ProcRank == (ProcNum - 1)) {
     local_count_of_rows += (ROWS % ProcNum);
@@ -74,16 +79,17 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   for (int i = 0; i < ProcNum; ++i) {
     displs[i] = (ROWS / ProcNum) * i;
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Barrier(new_comm);
   MPI_Gatherv(local_min_values.data(), local_count_of_rows, MPI_DOUBLE, global_min_values.data(), recvcounts.data(),
-              displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(global_min_values.data(), ROWS, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+              displs.data(), MPI_DOUBLE, 0, new_comm);
+  MPI_Barrier(new_comm);
+  MPI_Bcast(global_min_values.data(), ROWS, MPI_DOUBLE, 0, new_comm);
   std::cout << ProcRank << ": ";
   for (auto i : global_min_values) {
     std::cout << i << ' ';
   }
   std::cout << std::endl;
+  MPI_Comm_free(&new_comm);
   return true;
 }
 
