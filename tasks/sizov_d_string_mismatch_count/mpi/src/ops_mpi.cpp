@@ -1,13 +1,8 @@
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-#include <unistd.h>
 
-#include <chrono>
-#include <cstddef>
 #include <iostream>
-#include <string>
-#include <tuple>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 
@@ -34,22 +29,37 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
-  // --- Базовая инфа ---
-  int rank = 0, size = 1;
+  bool mpi_ready = false;
+
+  try {
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    mpi_ready = (initialized != 0);
+  } catch (...) {
+    mpi_ready = false;
+  }
+
+  const int total_size = static_cast<int>(str_a_.size());
+
+  if (!mpi_ready) {
+    std::cerr << "[RunImpl][seq-fallback] MPI not initialized, running locally\n";
+    int local_result = 0;
+    for (int i = 0; i < total_size; ++i) {
+      if (str_a_[i] != str_b_[i]) {
+        ++local_result;
+      }
+    }
+    GetOutput() = local_result;
+    return true;
+  }
+
+  int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int pid = static_cast<int>(getpid());
-  const int total_size = static_cast<int>(str_a_.size());
+  std::cerr << "[Rank " << rank << "] Start RunImpl (MPI), size=" << size << ", len=" << total_size << "\n";
 
-  std::cerr << "[Rank " << rank << " | pid " << pid << "] Start RunImpl (MPI): size=" << size << " len=" << total_size
-            << std::endl;
-
-  // --- Барьер перед измерением ---
-  MPI_Barrier(MPI_COMM_WORLD);
-  auto start_time = std::chrono::high_resolution_clock::now();
-
-  // --- Локная работа ---
   int local_result = 0;
   for (int i = rank; i < total_size; i += size) {
     if (str_a_[i] != str_b_[i]) {
@@ -57,22 +67,13 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
     }
   }
 
-  std::cerr << "[Rank " << rank << "] Local mismatches = " << local_result << std::endl;
-
-  // --- Глобальная редукция ---
   int global_result = 0;
-  MPI_Barrier(MPI_COMM_WORLD);  // синхронизация перед Reduce
   MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // --- Завершение ---
-  auto end_time = std::chrono::high_resolution_clock::now();
-  double elapsed_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1000.0;
-
-  std::cerr << "[Rank " << rank << " | pid " << pid << "] End RunImpl → local=" << local_result
-            << ", global=" << global_result << ", time=" << elapsed_ms << " ms" << std::endl;
-
   GetOutput() = global_result;
+
+  std::cerr << "[Rank " << rank << "] End RunImpl → local=" << local_result << ", global=" << global_result << "\n";
   return true;
 }
 
