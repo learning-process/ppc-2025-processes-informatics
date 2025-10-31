@@ -2,13 +2,8 @@
 #include <mpi.h>
 
 #include <array>
-#include <cstddef>
-#include <cstdlib>
-#include <cstring>
 #include <fstream>
-#include <iostream>  // для cerr
-#include <optional>
-#include <stdexcept>
+#include <iostream>
 #include <string>
 #include <tuple>
 
@@ -20,17 +15,6 @@
 
 namespace sizov_d_string_mismatch_count {
 
-inline int static GetMpiRankReallySafe() {
-  int initialized = 0;
-  MPI_Initialized(&initialized);
-  if (initialized == 0) {
-    return 0;
-  }
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  return rank;
-}
-
 class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -39,38 +23,19 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 
  protected:
   void SetUp() override {
-    int rank = GetMpiRankReallySafe();
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
+
+    std::cerr << "[test] opening: " << abs_path << "\n";
+
+    std::ifstream file(abs_path);
+    if (!file.is_open()) {
+      throw std::runtime_error("Cannot open strings.txt");
+    }
+
     std::string a, b;
-
-    if (rank == 0) {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
-
-      std::cerr << "[test][rank 0] opening: " << abs_path << "\n";
-      std::ifstream file(abs_path);
-      if (!file.is_open()) {
-        std::cerr << "[test][rank 0] FAILED to open file\n";
-        a = "";
-        b = "";
-      } else {
-        std::getline(file, a);
-        std::getline(file, b);
-        file.close();
-      }
-    }
-
-    int len_a = static_cast<int>(a.size());
-    int len_b = static_cast<int>(b.size());
-    MPI_Bcast(&len_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&len_b, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    a.resize(len_a);
-    b.resize(len_b);
-    if (len_a > 0) {
-      MPI_Bcast(a.data(), len_a, MPI_CHAR, 0, MPI_COMM_WORLD);
-    }
-    if (len_b > 0) {
-      MPI_Bcast(b.data(), len_b, MPI_CHAR, 0, MPI_COMM_WORLD);
-    }
+    std::getline(file, a);
+    std::getline(file, b);
+    file.close();
 
     input_data_ = std::make_tuple(a, b);
     is_valid_ = !a.empty() && a.size() == b.size();
@@ -84,7 +49,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
       }
     }
 
-    std::cerr << "[test][rank " << rank << "] setup complete, len_a=" << len_a << " len_b=" << len_b << "\n";
+    std::cerr << "[test] setup complete: len_a=" << a.size() << " len_b=" << b.size() << "\n";
   }
 
   InType GetTestInputData() override {
@@ -96,30 +61,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
       return true;
     }
 
-    auto safe_get_rank = []() -> std::optional<int> {
-#ifdef _WIN32
-      char *buf = nullptr;
-      size_t len = 0;
-      if (_dupenv_s(&buf, &len, "OMPI_COMM_WORLD_RANK") == 0 && buf) {
-        char *end_ptr = nullptr;
-        size_t val = std::strtol(buf, &end_ptr, 10);
-        free(buf);
-        if (end_ptr != buf && *end_ptr == '\0') {
-          return static_cast<int>(val);
-        }
-      }
-      return std::nullopt;
-#else
-      return std::nullopt;
-#endif
-    };
-
-    const int rank = safe_get_rank().value_or(0);
-
-    if (rank != 0) {
-      return true;
-    }
-
+    std::cerr << "[test] expected=" << expected_result_ << " got=" << output_data << "\n";
     return output_data == expected_result_;
   }
 
