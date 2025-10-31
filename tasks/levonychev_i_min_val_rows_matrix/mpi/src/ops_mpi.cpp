@@ -36,7 +36,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   const int COLS = std::get<2>(GetInput());
   std::cout << "ROWS = " << ROWS << ", COLS = " << COLS << std::endl;
   OutType &global_min_values = GetOutput();
-  if (global_min_values.size() != ROWS) {
+  if (global_min_values.size() != static_cast<size_t>(ROWS)) {
     global_min_values.resize(ROWS);
   }
   int ProcNum, ProcRank;
