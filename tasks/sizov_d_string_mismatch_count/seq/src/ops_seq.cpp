@@ -1,9 +1,6 @@
 #include "sizov_d_string_mismatch_count/seq/include/ops_seq.hpp"
 
-#include <chrono>
 #include <cstddef>
-#include <iostream>
-#include <thread>  // для std::this_thread::get_id()
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 
@@ -31,26 +28,12 @@ bool SizovDStringMismatchCountSEQ::PreProcessingImpl() {
 }
 
 bool SizovDStringMismatchCountSEQ::RunImpl() {
-  using namespace std::chrono;
-
-  auto start_time = high_resolution_clock::now();
-  auto thread_id = std::this_thread::get_id();
-
-  std::cerr << "[SEQ][thread " << thread_id << "] Start RunImpl: len=" << str_a_.size() << "\n";
-
   result_ = 0;
   for (std::size_t i = 0; i < str_a_.size(); ++i) {
     if (str_a_[i] != str_b_[i]) {
       ++result_;
     }
   }
-
-  auto end_time = high_resolution_clock::now();
-  double elapsed_ms = duration_cast<microseconds>(end_time - start_time).count() / 1000.0;
-
-  std::cerr << "[SEQ][thread " << thread_id << "] End RunImpl → result=" << result_ << " | time=" << elapsed_ms
-            << " ms\n";
-
   return true;
 }
 
