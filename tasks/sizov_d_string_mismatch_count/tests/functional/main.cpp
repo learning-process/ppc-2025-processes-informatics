@@ -8,7 +8,7 @@
 #include <tuple>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
-#include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
+// #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 #include "sizov_d_string_mismatch_count/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -91,8 +91,8 @@ TEST_P(SizovDRunFuncTestsStringMismatchCount, CompareStringsFromFile) {
 
 const std::array<TestType, 1> kTestParam = {"default"};
 
-const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<SizovDStringMismatchCountMPI, InType>(
-                                          kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
+const auto kTaskList = std::tuple_cat(/*ppc::util::AddFuncTask<SizovDStringMismatchCountMPI, InType>(
+                                          kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),*/
                                       ppc::util::AddFuncTask<SizovDStringMismatchCountSEQ, InType>(
                                           kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
 

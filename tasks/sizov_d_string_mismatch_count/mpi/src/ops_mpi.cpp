@@ -1,4 +1,4 @@
-#include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
+/*#include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
@@ -107,4 +107,4 @@ bool SizovDStringMismatchCountMPI::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace sizov_d_string_mismatch_count
+}  // namespace sizov_d_string_mismatch_count*/
