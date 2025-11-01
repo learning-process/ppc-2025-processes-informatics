@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <array>
-#include <cstddef>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
@@ -19,14 +18,16 @@ namespace sizov_d_string_mismatch_count {
 class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return test_param;
+    std::string sanitized = test_param;
+    std::replace(sanitized.begin(), sanitized.end(), ' ', '_');
+    return sanitized;
   }
 
  protected:
   void SetUp() override {
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
+    const std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
 
-    std::cerr << "[test] opening: " << abs_path << "\n";
+    std::cerr << "[task] opening file: " << abs_path << "\n";
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {
@@ -39,6 +40,9 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
     std::getline(file, b);
     file.close();
 
+    TrimString(a);
+    TrimString(b);
+
     input_data_ = std::make_tuple(a, b);
     is_valid_ = !a.empty() && a.size() == b.size();
 
@@ -49,9 +53,12 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
           ++expected_result_;
         }
       }
+    } else {
+      std::cerr << "[task] invalid input, skipping... " << "a=" << a << ", b=" << b;
+      GTEST_SKIP();
     }
 
-    std::cerr << "[test] setup complete: len_a=" << a.size() << " len_b=" << b.size() << "\n";
+    std::cerr << "[task] setup complete: len=" << a.size() << ", mismatches=" << expected_result_ << "\n";
   }
 
   InType GetTestInputData() override {
@@ -59,16 +66,19 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    if (!is_valid_) {
-      return true;
-    }
-
-    std::cerr << "[test] expected=" << expected_result_ << " got=" << output_data << "\n";
+    std::cerr << "[task] expected=" << expected_result_ << ", got=" << output_data << "\n";
     return output_data == expected_result_;
   }
 
  private:
-  InType input_data_;
+  static void TrimString(std::string &s) {
+    s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char c) { return c == '\r' || c == '\n' || c == '\t'; }),
+            s.end());
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+  }
+
+  InType input_data_ = std::make_tuple(std::string{}, std::string{});
   OutType expected_result_ = 0;
   bool is_valid_ = true;
 };
