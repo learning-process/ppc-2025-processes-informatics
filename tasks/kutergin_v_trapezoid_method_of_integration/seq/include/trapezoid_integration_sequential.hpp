@@ -1,9 +1,11 @@
 #pragma once
 
-#include "common.hpp"
+#include "../../common/include/common.hpp"
 
 namespace kutergin_v_trapezoid_seq
 {
+
+double func(double x);
 
 class TrapezoidIntegrationSequential : public BaseTask // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)
 {

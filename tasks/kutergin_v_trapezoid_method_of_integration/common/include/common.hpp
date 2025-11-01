@@ -15,5 +15,6 @@ struct InputData
 using InType = InputData;
 using OutType = double; 
 using BaseTask = ppc::task::Task<InType, OutType>;
+using TestType = std::tuple<InputData, double, std::string>; // Тип для тестовых параметров {входные данные, ожидаемый результат, имя_теста}
 
 }

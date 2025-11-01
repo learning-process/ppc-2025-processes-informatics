@@ -3,15 +3,12 @@
 #include <vector>
 #include <tuple>
 
-#include "seq/kutergin_v_trapezoid_method_of_integration/include/trapezoid_integration_sequential.hpp"
+#include "../../seq/include/trapezoid_integration_sequential.hpp"
+#include "../../mpi/include/trapezoid_integration_mpi.hpp"
 #include "util/include/func_test_util.hpp"
 
 
-namespace kutergin_v_trapezoid_seq
-{
-
-
-using TestType = std::tuple<InputData, double, std::string>; // Тип для тестовых параметров {входные данные, ожидаемый результат, имя_теста}
+namespace kutergin_v_trapezoid_seq{
 
 
 class KuterginVRunFuncTestsSEQ : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> // наследник ppc::util::BaseRunFuncTests<InType, OutType, TestType> 
@@ -36,6 +33,8 @@ protected:
     // проверка результата после выполнения задачи
     bool CheckTestOutputData(OutType& output_data) final 
     {
+        std::cout << "-> EXPECTED: " << expected_output_ << std::endl;
+        std::cout << "-> ACTUAL:   " << output_data << std::endl;
         return std::abs(output_data - expected_output_) < 1e-6;
     }
 
@@ -62,20 +61,23 @@ TEST_P(KuterginVRunFuncTestsSEQ, TrapezoidTest) // параметризован�
 // массив с наборами тестовых данных
 const std::array<TestType, 2> kTestCases = {
     // тест 1
-    std::make_tuple(InputData{0.0, 3.0, 100}, 9.0, "f(x)=x^2_[0,3]_n=100"), 
+    std::make_tuple(InputData{0.0, 3.0, 10000}, 9.0, "f_x_squared_0_to_3_n_10000"), 
     // тест 2
-    std::make_tuple(InputData{-1.0, 1.0, 200}, 0.666666, "f(x)=x^2_[-1,1]_n=200")
+    std::make_tuple(InputData{-1.0, 1.0, 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000")
 };
 
 // используем фреймворк для подготовки задач к запуску
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TrapezoidIntegrationSequential, InType>(kTestCases, ""));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TrapezoidIntegrationSequential, InType>(kTestCases, PPC_SETTINGS_kutergin_v_trapezoid_method_of_integration),
+    ppc::util::AddFuncTask<kutergin_v_trapezoid_mpi::TrapezoidIntegrationMPI, InType>(kTestCases, PPC_SETTINGS_kutergin_v_trapezoid_method_of_integration)
+);
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = KuterginVRunFuncTestsSEQ::PrintFuncTestName<KuterginVRunFuncTestsSEQ>;
 
 // "регистрация" набора тестов и параметров в GTest
-INSTANTIATE_TEST_SUITE_P(TrapezopidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues, kTestName); 
+INSTANTIATE_TEST_SUITE_P(TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues, kTestName); 
 }
 
 }
