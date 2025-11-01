@@ -2,42 +2,55 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-#include <cstddef>
 #include <iostream>
-#include <numeric>
-#include <vector>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
 
-SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(const InType &in) {
+SizovDStringMismatchCountMPI::SizovDStringMismatchCountMPI(const InType &input) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput() = input;
   GetOutput() = 0;
 }
 
 bool SizovDStringMismatchCountMPI::ValidationImpl() {
-  const auto &[a, b] = GetInput();
+  const auto &input = GetInput();
+  const auto &a = std::get<0>(input);
+  const auto &b = std::get<1>(input);
   return !a.empty() && a.size() == b.size();
 }
 
 bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
-  const auto &[a, b] = GetInput();
-  str_a_ = a;
-  str_b_ = b;
-  GetOutput() = 0;
-  return !str_a_.empty() && str_a_.size() == str_b_.size();
+  const auto &input = GetInput();
+  str_a_ = std::get<0>(input);
+  str_b_ = std::get<1>(input);
+  return true;
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
-  int initialized = 0;
-  MPI_Initialized(&initialized);
-  if (initialized == 0) {
-    std::cerr << "[task] MPI not initialized\n";
-    return false;
+  bool mpi_ready = false;
+
+  try {
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    mpi_ready = (initialized != 0);
+  } catch (...) {
+    mpi_ready = false;
+  }
+
+  const int total_size = static_cast<int>(str_a_.size());
+
+  if (!mpi_ready) {
+    std::cerr << "[RunImpl][seq-fallback] MPI not initialized, running locally\n";
+    int local_result = 0;
+    for (int i = 0; i < total_size; ++i) {
+      if (str_a_[i] != str_b_[i]) {
+        ++local_result;
+      }
+    }
+    GetOutput() = local_result;
+    return true;
   }
 
   int rank = 0;
@@ -45,61 +58,27 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int total_size = static_cast<int>(str_a_.size());
-  if (total_size == 0) {
-    GetOutput() = 0;
-    return true;
-  }
+  std::cerr << "[Rank " << rank << "] Start RunImpl (MPI), size=" << size << ", len=" << total_size << "\n";
 
-  std::vector<int> counts(size, 0);
-  std::vector<int> displs(size, 0);
-
-  if (rank == 0) {
-    const int base = total_size / size;
-    const int rem = total_size % size;
-    for (int i = 0; i < size; ++i) {
-      counts[i] = base + (i < rem ? 1 : 0);
-    }
-    for (int i = 1; i < size; ++i) {
-      displs[i] = displs[i - 1] + counts[i - 1];
+  int local_result = 0;
+  for (int i = rank; i < total_size; i += size) {
+    if (str_a_[i] != str_b_[i]) {
+      ++local_result;
     }
   }
 
-  MPI_Bcast(counts.data(), static_cast<int>(counts.size()), MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(displs.data(), static_cast<int>(displs.size()), MPI_INT, 0, MPI_COMM_WORLD);
+  int global_result = 0;
+  MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<char> local_a(counts[rank]);
-  std::vector<char> local_b(counts[rank]);
+  GetOutput() = global_result;
 
-  MPI_Scatterv(str_a_.data(), counts.data(), displs.data(), MPI_CHAR, local_a.data(), counts[rank], MPI_CHAR, 0,
-               MPI_COMM_WORLD);
-
-  MPI_Scatterv(str_b_.data(), counts.data(), displs.data(), MPI_CHAR, local_b.data(), counts[rank], MPI_CHAR, 0,
-               MPI_COMM_WORLD);
-
-  int local_diff = 0;
-  for (int i = 0; i < counts[rank]; ++i) {
-    if (local_a[i] != local_b[i]) {
-      ++local_diff;
-    }
-  }
-
-  int global_diff = 0;
-  MPI_Reduce(&local_diff, &global_diff, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&global_diff, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  GetOutput() = global_diff;
-
-  std::cerr << "[Rank " << rank << "] local=" << local_diff << " chunk=" << counts[rank] << " total=" << total_size
-            << " global=" << global_diff << "\n";
-
+  std::cerr << "[Rank " << rank << "] End RunImpl → local=" << local_result << ", global=" << global_result << "\n";
   return true;
 }
 
 bool SizovDStringMismatchCountMPI::PostProcessingImpl() {
-  return GetOutput() >= 0;
+  return true;
 }
 
 }  // namespace sizov_d_string_mismatch_count
