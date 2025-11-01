@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <vector>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 
@@ -32,6 +33,10 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 bool SizovDStringMismatchCountMPI::RunImpl() {
   int initialized = 0;
   MPI_Initialized(&initialized);
+  if (initialized == 0) {
+    std::cerr << "[SizovDStringMismatchCountMPI] MPI is not initialized\n";
+    return false;
+  }
 
   int rank = 0;
   int size = 1;
@@ -40,9 +45,9 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
 
   const int total_size = static_cast<int>(str_a_.size());
   if (total_size == 0) {
-    if (rank == 0) {
-      GetOutput() = 0;
-    }
+    int zero = 0;
+    MPI_Bcast(&zero, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    GetOutput() = 0;
     return true;
   }
 
@@ -66,8 +71,8 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
     }
   }
 
-  MPI_Bcast(counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(counts.data(), static_cast<int>(counts.size()), MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(displs.data(), static_cast<int>(displs.size()), MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<char> local_a(counts[rank]);
   std::vector<char> local_b(counts[rank]);
@@ -88,9 +93,11 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   int global_result = 0;
   MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
+  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   GetOutput() = global_result;
 
-  std::cerr << "[Rank " << rank << "] local=" << local_result << ", size=" << counts[rank]
+  std::cerr << "[Rank " << rank << "] local=" << local_result << ", chunk=" << counts[rank]
             << ", global=" << global_result << "\n";
 
   return true;
