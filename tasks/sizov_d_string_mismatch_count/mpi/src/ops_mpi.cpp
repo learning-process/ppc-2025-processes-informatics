@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <cstddef>
 #include <iostream>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
@@ -29,53 +30,71 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
-  bool mpi_ready = false;
+  int initialized = 0;
+  MPI_Initialized(&initialized);
 
-  try {
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    mpi_ready = (initialized != 0);
-  } catch (...) {
-    mpi_ready = false;
-  }
-
-  const int total_size = static_cast<int>(str_a_.size());
-
-  // ---------- SEQ fallback ----------
-  if (!mpi_ready) {
-    std::cerr << "[RunImpl][seq-fallback] MPI not initialized, running locally\n";
-    int local_result = 0;
-    for (int i = 0; i < total_size; ++i) {
-      if (str_a_[i] != str_b_[i]) {
-        ++local_result;
-      }
-    }
-    GetOutput() = local_result;
-    return true;
-  }
-
-  // ---------- MPI mode ----------
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  std::cerr << "[Rank " << rank << "] Start RunImpl (MPI), size=" << size << ", len=" << total_size << "\n";
+  const int total_size = static_cast<int>(str_a_.size());
+  if (total_size == 0) {
+    if (rank == 0) {
+      GetOutput() = 0;
+    }
+    return true;
+  }
+
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
+
+  if (rank == 0) {
+    const int base_chunk = total_size / size;
+    const int remainder = total_size % size;
+
+    for (int i = 0; i < size; ++i) {
+      counts[i] = base_chunk;
+      if (i < remainder) {
+        counts[i] += 1;
+      }
+    }
+
+    displs[0] = 0;
+    for (int i = 1; i < size; ++i) {
+      displs[i] = displs[i - 1] + counts[i - 1];
+    }
+  }
+
+  MPI_Bcast(counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<char> local_a(counts[rank]);
+  std::vector<char> local_b(counts[rank]);
+
+  MPI_Scatterv(str_a_.data(), counts.data(), displs.data(), MPI_CHAR, local_a.data(), counts[rank], MPI_CHAR, 0,
+               MPI_COMM_WORLD);
+
+  MPI_Scatterv(str_b_.data(), counts.data(), displs.data(), MPI_CHAR, local_b.data(), counts[rank], MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   int local_result = 0;
-  for (int i = rank; i < total_size; i += size) {
-    if (str_a_[i] != str_b_[i]) {
+  for (int i = 0; i < counts[rank]; ++i) {
+    if (local_a[i] != local_b[i]) {
       ++local_result;
     }
   }
 
   int global_result = 0;
   MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  GetOutput() = global_result;
+  if (rank == 0) {
+    GetOutput() = global_result;
+  }
 
-  std::cerr << "[Rank " << rank << "] End RunImpl → local=" << local_result << ", global=" << global_result << "\n";
+  std::cerr << "[Rank " << rank << "] local=" << local_result << ", size=" << counts[rank]
+            << ", global=" << global_result << "\n";
+
   return true;
 }
 
