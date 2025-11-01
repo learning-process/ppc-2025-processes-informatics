@@ -41,6 +41,7 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
 
   const int total_size = static_cast<int>(str_a_.size());
 
+  // ---------- SEQ fallback ----------
   if (!mpi_ready) {
     std::cerr << "[RunImpl][seq-fallback] MPI not initialized, running locally\n";
     int local_result = 0;
@@ -53,6 +54,7 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
     return true;
   }
 
+  // ---------- MPI mode ----------
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
-#include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 
@@ -33,8 +32,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
       throw std::runtime_error("Cannot open strings.txt");
     }
 
-    std::string a;
-    std::string b;
+    std::string a, b;
     std::getline(file, a);
     std::getline(file, b);
     file.close();
@@ -89,8 +87,7 @@ const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<SizovDStringMismatc
 const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
 const auto kTestName = SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
 
-INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovDRunFuncTestsStringMismatchCount, kGtestValues,
-                         kTestName);  // NOLINT
+INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovDRunFuncTestsStringMismatchCount, kGtestValues, kTestName);
 
 }  // namespace
 }  // namespace sizov_d_string_mismatch_count
