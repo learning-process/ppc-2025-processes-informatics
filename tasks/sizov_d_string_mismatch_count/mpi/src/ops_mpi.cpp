@@ -88,9 +88,7 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   int global_result = 0;
   MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (rank == 0) {
-    GetOutput() = global_result;
-  }
+  GetOutput() = global_result;
 
   std::cerr << "[Rank " << rank << "] local=" << local_result << ", size=" << counts[rank]
             << ", global=" << global_result << "\n";
