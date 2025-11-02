@@ -23,14 +23,14 @@ namespace papulina_y_count_of_letters {
 class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<0>(test_param) + "_" + std::to_string(std::get<1>(test_param));
+    return std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::string(std::get<0>(params));
-    expectedResult_ = std::get<1>(params);
+    input_data_ = std::string(std::get<0>(std::get<0>(params)));
+    expectedResult_ = std::get<1>(std::get<0>(params));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -52,13 +52,13 @@ TEST_P(PapulinaYRunFuncTestsProcesses, CountOfLetters) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {std::make_tuple("", 0),
-                                            std::make_tuple("abcd", 4),
-                                            std::make_tuple("aabcd123abcd123abcd", 13),
-                                            std::make_tuple("abcd_____________123abcd", 8),
-                                            std::make_tuple("a", 1),
-                                            std::make_tuple("1243356", 0),
-                                            std::make_tuple("a1a1a1a1a1a1a1a1a1a1a1a1", 12)};
+const std::array<TestType, 7> kTestParam = {std::make_tuple(std::make_tuple("", 0),"test1"),
+                                            std::make_tuple(std::make_tuple("abcd", 4),"test2"),
+                                            std::make_tuple(std::make_tuple("aabcd123abcd123abcd", 13),"test3"),
+                                            std::make_tuple(std::make_tuple("abcd_____________123abcd", 8),"test4"),
+                                            std::make_tuple(std::make_tuple("a", 1),"test5"),
+                                            std::make_tuple(std::make_tuple("1243356", 0),"test6"),
+                                            std::make_tuple(std::make_tuple("a1a1a1a1a1a1a1a1a1a1a1a1", 12),"test7")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYCountOfLettersMPI, InType>(kTestParam, PPC_SETTINGS_papulina_y_count_of_letters),
