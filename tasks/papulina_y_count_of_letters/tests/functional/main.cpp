@@ -52,13 +52,21 @@ TEST_P(PapulinaYRunFuncTestsProcesses, CountOfLetters) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {std::make_tuple(std::make_tuple("", 0), "test1"),
-                                            std::make_tuple(std::make_tuple("abcd", 4), "test2"),
-                                            std::make_tuple(std::make_tuple("aabcd123abcd123abcd", 13), "test3"),
-                                            std::make_tuple(std::make_tuple("abcd_____________123abcd", 8), "test4"),
-                                            std::make_tuple(std::make_tuple("a", 1), "test5"),
-                                            std::make_tuple(std::make_tuple("1243356", 0), "test6"),
-                                            std::make_tuple(std::make_tuple("a1a1a1a1a1a1a1a1a1a1a1a1", 12), "test7")};
+const std::array<TestType, 14> kTestParam = {
+    std::make_tuple(std::make_tuple("", 0), "test1"),
+    std::make_tuple(std::make_tuple("abcd", 4), "test2"),
+    std::make_tuple(std::make_tuple("aabcd123abcd123abcd", 13), "test3"),
+    std::make_tuple(std::make_tuple("abcd_____________123abcd", 8), "test4"),
+    std::make_tuple(std::make_tuple("a", 1), "test5"),
+    std::make_tuple(std::make_tuple("1243356", 0), "test6"),
+    std::make_tuple(std::make_tuple("a1a1a1a1a1a1a1a1a1a1a1a1", 12), "test7"),
+    std::make_tuple(std::make_tuple("!@345678&*()", 0), "test8"),
+    std::make_tuple(std::make_tuple("aaaaaaaaaaaaaaaaaaaa", 20), "test9"),
+    std::make_tuple(std::make_tuple("tatatatatatatatatatatatatatatatatatatatata", 42), "test10"),
+    std::make_tuple(std::make_tuple("er11er11er11er11", 8), "test11"),
+    std::make_tuple(std::make_tuple("eee___eee__", 6), "test12"),
+    std::make_tuple(std::make_tuple("eee___eee__EEE", 9), "test13"),
+    std::make_tuple(std::make_tuple("EEEE___EEEE", 8), "test14")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYCountOfLettersMPI, InType>(kTestParam, PPC_SETTINGS_papulina_y_count_of_letters),
