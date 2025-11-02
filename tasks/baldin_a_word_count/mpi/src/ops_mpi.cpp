@@ -29,102 +29,102 @@ bool BaldinAWordCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  std::string &input = GetInput();
+  std::string input_local = GetInput();
 
-  if (input.size() == 0) {
-    if (rank == 0) {
-      GetOutput() = 0;
-    }
-    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  if (rank == 0 && input_local.empty()) {
+    GetOutput() = 0;
+  }
+  int is_empty = (rank == 0 && input_local.empty()) ? 1 : 0;
+  MPI_Bcast(&is_empty, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (is_empty) {
     return true;
   }
 
-  if (world_size > static_cast<int>(input.size())) {
-    if (rank == 0) {
-      size_t count = 0;
-      bool in_word = false;
-      for (char c : input) {
-        if (std::isalnum(c) || c == '-' || c == '_') {
-          if (!in_word) {
-            in_word = true;
-            count++;
-          }
-        } else {
-          in_word = false;
-        }
-      }
-      GetOutput() = count;
-    }
-    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
-    return true;
-  }
-
-  int total_len = static_cast<int>(input.size());
-  int rem = total_len % world_size;
-  if (rem != 0) {
-    input.append(world_size - rem + 1, ' ');
-  }
-  int part = input.size() / world_size;
-
-  std::cout << "+" << '\n';
-  std::vector<int> send_counts(world_size), displs(world_size);
-
+  int total_len = 0;
   if (rank == 0) {
+    total_len = static_cast<int>(input_local.size());
+  }
+
+  MPI_Bcast(&total_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  int padded_len = total_len;
+  if (rank == 0) {
+    int rem = total_len % world_size;
+    int pad = (rem == 0) ? 0 : (world_size - rem);
+    input_local.append(pad + 1, ' ');
+    padded_len = static_cast<int>(input_local.size());
+  }
+
+  MPI_Bcast(&padded_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  int part = padded_len / world_size;
+  int recv_count = (rank == world_size - 1) ? (padded_len - part * (world_size - 1)) : (part + 1);
+
+  std::vector<int> send_counts;
+  std::vector<int> displs;
+  if (rank == 0) {
+    displs.assign(world_size, 0);
+    send_counts.assign(world_size, 0);
     int offset = 0;
-    for (int i = 0; i < world_size; i++) {
-      send_counts[i] = part + 1;
+    for (int i = 0; i < world_size; ++i) {
       displs[i] = offset;
       offset += part;
     }
+    for (int i = 0; i < world_size; ++i) {
+      if (i < world_size - 1) {
+        send_counts[i] = part + 1;
+      } else {
+        send_counts[i] = padded_len - displs[i];
+      }
+    }
   }
-  std::cout << "++" << '\n';
-  // if (rank == 0) {
-  //   std::cout << total_len << '\n';
-  //   for (int i = 0; i < world_size; i++) {
-  //     std::cout << send_counts[i] << ' ';
-  //   }
-  //   std::cout << '\n';
-  // }
 
-  std::vector<char> local_buf(part + 1);
+  std::vector<char> local_buf(recv_count);
 
-  MPI_Scatterv(rank == 0 ? input.data() : nullptr, rank == 0 ? send_counts.data() : nullptr,
-               rank == 0 ? displs.data() : nullptr, MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? input_local.data() : nullptr, rank == 0 ? send_counts.data() : nullptr,
+               rank == 0 ? displs.data() : nullptr, MPI_CHAR, local_buf.data(), recv_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
-  std::cout << "+++" << '\n';
-  size_t local_cnt = 0;
+  auto is_word_char = [](char c) -> bool {
+    return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_';
+  };
+
+  long long local_cnt = 0;
   bool in_word = false;
-  for (int i = 0; i < part; i++) {
-    if (std::isalnum(local_buf[i]) || local_buf[i] == '-' || local_buf[i] == '_') {
+
+  int main_len = (rank == world_size - 1) ? (recv_count - 1) : part;
+  if (main_len < 0) {
+    main_len = 0;
+  }
+  for (int i = 0; i < main_len; ++i) {
+    if (is_word_char(local_buf[i])) {
       if (!in_word) {
         in_word = true;
-        local_cnt++;
+        ++local_cnt;
       }
     } else {
       in_word = false;
     }
   }
-
-  if (in_word && (std::isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
-    local_cnt--;
+  if (rank < world_size - 1 && main_len > 0) {
+    if (is_word_char(local_buf[main_len - 1]) && is_word_char(local_buf[main_len])) {
+      --local_cnt;
+    }
   }
-  std::cout << "++++" << '\n';
-  // std::cout << "RANK: " << rank << ' ' << local_cnt << '\n';
-  // for (int i = 0; i < part; i++) {
-  //   std::cout << local_buf[i];
-  // }
-  // std::cout << '\n';
 
-  size_t global_cnt = 0;
+  long long global_cnt = 0;
   MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-  std::cout << "+++++" << '\n';
+
   if (rank == 0) {
-    GetOutput() = global_cnt;
-    // std::cout << "ASWERRRRR: " << global_cnt << '\n';
+    GetOutput() = static_cast<long long>(global_cnt);
   }
 
-  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
-  std::cout << "++++++" << '\n';
+  long long broadcast_out = (rank == 0) ? global_cnt : 0;
+  MPI_Bcast(&broadcast_out, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  if (rank != 0) {
+    GetOutput() = broadcast_out;
+  }
+
   return true;
 }
 
