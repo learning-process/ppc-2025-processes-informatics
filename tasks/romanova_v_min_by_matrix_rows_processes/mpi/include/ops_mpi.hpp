@@ -18,7 +18,7 @@ class RomanovaVMinByMatrixRowsMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int n_{}, m_{};
+  int n_, m_;
   InType in_data_;
   OutType res_;
 };
