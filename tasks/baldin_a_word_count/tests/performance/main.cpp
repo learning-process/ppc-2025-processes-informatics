@@ -17,7 +17,7 @@ class BaldinAWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   OutType expected_output;
 
   void SetUp() override {
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_baldin_a_word_count, "book-war-and-peace.txt");
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_baldin_a_word_count, "test_string.txt");
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {

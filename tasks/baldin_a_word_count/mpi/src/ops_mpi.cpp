@@ -66,6 +66,7 @@ bool BaldinAWordCountMPI::RunImpl() {
   }
   int part = input.size() / world_size;
 
+  std::cout << "+" << '\n';
   std::vector<int> send_counts(world_size), displs(world_size);
 
   if (rank == 0) {
@@ -76,7 +77,7 @@ bool BaldinAWordCountMPI::RunImpl() {
       offset += part;
     }
   }
-
+  std::cout << "++" << '\n';
   // if (rank == 0) {
   //   std::cout << total_len << '\n';
   //   for (int i = 0; i < world_size; i++) {
@@ -89,7 +90,7 @@ bool BaldinAWordCountMPI::RunImpl() {
 
   MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0,
                MPI_COMM_WORLD);
-
+  std::cout << "+++" << '\n';
   size_t local_cnt = 0;
   bool in_word = false;
   for (int i = 0; i < part; i++) {
@@ -106,22 +107,23 @@ bool BaldinAWordCountMPI::RunImpl() {
   if (in_word && (std::isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
     local_cnt--;
   }
-
+  std::cout << "++++" << '\n';
   // std::cout << "RANK: " << rank << ' ' << local_cnt << '\n';
   // for (int i = 0; i < part; i++) {
   //   std::cout << local_buf[i];
   // }
+  // std::cout << '\n';
 
-  std::cout << '\n';
   size_t global_cnt = 0;
   MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
+  std::cout << "+++++" << '\n';
   if (rank == 0) {
     GetOutput() = global_cnt;
     // std::cout << "ASWERRRRR: " << global_cnt << '\n';
   }
 
   MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  std::cout << "++++++" << '\n';
   return true;
 }
 
