@@ -35,8 +35,7 @@ bool BaldinAWordCountMPI::RunImpl() {
     if (rank == 0) {
       GetOutput() = 0;
     }
-    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
     return true;
   }
 
@@ -56,14 +55,15 @@ bool BaldinAWordCountMPI::RunImpl() {
       }
       GetOutput() = count;
     }
-    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
     return true;
   }
 
   int total_len = static_cast<int>(input.size());
   int rem = total_len % world_size;
-  input.append(world_size - rem + 1, ' ');
+  if (rem != 0) {
+    input.append(world_size - rem + 1, ' ');
+  }
   int part = input.size() / world_size;
 
   std::vector<int> send_counts(world_size), displs(world_size);
@@ -114,15 +114,14 @@ bool BaldinAWordCountMPI::RunImpl() {
 
   std::cout << '\n';
   size_t global_cnt = 0;
-  MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     GetOutput() = global_cnt;
     // std::cout << "ASWERRRRR: " << global_cnt << '\n';
   }
 
-  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
   return true;
 }
 
