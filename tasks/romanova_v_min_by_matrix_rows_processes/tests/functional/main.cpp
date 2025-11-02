@@ -36,10 +36,10 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
       int rows, columns;
       file >> rows >> columns;
 
-      exp_answer = std::vector<int>(rows);
+      exp_answer = OutType(rows);
       for(int i = 0; i < rows; i++) file >> exp_answer[i];
 
-      input_data_ = std::vector<std::vector<int>>(rows, std::vector<int>(columns));
+      input_data_ = InType(rows, std::vector<int>(columns));
       for(int i = 0; i < rows; i++) for(int j = 0; j < columns; j++) file >> input_data_[i][j];
 
       file.close();
@@ -68,7 +68,7 @@ TEST_P(RomanovaVMinByMatrixRowsFuncTestsProcesses, MinByMatrixRowsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 2> kTestParam = {"test1", "test2"};
+const std::array<TestType, 3> kTestParam = {"test1", "test2", "bigTest"};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes),
