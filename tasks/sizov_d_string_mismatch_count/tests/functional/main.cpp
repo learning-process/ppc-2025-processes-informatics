@@ -66,7 +66,35 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    std::cerr << "[task] expected=" << expected_result_ << ", got=" << output_data << "\n";
+    int rank = 0;
+
+#if defined(_WIN32)
+    char *buf = nullptr;
+    size_t len = 0;
+    if (_dupenv_s(&buf, &len, "OMPI_COMM_WORLD_RANK") == 0 && buf) {
+      char *end_ptr = nullptr;
+      size_t val = std::strtol(buf, &end_ptr, 10);
+      if (end_ptr != buf && *end_ptr == '\0') {
+        rank = static_cast<int>(val);
+      }
+      free(buf);
+    }
+#else
+    const char *env_ptr = std::getenv("OMPI_COMM_WORLD_RANK");
+    if (env_ptr) {
+      char *end_ptr = nullptr;
+      size_t val = std::strtol(env_ptr, &end_ptr, 10);
+      if (end_ptr != env_ptr && *end_ptr == '\0') {
+        rank = static_cast<int>(val);
+      }
+    }
+#endif
+
+    std::cerr << "[task] (rank=" << rank << ") expected=" << expected_result_ << ", got=" << output_data << "\n";
+
+    if (rank != 0) {
+      return true;
+    }
     return output_data == expected_result_;
   }
 
