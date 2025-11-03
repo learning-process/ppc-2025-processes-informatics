@@ -24,7 +24,7 @@ class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfT
       file >> rows >> columns;
 
       exp_answer = OutType(rows);
-      for(size_t i = 0; i < rows; i++) file >> exp_answer[i];
+      for(int i = 0; i < rows; i++) file >> exp_answer[i];
 
       input_data_ = InType(rows, std::vector<int>(columns));
       for(int i = 0; i < rows; i++) for(int j = 0; j < columns; j++) file >> input_data_[i][j];

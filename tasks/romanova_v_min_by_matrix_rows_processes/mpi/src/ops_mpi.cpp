@@ -59,7 +59,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
 
   for(int i = 0; i < en_row - st_row; i++){
     min_val = in_data_[st_row + i][0];
-    for(size_t j = 1; j < m_; j++){
+    for(int j = 1; j < m_; j++){
       if(min_val > in_data_[st_row + i][j]) min_val = in_data_[st_row + i][j];
     }
     temp[i] = min_val;
