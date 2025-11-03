@@ -60,11 +60,10 @@ bool BaldinAWordCountMPI::RunImpl() {
   int part = padded_len / world_size;
   int recv_count = (rank == world_size - 1) ? (padded_len - part * (world_size - 1)) : (part + 1);
 
-  std::vector<int> send_counts;
-  std::vector<int> displs;
+  std::vector<int> send_counts(world_size, 0);
+  std::vector<int> displs(world_size, 0);
+
   if (rank == 0) {
-    displs.assign(world_size, 0);
-    send_counts.assign(world_size, 0);
     int offset = 0;
     for (int i = 0; i < world_size; ++i) {
       displs[i] = offset;
@@ -81,9 +80,10 @@ bool BaldinAWordCountMPI::RunImpl() {
 
   std::vector<char> local_buf(recv_count);
 
-  MPI_Scatterv(rank == 0 ? input_local.data() : nullptr, rank == 0 ? send_counts.data() : nullptr,
-               rank == 0 ? displs.data() : nullptr, MPI_CHAR, local_buf.data(), recv_count, MPI_CHAR, 0,
-               MPI_COMM_WORLD);
+  std::cout << "+++" << '\n';
+  MPI_Scatterv((rank == 0 ? input_local.data() : nullptr), send_counts.data(), displs.data(), MPI_CHAR,
+               local_buf.data(), recv_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+  std::cout << "++++" << '\n';
 
   auto is_word_char = [](char c) -> bool {
     return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_';
