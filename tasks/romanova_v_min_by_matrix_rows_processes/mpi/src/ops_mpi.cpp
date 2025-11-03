@@ -29,6 +29,7 @@ bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
+  
   int n, rank;
   int delta, extra = 0;
   std::vector<int> recv_counts, displs;
@@ -52,7 +53,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   int en_row = (rank + 1) * delta;
   if(rank == n - 1) en_row += extra;
 
-  std::vector<int> temp(en_row - st_row);
+  OutType temp(en_row - st_row);
 
   int min_val;
 
@@ -68,7 +69,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   
   MPI_Gatherv(temp.data(), temp.size(), MPI_INT, res_.data(), recv_counts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(res_.data(), n_, MPI_INT, 0, MPI_COMM_WORLD);
-
+  
   return true;
 }
 
