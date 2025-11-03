@@ -56,7 +56,7 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 29> kTestParam = {
+const std::array<TestType, 19> kTestParam = {
     std::make_tuple(0, "empty_vector"),         std::make_tuple(1, "single_element"),
     std::make_tuple(2, "two_elements"),         std::make_tuple(3, "small_odd"),
     std::make_tuple(4, "small_even"),           std::make_tuple(7, "prime_small"),
