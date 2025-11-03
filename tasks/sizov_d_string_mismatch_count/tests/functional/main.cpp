@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cctype>
+#include <cstddef>
 #include <fstream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -18,7 +21,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     std::string sanitized = test_param;
-    std::replace(sanitized.begin(), sanitized.end(), ' ', '_');
+    std::ranges::replace(sanitized, ' ', '_');
     return sanitized;
   }
 
@@ -68,10 +71,15 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 
  private:
   static void TrimString(std::string &s) {
-    s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char c) { return c == '\r' || c == '\n' || c == '\t'; }),
-            s.end());
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+    auto new_end = std::ranges::remove_if(s, [](unsigned char c) { return c == '\r' || c == '\n' || c == '\t'; });
+    s.erase(new_end.begin(), new_end.end());
+
+    auto left_it = std::ranges::find_if(s, [](unsigned char ch) { return !std::isspace(ch); });
+    s.erase(s.begin(), left_it);
+
+    auto right_it =
+        std::ranges::find_if(std::views::reverse(s), [](unsigned char ch) { return !std::isspace(ch); }).base();
+    s.erase(right_it, s.end());
   }
 
   InType input_data_ = std::make_tuple(std::string{}, std::string{});
