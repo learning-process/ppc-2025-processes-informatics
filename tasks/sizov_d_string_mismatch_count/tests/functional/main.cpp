@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -26,9 +25,6 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
  protected:
   void SetUp() override {
     const std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
-
-    std::cerr << "[task] opening file: " << abs_path << "\n";
-
     std::ifstream file(abs_path);
     if (!file.is_open()) {
       throw std::runtime_error("Cannot open strings.txt");
@@ -54,11 +50,8 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
         }
       }
     } else {
-      std::cerr << "[task] invalid input, skipping... " << "a=" << a << ", b=" << b;
       GTEST_SKIP();
     }
-
-    std::cerr << "[task] setup complete: len=" << a.size() << ", mismatches=" << expected_result_ << "\n";
   }
 
   InType GetTestInputData() override {
@@ -66,32 +59,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    int rank = 0;
-
-#if defined(_WIN32)
-    char *buf = nullptr;
-    size_t len = 0;
-    if (_dupenv_s(&buf, &len, "OMPI_COMM_WORLD_RANK") == 0 && buf) {
-      char *end_ptr = nullptr;
-      size_t val = std::strtol(buf, &end_ptr, 10);
-      if (end_ptr != buf && *end_ptr == '\0') {
-        rank = static_cast<int>(val);
-      }
-      free(buf);
-    }
-#else
-    const char *env_ptr = std::getenv("OMPI_COMM_WORLD_RANK");
-    if (env_ptr) {
-      char *end_ptr = nullptr;
-      size_t val = std::strtol(env_ptr, &end_ptr, 10);
-      if (end_ptr != env_ptr && *end_ptr == '\0') {
-        rank = static_cast<int>(val);
-      }
-    }
-#endif
-
-    std::cerr << "[task] (rank=" << rank << ") expected=" << expected_result_ << ", got=" << output_data << "\n";
-
+    const int rank = 0;
     if (rank != 0) {
       return true;
     }
