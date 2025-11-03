@@ -62,7 +62,7 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    const int rank = 0;
+    constexpr int rank = 0;
     if (rank != 0) {
       return true;
     }

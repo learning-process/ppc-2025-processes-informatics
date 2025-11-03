@@ -23,10 +23,19 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
   const auto &input = GetInput();
   str_a_ = std::get<0>(input);
   str_b_ = std::get<1>(input);
+  global_result_ = 0;
   return true;
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
+  int initialized = 0;
+  int finalized = 0;
+  MPI_Initialized(&initialized);
+  MPI_Finalized(&finalized);
+  if (initialized == 0 || finalized != 0) {
+    return false;
+  }
+
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -40,29 +49,31 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (total_size == 0) {
+    global_result_ = 0;
     GetOutput() = 0;
     return true;
   }
 
+  if (rank != 0) {
+    str_a_.resize(static_cast<std::size_t>(total_size));
+    str_b_.resize(static_cast<std::size_t>(total_size));
+  }
+
+  MPI_Bcast(str_a_.data(), total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(str_b_.data(), total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
   int local_result = 0;
   for (int i = rank; i < total_size; i += size) {
-    if (str_a_[i] != str_b_[i]) {
+    if (str_a_[static_cast<std::size_t>(i)] != str_b_[static_cast<std::size_t>(i)]) {
       ++local_result;
     }
   }
 
-  int global_result = 0;
-  MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_result, &global_result_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (rank == 0) {
-    GetOutput() = global_result;
-  }
+  MPI_Bcast(&global_result_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    GetOutput() = global_result;
-  }
+  GetOutput() = global_result_;
 
   return true;
 }
