@@ -48,7 +48,7 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
 
   bool CheckTestOutputData(OutType &output_data) final {
     if(exp_answer.size() != output_data.size()) return false;
-    for(int i = 0; i < exp_answer.size(); i++) if(exp_answer[i] != output_data[i]) return false;
+    for(size_t i = 0; i < exp_answer.size(); i++) if(exp_answer[i] != output_data[i]) return false;
     return true;
   }
 
