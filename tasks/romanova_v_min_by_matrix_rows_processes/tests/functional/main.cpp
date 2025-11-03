@@ -59,7 +59,6 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
  private:
   InType input_data_;
   OutType exp_answer;
-  std::string path = "../../data/";
 };
 
 namespace {
@@ -68,7 +67,7 @@ TEST_P(RomanovaVMinByMatrixRowsFuncTestsProcesses, MinByMatrixRowsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {"test1", "test2", "bigTest"};
+const std::array<TestType, 7> kTestParam = {"reallySmallTest", "simpleTest", "averageTest", "increasingValuesInRowsTest","decreasingValuesInRowsTest", "sameValuesTest", "matrixForPerfTest"};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes),
@@ -76,9 +75,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = RomanovaVMinByMatrixRowsFuncTestsProcesses::PrintFuncTestName<RomanovaVMinByMatrixRowsFuncTestsProcesses>;
+const auto kFuncTestName = RomanovaVMinByMatrixRowsFuncTestsProcesses::PrintFuncTestName<RomanovaVMinByMatrixRowsFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(FileTests, RomanovaVMinByMatrixRowsFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(FileTests, RomanovaVMinByMatrixRowsFuncTestsProcesses, kGtestValues, kFuncTestName);
 
 }  // namespace
 

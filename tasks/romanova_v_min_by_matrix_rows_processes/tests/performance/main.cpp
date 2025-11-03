@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <fstream>
+
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
 #include "romanova_v_min_by_matrix_rows_processes/mpi/include/ops_mpi.hpp"
@@ -8,15 +10,33 @@
 namespace romanova_v_min_by_matrix_rows_processes {
 
 class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+  const int kCount_ = 1000;
+  InType input_data_;
+  OutType exp_answer;
 
   void SetUp() override {
-    
+    std::string path = "matrixForPerfTest.txt";
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_min_by_matrix_rows_processes, path);
+    std::ifstream file(abs_path);
+    if(file.is_open()){
+
+      int rows, columns;
+      file >> rows >> columns;
+
+      exp_answer = OutType(rows);
+      for(int i = 0; i < rows; i++) file >> exp_answer[i];
+
+      input_data_ = InType(rows, std::vector<int>(columns));
+      for(int i = 0; i < rows; i++) for(int j = 0; j < columns; j++) file >> input_data_[i][j];
+
+      file.close();
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (output_data.size() != 0);
+    if(exp_answer.size() != output_data.size()) return false;
+    for(int i = 0; i < exp_answer.size(); i++) if(exp_answer[i] != output_data[i]) return false;
+    return true;
   }
 
   InType GetTestInputData() final {
