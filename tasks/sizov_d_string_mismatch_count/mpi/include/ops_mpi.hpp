@@ -18,7 +18,6 @@ class SizovDStringMismatchCountMPI : public BaseTask {
  private:
   std::string str_a_;
   std::string str_b_;
-  int local_result_ = 0;
   int global_result_ = 0;
 
   bool ValidationImpl() override;
