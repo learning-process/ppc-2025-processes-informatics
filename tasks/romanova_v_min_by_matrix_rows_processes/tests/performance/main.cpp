@@ -10,7 +10,6 @@
 namespace romanova_v_min_by_matrix_rows_processes {
 
 class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 1000;
   InType input_data_;
   OutType exp_answer;
 
