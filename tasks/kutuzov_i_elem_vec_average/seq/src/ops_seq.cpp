@@ -8,22 +8,22 @@
 
 namespace kutuzov_i_elem_vec_average {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
+KutuzovIElemVecAverageSEQ::KutuzovIElemVecAverageSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
+bool KutuzovIElemVecAverageSEQ::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
+bool KutuzovIElemVecAverageSEQ::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::RunImpl() {
+bool KutuzovIElemVecAverageSEQ::RunImpl() {
   if (GetInput() == 0) {
     return false;
   }
@@ -52,7 +52,7 @@ bool NesterovATestTaskSEQ::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
+bool KutuzovIElemVecAverageSEQ::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }

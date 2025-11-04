@@ -10,22 +10,22 @@
 
 namespace kutuzov_i_elem_vec_average {
 
-NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
+KutuzovIElemVecAverageMPI::KutuzovIElemVecAverageMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskMPI::ValidationImpl() {
+bool KutuzovIElemVecAverageMPI::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskMPI::PreProcessingImpl() {
+bool KutuzovIElemVecAverageMPI::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::RunImpl() {
+bool KutuzovIElemVecAverageMPI::RunImpl() {
   auto input = GetInput();
   if (input == 0) {
     return false;
@@ -64,7 +64,7 @@ bool NesterovATestTaskMPI::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::PostProcessingImpl() {
+bool KutuzovIElemVecAverageMPI::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
