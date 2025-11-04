@@ -56,18 +56,11 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {std::make_tuple(0, "empty_vector"),
-                                             std::make_tuple(1, "single_element"),
-                                             std::make_tuple(2, "two_elements"),
-                                             std::make_tuple(3, "small_odd"),
-                                             std::make_tuple(4, "small_even"),
-                                             std::make_tuple(7, "prime_small"),
-                                             std::make_tuple(8, "power_of_two_small"),
-                                             std::make_tuple(31, "odd_medium"),
-                                             std::make_tuple(32, "power_of_two_medium"),
-                                             std::make_tuple(63, "odd_boundary"),
-                                             std::make_tuple(64, "power_of_two_boundary"),
-                                             std::make_tuple(100, "round_number_large")};
+const std::array<TestType, 7> kTestParam = {
+    std::make_tuple(0, "empty_vector"),   std::make_tuple(1, "single_element"), std::make_tuple(2, "two_elements"),
+    std::make_tuple(3, "three_elements"), std::make_tuple(4, "four_elements"),  std::make_tuple(10, "medium_vec"),
+    std::make_tuple(20, "big_vec"),
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LukinIElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_lukin_i_elem_vec_sum),

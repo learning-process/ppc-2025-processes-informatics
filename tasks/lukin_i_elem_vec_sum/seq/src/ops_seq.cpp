@@ -24,7 +24,7 @@ bool LukinIElemVecSumSEQ::PreProcessingImpl() {
 
 bool LukinIElemVecSumSEQ::RunImpl() {
   std::vector<int> input = GetInput();
-  const int vec_size = static_cast<int>(input.size());
+  const size_t vec_size = static_cast<size_t>(input.size());
 
   if (vec_size == 0) {
     GetOutput() = 0;
