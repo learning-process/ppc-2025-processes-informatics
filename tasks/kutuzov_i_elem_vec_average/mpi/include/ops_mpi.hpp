@@ -5,12 +5,12 @@
 
 namespace kutuzov_i_elem_vec_average {
 
-class NesterovATestTaskMPI : public BaseTask {
+class KutuzovIElemVecAverageMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit NesterovATestTaskMPI(const InType &in);
+  explicit KutuzovIElemVecAverageMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

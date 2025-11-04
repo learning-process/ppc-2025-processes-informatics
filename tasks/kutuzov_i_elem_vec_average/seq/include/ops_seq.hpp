@@ -5,12 +5,12 @@
 
 namespace kutuzov_i_elem_vec_average {
 
-class NesterovATestTaskSEQ : public BaseTask {
+class KutuzovIElemVecAverageSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit NesterovATestTaskSEQ(const InType &in);
+  explicit KutuzovIElemVecAverageSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
