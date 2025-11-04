@@ -26,7 +26,7 @@ bool LukinIElemVecSumMPI::PreProcessingImpl() {
 
 bool LukinIElemVecSumMPI::RunImpl() {
   std::vector<int> input = GetInput();
-  const size_t vec_size = static_cast<size_t>(input.size());
+  const int vec_size = static_cast<int>(input.size());
 
   if (vec_size == 0) {
     GetOutput() = 0;
@@ -50,13 +50,13 @@ bool LukinIElemVecSumMPI::RunImpl() {
   std::vector<int> sendcounts(proc_count, 0);
   std::vector<int> offsets(proc_count, 0);
 
-  size_t local_size;
+  int local_size = 0;
 
   if (rank == 0) {
-    const size_t part = vec_size / proc_count;
-    const size_t reminder = vec_size % proc_count;
+    const int part = vec_size / proc_count;
+    const int reminder = vec_size % proc_count;
 
-    size_t offset = 0;
+    int offset = 0;
     for (int i = 0; i < proc_count; i++) {
       sendcounts[i] = part + (i < reminder ? 1 : 0);
       offsets[i] = offset;
