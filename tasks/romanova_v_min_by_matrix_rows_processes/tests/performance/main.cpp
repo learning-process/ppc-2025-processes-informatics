@@ -42,7 +42,7 @@ class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfT
     if (exp_answer.size() != output_data.size()) {
       return false;
     }
-    for (int i = 0; i < exp_answer.size(); i++) {
+    for (size_t i = 0; i < exp_answer.size(); i++) {
       if (exp_answer[i] != output_data[i]) {
         return false;
       }
