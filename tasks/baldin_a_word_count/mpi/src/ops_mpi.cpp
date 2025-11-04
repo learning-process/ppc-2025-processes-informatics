@@ -95,12 +95,12 @@ bool BaldinAWordCountMPI::RunImpl() {
   }
 
   size_t global_cnt = 0;
-  MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
   if (rank == 0) {
     GetOutput() = global_cnt;
   }
 
-  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
   return true;
 }
 
