@@ -25,106 +25,82 @@ bool BaldinAWordCountMPI::PreProcessingImpl() {
 }
 
 bool BaldinAWordCountMPI::RunImpl() {
-  int rank = 0, world_size = 1;
+  int rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  std::string input_local = GetInput();
+  std::string &input = GetInput();
 
-  if (rank == 0 && input_local.empty()) {
+  if (input.size() == 0) {
     GetOutput() = 0;
-  }
-  int is_empty = (rank == 0 && input_local.empty()) ? 1 : 0;
-  MPI_Bcast(&is_empty, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (is_empty) {
     return true;
   }
 
-  int total_len = 0;
-  if (rank == 0) {
-    total_len = static_cast<int>(input_local.size());
+  if (world_size > static_cast<int>(input.size())) {
+    if (rank == 0) {
+      size_t count = 0;
+      bool in_word = false;
+      for (char c : input) {
+        if (std::isalnum(c) || c == '-' || c == '_') {
+          if (!in_word) {
+            in_word = true;
+            count++;
+          }
+        } else {
+          in_word = false;
+        }
+      }
+      GetOutput() = count;
+    }
+    MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+    return true;
   }
 
-  MPI_Bcast(&total_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  int total_len = static_cast<int>(input.size());
+  int rem = total_len % world_size;
+  input.append(world_size - rem + 1, ' ');
+  int part = input.size() / world_size;
 
-  int padded_len = total_len;
-  if (rank == 0) {
-    int rem = total_len % world_size;
-    int pad = (rem == 0) ? 0 : (world_size - rem);
-    input_local.append(pad + 1, ' ');
-    padded_len = static_cast<int>(input_local.size());
-  }
-
-  MPI_Bcast(&padded_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  int part = padded_len / world_size;
-  int recv_count = (rank == world_size - 1) ? (padded_len - part * (world_size - 1)) : (part + 1);
-
-  std::vector<int> send_counts(world_size, 0);
-  std::vector<int> displs(world_size, 0);
+  std::vector<int> send_counts(world_size), displs(world_size);
 
   if (rank == 0) {
     int offset = 0;
-    for (int i = 0; i < world_size; ++i) {
+    for (int i = 0; i < world_size; i++) {
+      send_counts[i] = part + 1;
       displs[i] = offset;
       offset += part;
     }
-    for (int i = 0; i < world_size; ++i) {
-      if (i < world_size - 1) {
-        send_counts[i] = part + 1;
-      } else {
-        send_counts[i] = padded_len - displs[i];
-      }
-    }
   }
 
-  std::vector<char> local_buf(recv_count);
+  std::vector<char> local_buf(part + 1);
 
-  std::cout << "+++" << '\n';
-  MPI_Scatterv((rank == 0 ? input_local.data() : nullptr), send_counts.data(), displs.data(), MPI_CHAR,
-               local_buf.data(), recv_count, MPI_CHAR, 0, MPI_COMM_WORLD);
-  std::cout << "++++" << '\n';
-
-  auto is_word_char = [](char c) -> bool {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_';
-  };
-
-  long long local_cnt = 0;
+  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
+  size_t local_cnt = 0;
   bool in_word = false;
 
-  int main_len = (rank == world_size - 1) ? (recv_count - 1) : part;
-  if (main_len < 0) {
-    main_len = 0;
-  }
-  for (int i = 0; i < main_len; ++i) {
-    if (is_word_char(local_buf[i])) {
+  for (int i = 0; i < part; i++) {
+    if (std::isalnum(local_buf[i]) || local_buf[i] == '-' || local_buf[i] == '_') {
       if (!in_word) {
         in_word = true;
-        ++local_cnt;
+        local_cnt++;
       }
     } else {
       in_word = false;
     }
   }
-  if (rank < world_size - 1 && main_len > 0) {
-    if (is_word_char(local_buf[main_len - 1]) && is_word_char(local_buf[main_len])) {
-      --local_cnt;
-    }
+
+  if (in_word && (std::isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
+    local_cnt--;
   }
 
-  long long global_cnt = 0;
-  MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
+  size_t global_cnt = 0;
+  MPI_Reduce(&local_cnt, &global_cnt, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   if (rank == 0) {
-    GetOutput() = static_cast<long long>(global_cnt);
+    GetOutput() = global_cnt;
   }
 
-  long long broadcast_out = (rank == 0) ? global_cnt : 0;
-  MPI_Bcast(&broadcast_out, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
-  if (rank != 0) {
-    GetOutput() = broadcast_out;
-  }
-
+  MPI_Bcast(static_cast<void *>(&GetOutput()), 1, MPI_INT, 0, MPI_COMM_WORLD);
   return true;
 }
 
