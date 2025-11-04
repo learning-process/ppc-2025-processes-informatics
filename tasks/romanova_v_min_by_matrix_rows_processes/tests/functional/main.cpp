@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
-#include <fstream>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
-#include <array>
+#include <fstream>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -31,24 +31,35 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_min_by_matrix_rows_processes, params);
     std::ifstream file(abs_path + ".txt");
-    if(file.is_open()){
-
+    if (file.is_open()) {
       int rows, columns;
       file >> rows >> columns;
 
       exp_answer = OutType(rows);
-      for(int i = 0; i < rows; i++) file >> exp_answer[i];
+      for (int i = 0; i < rows; i++) {
+        file >> exp_answer[i];
+      }
 
       input_data_ = InType(rows, std::vector<int>(columns));
-      for(int i = 0; i < rows; i++) for(int j = 0; j < columns; j++) file >> input_data_[i][j];
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+          file >> input_data_[i][j];
+        }
+      }
 
       file.close();
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if(exp_answer.size() != output_data.size()) return false;
-    for(int i = 0; i < exp_answer.size(); i++) if(exp_answer[i] != output_data[i]) return false;
+    if (exp_answer.size() != output_data.size()) {
+      return false;
+    }
+    for (int i = 0; i < exp_answer.size(); i++) {
+      if (exp_answer[i] != output_data[i]) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -67,15 +78,19 @@ TEST_P(RomanovaVMinByMatrixRowsFuncTestsProcesses, MinByMatrixRowsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {"reallySmallTest", "simpleTest", "averageTest", "increasingValuesInRowsTest","decreasingValuesInRowsTest", "sameValuesTest", "matrixForPerfTest"};
+const std::array<TestType, 7> kTestParam = {
+    "reallySmallTest", "simpleTest",       "averageTest", "increasingValuesInRowsTest", "decreasingValuesInRowsTest",
+    "sameValuesTest",  "matrixForPerfTest"};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes),
-                   ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsSEQ, InType>(kTestParam, PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes),
+                                           ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = RomanovaVMinByMatrixRowsFuncTestsProcesses::PrintFuncTestName<RomanovaVMinByMatrixRowsFuncTestsProcesses>;
+const auto kFuncTestName =
+    RomanovaVMinByMatrixRowsFuncTestsProcesses::PrintFuncTestName<RomanovaVMinByMatrixRowsFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(FileTests, RomanovaVMinByMatrixRowsFuncTestsProcesses, kGtestValues, kFuncTestName);
 

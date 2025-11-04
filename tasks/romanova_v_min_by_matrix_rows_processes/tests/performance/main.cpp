@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <fstream>
 
+#include <fstream>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
 #include "romanova_v_min_by_matrix_rows_processes/mpi/include/ops_mpi.hpp"
@@ -18,24 +18,35 @@ class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfT
     std::string path = "matrixForPerfTest.txt";
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_min_by_matrix_rows_processes, path);
     std::ifstream file(abs_path);
-    if(file.is_open()){
-
+    if (file.is_open()) {
       int rows, columns;
       file >> rows >> columns;
 
       exp_answer = OutType(rows);
-      for(int i = 0; i < rows; i++) file >> exp_answer[i];
+      for (int i = 0; i < rows; i++) {
+        file >> exp_answer[i];
+      }
 
       input_data_ = InType(rows, std::vector<int>(columns));
-      for(int i = 0; i < rows; i++) for(int j = 0; j < columns; j++) file >> input_data_[i][j];
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+          file >> input_data_[i][j];
+        }
+      }
 
       file.close();
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if(exp_answer.size() != output_data.size()) return false;
-    for(int i = 0; i < exp_answer.size(); i++) if(exp_answer[i] != output_data[i]) return false;
+    if (exp_answer.size() != output_data.size()) {
+      return false;
+    }
+    for (int i = 0; i < exp_answer.size(); i++) {
+      if (exp_answer[i] != output_data[i]) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -49,7 +60,8 @@ TEST_P(RomanovaVMinByMatrixRowsPerfTestProcesses, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovaVMinByMatrixRowsMPI, RomanovaVMinByMatrixRowsSEQ>(PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes);
+    ppc::util::MakeAllPerfTasks<InType, RomanovaVMinByMatrixRowsMPI, RomanovaVMinByMatrixRowsSEQ>(
+        PPC_SETTINGS_romanova_v_min_by_matrix_rows_processes);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
