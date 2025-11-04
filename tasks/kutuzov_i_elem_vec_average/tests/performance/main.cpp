@@ -7,7 +7,7 @@
 
 namespace kutuzov_i_elem_vec_average {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KutuzovIElemVecAveragePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
 
@@ -24,7 +24,7 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
+TEST_P(KutuzovIElemVecAveragePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -33,8 +33,8 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = KutuzovIElemVecAveragePerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KutuzovIElemVecAveragePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace kutuzov_i_elem_vec_average
