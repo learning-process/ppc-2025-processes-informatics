@@ -13,6 +13,7 @@ namespace romanova_v_min_by_matrix_rows_processes {
 RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
+  std::cout << "in MPI constructor in.size() " << in.size() << "\n";
   GetOutput() = OutType(in.size());
 }
 
