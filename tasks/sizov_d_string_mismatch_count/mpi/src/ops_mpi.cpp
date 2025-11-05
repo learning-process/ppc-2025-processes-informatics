@@ -29,27 +29,15 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
 }
 
 bool SizovDStringMismatchCountMPI::RunImpl() {
-  int initialized = 0;
-  MPI_Initialized(&initialized);
-  if (!initialized) {
-    std::cerr << "[RunImpl] MPI is not initialized — aborting.\n";
-    return false;
-  }
-
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const int total_size = static_cast<int>(str_a_.size());
-  int chunk = total_size / size;
-  int remainder = total_size % size;
-
-  int start = rank * chunk + std::min(rank, remainder);
-  int end = start + chunk + (rank < remainder ? 1 : 0);
-
   int local_result = 0;
-  for (int i = start; i < end; ++i) {
+
+  for (int i = rank; i < total_size; i += size) {
     if (str_a_[i] != str_b_[i]) {
       ++local_result;
     }
@@ -57,18 +45,9 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
 
   int global_result = 0;
   MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    GetOutput() = global_result;
-  }
-
   MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (rank != 0) {
-    GetOutput() = global_result;
-  }
 
-  std::cerr << "[Rank " << rank << "] local=" << local_result << " → global=" << global_result << " (" << total_size
-            << " symbols, " << size << " processes)\n";
+  GetOutput() = global_result;
 
   return true;
 }
