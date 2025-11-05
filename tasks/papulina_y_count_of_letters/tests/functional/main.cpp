@@ -37,7 +37,9 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::cout << "CheckTestOutputData for " << std::get<1>(params) << std::endl;
+    std::cout << "CheckTestOutputData for "
+              << std::get<1>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()))
+              << std::endl;
     return (expectedResult_ == output_data);
   }
 
