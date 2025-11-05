@@ -41,9 +41,16 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
       }
 
       input_data_ = InType(rows, std::vector<int>(columns));
+      std::cout << "test set " << input_data_.size() << " " << input_data_[0].size() << "\n";
       for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
           file >> input_data_[i][j];
+          if (rows <= 10) {
+            std::cout << input_data_[i][j] << " ";
+          }
+        }
+        if (rows <= 10) {
+          std::cout << "\n";
         }
       }
 
