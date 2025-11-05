@@ -52,7 +52,7 @@ TEST_P(PapulinaYRunFuncTestsProcesses, CountOfLetters) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 14> kTestParam = {
+const std::array<TestType, 16> kTestParam = {
     std::make_tuple(std::make_tuple("", 0), "test1"),
     std::make_tuple(std::make_tuple("abcd", 4), "test2"),
     std::make_tuple(std::make_tuple("aabcd123abcd123abcd", 13), "test3"),
@@ -66,7 +66,14 @@ const std::array<TestType, 14> kTestParam = {
     std::make_tuple(std::make_tuple("er11er11er11er11", 8), "test11"),
     std::make_tuple(std::make_tuple("eee___eee__", 6), "test12"),
     std::make_tuple(std::make_tuple("eee___eee__EEE", 9), "test13"),
-    std::make_tuple(std::make_tuple("EEEE___EEEE", 8), "test14")};
+    std::make_tuple(std::make_tuple("EEEE___EEEE", 8), "test14"),
+    std::make_tuple(
+        std::make_tuple(
+            "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+            100),
+        "test15"),
+    std::make_tuple(std::make_tuple("фбсдуащуо", 0), "test16"),
+};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYCountOfLettersMPI, InType>(kTestParam, PPC_SETTINGS_papulina_y_count_of_letters),

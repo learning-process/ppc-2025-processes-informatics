@@ -13,10 +13,10 @@ PapulinaYCountOfLettersSEQ::PapulinaYCountOfLettersSEQ(const InType &in) {
   GetInput() = in;
   GetOutput() = 0;
 }
-int PapulinaYCountOfLettersSEQ::CountOfLetters() {
+int PapulinaYCountOfLettersSEQ::CountOfLetters(const char *s, const int &n) {
   int k = 0;
-  for (size_t i = 0; i < GetInput().size(); i++) {
-    char c = GetInput()[i];
+  for (int i = 0; i < n; i++) {
+    char c = s[i];
     if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
       k++;
     }
@@ -33,7 +33,7 @@ bool PapulinaYCountOfLettersSEQ::PreProcessingImpl() {
 }
 
 bool PapulinaYCountOfLettersSEQ::RunImpl() {
-  GetOutput() = CountOfLetters();
+  GetOutput() = CountOfLetters(GetInput().data(), GetInput().size());
   return true;
 }
 
