@@ -71,9 +71,8 @@ bool PapulinaYCountOfLettersMPI::RunImpl() {
   }
   int localResult = CountOfLetters(partOfString.data(), trueLen);
   MPI_Reduce(&localResult, &result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  if (procRank == 0) {
-    GetOutput() = result;
-  }
+  MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  GetOutput() = result;
   MPI_Barrier(MPI_COMM_WORLD);
   std::cout << "Output data in RunImpl: " << GetOutput() << std::endl;
   return true;
