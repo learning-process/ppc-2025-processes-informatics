@@ -21,6 +21,7 @@ bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
+  std::cout << "MPI-version get: "<< n_ << " " << m_ << "\n";
   in_data_ = GetInput();
   n_ = in_data_.size();
   m_ = in_data_[0].size();

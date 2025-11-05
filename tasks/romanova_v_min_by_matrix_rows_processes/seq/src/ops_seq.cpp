@@ -25,6 +25,7 @@ bool RomanovaVMinByMatrixRowsSEQ::PreProcessingImpl() {
   n_ = in_data_.size();
   m_ = in_data_[0].size();
   res_ = OutType(n_);
+  std::cout << "SEQ-version get: "<< n_ << " " << m_ << "\n";
   return true;
 }
 
