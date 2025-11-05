@@ -37,16 +37,6 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   const int total_size = static_cast<int>(str_a_.size());
   int local_result = 0;
 
-  if (size == 1) {
-    for (int i = 0; i < total_size; ++i) {
-      if (str_a_[i] != str_b_[i]) {
-        ++local_result;
-      }
-    }
-    GetOutput() = local_result;
-    return true;
-  }
-
   for (int i = rank; i < total_size; i += size) {
     if (str_a_[i] != str_b_[i]) {
       ++local_result;
@@ -54,12 +44,9 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   }
 
   int global_result = 0;
-  MPI_Reduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_result, &global_result, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = global_result;
-  MPI_Barrier(MPI_COMM_WORLD);
-
   return true;
 }
 
