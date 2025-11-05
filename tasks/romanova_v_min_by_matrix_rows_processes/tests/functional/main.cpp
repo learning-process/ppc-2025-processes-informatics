@@ -34,7 +34,7 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
     if (file.is_open()) {
       int rows, columns;
       file >> rows >> columns;
-
+      std::cout << "test sended " << rows << " " << columns << "\n";
       exp_answer = OutType(rows);
       for (int i = 0; i < rows; i++) {
         file >> exp_answer[i];
