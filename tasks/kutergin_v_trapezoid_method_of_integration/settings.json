@@ -2,6 +2,7 @@
     "tasks_type": "processes",
     "tasks":
     {
-        "seq": "enabled"
+        "seq": "enabled",
+        "mpi": "enabled"
     }
 }

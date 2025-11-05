@@ -64,7 +64,7 @@ bool TrapezoidIntegrationMPI::RunImpl()
         local_sum = (func(local_a) + func(local_a + local_n * h)) / 2.0;
     }
 
-    for (int i = 1; i < n; ++i)
+    for (int i = 1; i < local_n; ++i)
     {
         local_sum += func(local_a + i * h);
     }

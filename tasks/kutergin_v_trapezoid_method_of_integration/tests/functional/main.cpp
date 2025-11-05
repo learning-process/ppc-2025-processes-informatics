@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <gtest/gtest.h>
 
 #include <vector>
@@ -30,12 +31,19 @@ protected:
         expected_output_ = std::get<1>(params); // извлечение ожидаемого результата
     }
 
+
     // проверка результата после выполнения задачи
     bool CheckTestOutputData(OutType& output_data) final 
     {
-        std::cout << "-> EXPECTED: " << expected_output_ << std::endl;
-        std::cout << "-> ACTUAL:   " << output_data << std::endl;
-        return std::abs(output_data - expected_output_) < 1e-6;
+        int process_rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+        if (process_rank == 0) // проверку выполняет только нулевой процесс
+        {
+            std::cout << "-> RANK 0 EXPECTED: " << expected_output_ << std::endl;
+            std::cout << "-> RANK 0 ACTUAL:   " << output_data << std::endl;
+            return std::abs(output_data - expected_output_) < 1e-6; 
+        }
+        return true; // у всех остальных процессов все в порядке
     }
 
     // возврат подготовленных входных данных для задачи
@@ -43,6 +51,7 @@ protected:
     {
         return input_data_;
     }
+
 
 private:
 
@@ -55,7 +64,7 @@ namespace // анонимное пространство имен
     
 TEST_P(KuterginVRunFuncTestsSEQ, TrapezoidTest) // параметризованный тест
 {
-    ExecuteTest(GetParam());
+    ExecuteTest(GetParam());  
 }
 
 // массив с наборами тестовых данных
@@ -79,6 +88,7 @@ const auto kTestName = KuterginVRunFuncTestsSEQ::PrintFuncTestName<KuterginVRunF
 // "регистрация" набора тестов и параметров в GTest
 INSTANTIATE_TEST_SUITE_P(TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues, kTestName); 
 }
+
 
 }
 
