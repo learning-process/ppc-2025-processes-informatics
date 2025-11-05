@@ -53,8 +53,6 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
           ++expected_result_;
         }
       }
-    } else {
-      GTEST_SKIP();
     }
   }
 

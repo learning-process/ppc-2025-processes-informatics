@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <iostream>
+// #include <iostream>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 
