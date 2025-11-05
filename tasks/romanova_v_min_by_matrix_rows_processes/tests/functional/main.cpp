@@ -85,7 +85,7 @@ TEST_P(RomanovaVMinByMatrixRowsFuncTestsProcesses, MinByMatrixRowsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {
+const std::array<TestType, 6> kTestParam = {
     "reallySmallTest", "simpleTest", "averageTest", "increasingValuesInRowsTest", "decreasingValuesInRowsTest",
     "sameValuesTest"};
 
