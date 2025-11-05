@@ -35,7 +35,7 @@ bool PapulinaYCountOfLettersMPI::PreProcessingImpl() {
 }
 
 bool PapulinaYCountOfLettersMPI::RunImpl() {
-  std::cout << GetInput() << std::endl;
+  std::cout << "Input data in RunImpl: " << GetInput() << std::endl;
   int procRank = 0;
   int result = 0;
   std::string partOfString = "";  // части строки, которая будет обрабатываться потоком
@@ -73,7 +73,7 @@ bool PapulinaYCountOfLettersMPI::RunImpl() {
   MPI_Reduce(&localResult, &result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = result;
-  std::cout << GetOutput() << std::endl;
+  std::cout << "Output data in RunImpl: " << GetOutput() << std::endl;
   return true;
 }
 

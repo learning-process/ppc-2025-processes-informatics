@@ -29,11 +29,15 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::cout << "SetUp for " << std::get<1>(params) << std::endl;
     input_data_ = std::string(std::get<0>(std::get<0>(params)));
+    std::cout << "We set input data:  " << input_data_ << std::endl;
     expectedResult_ = std::get<1>(std::get<0>(params));
+    std::cout << "We set expected result:  " << expectedResult_ << std::endl;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    std::cout << "CheckTestOutputData for " << std::get<1>(params) << std::endl;
     return (expectedResult_ == output_data);
   }
 
