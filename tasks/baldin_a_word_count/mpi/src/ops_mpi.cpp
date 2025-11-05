@@ -36,16 +36,12 @@ bool BaldinAWordCountMPI::RunImpl() {
     return true;
   }
 
-  auto is_word_char = [](char c) -> bool {
-    return std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_';
-  };
-
   if (world_size > static_cast<int>(input.size())) {
     if (rank == 0) {
       size_t count = 0;
       bool in_word = false;
       for (char c : input) {
-        if (is_word_char(c)) {
+        if (std::isalnum(c) || c == '-' || c == '_') {
           if (!in_word) {
             in_word = true;
             count++;
@@ -62,18 +58,29 @@ bool BaldinAWordCountMPI::RunImpl() {
 
   int total_len = static_cast<int>(input.size());
   int rem = total_len % world_size;
-  if (rem != 0) {
-    input.append(world_size - rem, ' ');
-  }
+  input.append(world_size - rem + 1, ' ');
   int part = input.size() / world_size;
 
-  std::vector<char> local_buf(part);
-  MPI_Scatter(input.data(), part, MPI_CHAR, local_buf.data(), part, MPI_CHAR, 0, MPI_COMM_WORLD);
+  std::vector<int> send_counts(world_size), displs(world_size);
 
+  if (rank == 0) {
+    int offset = 0;
+    for (int i = 0; i < world_size; i++) {
+      send_counts[i] = part + 1;
+      displs[i] = offset;
+      offset += part;
+    }
+  }
+
+  std::vector<char> local_buf(part + 1);
+
+  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
   size_t local_cnt = 0;
   bool in_word = false;
+
   for (int i = 0; i < part; i++) {
-    if (is_word_char(local_buf[i])) {
+    if (std::isalnum(local_buf[i]) || local_buf[i] == '-' || local_buf[i] == '_') {
       if (!in_word) {
         in_word = true;
         local_cnt++;
@@ -83,17 +90,8 @@ bool BaldinAWordCountMPI::RunImpl() {
     }
   }
 
-  if (rank > 0) {
-    char first_char = local_buf[0];
-    MPI_Send(&first_char, 1, MPI_CHAR, rank - 1, 0, MPI_COMM_WORLD);
-  }
-
-  if (rank < world_size - 1) {
-    char next_first_char;
-    MPI_Recv(&next_first_char, 1, MPI_CHAR, rank + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (is_word_char(local_buf.back()) && is_word_char(next_first_char)) {
-      local_cnt--;
-    }
+  if (in_word && (std::isalnum(local_buf[part]) || local_buf[part] == '-' || local_buf[part] == '_')) {
+    local_cnt--;
   }
 
   size_t global_cnt = 0;
