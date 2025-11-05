@@ -2,28 +2,25 @@
 
 #include "../../common/include/common.hpp"
 
-namespace kutergin_v_trapezoid_mpi
-{
+namespace kutergin_v_trapezoid_mpi {
 
 double func(double x);
 
-class TrapezoidIntegrationMPI : public kutergin_v_trapezoid_seq::BaseTask // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)
+class TrapezoidIntegrationMPI
+    : public kutergin_v_trapezoid_seq::BaseTask  // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)
 {
-public:
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+  explicit TrapezoidIntegrationMPI(
+      const kutergin_v_trapezoid_seq::InType &in);  // конструктор принимает InType (псевдоним для структуры InputData)
 
-    static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask()
-    {
-        return ppc::task::TypeOfTask::kMPI;
-    }
-    explicit TrapezoidIntegrationMPI(const kutergin_v_trapezoid_seq::InType& in); // конструктор принимает InType (псевдоним для структуры InputData)
-
-protected:
-
-    bool ValidationImpl() override;
-    bool PreProcessingImpl() override;
-    bool RunImpl() override;
-    bool PostProcessingImpl() override;
+ protected:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
 };
 
-}
-
+}  // namespace kutergin_v_trapezoid_mpi
