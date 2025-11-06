@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
@@ -21,39 +22,45 @@ namespace sizov_d_string_mismatch_count {
 class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    std::string sanitized = test_param;
-    std::ranges::replace(sanitized, ' ', '_');
-    return sanitized;
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    const std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, "strings.txt");
-    std::ifstream file(abs_path);
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_string_mismatch_count, param + ".txt");
+
+    std::ifstream file(file_path);
     if (!file.is_open()) {
-      throw std::runtime_error("Cannot open strings.txt");
+      throw std::runtime_error("Cannot open file: " + file_path);
     }
 
-    std::string a;
-    std::string b;
+    std::string a, b, expected_line;
     std::getline(file, a);
     std::getline(file, b);
+    std::getline(file, expected_line);
     file.close();
 
     TrimString(a);
     TrimString(b);
+    TrimString(expected_line);
+
+    if (a.empty() || b.empty()) {
+      throw std::runtime_error("Input strings cannot be empty in " + file_path);
+    }
+    if (a.size() != b.size()) {
+      throw std::runtime_error("Input strings must have equal length in " + file_path);
+    }
+
+    try {
+      expected_result_ = std::stoi(expected_line);
+    } catch (...) {
+      throw std::runtime_error("Invalid expected value in " + file_path + " (line 3 must be an integer)");
+    }
 
     input_data_ = std::make_tuple(a, b);
-    is_valid_ = !a.empty() && a.size() == b.size();
-
-    expected_result_ = 0;
-    if (is_valid_) {
-      for (std::size_t i = 0; i < a.size(); ++i) {
-        if (a[i] != b[i]) {
-          ++expected_result_;
-        }
-      }
-    }
+    is_valid_ = true;
   }
 
   InType GetTestInputData() override {
@@ -91,17 +98,21 @@ TEST_P(SizovDRunFuncTestsStringMismatchCount, CompareStringsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {"default"};
+const std::array<TestType, 10> kTestParam = {"strings1", "strings2", "strings3", "strings4", "strings5",
+                                             "strings6", "strings7", "strings8", "strings9", "strings10"};
 
-const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<SizovDStringMismatchCountMPI, InType>(
-                                          kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
-                                      ppc::util::AddFuncTask<SizovDStringMismatchCountSEQ, InType>(
-                                          kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<sizov_d_string_mismatch_count::SizovDStringMismatchCountMPI, InType>(
+                       kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count),
+                   ppc::util::AddFuncTask<sizov_d_string_mismatch_count::SizovDStringMismatchCountSEQ, InType>(
+                       kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTaskList);
-const auto kTestName = SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
+inline const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-INSTANTIATE_TEST_SUITE_P(CompareFromFile, SizovDRunFuncTestsStringMismatchCount, kGtestValues, kTestName);
+inline const auto kTestName =
+    SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
+
+INSTANTIATE_TEST_SUITE_P(SizovDStringMismatchCount, SizovDRunFuncTestsStringMismatchCount, kGtestValues, kTestName);
 
 }  // namespace
 }  // namespace sizov_d_string_mismatch_count

@@ -9,6 +9,7 @@
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
 #include "sizov_d_string_mismatch_count/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace sizov_d_string_mismatch_count {
 
@@ -18,7 +19,7 @@ class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests
     std::string a(1'000'000, 'a');
     std::string b = a;
 
-    for (std::size_t i = 0; i < a.size() / 10; ++i) {
+    for (std::size_t i = 0; i < a.size(); i += 10) {
       b[i] = 'b';
     }
 
@@ -26,7 +27,7 @@ class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests
     input_data_ = std::make_tuple(std::move(a), std::move(b));
   }
 
-  InType GetTestInputData() final {
+  [[nodiscard]] InType GetTestInputData() final {
     return input_data_;
   }
 
@@ -39,12 +40,16 @@ class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests
   OutType expected_result_ = 0;
 };
 
+namespace {
+
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SizovDStringMismatchCountMPI, SizovDStringMismatchCountSEQ>(
+    ppc::util::MakeAllPerfTasks<InType, sizov_d_string_mismatch_count::SizovDStringMismatchCountMPI,
+                                sizov_d_string_mismatch_count::SizovDStringMismatchCountSEQ>(
         PPC_SETTINGS_sizov_d_string_mismatch_count);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = SizovDRunPerfTestsStringMismatchCount::CustomPerfTestName;
+inline const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+inline const auto kPerfTestName = SizovDRunPerfTestsStringMismatchCount::CustomPerfTestName;
 
 TEST_P(SizovDRunPerfTestsStringMismatchCount, RunPerfModes) {
   ExecuteTest(GetParam());
@@ -52,4 +57,5 @@ TEST_P(SizovDRunPerfTestsStringMismatchCount, RunPerfModes) {
 
 INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsStringMismatchCount, kGtestValues, kPerfTestName);
 
+}  // namespace
 }  // namespace sizov_d_string_mismatch_count

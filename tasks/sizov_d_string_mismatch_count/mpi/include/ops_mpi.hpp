@@ -13,7 +13,7 @@ class SizovDStringMismatchCountMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
 
-  explicit SizovDStringMismatchCountMPI(const InType &input);
+  explicit SizovDStringMismatchCountMPI(const InType &in);
 
  private:
   std::string str_a_;
