@@ -22,17 +22,18 @@ namespace smyshlaev_a_str_order_check {
 class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const auto &input = std::get<0>(test_param);
-    const auto &expected = std::get<1>(test_param);
-    return input.first + "_" + input.second + "_expect_" + std::to_string(expected);
+    const auto &strA = std::get<0>(test_param);
+    const auto &strB = std::get<1>(test_param);
+    const auto &expected = std::get<2>(test_param);
+    return strA + "_" + strB + "_expect_" + std::to_string(expected);
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    input_data_ = std::get<0>(params);
-    expected_output_ = std::get<1>(params);
+    input_data_ = std::make_pair(std::get<0>(params), std::get<1>(params));
+    expected_output_ = std::get<2>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final { return (expected_output_ == output_data); }
@@ -49,12 +50,12 @@ namespace {
 TEST_P(SmyshlaevAStrOrderCheckRunFuncTestsProcesses, StringOrderCheckTest) { ExecuteTest(GetParam()); }
 
 const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(std::make_pair("apple", "apple"), 0),
-    std::make_tuple(std::make_pair("apple", "banana"), -1),
-    std::make_tuple(std::make_pair("zebra", "yak"), 1),
-    std::make_tuple(std::make_pair("cat", "caterpillar"), -1),
-    std::make_tuple(std::make_pair("caterpillar", "cat"), 1),
-    std::make_tuple(std::make_pair("Zebra", "zebra"), -1)};
+    std::make_tuple(std::string("apple"), std::string("apple"), 0),
+    std::make_tuple(std::string("apple"), std::string("banana"), -1),
+    std::make_tuple(std::string("zebra"), std::string("yak"), 1),
+    std::make_tuple(std::string("cat"), std::string("caterpillar"), -1),
+    std::make_tuple(std::string("caterpillar"), std::string("cat"), 1),
+    std::make_tuple(std::string("Zebra"), std::string("zebra"), -1)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SmyshlaevAStrOrderCheckMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_str_order_check),
