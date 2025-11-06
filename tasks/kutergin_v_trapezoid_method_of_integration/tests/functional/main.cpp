@@ -28,6 +28,7 @@ class KuterginVRunFuncTestsSEQ
     input_data_ = std::get<0>(params);       // извлечение входных данных
     expected_output_ = std::get<1>(params);  // извлечение ожидаемого результата
 
+    /*
     if (ppc::util::IsUnderMpirun()) {
       int process_count;
       MPI_Comm_size(MPI_COMM_WORLD, &process_count);
@@ -40,6 +41,7 @@ class KuterginVRunFuncTestsSEQ
         }
       }
     }
+    */
   }
 
   // проверка результата после выполнения задачи
