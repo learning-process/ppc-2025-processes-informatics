@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "util/include/util.hpp"
+
 namespace kutergin_v_trapezoid_mpi {
 
 double func(double x)  // интегрируемая функция для примера
@@ -19,12 +21,22 @@ TrapezoidIntegrationMPI::TrapezoidIntegrationMPI(const kutergin_v_trapezoid_seq:
 }
 
 bool TrapezoidIntegrationMPI::ValidationImpl() {
-  int process_count;
-  MPI_Comm_size(MPI_COMM_WORLD, &process_count);  // получение общего числа процессов
+  if (GetInput().b <= GetInput().a ||
+      GetInput().n <= 0)  // проверка b > a (границ интегрирования) и n > 0 (число разбиений)
+  {
+    return false;
+  }
 
-  return (GetInput().b > GetInput().a) && (GetInput().n > 0) &&
-         (GetInput().n % process_count == 0);  // проверка b > a (границ интегрирования), n > 0 (число разбиений) и
-                                               // число разбиений делится нацело на число процессов
+  if (ppc::util::IsUnderMpirun()) {
+    int process_count;
+    MPI_Comm_size(MPI_COMM_WORLD, &process_count);  // получение общего числа процессов
+    if (GetInput().n % process_count != 0)          // число разбиений делится нацело на число процессов
+    {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool TrapezoidIntegrationMPI::PreProcessingImpl() {
