@@ -1,60 +1,59 @@
 #include "smyshlaev_a_str_order_check/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <algorithm>
+#include <string>
+#include <utility>
 
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace smyshlaev_a_str_order_check {
 
-SmyshlaevAStrOrderCheckSEQ::SmyshlaevAStrOrderCheckSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
+SmyshlaevAStrOrderCheckSEQ::SmyshlaevAStrOrderCheckSEQ(const InType& in) {
+    SetTypeOfTask(GetStaticTypeOfTask());
+    GetInput() = in;
+    GetOutput() = 0;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+    return true;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+    return true;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+    const auto& input_data = GetInput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+    const std::string& str1 = input_data.first;
+    const std::string& str2 = input_data.second;
+
+    size_t min_len = std::min(str1.length(), str2.length());
+
+    for (size_t i = 0; i < min_len; ++i) {
+        if (str1[i] < str2[i]) {
+            GetOutput() = -1;
+            return true;
+        }
+        if (str1[i] > str2[i]) {
+            GetOutput() = 1;
+            return true;
+        }
     }
-  }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+    if (str1.length() < str2.length()) {
+        GetOutput() = -1;
+    } else if (str1.length() > str2.length()) {
+        GetOutput() = 1;
+    } else {
+        GetOutput() = 0;
+    }
 
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+    return true;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+    return true;
 }
 
 }  // namespace smyshlaev_a_str_order_check

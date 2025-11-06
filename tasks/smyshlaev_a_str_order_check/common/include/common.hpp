@@ -7,9 +7,9 @@
 
 namespace smyshlaev_a_str_order_check {
 
-using InType = int;
+using InType = std::pair<std::string, std::string>;
 using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using TestType = std::tuple<std::string, std::string, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace smyshlaev_a_str_order_check
