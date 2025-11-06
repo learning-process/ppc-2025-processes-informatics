@@ -18,6 +18,9 @@ PapulinaYCountOfLettersMPI::PapulinaYCountOfLettersMPI(const InType &in) {
 }
 int PapulinaYCountOfLettersMPI::CountOfLetters(const char *s, const int &n) {
   int k = 0;
+  if (n <= 0) {
+    return 0;
+  }
   for (int i = 0; i < n; i++) {
     char c = s[i];
     if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
