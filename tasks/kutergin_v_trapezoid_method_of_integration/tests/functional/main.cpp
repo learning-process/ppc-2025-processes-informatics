@@ -28,20 +28,26 @@ class KuterginVRunFuncTestsSEQ
     input_data_ = std::get<0>(params);       // извлечение входных данных
     expected_output_ = std::get<1>(params);  // извлечение ожидаемого результата
 
-    int process_count;
-    MPI_Comm_size(MPI_COMM_WORLD, &process_count);
+    if (ppc::util::IsUnderMpirun()) {
+      int process_count;
+      MPI_Comm_size(MPI_COMM_WORLD, &process_count);
 
-    // Берем базовое n из теста и "округляем" его вверх до ближайшего числа, кратному числу процессов
-    int base_n = input_data_.n;
-    if (base_n % process_count != 0) {
-      input_data_.n = base_n + (process_count - (base_n % process_count));
+      if (process_count > 0) {
+        // Берем базовое n из теста и "округляем" его вверх до ближайшего числа, кратному числу процессов
+        int base_n = input_data_.n;
+        if (base_n % process_count != 0) {
+          input_data_.n = base_n + (process_count - (base_n % process_count));
+        }
+      }
     }
   }
 
   // проверка результата после выполнения задачи
   bool CheckTestOutputData(OutType &output_data) final {
-    int process_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+    int process_rank = 0;
+    if (ppc::util::IsUnderMpirun()) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
+    }
     if (process_rank == 0)  // проверку выполняет только нулевой процесс
     {
       std::cout << "-> RANK 0 EXPECTED: " << expected_output_ << std::endl;
