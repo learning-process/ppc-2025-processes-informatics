@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <string>
+
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
 #include "smyshlaev_a_str_order_check/mpi/include/ops_mpi.hpp"
 #include "smyshlaev_a_str_order_check/seq/include/ops_seq.hpp"
@@ -7,34 +10,34 @@
 
 namespace smyshlaev_a_str_order_check {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+const size_t kStringLength = 1000000;
+
+class SmyshlaevAStrOrderCheckRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ private:
+  const OutType kExpectedResult_ = 0;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::string long_str_A(kStringLength, 'a');
+    std::string long_str_B = long_str_A;
+
+    input_data_ = std::make_pair(long_str_A, long_str_B);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
-  }
+  bool CheckTestOutputData(OutType &output_data) final { return kExpectedResult_ == output_data; }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
+TEST_P(SmyshlaevAStrOrderCheckRunPerfTestsProcesses, RunPerfModes) { ExecuteTest(GetParam()); }
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SmyshlaevAStrOrderCheckMPI, SmyshlaevAStrOrderCheckSEQ>(PPC_SETTINGS_smyshlaev_a_str_order_check);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = SmyshlaevAStrOrderCheckRunPerfTestsProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SmyshlaevAStrOrderCheckRunPerfTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace smyshlaev_a_str_order_check

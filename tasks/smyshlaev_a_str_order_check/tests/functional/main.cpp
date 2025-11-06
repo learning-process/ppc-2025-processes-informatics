@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
@@ -20,55 +19,42 @@
 
 namespace smyshlaev_a_str_order_check {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    const auto &input = std::get<0>(test_param);
+    const auto &expected = std::get<1>(test_param);
+    return input.first + "_" + input.second + "_expect_" + std::to_string(expected);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_smyshlaev_a_str_order_check, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+
+    input_data_ = std::get<0>(params);
+    expected_output_ = std::get<1>(params);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
-  }
+  bool CheckTestOutputData(OutType &output_data) final { return (expected_output_ == output_data); }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_output_ = 0;
 };
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
-  ExecuteTest(GetParam());
-}
+TEST_P(SmyshlaevAStrOrderCheckRunFuncTestsProcesses, StringOrderCheckTest) { ExecuteTest(GetParam()); }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(std::make_pair("apple", "apple"), 0),
+    std::make_tuple(std::make_pair("apple", "banana"), -1),
+    std::make_tuple(std::make_pair("zebra", "yak"), 1),
+    std::make_tuple(std::make_pair("cat", "caterpillar"), -1),
+    std::make_tuple(std::make_pair("caterpillar", "cat"), 1),
+    std::make_tuple(std::make_pair("Zebra", "zebra"), -1)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SmyshlaevAStrOrderCheckMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_str_order_check),
@@ -76,9 +62,10 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName =
+    SmyshlaevAStrOrderCheckRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAStrOrderCheckRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(StringOrderCheckTests, SmyshlaevAStrOrderCheckRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
