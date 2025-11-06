@@ -9,7 +9,6 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "sizov_d_string_mismatch_count/common/include/common.hpp"
 #include "sizov_d_string_mismatch_count/mpi/include/ops_mpi.hpp"
@@ -36,7 +35,9 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
       throw std::runtime_error("Cannot open file: " + file_path);
     }
 
-    std::string a, b, expected_line;
+    std::string a;
+    std::string b;
+    std::string expected_line;
     std::getline(file, a);
     std::getline(file, b);
     std::getline(file, expected_line);
