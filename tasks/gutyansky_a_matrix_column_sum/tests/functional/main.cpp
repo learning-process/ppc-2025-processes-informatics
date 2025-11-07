@@ -5,13 +5,13 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <fstream>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
@@ -36,7 +36,8 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
 
     // Read test data
     {
-      std::string file_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
+      std::string file_name =
+          std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
       std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gutyansky_a_matrix_column_sum, file_name);
 
       std::ifstream ifs(abs_path);
@@ -46,7 +47,7 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
       }
 
       ifs >> rows >> cols;
-      
+
       if (rows == 0 || cols == 0) {
         throw std::runtime_error("Both dimensions of matrix must be positive integers");
       }
@@ -64,8 +65,8 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
       }
     }
 
-    input_data_ = { rows, cols, input_elements };
-    output_data_ = { cols, output_elements };
+    input_data_ = {rows, cols, input_elements};
+    output_data_ = {cols, output_elements};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -77,8 +78,8 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
   }
 
  private:
-  InType input_data_ = { };
-  OutType output_data_ = { };
+  InType input_data_ = {};
+  OutType output_data_ = {};
 };
 
 namespace {

@@ -1,8 +1,8 @@
 #include "gutyansky_a_matrix_column_sum/seq/include/ops_seq.hpp"
 
+#include <iostream>
 #include <numeric>
 #include <vector>
-#include <iostream>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -23,7 +23,6 @@ bool GutyanskyAMatrixColumnSumSEQ::ValidationImpl() {
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::PreProcessingImpl() {
-
   GetOutput().size = GetInput().cols;
   GetOutput().data.resize(GetInput().cols);
 

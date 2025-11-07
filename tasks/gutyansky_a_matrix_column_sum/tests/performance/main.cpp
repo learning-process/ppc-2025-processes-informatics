@@ -26,7 +26,7 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
       }
 
       ifs >> rows >> cols;
-      
+
       if (rows == 0 || cols == 0) {
         throw std::runtime_error("Both dimensions of matrix must be positive integers");
       }
@@ -44,8 +44,8 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
       }
     }
 
-    input_data_ = { rows, cols, input_elements };
-    output_data_ = { cols, output_elements };
+    input_data_ = {rows, cols, input_elements};
+    output_data_ = {cols, output_elements};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -55,6 +55,7 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   InType GetTestInputData() final {
     return input_data_;
   }
+
  private:
   InType input_data_ = {};
   OutType output_data_ = {};

@@ -10,9 +10,9 @@ struct Matrix {
   size_t cols;
   std::vector<double> data;
 
-  friend bool operator==(const Matrix& v_left, const Matrix& v_right) {
+  friend bool operator==(const Matrix &v_left, const Matrix &v_right) {
     return v_left.rows == v_right.rows && v_left.cols == v_right.cols && v_left.data == v_right.data;
   }
 };
 
-} // namespace gutyansky_a_matrix_column_sum
+}  // namespace gutyansky_a_matrix_column_sum
