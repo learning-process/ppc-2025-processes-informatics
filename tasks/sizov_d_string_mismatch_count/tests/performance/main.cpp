@@ -48,9 +48,9 @@ const auto kAllPerfTasks =
                                 sizov_d_string_mismatch_count::SizovDStringMismatchCountSEQ>(
         PPC_SETTINGS_sizov_d_string_mismatch_count);
 
-inline const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-inline const auto kPerfTestName = SizovDRunPerfTestsStringMismatchCount::CustomPerfTestName;
+const auto kPerfTestName = SizovDRunPerfTestsStringMismatchCount::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsStringMismatchCount, kGtestValues, kPerfTestName);
 

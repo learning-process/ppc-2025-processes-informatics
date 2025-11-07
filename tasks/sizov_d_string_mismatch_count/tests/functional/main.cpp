@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cctype>
 #include <cstddef>
 #include <fstream>
-#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -117,10 +115,9 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<sizov_d_string_mismatch_count::SizovDStringMismatchCountSEQ, InType>(
                        kTestParam, PPC_SETTINGS_sizov_d_string_mismatch_count));
 
-inline const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-inline const auto kTestName =
-    SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
+const auto kTestName = SizovDRunFuncTestsStringMismatchCount::PrintFuncTestName<SizovDRunFuncTestsStringMismatchCount>;
 
 INSTANTIATE_TEST_SUITE_P(SizovDStringMismatchCount, SizovDRunFuncTestsStringMismatchCount, kGtestValues, kTestName);
 
