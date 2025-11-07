@@ -20,7 +20,7 @@ int PapulinaYCountOfLettersSEQ::CountOfLetters(const char *s, const int &n) {
   }
   for (int i = 0; i < n; i++) {
     char c = s[i];
-    if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+    if (isalpha(c)) {
       k++;
     }
   }
