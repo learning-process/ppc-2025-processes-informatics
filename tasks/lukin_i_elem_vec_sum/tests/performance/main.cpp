@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <cstddef>
+#include <vector>
 
 #include "lukin_i_elem_vec_sum/common/include/common.hpp"
 #include "lukin_i_elem_vec_sum/mpi/include/ops_mpi.hpp"
