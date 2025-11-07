@@ -59,7 +59,7 @@ TEST_P(BaldinAWordCountFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {
+const std::array<TestType, 30> kTestParam = {
     std::make_tuple(std::string("Hello world"), 2),
     std::make_tuple(std::string("One two  three   four"), 4),
     std::make_tuple(std::string("   Leading and trailing spaces   "), 4),
