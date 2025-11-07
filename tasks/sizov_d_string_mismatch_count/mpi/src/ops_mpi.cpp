@@ -54,8 +54,8 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   }
 
   const int local_size = counts[rank];
-  std::vector<char> local_a(local_size);
-  std::vector<char> local_b(local_size);
+  std::string local_a(local_size, '\0');
+  std::string local_b(local_size, '\0');
 
   MPI_Scatterv(str_a_.data(), counts.data(), displs.data(), MPI_CHAR, local_a.data(), local_size, MPI_CHAR, 0,
                MPI_COMM_WORLD);
