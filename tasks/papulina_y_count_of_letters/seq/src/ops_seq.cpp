@@ -2,7 +2,7 @@
 
 #include <cctype>
 // #include <numeric>
-// #include <vector>
+// #include <vector> комментарий
 
 #include "papulina_y_count_of_letters/common/include/common.hpp"
 // #include "util/include/util.hpp"
