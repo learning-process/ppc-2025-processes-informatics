@@ -12,7 +12,7 @@ namespace papulina_y_count_of_letters {
 class PapulinaYRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 10000000;
   const std::string s_ = "abcdabcd";
-  InType input_data_{};
+  InType input_data_;
   OutType expectedResult_ = 0;
 
   void SetUp() override {
