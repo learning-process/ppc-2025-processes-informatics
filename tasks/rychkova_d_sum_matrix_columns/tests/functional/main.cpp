@@ -1,12 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <numeric>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "rychkova_d_sum_matrix_columns/common/include/common.hpp"

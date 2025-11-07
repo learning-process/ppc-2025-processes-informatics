@@ -1,10 +1,9 @@
 #include "rychkova_d_sum_matrix_columns/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "rychkova_d_sum_matrix_columns/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace rychkova_d_sum_matrix_columns {
 

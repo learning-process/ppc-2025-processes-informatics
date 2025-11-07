@@ -2,12 +2,12 @@
 
 #include <mpi.h>
 
+#include <algorithm>
+#include <cstddef>
 #include <numeric>
 #include <vector>
-#include <algorithm>
 
 #include "rychkova_d_sum_matrix_columns/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace rychkova_d_sum_matrix_columns {
 
@@ -54,7 +54,8 @@ bool RychkovaDSumMatrixColumnsMPI::RunImpl() {
     return true;
   }
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -63,8 +64,8 @@ bool RychkovaDSumMatrixColumnsMPI::RunImpl() {
 
   size_t rows_per_process = num_rows / size;
   size_t remainder = num_rows % size;
-  size_t start_row = rank * rows_per_process + std::min(static_cast<size_t>(rank), remainder);
-  size_t end_row = start_row + rows_per_process + (rank < static_cast<int>(remainder) ? 1 : 0);
+  size_t start_row = (rank * rows_per_process) + std::min(static_cast<size_t>(rank), remainder);
+  size_t end_row = start_row + rows_per_process + (std::cmp_less(rank, remainder) ? 1 : 0);
 
   std::vector<int> local_sums(num_cols, 0);
 
