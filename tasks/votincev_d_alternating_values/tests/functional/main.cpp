@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <cstddef>  // для size_t
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -29,24 +25,31 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
  protected:
   // считываем/генерируем данные
   void SetUp() override {
-    int sz = expectedRes + 1;  // чтобы чередований было ровно expectedRes
-    std::vector<double> v;
-    int swapper = 1;
-    for (int i = 0; i < sz; i++) {
-      v.push_back(i * swapper);  // 0 -1 2 -3 4 ...
-      swapper *= -1;
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string input_data_source =
+        ppc::util::GetAbsoluteTaskPath(PPC_ID_votincev_d_alternating_values, param + ".txt");
+
+    std::ifstream file(input_data_source);
+    int expect_res = 0;
+    file >> expect_res;  // считываю предполагаемый ответ
+
+    expected_res_ = expect_res;  // устанавливаю его
+
+    int data_count = 0;
+    file >> data_count;  // получаю количество элементов
+
+    std::vector<double> vect_data;
+    for (int i = 0; i < data_count; i++) {
+      double elem = 0.0;
+      file >> elem;
+      vect_data.push_back(elem);
     }
-    input_data_ = v;
+
+    input_data_ = vect_data;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // спец значения для всех процессов 1,2 ... N-1
-    // if (output_data == -1) {
-    //   return true;
-    // }
-
-    // 0й процесс должен вернуть правильный результат
-    return output_data == expectedRes;
+    return output_data == expected_res_;
   }
 
   InType GetTestInputData() final {
@@ -55,7 +58,7 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
 
  private:
   InType input_data_;
-  OutType expectedRes = 10;
+  OutType expected_res_ = -1;
 };
 
 namespace {
@@ -64,9 +67,7 @@ TEST_P(VotincevDAlternatigValuesRunFuncTestsProcesses, CountSwapsFromGenerator) 
   ExecuteTest(GetParam());
 }
 
-// тестов всего k, но на самом деле 2k, на MPI и на SEQ,
-// так что не удивляемся, когда видим их в 2 раза больше
-const std::array<TestType, 1> kTestParam = {"myDefaultTest"};
+const std::array<TestType, 6> kTestParam = {"test1", "test2", "test3", "test4", "test5", "test6"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<VotincevDAlternatingValuesMPI, InType>(
                                                kTestParam, PPC_SETTINGS_votincev_d_alternating_values),

@@ -1,9 +1,8 @@
 #include "votincev_d_alternating_values/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>  // для size_t
 #include <vector>
 
-#include "util/include/util.hpp"
 #include "votincev_d_alternating_values/common/include/common.hpp"
 
 namespace votincev_d_alternating_values {
@@ -15,30 +14,26 @@ VotincevDAlternatingValuesSEQ::VotincevDAlternatingValuesSEQ(const InType &in) {
 }
 
 bool VotincevDAlternatingValuesSEQ::ValidationImpl() {
-  return !(GetInput().empty());
+  return true;
 }
 
 bool VotincevDAlternatingValuesSEQ::PreProcessingImpl() {
-  v = GetInput();
+  vect_data_ = GetInput();
   return true;
 }
 
 bool VotincevDAlternatingValuesSEQ::RunImpl() {
   // auto start_time = std::chrono::high_resolution_clock::now();
-
-  int allSwaps = 0;
-  for (size_t j = 1; j < v.size(); j++) {
-    if ((v[j - 1] < 0 && v[j] >= 0) || (v[j - 1] >= 0 && v[j] < 0)) {
-      allSwaps++;
+  int all_swaps = 0;
+  for (size_t j = 1; j < vect_data_.size(); j++) {
+    if ((vect_data_[j - 1] < 0 && vect_data_[j] >= 0) || (vect_data_[j - 1] >= 0 && vect_data_[j] < 0)) {
+      all_swaps++;
     }
   }
-
   // auto end_time = std::chrono::high_resolution_clock::now();
   // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-  // std::cout << "SEQ_was_working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
-
-  GetOutput() = allSwaps;
-  // std::cout<< "Seq result: " << GetOutput() << "\n";
+  // std::cout << "SEQ was working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
+  GetOutput() = all_swaps;
   return true;
 }
 

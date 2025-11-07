@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "task/include/task.hpp"
 #include "votincev_d_alternating_values/common/include/common.hpp"
 
@@ -13,7 +15,7 @@ class VotincevDAlternatingValuesSEQ : public BaseTask {
   explicit VotincevDAlternatingValuesSEQ(const InType &in);
 
  private:
-  std::vector<double> v;
+  std::vector<double> vect_data_;
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
