@@ -23,7 +23,6 @@ bool SizovDStringMismatchCountMPI::PreProcessingImpl() {
   const auto &[a, b] = GetInput();
   str_a_ = a;
   str_b_ = b;
-  GetOutput() = 0;
   return true;
 }
 

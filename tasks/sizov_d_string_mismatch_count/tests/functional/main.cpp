@@ -77,15 +77,24 @@ class SizovDRunFuncTestsStringMismatchCount : public ppc::util::BaseRunFuncTests
 
  private:
   static void TrimString(std::string &s) {
-    auto new_end = std::ranges::remove_if(s, [](unsigned char c) { return c == '\r' || c == '\n' || c == '\t'; });
-    s.erase(new_end.begin(), new_end.end());
+    const auto is_edge_escape = [](unsigned char c) { return c == '\r' || c == '\n' || c == '\t'; };
 
-    auto left_it = std::ranges::find_if(s, [](unsigned char ch) { return !std::isspace(ch); });
-    s.erase(s.begin(), left_it);
+    std::size_t left = 0;
+    while (left < s.size() && is_edge_escape(static_cast<unsigned char>(s[left]))) {
+      ++left;
+    }
 
-    auto right_it =
-        std::ranges::find_if(std::views::reverse(s), [](unsigned char ch) { return !std::isspace(ch); }).base();
-    s.erase(right_it, s.end());
+    std::size_t right = s.size();
+    while (right > left && is_edge_escape(static_cast<unsigned char>(s[right - 1]))) {
+      --right;
+    }
+
+    if (left == 0 && right == s.size()) {
+      return;
+    }
+
+    s.erase(right);
+    s.erase(0, left);
   }
 
   InType input_data_ = std::make_tuple(std::string{}, std::string{});

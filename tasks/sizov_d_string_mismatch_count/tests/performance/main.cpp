@@ -15,7 +15,7 @@ namespace sizov_d_string_mismatch_count {
 class SizovDRunPerfTestsStringMismatchCount : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    std::string a(1'000'000, 'a');
+    std::string a(15'000'000, 'a');
     std::string b = a;
 
     for (std::size_t i = 0; i < a.size(); i += 10) {
