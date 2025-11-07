@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "lukin_i_elem_vec_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace lukin_i_elem_vec_sum {
 
@@ -33,7 +32,8 @@ bool LukinIElemVecSumMPI::RunImpl() {
     return true;
   }
 
-  int proc_count, rank;
+  int proc_count = 0;
+  int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 

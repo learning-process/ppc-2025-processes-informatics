@@ -8,19 +8,19 @@
 namespace lukin_i_elem_vec_sum {
 
 class LukinIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t vec_size = 100000000;
-  const int vec_value = 1;
+  const size_t vec_size_ = 100000000;
+  const int vec_value_ = 1;
 
-  InType input_data_{};
-  OutType expected_result = 0;
+  InType input_data_;
+  OutType expected_result_ = 0;
 
   void SetUp() override {
-    input_data_ = std::vector<int>(vec_size, vec_value);
-    expected_result = vec_size * vec_value;
+    input_data_ = std::vector<int>(vec_size_, vec_value_);
+    expected_result_ = static_cast<OutType>(vec_size_) * vec_value_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return expected_result == output_data;
+    return expected_result_ == output_data;
   }
 
   InType GetTestInputData() final {

@@ -1,10 +1,9 @@
 #include "lukin_i_elem_vec_sum/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "lukin_i_elem_vec_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace lukin_i_elem_vec_sum {
 
@@ -24,7 +23,7 @@ bool LukinIElemVecSumSEQ::PreProcessingImpl() {
 
 bool LukinIElemVecSumSEQ::RunImpl() {
   std::vector<int> input = GetInput();
-  const size_t vec_size = static_cast<size_t>(input.size());
+  const auto vec_size = static_cast<size_t>(input.size());
 
   if (vec_size == 0) {
     GetOutput() = 0;

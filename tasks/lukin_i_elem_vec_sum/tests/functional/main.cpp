@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "lukin_i_elem_vec_sum/common/include/common.hpp"
@@ -31,14 +26,14 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    size_t vec_size = static_cast<size_t>(std::get<0>(params));
+    auto vec_size = static_cast<size_t>(std::get<0>(params));
     input_data_ = std::vector<int>(vec_size, 1);
 
-    expected = vec_size;
+    expected_ = static_cast<OutType>(vec_size);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return expected == output_data;
+    return expected_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -46,8 +41,8 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_{};
-  OutType expected = 0;
+  InType input_data_;
+  OutType expected_ = 0;
 };
 
 namespace {
