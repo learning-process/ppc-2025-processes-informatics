@@ -37,7 +37,7 @@ class RychkovaRunFuncTestsMatrixColumns : public ppc::util::BaseRunFuncTests<InT
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -57,23 +57,23 @@ TEST_P(RychkovaRunFuncTestsMatrixColumns, SumMatrixColumnsTest) {
 }
 
 const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(std::vector<std::vector<int>>{}, 
-                    std::vector<int>{}, 
+    std::make_tuple(std::vector<std::vector<int>>{},
+                    std::vector<int>{},
                     "empty_matrix"),
-    
-    std::make_tuple(std::vector<std::vector<int>>{{5}}, 
-                    std::vector<int>{5}, 
+
+    std::make_tuple(std::vector<std::vector<int>>{{5}},
+                    std::vector<int>{5},
                     "1x1_matrix"),
-    
-    std::make_tuple(std::vector<std::vector<int>>{{1, 2, 3}, 
-                                                  {4, 5, 6}}, 
-                    std::vector<int>{5, 7, 9}, 
+
+    std::make_tuple(std::vector<std::vector<int>>{{1, 2, 3},
+                                                  {4, 5, 6}},
+                    std::vector<int>{5, 7, 9},
                     "2x3_matrix"),
-    
-    std::make_tuple(std::vector<std::vector<int>>{{1, -2}, 
-                                                  {-3, 4}, 
-                                                  {5, -6}}, 
-                    std::vector<int>{3, -4}, 
+
+    std::make_tuple(std::vector<std::vector<int>>{{1, -2},
+                                                  {-3, 4},
+                                                  {5, -6}},
+                    std::vector<int>{3, -4},
                     "3x2_matrix_with_negatives")
 };
 

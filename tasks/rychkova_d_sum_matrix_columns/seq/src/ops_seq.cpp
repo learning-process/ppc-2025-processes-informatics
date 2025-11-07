@@ -26,7 +26,7 @@ bool RychkovaDSumMatrixColumnsSEQ::ValidationImpl() {
       return false;
     }
   }
-  
+
   return GetOutput().empty();
 }
 
@@ -42,7 +42,6 @@ bool RychkovaDSumMatrixColumnsSEQ::PreProcessingImpl() {
   GetOutput().assign(cols, 0);
   return true;
 }
-
 
 bool RychkovaDSumMatrixColumnsSEQ::RunImpl() {
   const auto& input = GetInput();
@@ -64,7 +63,6 @@ bool RychkovaDSumMatrixColumnsSEQ::RunImpl() {
 
   return true;
 }
-
 
 bool RychkovaDSumMatrixColumnsSEQ::PostProcessingImpl() {
   return true;

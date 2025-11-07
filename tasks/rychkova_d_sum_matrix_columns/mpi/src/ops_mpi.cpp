@@ -4,7 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <numeric>
+#include <utility>
 #include <vector>
 
 #include "rychkova_d_sum_matrix_columns/common/include/common.hpp"
@@ -75,7 +75,7 @@ bool RychkovaDSumMatrixColumnsMPI::RunImpl() {
     }
   }
 
-  MPI_Allreduce(local_sums.data(), output.data(), static_cast<int>(num_cols), 
+  MPI_Allreduce(local_sums.data(), output.data(), static_cast<int>(num_cols),
                 MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   return true;
