@@ -11,7 +11,7 @@
 
 namespace rychkova_d_sum_matrix_columns {
 
-RychkovaDSumMatrixColumnsMPI::RychkovaDSumMatrixColumnsMPI(const InType &in) {
+RychkovaDSumMatrixColumnsMPI::RychkovaDSumMatrixColumnsMPI(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType{};
@@ -75,8 +75,7 @@ bool RychkovaDSumMatrixColumnsMPI::RunImpl() {
     }
   }
 
-  MPI_Allreduce(local_sums.data(), output.data(), static_cast<int>(num_cols),
-                MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(local_sums.data(), output.data(), static_cast<int>(num_cols), MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   return true;
 }

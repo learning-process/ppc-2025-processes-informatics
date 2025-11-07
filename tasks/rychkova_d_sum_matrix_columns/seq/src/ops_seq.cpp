@@ -7,7 +7,7 @@
 
 namespace rychkova_d_sum_matrix_columns {
 
-RychkovaDSumMatrixColumnsSEQ::RychkovaDSumMatrixColumnsSEQ(const InType &in) {
+RychkovaDSumMatrixColumnsSEQ::RychkovaDSumMatrixColumnsSEQ(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType{};

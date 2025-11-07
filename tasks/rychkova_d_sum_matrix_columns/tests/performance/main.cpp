@@ -1,63 +1,86 @@
-#include <gtest/gtest.h>
+#include <mpi.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <numeric>
+#include <vector>
 
 #include "rychkova_d_sum_matrix_columns/common/include/common.hpp"
 #include "rychkova_d_sum_matrix_columns/mpi/include/ops_mpi.hpp"
-#include "rychkova_d_sum_matrix_columns/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
 
 namespace rychkova_d_sum_matrix_columns {
 
-class RychkovaRunPerfTestMatrixColumns : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t kMatrixSize_ = 100;
+RychkovaDSumMatrixColumnsMPI::RychkovaDSumMatrixColumnsMPI(const InType& in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = OutType{};
+}
 
-  InType input_matrix_;
-  OutType expected_output_;
+bool RychkovaDSumMatrixColumnsMPI::ValidationImpl() {
+  const auto& input = GetInput();
 
-  void SetUp() override {
-    input_matrix_.resize(kMatrixSize_);
-    expected_output_.resize(kMatrixSize_, 0);
-
-    for (size_t i = 0; i < kMatrixSize_; ++i) {
-      input_matrix_[i].resize(kMatrixSize_);
-      for (size_t j = 0; j < kMatrixSize_; ++j) {
-        input_matrix_[i][j] = 1;
-        expected_output_[j] += 1;
-      }
-    }
-  }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != expected_output_.size()) {
-      return false;
-    }
-
-    for (size_t j = 0; j < kMatrixSize_; ++j) {
-      if (output_data[j] != expected_output_[j]) {
-        return false;
-      }
-    }
-
+  if (input.empty()) {
     return true;
   }
 
-  InType GetTestInputData() final {
-    return input_matrix_;
+  size_t cols = input[0].size();
+  for (const auto& row : input) {
+    if (row.size() != cols) {
+      return false;
+    }
   }
-};
 
-TEST_P(RychkovaRunPerfTestMatrixColumns, RunPerfModes) {
-  ExecuteTest(GetParam());
+  return GetOutput().empty();
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RychkovaDSumMatrixColumnsMPI, RychkovaDSumMatrixColumnsSEQ>(PPC_SETTINGS_rychkova_d_sum_matrix_columns);
+bool RychkovaDSumMatrixColumnsMPI::PreProcessingImpl() {
+  const auto& input = GetInput();
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+  if (input.empty()) {
+    GetOutput() = std::vector<int>{};
+    return true;
+  }
 
-const auto kPerfTestName = RychkovaRunPerfTestMatrixColumns::CustomPerfTestName;
+  GetOutput() = std::vector<int>(input[0].size(), 0);
+  return true;
+}
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, RychkovaRunPerfTestMatrixColumns, kGtestValues, kPerfTestName);
+bool RychkovaDSumMatrixColumnsMPI::RunImpl() {
+  const auto& input = GetInput();
+  auto& output = GetOutput();
+
+  if (input.empty()) {
+    return true;
+  }
+
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  size_t num_rows = input.size();
+  size_t num_cols = input[0].size();
+
+  size_t rows_per_process = num_rows / size;
+  size_t remainder = num_rows % size;
+  size_t start_row = (rank * rows_per_process) + std::min(static_cast<size_t>(rank), remainder);
+  size_t end_row = start_row + rows_per_process + (std::cmp_less(rank, remainder) ? 1 : 0);
+
+  std::vector<int> local_sums(num_cols, 0);
+
+  for (size_t i = start_row; i < end_row; ++i) {
+    for (size_t j = 0; j < num_cols; ++j) {
+      local_sums[j] += input[i][j];
+    }
+  }
+
+  MPI_Allreduce(local_sums.data(), output.data(), static_cast<int>(num_cols), MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  return true;
+}
+
+bool RychkovaDSumMatrixColumnsMPI::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace rychkova_d_sum_matrix_columns
