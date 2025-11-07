@@ -8,20 +8,56 @@
 namespace gutyansky_a_matrix_column_sum {
 
 class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
-
+ protected:
   void SetUp() override {
-    input_data_ = kCount_;
+    size_t rows = 0;
+    size_t cols = 0;
+    std::vector<double> input_elements;
+    std::vector<double> output_elements;
+
+    // Read test data
+    {
+      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gutyansky_a_matrix_column_sum, "test_perf.txt");
+
+      std::ifstream ifs(abs_path);
+
+      if (!ifs.is_open()) {
+        throw std::runtime_error("Failed to open test file: test_perf.txt");
+      }
+
+      ifs >> rows >> cols;
+      
+      if (rows == 0 || cols == 0) {
+        throw std::runtime_error("Both dimensions of matrix must be positive integers");
+      }
+
+      input_elements.resize(rows * cols);
+
+      for (size_t i = 0; i < input_elements.size(); i++) {
+        ifs >> input_elements[i];
+      }
+
+      output_elements.resize(cols);
+
+      for (size_t i = 0; i < output_elements.size(); i++) {
+        ifs >> output_elements[i];
+      }
+    }
+
+    input_data_ = { rows, cols, input_elements };
+    output_data_ = { cols, output_elements };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data_ == output_data;
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
+ private:
+  InType input_data_ = {};
+  OutType output_data_ = {};
 };
 
 TEST_P(GutyanskyAMatrixColumnSumPerfTest, RunPerfModes) {

@@ -11,6 +11,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <fstream>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
@@ -23,35 +24,52 @@ namespace gutyansky_a_matrix_column_sum {
 class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
+    size_t rows = 0;
+    size_t cols = 0;
+    std::vector<double> input_elements;
+    std::vector<double> output_elements;
+
+    // Read test data
     {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gutyansky_a_matrix_column_sum, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
+      std::string file_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
+      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gutyansky_a_matrix_column_sum, file_name);
+
+      std::ifstream ifs(abs_path);
+
+      if (!ifs.is_open()) {
+        throw std::runtime_error("Failed to open test file: " + file_name);
       }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
+
+      ifs >> rows >> cols;
+      
+      if (rows == 0 || cols == 0) {
+        throw std::runtime_error("Both dimensions of matrix must be positive integers");
+      }
+
+      input_elements.resize(rows * cols);
+
+      for (size_t i = 0; i < input_elements.size(); i++) {
+        ifs >> input_elements[i];
+      }
+
+      output_elements.resize(cols);
+
+      for (size_t i = 0; i < output_elements.size(); i++) {
+        ifs >> output_elements[i];
       }
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = { rows, cols, input_elements };
+    output_data_ = { cols, output_elements };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return (output_data_ == output_data);
   }
 
   InType GetTestInputData() final {
@@ -59,16 +77,17 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_ = { };
+  OutType output_data_ = { };
 };
 
 namespace {
 
-TEST_P(GutyanskyAMatrixColumnSumFuncTests, MatmulFromPic) {
+TEST_P(GutyanskyAMatrixColumnSumFuncTests, MatrixColumnSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {"test_1", "test_2", "test_3"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GutyanskyAMatrixColumnSumMPI, InType>(
                                                kTestParam, PPC_SETTINGS_gutyansky_a_matrix_column_sum),

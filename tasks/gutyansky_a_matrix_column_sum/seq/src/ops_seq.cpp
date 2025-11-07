@@ -2,6 +2,7 @@
 
 #include <numeric>
 #include <vector>
+#include <iostream>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -10,51 +11,41 @@ namespace gutyansky_a_matrix_column_sum {
 
 GutyanskyAMatrixColumnSumSEQ::GutyanskyAMatrixColumnSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
+
+  std::cout << in.cols << '\n';
+
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput().rows > 0 && GetInput().cols > 0 && GetInput().data.size() == GetInput().rows * GetInput().cols;
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+
+  GetOutput().size = GetInput().cols;
+  GetOutput().data.resize(GetInput().cols);
+
+  return GetOutput().data.size() == GetInput().cols;
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  if (GetInput().rows == 0 || GetInput().cols == 0) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
+  std::fill(GetOutput().data.begin(), GetOutput().data.end(), 0.0);
+
+  for (size_t i = 0; i < GetInput().rows * GetInput().cols; i++) {
+    GetOutput().data[i % GetInput().cols] += GetInput().data[i];
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace gutyansky_a_matrix_column_sum
