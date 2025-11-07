@@ -1,5 +1,4 @@
 #pragma once
-#include <mpi.h>
 
 #include "papulina_y_count_of_letters/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -18,7 +17,7 @@ class PapulinaYCountOfLettersMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  int CountOfLetters(const char *s, const int &n);
+  static int CountOfLetters(const char *s, const int &n);
 
   int procNum_ = 0;
 };

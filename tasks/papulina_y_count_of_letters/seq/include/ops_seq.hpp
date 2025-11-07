@@ -13,7 +13,7 @@ class PapulinaYCountOfLettersSEQ : public BaseTask {
   explicit PapulinaYCountOfLettersSEQ(const InType &in);
 
  private:
-  int CountOfLetters(const char *s, const int &n);
+  static int CountOfLetters(const char *s, const int &n);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

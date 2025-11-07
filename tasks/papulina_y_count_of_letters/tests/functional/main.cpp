@@ -1,16 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <iostream>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
+// #include <stdexcept>
 
 #include "papulina_y_count_of_letters/common/include/common.hpp"
 #include "papulina_y_count_of_letters/mpi/include/ops_mpi.hpp"
@@ -29,17 +25,17 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::cout << "SetUp for " << std::get<1>(params) << std::endl;
+    std::cout << "SetUp for " << std::get<1>(params) << '\n';
     input_data_ = std::string(std::get<0>(std::get<0>(params)));
-    std::cout << "We set input data:  " << input_data_ << std::endl;
+    std::cout << "We set input data:  " << input_data_ << '\n';
     expectedResult_ = std::get<1>(std::get<0>(params));
-    std::cout << "We set expected result:  " << expectedResult_ << std::endl;
+    std::cout << "We set expected result:  " << expectedResult_ << '\n';
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     std::cout << "CheckTestOutputData for "
               << std::get<1>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()))
-              << std::endl;
+              << '\n';
     return (expectedResult_ == output_data);
   }
 
@@ -48,7 +44,7 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_ = "";
+  InType input_data_;
   OutType expectedResult_ = 0;
 };
 

@@ -1,7 +1,8 @@
 #include "papulina_y_count_of_letters/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <cctype>
+// #include <numeric>
+// #include <vector>
 
 #include "papulina_y_count_of_letters/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -19,8 +20,8 @@ int PapulinaYCountOfLettersSEQ::CountOfLetters(const char *s, const int &n) {
     return 0;
   }
   for (int i = 0; i < n; i++) {
-    char c = s[i];
-    if (isalpha(c)) {
+    unsigned char c = s[i];
+    if (isalpha(c) != 0) {
       k++;
     }
   }
@@ -36,7 +37,7 @@ bool PapulinaYCountOfLettersSEQ::PreProcessingImpl() {
 }
 
 bool PapulinaYCountOfLettersSEQ::RunImpl() {
-  GetOutput() = CountOfLetters(GetInput().data(), GetInput().size());
+  GetOutput() = CountOfLetters(GetInput().data(), static_cast<int>(GetInput().size()));
   return true;
 }
 
