@@ -34,10 +34,6 @@ bool SizovDStringMismatchCountMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   const int total_size = static_cast<int>(str_a_.size());
-  if (total_size == 0) {
-    GetOutput() = 0;
-    return true;
-  }
 
   const int base = total_size / world_size;
   const int remainder = total_size % world_size;
