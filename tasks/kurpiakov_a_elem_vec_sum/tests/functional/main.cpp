@@ -52,8 +52,8 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(std::make_tuple(3, std::vector<int>{1, 2, 3}), "test3_positive", 6LL),
     std::make_tuple(std::make_tuple(3, std::vector<int>{0, 0, 0}), "test4_zeros", 0LL),
     std::make_tuple(std::make_tuple(3, std::vector<int>{1, -2, 3}), "test5_mixed", 2LL),
-    std::make_tuple(std::make_tuple(2, std::vector<int>{2147483647, 1}), "test6_border", 4294967293LL),
-    std::make_tuple(std::make_tuple(2, std::vector<int>{2147483646, 2147483647}), "test7_overflow", 2147483648LL),
+    std::make_tuple(std::make_tuple(2, std::vector<int>{2147483646, 1}), "test6_border", 2147483647LL),
+    std::make_tuple(std::make_tuple(2, std::vector<int>{2147483646, 2147483647}), "test7_overflow", 4294967293LL),
     std::make_tuple(std::make_tuple(3, std::vector<int>{-1, -2, -3}), "test8_negative", -6LL),
     std::make_tuple(std::make_tuple(4, std::vector<int>{1, -1, 2, -2}), "test9_alternating", 0LL)};
 
