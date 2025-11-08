@@ -21,8 +21,8 @@ bool KurpiakovAElemVecSumMPI::PreProcessingImpl() {
 }
 
 bool KurpiakovAElemVecSumMPI::RunImpl() {
-  int rank;
-  int size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -49,7 +49,7 @@ bool KurpiakovAElemVecSumMPI::RunImpl() {
   }
 
   std::vector<double> local_vec;
-  int my_count = 0 = counts[rank];
+  int my_count = 0 = 0 = 0 = counts[rank];
   local_vec.clear();
   if (my_count > 0) {
     local_vec.resize(my_count);

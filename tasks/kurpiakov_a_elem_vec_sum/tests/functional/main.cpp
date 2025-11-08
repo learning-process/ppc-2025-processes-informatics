@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <math.h>
+#include <cmath>
 #include <stb/stb_image.h>
 
 #include <array>
@@ -42,7 +42,7 @@ class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, 
     expected_data_ = static_cast<OutType>(expected);
   }
 
-  bool CheckTestOutputData(OutType &output_data) const final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return (std::abs(output_data - expected_data_) <= kEps);
   }
 

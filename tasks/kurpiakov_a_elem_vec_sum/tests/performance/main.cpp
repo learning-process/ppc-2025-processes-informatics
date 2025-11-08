@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <math.h>
+#include <cmath>
 
 #include <cstdlib>
 #include <fstream>
@@ -35,7 +35,7 @@ class KurpiakovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType,
     expected_data_ = static_cast<OutType>(expected);
   }
 
-  bool CheckTestOutputData(OutType &output_data) const final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return (std::abs(output_data - expected_data_) <= kEps);
   }
 
