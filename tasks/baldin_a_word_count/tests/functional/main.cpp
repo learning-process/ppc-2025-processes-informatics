@@ -17,7 +17,7 @@ namespace baldin_a_word_count {
 
 class BaldinAWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  BaldinAWordCountFuncTests() : input_data_(), expected_output_(0) {}
+  BaldinAWordCountFuncTests() = default;
 
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
@@ -47,7 +47,7 @@ class BaldinAWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
  private:
   InType input_data_;
-  OutType expected_output_;
+  OutType expected_output_ = 0;
 };
 
 namespace {

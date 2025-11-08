@@ -26,7 +26,7 @@ bool IsWordChar(char c) {
 class BaldinAWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
-  OutType expected_output_;
+  OutType expected_output_ = 0;
 
   void SetUp() override {
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_baldin_a_word_count, "book-war-and-peace.txt");
@@ -65,7 +65,7 @@ class BaldinAWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
  public:
-  BaldinAWordCountPerfTests() : input_data_(), expected_output_(0) {}
+  BaldinAWordCountPerfTests() = default;
 };
 
 TEST_P(BaldinAWordCountPerfTests, RunPerfModes) {

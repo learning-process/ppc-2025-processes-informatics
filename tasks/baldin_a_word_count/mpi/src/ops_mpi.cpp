@@ -100,17 +100,17 @@ bool BaldinAWordCountMPI::RunImpl() {
 
   if (rank == 0) {
     for (int i = 0; i < world_size; i++) {
-      displs[i] = i * part;
-      send_counts[i] = part + 1;
+      displs[i] = static_cast<int>(i * part);
+      send_counts[i] = static_cast<int>(part + 1);
     }
   }
 
   std::vector<char> local_buf(part + 1);
 
-  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), part + 1, MPI_CHAR, 0,
+  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), static_cast<int>(part + 1), MPI_CHAR, 0,
                MPI_COMM_WORLD);
 
-  size_t local_cnt = CountLocalWords(local_buf, part);
+  size_t local_cnt = CountLocalWords(local_buf, static_cast<int>(part));
 
   size_t global_cnt = 0;
   MPI_Allreduce(&local_cnt, &global_cnt, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
