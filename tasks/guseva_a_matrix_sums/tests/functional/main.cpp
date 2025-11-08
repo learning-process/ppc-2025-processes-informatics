@@ -56,7 +56,7 @@ class GusevaARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() == 1 && output_data[0] == -1) {
+    if (output_data.empty()) {
       return true;
     }
     if (output_data.size() != expected_data_.size()) {

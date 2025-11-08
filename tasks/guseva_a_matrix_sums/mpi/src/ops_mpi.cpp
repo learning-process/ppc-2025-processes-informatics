@@ -82,8 +82,6 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
 
   if (rank == 0) {
     GetOutput() = global_sums;
-  } else {
-    GetOutput() = {-1};
   }
 
   return true;
