@@ -5,6 +5,8 @@
 #include <fstream>
 #include <string>
 
+#include "kurpiakov_a_elem_vec_sum/mpi/include/ops_mpi.hpp"
+#include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -34,7 +36,7 @@ class KurpiakovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) const final {
-    return std::abs(output_data - expected_data_) <= eps;
+    return (std::abs(output_data - expected_data_) <= kEps);
   }
 
   InType GetTestInputData() final {
