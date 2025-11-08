@@ -49,7 +49,7 @@ bool KurpiakovAElemVecSumMPI::RunImpl() {
   }
 
   std::vector<double> local_vec;
-  int my_count = 0 = 0 = 0 = counts[rank];
+  int my_count = counts[rank];
   local_vec.clear();
   if (my_count > 0) {
     local_vec.resize(my_count);

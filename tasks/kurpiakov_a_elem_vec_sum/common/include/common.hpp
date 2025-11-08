@@ -1,9 +1,9 @@
 #pragma once
 
+#include <numeric>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <numeric>
 
 #include "task/include/task.hpp"
 

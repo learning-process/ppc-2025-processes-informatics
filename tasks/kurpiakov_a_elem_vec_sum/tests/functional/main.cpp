@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
-#include <cmath>
 #include <stb/stb_image.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdlib>
 #include <fstream>

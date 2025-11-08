@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include <cmath>
 
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <string>
