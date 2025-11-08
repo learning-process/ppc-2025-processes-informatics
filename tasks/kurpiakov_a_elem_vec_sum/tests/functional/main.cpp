@@ -76,6 +76,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KurpiakovAElemVecSumFuncTest::PrintFuncTestName<KurpiakovAElemVecSumFuncTest>;
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(KurpiakovAVec, KurpiakovAElemVecSumFuncTest, kGtestValues, kPerfTestName);
 
 }  // namespace

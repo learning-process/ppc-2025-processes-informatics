@@ -4,7 +4,6 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
@@ -59,6 +58,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = KurpiakovAElemVecSumPerfTests::CustomPerfTestName;
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(KurpiakovAVecPerf, KurpiakovAElemVecSumPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace
