@@ -4,7 +4,6 @@
 #include "task/include/task.hpp"
 
 namespace kurpiakov_a_elem_vec_sum {
-
 class KurpiakovAElemVecSumMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
@@ -13,10 +12,10 @@ class KurpiakovAElemVecSumMPI : public BaseTask {
   explicit KurpiakovAElemVecSumMPI(const InType &in);
 
  private:
-  bool ValidationImpl() override;
-  bool PreProcessingImpl() override;
-  bool RunImpl() override;
-  bool PostProcessingImpl() override;
+  static bool ValidationImpl() override;
+  static bool PreProcessingImpl() override;
+  static bool RunImpl() override;
+  static bool PostProcessingImpl() override;
 };
 
 }  // namespace kurpiakov_a_elem_vec_sum

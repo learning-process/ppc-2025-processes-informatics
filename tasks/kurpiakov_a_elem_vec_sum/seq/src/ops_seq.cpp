@@ -1,14 +1,7 @@
-#include "kurpiakov_a_elem_vec_sum//seq/include/ops_seq.hpp"
-
-#include <numeric>
-#include <vector>
-
-#include "kurpiakov_a_elem_vec_sum//common/include/common.hpp"
-#include "util/include/util.hpp"
+#include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
 
 namespace kurpiakov_a_elem_vec_sum {
-
-KurpiakovAElemVecSumSEQ::NesterovATestTaskSEQ(const InType &in) {
+KurpiakovAElemVecSumSEQ::KurpiakovAElemVecSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
@@ -21,19 +14,18 @@ bool KurpiakovAElemVecSumSEQ::ValidationImpl() {
 }
 
 bool KurpiakovAElemVecSumSEQ::PreProcessingImpl() {
-  GetOutput() == 0.0;
+  GetOutput() = 0.0;
   return true;
 }
 
 bool KurpiakovAElemVecSumSEQ::RunImpl() {
-  vec = std::get<1>(GetInput());
-  GetOutput() = std::accumulate(vec.begin(), vec.end(), 0.0)
+  std::vector<double> vec = std::get<1>(GetInput());
+  GetOutput() = std::accumulate(vec.begin(), vec.end(), 0.0);
   return true;
 }
 
 bool KurpiakovAElemVecSumSEQ::PostProcessingImpl() {
   return true;
 }
-
 
 }  // namespace kurpiakov_a_elem_vec_sum

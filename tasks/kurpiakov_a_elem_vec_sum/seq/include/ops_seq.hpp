@@ -1,10 +1,9 @@
 #pragma once
 
-#include "kurpiakov_a_elem_vec_sum//common/include/common.hpp"
+#include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace kurpiakov_a_elem_vec_sum {
-
 class KurpiakovAElemVecSumSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
@@ -13,10 +12,10 @@ class KurpiakovAElemVecSumSEQ : public BaseTask {
   explicit KurpiakovAElemVecSumSEQ(const InType &in);
 
  private:
-  bool ValidationImpl() override;
-  bool PreProcessingImpl() override;
-  bool RunImpl() override;
-  bool PostProcessingImpl() override;
+  static bool ValidationImpl() override;
+  static bool PreProcessingImpl() override;
+  static bool RunImpl() override;
+  static bool PostProcessingImpl() override;
 };
 
 }  // namespace kurpiakov_a_elem_vec_sum

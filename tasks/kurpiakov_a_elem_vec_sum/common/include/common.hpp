@@ -6,8 +6,7 @@
 #include "task/include/task.hpp"
 
 namespace kurpiakov_a_elem_vec_sum {
-
-constexpr double eps = 10e-12;
+constexpr double kEps = 10e-12;
 using InType = std::tuple<int, std::vector<double>>;
 using OutType = double;
 using TestType = std::string;
