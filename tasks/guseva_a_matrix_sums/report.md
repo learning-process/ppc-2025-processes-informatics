@@ -1,6 +1,6 @@
 # Matrix Sums By Columns
 
-- Student: Гусева Алёна Алексеевна, 3823Б1ФИ2
+- Student: Гусева Алёна Сергеевна, 3823Б1ФИ2
 - Technology: SEQ | MPI
 - Variant: 12
 
