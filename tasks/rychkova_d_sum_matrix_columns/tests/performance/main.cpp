@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <numeric>
+#include <utility>
 #include <vector>
 
 #include "rychkova_d_sum_matrix_columns/common/include/common.hpp"
