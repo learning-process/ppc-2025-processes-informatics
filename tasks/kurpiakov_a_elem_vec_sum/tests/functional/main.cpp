@@ -54,7 +54,7 @@ class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, 
 
  private:
   InType input_data_{0, {}};
-  OutType expected_data_(0.0);
+  OutType expected_data_{0.0};
 };
 
 namespace {
