@@ -8,9 +8,9 @@
 #include <fstream>
 #include <string>
 
+#include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "kurpiakov_a_elem_vec_sum/mpi/include/ops_mpi.hpp"
 #include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
-#include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
