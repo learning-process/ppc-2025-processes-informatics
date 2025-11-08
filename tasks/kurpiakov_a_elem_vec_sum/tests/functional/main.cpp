@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "kurpiakov_a_elem_vec_sum/mpi/include/ops_mpi.hpp"
@@ -51,8 +53,8 @@ class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_;
-  OutType expected_data_;
+  InType input_data_{0, {}};
+  OutType expected_data_(0.0);
 };
 
 namespace {

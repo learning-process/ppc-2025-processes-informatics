@@ -1,5 +1,9 @@
 #include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
 
+#include <numeric>
+
+#include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
+
 namespace kurpiakov_a_elem_vec_sum {
 KurpiakovAElemVecSumSEQ::KurpiakovAElemVecSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());

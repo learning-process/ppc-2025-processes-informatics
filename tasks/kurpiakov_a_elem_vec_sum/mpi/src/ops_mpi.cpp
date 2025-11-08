@@ -2,6 +2,10 @@
 
 #include <mpi.h>
 
+#include <numeric>
+
+#include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
+
 namespace kurpiakov_a_elem_vec_sum {
 KurpiakovAElemVecSumMPI::KurpiakovAElemVecSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());

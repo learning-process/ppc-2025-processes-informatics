@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "kurpiakov_a_elem_vec_sum/mpi/include/ops_mpi.hpp"
@@ -14,7 +16,7 @@
 namespace kurpiakov_a_elem_vec_sum {
 class KurpiakovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{0, {}};
-  OutType expected_data_;
+  OutType expected_data_(0.0);
 
   void SetUp() override {
     std::string input_data_source = ppc::util::GetAbsoluteTaskPath(PPC_ID_kurpiakov_a_elem_vec_sum, "test10_large.txt");
