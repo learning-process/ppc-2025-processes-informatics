@@ -45,7 +45,7 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
   size_t remainder_size = row_count % p_count;
 
   size_t start_row_index = rows_chunk_size * rank + std::min((size_t)rank, remainder_size);
-  size_t end_row_index = start_row_index + rows_chunk_size + (rank < remainder_size ? (size_t)1 : (size_t)0);
+  size_t end_row_index = start_row_index + rows_chunk_size + ((size_t)rank < remainder_size ? (size_t)1 : (size_t)0);
 
   std::vector<int64_t> final_res(col_count, 0.0);
   std::vector<int64_t> partial_res(col_count, 0.0);
