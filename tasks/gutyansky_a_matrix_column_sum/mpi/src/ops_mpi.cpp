@@ -52,13 +52,13 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
 
   for (size_t i = start_row_index; i < end_row_index; i++) {
     for (size_t j = 0; j < col_count; j++) {
-        partial_res[j] += GetInput().data[i * col_count + j];
+      partial_res[j] += GetInput().data[i * col_count + j];
     }
   }
 
   MPI_Allreduce(partial_res.data(), final_res.data(), col_count, MPI_INTEGER8, MPI_SUM, MPI_COMM_WORLD);
 
-  GetOutput() = { col_count, final_res };
+  GetOutput() = {col_count, final_res};
 
   return true;
 }

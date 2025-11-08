@@ -1,8 +1,8 @@
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 #include <vector>
-#include <cmath>
 
 namespace gutyansky_a_matrix_column_sum {
 
