@@ -107,8 +107,8 @@ bool BaldinAWordCountMPI::RunImpl() {
 
   std::vector<char> local_buf(part + 1);
 
-  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), static_cast<int>(part + 1), MPI_CHAR, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(input.data(), send_counts.data(), displs.data(), MPI_CHAR, local_buf.data(), static_cast<int>(part + 1),
+               MPI_CHAR, 0, MPI_COMM_WORLD);
 
   size_t local_cnt = CountLocalWords(local_buf, static_cast<int>(part));
 

@@ -23,7 +23,7 @@ class BaldinAWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     std::string text = std::get<0>(test_param);
 
     for (char &c : text) {
-      if (std::isalnum(static_cast<unsigned char>(c)) == false || c == '_') {
+      if (!static_cast<bool>(std::isalnum(static_cast<unsigned char>(c))) || c == '_') {
         c = '_';
       }
     }
