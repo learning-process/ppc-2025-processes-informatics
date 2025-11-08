@@ -46,6 +46,8 @@ class KurpiakovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
+namespace {
+
 TEST_P(KurpiakovAElemVecSumPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
@@ -58,5 +60,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = KurpiakovAElemVecSumPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(KurpiakovAVecPerf, KurpiakovAElemVecSumPerfTests, kGtestValues, kPerfTestName);
+
+}  // namespace
 
 }  // namespace kurpiakov_a_elem_vec_sum

@@ -1,6 +1,7 @@
 #include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
 
 #include <numeric>
+#include <vector>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 

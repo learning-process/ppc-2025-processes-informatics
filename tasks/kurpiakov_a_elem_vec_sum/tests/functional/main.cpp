@@ -58,7 +58,7 @@ class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, 
 };
 
 namespace {
-TEST_P(KurpiakovAElemVecSumFuncTest, MatmulFromPic) {
+TEST_P(KurpiakovAElemVecSumFuncTest, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
@@ -66,9 +66,11 @@ const std::array<TestType, 10> kTestParam = {"test1_empty", "test2_single", "tes
                                              "test5_mixed", "test6_border", "test7_overflow", "test8_inf",
                                              "test9_nan",   "test10_large"};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<KurpiakovAElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_kurpiakov_a_elem_vec_sum),
-    ppc::util::AddFuncTask<KurpiakovAElemVecSumSEQ, InType>(kTestParam, PPC_SETTINGS_kurpiakov_a_elem_vec_sum));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<kurpiakov_a_elem_vec_sum::KurpiakovAElemVecSumMPI, InType>(
+                       kTestParam, PPC_SETTINGS_kurpiakov_a_elem_vec_sum),
+                   ppc::util::AddFuncTask<kurpiakov_a_elem_vec_sum::KurpiakovAElemVecSumSEQ, InType>(
+                       kTestParam, PPC_SETTINGS_kurpiakov_a_elem_vec_sum));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
