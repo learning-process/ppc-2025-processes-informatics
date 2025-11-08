@@ -9,23 +9,26 @@ namespace kurpiakov_a_elem_vec_sum {
 KurpiakovAElemVecSumSEQ::KurpiakovAElemVecSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0.0;
+  GetOutput() = 0;
 }
 
 bool KurpiakovAElemVecSumSEQ::ValidationImpl() {
-  bool if_dividable = std::get<1>(GetInput()).size() % std::get<0>(GetInput()) == 0;
-  bool res = (GetOutput() == 0.0) && if_dividable;
+  bool res = (GetOutput() == 0) && ((int)(std::get<1>(GetInput()).size()) == std::get<0>(GetInput()));
   return res;
 }
 
 bool KurpiakovAElemVecSumSEQ::PreProcessingImpl() {
-  GetOutput() = 0.0;
+  GetOutput() = 0;
   return true;
 }
 
 bool KurpiakovAElemVecSumSEQ::RunImpl() {
-  std::vector<double> vec = std::get<1>(GetInput());
-  GetOutput() = std::accumulate(vec.begin(), vec.end(), 0.0);
+  std::vector<int> vec = std::get<1>(GetInput());
+  long long res = 0LL;
+  for (const int &it : vec) {
+    res += static_cast<long long>(it);
+  }
+  GetOutput() = res;
   return true;
 }
 

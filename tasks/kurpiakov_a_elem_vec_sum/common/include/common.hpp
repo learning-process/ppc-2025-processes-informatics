@@ -7,10 +7,9 @@
 #include "task/include/task.hpp"
 
 namespace kurpiakov_a_elem_vec_sum {
-constexpr double kEps = 10e-12;
-using InType = std::tuple<int, std::vector<double>>;
-using OutType = double;
-using TestType = std::string;
+using InType = std::tuple<int, std::vector<int>>;
+using OutType = long long;
+using TestType = std::tuple<InType, std::string, OutType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace kurpiakov_a_elem_vec_sum

@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
-#include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -20,32 +18,18 @@ namespace kurpiakov_a_elem_vec_sum {
 class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return test_param;
+    return std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::string input_data_source = ppc::util::GetAbsoluteTaskPath(PPC_ID_kurpiakov_a_elem_vec_sum, param + ".txt");
-
-    std::ifstream file(input_data_source);
-    int size = 0;
-    double expected = NAN;
-    std::vector<double> input;
-    file >> size;
-    file >> expected;
-    double num = 0.0;
-    while (file >> num) {
-      input.push_back(num);
-    }
-    file.close();
-
-    input_data_ = InType(size, input);
-    expected_data_ = static_cast<OutType>(expected);
+    input_data_ = std::get<0>(param);
+    expected_data_ = std::get<2>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (std::abs(output_data - expected_data_) <= kEps);
+    return (output_data == expected_data_);
   }
 
   InType GetTestInputData() final {
@@ -53,8 +37,8 @@ class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_{0, {}};
-  OutType expected_data_{0.0};
+  InType input_data_;
+  OutType expected_data_;
 };
 
 namespace {
@@ -62,9 +46,16 @@ TEST_P(KurpiakovAElemVecSumFuncTest, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {"test1_empty", "test2_single", "test3_positive", "test4_zeros",
-                                             "test5_mixed", "test6_border", "test7_overflow", "test8_inf",
-                                             "test9_nan",   "test10_large"};
+const std::array<TestType, 10> kTestParam = {
+    std::make_tuple(std::make_tuple(0, std::vector<int>{}), "test1_empty", 0LL),
+    std::make_tuple(std::make_tuple(1, std::vector<int>{5}), "test2_single", 5LL),
+    std::make_tuple(std::make_tuple(3, std::vector<int>{1, 2, 3}), "test3_positive", 6LL),
+    std::make_tuple(std::make_tuple(3, std::vector<int>{0, 0, 0}), "test4_zeros", 0LL),
+    std::make_tuple(std::make_tuple(3, std::vector<int>{1, -2, 3}), "test5_mixed", 2LL),
+    std::make_tuple(std::make_tuple(2, std::vector<int>{2147483647, 1}), "test6_border", 4294967293LL),
+    std::make_tuple(std::make_tuple(2, std::vector<int>{2147483646, 2147483647}), "test7_overflow", 2147483648LL),
+    std::make_tuple(std::make_tuple(3, std::vector<int>{-1, -2, -3}), "test8_negative", -6LL),
+    std::make_tuple(std::make_tuple(4, std::vector<int>{1, -1, 2, -2}), "test9_alternating", 0LL)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<kurpiakov_a_elem_vec_sum::KurpiakovAElemVecSumMPI, InType>(
