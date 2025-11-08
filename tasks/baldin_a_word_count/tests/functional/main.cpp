@@ -1,16 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "baldin_a_word_count/common/include/common.hpp"
 #include "baldin_a_word_count/mpi/include/ops_mpi.hpp"
@@ -22,11 +17,13 @@ namespace baldin_a_word_count {
 
 class BaldinAWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  BaldinAWordCountFuncTests() : input_data_(), expected_output_(0) {}
+
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
 
     for (char &c : text) {
-      if (!std::isalnum(static_cast<unsigned char>(c)) || c == '_') {
+      if (std::isalnum(static_cast<unsigned char>(c)) == false || c == '_') {
         c = '_';
       }
     }
@@ -36,21 +33,21 @@ class BaldinAWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data = std::get<0>(params);
-    expected_output = std::get<1>(params);
+    input_data_ = std::get<0>(params);
+    expected_output_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_output;
+    return output_data == expected_output_;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data;
-  OutType expected_output;
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
