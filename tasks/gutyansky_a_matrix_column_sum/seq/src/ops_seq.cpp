@@ -12,8 +12,6 @@ namespace gutyansky_a_matrix_column_sum {
 GutyanskyAMatrixColumnSumSEQ::GutyanskyAMatrixColumnSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 
-  std::cout << in.cols << '\n';
-
   GetInput() = in;
   GetOutput() = {};
 }
@@ -34,7 +32,7 @@ bool GutyanskyAMatrixColumnSumSEQ::RunImpl() {
     return false;
   }
 
-  std::fill(GetOutput().data.begin(), GetOutput().data.end(), 0.0);
+  std::fill(GetOutput().data.begin(), GetOutput().data.end(), (int64_t)0);
 
   for (size_t i = 0; i < GetInput().rows * GetInput().cols; i++) {
     GetOutput().data[i % GetInput().cols] += GetInput().data[i];

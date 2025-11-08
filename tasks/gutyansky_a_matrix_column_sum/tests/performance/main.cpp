@@ -12,8 +12,8 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   void SetUp() override {
     size_t rows = 0;
     size_t cols = 0;
-    std::vector<double> input_elements;
-    std::vector<double> output_elements;
+    std::vector<int64_t> input_elements;
+    std::vector<int64_t> output_elements;
 
     // Read test data
     {

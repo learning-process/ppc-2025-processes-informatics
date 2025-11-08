@@ -31,8 +31,8 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
   void SetUp() override {
     size_t rows = 0;
     size_t cols = 0;
-    std::vector<double> input_elements;
-    std::vector<double> output_elements;
+    std::vector<int64_t> input_elements;
+    std::vector<int64_t> output_elements;
 
     // Read test data
     {
@@ -88,7 +88,7 @@ TEST_P(GutyanskyAMatrixColumnSumFuncTests, MatrixColumnSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {"test_1", "test_2", "test_3"};
+const std::array<TestType, 5> kTestParam = {"test_1", "test_2", "test_3", "test_4", "test_5"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GutyanskyAMatrixColumnSumMPI, InType>(
                                                kTestParam, PPC_SETTINGS_gutyansky_a_matrix_column_sum),

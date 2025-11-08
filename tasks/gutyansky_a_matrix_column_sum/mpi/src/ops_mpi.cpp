@@ -12,65 +12,59 @@ namespace gutyansky_a_matrix_column_sum {
 
 GutyanskyAMatrixColumnSumMPI::GutyanskyAMatrixColumnSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
+
   GetInput() = in;
   GetOutput() = {};
 }
 
 bool GutyanskyAMatrixColumnSumMPI::ValidationImpl() {
-  // return (GetInput() > 0) && (GetOutput() == 0);
-  return false;
+  return GetInput().rows > 0 && GetInput().cols > 0 && GetInput().data.size() == GetInput().rows * GetInput().cols;
 }
 
 bool GutyanskyAMatrixColumnSumMPI::PreProcessingImpl() {
-  //   GetOutput() = 2 * GetInput();
-  //   return GetOutput() > 0;
-  return false;
+  GetOutput().size = GetInput().cols;
+  GetOutput().data.resize(GetInput().cols);
+
+  return GetOutput().data.size() == GetInput().cols;
 }
 
 bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
-  //   auto input = GetInput();
-  //   if (input == 0) {
-  //     return false;
-  //   }
+  if (GetInput().rows == 0 || GetInput().cols == 0) {
+    return false;
+  }
 
-  //   for (InType i = 0; i < GetInput(); i++) {
-  //     for (InType j = 0; j < GetInput(); j++) {
-  //       for (InType k = 0; k < GetInput(); k++) {
-  //         std::vector<InType> tmp(i + j + k, 1);
-  //         GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-  //         GetOutput() -= i + j + k;
-  //       }
-  //     }
-  //   }
+  int rank, p_count;
 
-  //   const int num_threads = ppc::util::GetNumThreads();
-  //   GetOutput() *= num_threads;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &p_count);
 
-  //   int rank = 0;
-  //   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  size_t row_count = GetInput().rows;
+  size_t col_count = GetInput().cols;
 
-  //   if (rank == 0) {
-  //     GetOutput() /= num_threads;
-  //   } else {
-  //     int counter = 0;
-  //     for (int i = 0; i < num_threads; i++) {
-  //       counter++;
-  //     }
+  size_t rows_chunk_size = row_count / p_count;
+  size_t remainder_size = row_count % p_count;
 
-  //     if (counter != 0) {
-  //       GetOutput() /= counter;
-  //     }
-  //   }
+  size_t start_row_index = rows_chunk_size * rank + std::min((size_t)rank, remainder_size);
+  size_t end_row_index = start_row_index + rows_chunk_size + (rank < remainder_size ? (size_t)1 : (size_t)0);
 
-  //   MPI_Barrier(MPI_COMM_WORLD);
-  //   return GetOutput() > 0;
-  return false;
+  std::vector<int64_t> final_res(col_count, 0.0);
+  std::vector<int64_t> partial_res(col_count, 0.0);
+
+  for (size_t i = start_row_index; i < end_row_index; i++) {
+    for (size_t j = 0; j < col_count; j++) {
+        partial_res[j] += GetInput().data[i * col_count + j];
+    }
+  }
+
+  MPI_Allreduce(partial_res.data(), final_res.data(), col_count, MPI_INTEGER8, MPI_SUM, MPI_COMM_WORLD);
+
+  GetOutput() = { col_count, final_res };
+
+  return true;
 }
 
 bool GutyanskyAMatrixColumnSumMPI::PostProcessingImpl() {
-  //   GetOutput() -= GetInput();
-  //   return GetOutput() > 0;
-  return false;
+  return true;
 }
 
 }  // namespace gutyansky_a_matrix_column_sum
