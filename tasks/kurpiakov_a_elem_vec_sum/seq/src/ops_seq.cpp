@@ -13,7 +13,7 @@ KurpiakovAElemVecSumSEQ::KurpiakovAElemVecSumSEQ(const InType &in) {
 }
 
 bool KurpiakovAElemVecSumSEQ::ValidationImpl() {
-  bool res = (GetOutput() == 0) && ((int)(std::get<1>(GetInput()).size()) == std::get<0>(GetInput()));
+  bool res = (GetOutput() == 0) &&  (std::cmp_equal((std::get<1>(GetInput()).size()), std::get<0>(GetInput())));
   return res;
 }
 

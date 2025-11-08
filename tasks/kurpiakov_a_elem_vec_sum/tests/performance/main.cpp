@@ -2,14 +2,12 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <string>
 #include <vector>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 #include "kurpiakov_a_elem_vec_sum/mpi/include/ops_mpi.hpp"
 #include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kurpiakov_a_elem_vec_sum {
 
@@ -25,7 +23,7 @@ class KurpiakovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType,
       input[i] = i + 1;
     }
 
-    expected_data_ = static_cast<long long>(vector_size) * (vector_size + 1) / 2;
+    expected_data_ = static_cast<OutType>(vector_size) * (vector_size + 1) / 2;
     input_data_ = InType(vector_size, input);
   }
 

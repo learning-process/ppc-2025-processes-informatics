@@ -3,9 +3,8 @@
 #include <mpi.h>
 
 #include <cmath>
-#include <limits>
-#include <numeric>
 #include <vector>
+#include <utility>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 
@@ -18,7 +17,7 @@ KurpiakovAElemVecSumMPI::KurpiakovAElemVecSumMPI(const InType &in) {
 }
 
 bool KurpiakovAElemVecSumMPI::ValidationImpl() {
-  bool res = (GetOutput() == 0) && ((int)(std::get<1>(GetInput()).size()) == std::get<0>(GetInput()));
+  bool res = (GetOutput() == 0) && (std::cmp_equal((std::get<1>(GetInput()).size()), std::get<0>(GetInput())));
   return res;
 }
 
@@ -28,7 +27,8 @@ bool KurpiakovAElemVecSumMPI::PreProcessingImpl() {
 }
 
 bool KurpiakovAElemVecSumMPI::RunImpl() {
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -63,12 +63,12 @@ bool KurpiakovAElemVecSumMPI::RunImpl() {
   MPI_Scatterv(sendbuf, batch.data(), displs.data(), MPI_INT, local_data.data(), local_size, MPI_INT, 0,
                MPI_COMM_WORLD);
 
-  long long local_sum = 0LL;
+  OutType local_sum = 0LL;
   for (int i = 0; i < local_size; ++i) {
-    local_sum += static_cast<long long>(local_data[i]);
+    local_sum += static_cast<OutType>(local_data[i]);
   }
 
-  long long global_sum = 0LL;
+  OutType global_sum = 0LL;
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   MPI_Bcast(&global_sum, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
