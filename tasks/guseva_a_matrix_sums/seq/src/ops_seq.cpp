@@ -24,9 +24,7 @@ bool GusevaAMatrixSumsSEQ::PreProcessingImpl() {
 }
 
 bool GusevaAMatrixSumsSEQ::RunImpl() {
-  auto &matrix = std::get<2>(GetInput());
-  auto &columns = std::get<1>(GetInput());
-  auto &rows = std::get<0>(GetInput());
+  const auto &[rows, columns, matrix] = GetInput();
   for (uint32_t i = 0; i < rows; i++) {
     for (uint32_t j = 0; j < columns; j++) {
       GetOutput()[j] += matrix[(i * columns) + j];

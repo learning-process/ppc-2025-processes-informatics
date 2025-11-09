@@ -76,13 +76,11 @@ bool GusevaAMatrixSumsMPI::RunImpl() {
     local_sums[(i + shift) % columns] += local_buff[i];
   }
 
-  std::vector<double> global_sums(columns, 0.0);
-
-  MPI_Reduce(local_sums.data(), global_sums.data(), columns, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
   if (rank == 0) {
-    GetOutput() = global_sums;
+    GetOutput().resize(columns, 0.0);
   }
+
+  MPI_Reduce(local_sums.data(), GetOutput().data(), columns, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   return true;
 }
