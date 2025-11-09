@@ -12,6 +12,7 @@
 #include "../../mpi/include/trapezoid_integration_mpi.hpp"
 #include "../../seq/include/trapezoid_integration_sequential.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kutergin_v_trapezoid_seq {
 
@@ -101,6 +102,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = KuterginVRunFuncTestsSEQ::PrintFuncTestName<KuterginVRunFuncTestsSEQ>;
 
 // "регистрация" набора тестов и параметров в GTest
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 INSTANTIATE_TEST_SUITE_P(TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues, kTestName);
 }  // namespace
 
