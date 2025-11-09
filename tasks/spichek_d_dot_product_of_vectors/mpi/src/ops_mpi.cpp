@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>  // для int64_t
 
 #include "spichek_d_dot_product_of_vectors/common/include/common.hpp"
 
@@ -44,14 +45,15 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
     return true;
   }
 
-  const size_t n = static_cast<size_t>(max_size);
+  const auto n = static_cast<size_t>(max_size);  // modernize-use-auto
   const size_t base_chunk = n / static_cast<size_t>(size);
   const size_t remainder = n % static_cast<size_t>(size);
 
   const int remainder_i = static_cast<int>(remainder);
   const bool has_extra = (rank < remainder_i);
 
-  const size_t start = static_cast<size_t>(rank) * base_chunk + static_cast<size_t>(std::min(rank, remainder_i));
+  // исправлено: добавлены скобки для явного порядка операций
+  const size_t start = (static_cast<size_t>(rank) * base_chunk) + static_cast<size_t>(std::min(rank, remainder_i));
 
   const size_t end = start + base_chunk + (has_extra ? 1U : 0U);
 
@@ -68,7 +70,9 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   }
 
   int64_t global_dot = 0;
-  MPI_Allreduce(&local_dot, &global_dot, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+
+  // исправлено: тип MPI_INT64_T соответствует int64_t
+  MPI_Allreduce(&local_dot, &global_dot, 1, MPI_INT64_T, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_dot);
   return true;
