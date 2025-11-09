@@ -50,8 +50,8 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   int local_size = 0;
 
-  const int part = vec_size / proc_count;
-  const int reminder = vec_size % proc_count;
+  const int part = vec_size_ / proc_count;
+  const int reminder = vec_size_ % proc_count;
 
   int offset = 0;
   for (int i = 0; i < proc_count; i++) {

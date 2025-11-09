@@ -18,6 +18,6 @@ class LukinIElemVecSumSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  size_t vec_size_ = 0;
+  int vec_size_ = 0;
 };
 }  // namespace lukin_i_elem_vec_sum
