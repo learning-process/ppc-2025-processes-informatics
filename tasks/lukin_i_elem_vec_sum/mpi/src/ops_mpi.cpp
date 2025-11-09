@@ -20,12 +20,12 @@ bool LukinIElemVecSumMPI::ValidationImpl() {
 }
 
 bool LukinIElemVecSumMPI::PreProcessingImpl() {
-  vec_size = static_cast<int>(GetInput().size());
+  vec_size_ = static_cast<int>(GetInput().size());
   return true;
 }
 
 bool LukinIElemVecSumMPI::RunImpl() {
-  if (vec_size == 0) {
+  if (vec_size_ == 0) {
     GetOutput() = 0;
     return true;
   }
@@ -35,13 +35,13 @@ bool LukinIElemVecSumMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (proc_count > vec_size) {
+  if (proc_count > vec_size_) {
     if (rank == 0) {
       GetOutput() = std::accumulate(GetInput().begin(), GetInput().end(), 0);
     } else {
       GetOutput() = 0;
     }
-    MPI_Bcast(&GetOutput(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&GetOutput(), 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
     return true;
   }
 
