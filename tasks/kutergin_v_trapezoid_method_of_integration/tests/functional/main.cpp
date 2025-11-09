@@ -102,8 +102,10 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = KuterginVRunFuncTestsSEQ::PrintFuncTestName<KuterginVRunFuncTestsSEQ>;
 
 // "регистрация" набора тестов и параметров в GTest
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
-INSTANTIATE_TEST_SUITE_P(TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues, kTestName);
+// NOLINTNEXTLINE(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables)
+INSTANTIATE_TEST_SUITE_P(
+    TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues,
+    kTestName);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 }  // namespace
 
 }  // namespace kutergin_v_trapezoid_seq
