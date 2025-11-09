@@ -15,15 +15,15 @@ ShkrebkoMCountCharFreqSEQ::ShkrebkoMCountCharFreqSEQ(const InType &in) {
 }
 
 bool ShkrebkoMCountCharFreqSEQ::ValidationImpl() {
-  const auto& input_data = GetInput();
-  return !input_data.first.empty();             
+  const auto &input_data = GetInput();
+  return !input_data.first.empty();
 }
 
 bool ShkrebkoMCountCharFreqSEQ::PreProcessingImpl() {
-  const auto& input_data = GetInput();
-  input_text_ = input_data.first;      
-  target_char_ = input_data.second;    
-  result_count_ = 0;                   
+  const auto &input_data = GetInput();
+  input_text_ = input_data.first;
+  target_char_ = input_data.second;
+  result_count_ = 0;
   return true;
 }
 

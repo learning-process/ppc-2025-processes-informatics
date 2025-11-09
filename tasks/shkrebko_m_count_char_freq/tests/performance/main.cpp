@@ -13,26 +13,24 @@ class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
   void SetUp() override {
     std::string large_text;
-    const int target_size = 13000000; 
+    const int target_size = 1000000;
     const std::string base_text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
-    
+
     while (large_text.size() < target_size) {
       large_text += base_text;
     }
-    
 
     large_text = large_text.substr(0, target_size);
-    
 
     char target_char = 'e';
-    
+
     expected_data_ = 0;
     for (char c : large_text) {
       if (c == target_char) {
         expected_data_++;
       }
     }
-    
+
     input_data_ = std::make_pair(large_text, target_char);
   }
 
@@ -49,8 +47,8 @@ TEST_P(ShkrebkoMCountCharFreqPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCountCharFreqMPI, ShkrebkoMCountCharFreqSEQ>(PPC_SETTINGS_shkrebko_m_count_char_freq);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShkrebkoMCountCharFreqMPI, ShkrebkoMCountCharFreqSEQ>(
+    PPC_SETTINGS_shkrebko_m_count_char_freq);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

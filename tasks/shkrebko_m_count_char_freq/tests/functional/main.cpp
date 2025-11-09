@@ -27,10 +27,10 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  protected:
- void SetUp() override {
+  void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_id = std::get<0>(param);
-    
+
     switch (test_id) {
       case 1:
         input_data_ = std::make_pair("Alolo polo", 'l');
@@ -51,7 +51,7 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     }
   }
 
-   bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return output_data == expected_data_;
   }
 
@@ -59,7 +59,7 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     return input_data_;
   }
 
-  private:
+ private:
   InType input_data_;
   OutType expected_data_;
 };
@@ -70,15 +70,14 @@ TEST_P(ShkrebkoMCountCharFreqFuncTests, CountCharFrequency) {
   ExecuteTest(GetParam());
 }
 
-
 const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(1, "test1"),      
-    std::make_tuple(2, "test2"),      
-    std::make_tuple(3, "test3"),      
-    std::make_tuple(4, "test4"),            
+    std::make_tuple(1, "test1"),
+    std::make_tuple(2, "test2"),
+    std::make_tuple(3, "test3"),
+    std::make_tuple(4, "test4"),
 };
 
-const auto kTestTasksList = 
+const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<shkrebko_m_count_char_freq::ShkrebkoMCountCharFreqMPI, InType>(
                        kTestParam, PPC_SETTINGS_shkrebko_m_count_char_freq),
                    ppc::util::AddFuncTask<shkrebko_m_count_char_freq::ShkrebkoMCountCharFreqSEQ, InType>(
