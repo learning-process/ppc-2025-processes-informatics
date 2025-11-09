@@ -3,8 +3,8 @@
 #include <mpi.h>
 
 #include <cmath>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 

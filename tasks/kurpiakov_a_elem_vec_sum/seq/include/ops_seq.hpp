@@ -12,10 +12,10 @@ class KurpiakovAElemVecSumSEQ : public BaseTask {
   explicit KurpiakovAElemVecSumSEQ(const InType &in);
 
  private:
-  bool ValidationImpl() override;
-  bool PreProcessingImpl() override;
-  bool RunImpl() override;
-  bool PostProcessingImpl() override;
+  static bool ValidationImpl() override;
+  static bool PreProcessingImpl() override;
+  static bool RunImpl() override;
+  static bool PostProcessingImpl() override;
 };
 
 }  // namespace kurpiakov_a_elem_vec_sum
