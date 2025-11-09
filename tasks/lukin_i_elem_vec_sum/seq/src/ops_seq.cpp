@@ -18,22 +18,17 @@ bool LukinIElemVecSumSEQ::ValidationImpl() {
 }
 
 bool LukinIElemVecSumSEQ::PreProcessingImpl() {
+  vec_size = static_cast<size_t>(GetInput().size());
   return true;
 }
 
 bool LukinIElemVecSumSEQ::RunImpl() {
-  std::vector<int> input = GetInput();
-  const auto vec_size = static_cast<size_t>(input.size());
-
   if (vec_size == 0) {
     GetOutput() = 0;
     return true;
   }
 
-  int sum = 0;
-  for (const auto &elem : input) {
-    sum += elem;
-  }
+  OutType sum = std::accumulate(GetInput().begin(), GetInput().end(), 0);
 
   GetOutput() = sum;
   return true;

@@ -17,6 +17,8 @@ class LukinIElemVecSumMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  int vec_size;
 };
 
 }  // namespace lukin_i_elem_vec_sum

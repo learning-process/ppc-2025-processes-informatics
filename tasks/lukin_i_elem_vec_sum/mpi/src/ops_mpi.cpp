@@ -20,13 +20,11 @@ bool LukinIElemVecSumMPI::ValidationImpl() {
 }
 
 bool LukinIElemVecSumMPI::PreProcessingImpl() {
+  vec_size = static_cast<int>(GetInput().size());
   return true;
 }
 
 bool LukinIElemVecSumMPI::RunImpl() {
-  std::vector<int> input = GetInput();
-  const int vec_size = static_cast<int>(input.size());
-
   if (vec_size == 0) {
     GetOutput() = 0;
     return true;
@@ -39,7 +37,7 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   if (proc_count > vec_size) {
     if (rank == 0) {
-      GetOutput() = std::accumulate(input.begin(), input.end(), 0);
+      GetOutput() = std::accumulate(GetInput().begin(), GetInput().end(), 0);
     } else {
       GetOutput() = 0;
     }
@@ -52,26 +50,23 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   int local_size = 0;
 
-  if (rank == 0) {
-    const int part = vec_size / proc_count;
-    const int reminder = vec_size % proc_count;
+  const int part = vec_size / proc_count;
+  const int reminder = vec_size % proc_count;
 
-    int offset = 0;
-    for (int i = 0; i < proc_count; i++) {
-      sendcounts[i] = part + (i < reminder ? 1 : 0);
-      offsets[i] = offset;
-      offset += sendcounts[i];
-    }
+  int offset = 0;
+  for (int i = 0; i < proc_count; i++) {
+    sendcounts[i] = part + (i < reminder ? 1 : 0);
+    offsets[i] = offset;
+    offset += sendcounts[i];
   }
 
-  MPI_Scatter(sendcounts.data(), 1, MPI_INT, &local_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+  local_size = sendcounts[rank];
   std::vector<int> local_vec(local_size);
 
-  MPI_Scatterv(input.data(), sendcounts.data(), offsets.data(), MPI_INT, local_vec.data(), local_size, MPI_INT, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, sendcounts.data(), offsets.data(), MPI_INT, local_vec.data(),
+               local_size, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
+  OutType local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
 
   int global_sum = 0;
 

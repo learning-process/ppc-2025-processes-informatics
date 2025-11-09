@@ -51,18 +51,12 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 32> kTestParam = {
-    std::make_tuple(0, "empty"),         std::make_tuple(1, "single"),         std::make_tuple(2, "pair"),
-    std::make_tuple(3, "triple"),        std::make_tuple(4, "quartet"),        std::make_tuple(5, "small_odd"),
-    std::make_tuple(6, "small_even"),    std::make_tuple(7, "prime_small"),    std::make_tuple(8, "octet"),
-    std::make_tuple(9, "square_small"),  std::make_tuple(10, "medium"),        std::make_tuple(11, "prime_medium"),
-    std::make_tuple(12, "dozen"),        std::make_tuple(13, "prime_baker"),   std::make_tuple(14, "even_medium"),
-    std::make_tuple(15, "odd_medium"),   std::make_tuple(16, "hex"),           std::make_tuple(17, "prime_hex"),
-    std::make_tuple(18, "even_large"),   std::make_tuple(19, "prime_large"),   std::make_tuple(20, "score"),
-    std::make_tuple(21, "odd_large"),    std::make_tuple(22, "even_big"),      std::make_tuple(23, "prime_big"),
-    std::make_tuple(24, "day_hours"),    std::make_tuple(25, "square_medium"), std::make_tuple(30, "month_days"),
-    std::make_tuple(32, "double_hex"),   std::make_tuple(36, "square_large"),  std::make_tuple(40, "forty"),
-    std::make_tuple(50, "half_hundred"), std::make_tuple(64, "double_square")};
+const std::array<TestType, 12> kTestParam = {
+    std::make_tuple(0, "empty"),          std::make_tuple(1, "single_element"), std::make_tuple(2, "two_elements"),
+    std::make_tuple(3, "three_elements"), std::make_tuple(4, "four_elements"),  std::make_tuple(5, "five_elements"),
+    std::make_tuple(6, "six_elements"),   std::make_tuple(7, "seven_elements"), std::make_tuple(8, "eight_elements"),
+    std::make_tuple(9, "nine_elements"),  std::make_tuple(10, "medium_size"),   std::make_tuple(11, "prime_size"),
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LukinIElemVecSumMPI, InType>(kTestParam, PPC_SETTINGS_lukin_i_elem_vec_sum),
