@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
 
 #include "spichek_d_dot_product_of_vectors/common/include/common.hpp"
 
