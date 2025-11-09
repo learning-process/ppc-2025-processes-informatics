@@ -23,62 +23,72 @@ namespace shkrebko_m_count_char_freq {
 class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<1>(test_param);
   }
 
  protected:
-  void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_shkrebko_m_count_char_freq, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
+ void SetUp() override {
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int test_id = std::get<0>(param);
+    
+    switch (test_id) {
+      case 1:
+        input_data_ = std::make_pair("Alolo polo", 'l');
+        expected_data_ = 3;
+        break;
+      case 2:
+        input_data_ = std::make_pair("aramopma", 'm');
+        expected_data_ = 2;
+        break;
+      case 3:
+        input_data_ = std::make_pair("banana", 'a');
+        expected_data_ = 3;
+        break;
+      case 4:
+        input_data_ = std::make_pair("abcde", 'z');
+        expected_data_ = 0;
+        break;
     }
-
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+   bool CheckTestOutputData(OutType &output_data) final {
+    return output_data == expected_data_;
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
 
- private:
-  InType input_data_ = 0;
+  private:
+  InType input_data_;
+  OutType expected_data_;
 };
 
 namespace {
 
-TEST_P(ShkrebkoMCountCharFreqFuncTests, MatmulFromPic) {
+TEST_P(ShkrebkoMCountCharFreqFuncTests, CountCharFrequency) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ShkrebkoMCountCharFreqMPI, InType>(kTestParam, PPC_SETTINGS_shkrebko_m_count_char_freq),
-                   ppc::util::AddFuncTask<ShkrebkoMCountCharFreqSEQ, InType>(kTestParam, PPC_SETTINGS_shkrebko_m_count_char_freq));
+const std::array<TestType, 4> kTestParam = {
+    std::make_tuple(1, "test1"),      
+    std::make_tuple(2, "test2"),      
+    std::make_tuple(3, "test3"),      
+    std::make_tuple(4, "test4"),            
+};
+
+const auto kTestTasksList = 
+    std::tuple_cat(ppc::util::AddFuncTask<shkrebko_m_count_char_freq::ShkrebkoMCountCharFreqMPI, InType>(
+                       kTestParam, PPC_SETTINGS_shkrebko_m_count_char_freq),
+                   ppc::util::AddFuncTask<shkrebko_m_count_char_freq::ShkrebkoMCountCharFreqSEQ, InType>(
+                       kTestParam, PPC_SETTINGS_shkrebko_m_count_char_freq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = ShkrebkoMCountCharFreqFuncTests::PrintFuncTestName<ShkrebkoMCountCharFreqFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ShkrebkoMCountCharFreqFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ShkrebkoMCharFreq, ShkrebkoMCountCharFreqFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

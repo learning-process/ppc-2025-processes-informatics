@@ -15,46 +15,26 @@ ShkrebkoMCountCharFreqSEQ::ShkrebkoMCountCharFreqSEQ(const InType &in) {
 }
 
 bool ShkrebkoMCountCharFreqSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto& input_data = GetInput();
+  return !input_data.first.empty();             
 }
 
 bool ShkrebkoMCountCharFreqSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  const auto& input_data = GetInput();
+  input_text_ = input_data.first;      
+  target_char_ = input_data.second;    
+  result_count_ = 0;                   
+  return true;
 }
 
 bool ShkrebkoMCountCharFreqSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  result_count_ = std::count(input_text_.begin(), input_text_.end(), target_char_);
+  return true;
 }
 
 bool ShkrebkoMCountCharFreqSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = result_count_;
+  return true;
 }
 
 }  // namespace shkrebko_m_count_char_freq

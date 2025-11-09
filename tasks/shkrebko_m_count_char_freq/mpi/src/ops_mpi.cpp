@@ -17,56 +17,55 @@ ShkrebkoMCountCharFreqMPI::ShkrebkoMCountCharFreqMPI(const InType &in) {
 }
 
 bool ShkrebkoMCountCharFreqMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto& input_data = GetInput();
+  return !input_data.first.empty(); 
 }
 
 bool ShkrebkoMCountCharFreqMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  const auto& input_data = GetInput();
+  input_text_ = input_data.first;      
+  target_char_ = input_data.second;    
+  return true;
 }
 
 bool ShkrebkoMCountCharFreqMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
   int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  const int total_size = static_cast<int>(input_text_.size());
+  
+  if (total_size == 0) {
+    global_result_ = 0;
+    GetOutput() = global_result_;
+    return true;
+  }
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+
+  const int base = total_size / size;
+  const int remainder = total_size % size;
+  const int start = (rank * base) + std::min(rank, remainder);
+  const int local_size = base + (rank < remainder ? 1 : 0);
+
+
+  int local_count = 0;
+  for (int i = start; i < start + local_size; ++i) {
+    if (input_text_[i] == target_char_) {
+      ++local_count;
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+
+  MPI_Reduce(&local_count, &global_result_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_result_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput() = global_result_;
+  return true;
 }
 
 bool ShkrebkoMCountCharFreqMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;  
 }
 
 }  // namespace shkrebko_m_count_char_freq
