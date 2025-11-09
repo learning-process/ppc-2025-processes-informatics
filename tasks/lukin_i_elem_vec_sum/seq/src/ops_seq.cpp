@@ -19,7 +19,7 @@ bool LukinIElemVecSumSEQ::ValidationImpl() {
 }
 
 bool LukinIElemVecSumSEQ::PreProcessingImpl() {
-  vec_size_ = static_cast<size_t>(GetInput().size());
+  vec_size_ = static_cast<int>(GetInput().size());
   return true;
 }
 
