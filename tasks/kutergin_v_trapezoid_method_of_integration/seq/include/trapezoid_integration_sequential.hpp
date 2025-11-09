@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace kutergin_v_trapezoid_seq {
 

@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <tuple>
+
 #include "task/include/task.hpp"
 
 namespace kutergin_v_trapezoid_seq {

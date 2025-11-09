@@ -1,9 +1,14 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <iostream>
+#include <string>
 #include <tuple>
-#include <vector>
 
+#include "../../common/include/common.hpp"
 #include "../../mpi/include/trapezoid_integration_mpi.hpp"
 #include "../../seq/include/trapezoid_integration_sequential.hpp"
 #include "util/include/func_test_util.hpp"
@@ -52,8 +57,8 @@ class KuterginVRunFuncTestsSEQ
     }
     if (process_rank == 0)  // проверку выполняет только нулевой процесс
     {
-      std::cout << "-> RANK 0 EXPECTED: " << expected_output_ << std::endl;
-      std::cout << "-> RANK 0 ACTUAL:   " << output_data << std::endl;
+      std::cout << "-> RANK 0 EXPECTED: " << expected_output_ << '\n';
+      std::cout << "-> RANK 0 ACTUAL:   " << output_data << '\n';
       return std::abs(output_data - expected_output_) < 1e-6;
     }
     return true;  // у всех остальных процессов все в порядке
@@ -80,9 +85,9 @@ TEST_P(KuterginVRunFuncTestsSEQ, TrapezoidTest)  // параметризован
 // массив с наборами тестовых данных
 const std::array<TestType, 2> kTestCases = {
     // тест 1
-    std::make_tuple(InputData{0.0, 3.0, 10000}, 9.0, "f_x_squared_0_to_3_n_10000"),
+    std::make_tuple(InputData{.a = 0.0, .b = 3.0, .n = 10000}, 9.0, "f_x_squared_0_to_3_n_10000"),
     // тест 2
-    std::make_tuple(InputData{-1.0, 1.0, 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000")};
+    std::make_tuple(InputData{.a = -1.0, .b = 1.0, .n = 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000")};
 
 // используем фреймворк для подготовки задач к запуску
 const auto kTestTasksList =
