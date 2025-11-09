@@ -1,7 +1,7 @@
 #include "kurpiakov_a_elem_vec_sum/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <vector>
+#include <utility>
 
 #include "kurpiakov_a_elem_vec_sum/common/include/common.hpp"
 
@@ -24,9 +24,9 @@ bool KurpiakovAElemVecSumSEQ::PreProcessingImpl() {
 
 bool KurpiakovAElemVecSumSEQ::RunImpl() {
   std::vector<int> vec = std::get<1>(GetInput());
-  long long res = 0LL;
+  OutType res = 0LL;
   for (const int &it : vec) {
-    res += static_cast<long long>(it);
+    res += static_cast<OutType>(it);
   }
   GetOutput() = res;
   return true;

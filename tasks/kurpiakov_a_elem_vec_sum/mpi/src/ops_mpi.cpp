@@ -44,7 +44,8 @@ bool KurpiakovAElemVecSumMPI::RunImpl() {
     return true;
   }
 
-  std::vector<int> batch(size), displs(size);
+  std::vector<int> batch(size);
+  std::vector<int> displs(size);
   int batch_size = total_size / size;
   int remainder = total_size % size;
   for (int i = 0; i < size; ++i) {
