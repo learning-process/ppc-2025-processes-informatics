@@ -4,7 +4,7 @@
 
 namespace kutergin_v_trapezoid_seq {
 
-double func(double x);
+double Func(double x);
 
 class TrapezoidIntegrationSequential
     : public BaseTask  // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)

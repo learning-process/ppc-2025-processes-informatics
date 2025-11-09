@@ -1,11 +1,10 @@
 #include "../include/trapezoid_integration_sequential.hpp"
 
-#include <cmath>
-#include <iostream>
+#include "../../common/include/common.hpp"
 
 namespace kutergin_v_trapezoid_seq {
 
-double func(double x)  // интегрируемая функция для примера
+double Func(double x)  // интегрируемая функция для примера
 {
   return x * x;
 }
@@ -26,23 +25,19 @@ bool TrapezoidIntegrationSequential::PreProcessingImpl() {
 }
 
 bool TrapezoidIntegrationSequential::RunImpl() {
-  try {
-    double a = GetInput().a;
-    double b = GetInput().b;
-    int n = GetInput().n;
+  double a = GetInput().a;
+  double b = GetInput().b;
+  int n = GetInput().n;
 
-    double h = (b - a) / n;
-    double integral_res = (func(a) + func(b)) / 2.0;
+  double h = (b - a) / n;
+  double integral_res = (Func(a) + Func(b)) / 2.0;
 
-    for (int i = 1; i < n; ++i) {
-      integral_res += func(a + i * h);
-    }
-
-    GetOutput() = integral_res * h;
-  } catch (const std::exception &e) {
-    std::cout << "RUN ERROR: " << e.what() << std::endl;
-    return false;
+  for (int i = 1; i < n; ++i) {
+    integral_res += Func(a + (i * h));
   }
+
+  GetOutput() = integral_res * h;
+
   return true;
 }
 

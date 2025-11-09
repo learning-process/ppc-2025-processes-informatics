@@ -4,7 +4,7 @@
 
 namespace kutergin_v_trapezoid_mpi {
 
-double func(double x);
+double Func(double x);
 
 class TrapezoidIntegrationMPI
     : public kutergin_v_trapezoid_seq::BaseTask  // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)
