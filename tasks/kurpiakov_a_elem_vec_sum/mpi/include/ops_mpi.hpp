@@ -12,10 +12,10 @@ class KurpiakovAElemVecSumMPI : public BaseTask {
   explicit KurpiakovAElemVecSumMPI(const InType &in);
 
  private:
-  static bool ValidationImpl() override;
-  static bool PreProcessingImpl() override;
-  static bool RunImpl() override;
-  static bool PostProcessingImpl() override;
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
 };
 
 }  // namespace kurpiakov_a_elem_vec_sum

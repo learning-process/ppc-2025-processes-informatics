@@ -27,7 +27,7 @@ class KurpiakovAElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType,
     input_data_ = InType(vector_size, input);
   }
 
-  bool CheckTestOutputData(OutType &output_data) const final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return (output_data == expected_data_);
   }
 

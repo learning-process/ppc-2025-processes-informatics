@@ -28,7 +28,7 @@ class KurpiakovAElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, 
     expected_data_ = std::get<2>(param);
   }
 
-  bool CheckTestOutputData(OutType &output_data) const final {
+  bool CheckTestOutputData(OutType &output_data) final {
     return (output_data == expected_data_);
   }
 
