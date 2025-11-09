@@ -68,9 +68,9 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   OutType local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
 
-  int global_sum = 0;
+  OutType global_sum = 0;
 
-  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = global_sum;
 
