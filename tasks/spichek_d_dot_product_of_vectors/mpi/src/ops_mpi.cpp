@@ -50,23 +50,23 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   }
 
   // Корректное разделение с учётом остатка
-  const size_t n = static_cast<size_t>(max_size);
+  const auto n = static_cast<size_t>(max_size);
   const size_t base_chunk = n / static_cast<size_t>(size);
   const size_t remainder = n % static_cast<size_t>(size);
   const size_t start = (static_cast<size_t>(rank) * base_chunk) + std::min(static_cast<size_t>(rank), remainder);
-  const size_t end = start + base_chunk + (static_cast<size_t>(rank) < remainder ? 1 : 0);
+  const size_t end = start + base_chunk + (static_cast<size_t>(rank) < static_cast<size_t>(remainder) ? 1u : 0u);
 
-  int64_t local_dot = 0;
+  long long local_dot = 0;
   if (local_size > 0) {
     const size_t local_n = vector1.size();
     const size_t real_start = std::min(start, local_n);
     const size_t real_end = std::min(end, local_n);
     for (size_t i = real_start; i < real_end; ++i) {
-      local_dot += static_cast<int64_t>(vector1[i]) * static_cast<int64_t>(vector2[i]);
+      local_dot += static_cast<long long>(vector1[i]) * static_cast<long long>(vector2[i]);
     }
   }
 
-  int64_t global_dot = 0;
+  long long global_dot = 0;
   MPI_Allreduce(&local_dot, &global_dot, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_dot);
