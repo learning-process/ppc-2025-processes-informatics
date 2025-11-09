@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <utility>
+#include <vector>
+
 #include "spichek_d_dot_product_of_vectors/common/include/common.hpp"
 #include "spichek_d_dot_product_of_vectors/mpi/include/ops_mpi.hpp"
 #include "spichek_d_dot_product_of_vectors/seq/include/ops_seq.hpp"
@@ -8,15 +12,15 @@
 namespace spichek_d_dot_product_of_vectors {
 
 class SpichekDDotProductOfVectorsRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
-    const size_t VECTOR_SIZE = 10000000;
+    const size_t vector_size = 10000000;
 
-    std::vector<int> vector1(VECTOR_SIZE);
-    std::vector<int> vector2(VECTOR_SIZE);
+    std::vector<int> vector1(vector_size);
+    std::vector<int> vector2(vector_size);
 
-    for (size_t i = 0; i < VECTOR_SIZE; ++i) {
+    for (size_t i = 0; i < vector_size; ++i) {
       vector1[i] = static_cast<int>(i % 1000) + 1;
       vector2[i] = static_cast<int>((i * 2) % 1000) + 1;
     }

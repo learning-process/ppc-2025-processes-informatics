@@ -2,11 +2,11 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 
 #include "spichek_d_dot_product_of_vectors/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace spichek_d_dot_product_of_vectors {
 
@@ -18,7 +18,7 @@ SpichekDDotProductOfVectorsMPI::SpichekDDotProductOfVectorsMPI(const InType &in)
 
 bool SpichekDDotProductOfVectorsMPI::ValidationImpl() {
   const auto &[vector1, vector2] = GetInput();
-  // Важно: разрешаем пустые векторы, чтобы все процессы участвовали в MPI-вызовах.
+  // Разрешаем пустые векторы, чтобы все процессы участвовали в MPI-вызовах.
   return (vector1.size() == vector2.size());
 }
 
@@ -28,7 +28,8 @@ bool SpichekDDotProductOfVectorsMPI::PreProcessingImpl() {
 }
 
 bool SpichekDDotProductOfVectorsMPI::RunImpl() {
-  int rank = 0, size = 1;
+  int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -52,20 +53,20 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   const size_t n = static_cast<size_t>(max_size);
   const size_t base_chunk = n / static_cast<size_t>(size);
   const size_t remainder = n % static_cast<size_t>(size);
-  const size_t start = static_cast<size_t>(rank) * base_chunk + std::min(static_cast<size_t>(rank), remainder);
+  const size_t start = (static_cast<size_t>(rank) * base_chunk) + std::min(static_cast<size_t>(rank), remainder);
   const size_t end = start + base_chunk + (static_cast<size_t>(rank) < remainder ? 1 : 0);
 
-  long long local_dot = 0;
+  int64_t local_dot = 0;
   if (local_size > 0) {
     const size_t local_n = vector1.size();
     const size_t real_start = std::min(start, local_n);
     const size_t real_end = std::min(end, local_n);
     for (size_t i = real_start; i < real_end; ++i) {
-      local_dot += static_cast<long long>(vector1[i]) * static_cast<long long>(vector2[i]);
+      local_dot += static_cast<int64_t>(vector1[i]) * static_cast<int64_t>(vector2[i]);
     }
   }
 
-  long long global_dot = 0;
+  int64_t global_dot = 0;
   MPI_Allreduce(&local_dot, &global_dot, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_dot);

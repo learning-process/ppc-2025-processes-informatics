@@ -1,10 +1,8 @@
 #include "spichek_d_dot_product_of_vectors/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <cstddef>
 
 #include "spichek_d_dot_product_of_vectors/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace spichek_d_dot_product_of_vectors {
 
