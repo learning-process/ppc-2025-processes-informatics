@@ -120,13 +120,13 @@ const std::array<TestType, 17> kTestParam = {
     std::make_tuple(std::make_pair(
                         []{
                             std::vector<int> v(60);
-                            for (int i = 0; i < 60; i++){ v[i] = (i * 7) % 13 - 6;
+                            for (int i = 0; i < 60; i++){ v[i] = ((i * 7) % 13) - 6;
 }
                             return v;
                         }(),
                         []{
                             std::vector<int> v(60);
-                            for (int i = 0; i < 60; i++){ v[i] = (i * 3) % 11 - 5;
+                            for (int i = 0; i < 60; i++){ v[i] = ((i * 3) % 11) - 5;
 }
                             return v;
                         }()),
