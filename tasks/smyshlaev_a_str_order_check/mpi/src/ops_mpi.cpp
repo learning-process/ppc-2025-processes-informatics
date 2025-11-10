@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <vector>
 #include <algorithm>
 #include <string>
 
@@ -33,11 +34,11 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int min_len = std::min(str1.length(), str2.length());
+  const int min_len = static_cast<int>(std::min(str1.length(), str2.length()));
   const int chunk_size = (size > 0) ? (min_len / size) : 0;
   const int remainder = (size > 0) ? (min_len % size) : 0;
 
-  const int start_idx = rank * chunk_size + std::min(rank, remainder);
+  const int start_idx = (rank * chunk_size) + std::min(rank, remainder);
   const int end_idx = start_idx + chunk_size + (rank < remainder ? 1 : 0);
 
   int local_result = 0;

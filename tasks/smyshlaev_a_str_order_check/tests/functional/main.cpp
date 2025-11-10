@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <vector>
+#include <cmath>
 
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
 #include "smyshlaev_a_str_order_check/mpi/include/ops_mpi.hpp"
@@ -22,8 +18,8 @@ namespace smyshlaev_a_str_order_check {
 class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const auto &strA = std::get<0>(test_param);
-    const auto &strB = std::get<1>(test_param);
+    const auto &str_a = std::get<0>(test_param);
+    const auto &str_b = std::get<1>(test_param);
     const auto &expected = std::get<2>(test_param);
 
     std::string expected_str;
@@ -32,7 +28,7 @@ class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFu
     } else {
       expected_str = std::to_string(expected);
     }
-    return strA + "_" + strB + "_expect_" + expected_str;
+    return str_a + "_" + str_b + "_expect_" + expected_str;
   }
 
  protected:

@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <string>
+#include <utility>
+#include <cstddef>
 
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
 #include "smyshlaev_a_str_order_check/mpi/include/ops_mpi.hpp"
@@ -15,13 +16,13 @@ const size_t kStringLength = 20000000;
 class SmyshlaevAStrOrderCheckRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   const OutType kExpectedResult_ = -1;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
-    std::string long_str_A(kStringLength, 'a');
-    std::string long_str_B = long_str_A;
-    long_str_B.back() = 'b';
-    input_data_ = std::make_pair(long_str_A, long_str_B);
+    std::string long_str_a(kStringLength, 'a');
+    std::string long_str_b = long_str_a;
+    long_str_b.back() = 'b';
+    input_data_ = std::make_pair(long_str_a, long_str_b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

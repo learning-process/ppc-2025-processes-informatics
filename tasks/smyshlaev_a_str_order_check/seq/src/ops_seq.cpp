@@ -28,7 +28,7 @@ bool SmyshlaevAStrOrderCheckSEQ::RunImpl() {
   const std::string &str1 = input_data.first;
   const std::string &str2 = input_data.second;
 
-  int min_len = std::min(str1.length(), str2.length());
+  int min_len = static_cast<int>(std::min(str1.length(), str2.length()));
 
   for (int i = 0; i < min_len; ++i) {
     if (str1[i] < str2[i]) {
