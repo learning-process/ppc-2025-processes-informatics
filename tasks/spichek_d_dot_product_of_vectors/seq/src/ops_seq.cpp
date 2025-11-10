@@ -25,9 +25,14 @@ bool SpichekDDotProductOfVectorsSEQ::PreProcessingImpl() {
 bool SpichekDDotProductOfVectorsSEQ::RunImpl() {
   const auto &[vector1, vector2] = GetInput();
 
-  if (vector1.empty()) {
+  if (vector1.empty() && vector2.empty()) {
     GetOutput() = 0;
     return true;
+  }
+
+  // На случай, если ValidationImpl() вдруг пропустил ошибку
+  if (vector1.size() != vector2.size()) {
+    return false;
   }
 
   int dot_product = 0;
