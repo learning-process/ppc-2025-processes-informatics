@@ -8,52 +8,52 @@
 
 namespace smyshlaev_a_str_order_check {
 
-SmyshlaevAStrOrderCheckSEQ::SmyshlaevAStrOrderCheckSEQ(const InType& in) {
-    SetTypeOfTask(GetStaticTypeOfTask());
-    GetInput() = in;
-    GetOutput() = 0;
+SmyshlaevAStrOrderCheckSEQ::SmyshlaevAStrOrderCheckSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = 0;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::ValidationImpl() {
-    return true;
+  return true;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::PreProcessingImpl() {
-    return true;
+  return true;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::RunImpl() {
-    const auto& input_data = GetInput();
+  const auto &input_data = GetInput();
 
-    const std::string& str1 = input_data.first;
-    const std::string& str2 = input_data.second;
+  const std::string &str1 = input_data.first;
+  const std::string &str2 = input_data.second;
 
-    int min_len = std::min(str1.length(), str2.length());
+  int min_len = std::min(str1.length(), str2.length());
 
-    for (int i = 0; i < min_len; ++i) {
-        if (str1[i] < str2[i]) {
-            GetOutput() = -1;
-            return true;
-        }
-        if (str1[i] > str2[i]) {
-            GetOutput() = 1;
-            return true;
-        }
+  for (int i = 0; i < min_len; ++i) {
+    if (str1[i] < str2[i]) {
+      GetOutput() = -1;
+      return true;
     }
-
-    if (str1.length() < str2.length()) {
-        GetOutput() = -1;
-    } else if (str1.length() > str2.length()) {
-        GetOutput() = 1;
-    } else {
-        GetOutput() = 0;
+    if (str1[i] > str2[i]) {
+      GetOutput() = 1;
+      return true;
     }
+  }
 
-    return true;
+  if (str1.length() < str2.length()) {
+    GetOutput() = -1;
+  } else if (str1.length() > str2.length()) {
+    GetOutput() = 1;
+  } else {
+    GetOutput() = 0;
+  }
+
+  return true;
 }
 
 bool SmyshlaevAStrOrderCheckSEQ::PostProcessingImpl() {
-    return true;
+  return true;
 }
 
 }  // namespace smyshlaev_a_str_order_check

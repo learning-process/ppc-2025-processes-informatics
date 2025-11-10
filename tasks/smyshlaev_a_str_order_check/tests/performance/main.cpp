@@ -24,15 +24,21 @@ class SmyshlaevAStrOrderCheckRunPerfTestsProcesses : public ppc::util::BaseRunPe
     input_data_ = std::make_pair(long_str_A, long_str_B);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final { return kExpectedResult_ == output_data; }
+  bool CheckTestOutputData(OutType &output_data) final {
+    return kExpectedResult_ == output_data;
+  }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(SmyshlaevAStrOrderCheckRunPerfTestsProcesses, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(SmyshlaevAStrOrderCheckRunPerfTestsProcesses, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SmyshlaevAStrOrderCheckMPI, SmyshlaevAStrOrderCheckSEQ>(PPC_SETTINGS_smyshlaev_a_str_order_check);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SmyshlaevAStrOrderCheckMPI, SmyshlaevAStrOrderCheckSEQ>(
+    PPC_SETTINGS_smyshlaev_a_str_order_check);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

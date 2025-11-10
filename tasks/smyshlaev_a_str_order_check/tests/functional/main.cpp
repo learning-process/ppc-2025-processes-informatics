@@ -36,9 +36,13 @@ class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFu
     expected_output_ = std::get<2>(params);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final { return (expected_output_ == output_data); }
+  bool CheckTestOutputData(OutType &output_data) final {
+    return (expected_output_ == output_data);
+  }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -47,26 +51,28 @@ class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFu
 
 namespace {
 
-TEST_P(SmyshlaevAStrOrderCheckRunFuncTestsProcesses, StringOrderCheckTest) { ExecuteTest(GetParam()); }
+TEST_P(SmyshlaevAStrOrderCheckRunFuncTestsProcesses, StringOrderCheckTest) {
+  ExecuteTest(GetParam());
+}
 
-const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(std::string("apple"), std::string("apple"), 0),
-    std::make_tuple(std::string("apple"), std::string("banana"), -1),
-    std::make_tuple(std::string("zebra"), std::string("yak"), 1),
-    std::make_tuple(std::string("cat"), std::string("caterpillar"), -1),
-    std::make_tuple(std::string("caterpillar"), std::string("cat"), 1),
-    std::make_tuple(std::string("Zebra"), std::string("zebra"), -1)};
+const std::array<TestType, 6> kTestParam = {std::make_tuple(std::string("apple"), std::string("apple"), 0),
+                                            std::make_tuple(std::string("apple"), std::string("banana"), -1),
+                                            std::make_tuple(std::string("zebra"), std::string("yak"), 1),
+                                            std::make_tuple(std::string("cat"), std::string("caterpillar"), -1),
+                                            std::make_tuple(std::string("caterpillar"), std::string("cat"), 1),
+                                            std::make_tuple(std::string("Zebra"), std::string("zebra"), -1)};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<SmyshlaevAStrOrderCheckMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_str_order_check),
-                   ppc::util::AddFuncTask<SmyshlaevAStrOrderCheckSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_str_order_check));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SmyshlaevAStrOrderCheckMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_str_order_check),
+    ppc::util::AddFuncTask<SmyshlaevAStrOrderCheckSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_str_order_check));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
     SmyshlaevAStrOrderCheckRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAStrOrderCheckRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(StringOrderCheckTests, SmyshlaevAStrOrderCheckRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(StringOrderCheckTests, SmyshlaevAStrOrderCheckRunFuncTestsProcesses, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
