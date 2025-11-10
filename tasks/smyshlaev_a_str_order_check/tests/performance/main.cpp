@@ -10,7 +10,7 @@
 
 namespace smyshlaev_a_str_order_check {
 
-const size_t kStringLength = 2000000;
+const size_t kStringLength = 20000000;
 
 class SmyshlaevAStrOrderCheckRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
