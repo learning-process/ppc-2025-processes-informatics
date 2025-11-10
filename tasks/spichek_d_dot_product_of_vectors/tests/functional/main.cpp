@@ -55,7 +55,7 @@ TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, DotProductTest) {
 }
 
 // Тестовые параметры: ((вектор1, вектор2), описание)
-const std::array<TestType, 15> kTestParam = {
+const std::array<TestType, 17> kTestParam = {
     // 1. Простые
     std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, 
                                    std::vector<int>{4, 5, 6}), 
