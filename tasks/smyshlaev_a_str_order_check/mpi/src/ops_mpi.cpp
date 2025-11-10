@@ -52,30 +52,26 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
     }
   }
 
-  if (rank == 0) {
-    std::vector<int> all_results(size);
-    MPI_Gather(&local_result, 1, MPI_INT, all_results.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  std::vector<int> all_results(size);
+  MPI_Allgather(&local_result, 1, MPI_INT, all_results.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-    int global_result = 0;
-    for (int result : all_results) {
-      if (result != 0) {
-        global_result = result;
-        break;
-      }
+  int global_result = 0;
+  for (int result : all_results) {
+    if (result != 0) {
+      global_result = result;
+      break;
     }
-
-    if (global_result == 0) {
-      if (str1.length() < str2.length()) {
-        global_result = -1;
-      } else if (str1.length() > str2.length()) {
-        global_result = 1;
-      }
-    }
-    GetOutput() = global_result;
-
-  } else {
-    MPI_Gather(&local_result, 1, MPI_INT, nullptr, 0, MPI_INT, 0, MPI_COMM_WORLD);
   }
+
+  if (global_result == 0) {
+    if (str1.length() < str2.length()) {
+      global_result = -1;
+    } else if (str1.length() > str2.length()) {
+      global_result = 1;
+    }
+  }
+
+  GetOutput() = global_result;
 
   return true;
 }
