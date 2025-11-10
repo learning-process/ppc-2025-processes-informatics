@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <vector>
 
 #include "lukin_i_elem_vec_sum/common/include/common.hpp"
@@ -11,15 +10,17 @@
 namespace lukin_i_elem_vec_sum {
 
 class LukinIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t vec_size_ = 10000000;
-  const int vec_value_ = 1;
+  const int vec_size_ = 50000000;
 
   InType input_data_;
-  OutType expected_result_ = 0;
+  OutType expected_result_ = 0LL;
 
   void SetUp() override {
-    input_data_ = std::vector<int>(vec_size_, vec_value_);
-    expected_result_ = static_cast<OutType>(vec_size_) * vec_value_;
+    input_data_ = std::vector<int>(vec_size_, 1);
+    for (int i = 0; i < vec_size_; i++) {
+      input_data_[i] = i + 1;
+    }
+    expected_result_ = static_cast<OutType>(vec_size_) * (vec_size_ + 1) / 2;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

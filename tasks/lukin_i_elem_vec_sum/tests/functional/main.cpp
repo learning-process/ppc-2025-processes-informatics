@@ -26,7 +26,7 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    auto vec_size = static_cast<size_t>(std::get<0>(params));
+    auto vec_size = static_cast<int>(std::get<0>(params));
     input_data_ = std::vector<int>(vec_size, 1);
 
     expected_ = static_cast<OutType>(vec_size);
