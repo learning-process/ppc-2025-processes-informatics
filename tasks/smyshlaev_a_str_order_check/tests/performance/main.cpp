@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string>
 #include <utility>
-#include <cstddef>
 
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
 #include "smyshlaev_a_str_order_check/mpi/include/ops_mpi.hpp"

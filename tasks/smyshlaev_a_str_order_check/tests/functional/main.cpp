@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <string>
 #include <tuple>
 #include <utility>
-#include <cmath>
 
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
 #include "smyshlaev_a_str_order_check/mpi/include/ops_mpi.hpp"

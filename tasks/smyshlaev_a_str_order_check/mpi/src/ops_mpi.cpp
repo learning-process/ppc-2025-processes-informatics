@@ -2,9 +2,9 @@
 
 #include <mpi.h>
 
-#include <vector>
 #include <algorithm>
 #include <string>
+#include <vector>
 
 #include "smyshlaev_a_str_order_check/common/include/common.hpp"
 
