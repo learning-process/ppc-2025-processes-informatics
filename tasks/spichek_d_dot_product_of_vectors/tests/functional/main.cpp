@@ -55,11 +55,127 @@ TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, DotProductTest) {
 }
 
 // Тестовые параметры: ((вектор1, вектор2), описание)
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, std::vector<int>{4, 5, 6}), "vectors_3"),
-    std::make_tuple(std::make_pair(std::vector<int>{1, 0, -1, 2}, std::vector<int>{2, 3, 4, -1}),
-                    "vectors_4_with_negatives"),
-    std::make_tuple(std::make_pair(std::vector<int>{5, 5, 5}, std::vector<int>{2, 2, 2}), "constant_vectors")};
+const std::array<TestType, 15> kTestParam = {
+    // 1. Простые
+    std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, 
+                                   std::vector<int>{4, 5, 6}), 
+                    "basic_vectors_3"),
+
+    // 2. Нули
+    std::make_tuple(std::make_pair(std::vector<int>{0, 0, 0}, 
+                                   std::vector<int>{1, 2, 3}), 
+                    "all_zero_first"),
+
+    std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, 
+                                   std::vector<int>{0, 0, 0}), 
+                    "all_zero_second"),
+
+    // 3. Только отрицательные
+    std::make_tuple(std::make_pair(std::vector<int>{-1, -2, -3},
+                                   std::vector<int>{-4, -5, -6}),
+                    "all_negative"),
+
+    // 4. Смешанные
+    std::make_tuple(std::make_pair(std::vector<int>{1, -2, 3, -4},
+                                   std::vector<int>{-1, 2, -3, 4}),
+                    "alternating_signs"),
+
+    // 5. Большие числа (проверка переполнения)
+    std::make_tuple(std::make_pair(std::vector<int>{10000, 20000, 30000},
+                                   std::vector<int>{30000, 20000, 10000}),
+                    "large_numbers"),
+
+    // 6. Короткий случай
+    std::make_tuple(std::make_pair(std::vector<int>{7},
+                                   std::vector<int>{9}),
+                    "single_element"),
+
+    // 7. Много одинаковых
+    std::make_tuple(std::make_pair(std::vector<int>(100, 5),
+                                   std::vector<int>(100, 2)),
+                    "constant_100"),
+
+    // 8. Вектор длиной 1000
+    std::make_tuple(std::make_pair(std::vector<int>(1000, 1),
+                                   std::vector<int>(1000, -1)),
+                    "size_1000"),
+
+    // 9. Рандом-1 (детерминированный)
+    std::make_tuple(std::make_pair(
+                        []{
+                            std::vector<int> v(50);
+                            for (int i = 0; i < 50; i++){ v[i] = i - 25;
+}
+                            return v;
+                        }(),
+                        []{
+                            std::vector<int> v(50);
+                            for (int i = 0; i < 50; i++){ v[i] = 25 - i;
+}
+                            return v;
+                        }()),
+                    "random_like_case_1"),
+
+    // 10. Рандом-2 (другая закономерность)
+    std::make_tuple(std::make_pair(
+                        []{
+                            std::vector<int> v(60);
+                            for (int i = 0; i < 60; i++){ v[i] = (i * 7) % 13 - 6;
+}
+                            return v;
+                        }(),
+                        []{
+                            std::vector<int> v(60);
+                            for (int i = 0; i < 60; i++){ v[i] = (i * 3) % 11 - 5;
+}
+                            return v;
+                        }()),
+                    "random_like_case_2"),
+
+    // 11. Половина нулей
+    std::make_tuple(std::make_pair(std::vector<int>{0,1,0,1,0,1},
+                                   std::vector<int>{1,0,1,0,1,0}),
+                    "half_zero"),
+
+    // 12. Восходящая/нисходящая последовательность
+    std::make_tuple(std::make_pair(
+                        []{
+                            std::vector<int> v(100);
+                            for (int i = 0; i < 100; i++){ v[i] = i;
+}
+                            return v;
+                        }(),
+                        []{
+                            std::vector<int> v(100);
+                            for (int i = 0; i < 100; i++){ v[i] = 100 - i;
+}
+                            return v;
+                        }()),
+                    "ascending_descending"),
+
+    // 13. Большой тест (5000 элементов)
+    std::make_tuple(std::make_pair(std::vector<int>(5000, 3),
+                                   std::vector<int>(5000, 4)),
+                    "size_5000"),
+
+    // 14. Очень большие положительные/отрицательные
+    std::make_tuple(std::make_pair(std::vector<int>{1000000, -1000000},
+                                   std::vector<int>{-500000, 500000}),
+                    "extreme_values"),
+
+    // 15. Векторы одинаковых случайных чисел
+    std::make_tuple(std::make_pair(std::vector<int>(200, 123),
+                                   std::vector<int>(200, 321)),
+                    "same_random_like"),
+    
+    // 16. Пустые векторы
+std::make_tuple(std::make_pair(std::vector<int>{}, std::vector<int>{}),
+                "empty_vectors"),
+
+// 17. Разная длина
+std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, std::vector<int>{1, 2}),
+                "different_sizes")
+};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SpichekDDotProductOfVectorsMPI, InType>(
                                                kTestParam, PPC_SETTINGS_spichek_d_dot_product_of_vectors),
