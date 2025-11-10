@@ -32,7 +32,7 @@ class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFu
     } else {
       expected_str = std::to_string(expected);
     }
-    return strA + "_" + strB + "_expect_" + std::to_string(expected);
+    return strA + "_" + strB + "_expect_" + expected_str;
   }
 
  protected:
