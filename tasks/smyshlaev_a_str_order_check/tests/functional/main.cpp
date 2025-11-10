@@ -25,6 +25,13 @@ class SmyshlaevAStrOrderCheckRunFuncTestsProcesses : public ppc::util::BaseRunFu
     const auto &strA = std::get<0>(test_param);
     const auto &strB = std::get<1>(test_param);
     const auto &expected = std::get<2>(test_param);
+
+    std::string expected_str;
+    if (expected < 0) {
+      expected_str = "neg_" + std::to_string(std::abs(expected));
+    } else {
+      expected_str = std::to_string(expected);
+    }
     return strA + "_" + strB + "_expect_" + std::to_string(expected);
   }
 
