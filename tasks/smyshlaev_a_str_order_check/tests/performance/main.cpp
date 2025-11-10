@@ -10,17 +10,17 @@
 
 namespace smyshlaev_a_str_order_check {
 
-const size_t kStringLength = 1000000;
+const size_t kStringLength = 2000000;
 
 class SmyshlaevAStrOrderCheckRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
-  const OutType kExpectedResult_ = 0;
+  const OutType kExpectedResult_ = -1;
   InType input_data_{};
 
   void SetUp() override {
     std::string long_str_A(kStringLength, 'a');
     std::string long_str_B = long_str_A;
-
+    long_str_B.back() = 'b';
     input_data_ = std::make_pair(long_str_A, long_str_B);
   }
 
