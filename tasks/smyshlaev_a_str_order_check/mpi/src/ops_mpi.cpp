@@ -33,48 +33,34 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  const int min_len = std::min(str1.length(), str2.length());
+  const int chunk_size = (size > 0) ? (min_len / size) : 0;
+  const int remainder = (size > 0) ? (min_len % size) : 0;
+
+  const int start_idx = rank * chunk_size + std::min(rank, remainder);
+  const int end_idx = start_idx + chunk_size + (rank < remainder ? 1 : 0);
+
   int local_result = 0;
-  int global_result = 0;
+  for (int i = start_idx; i < end_idx; ++i) {
+    if (str1[i] < str2[i]) {
+      local_result = -1;
+      break;
+    }
+    if (str1[i] > str2[i]) {
+      local_result = 1;
+      break;
+    }
+  }
 
   if (rank == 0) {
-    int min_len = std::min(str1.length(), str2.length());
+    std::vector<int> all_results(size);
+    MPI_Gather(&local_result, 1, MPI_INT, all_results.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    int chunk_size = (size > 0) ? (min_len / size) : 0;
-    int remainder = (size > 0) ? (min_len % size) : 0;
-
-    for (int i = 0; i < size; ++i) {
-      int start_idx = i * chunk_size + std::min(i, remainder);
-      int current_chunk_size = chunk_size + (i < remainder ? 1 : 0);
-
-      if (i != 0) {
-        MPI_Send(&start_idx, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
-        MPI_Send(&current_chunk_size, 1, MPI_INT, i, 2, MPI_COMM_WORLD);
-        if (current_chunk_size > 0) {
-          MPI_Send(str1.c_str() + start_idx, current_chunk_size, MPI_CHAR, i, 3, MPI_COMM_WORLD);
-          MPI_Send(str2.c_str() + start_idx, current_chunk_size, MPI_CHAR, i, 4, MPI_COMM_WORLD);
-        }
-      } else {
-        local_result = 0;
-        for (int k = 0; k < current_chunk_size; ++k) {
-          if (str1[start_idx + k] < str2[start_idx + k]) {
-            local_result = -1;
-            break;
-          }
-          if (str1[start_idx + k] > str2[start_idx + k]) {
-            local_result = 1;
-            break;
-          }
-        }
-      }
-    }
-
-    global_result = local_result;
-
-    for (int i = 1; i < size; ++i) {
-      int worker_result;
-      MPI_Recv(&worker_result, 1, MPI_INT, i, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      if (global_result == 0 && worker_result != 0) {
-        global_result = worker_result;
+    int global_result = 0;
+    for (int result : all_results) {
+      if (result != 0) {
+        global_result = result;
+        break;
       }
     }
 
@@ -85,38 +71,12 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
         global_result = 1;
       }
     }
-
     GetOutput() = global_result;
 
   } else {
-    int start_idx = 0;
-    int current_chunk_size = 0;
-
-    MPI_Recv(&start_idx, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&current_chunk_size, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    if (current_chunk_size > 0) {
-      std::string sub_str1(current_chunk_size, '\0');
-      std::string sub_str2(current_chunk_size, '\0');
-
-      MPI_Recv(&sub_str1[0], current_chunk_size, MPI_CHAR, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Recv(&sub_str2[0], current_chunk_size, MPI_CHAR, 0, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-      for (int k = 0; k < current_chunk_size; ++k) {
-        if (sub_str1[k] < sub_str2[k]) {
-          local_result = -1;
-          break;
-        }
-        if (sub_str1[k] > sub_str2[k]) {
-          local_result = 1;
-          break;
-        }
-      }
-    }
-    MPI_Send(&local_result, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
+    MPI_Gather(&local_result, 1, MPI_INT, nullptr, 0, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
