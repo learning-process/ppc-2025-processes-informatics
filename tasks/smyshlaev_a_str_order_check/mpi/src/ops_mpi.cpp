@@ -35,7 +35,7 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
     }
 
     int rank = 0;
-    int size = 0;
+    size_t size = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -85,7 +85,7 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
 
             global_result = local_result;
 
-            for (int i = 1; i < size; ++i) {
+            for (size_t i = 1; i < size; ++i) {
                 int worker_result;
                 MPI_Recv(&worker_result, 1, MPI_INT, i, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
