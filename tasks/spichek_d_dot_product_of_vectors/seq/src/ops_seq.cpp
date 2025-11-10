@@ -14,7 +14,7 @@ SpichekDDotProductOfVectorsSEQ::SpichekDDotProductOfVectorsSEQ(const InType &in)
 
 bool SpichekDDotProductOfVectorsSEQ::ValidationImpl() {
   const auto &[vector1, vector2] = GetInput();
-  return (!vector1.empty()) && (vector1.size() == vector2.size()) && (GetOutput() == 0);
+  return vector1.size() == vector2.size();
 }
 
 bool SpichekDDotProductOfVectorsSEQ::PreProcessingImpl() {
@@ -25,8 +25,9 @@ bool SpichekDDotProductOfVectorsSEQ::PreProcessingImpl() {
 bool SpichekDDotProductOfVectorsSEQ::RunImpl() {
   const auto &[vector1, vector2] = GetInput();
 
-  if (vector1.size() != vector2.size() || vector1.empty()) {
-    return false;
+  if (vector1.empty()) {
+    GetOutput() = 0;
+    return true;
   }
 
   int dot_product = 0;
