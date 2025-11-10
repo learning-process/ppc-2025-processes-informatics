@@ -59,7 +59,7 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
             size_t chunk_size = min_len / size;
             size_t remainder = min_len % size;
             
-            for (int i = 0; i < size; ++i) {
+            for (size_t i = 0; i < size; ++i) {
                 size_t start_idx = i * chunk_size + std::min((size_t)i, remainder);
                 size_t current_chunk_size = chunk_size + (i < remainder ? 1 : 0);
 
