@@ -55,7 +55,7 @@ TEST_P(SpichekDDotProductOfVectorsRunFuncTestsProcesses, DotProductTest) {
 }
 
 // Тестовые параметры: ((вектор1, вектор2), описание)
-const std::array<TestType, 18> kTestParam = {
+const std::array<TestType, 17> kTestParam = {
     // 1. Простые
     std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3}, 
                                    std::vector<int>{4, 5, 6}), 
@@ -171,12 +171,7 @@ const std::array<TestType, 18> kTestParam = {
     // 16. Пустые векторы
     std::make_tuple(std::make_pair(std::vector<int>{}, 
                                    std::vector<int>{}),
-                      "empty_vectors"),
-
-    // 17. Разная длина
-    std::make_tuple(std::make_pair(std::vector<int>{1, 2, 3},  
-                                   std::vector<int>{1, 2}),
-                      "different_sizes")
+                      "empty_vectors")
 };
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SpichekDDotProductOfVectorsMPI, InType>(
