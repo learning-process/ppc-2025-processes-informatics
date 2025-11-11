@@ -20,7 +20,7 @@
 
 namespace shvetsova_k_max_diff_neig_vec {
 
-class ShvetsovaKMaxDiffNeigVecRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -65,7 +65,7 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTests : public ppc::util::BaseRunFuncTests<
 
 namespace {
 
-TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTests, MatmulFromPic) {
+TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -79,9 +79,9 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    ShvetsovaKMaxDiffNeigVecRunFuncTests::PrintFuncTestName<ShvetsovaKMaxDiffNeigVecRunFuncTests>;
+    ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses::PrintFuncTestName<ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ShvetsovaKMaxDiffNeigVecRunFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
