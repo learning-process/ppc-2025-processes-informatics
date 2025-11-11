@@ -10,13 +10,13 @@
 namespace lukin_i_elem_vec_sum {
 
 class LukinIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int vec_size_ = 50000000;
+  const int vec_size_ = 500000000;
 
   InType input_data_;
   OutType expected_result_ = 0LL;
 
   void SetUp() override {
-    input_data_ = std::vector<int>(vec_size_, 1);
+    input_data_ = std::vector<int>(vec_size_);
     for (int i = 0; i < vec_size_; i++) {
       input_data_[i] = i + 1;
     }

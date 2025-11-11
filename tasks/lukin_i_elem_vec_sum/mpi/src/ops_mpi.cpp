@@ -26,7 +26,7 @@ bool LukinIElemVecSumMPI::PreProcessingImpl() {
 
 bool LukinIElemVecSumMPI::RunImpl() {
   if (vec_size_ == 0) {
-    GetOutput() = 0LL;
+    GetOutput() = 0;
     return true;
   }
 
@@ -37,9 +37,9 @@ bool LukinIElemVecSumMPI::RunImpl() {
 
   if (proc_count > vec_size_) {
     if (rank == 0) {
-      GetOutput() = std::accumulate(GetInput().begin(), GetInput().end(), 0LL);
+      GetOutput() = std::accumulate(GetInput().begin(), GetInput().end(), 0);
     } else {
-      GetOutput() = 0LL;
+      GetOutput() = 0;
     }
     OutType output = GetOutput();
     MPI_Bcast(&output, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
