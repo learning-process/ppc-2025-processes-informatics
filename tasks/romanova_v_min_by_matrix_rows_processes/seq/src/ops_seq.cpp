@@ -13,7 +13,6 @@ namespace romanova_v_min_by_matrix_rows_processes {
 RomanovaVMinByMatrixRowsSEQ::RomanovaVMinByMatrixRowsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  std::cout << "in SEQ constructor in.size() " << in.size() << "\n";
   GetOutput() = OutType(in.size());
 }
 
@@ -26,7 +25,6 @@ bool RomanovaVMinByMatrixRowsSEQ::PreProcessingImpl() {
   n_ = in_data_.size();
   m_ = in_data_[0].size();
   res_ = OutType(n_);
-  std::cout << "SEQ-version get: " << n_ << " " << m_ << "\n";
   return true;
 }
 
