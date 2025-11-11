@@ -8,7 +8,6 @@
 namespace fatehov_k_matrix_max_elem {
 
 class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
   OutType excepted_result_;
   void SetUp() override {
