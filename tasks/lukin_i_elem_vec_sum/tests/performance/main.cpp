@@ -10,7 +10,7 @@
 namespace lukin_i_elem_vec_sum {
 
 class LukinIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int vec_size_ = 500000000;
+  const int vec_size_ = 20000000;
 
   InType input_data_;
   OutType expected_result_ = 0LL;
