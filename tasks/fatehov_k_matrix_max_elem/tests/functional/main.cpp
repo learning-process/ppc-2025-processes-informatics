@@ -23,35 +23,25 @@ namespace fatehov_k_matrix_max_elem {
 class FatehovKRunFuncTestsMatrixMaxElem : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    std::string out = std::to_string(std::get<0>(test_param)) + "_matrix_" + std::to_string(std::get<1>(test_param)) +
+                      "x" + std::to_string(std::get<2>(test_param));
+    std::ranges::replace(out, '-', 'm');
+    std::ranges::replace(out, '.', '_');
+    return out;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_fatehov_k_matrix_max_elem, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    size_t rows = std::get<1>(params);
+    size_t columns = std::get<2>(params);
+    std::vector<double> matrix = std::get<3>(params);
+    input_data_ = std::make_tuple(rows, columns, matrix);
+    expected_result_ = std::get<4>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return expected_result_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -60,6 +50,7 @@ class FatehovKRunFuncTestsMatrixMaxElem : public ppc::util::BaseRunFuncTests<InT
 
  private:
   InType input_data_;
+  OutType expected_result_;
 };
 
 namespace {
@@ -68,11 +59,17 @@ TEST_P(FatehovKRunFuncTestsMatrixMaxElem, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(1, 3, 4, std::vector<double>{1,2,3,4,5,6,7,8,9,10,11,12}), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(1, 3, 4, std::vector<double>{1.3, 2.4, 3.1, 4, 5.0, 6.2, 7, 8, 9, 10, 11, 12}, 12),
+    std::make_tuple(2, 3, 3, std::vector<double>{-10.3, -9.1, -8.5, -7.1, -6, -5, -4.0, -3, -2}, -2),
+    std::make_tuple(3, 5, 5, std::vector<double>{10000,      124124, 65789, 75445, 4123412, 1412412, 56,  65,  -2,
+                                                 -151234124, 63124,  454,   223,   454,     232,     565, 232, 7878,
+                                                 2324,       57546,  12412, 454,   434,     466,     444},
+                    4123412)};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<FatehovKMatrixMaxElemMPI, InType>(kTestParam, PPC_SETTINGS_fatehov_k_matrix_max_elem),
-                   ppc::util::AddFuncTask<FatehovKMatrixMaxElemSEQ, InType>(kTestParam, PPC_SETTINGS_fatehov_k_matrix_max_elem));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<FatehovKMatrixMaxElemMPI, InType>(kTestParam, PPC_SETTINGS_fatehov_k_matrix_max_elem),
+    ppc::util::AddFuncTask<FatehovKMatrixMaxElemSEQ, InType>(kTestParam, PPC_SETTINGS_fatehov_k_matrix_max_elem));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

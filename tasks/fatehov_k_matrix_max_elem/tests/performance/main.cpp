@@ -10,13 +10,29 @@ namespace fatehov_k_matrix_max_elem {
 class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
-
+  OutType excepted_result_;
   void SetUp() override {
-    input_data_ = kCount_;
+    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_fatehov_k_matrix_max_elem, "matrix.txt");
+    std::ifstream file(file_path);
+    size_t rows;
+    size_t cols;
+    double max_val;
+    std::vector<double> matrix;
+
+    file >> rows >> cols >> max_val;
+
+    matrix.reserve(rows * cols);
+    double value;
+    for (size_t i = 0; i < rows * cols; ++i) {
+      file >> value;
+      matrix.push_back(value);
+    }
+    input_data_ = std::make_tuple(rows, cols, matrix);
+    excepted_result_ = max_val;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return excepted_result_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -28,8 +44,8 @@ TEST_P(FatehovKRunPerfTestsMatrixMaxElem, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, FatehovKMatrixMaxElemMPI, FatehovKMatrixMaxElemSEQ>(PPC_SETTINGS_fatehov_k_matrix_max_elem);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, FatehovKMatrixMaxElemMPI, FatehovKMatrixMaxElemSEQ>(
+    PPC_SETTINGS_fatehov_k_matrix_max_elem);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
