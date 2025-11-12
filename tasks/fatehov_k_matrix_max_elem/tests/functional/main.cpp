@@ -41,6 +41,7 @@ class FatehovKRunFuncTestsMatrixMaxElem : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    std::cout << expected_result_ << " == " << output_data << std::endl;
     return expected_result_ == output_data;
   }
 
@@ -75,7 +76,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = FatehovKRunFuncTestsMatrixMaxElem::PrintFuncTestName<FatehovKRunFuncTestsMatrixMaxElem>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, FatehovKRunFuncTestsMatrixMaxElem, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(TestMatrixMax, FatehovKRunFuncTestsMatrixMaxElem, kGtestValues, kPerfTestName);
 
 }  // namespace
 

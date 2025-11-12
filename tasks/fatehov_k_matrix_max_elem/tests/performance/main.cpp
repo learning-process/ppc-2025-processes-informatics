@@ -50,6 +50,6 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = FatehovKRunPerfTestsMatrixMaxElem::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, FatehovKRunPerfTestsMatrixMaxElem, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerfTest, FatehovKRunPerfTestsMatrixMaxElem, kGtestValues, kPerfTestName);
 
 }  // namespace fatehov_k_matrix_max_elem
