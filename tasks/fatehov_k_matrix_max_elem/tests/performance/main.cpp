@@ -35,11 +35,11 @@ class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InT
       matrix.push_back(value);
     }
     input_data_ = std::make_tuple(rows, cols, matrix);
-    excepted_result_ = max_val;
+    expected_result_ = max_val;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return excepted_result_ == output_data;
+    return expected_result_ == output_data;
   }
 
   InType GetTestInputData() final {
