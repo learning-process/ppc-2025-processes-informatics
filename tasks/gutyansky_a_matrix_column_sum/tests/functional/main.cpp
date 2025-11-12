@@ -76,7 +76,7 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
 
  private:
   InType input_data_ = {};
-  OutType output_data_ = {};
+  OutType output_data_;
 };
 
 namespace {

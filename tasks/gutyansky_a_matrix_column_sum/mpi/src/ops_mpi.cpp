@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <utility>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 
@@ -46,7 +47,7 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
   size_t remainder_size = row_count % p_count;
 
   size_t start_row_index = (rows_chunk_size * rank) + std::min(static_cast<size_t>(rank), remainder_size);
-  size_t end_row_index = start_row_index + rows_chunk_size + (static_cast<size_t>(rank) < remainder_size ? 1 : 0);
+  size_t end_row_index = start_row_index + rows_chunk_size + (std::cmp_less(rank, remainder_size) ? 1 : 0);
 
   std::vector<int64_t> partial_res(col_count, 0.0);
 

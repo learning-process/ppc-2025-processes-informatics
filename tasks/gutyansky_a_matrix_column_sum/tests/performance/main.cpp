@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
@@ -65,7 +66,7 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
 
  private:
   InType input_data_ = {};
-  OutType output_data_ = {};
+  OutType output_data_;
 };
 
 TEST_P(GutyanskyAMatrixColumnSumPerfTest, RunPerfModes) {
