@@ -62,7 +62,7 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
       }
     }
 
-    input_data_ = {.rows=rows, .cols=cols, .data=input_elements};
+    input_data_ = {.rows = rows, .cols = cols, .data = input_elements};
     output_data_ = output_elements;
   }
 

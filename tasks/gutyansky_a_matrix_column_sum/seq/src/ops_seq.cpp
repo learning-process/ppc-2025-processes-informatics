@@ -1,8 +1,8 @@
 #include "gutyansky_a_matrix_column_sum/seq/include/ops_seq.hpp"
 
-#include <vector>
-#include <cstddef>
 #include <algorithm>
+#include <cstddef>
+#include <vector>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 

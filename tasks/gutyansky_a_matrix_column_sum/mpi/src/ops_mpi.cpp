@@ -1,6 +1,7 @@
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -55,7 +56,8 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
     }
   }
 
-  MPI_Allreduce(partial_res.data(), GetOutput().data(), static_cast<int>(col_count), MPI_INTEGER8, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(partial_res.data(), GetOutput().data(), static_cast<int>(col_count), MPI_INTEGER8, MPI_SUM,
+                MPI_COMM_WORLD);
 
   return true;
 }
