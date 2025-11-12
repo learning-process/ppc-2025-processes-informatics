@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 
