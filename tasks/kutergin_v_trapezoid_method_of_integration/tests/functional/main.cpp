@@ -78,17 +78,49 @@ class KuterginVRunFuncTestsSEQ
 namespace  // анонимное пространство имен
 {
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_P(KuterginVRunFuncTestsSEQ, TrapezoidTest)  // параметризованный тест
 {
-  ExecuteTest(GetParam());
+  // Получение параметров теста
+  auto test_param = GetParam();
+  auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param);
+  const auto &test_case_params =
+      std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(test_param);
+  const auto &input_data = std::get<0>(test_case_params);
+
+  // Создание задачи
+  auto task = task_getter(input_data);
+
+  // Ожидание провала валидации
+  bool expected_validation_fail = (input_data.b <= input_data.a || input_data.n <= 0);
+
+  // Запуск конвейера в соответствии с ожиданиями
+  if (expected_validation_fail)  // ожидание провала
+  {
+    ASSERT_FALSE(task->Validation());
+    // Вызов остальных этапов "вхолостую"
+    task->PreProcessing();
+    task->Run();
+    task->PostProcessing();
+  } else {
+    ASSERT_TRUE(task->Validation());
+    ASSERT_TRUE(task->PreProcessing());
+    ASSERT_TRUE(task->Run());
+    ASSERT_TRUE(task->PostProcessing());
+    ASSERT_TRUE(CheckTestOutputData(task->GetOutput()));
+  }
 }
 
 // массив с наборами тестовых данных
-const std::array<TestType, 2> kTestCases = {
-    // тест 1
+const std::array<TestType, 5> kTestCases = {
+    // Успешные тесты
     std::make_tuple(InputData{.a = 0.0, .b = 3.0, .n = 10000}, 9.0, "f_x_squared_0_to_3_n_10000"),
-    // тест 2
-    std::make_tuple(InputData{.a = -1.0, .b = 1.0, .n = 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000")};
+    std::make_tuple(InputData{.a = -1.0, .b = 1.0, .n = 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000"),
+
+    // Тесты на провал валидации
+    std::make_tuple(InputData{.a = 1.0, .b = 0.0, .n = 30000}, 0.0, "invalid_bounds"),
+    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = 0}, 0.0, "invalid_n_zero"),
+    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = -100}, 0.0, "invalid_n_negative")};
 
 // используем фреймворк для подготовки задач к запуску
 const auto kTestTasksList =
@@ -103,9 +135,7 @@ const auto kTestName = KuterginVRunFuncTestsSEQ::PrintFuncTestName<KuterginVRunF
 
 // "регистрация" набора тестов и параметров в GTest
 // NOLINTNEXTLINE(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables)
-INSTANTIATE_TEST_SUITE_P(
-    TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues,
-    kTestName);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+INSTANTIATE_TEST_SUITE_P(TrapezoidIntegrationSEQ, KuterginVRunFuncTestsSEQ, kGtestValues, kTestName);
 }  // namespace
 
 }  // namespace kutergin_v_trapezoid_seq
