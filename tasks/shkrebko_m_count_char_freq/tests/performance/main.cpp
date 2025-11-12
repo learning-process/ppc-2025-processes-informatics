@@ -13,7 +13,7 @@ class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
   void SetUp() override {
     std::string large_text;
-    const int target_size = 1000000;
+    const int target_size = 50000000;
     const std::string base_text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
 
     while (large_text.size() < target_size) {
