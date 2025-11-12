@@ -27,6 +27,16 @@ class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
+    // обрежем длинные строки
+    if (text.size() > 20) {
+      text = text.substr(0, 20);
+    }
+    // заменим всё недопустимое
+    for (char &ch : text) {
+      if (!std::isalnum(static_cast<unsigned char>(ch)) && ch != '_') {
+        ch = '_';
+      }
+    }
     return text + "_" + std::to_string(std::get<1>(test_param));
   }
 

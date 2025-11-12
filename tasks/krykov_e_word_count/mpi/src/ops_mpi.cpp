@@ -15,89 +15,75 @@ KrykovEWordCountMPI::KrykovEWordCountMPI(const InType &in) {
 }
 
 bool KrykovEWordCountMPI::ValidationImpl() {
-  return true;  // Всегда валидно для пустой строки тоже
+  return (!GetInput().empty()) && (GetOutput() == 0);
 }
 
 bool KrykovEWordCountMPI::PreProcessingImpl() {
-  GetOutput() = 0;
+  auto &input = GetInput();
+  input.erase(input.begin(),
+              std::find_if(input.begin(), input.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+  input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(),
+              input.end());
   return true;
 }
 
 bool KrykovEWordCountMPI::RunImpl() {
-  const std::string &text = GetInput();
-  int world_size, world_rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  int rank = 0;
+  int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Обработка пустой строки
-  if (text.empty()) {
-    GetOutput() = 0;
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
+  const std::string &input = GetInput();
+  const size_t total_length = input.size();
+
+  // Разделяем строку на подстроки для каждого процесса
+  size_t chunk_size = total_length / size;
+  size_t start = rank * chunk_size;
+  size_t end = (rank == size - 1) ? total_length : start + chunk_size;
+
+  // Корректируем границы, чтобы не разорвать слова
+  // Если не первый процесс и текущий символ не пробел, отодвигаем начало до следующего пробела
+  if (rank != 0 && start < total_length) {
+    while (start < total_length && !std::isspace(static_cast<unsigned char>(input[start]))) {
+      start++;
+    }
+  }
+  // Если не последний процесс и не дошли до конца, продлеваем кусок до ближайшего пробела
+  if (rank != size - 1 && end < total_length) {
+    while (end < total_length && !std::isspace(static_cast<unsigned char>(input[end]))) {
+      end++;
+    }
   }
 
-  int total_length = text.length();
-  int chunk_size = total_length / world_size;
-  int remainder = total_length % world_size;
+  // Подстрока для данного процесса
+  std::string local_str = input.substr(start, end - start);
 
-  int start = world_rank * chunk_size + std::min(world_rank, remainder);
-  int end = start + chunk_size + (world_rank < remainder ? 1 : 0);
-
-  // Подсчет слов в локальном чанке
-  int local_count = 0;
+  // Подсчёт слов в локальной части
+  size_t local_count = 0;
   bool in_word = false;
-
-  for (int i = start; i < end; i++) {
-    char c = text[i];
-    if (std::isspace(c) || std::ispunct(c)) {
+  for (char ch : local_str) {
+    if (std::isspace(static_cast<unsigned char>(ch))) {
       if (in_word) {
-        local_count++;
         in_word = false;
       }
     } else {
-      in_word = true;
+      if (!in_word) {
+        in_word = true;
+        local_count++;
+      }
     }
   }
 
-  // Проверка границ между процессами
-  if (world_rank > 0 && start > 0) {
-    // Если слово продолжается с предыдущего процесса
-    char prev_char = text[start - 1];
-    char curr_char = text[start];
-    if (!std::isspace(prev_char) && !std::ispunct(prev_char) && !std::isspace(curr_char) && !std::ispunct(curr_char)) {
-      // Слово разделено между процессами - не вычитаем, а корректируем логику
-      // Эта логика требует пересмотра
-    }
-  }
+  // Суммируем количество слов со всех процессов
+  size_t global_count = 0;
+  MPI_Reduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  // Сбор результатов
-  std::vector<int> all_counts;
-  if (world_rank == 0) {
-    all_counts.resize(world_size);
-  }
-
-  MPI_Gather(&local_count, 1, MPI_INT, all_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  int global_count = 0;
-  if (world_rank == 0) {
-    global_count = std::accumulate(all_counts.begin(), all_counts.end(), 0);
-
-    // Проверка последнего символа
-    if (!text.empty() && !std::isspace(text.back()) && !std::ispunct(text.back())) {
-      global_count++;
-    }
-
-    GetOutput() = global_count;
-  }
-
-  // Распространение результата на все процессы
-  MPI_Bcast(&global_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (world_rank != 0) {
+  if (rank == 0) {
     GetOutput() = global_count;
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() >= 0;
+  return true;
 }
 
 bool KrykovEWordCountMPI::PostProcessingImpl() {

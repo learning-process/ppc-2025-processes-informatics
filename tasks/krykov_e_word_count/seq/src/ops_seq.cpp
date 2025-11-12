@@ -16,11 +16,15 @@ KrykovEWordCountSEQ::KrykovEWordCountSEQ(const InType &in) {
 }
 
 bool KrykovEWordCountSEQ::ValidationImpl() {
-  return (GetOutput() == 0);
+  return (!GetInput().empty()) && (GetOutput() == 0);
 }
 
 bool KrykovEWordCountSEQ::PreProcessingImpl() {
-  GetOutput() = 0;
+  auto &input = GetInput();
+  input.erase(input.begin(),
+              std::find_if(input.begin(), input.end(), [](unsigned char ch) { return !std::isspace(ch); }));
+  input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(),
+              input.end());
   return true;
 }
 
@@ -31,25 +35,23 @@ bool KrykovEWordCountSEQ::RunImpl() {
   }
 
   bool in_word = false;
-  int word_count = 0;
+  size_t word_count = 0;
 
   for (char c : text) {
-    if (std::isspace(c) || std::ispunct(c)) {
+    if (std::isspace(static_cast<unsigned char>(c))) {
       if (in_word) {
-        word_count++;
         in_word = false;
       }
     } else {
-      in_word = true;
+      if (!in_word) {
+        in_word = true;
+        word_count++;
+      }
     }
   }
 
-  if (in_word) {
-    word_count++;
-  }
-
   GetOutput() = word_count;
-  return GetOutput() >= 0;
+  return true;
 }
 
 bool KrykovEWordCountSEQ::PostProcessingImpl() {

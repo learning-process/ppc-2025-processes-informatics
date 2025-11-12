@@ -10,7 +10,8 @@
 namespace krykov_e_word_count {
 
 class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const std::size_t kRepeatCount_ = 1000;
+ private:
+  const std::size_t kRepeatCount_ = 100000;
   InType input_data_{};
   OutType expected_result_;
 
@@ -21,8 +22,6 @@ class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
       input_data_ += base_text;
     }
 
-    // Правильно вычисляем ожидаемое количество слов
-    // В base_text 10 слов, повторенных kRepeatCount_ раз
     expected_result_ = kRepeatCount_;
   }
 
@@ -33,6 +32,9 @@ class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   InType GetTestInputData() final {
     return input_data_;
   }
+
+ public:
+  KrykovEWordCountPerfTests() = default;
 };
 
 TEST_P(KrykovEWordCountPerfTests, RunPerfModes) {
