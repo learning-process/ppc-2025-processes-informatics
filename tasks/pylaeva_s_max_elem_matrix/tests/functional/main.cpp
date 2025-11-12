@@ -23,36 +23,31 @@ namespace pylaeva_s_max_elem_matrix {
 class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, param);
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    std::ifstream file(filename);
+    size_t size = 0;
+    std::vector<double> input;
+    int max;
+    file >> size;
+    file >> max;
+    int elem = 0;
+    while (file >> elem) {
+      input.push_back(elem);
+    }
+    input_data_ = InType(size, input);
+    expected_data_ = OutType(max);
+    file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return (output_data == expected_data_);
   }
 
   InType GetTestInputData() final {
@@ -60,16 +55,20 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_data_;
 };
 
 namespace {
 
-TEST_P(PylaevaSMaxElemMatrixFuncTests, MatmulFromPic) {
+TEST_P(PylaevaSMaxElemMatrixFuncTests, MaxElemMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 2> kTestParam = {
+    "matrix_3x3.txt",
+    "matrix_5x5.txt", 
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<PylaevaSMaxElemMatrixMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_max_elem_matrix),
@@ -79,7 +78,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = PylaevaSMaxElemMatrixFuncTests::PrintFuncTestName<PylaevaSMaxElemMatrixFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, PylaevaSMaxElemMatrixFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MaxElemMatrixTests, PylaevaSMaxElemMatrixFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -7,9 +7,9 @@
 
 namespace pylaeva_s_max_elem_matrix {
 
-using InType = int;
+using InType = std::tuple<size_t, std::vector<int>>;
 using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using TestType = std::string;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace pylaeva_s_max_elem_matrix
