@@ -15,16 +15,16 @@ class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   OutType expected_result_;
 
   void SetUp() override {
-  std::string base_text = "word ";
-  input_data_ = "";
-  for (int i = 0; i < kRepeatCount_; i++) {
-    input_data_ += base_text;
-  }
+    std::string base_text = "word ";
+    input_data_ = "";
+    for (int i = 0; i < kRepeatCount_; i++) {
+      input_data_ += base_text;
+    }
 
-  // Правильно вычисляем ожидаемое количество слов
-  // В base_text 10 слов, повторенных kRepeatCount_ раз
-  expected_result_ = kRepeatCount_;
-}
+    // Правильно вычисляем ожидаемое количество слов
+    // В base_text 10 слов, повторенных kRepeatCount_ раз
+    expected_result_ = kRepeatCount_;
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data == expected_result_;
