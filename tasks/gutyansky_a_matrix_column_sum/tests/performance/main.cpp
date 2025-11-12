@@ -1,9 +1,15 @@
 #include <gtest/gtest.h>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+#include <string>
+#include <fstream>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
 #include "gutyansky_a_matrix_column_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace gutyansky_a_matrix_column_sum {
 
@@ -44,8 +50,8 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
       }
     }
 
-    input_data_ = {rows, cols, input_elements};
-    output_data_ = {cols, output_elements};
+    input_data_ = { .rows=rows, .cols=cols, .data=input_elements};
+    output_data_ = output_elements;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

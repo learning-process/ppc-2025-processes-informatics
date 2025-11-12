@@ -1,16 +1,13 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
@@ -65,8 +62,8 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
       }
     }
 
-    input_data_ = {rows, cols, input_elements};
-    output_data_ = {cols, output_elements};
+    input_data_ = {.rows=rows, .cols=cols, .data=input_elements};
+    output_data_ = output_elements;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

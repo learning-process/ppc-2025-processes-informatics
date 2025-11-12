@@ -1,11 +1,10 @@
 #include "gutyansky_a_matrix_column_sum/seq/include/ops_seq.hpp"
 
-#include <iostream>
-#include <numeric>
 #include <vector>
+#include <cstddef>
+#include <algorithm>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace gutyansky_a_matrix_column_sum {
 
@@ -21,10 +20,9 @@ bool GutyanskyAMatrixColumnSumSEQ::ValidationImpl() {
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::PreProcessingImpl() {
-  GetOutput().size = GetInput().cols;
-  GetOutput().data.resize(GetInput().cols);
+  GetOutput().resize(GetInput().cols);
 
-  return GetOutput().data.size() == GetInput().cols;
+  return GetOutput().size() == GetInput().cols;
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::RunImpl() {
@@ -32,10 +30,10 @@ bool GutyanskyAMatrixColumnSumSEQ::RunImpl() {
     return false;
   }
 
-  std::fill(GetOutput().data.begin(), GetOutput().data.end(), (int64_t)0);
+  std::fill(GetOutput().begin(), GetOutput().end(), 0);
 
   for (size_t i = 0; i < GetInput().rows * GetInput().cols; i++) {
-    GetOutput().data[i % GetInput().cols] += GetInput().data[i];
+    GetOutput()[i % GetInput().cols] += GetInput().data[i];
   }
 
   return true;
