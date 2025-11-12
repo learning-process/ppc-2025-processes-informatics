@@ -3,6 +3,8 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -51,7 +53,7 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   if (world_rank == 0) {
     int current_displacement = 0;
     for (int i = 0; i < world_size; i++) {
-      elem_counts[i] = (int)elem_per_process;
+      elem_counts[i] = static_cast<int>(elem_per_process);
       if (std::cmp_less(i, remainder_elems)) {
         elem_counts[i]++;
       }

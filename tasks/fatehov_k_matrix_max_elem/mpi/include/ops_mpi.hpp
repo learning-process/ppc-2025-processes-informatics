@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstddef>
-
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
 #include "task/include/task.hpp"
 

@@ -1,6 +1,7 @@
 #include "fatehov_k_matrix_max_elem/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"

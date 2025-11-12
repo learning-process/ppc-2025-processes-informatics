@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
 #include <fstream>
 #include <string>
@@ -10,12 +11,13 @@
 #include "fatehov_k_matrix_max_elem/mpi/include/ops_mpi.hpp"
 #include "fatehov_k_matrix_max_elem/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace fatehov_k_matrix_max_elem {
 
 class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
-  OutType excepted_result_;
+  InType input_data_ = std::make_tuple(0, 0, std::vector<double>{});
+  OutType expected_result_ = 0;
   void SetUp() override {
     std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_fatehov_k_matrix_max_elem, "matrix.txt");
     std::ifstream file(file_path);
