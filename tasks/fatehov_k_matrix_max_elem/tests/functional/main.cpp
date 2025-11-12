@@ -4,12 +4,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
@@ -41,7 +37,6 @@ class FatehovKRunFuncTestsMatrixMaxElem : public ppc::util::BaseRunFuncTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::cout << expected_result_ << " == " << output_data << std::endl;
     return expected_result_ == output_data;
   }
 
@@ -50,8 +45,8 @@ class FatehovKRunFuncTestsMatrixMaxElem : public ppc::util::BaseRunFuncTests<InT
   }
 
  private:
-  InType input_data_;
-  OutType expected_result_;
+  InType input_data_ = std::make_tuple(0, 0, std::vector<double>{});
+  OutType expected_result_ = 0;
 };
 
 namespace {

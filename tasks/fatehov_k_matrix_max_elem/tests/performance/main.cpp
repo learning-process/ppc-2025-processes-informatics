@@ -1,5 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <fstream>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
 #include "fatehov_k_matrix_max_elem/mpi/include/ops_mpi.hpp"
 #include "fatehov_k_matrix_max_elem/seq/include/ops_seq.hpp"
@@ -13,15 +19,15 @@ class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InT
   void SetUp() override {
     std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_fatehov_k_matrix_max_elem, "matrix.txt");
     std::ifstream file(file_path);
-    size_t rows;
-    size_t cols;
-    double max_val;
+    size_t rows = 0;
+    size_t cols = 0;
+    double max_val = NAN;
     std::vector<double> matrix;
 
     file >> rows >> cols >> max_val;
 
     matrix.reserve(rows * cols);
-    double value;
+    double value = NAN;
     for (size_t i = 0; i < rows * cols; ++i) {
       file >> value;
       matrix.push_back(value);

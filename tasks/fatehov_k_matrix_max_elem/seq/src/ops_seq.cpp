@@ -1,10 +1,9 @@
 #include "fatehov_k_matrix_max_elem/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace fatehov_k_matrix_max_elem {
 
@@ -16,10 +15,10 @@ FatehovKMatrixMaxElemSEQ::FatehovKMatrixMaxElemSEQ(const InType &in) {
 
 bool FatehovKMatrixMaxElemSEQ::ValidationImpl() {
   auto &data = GetInput();
-  return (std::get<0>(data) > 0 && std::get<0>(data) <= MAX_ROWS) &&
-         (std::get<1>(data) > 0 && std::get<1>(data) <= MAX_COLS) &&
-         (std::get<0>(data) * std::get<1>(data) <= MAX_MATRIX_SIZE) &&
-         (std::get<2>(data).size() <= MAX_MATRIX_SIZE &&
+  return (std::get<0>(data) > 0 && std::get<0>(data) <= kMaxRows) &&
+         (std::get<1>(data) > 0 && std::get<1>(data) <= kMaxCols) &&
+         (std::get<0>(data) * std::get<1>(data) <= kMaxMatrixSize) &&
+         (std::get<2>(data).size() <= kMaxMatrixSize &&
           std::get<2>(data).size() == std::get<0>(data) * std::get<1>(data)) &&
          (!std::get<2>(data).empty());
 }
@@ -36,9 +35,7 @@ bool FatehovKMatrixMaxElemSEQ::RunImpl() {
   double max = matrix[0];
   for (size_t i = 0; i < rows; i++) {
     for (size_t j = 0; j < columns; j++) {
-      if (matrix[i * columns + j] > max) {
-        max = matrix[i * columns + j];
-      }
+      max = std::max(matrix[(i * columns) + j], max);
     }
   }
   GetOutput() = max;

@@ -2,11 +2,12 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <limits>
+#include <utility>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace fatehov_k_matrix_max_elem {
 
@@ -18,10 +19,10 @@ FatehovKMatrixMaxElemMPI::FatehovKMatrixMaxElemMPI(const InType &in) {
 
 bool FatehovKMatrixMaxElemMPI::ValidationImpl() {
   auto &data = GetInput();
-  return (std::get<0>(data) > 0 && std::get<0>(data) <= MAX_ROWS) &&
-         (std::get<1>(data) > 0 && std::get<1>(data) <= MAX_COLS) &&
-         (std::get<0>(data) * std::get<1>(data) <= MAX_MATRIX_SIZE) &&
-         (std::get<2>(data).size() <= MAX_MATRIX_SIZE &&
+  return (std::get<0>(data) > 0 && std::get<0>(data) <= kMaxRows) &&
+         (std::get<1>(data) > 0 && std::get<1>(data) <= kMaxCols) &&
+         (std::get<0>(data) * std::get<1>(data) <= kMaxMatrixSize) &&
+         (std::get<2>(data).size() <= kMaxMatrixSize &&
           std::get<2>(data).size() == std::get<0>(data) * std::get<1>(data)) &&
          (!std::get<2>(data).empty());
 }
@@ -36,8 +37,8 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   size_t columns = std::get<1>(data);
   std::vector<double> matrix = std::get<2>(data);
 
-  int world_rank;
-  int world_size;
+  int world_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   size_t elems = rows * columns;
@@ -50,8 +51,8 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   if (world_rank == 0) {
     int current_displacement = 0;
     for (int i = 0; i < world_size; i++) {
-      elem_counts[i] = elem_per_process;
-      if (i < (int)remainder_elems) {
+      elem_counts[i] = (int)elem_per_process;
+      if (std::cmp_less(i, remainder_elems)) {
         elem_counts[i]++;
       }
       elem_displacements[i] = current_displacement;
@@ -59,7 +60,7 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
     }
   }
 
-  int my_element_count;
+  int my_element_count = 0;
   MPI_Scatter(elem_counts.data(), 1, MPI_INT, &my_element_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<double> local_elements(my_element_count);
@@ -67,13 +68,11 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
                my_element_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double local_max = -std::numeric_limits<double>::max();
-  for (size_t i = 0; i < local_elements.size(); i++) {
-    if (local_elements[i] > local_max) {
-      local_max = local_elements[i];
-    }
+  for (double element : local_elements) {
+    local_max = std::max(element, local_max);
   }
 
-  double global_max;
+  double global_max = NAN;
   MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
   GetOutput() = global_max;

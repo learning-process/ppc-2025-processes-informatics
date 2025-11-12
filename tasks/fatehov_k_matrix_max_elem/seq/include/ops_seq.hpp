@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,9 +19,9 @@ class FatehovKMatrixMaxElemSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static const int MAX_ROWS = 10000;
-  static const int MAX_COLS = 10000;
-  static const int MAX_MATRIX_SIZE = 1000000;
+  static const int kMaxRows = 10000;
+  static const int kMaxCols = 10000;
+  static const int kMaxMatrixSize = 1000000;
 };
 
 }  // namespace fatehov_k_matrix_max_elem
