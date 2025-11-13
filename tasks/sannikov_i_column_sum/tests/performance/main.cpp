@@ -13,9 +13,9 @@ class SannikovIColumnSumPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   void SetUp() override {
     input_data_ = InType(10000, std::vector<int>(10000));
     for (size_t i = 0; i < 10000; i++) {
-        for (size_t j = 0; j < 10000; j++) {
-            input_data_[i][j] = (size_t)(i*14 + j*21);
-        }
+      for (size_t j = 0; j < 10000; j++) {
+        input_data_[i][j] = (size_t)(i * 14 + j * 21);
+      }
     }
   }
 
@@ -38,8 +38,8 @@ TEST_P(SannikovIColumnSumPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SannikovIColumnSumMPI, SannikovIColumnSumSEQ>(PPC_SETTINGS_sannikov_i_column_sum);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SannikovIColumnSumMPI, SannikovIColumnSumSEQ>(
+    PPC_SETTINGS_sannikov_i_column_sum);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
