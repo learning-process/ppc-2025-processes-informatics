@@ -30,11 +30,6 @@ bool SpichekDDotProductOfVectorsSEQ::RunImpl() {
     return true;
   }
 
-  // На случай, если ValidationImpl() вдруг пропустил ошибку
-  if (vector1.size() != vector2.size()) {
-    return false;
-  }
-
   int dot_product = 0;
   for (size_t i = 0; i < vector1.size(); ++i) {
     dot_product += vector1[i] * vector2[i];
