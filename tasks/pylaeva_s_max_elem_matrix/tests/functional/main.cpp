@@ -37,7 +37,7 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
     }
     
     size_t size = 0;
-    std::vector<double> input;
+    std::vector<int> input;
     input.reserve(size);
     int max;
 

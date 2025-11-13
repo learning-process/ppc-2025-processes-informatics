@@ -13,7 +13,7 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
   OutType expected_data_;
 
   void SetUp() override {
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_4096x4096.txt");
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_5x5.txt");
 
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -21,7 +21,7 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
     }
     
     size_t size = 0;
-    std::vector<double> input;
+    std::vector<int> input;
     input.reserve(size);
     int max;
 

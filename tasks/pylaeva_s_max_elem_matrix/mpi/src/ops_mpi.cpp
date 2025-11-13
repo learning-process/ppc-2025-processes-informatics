@@ -34,10 +34,11 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  MPI_Bcast(&matrix_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  int n = static_cast<int>(matrix_size);
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int local_size = matrix_size / size;
-  int remainder = matrix_size % size;
+  int local_size = n / size;
+  int remainder = n % size;
 
   int start_idx = 0;
   int end_idx = 0;
@@ -50,16 +51,16 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
     end_idx = start_idx + local_size;
   }
 
-  int local_max = INT_MIN;
+  int local_max = std::numeric_limits<int>::min();
   
-  for (int i = start_idx; i < end_idx && i < matrix_size; i++) {
+  for (int i = start_idx; i < end_idx && i < n; i++) {
     if (matrix_data[i] > local_max) {
       local_max = matrix_data[i];
     }
   }
 
-  if (local_size == 0 && rank >= matrix_size) {
-    local_max = INT_MIN;
+  if (local_size == 0 && rank >= n) {
+    local_max = std::numeric_limits<int>::min();
   }
 
   int global_max = 0;
