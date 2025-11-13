@@ -29,7 +29,7 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, param);
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, param  + ".txt");
 
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -75,8 +75,8 @@ TEST_P(PylaevaSMaxElemMatrixFuncTests, MaxElemMatrix) {
 }
 
 const std::array<TestType, 2> kTestParam = {
-    "matrix_3x3.txt",
-    "matrix_5x5.txt", 
+    "matrix_3x3",
+    "matrix_5x5", 
 };
 
 const auto kTestTasksList =
