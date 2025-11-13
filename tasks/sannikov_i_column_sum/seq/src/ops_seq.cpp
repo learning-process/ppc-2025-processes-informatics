@@ -33,8 +33,8 @@ bool SannikovIColumnSumSEQ::RunImpl() {
     return false;
   }
 
-  for (size_t i = 0; i < (size_t)input_matrix.size(); i++) {
-    for (size_t j = 0; j < (size_t)input_matrix[i].size(); j++) {
+  for (int i = 0; i < (int)input_matrix.size(); i++) {
+    for (int j = 0; j < (int)input_matrix[i].size(); j++) {
       GetOutput()[j] += input_matrix[i][j];
     }
   }

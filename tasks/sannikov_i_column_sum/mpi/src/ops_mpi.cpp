@@ -45,21 +45,19 @@ bool SannikovIColumnSumMPI::PreProcessingImpl() {
 
 bool SannikovIColumnSumMPI::RunImpl() {
   const auto &input_matrix = GetInput();
-  if (input_matrix.empty()) {
-    return false;
-  }
+
   int rank = 0;
   int size = 1;
-  size_t rows = 0;
-  size_t columns = (GetOutput().size());
+  int rows = 0;
+  int columns = (GetOutput().size());
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   if (rank == 0) {
-    if (input_matrix.empty() || (size_t)input_matrix.front().size() != columns) {
+    if (input_matrix.empty() || (int)input_matrix.front().size() != columns) {
       return false;
     }
-    rows = (GetInput().size());
+    rows = (input_matrix.size());
   }
 
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -67,21 +65,21 @@ bool SannikovIColumnSumMPI::RunImpl() {
   if (rows <= 0 || columns <= 0) {
     return false;
   }
-  size_t rem = rows % size;
-  size_t pad = (rem == 0) ? 0 : (size - rem);
-  size_t total_rows = rows + pad;
-  size_t rows_per_proc = total_rows / size;
+  int rem = rows % size;
+  int pad = (rem == 0) ? 0 : (size - rem);
+  int total_rows = rows + pad;
+  int rows_per_proc = total_rows / size;
   std::vector<int> sendbuf;
   if (rank == 0) {
     sendbuf.resize((total_rows * columns));
-    for (size_t i = 0; i < rows; i++) {
-      for (size_t j = 0; j < columns; j++) {
-        sendbuf[(i)*columns + j] = GetInput()[(i)][(j)];
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < columns; j++) {
+        sendbuf[(i)*columns + j] = input_matrix[(i)][(j)];
       }
     }
 
-    for (size_t i = rows; i < total_rows; i++) {
-      for (size_t j = 0; j < columns; j++) {
+    for (int i = rows; i < total_rows; i++) {
+      for (int j = 0; j < columns; j++) {
         sendbuf[(i)*columns + j] = 0;
       }
     }
@@ -91,9 +89,9 @@ bool SannikovIColumnSumMPI::RunImpl() {
   MPI_Scatter(rank == 0 ? sendbuf.data() : nullptr, rows_per_proc * columns, MPI_INT, recvbuf.data(),
               rows_per_proc * columns, MPI_INT, 0, MPI_COMM_WORLD);
   std::vector<int> sum((columns), 0);
-  for (size_t i = 0; i < rows_per_proc; i++) {
+  for (int i = 0; i < rows_per_proc; i++) {
     int local_id = i * columns;
-    for (size_t j = 0; j < columns; j++) {
+    for (int j = 0; j < columns; j++) {
       sum[(j)] += recvbuf[local_id + j];
     }
   }
