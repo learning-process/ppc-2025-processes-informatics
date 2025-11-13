@@ -56,7 +56,7 @@ TEST_P(BaldinAWordCountFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 30> kTestParam = {
+const std::array<TestType, 36> kTestParam = {
     std::make_tuple(std::string("Hello world"), 2),
     std::make_tuple(std::string("One two  three   four"), 4),
     std::make_tuple(std::string("   Leading and trailing spaces   "), 4),
@@ -94,7 +94,14 @@ const std::array<TestType, 30> kTestParam = {
     std::make_tuple(std::string("12345 67890 abcde fghij klmno pqrst uvwxyz"), 7),
 
     std::make_tuple(std::string("  a   b   c   "), 3),
-    std::make_tuple(std::string("   A    "), 1)};
+    std::make_tuple(std::string("   A    "), 1),
+
+    std::make_tuple(std::string("ab"), 1),
+    std::make_tuple(std::string("!a"), 1),
+    std::make_tuple(std::string("a!"), 1),
+    std::make_tuple(std::string("a b"), 2),
+    std::make_tuple(std::string("ab_c"), 1),
+    std::make_tuple(std::string("a--b"), 1)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<BaldinAWordCountMPI, InType>(kTestParam, PPC_SETTINGS_baldin_a_word_count),
