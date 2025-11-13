@@ -15,7 +15,8 @@ SannikovIColumnSumSEQ::SannikovIColumnSumSEQ(const InType &in) {
 }
 
 bool SannikovIColumnSumSEQ::ValidationImpl() {
-  return (!GetInput().empty()) && (GetInput().front().size() != 0) && (GetOutput().empty());
+  const auto &input_matrix = GetInput();
+  return (!input_matrix.empty()) && (input_matrix.front().size() != 0) && (GetOutput().empty());
 }
 
 bool SannikovIColumnSumSEQ::PreProcessingImpl() {
@@ -24,13 +25,14 @@ bool SannikovIColumnSumSEQ::PreProcessingImpl() {
 }
 
 bool SannikovIColumnSumSEQ::RunImpl() {
-  if (GetInput().empty()) {
+  const auto &input_matrix = GetInput();
+  if (input_matrix.empty()) {
     return false;
   }
 
-  for (size_t i = 0; i < (size_t)GetInput().size(); i++) {
-    for (size_t j = 0; j < (size_t)GetInput()[i].size(); j++) {
-      GetOutput()[j] += GetInput()[i][j];
+  for (size_t i = 0; i < (size_t)input_matrix.size(); i++) {
+    for (size_t j = 0; j < (size_t)input_matrix[i].size(); j++) {
+      GetOutput()[j] += input_matrix[i][j];
     }
   }
 

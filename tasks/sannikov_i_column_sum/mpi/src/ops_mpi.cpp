@@ -17,19 +17,20 @@ SannikovIColumnSumMPI::SannikovIColumnSumMPI(const InType &in) {
 }
 
 bool SannikovIColumnSumMPI::ValidationImpl() {
-  return (!GetInput().empty()) && (GetInput().front().size() != 0) && (GetOutput().empty());
+  const auto &input_matrix = GetInput();
+  return (!input_matrix.empty()) && (input_matrix.front().size() != 0) && (GetOutput().empty());
 }
 
 bool SannikovIColumnSumMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+  const auto &input_matrix = GetInput();
   int columns = 0;
   if (rank == 0) {
-    if (GetInput().empty()) {
+    if (input_matrix.empty()) {
       return false;
     }
-    columns = (GetInput().front().size());
+    columns = (input_matrix.front().size());
   }
   MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (columns <= 0) {
@@ -40,7 +41,8 @@ bool SannikovIColumnSumMPI::PreProcessingImpl() {
 }
 
 bool SannikovIColumnSumMPI::RunImpl() {
-  if (GetInput().empty()) {
+  const auto &input_matrix = GetInput();
+  if (input_matrix.empty()) {
     return false;
   }
   int rank = 0;
@@ -51,7 +53,7 @@ bool SannikovIColumnSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   if (rank == 0) {
-    if (GetInput().empty() || (size_t)GetInput().front().size() != columns) {
+    if (input_matrix.empty() || (size_t)input_matrix.front().size() != columns) {
       return false;
     }
     rows = (GetInput().size());
