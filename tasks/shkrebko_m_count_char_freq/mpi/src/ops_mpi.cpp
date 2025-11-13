@@ -32,7 +32,7 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
 
   std::string input_text = std::get<0>(GetInput());
   std::string target_char_str = std::get<1>(GetInput());
-  char target_char = target_char_str[0];  
+  char target_char = target_char_str[0];
 
   const int total_size = static_cast<int>(input_text.size());
 

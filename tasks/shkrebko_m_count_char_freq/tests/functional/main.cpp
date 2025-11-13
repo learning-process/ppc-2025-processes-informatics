@@ -23,7 +23,7 @@ namespace shkrebko_m_count_char_freq {
 class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return test_param;  
+    return test_param;
   }
 
  protected:
@@ -64,9 +64,7 @@ TEST_P(ShkrebkoMCountCharFreqFuncTests, CountCharFrequency) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    "test1", "test2", "test3", "test4"
-};
+const std::array<TestType, 4> kTestParam = {"test1", "test2", "test3", "test4"};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<shkrebko_m_count_char_freq::ShkrebkoMCountCharFreqMPI, InType>(

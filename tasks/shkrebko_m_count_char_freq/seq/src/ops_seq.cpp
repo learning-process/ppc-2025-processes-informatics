@@ -25,8 +25,8 @@ bool ShkrebkoMCountCharFreqSEQ::PreProcessingImpl() {
 bool ShkrebkoMCountCharFreqSEQ::RunImpl() {
   std::string str = std::get<0>(GetInput());
   std::string symbol_str = std::get<1>(GetInput());
-  char symbol = symbol_str[0];  
-  int result = std::count(str.begin(), str.end(), symbol);  
+  char symbol = symbol_str[0];
+  int result = std::count(str.begin(), str.end(), symbol);
   GetOutput() = result;
   return true;
 }

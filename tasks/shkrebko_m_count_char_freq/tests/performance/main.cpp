@@ -22,7 +22,7 @@ class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
     large_text = large_text.substr(0, target_size);
 
-    std::string target_char = "e";  
+    std::string target_char = "e";
 
     expected_data_ = 0;
     for (char c : large_text) {
