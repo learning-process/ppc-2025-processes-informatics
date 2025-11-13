@@ -19,11 +19,13 @@ SannikovIColumnSumSEQ::SannikovIColumnSumSEQ(const InType &in) {
 
 bool SannikovIColumnSumSEQ::ValidationImpl() {
   const auto &input_matrix = GetInput();
-  return (!input_matrix.empty()) && (input_matrix.front().size() != 0) && (GetOutput().empty());
+  return (!input_matrix.empty()) && (input_matrix.front().size() != 0);
 }
 
 bool SannikovIColumnSumSEQ::PreProcessingImpl() {
-  GetOutput().resize(GetInput().front().size(), 0);
+  const auto &input_matrix = GetInput();
+  GetOutput().clear();
+  GetOutput().resize(input_matrix.front().size(), 0);
   return !GetOutput().empty();
 }
 
@@ -38,7 +40,6 @@ bool SannikovIColumnSumSEQ::RunImpl() {
       GetOutput()[j] += input_matrix[i][j];
     }
   }
-
   return !GetOutput().empty();
 }
 
