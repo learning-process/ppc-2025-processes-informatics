@@ -20,11 +20,18 @@ bool PylaevaSMaxElemMatrixSEQ::ValidationImpl() {
 
 bool PylaevaSMaxElemMatrixSEQ::PreProcessingImpl() {
   GetOutput() = std::numeric_limits<int>::min();
-  return GetOutput()<0;
+  return true;
 }
 
 bool PylaevaSMaxElemMatrixSEQ::RunImpl() {
-  int max_element = std::get<1>(GetInput())[0];  
+  const auto& matrix_data = std::get<1>(GetInput());
+  const auto& matrix_size = std::get<0>(GetInput());
+  
+  if (matrix_data.empty() || matrix_size == 0 || matrix_data.size()!=matrix_size) {
+    return false;
+  }
+
+  int max_element = matrix_data[0];  
   
   for (size_t i = 1; i < std::get<0>(GetInput()); ++i) {
     if (std::get<1>(GetInput())[i] > max_element) {
