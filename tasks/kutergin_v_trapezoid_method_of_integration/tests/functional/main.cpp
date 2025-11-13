@@ -16,6 +16,17 @@
 
 namespace kutergin_v_trapezoid_seq {
 
+TEST(KuterginTrapezoidFunc, SeqVersionWorks) {
+  ASSERT_DOUBLE_EQ(kutergin_v_trapezoid_seq::Func(0.0), 0.0);
+  ASSERT_DOUBLE_EQ(kutergin_v_trapezoid_seq::Func(2.0), 4.0);
+  ASSERT_DOUBLE_EQ(kutergin_v_trapezoid_seq::Func(-3.0), 9.0);
+}
+
+TEST(KuterginTrapezoidFunc, MpiVersionWorks) {
+  ASSERT_DOUBLE_EQ(kutergin_v_trapezoid_mpi::Func(0.0), 0.0);
+  ASSERT_DOUBLE_EQ(kutergin_v_trapezoid_mpi::Func(2.0), 4.0);
+}
+
 class KuterginVRunFuncTestsSEQ
     : public ppc::util::BaseRunFuncTests<InType, OutType,
                                          TestType>  // наследник ppc::util::BaseRunFuncTests<InType, OutType, TestType>
@@ -97,10 +108,11 @@ TEST_P(KuterginVRunFuncTestsSEQ, TrapezoidTest)  // параметризован
 }
 
 // массив с наборами тестовых данных
-const std::array<TestType, 5> kTestCases = {
+const std::array<TestType, 6> kTestCases = {
     // Успешные тесты
     std::make_tuple(InputData{.a = 0.0, .b = 3.0, .n = 10000}, 9.0, "f_x_squared_0_to_3_n_10000"),
     std::make_tuple(InputData{.a = -1.0, .b = 1.0, .n = 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000"),
+    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = 1001}, 1.0 / 3.0, "remainder_check"),
 
     // Тесты на провал валидации
     std::make_tuple(InputData{.a = 1.0, .b = 0.0, .n = 30000}, 0.0, "invalid_bounds"),
