@@ -13,10 +13,6 @@ class ShkrebkoMCountCharFreqSEQ : public BaseTask {
   explicit ShkrebkoMCountCharFreqSEQ(const InType &in);
 
  private:
-  std::string input_text_;
-  char target_char_;
-  int result_count_;
-
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

@@ -13,10 +13,6 @@ class ShkrebkoMCountCharFreqMPI : public BaseTask {
   explicit ShkrebkoMCountCharFreqMPI(const InType &in);
 
  private:
-  std::string input_text_;
-  char target_char_;
-  int global_result_ = 0;
-
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

@@ -13,8 +13,8 @@ class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
   void SetUp() override {
     std::string large_text;
-    const int target_size = 50000000;
-    const std::string base_text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ";
+    const int target_size = 100000000;
+    const std::string base_text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     while (large_text.size() < target_size) {
       large_text += base_text;
@@ -22,16 +22,16 @@ class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
     large_text = large_text.substr(0, target_size);
 
-    char target_char = 'e';
+    std::string target_char = "e";  
 
     expected_data_ = 0;
     for (char c : large_text) {
-      if (c == target_char) {
+      if (c == target_char[0]) {
         expected_data_++;
       }
     }
 
-    input_data_ = std::make_pair(large_text, target_char);
+    input_data_ = std::make_tuple(large_text, target_char);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

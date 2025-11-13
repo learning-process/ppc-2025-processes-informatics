@@ -15,25 +15,23 @@ ShkrebkoMCountCharFreqSEQ::ShkrebkoMCountCharFreqSEQ(const InType &in) {
 }
 
 bool ShkrebkoMCountCharFreqSEQ::ValidationImpl() {
-  const auto &input_data = GetInput();
-  return !input_data.first.empty();
+  return (!std::get<0>(GetInput()).empty()) && (std::get<1>(GetInput()).length() == 1);
 }
 
 bool ShkrebkoMCountCharFreqSEQ::PreProcessingImpl() {
-  const auto &input_data = GetInput();
-  input_text_ = input_data.first;
-  target_char_ = input_data.second;
-  result_count_ = 0;
   return true;
 }
 
 bool ShkrebkoMCountCharFreqSEQ::RunImpl() {
-  result_count_ = std::count(input_text_.begin(), input_text_.end(), target_char_);
+  std::string str = std::get<0>(GetInput());
+  std::string symbol_str = std::get<1>(GetInput());
+  char symbol = symbol_str[0];  
+  int result = std::count(str.begin(), str.end(), symbol);  
+  GetOutput() = result;
   return true;
 }
 
 bool ShkrebkoMCountCharFreqSEQ::PostProcessingImpl() {
-  GetOutput() = result_count_;
   return true;
 }
 

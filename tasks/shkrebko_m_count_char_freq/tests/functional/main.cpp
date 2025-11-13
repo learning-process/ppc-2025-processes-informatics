@@ -23,31 +23,25 @@ namespace shkrebko_m_count_char_freq {
 class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<1>(test_param);
+    return test_param;  
   }
 
  protected:
   void SetUp() override {
-    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int test_id = std::get<0>(param);
+    TestType test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    switch (test_id) {
-      case 1:
-        input_data_ = std::make_pair("Alolo polo", 'l');
-        expected_data_ = 3;
-        break;
-      case 2:
-        input_data_ = std::make_pair("aramopma", 'm');
-        expected_data_ = 2;
-        break;
-      case 3:
-        input_data_ = std::make_pair("banana", 'a');
-        expected_data_ = 3;
-        break;
-      case 4:
-        input_data_ = std::make_pair("abcde", 'z');
-        expected_data_ = 0;
-        break;
+    if (test_name == "test1") {
+      input_data_ = std::make_tuple("Alolo polo", "l");  // Используем tuple и string для символа
+      expected_data_ = 3;
+    } else if (test_name == "test2") {
+      input_data_ = std::make_tuple("aramopma", "m");
+      expected_data_ = 2;
+    } else if (test_name == "test3") {
+      input_data_ = std::make_tuple("banana", "a");
+      expected_data_ = 3;
+    } else if (test_name == "test4") {
+      input_data_ = std::make_tuple("abcde", "z");
+      expected_data_ = 0;
     }
   }
 
@@ -71,10 +65,7 @@ TEST_P(ShkrebkoMCountCharFreqFuncTests, CountCharFrequency) {
 }
 
 const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(1, "test1"),
-    std::make_tuple(2, "test2"),
-    std::make_tuple(3, "test3"),
-    std::make_tuple(4, "test4"),
+    "test1", "test2", "test3", "test4"
 };
 
 const auto kTestTasksList =

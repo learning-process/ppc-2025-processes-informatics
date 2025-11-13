@@ -17,14 +17,10 @@ ShkrebkoMCountCharFreqMPI::ShkrebkoMCountCharFreqMPI(const InType &in) {
 }
 
 bool ShkrebkoMCountCharFreqMPI::ValidationImpl() {
-  const auto &input_data = GetInput();
-  return !input_data.first.empty();
+  return (!std::get<0>(GetInput()).empty()) && (std::get<1>(GetInput()).length() == 1);
 }
 
 bool ShkrebkoMCountCharFreqMPI::PreProcessingImpl() {
-  const auto &input_data = GetInput();
-  input_text_ = input_data.first;
-  target_char_ = input_data.second;
   return true;
 }
 
@@ -34,11 +30,14 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int total_size = static_cast<int>(input_text_.size());
+  std::string input_text = std::get<0>(GetInput());
+  std::string target_char_str = std::get<1>(GetInput());
+  char target_char = target_char_str[0];  
+
+  const int total_size = static_cast<int>(input_text.size());
 
   if (total_size == 0) {
-    global_result_ = 0;
-    GetOutput() = global_result_;
+    GetOutput() = 0;
     return true;
   }
 
@@ -49,15 +48,16 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
 
   int local_count = 0;
   for (int i = start; i < start + local_size; ++i) {
-    if (input_text_[i] == target_char_) {
+    if (input_text[i] == target_char) {
       ++local_count;
     }
   }
 
-  MPI_Reduce(&local_count, &global_result_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&global_result_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  int global_result = 0;
+  MPI_Reduce(&local_count, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  GetOutput() = global_result_;
+  GetOutput() = global_result;
   return true;
 }
 
