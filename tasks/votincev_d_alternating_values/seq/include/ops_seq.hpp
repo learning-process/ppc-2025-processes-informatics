@@ -1,0 +1,26 @@
+#pragma once
+
+#include <vector>
+
+#include "task/include/task.hpp"
+#include "votincev_d_alternating_values/common/include/common.hpp"
+
+namespace votincev_d_alternating_values {
+
+class VotincevDAlternatingValuesSEQ : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  explicit VotincevDAlternatingValuesSEQ(const InType &in);
+
+ private:
+  std::vector<double> vect_data_;
+
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+};
+
+}  // namespace votincev_d_alternating_values
