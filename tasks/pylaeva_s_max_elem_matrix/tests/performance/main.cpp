@@ -9,14 +9,38 @@ namespace pylaeva_s_max_elem_matrix {
 
 class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
-  InType input_data_{};
+  InType input_data_{0, {}};
+  OutType expected_data_;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_4096x4096.txt");
+
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+      throw std::runtime_error("Cannot open file: " + filename);
+    }
+    
+    size_t size = 0;
+    std::vector<double> input;
+    input.reserve(size);
+    int max;
+
+    file >> size;
+    file >> max;
+
+    int elem = 0;
+    while (file >> elem) {
+      input.push_back(elem);
+    }
+
+    input_data_ = std::make_tuple(size, input);
+    expected_data_ = max;
+
+    file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return (output_data == expected_data_);
   }
 
   InType GetTestInputData() final {
