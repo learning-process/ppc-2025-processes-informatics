@@ -10,7 +10,10 @@ namespace sannikov_i_column_sum {
 
 SannikovIColumnSumSEQ::SannikovIColumnSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  auto &dst = GetInput();
+  InType tmp(in);
+  dst.swap(tmp);
+
   GetOutput().clear();
 }
 

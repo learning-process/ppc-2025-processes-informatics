@@ -12,7 +12,10 @@ namespace sannikov_i_column_sum {
 
 SannikovIColumnSumMPI::SannikovIColumnSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  auto &dst = GetInput();
+  InType tmp(in);
+  dst.swap(tmp);
+
   GetOutput().clear();
 }
 
