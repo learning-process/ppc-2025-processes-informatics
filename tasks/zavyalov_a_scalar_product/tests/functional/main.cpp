@@ -48,7 +48,7 @@ class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     for (size_t i = 0; i < std::get<0>(input_data_).size(); i++) {
       res += std::get<0>(input_data_)[i] * std::get<1>(input_data_)[i];
     }
-    return (res == output_data);
+    return (fabs(res - output_data) < 1e-6);
   }
 
   InType GetTestInputData() final {
