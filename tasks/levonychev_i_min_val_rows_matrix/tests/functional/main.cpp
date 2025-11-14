@@ -29,14 +29,14 @@ class LevonychevIMinValRowsMatrixFuncTests : public ppc::util::BaseRunFuncTests<
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int ROWS = std::get<0>(param);
-    int COLS = std::get<1>(param);
-    input_data_ = std::make_tuple(std::vector<double>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, ROWS, COLS);
+    size_t ROWS = std::get<0>(param);
+    size_t COLS = std::get<1>(param);
+    input_data_ = std::make_tuple(std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, ROWS, COLS);
     if (ROWS == 4 && COLS == 3) {
       output_data_ = {1, 4, 7, 10};
     }
     if (ROWS == 3 && COLS == 4) {
-      input_data_ = std::make_tuple(std::vector<double>{12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, ROWS, COLS);
+      input_data_ = std::make_tuple(std::vector<int>{12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, ROWS, COLS);
       output_data_ = {9, 5, 1};
     }
     if (ROWS == 6 && COLS == 2) {

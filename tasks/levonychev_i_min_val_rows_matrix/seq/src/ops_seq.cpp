@@ -15,10 +15,13 @@ LevonychevIMinValRowsMatrixSEQ::LevonychevIMinValRowsMatrixSEQ(const InType &in)
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
-  if (std::get<0>(GetInput()).size() == 0 || std::get<1>(GetInput()) == 0 || std::get<2>(GetInput()) == 0) {
+  const size_t vector_size_ = std::get<0>(GetInput()).size();
+  const size_t ROWS = std::get<1>(GetInput());
+  const size_t COLS = std::get<2>(GetInput());
+  if (vector_size_ == 0 || ROWS == 0 || COLS == 0) {
     return false;
   }
-  if (std::get<0>(GetInput()).size() != std::get<1>(GetInput()) * std::get<2>(GetInput())) {
+  if (vector_size_ != ROWS * COLS) {
     return false;
   }
   return true;
@@ -30,18 +33,19 @@ bool LevonychevIMinValRowsMatrixSEQ::PreProcessingImpl() {
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::RunImpl() {
-  const std::vector<double> &matrix = std::get<0>(GetInput());
-  const int ROWS = std::get<1>(GetInput());
-  const int COLS = std::get<2>(GetInput());
-
-  for (int i = 0; i < ROWS; ++i) {
-    double min_val = matrix[COLS * i];
-    for (int j = 1; j < COLS; ++j) {
+  const std::vector<int> &matrix = std::get<0>(GetInput());
+  const size_t ROWS = std::get<1>(GetInput());
+  const size_t COLS = std::get<2>(GetInput());
+  OutType& result = GetOutput();
+  
+  for (size_t i = 0; i < ROWS; ++i) {
+    int min_val = matrix[COLS * i];
+    for (size_t j = 1; j < COLS; ++j) {
       if (matrix[COLS * i + j] < min_val) {
         min_val = matrix[COLS * i + j];
       }
     }
-    GetOutput()[i] = min_val;
+    result[i] = min_val;
   }
 
   return true;
