@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include <mpi.h> 
+#include <mpi.h>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
-#include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
+#include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
@@ -32,7 +32,7 @@ class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
       const auto &expected = std::get<1>(params);
       return output_data == expected;
     }
-    
+
     return true;
   }
 };
@@ -52,14 +52,13 @@ const auto kTestCases = std::array<TestType, 4>{
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<MinValueSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows),
-    ppc::util::AddFuncTask<MinValueMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows)
-);
+    ppc::util::AddFuncTask<MinValueMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
 const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
 
-}  
+}  // namespace
 
-}  
+}  // namespace makovskiy_i_min_value_in_matrix_rows

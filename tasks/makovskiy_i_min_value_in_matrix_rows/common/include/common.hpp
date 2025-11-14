@@ -13,7 +13,7 @@ using OutType = std::vector<int>;
 using TestType = std::tuple<InType, OutType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows
 #pragma once
 
 #include <string>
@@ -29,4 +29,4 @@ using OutType = std::vector<int>;
 using TestType = std::tuple<InType, OutType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows

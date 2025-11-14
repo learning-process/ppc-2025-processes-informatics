@@ -2,8 +2,8 @@
 #include <mpi.h>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
-#include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
+#include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
@@ -64,6 +64,6 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = MinValuePerfTests::CustomPerfTestName;
 INSTANTIATE_TEST_SUITE_P(MinValuePerf, MinValuePerfTests, kGtestValues, kPerfTestName);
 
-}
+}  // namespace
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows

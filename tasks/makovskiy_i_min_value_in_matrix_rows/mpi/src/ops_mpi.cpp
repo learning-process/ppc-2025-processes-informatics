@@ -1,7 +1,9 @@
+#include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
+
 #include <mpi.h>
+
 #include <algorithm>
 #include <vector>
-#include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
@@ -113,4 +115,4 @@ bool MinValueMPI::PostProcessingImpl() {
   return true;
 }
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows

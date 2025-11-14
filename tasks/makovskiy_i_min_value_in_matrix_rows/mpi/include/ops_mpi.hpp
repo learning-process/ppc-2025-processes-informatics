@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
@@ -19,4 +20,4 @@ class MinValueMPI : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows

@@ -47,4 +47,4 @@ bool MinValueSEQ::PostProcessingImpl() {
   return true;
 }
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows

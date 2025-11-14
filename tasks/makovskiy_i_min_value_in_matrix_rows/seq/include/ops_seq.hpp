@@ -18,4 +18,4 @@ class MinValueSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}
+}  // namespace makovskiy_i_min_value_in_matrix_rows
