@@ -13,7 +13,7 @@ class ShvetsovaKMaxDiffNeigVecMPI : public BaseTask {
   explicit ShvetsovaKMaxDiffNeigVecMPI(const InType &in);
 
  private:
-   std::vector<double> data;
+  std::vector<double> data;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
