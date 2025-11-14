@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "student": {
     "first_name": "Алексей",
@@ -8,14 +7,3 @@
     "task_number": "1"
   }
 }
-=======
-{
-  "student": {
-    "first_name": "Алексей",
-    "last_name": "Завьялов",
-    "middle_name": "Алексеевич",
-    "group_number": "3823Б1ФИ3",
-    "task_number": "1"
-  }
-}
->>>>>>> 1d8897f423bc9dd18928ee7d1e015802a6147d42

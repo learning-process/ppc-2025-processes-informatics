@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 {
   "tasks_type": "processes",
   "tasks": {
@@ -6,12 +5,3 @@
     "seq": "enabled"
   }
 }
-=======
-{
-  "tasks_type": "processes",
-  "tasks": {
-    "mpi": "enabled",
-    "seq": "enabled"
-  }
-}
->>>>>>> 1d8897f423bc9dd18928ee7d1e015802a6147d42
