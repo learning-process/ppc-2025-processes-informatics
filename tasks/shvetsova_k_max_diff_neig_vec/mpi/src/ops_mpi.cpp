@@ -69,7 +69,7 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   // работа процесса
   double LocalMx = 0;
   int LocInd = 0;
-  for (size_t i = 0; i < PeaceSize - 1; i++) {
+  for (int i = 0; i < PeaceSize - 1; i++) {
     double tmp = std::abs(peace[i] - peace[i + 1]);
     if (LocalMx <= tmp) {
       LocalMx = tmp;
