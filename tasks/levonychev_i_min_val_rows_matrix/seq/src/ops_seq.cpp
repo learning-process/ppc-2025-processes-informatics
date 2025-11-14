@@ -36,8 +36,8 @@ bool LevonychevIMinValRowsMatrixSEQ::RunImpl() {
   const std::vector<int> &matrix = std::get<0>(GetInput());
   const int ROWS = std::get<1>(GetInput());
   const int COLS = std::get<2>(GetInput());
-  OutType& result = GetOutput();
-  
+  OutType &result = GetOutput();
+
   for (int i = 0; i < ROWS; ++i) {
     int min_val = matrix[COLS * i];
     for (int j = 1; j < COLS; ++j) {
