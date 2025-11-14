@@ -9,6 +9,7 @@
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
+// Positive
 class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -62,5 +63,29 @@ const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFu
 INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
+
+// Negative
+TEST(MinValueValidation, RejectsEmptyMatrix) {
+  InType empty_input = {};
+
+  ASSERT_THROW(MinValueSEQ task(empty_input), std::invalid_argument);
+
+  if (ppc::util::IsUnderMpirun()) {
+    auto task_mpi = std::make_shared<MinValueMPI>(empty_input);
+    ASSERT_FALSE(task_mpi->Validation());
+  }
+}
+
+TEST(MinValueValidation, RejectsMatrixWithEmptyRow) {
+  InType invalid_input = {{1, 2, 3}, {}};
+
+  auto task_seq = std::make_shared<MinValueSEQ>(invalid_input);
+  ASSERT_FALSE(task_seq->Validation());
+
+  if (ppc::util::IsUnderMpirun()) {
+    auto task_mpi = std::make_shared<MinValueMPI>(invalid_input);
+    ASSERT_FALSE(task_mpi->Validation());
+  }
+}
 
 }  // namespace makovskiy_i_min_value_in_matrix_rows
