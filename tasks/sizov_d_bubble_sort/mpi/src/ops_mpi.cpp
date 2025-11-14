@@ -26,31 +26,71 @@ bool SizovDBubbleSortMPI::PreProcessingImpl() {
   return true;
 }
 
+static void ComputeScatterInfo(int total, int size, int rem, std::vector<int> &counts, std::vector<int> &displs) {
+  int offset = 0;
+  for (int i = 0; i < size; ++i) {
+    const int chunk = total / size + (i < rem ? 1 : 0);
+    counts[i] = chunk;
+    displs[i] = offset;
+    offset += chunk;
+  }
+}
+
+static void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, int rank, int size, int phase) {
+  const bool even_phase = (phase % 2 == 0);
+  const bool even_rank = (rank % 2 == 0);
+
+  int partner = even_phase ? (even_rank ? rank + 1 : rank - 1) : (!even_rank ? rank + 1 : rank - 1);
+
+  if (partner < 0 || partner >= size) {
+    return;
+  }
+
+  const int local_n = static_cast<int>(local.size());
+  const int pn = counts[partner];
+
+  std::vector<int> recvbuf(pn);
+
+  MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 0, recvbuf.data(), pn, MPI_INT, partner, 0, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+
+  std::vector<int> merged(local_n + pn);
+  std::ranges::merge(local, recvbuf, merged.begin());
+
+  if (rank < partner) {
+    std::ranges::copy(merged | std::views::take(local_n), local.begin());
+  } else {
+    std::ranges::copy(merged | std::views::drop(pn), local.begin());
+  }
+}
+
+static void GatherResult(const std::vector<int> &local, const std::vector<int> &counts, const std::vector<int> &displs,
+                         int rank, int total, std::vector<int> &output) {
+  if (rank == 0) {
+    output.resize(total);
+  }
+
+  MPI_Gatherv(local.data(), static_cast<int>(local.size()), MPI_INT, (rank == 0 ? output.data() : nullptr),
+              (rank == 0 ? counts.data() : nullptr), (rank == 0 ? displs.data() : nullptr), MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    std::ranges::sort(output);
+  }
+}
+
 bool SizovDBubbleSortMPI::RunImpl() {
   int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const int total = static_cast<int>(data_.size());
-  const int base = total / size;
   const int rem = total % size;
 
   std::vector<int> counts(size);
   std::vector<int> displs(size);
 
-  int offset = 0;
-  int idx = 0;
-  for (auto &c : counts) {
-    c = base;
-    if (idx < rem) {
-      ++c;
-    }
-    displs[idx] = offset;
-    offset += c;
-    ++idx;
-  }
+  ComputeScatterInfo(total, size, rem, counts, displs);
 
   const int local_n = counts[rank];
   std::vector<int> local(local_n);
@@ -60,54 +100,13 @@ bool SizovDBubbleSortMPI::RunImpl() {
   std::ranges::sort(local);
 
   for (int phase = 0; phase < size; ++phase) {
-    const bool even_phase = ((phase % 2) == 0);
-    const bool even_rank = ((rank % 2) == 0);
-
-    int partner = -1;
-    if (even_phase) {
-      if (even_rank) {
-        partner = rank + 1;
-      } else {
-        partner = rank - 1;
-      }
-    } else {
-      if (!even_rank) {
-        partner = rank + 1;
-      } else {
-        partner = rank - 1;
-      }
-    }
-
-    if (partner < 0 || partner >= size) {
-      continue;
-    }
-
-    const int pn = counts[partner];
-    std::vector<int> recvbuf(pn);
-
-    MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 0, recvbuf.data(), pn, MPI_INT, partner, 0, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
-
-    std::vector<int> merged(local_n + pn);
-    std::ranges::merge(local, recvbuf, merged.begin());
-
-    if (rank < partner) {
-      std::ranges::copy(merged | std::views::take(local_n), local.begin());
-    } else {
-      std::ranges::copy(merged | std::views::drop(pn), local.begin());
-    }
+    OddEvenExchange(local, counts, rank, size, phase);
   }
 
   std::vector<int> global;
-  if (rank == 0) {
-    global.resize(total);
-  }
-
-  MPI_Gatherv(local.data(), local_n, MPI_INT, (rank == 0 ? global.data() : nullptr),
-              (rank == 0 ? counts.data() : nullptr), (rank == 0 ? displs.data() : nullptr), MPI_INT, 0, MPI_COMM_WORLD);
+  GatherResult(local, counts, displs, rank, total, global);
 
   if (rank == 0) {
-    std::ranges::sort(global);
     GetOutput() = global;
   }
 

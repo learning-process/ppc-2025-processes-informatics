@@ -120,20 +120,17 @@ constexpr int kNumTests = 20;
 
 const std::array<TestType, kNumTests> kTestParam = [] {
   std::array<TestType, kNumTests> arr{};
-
-  size_t idx = 0;
+  std::size_t idx = 0;
   for (auto &elem : arr) {
     elem = "test" + std::to_string(idx + 1);
     ++idx;
   }
-
   return arr;
 }();
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<sizov_d_bubble_sort::SizovDBubbleSortMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_sizov_d_bubble_sort),
-                                           ppc::util::AddFuncTask<sizov_d_bubble_sort::SizovDBubbleSortSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_sizov_d_bubble_sort));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<SizovDBubbleSortMPI, InType>(kTestParam, PPC_SETTINGS_sizov_d_bubble_sort),
+                   ppc::util::AddFuncTask<SizovDBubbleSortSEQ, InType>(kTestParam, PPC_SETTINGS_sizov_d_bubble_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -142,4 +139,5 @@ const auto kTestName = SizovDRunFuncTestsBubbleSort::PrintFuncTestName<SizovDRun
 INSTANTIATE_TEST_SUITE_P(SizovDBubbleSort, SizovDRunFuncTestsBubbleSort, kGtestValues, kTestName);
 
 }  // namespace
+
 }  // namespace sizov_d_bubble_sort
