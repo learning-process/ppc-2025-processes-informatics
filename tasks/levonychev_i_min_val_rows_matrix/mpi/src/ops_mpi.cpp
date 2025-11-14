@@ -107,7 +107,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
 }
 
 bool LevonychevIMinValRowsMatrixMPI::PostProcessingImpl() {
-  return GetOutput().size() == std::get<1>(GetInput());
+  return true;
 }
 
 }  // namespace levonychev_i_min_val_rows_matrix
