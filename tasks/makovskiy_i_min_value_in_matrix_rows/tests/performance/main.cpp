@@ -5,6 +5,7 @@
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
@@ -29,19 +30,12 @@ class MinValuePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    int world_size = 1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-    if (world_size > 1) {
-      if (rank == 0) {
-        // return output_data.size() == 100;
-        // return output_data.size() == 1000;
-        // constexpr std::size_t kCols = 5000;
-        return output_data.size() == 10000;
+    if (ppc::util::IsUnderMpirun()) {
+      int rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
       }
-      return true;
     }
 
     // return output_data.size() == 100;

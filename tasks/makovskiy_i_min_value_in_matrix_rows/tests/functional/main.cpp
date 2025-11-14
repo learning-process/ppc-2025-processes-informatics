@@ -5,6 +5,7 @@
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
@@ -24,16 +25,17 @@ class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if (rank == 0) {
-      auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-      const auto &expected = std::get<1>(params);
-      return output_data == expected;
+    if (ppc::util::IsUnderMpirun()) {
+      int rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
     }
 
-    return true;
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto &expected = std::get<1>(params);
+    return output_data == expected;
   }
 };
 
