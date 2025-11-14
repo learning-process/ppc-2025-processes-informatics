@@ -10,37 +10,32 @@
 
 namespace sizov_d_bubble_sort {
 
-SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput().clear();
-}
-
-bool SizovDBubbleSortMPI::ValidationImpl() {
-  const auto &input = GetInput();
-  return !input.empty();
-}
-
-bool SizovDBubbleSortMPI::PreProcessingImpl() {
-  data_ = GetInput();
-  return true;
-}
-
-static void ComputeScatterInfo(int total, int size, int rem, std::vector<int> &counts, std::vector<int> &displs) {
+namespace {
+void ComputeScatterInfo(int total, int size, int rem, std::vector<int> &counts, std::vector<int> &displs) {
   int offset = 0;
   for (int i = 0; i < size; ++i) {
-    const int chunk = total / size + (i < rem ? 1 : 0);
+    const int chunk = (total / size) + (i < rem ? 1 : 0);
     counts[i] = chunk;
     displs[i] = offset;
     offset += chunk;
   }
 }
 
-static void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, int rank, int size, int phase) {
+void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, int rank, int size, int phase) {
   const bool even_phase = (phase % 2 == 0);
   const bool even_rank = (rank % 2 == 0);
 
-  int partner = even_phase ? (even_rank ? rank + 1 : rank - 1) : (!even_rank ? rank + 1 : rank - 1);
+  int partner = -1;
+
+  if (even_phase && even_rank) {
+    partner = rank + 1;
+  } else if (even_phase && !even_rank) {
+    partner = rank - 1;
+  } else if (!even_phase && even_rank) {
+    partner = rank - 1;
+  } else {
+    partner = rank + 1;
+  }
 
   if (partner < 0 || partner >= size) {
     return;
@@ -64,8 +59,8 @@ static void OddEvenExchange(std::vector<int> &local, const std::vector<int> &cou
   }
 }
 
-static void GatherResult(const std::vector<int> &local, const std::vector<int> &counts, const std::vector<int> &displs,
-                         int rank, int total, std::vector<int> &output) {
+void GatherResult(const std::vector<int> &local, const std::vector<int> &counts, const std::vector<int> &displs,
+                  int rank, int total, std::vector<int> &output) {
   if (rank == 0) {
     output.resize(total);
   }
@@ -76,6 +71,23 @@ static void GatherResult(const std::vector<int> &local, const std::vector<int> &
   if (rank == 0) {
     std::ranges::sort(output);
   }
+}
+}  // namespace
+
+SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput().clear();
+}
+
+bool SizovDBubbleSortMPI::ValidationImpl() {
+  const auto &input = GetInput();
+  return !input.empty();
+}
+
+bool SizovDBubbleSortMPI::PreProcessingImpl() {
+  data_ = GetInput();
+  return true;
 }
 
 bool SizovDBubbleSortMPI::RunImpl() {

@@ -136,7 +136,9 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = SizovDRunFuncTestsBubbleSort::PrintFuncTestName<SizovDRunFuncTestsBubbleSort>;
 
-INSTANTIATE_TEST_SUITE_P(SizovDBubbleSort, SizovDRunFuncTestsBubbleSort, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(SizovDBubbleSort, SizovDRunFuncTestsBubbleSort, kGtestValues,
+                         kTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
+                                      // misc-use-anonymous-namespace, modernize-type-traits)
 
 }  // namespace
 

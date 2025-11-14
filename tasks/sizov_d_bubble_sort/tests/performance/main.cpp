@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <vector>
 
 #include "sizov_d_bubble_sort/common/include/common.hpp"
@@ -15,7 +14,7 @@ namespace sizov_d_bubble_sort {
 class SizovDRunPerfTestsBubbleSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    const std::size_t n = 35000;
+    const std::size_t n = 75000;
 
     std::vector<int> data(n);
     for (std::size_t i = 0; i < n; ++i) {
@@ -41,7 +40,7 @@ class SizovDRunPerfTestsBubbleSort : public ppc::util::BaseRunPerfTests<InType, 
   OutType expected_result_;
 };
 
-namespace {
+namespace {  // namespace #1
 
 TEST_P(SizovDRunPerfTestsBubbleSort, RunPerfModes) {
   ExecuteTest(GetParam());
@@ -51,10 +50,14 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SizovDBubbleSortMPI, SizovDBubbleSortSEQ>(PPC_SETTINGS_sizov_d_bubble_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = SizovDRunPerfTestsBubbleSort::CustomPerfTestName;
+
+namespace {  // namespace #2
 
 INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsBubbleSort, kGtestValues, kPerfTestName);
 
 }  // namespace
+
+}  // namespace
+
 }  // namespace sizov_d_bubble_sort
