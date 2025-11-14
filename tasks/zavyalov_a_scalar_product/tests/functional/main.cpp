@@ -33,11 +33,11 @@ class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     std::vector<double> leftVec(params);
     std::vector<double> rightVec(params);
 
-    int minus = -1;
+    double minus = -1.0;
     for (unsigned int i = 0; i < params; i++) {
-      leftVec[i] = i * 0.5;
-      rightVec[i] = (i + 1) * minus;
-      minus *= -1;
+      leftVec[i] = i * 0.5 + 0.1;
+      rightVec[i] = double(i + 1) * minus;
+      minus *= -1.0;
     }
 
     input_data_ = std::make_tuple(leftVec, rightVec);
@@ -65,7 +65,7 @@ TEST_P(ZavyalovAScalarProductFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {1u, 7u, 16u};
+const std::array<TestType, 12> kTestParam = {1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u, 160u, 1000u};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZavyalovAScalarProductMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_scalar_product),
