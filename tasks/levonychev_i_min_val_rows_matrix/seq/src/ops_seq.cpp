@@ -1,10 +1,10 @@
 #include "levonychev_i_min_val_rows_matrix/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "levonychev_i_min_val_rows_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace levonychev_i_min_val_rows_matrix {
 
@@ -15,13 +15,13 @@ LevonychevIMinValRowsMatrixSEQ::LevonychevIMinValRowsMatrixSEQ(const InType &in)
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
-  const size_t vector_size_ = std::get<0>(GetInput()).size();
-  const int ROWS = std::get<1>(GetInput());
-  const int COLS = std::get<2>(GetInput());
-  if (vector_size_ == 0 || ROWS == 0 || COLS == 0) {
+  const size_t vector_size = std::get<0>(GetInput()).size();
+  const int rows = std::get<1>(GetInput());
+  const int cols = std::get<2>(GetInput());
+  if (vector_size == 0 || rows == 0 || cols == 0) {
     return false;
   }
-  if (vector_size_ != static_cast<size_t>(ROWS * COLS)) {
+  if (vector_size != static_cast<size_t>(rows * cols)) {
     return false;
   }
   return true;
@@ -34,16 +34,14 @@ bool LevonychevIMinValRowsMatrixSEQ::PreProcessingImpl() {
 
 bool LevonychevIMinValRowsMatrixSEQ::RunImpl() {
   const std::vector<int> &matrix = std::get<0>(GetInput());
-  const int ROWS = std::get<1>(GetInput());
-  const int COLS = std::get<2>(GetInput());
+  const int rows = std::get<1>(GetInput());
+  const int cols = std::get<2>(GetInput());
   OutType &result = GetOutput();
 
-  for (int i = 0; i < ROWS; ++i) {
-    int min_val = matrix[COLS * i];
-    for (int j = 1; j < COLS; ++j) {
-      if (matrix[COLS * i + j] < min_val) {
-        min_val = matrix[COLS * i + j];
-      }
+  for (int i = 0; i < rows; ++i) {
+    int min_val = matrix[cols * i];
+    for (int j = 1; j < cols; ++j) {
+      min_val = std::min(matrix[(cols * i) + j], min_val);
     }
     result[i] = min_val;
   }

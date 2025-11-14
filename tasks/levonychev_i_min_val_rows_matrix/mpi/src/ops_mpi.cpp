@@ -2,11 +2,11 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "levonychev_i_min_val_rows_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace levonychev_i_min_val_rows_matrix {
 
@@ -16,13 +16,13 @@ LevonychevIMinValRowsMatrixMPI::LevonychevIMinValRowsMatrixMPI(const InType &in)
   GetOutput() = {};
 }
 bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
-  const size_t vector_size_ = std::get<0>(GetInput()).size();
-  const int ROWS = std::get<1>(GetInput());
-  const int COLS = std::get<2>(GetInput());
-  if (vector_size_ == 0 || ROWS == 0 || COLS == 0) {
+  const size_t vector_size = std::get<0>(GetInput()).size();
+  const int rows = std::get<1>(GetInput());
+  const int cols = std::get<2>(GetInput());
+  if (vector_size == 0 || rows == 0 || cols == 0) {
     return false;
   }
-  if (vector_size_ != static_cast<size_t>(ROWS * COLS)) {
+  if (vector_size != static_cast<size_t>(rows * cols)) {
     return false;
   }
   return true;
@@ -35,64 +35,62 @@ bool LevonychevIMinValRowsMatrixMPI::PreProcessingImpl() {
 
 bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   const std::vector<int> &matrix = std::get<0>(GetInput());
-  const int ROWS = std::get<1>(GetInput());
-  const int COLS = std::get<2>(GetInput());
+  const int rows = std::get<1>(GetInput());
+  const int cols = std::get<2>(GetInput());
   OutType &global_min_values = GetOutput();
 
-  if (global_min_values.size() != static_cast<size_t>(ROWS)) {
-    global_min_values.resize(ROWS);
+  if (global_min_values.size() != static_cast<size_t>(rows)) {
+    global_min_values.resize(rows);
   }
-  int ProcNum = 0;
-  int ProcRank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
-  MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
+  int proc_num = 0;
+  int proc_rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
   int local_count_of_rows = 0;
   int start_id = 0;
-  if (ROWS < ProcNum) {
-    if (ProcRank < ROWS) {
+  if (rows < proc_num) {
+    if (proc_rank < rows) {
       local_count_of_rows = 1;
-      start_id = ProcRank * COLS;
+      start_id = proc_rank * cols;
     } else {
       local_count_of_rows = 0;
       start_id = 0;
     }
   } else {
-    local_count_of_rows = ROWS / ProcNum;
-    if (ProcRank == (ProcNum - 1)) {
-      local_count_of_rows += (ROWS % ProcNum);
+    local_count_of_rows = rows / proc_num;
+    if (proc_rank == (proc_num - 1)) {
+      local_count_of_rows += (rows % proc_num);
     }
-    start_id = ProcRank * (ROWS / ProcNum) * COLS;
+    start_id = proc_rank * (rows / proc_num) * cols;
   }
 
   std::vector<int> local_min_values(local_count_of_rows);
   for (int i = 0; i < local_count_of_rows; ++i) {
-    const int start_row_id = start_id + COLS * i;
+    const int start_row_id = start_id + (cols * i);
     int min_value = matrix[start_row_id];
-    for (int j = 1; j < COLS; ++j) {
-      if (matrix[start_row_id + j] < min_value) {
-        min_value = matrix[start_row_id + j];
-      }
+    for (int j = 1; j < cols; ++j) {
+      min_value = std::min(matrix[start_row_id + j], min_value);
     }
     local_min_values[i] = min_value;
   }
 
-  std::vector<int> recvcounts(ProcNum);
-  std::vector<int> displs(ProcNum);
+  std::vector<int> recvcounts(proc_num);
+  std::vector<int> displs(proc_num);
   int current_displacement = 0;
 
-  for (int i = 0; i < ProcNum; ++i) {
-    int count_i;
-    if (ROWS < ProcNum) {
-      if (i < ROWS) {
+  for (int i = 0; i < proc_num; ++i) {
+    int count_i = 0;
+    if (rows < proc_num) {
+      if (i < rows) {
         count_i = 1;
       } else {
         count_i = 0;
       }
     } else {
-      count_i = ROWS / ProcNum;
-      if (i == (ProcNum - 1)) {
-        count_i += ROWS % ProcNum;
+      count_i = rows / proc_num;
+      if (i == (proc_num - 1)) {
+        count_i += rows % proc_num;
       }
     }
     recvcounts[i] = count_i;
@@ -102,7 +100,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   }
   MPI_Gatherv(local_min_values.data(), local_count_of_rows, MPI_INT, global_min_values.data(), recvcounts.data(),
               displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(global_min_values.data(), ROWS, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(global_min_values.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
   return true;
 }
 
