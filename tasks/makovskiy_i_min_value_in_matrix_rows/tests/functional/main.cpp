@@ -1,91 +1,108 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <functional>
+#include <stdexcept>
+#include <vector>
+
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
-// Positive
-class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    const auto &input = std::get<0>(test_param);
-    const std::size_t rows = input.size();
-    const std::size_t cols = input.empty() ? 0 : input.front().size();
-    return "r" + std::to_string(rows) + "x" + std::to_string(cols);
-  }
+enum class TestExpectation { SUCCESS, FAIL_VALIDATION, THROW_CONSTRUCTION };
 
- protected:
-  InType GetTestInputData() final {
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    return std::get<0>(params);
-  }
+using UnifiedTestParam =
+    std::tuple<std::function<std::shared_ptr<BaseTask>(const InType &)>, std::string, InType, OutType, TestExpectation>;
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (ppc::util::IsUnderMpirun()) {
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if (rank != 0) {
-        return true;
+class MinValueAllTests : public ::testing::TestWithParam<UnifiedTestParam> {};
+
+TEST_P(MinValueAllTests, AllCases) {
+  auto task_factory = std::get<0>(GetParam());
+  auto test_name = std::get<1>(GetParam());
+  auto input_data = std::get<2>(GetParam());
+  auto expected_output = std::get<3>(GetParam());
+  auto expectation = std::get<4>(GetParam());
+
+  switch (expectation) {
+    case TestExpectation::SUCCESS: {
+      auto task = task_factory(input_data);
+      ASSERT_TRUE(task->Validation());
+      ASSERT_TRUE(task->PreProcessing());
+      ASSERT_TRUE(task->Run());
+      ASSERT_TRUE(task->PostProcessing());
+
+      if (ppc::util::IsUnderMpirun()) {
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        if (rank == 0) {
+          ASSERT_EQ(task->GetOutput(), expected_output);
+        }
+      } else {
+        ASSERT_EQ(task->GetOutput(), expected_output);
       }
+      break;
     }
-
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    const auto &expected = std::get<1>(params);
-    return output_data == expected;
+    case TestExpectation::FAIL_VALIDATION: {
+      auto task = task_factory(input_data);
+      ASSERT_FALSE(task->Validation());
+      break;
+    }
+    case TestExpectation::THROW_CONSTRUCTION: {
+      if (!ppc::util::IsUnderMpirun()) {
+        ASSERT_THROW(task_factory(input_data), std::invalid_argument);
+      }
+      break;
+    }
   }
+}
+
+auto GenerateTestName = [](const ::testing::TestParamInfo<UnifiedTestParam> &info) {
+  std::string name = std::get<1>(info.param);
+  std::replace(name.begin(), name.end(), '/', '_');
+  return name;
 };
 
-TEST_P(MinValueRunFuncTests, MinPerRow) {
-  ExecuteTest(GetParam());
-}
+INSTANTIATE_TEST_SUITE_P(
+    MinValueTests, MinValueAllTests,
+    ::testing::Values(
+        // Positive
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Positive/r2x3", {{1, 2, 3}, {4, 5, 6}}, {1, 4}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Positive/r2x3", {{1, 2, 3}, {4, 5, 6}}, {1, 4}, TestExpectation::SUCCESS},
+        UnifiedTestParam{
+            [](const InType &in) {
+              return std::make_shared<MinValueSEQ>(in);
+            }, "SEQ/Positive/NegativeValues", {{-1, 0}, {10, 2}, {7}}, {-1, 2, 7}, TestExpectation::SUCCESS},
+        UnifiedTestParam{
+            [](const InType &in) {
+              return std::make_shared<MinValueMPI>(in);
+            }, "MPI/Positive/NegativeValues", {{-1, 0}, {10, 2}, {7}}, {-1, 2, 7}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Positive/SingleValue", {{8}}, {8}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Positive/SingleValue", {{8}}, {8}, TestExpectation::SUCCESS},
 
-namespace {
-
-const auto kTestCases = std::array<TestType, 4>{
-    TestType{InType{{1, 2, 3}, {4, 5, 6}}, OutType{1, 4}},
-    TestType{InType{{-1, 0}, {10, 2}, {7}}, OutType{-1, 2, 7}},
-    TestType{InType{{5, 5, 5}}, OutType{5}},
-    TestType{InType{{8}}, OutType{8}},
-};
-
-const auto kTasks = std::tuple_cat(
-    ppc::util::AddFuncTask<MinValueSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows),
-    ppc::util::AddFuncTask<MinValueMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows));
-
-const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
-const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFuncTests>;
-
-INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
-
-}  // namespace
-
-// Negative
-TEST(MinValueValidation, RejectsEmptyMatrix) {
-  InType empty_input = {};
-
-  ASSERT_THROW(MinValueSEQ task(empty_input), std::invalid_argument);
-
-  if (ppc::util::IsUnderMpirun()) {
-    auto task_mpi = std::make_shared<MinValueMPI>(empty_input);
-    ASSERT_FALSE(task_mpi->Validation());
-  }
-}
-
-TEST(MinValueValidation, RejectsMatrixWithEmptyRow) {
-  InType invalid_input = {{1, 2, 3}, {}};
-
-  auto task_seq = std::make_shared<MinValueSEQ>(invalid_input);
-  ASSERT_FALSE(task_seq->Validation());
-
-  if (ppc::util::IsUnderMpirun()) {
-    auto task_mpi = std::make_shared<MinValueMPI>(invalid_input);
-    ASSERT_FALSE(task_mpi->Validation());
-  }
-}
+        // Negative
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Negative/EmptyMatrix", {}, {}, TestExpectation::THROW_CONSTRUCTION},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Negative/EmptyMatrix", {}, {}, TestExpectation::FAIL_VALIDATION},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Negative/EmptyRow", {{1, 2}, {}}, {}, TestExpectation::FAIL_VALIDATION},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Negative/EmptyRow", {{1, 2}, {}}, {}, TestExpectation::FAIL_VALIDATION}),
+    GenerateTestName);
 
 }  // namespace makovskiy_i_min_value_in_matrix_rows
