@@ -8,15 +8,23 @@
 namespace levonychev_i_min_val_rows_matrix {
 
 class LevonychevIMinValRowsMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  // const int kCount_ = 100;
-  InType input_data_{};
-
+  const int ROWS = 10000;
+  const int COLS = 10000;
+  InType input_data_;
+  OutType expected_result_;
   void SetUp() override {
-    // input_data_ = kCount_;
+    std::vector<int> matrix(ROWS * COLS);
+    for (int i = 0; i < COLS * ROWS; ++i) {
+      matrix[i] = i;
+    }
+    input_data_ = std::make_tuple(std::move(matrix), ROWS, COLS);
+    for (int i = 0; i < ROWS * COLS; i += COLS) {
+      expected_result_.push_back(i);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.size() == std::get<0>(input_data_).size();
+    return output_data == expected_result_;
   }
 
   InType GetTestInputData() final {
