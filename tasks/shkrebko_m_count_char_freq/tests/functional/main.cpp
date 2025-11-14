@@ -31,7 +31,7 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     TestType test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     if (test_name == "test1") {
-      input_data_ = std::make_tuple("Alolo polo", "l");  // Используем tuple и string для символа
+      input_data_ = std::make_tuple("Alolo polo", "l");
       expected_data_ = 3;
     } else if (test_name == "test2") {
       input_data_ = std::make_tuple("aramopma", "m");
