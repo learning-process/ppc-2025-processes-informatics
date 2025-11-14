@@ -69,7 +69,7 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   // работа процесса
   double LocalMx = 0;
   int LocInd = 0;
-  for (int i = 0; i < PeaceSize - 1; i++) {
+  for (size_t i = 0; i < PeaceSize - 1; i++) {
     double tmp = std::abs(peace[i] - peace[i + 1]);
     if (LocalMx <= tmp) {
       LocalMx = tmp;
@@ -95,7 +95,7 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
     MPI_Send(&last, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
   }
 
-  std::pair<double, int> ValInd;
+  std::pair<double, int> ValInd{LocalMx, LocInd};
 
   MPI_Reduce(&ValInd.first, &ValInd.second, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0,
              MPI_COMM_WORLD);  // MPIMAXLOC выбирает максимум из всех результатов процессов

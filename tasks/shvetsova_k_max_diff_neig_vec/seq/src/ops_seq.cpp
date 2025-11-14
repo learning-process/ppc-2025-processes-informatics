@@ -27,7 +27,7 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
   double MaxDif = 0;
   int FirstElem = 0;
   int SecondElem = 0;
-  for (int i = 0; i < data.size() - 1; i++) {
+  for (size_t i = 0; i < data.size() - 1; i++) {
     if (MaxDif <= abs(data.at(i) - data.at(i + 1))) {
       FirstElem = i;
       SecondElem = i + 1;
