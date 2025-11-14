@@ -21,21 +21,15 @@ void ComputeScatterInfo(int total, int size, int rem, std::vector<int> &counts, 
   }
 }
 
+int ComputePartner(bool even_phase, bool even_rank, int rank) {
+  return (even_phase == even_rank) ? (rank + 1) : (rank - 1);
+}
+
 void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, int rank, int size, int phase) {
   const bool even_phase = (phase % 2 == 0);
   const bool even_rank = (rank % 2 == 0);
 
-  int partner = -1;
-
-  if (even_phase && even_rank) {
-    partner = rank + 1;
-  } else if (even_phase && !even_rank) {
-    partner = rank - 1;
-  } else if (!even_phase && even_rank) {
-    partner = rank - 1;
-  } else {
-    partner = rank + 1;
-  }
+  const int partner = ComputePartner(even_phase, even_rank, rank);
 
   if (partner < 0 || partner >= size) {
     return;
