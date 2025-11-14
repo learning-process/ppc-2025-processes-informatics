@@ -17,12 +17,12 @@ LevonychevIMinValRowsMatrixMPI::LevonychevIMinValRowsMatrixMPI(const InType &in)
 }
 bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
   const size_t vector_size_ = std::get<0>(GetInput()).size();
-  const size_t ROWS = std::get<1>(GetInput());
-  const size_t COLS = std::get<2>(GetInput());
+  const int ROWS = std::get<1>(GetInput());
+  const int COLS = std::get<2>(GetInput());
   if (vector_size_ == 0 || ROWS == 0 || COLS == 0) {
     return false;
   }
-  if (vector_size_ != ROWS * COLS) {
+  if (vector_size_ != static_cast<size_t>(ROWS * COLS)) {
     return false;
   }
   return true;
@@ -35,11 +35,11 @@ bool LevonychevIMinValRowsMatrixMPI::PreProcessingImpl() {
 
 bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   const std::vector<int> &matrix = std::get<0>(GetInput());
-  const size_t ROWS = std::get<1>(GetInput());
-  const size_t COLS = std::get<2>(GetInput());
+  const int ROWS = std::get<1>(GetInput());
+  const int COLS = std::get<2>(GetInput());
   OutType &global_min_values = GetOutput();
 
-  if (global_min_values.size() != ROWS) {
+  if (global_min_values.size() != static_cast<size_t>(ROWS)) {
     global_min_values.resize(ROWS);
   }
   int ProcNum = 0;
@@ -47,8 +47,8 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &ProcNum);
   MPI_Comm_rank(MPI_COMM_WORLD, &ProcRank);
 
-  size_t local_count_of_rows = 0;
-  size_t start_id = 0;
+  int local_count_of_rows = 0;
+  int start_id = 0;
   if (ROWS < ProcNum) {
     if (ProcRank < ROWS) {
       local_count_of_rows = 1;
@@ -66,10 +66,10 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   }
 
   std::vector<int> local_min_values(local_count_of_rows);
-  for (size_t i = 0; i < local_count_of_rows; ++i) {
-    const size_t start_row_id = start_id + COLS * i;
+  for (int i = 0; i < local_count_of_rows; ++i) {
+    const int start_row_id = start_id + COLS * i;
     int min_value = matrix[start_row_id];
-    for (size_t j = 1; j < COLS; ++j) {
+    for (int j = 1; j < COLS; ++j) {
       if (matrix[start_row_id + j] < min_value) {
         min_value = matrix[start_row_id + j];
       }

@@ -8,9 +8,9 @@
 
 namespace levonychev_i_min_val_rows_matrix {
 
-using InType = std::tuple<std::vector<int>, size_t, size_t>;
+using InType = std::tuple<std::vector<int>, int, int>;
 using OutType = std::vector<int>;
-using TestType = std::tuple<size_t, size_t>;
+using TestType = std::tuple<int, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace levonychev_i_min_val_rows_matrix
