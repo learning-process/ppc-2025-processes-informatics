@@ -116,8 +116,19 @@ TEST_P(SizovDRunFuncTestsBubbleSort, CompareStringsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {"strings1", "strings2", "strings3", "strings4", "strings5",
-                                             "strings6", "strings7", "strings8", "strings9", "strings10"};
+constexpr int kNumTests = 20;
+
+const std::array<TestType, kNumTests> kTestParam = [] {
+  std::array<TestType, kNumTests> arr{};
+
+  size_t idx = 0;
+  for (auto &elem : arr) {
+    elem = "test" + std::to_string(idx + 1);
+    ++idx;
+  }
+
+  return arr;
+}();
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<sizov_d_bubble_sort::SizovDBubbleSortMPI, InType>(
                                                kTestParam, PPC_SETTINGS_sizov_d_bubble_sort),

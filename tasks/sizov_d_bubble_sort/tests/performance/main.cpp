@@ -1,134 +1,54 @@
 #include <gtest/gtest.h>
 
-#include <array>
-#include <cctype>
+#include <algorithm>
 #include <cstddef>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <tuple>
 #include <vector>
 
 #include "sizov_d_bubble_sort/common/include/common.hpp"
 #include "sizov_d_bubble_sort/mpi/include/ops_mpi.hpp"
 #include "sizov_d_bubble_sort/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace sizov_d_bubble_sort {
 
-class SizovDRunFuncTestsBubbleSort : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class SizovDRunPerfTestsBubbleSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return ppc::util::test::SanitizeToken(test_param);
-  }
-
- protected:
   void SetUp() override {
-    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_bubble_sort, param + ".txt");
-
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-      throw std::runtime_error("Cannot open file: " + file_path);
+    const std::size_t n = 10000;
+    std::vector<int> data(n);
+    for (std::size_t i = 0; i < n; ++i) {
+      data[i] = static_cast<int>(n - i);
     }
+    input_data_ = data;
 
-    std::string unsorted_line;
-    std::string sorted_line;
-
-    std::getline(file, unsorted_line);
-    std::getline(file, sorted_line);
-    file.close();
-
-    TrimString(unsorted_line);
-    TrimString(sorted_line);
-
-    if (unsorted_line.empty() || sorted_line.empty()) {
-      throw std::runtime_error("Input lines cannot be empty in " + file_path);
-    }
-
-    std::istringstream unsorted_stream(unsorted_line);
-    std::istringstream sorted_stream(sorted_line);
-
-    std::vector<int> unsorted_vec;
-    std::vector<int> expected_vec;
-
-    int value = 0;
-    while (unsorted_stream >> value) {
-      unsorted_vec.push_back(value);
-    }
-    while (sorted_stream >> value) {
-      expected_vec.push_back(value);
-    }
-
-    if (unsorted_vec.size() != expected_vec.size()) {
-      throw std::runtime_error("Input and expected vectors must have equal size in " + file_path);
-    }
-
-    input_data_ = unsorted_vec;
-    expected_result_ = expected_vec;
-    is_valid_ = true;
+    std::sort(data.begin(), data.end());
+    expected_result_ = data;
   }
 
-  InType GetTestInputData() override {
+  InType GetTestInputData() final {
     return input_data_;
   }
 
-  bool CheckTestOutputData(OutType &output_data) override {
-    if (!is_valid_) {
-      return true;
-    }
+  bool CheckTestOutputData(OutType &output_data) final {
     return output_data == expected_result_;
   }
 
  private:
-  static void TrimString(std::string &s) {
-    const auto is_edge_escape = [](unsigned char c) { return c == '\r' || c == '\n' || c == '\t'; };
-
-    std::size_t left = 0;
-    while (left < s.size() && is_edge_escape(static_cast<unsigned char>(s[left]))) {
-      ++left;
-    }
-
-    std::size_t right = s.size();
-    while (right > left && is_edge_escape(static_cast<unsigned char>(s[right - 1]))) {
-      --right;
-    }
-
-    if (left == 0 && right == s.size()) {
-      return;
-    }
-
-    s.erase(right);
-    s.erase(0, left);
-  }
-
   InType input_data_;
   OutType expected_result_;
-  bool is_valid_ = true;
 };
 
-namespace {
-
-TEST_P(SizovDRunFuncTestsBubbleSort, CompareStringsFromFile) {
+TEST_P(SizovDRunPerfTestsBubbleSort, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {"strings1", "strings2", "strings3", "strings4", "strings5",
-                                             "strings6", "strings7", "strings8", "strings9", "strings10"};
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, sizov_d_bubble_sort::SizovDBubbleSortMPI,
+                                sizov_d_bubble_sort::SizovDBubbleSortSEQ>(PPC_SETTINGS_sizov_d_bubble_sort);
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<sizov_d_bubble_sort::SizovDBubbleSortMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_sizov_d_bubble_sort),
-                                           ppc::util::AddFuncTask<sizov_d_bubble_sort::SizovDBubbleSortSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_sizov_d_bubble_sort));
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kPerfTestName = SizovDRunPerfTestsBubbleSort::CustomPerfTestName;
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsBubbleSort, kGtestValues, kPerfTestName);
 
-const auto kTestName = SizovDRunFuncTestsBubbleSort::PrintFuncTestName<SizovDRunFuncTestsBubbleSort>;
-
-INSTANTIATE_TEST_SUITE_P(SizovDBubbleSort, SizovDRunFuncTestsBubbleSort, kGtestValues, kTestName);
-
-}  // namespace
 }  // namespace sizov_d_bubble_sort

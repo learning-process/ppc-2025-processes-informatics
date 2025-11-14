@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <ranges>
 #include <vector>
 
 #include "sizov_d_bubble_sort/common/include/common.hpp"
@@ -27,48 +28,89 @@ bool SizovDBubbleSortMPI::PreProcessingImpl() {
 
 bool SizovDBubbleSortMPI::RunImpl() {
   int rank = 0;
-  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  int size = 1;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int total_size = static_cast<int>(data_.size());
-  const int base = total_size / size;
-  const int remainder = total_size % size;
+  const int total = static_cast<int>(data_.size());
+  const int base = total / size;
+  const int rem = total % size;
 
   std::vector<int> counts(size);
   std::vector<int> displs(size);
 
   int offset = 0;
-  for (int i = 0; i < size; ++i) {
-    counts[i] = base + (i < remainder ? 1 : 0);
-    displs[i] = offset;
-    offset += counts[i];
+  int idx = 0;
+  for (auto &c : counts) {
+    c = base;
+    if (idx < rem) {
+      ++c;
+    }
+    displs[idx] = offset;
+    offset += c;
+    ++idx;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  const int local_n = counts[rank];
+  std::vector<int> local(local_n);
 
-  std::vector<int> local_data(counts[rank]);
-  MPI_Scatterv(data_.data(), counts.data(), displs.data(), MPI_INT, local_data.data(), counts[rank], MPI_INT, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(data_.data(), counts.data(), displs.data(), MPI_INT, local.data(), local_n, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::sort(local_data.begin(), local_data.end());
+  std::ranges::sort(local);
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  for (int phase = 0; phase < size; ++phase) {
+    const bool even_phase = ((phase % 2) == 0);
+    const bool even_rank = ((rank % 2) == 0);
 
-  std::vector<int> global_data;
+    int partner = -1;
+    if (even_phase) {
+      if (even_rank) {
+        partner = rank + 1;
+      } else {
+        partner = rank - 1;
+      }
+    } else {
+      if (!even_rank) {
+        partner = rank + 1;
+      } else {
+        partner = rank - 1;
+      }
+    }
+
+    if (partner < 0 || partner >= size) {
+      continue;
+    }
+
+    const int pn = counts[partner];
+    std::vector<int> recvbuf(pn);
+
+    MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 0, recvbuf.data(), pn, MPI_INT, partner, 0, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
+
+    std::vector<int> merged(local_n + pn);
+    std::ranges::merge(local, recvbuf, merged.begin());
+
+    if (rank < partner) {
+      std::ranges::copy(merged | std::views::take(local_n), local.begin());
+    } else {
+      std::ranges::copy(merged | std::views::drop(pn), local.begin());
+    }
+  }
+
+  std::vector<int> global;
   if (rank == 0) {
-    global_data.resize(total_size);
+    global.resize(total);
   }
 
-  MPI_Gatherv(local_data.data(), counts[rank], MPI_INT, global_data.data(), counts.data(), displs.data(), MPI_INT, 0,
-              MPI_COMM_WORLD);
+  MPI_Gatherv(local.data(), local_n, MPI_INT, (rank == 0 ? global.data() : nullptr),
+              (rank == 0 ? counts.data() : nullptr), (rank == 0 ? displs.data() : nullptr), MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    std::sort(global_data.begin(), global_data.end());
-    GetOutput() = global_data;
+    std::ranges::sort(global);
+    GetOutput() = global;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
