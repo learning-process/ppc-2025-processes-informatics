@@ -28,7 +28,6 @@ class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
  protected:
   void SetUp() override {
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::vector<double> leftVec(params);
     std::vector<double> rightVec(params);
