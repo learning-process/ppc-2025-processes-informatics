@@ -11,50 +11,41 @@ namespace shvetsova_k_max_diff_neig_vec {
 ShvetsovaKMaxDiffNeigVecSEQ::ShvetsovaKMaxDiffNeigVecSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = std::pair<double, std::pair<int, int>>{{0}, {0, 0}};
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  data = GetInput();
+  return true;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  double MaxDif = 0;
+  int FirstElem = 0;
+  int SecondElem = 0;
+  for (const auto &elem : data) {
+    std::cout << elem << " ";
   }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  std::cout << std::endl;
+  for (int i = 0; i < data.size() - 1; i++) {
+    if (MaxDif <= abs(data.at(i) - data.at(i + 1))) {
+      FirstElem = i;
+      SecondElem = i + 1;
+      MaxDif = abs(data.at(i) - data.at(i + 1));
     }
   }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput().first = MaxDif;
+  GetOutput().second.first = FirstElem;
+  GetOutput().second.second = SecondElem;
+  return true;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace shvetsova_k_max_diff_neig_vec

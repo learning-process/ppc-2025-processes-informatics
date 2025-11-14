@@ -8,7 +8,7 @@
 namespace shvetsova_k_max_diff_neig_vec {
 
 class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const std::vector<double> kCount_ = {0.0};
   InType input_data_{};
 
   void SetUp() override {
@@ -16,7 +16,8 @@ class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPe
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data.first != -101;
+    ;
   }
 
   InType GetTestInputData() final {

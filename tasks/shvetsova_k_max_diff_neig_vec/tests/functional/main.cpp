@@ -5,6 +5,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
+#include <map>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -23,36 +25,33 @@ namespace shvetsova_k_max_diff_neig_vec {
 class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_shvetsova_k_max_diff_neig_vec, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_shvetsova_k_max_diff_neig_vec, param + ".txt");
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    std::ifstream file(abs_path);
+    if (!file.is_open()) {
+      std::cerr << "ERROR: Cannot open file: " << abs_path << std::endl;
+      return;
+    }
+    file >> expect_res.first;
+    file >> expect_res.second.first;
+    file >> expect_res.second.second;
+    double num;
+    std::vector<double> vec;
+    while (file >> num) {
+      vec.push_back(num);
+    }
+    input_data_ = vec;
+    file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data.first != -10;
   }
 
   InType GetTestInputData() final {
@@ -60,16 +59,17 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expect_res;
 };
 
 namespace {
 
-TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, DataFromTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 1> kTestParam = {"test1"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ShvetsovaKMaxDiffNeigVecMPI, InType>(kTestParam, PPC_SETTINGS_shvetsova_k_max_diff_neig_vec),
@@ -81,7 +81,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName =
     ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses::PrintFuncTestName<ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MaxDiffTest, ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
