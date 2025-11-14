@@ -7,7 +7,7 @@
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
 
@@ -24,17 +24,17 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
+TEST_P(NikolaevDMostDifVecNeighborsPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskMPI, NesterovATestTaskSEQ>(PPC_SETTINGS_example_processes);
+    ppc::util::MakeAllPerfTasks<InType, NikolaevDMostDifVecNeighborsMPI, NikolaevDMostDifVecNeighborsSEQ>(PPC_SETTINGS_nikolaev_d_most_dif_vec_neighbors);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = NikolaevDMostDifVecNeighborsPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, NikolaevDMostDifVecNeighborsPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace nikolaev_d_most_dif_vec_neighbors

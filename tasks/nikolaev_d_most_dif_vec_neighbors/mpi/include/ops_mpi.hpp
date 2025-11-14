@@ -5,12 +5,12 @@
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
-class NesterovATestTaskMPI : public BaseTask {
+class NikolaevDMostDifVecNeighborsMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit NesterovATestTaskMPI(const InType &in);
+  explicit NikolaevDMostDifVecNeighborsMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

@@ -10,22 +10,22 @@
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
-NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
+NikolaevDMostDifVecNeighborsMPI::NikolaevDMostDifVecNeighborsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskMPI::ValidationImpl() {
+bool NikolaevDMostDifVecNeighborsMPI::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskMPI::PreProcessingImpl() {
+bool NikolaevDMostDifVecNeighborsMPI::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::RunImpl() {
+bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
   auto input = GetInput();
   if (input == 0) {
     return false;
@@ -64,7 +64,7 @@ bool NesterovATestTaskMPI::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskMPI::PostProcessingImpl() {
+bool NikolaevDMostDifVecNeighborsMPI::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }

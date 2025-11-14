@@ -8,22 +8,22 @@
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
+NikolaevDMostDifVecNeighborsSEQ::NikolaevDMostDifVecNeighborsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
+bool NikolaevDMostDifVecNeighborsSEQ::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
+bool NikolaevDMostDifVecNeighborsSEQ::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::RunImpl() {
+bool NikolaevDMostDifVecNeighborsSEQ::RunImpl() {
   if (GetInput() == 0) {
     return false;
   }
@@ -52,7 +52,7 @@ bool NesterovATestTaskSEQ::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
+bool NikolaevDMostDifVecNeighborsSEQ::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }

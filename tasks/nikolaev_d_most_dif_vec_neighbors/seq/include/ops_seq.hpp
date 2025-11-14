@@ -5,12 +5,12 @@
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
-class NesterovATestTaskSEQ : public BaseTask {
+class NikolaevDMostDifVecNeighborsSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit NesterovATestTaskSEQ(const InType &in);
+  explicit NikolaevDMostDifVecNeighborsSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
