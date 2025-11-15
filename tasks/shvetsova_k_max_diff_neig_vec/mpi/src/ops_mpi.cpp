@@ -77,22 +77,33 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
     }
   }
   // Обработка граничных эелеметов
+  double PrevLast = 0;
+  MPI_Request requestR;
   if (rank > 0) {
-    double PrevLast = 0;
-    MPI_Recv(&PrevLast, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Irecv(&PrevLast, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &requestR);
+  }
 
+  // пересылаем последний элемент предыдущего процесса следующему
+  double last = 0;
+  MPI_Request requestS;
+  if (rank < CountOfProc - 1) {
+    last = peace.back();
+    MPI_Isend(&last, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, &requestS);
+  }
+
+  if (rank > 0) {
+    MPI_Wait(&requestR, MPI_STATUS_IGNORE);
     double BoundDiff = std::abs(PrevLast - peace[0]);
     int GlobalBoundInd = ind[rank] - 1;
+
     if (LocalMx <= BoundDiff) {
       LocalMx = BoundDiff;
       LocInd = GlobalBoundInd;
     }
   }
 
-  // пересылаем последний элемент предыдущего процесса следующему
   if (rank < CountOfProc - 1) {
-    double last = peace.back();
-    MPI_Send(&last, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
+    MPI_Wait(&requestS, MPI_STATUS_IGNORE);
   }
 
   std::pair<double, int> ValInd{LocalMx, LocInd};
