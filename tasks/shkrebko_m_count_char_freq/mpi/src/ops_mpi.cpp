@@ -50,8 +50,6 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
 
   const int base = total_size / size;
   const int remainder = total_size % size;
-  const int start = (rank * base) + std::min(rank, remainder);
-  const int local_size = base + (rank < remainder ? 1 : 0);
 
   std::vector<int> sendcounts(size);
   std::vector<int> displs(size);
