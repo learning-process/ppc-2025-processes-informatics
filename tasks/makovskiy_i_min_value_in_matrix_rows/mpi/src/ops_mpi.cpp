@@ -3,17 +3,11 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <stdexcept>
 #include <vector>
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
 MinValueMPI::MinValueMPI(const InType &in) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0 && in.empty()) {
-    throw std::invalid_argument("Input matrix is empty");
-  }
   this->GetInput() = in;
   SetTypeOfTask(GetStaticTypeOfTask());
 }
