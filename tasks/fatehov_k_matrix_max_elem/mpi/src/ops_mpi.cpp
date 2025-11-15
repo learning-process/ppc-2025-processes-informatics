@@ -6,7 +6,6 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
-#include <utility>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
@@ -39,7 +38,8 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   size_t columns = std::get<1>(data);
   std::vector<double> matrix = std::get<2>(data);
 
-  int world_rank, world_size;
+  int world_rank;
+  int world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
@@ -48,14 +48,14 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   size_t remainder = total_elems % world_size;
 
   double local_max = -std::numeric_limits<double>::max();
-  size_t start = world_rank * elems_per_proc + std::min(world_rank, (int)remainder);
-  size_t end = start + elems_per_proc + (world_rank < (int)remainder ? 1 : 0);
+  size_t start = (world_rank * elems_per_proc) + std::min(world_rank, static_cast<int>(remainder));
+  size_t end = start + elems_per_proc + (std::cmp_less(world_rank, remainder) ? 1 : 0);
 
   for (size_t i = start; i < end; i++) {
     local_max = std::max(matrix[i], local_max);
   }
 
-  double global_max;
+  double global_max = NAN;
 
   MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 

@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <tuple>
 #include <vector>
 
@@ -9,7 +10,6 @@
 #include "fatehov_k_matrix_max_elem/mpi/include/ops_mpi.hpp"
 #include "fatehov_k_matrix_max_elem/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace fatehov_k_matrix_max_elem {
 
@@ -22,10 +22,10 @@ class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InT
     const size_t cols = 10000;
     const size_t total = rows * cols;
 
-    unsigned long long state = 42;
-    const unsigned long long a = 1664525ULL;
-    const unsigned long long c = 1013904223ULL;
-    const unsigned long long m = (1ULL << 22);
+    uint64_t state = 42;
+    const uint64_t a = 1664525ULL;
+    const uint64_t c = 1013904223ULL;
+    const uint64_t m = (1ULL << 22);
 
     std::vector<double> matrix;
     matrix.reserve(total);
@@ -36,9 +36,7 @@ class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InT
       double value = (static_cast<double>(state) / m) * 1000.0;
       matrix.push_back(value);
 
-      if (value > max_val) {
-        max_val = value;
-      }
+      max_val = std::max(value, max_val);
     }
 
     input_data_ = std::make_tuple(rows, cols, matrix);
