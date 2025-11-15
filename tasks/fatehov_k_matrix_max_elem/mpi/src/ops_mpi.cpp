@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
@@ -38,8 +39,8 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   size_t columns = std::get<1>(data);
   std::vector<double> matrix = std::get<2>(data);
 
-  int world_rank;
-  int world_size;
+  int world_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
