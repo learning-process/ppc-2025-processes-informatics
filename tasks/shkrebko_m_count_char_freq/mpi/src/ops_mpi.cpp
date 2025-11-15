@@ -30,11 +30,18 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  std::string input_text = std::get<0>(GetInput());
-  std::string target_char_str = std::get<1>(GetInput());
-  char target_char = target_char_str[0];
+  std::string input_text;
+  char target_char;
+  int total_size = 0;
 
-  const int total_size = static_cast<int>(input_text.size());
+  if (rank == 0) {
+    input_text = std::get<0>(GetInput());
+    target_char = std::get<1>(GetInput())[0];
+    total_size = static_cast<int>(input_text.size());
+  }
+
+  MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&target_char, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   if (total_size == 0) {
     GetOutput() = 0;
@@ -46,16 +53,29 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
   const int start = (rank * base) + std::min(rank, remainder);
   const int local_size = base + (rank < remainder ? 1 : 0);
 
+  std::vector<int> sendcounts(size);
+  std::vector<int> displs(size);
+
+  for (int i = 0; i < size; i++) {
+    sendcounts[i] = base + (i < remainder ? 1 : 0);
+    displs[i] = (i * base) + std::min(i, remainder);
+  }
+
+  int local_size = sendcounts[rank];
+  std::vector<char> local_data(local_size);
+
+  MPI_Scatterv(rank == 0 ? input_text.data() : nullptr, sendcounts.data(), displs.data(), MPI_CHAR, local_data.data(),
+               sendcounts[rank], MPI_CHAR, 0, MPI_COMM_WORLD);
+
   int local_count = 0;
-  for (int i = start; i < start + local_size; ++i) {
-    if (input_text[i] == target_char) {
-      ++local_count;
+  for (char c : local_data) {
+    if (c == target_char) {
+      local_count++;
     }
   }
 
   int global_result = 0;
-  MPI_Reduce(&local_count, &global_result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&global_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_count, &global_result, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = global_result;
   return true;
