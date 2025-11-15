@@ -8,8 +8,8 @@
 namespace krykov_e_word_count {
 
 using InType = std::string;
-using OutType = size_t;
-using TestType = std::tuple<std::string, size_t>;
+using OutType = int;
+using TestType = std::tuple<std::string, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace krykov_e_word_count
