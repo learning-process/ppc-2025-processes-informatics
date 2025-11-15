@@ -12,8 +12,8 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
 
   void SetUp() override {
     // Генерируем длинные строки для тестирования производительности
-    std::string long_str1(10000, 'a');
-    std::string long_str2(10000, 'a');
+    std::string long_str1(1000000000, 'a');
+    std::string long_str2(1000000000, 'a');
     long_str2[9999] = 'b';  // Различие в последнем символе
 
     input_data_ = {long_str1, long_str2};
@@ -34,8 +34,8 @@ TEST_P(GaseninLRunPerfTestsLexDif, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLLexDifMPI, GaseninLLexDifSEQ>(
-    PPC_SETTINGS_gasenin_l_lex_dif);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GaseninLLexDifMPI, GaseninLLexDifSEQ>(PPC_SETTINGS_gasenin_l_lex_dif);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

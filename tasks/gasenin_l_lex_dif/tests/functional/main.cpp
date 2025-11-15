@@ -93,9 +93,9 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(7, "different_length"), std::make_tuple(8, "same_prefix"),  std::make_tuple(9, "unicode_test"),
     std::make_tuple(10, "case_sensitive")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<GaseninLLexDifMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_lex_dif),
-    ppc::util::AddFuncTask<GaseninLLexDifSEQ, InType>(kTestParam, PPC_SETTINGS_gasenin_l_lex_dif));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<GaseninLLexDifMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_lex_dif),
+                   ppc::util::AddFuncTask<GaseninLLexDifSEQ, InType>(kTestParam, PPC_SETTINGS_gasenin_l_lex_dif));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
