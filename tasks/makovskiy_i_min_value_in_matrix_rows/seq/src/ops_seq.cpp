@@ -1,9 +1,13 @@
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 
+#include <algorithm>
+#include <cstddef>
+
 namespace makovskiy_i_min_value_in_matrix_rows {
 
 MinValueSEQ::MinValueSEQ(const InType &in) {
-  this->GetInput() = in;
+  InType temp(in);
+  this->GetInput().swap(temp);
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 

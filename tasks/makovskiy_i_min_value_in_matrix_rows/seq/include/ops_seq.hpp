@@ -1,6 +1,7 @@
 #pragma once
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 

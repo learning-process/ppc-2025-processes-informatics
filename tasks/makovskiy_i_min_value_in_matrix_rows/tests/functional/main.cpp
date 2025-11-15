@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
+#include <cstddef>
+#include <string>
+#include <tuple>
+
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
@@ -26,7 +31,7 @@ class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
-      int rank;
+      int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if (rank != 0) {
         return true;
