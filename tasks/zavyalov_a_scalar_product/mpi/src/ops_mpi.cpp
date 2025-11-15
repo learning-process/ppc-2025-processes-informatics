@@ -90,7 +90,7 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
 
   } else {
     if (rank < elementsLeft) {
-       ++blocksize;
+      ++blocksize;
     }
 
     leftVecData = new double[blocksize];
@@ -98,7 +98,6 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
 
     MPI_Recv(leftVecData, blocksize, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     MPI_Recv(rightVecData, blocksize, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
   }
   double curRes = 0.0;
   if (leftVecData != nullptr && rightVecData != nullptr) {
