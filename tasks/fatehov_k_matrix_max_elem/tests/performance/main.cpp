@@ -2,8 +2,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <fstream>
-#include <string>
 #include <tuple>
 #include <vector>
 
@@ -18,22 +16,31 @@ namespace fatehov_k_matrix_max_elem {
 class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_ = std::make_tuple(0, 0, std::vector<double>{});
   OutType expected_result_ = 0;
+
   void SetUp() override {
-    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_fatehov_k_matrix_max_elem, "matrix.txt");
-    std::ifstream file(file_path);
-    size_t rows = 0;
-    size_t cols = 0;
-    double max_val = NAN;
+    const size_t rows = 5000;
+    const size_t cols = 10000;
+    const size_t total = rows * cols;
+
+    unsigned long long state = 42;
+    const unsigned long long a = 1664525ULL;
+    const unsigned long long c = 1013904223ULL;
+    const unsigned long long m = (1ULL << 22);
+
     std::vector<double> matrix;
+    matrix.reserve(total);
+    double max_val = -std::numeric_limits<double>::max();
 
-    file >> rows >> cols >> max_val;
-
-    matrix.reserve(rows * cols);
-    double value = NAN;
-    for (size_t i = 0; i < rows * cols; ++i) {
-      file >> value;
+    for (size_t i = 0; i < total; ++i) {
+      state = (a * state + c) % m;
+      double value = (static_cast<double>(state) / m) * 1000.0;
       matrix.push_back(value);
+
+      if (value > max_val) {
+        max_val = value;
+      }
     }
+
     input_data_ = std::make_tuple(rows, cols, matrix);
     expected_result_ = max_val;
   }
