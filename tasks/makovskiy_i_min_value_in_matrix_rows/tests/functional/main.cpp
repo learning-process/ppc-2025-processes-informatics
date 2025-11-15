@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
+#include <functional>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
@@ -13,25 +12,23 @@
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
-enum class TaskType { SEQ, MPI };
 enum class TestExpectation { SUCCESS, FAIL_VALIDATION, THROW_CONSTRUCTION };
 
-using TestParam = std::tuple<TaskType, std::string, InType, OutType, TestExpectation>;
+using UnifiedTestParam =
+    std::tuple<std::function<std::shared_ptr<BaseTask>(const InType &)>, std::string, InType, OutType, TestExpectation>;
 
-class MinValueFunctionalTests : public ::testing::TestWithParam<TestParam> {};
+class MinValueAllTests : public ::testing::TestWithParam<UnifiedTestParam> {};
 
-TEST_P(MinValueFunctionalTests, AllCases) {
-  const auto &[task_type, test_name, input_data, expected_output, expectation] = GetParam();
+TEST_P(MinValueAllTests, AllCases) {
+  auto task_factory = std::get<0>(GetParam());
+  auto test_name = std::get<1>(GetParam());
+  auto input_data = std::get<2>(GetParam());
+  auto expected_output = std::get<3>(GetParam());
+  auto expectation = std::get<4>(GetParam());
 
   switch (expectation) {
     case TestExpectation::SUCCESS: {
-      std::shared_ptr<BaseTask> task;
-      if (task_type == TaskType::SEQ) {
-        task = std::make_shared<MinValueSEQ>(input_data);
-      } else {
-        task = std::make_shared<MinValueMPI>(input_data);
-      }
-
+      auto task = task_factory(input_data);
       ASSERT_TRUE(task->Validation());
       ASSERT_TRUE(task->PreProcessing());
       ASSERT_TRUE(task->Run());
@@ -49,56 +46,61 @@ TEST_P(MinValueFunctionalTests, AllCases) {
       break;
     }
     case TestExpectation::FAIL_VALIDATION: {
-      std::shared_ptr<BaseTask> task;
-      if (task_type == TaskType::SEQ) {
-        task = std::make_shared<MinValueSEQ>(input_data);
-      } else {
-        task = std::make_shared<MinValueMPI>(input_data);
-      }
-
+      auto task = task_factory(input_data);
       ASSERT_FALSE(task->Validation());
-      task->PreProcessing();
-      task->Run();
-      task->PostProcessing();
       break;
     }
     case TestExpectation::THROW_CONSTRUCTION: {
-      if (task_type == TaskType::SEQ && !ppc::util::IsUnderMpirun()) {
-        ASSERT_THROW((MinValueSEQ(input_data)), std::invalid_argument);
+      if (!ppc::util::IsUnderMpirun()) {
+        ASSERT_THROW(task_factory(input_data), std::invalid_argument);
       }
       break;
     }
   }
 }
 
-auto GenerateTestName = [](const ::testing::TestParamInfo<TestParam> &info) {
+auto GenerateTestName = [](const ::testing::TestParamInfo<UnifiedTestParam> &info) {
   std::string name = std::get<1>(info.param);
-  TaskType type = std::get<0>(info.param);
-  std::string type_str = (type == TaskType::SEQ) ? "SEQ_" : "MPI_";
   std::replace(name.begin(), name.end(), '/', '_');
-  return type_str + name;
+  return name;
 };
 
 INSTANTIATE_TEST_SUITE_P(
-    MinValueTests, MinValueFunctionalTests,
+    MinValueTests, MinValueAllTests,
     ::testing::Values(
-        // Positive
-        TestParam{TaskType::SEQ, "Positive_2x3", {{1, 2, 3}, {4, 5, 6}}, {1, 4}, TestExpectation::SUCCESS},
-        TestParam{TaskType::MPI, "Positive_2x3", {{1, 2, 3}, {4, 5, 6}}, {1, 4}, TestExpectation::SUCCESS},
-        TestParam{
-            TaskType::SEQ, "Positive_NegativeVals", {{-1, 0}, {10, 2}, {7}}, {-1, 2, 7}, TestExpectation::SUCCESS},
-        TestParam{
-            TaskType::MPI, "Positive_NegativeVals", {{-1, 0}, {10, 2}, {7}}, {-1, 2, 7}, TestExpectation::SUCCESS},
-        TestParam{TaskType::SEQ, "Positive_Single", {{8}}, {8}, TestExpectation::SUCCESS},
-        TestParam{TaskType::MPI, "Positive_Single", {{8}}, {8}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Positive/r2x3", {{1, 2, 3}, {4, 5, 6}}, {1, 4}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Positive/r2x3", {{1, 2, 3}, {4, 5, 6}}, {1, 4}, TestExpectation::SUCCESS},
+        UnifiedTestParam{
+            [](const InType &in) {
+              return std::make_shared<MinValueSEQ>(in);
+            }, "SEQ/Positive/NegativeValues", {{-1, 0}, {10, 2}, {7}}, {-1, 2, 7}, TestExpectation::SUCCESS},
+        UnifiedTestParam{
+            [](const InType &in) {
+              return std::make_shared<MinValueMPI>(in);
+            }, "MPI/Positive/NegativeValues", {{-1, 0}, {10, 2}, {7}}, {-1, 2, 7}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Positive/SingleValue", {{8}}, {8}, TestExpectation::SUCCESS},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Positive/SingleValue", {{8}}, {8}, TestExpectation::SUCCESS},
 
-        // Negative: THROW_CONSTRUCTION
-        TestParam{TaskType::SEQ, "Invalid_EmptyMatrix", {}, {}, TestExpectation::THROW_CONSTRUCTION},
-
-        // Negative: FAIL_VALIDATION
-        TestParam{TaskType::MPI, "Invalid_EmptyMatrix", {}, {}, TestExpectation::FAIL_VALIDATION},
-        TestParam{TaskType::SEQ, "Invalid_EmptyRow", {{1, 2}, {}}, {}, TestExpectation::FAIL_VALIDATION},
-        TestParam{TaskType::MPI, "Invalid_EmptyRow", {{1, 2}, {}}, {}, TestExpectation::FAIL_VALIDATION}),
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Negative/EmptyMatrix", {}, {}, TestExpectation::THROW_CONSTRUCTION},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Negative/EmptyMatrix", {}, {}, TestExpectation::FAIL_VALIDATION},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueSEQ>(in);
+                         }, "SEQ/Negative/EmptyRow", {{1, 2}, {}}, {}, TestExpectation::FAIL_VALIDATION},
+        UnifiedTestParam{[](const InType &in) {
+                           return std::make_shared<MinValueMPI>(in);
+                         }, "MPI/Negative/EmptyRow", {{1, 2}, {}}, {}, TestExpectation::FAIL_VALIDATION}),
     GenerateTestName);
 
 }  // namespace makovskiy_i_min_value_in_matrix_rows
