@@ -14,11 +14,8 @@ namespace nikitina_v_max_elem_matr {
 class NikitinaVMaxElemMatrPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    // ================== ИСПРАВЛЕНИЕ ЗДЕСЬ ==================
-    // Увеличиваем размер матрицы, чтобы тест работал дольше 0.001с
-    int rows = 2000;
-    int cols = 2000;
-    // =======================================================
+    int rows = 12000;
+    int cols = 12000;
     int max_val = INT_MIN;
 
     std::mt19937 gen(1);
