@@ -21,7 +21,7 @@ bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
   if (vector_size == 0 || rows == 0 || cols == 0) {
     return false;
   }
-  if (vector_size != static_cast<size_t>(rows * cols)) {
+  if (vector_size != static_cast<size_t>(rows) * static_cast<size_t>(cols)) {
     return false;
   }
   return true;
@@ -39,7 +39,7 @@ bool LevonychevIMinValRowsMatrixSEQ::RunImpl() {
   OutType &result = GetOutput();
 
   for (int i = 0; i < rows; ++i) {
-    int min_val = matrix[cols * i];
+    int min_val = matrix[static_cast<size_t>(cols) * static_cast<size_t>(i)];
     for (int j = 1; j < cols; ++j) {
       min_val = std::min(matrix[(cols * i) + j], min_val);
     }

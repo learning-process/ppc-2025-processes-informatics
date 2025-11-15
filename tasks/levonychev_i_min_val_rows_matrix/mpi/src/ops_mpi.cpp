@@ -10,6 +10,22 @@
 
 namespace levonychev_i_min_val_rows_matrix {
 
+void LevonychevIMinValRowsMatrixMPI::SetLocalRows(int rows, int cols, int proc_rank, int proc_num, int *local_rows,
+                                                  int *start_id) {
+  if (rows < proc_num) {
+    if (proc_rank < rows) {
+      *local_rows = 1;
+      *start_id = proc_rank * cols;
+    }
+  } else {
+    *local_rows = rows / proc_num;
+    if (proc_rank == (proc_num - 1)) {
+      *local_rows += (rows % proc_num);
+    }
+    *start_id = proc_rank * (rows / proc_num) * cols;
+  }
+}
+
 LevonychevIMinValRowsMatrixMPI::LevonychevIMinValRowsMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -22,7 +38,7 @@ bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
   if (vector_size == 0 || rows == 0 || cols == 0) {
     return false;
   }
-  if (vector_size != static_cast<size_t>(rows * cols)) {
+  if (vector_size != static_cast<size_t>(rows) * static_cast<size_t>(cols)) {
     return false;
   }
   return true;
@@ -49,21 +65,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
 
   int local_count_of_rows = 0;
   int start_id = 0;
-  if (rows < proc_num) {
-    if (proc_rank < rows) {
-      local_count_of_rows = 1;
-      start_id = proc_rank * cols;
-    } else {
-      local_count_of_rows = 0;
-      start_id = 0;
-    }
-  } else {
-    local_count_of_rows = rows / proc_num;
-    if (proc_rank == (proc_num - 1)) {
-      local_count_of_rows += (rows % proc_num);
-    }
-    start_id = proc_rank * (rows / proc_num) * cols;
-  }
+  SetLocalRows(rows, cols, proc_rank, proc_num, &local_count_of_rows, &start_id);
 
   std::vector<int> local_min_values(local_count_of_rows);
   for (int i = 0; i < local_count_of_rows; ++i) {
@@ -84,8 +86,6 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
     if (rows < proc_num) {
       if (i < rows) {
         count_i = 1;
-      } else {
-        count_i = 0;
       }
     } else {
       count_i = rows / proc_num;

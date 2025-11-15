@@ -17,7 +17,7 @@ class LevonychevIMinValRowsMatrixPerfTests : public ppc::util::BaseRunPerfTests<
   InType input_data_;
   OutType expected_result_;
   void SetUp() override {
-    std::vector<int> matrix(ROWS_ * COLS_);
+    std::vector<int> matrix(static_cast<size_t>(ROWS_) * static_cast<size_t>(COLS_));
     for (int i = 0; i < COLS_ * ROWS_; ++i) {
       matrix[i] = i;
     }
