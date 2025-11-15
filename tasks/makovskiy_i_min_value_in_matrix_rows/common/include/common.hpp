@@ -10,7 +10,7 @@ namespace makovskiy_i_min_value_in_matrix_rows {
 
 using InType = std::vector<std::vector<int>>;
 using OutType = std::vector<int>;
-using TestType = std::tuple<InType, OutType>;
+using TestType = std::tuple<InType, OutType, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace makovskiy_i_min_value_in_matrix_rows
