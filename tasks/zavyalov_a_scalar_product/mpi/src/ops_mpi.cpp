@@ -90,20 +90,15 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
 
   } else {
     if (rank < elementsLeft) {
-      blocksize++;
+       ++blocksize;
     }
 
     leftVecData = new double[blocksize];
     rightVecData = new double[blocksize];
 
-    int errorCode = MPI_Recv(leftVecData, blocksize, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (errorCode != MPI_SUCCESS) {
-      throw std::string("There was an error trying to receive leftVecData in process ") + std::to_string(rank);
-    }
-    errorCode = MPI_Recv(rightVecData, blocksize, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (errorCode != MPI_SUCCESS) {
-      throw std::string("There was an error trying to receive rightVecData in process ") + std::to_string(rank);
-    }
+    MPI_Recv(leftVecData, blocksize, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(rightVecData, blocksize, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
   }
   double curRes = 0.0;
   if (leftVecData != nullptr && rightVecData != nullptr) {
