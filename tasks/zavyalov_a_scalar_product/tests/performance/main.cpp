@@ -30,7 +30,9 @@ class ZavyalovAScalarProductPerfTestProcesses : public ppc::util::BaseRunPerfTes
     for (unsigned long long i = 0; i < kCount_; i++) {
       res += std::get<0>(input_data_)[i] * std::get<1>(input_data_)[i];
     }
-    return res == output_data;
+    double diff = fabs(res - output_data);
+    double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(output_data)));
+    return diff < epsilon;
   }
 
   InType GetTestInputData() final {
