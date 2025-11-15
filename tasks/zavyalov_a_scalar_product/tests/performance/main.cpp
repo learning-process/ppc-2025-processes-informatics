@@ -18,8 +18,8 @@ class ZavyalovAScalarProductPerfTestProcesses : public ppc::util::BaseRunPerfTes
     std::vector<double> rightVec(kCount_);
 
     for (unsigned long long i = 0; i < kCount_; i++) {
-      leftVec[i] = (i * 14324ull + 5453ull) % 10854ull;
-      rightVec[i] = (i * 26534ull + 8761ull) % 24422ull;
+      leftVec[i] = i;
+      rightVec[i] = i * 2ull;
     }
 
     input_data_ = std::make_tuple(leftVec, rightVec);

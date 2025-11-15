@@ -6,71 +6,59 @@
 
 ## 1. Introduction
 
+Скалярное произведение имеет широкую область применения в современном мире, в связи с чем возникает необходимость оптимизировать процесс его нахождения.
 
-- Brief motivation, problem context, expected outcome.**
+Ожидается небольшое ускорение mpi версии программы относительно последовательной версии.
 
 ## 2. Problem Statement
 Скалярное произведение двух векторов одной размерности - это число, равное сумме произведений соответствующих координат этих векторов.
 Требуется найти скалярное произведение двух заданных векторов.
 
-Формат входных данных:
+```math
+(a, b) = \sum_{i=0}^{n-1} a_i b_i.
+```
+
+### Входные данные: 
 Два математических вектора произвольной размерности, состоящих из действительных чисел.
 
-Формат выходных данных:
+### Выходные данные:
 Одно действительное число - скалярное произведение заданных векторов.
-
-- Formal task definition, input/output format, constraints.**
 
 ## 3. Baseline Algorithm (Sequential)
 Инициализируем результат значением 0. Затем последовательно проходим по векторам, добавляя к результату произведение соответствующих координат.
 
-- Describe the base algorithm with enough detail to reproduce.
-
 ## 4. Parallelization Scheme
-MPI:
-Делим размер одного из векторов нацело на n, где n - число процессов, получаем размер блока - обозначим как block_size.
-Далее каждый процесс вычисляет block_size слагаемых, составляющих скалярное произведение.
+Делим размер вектора нацело на n, где n - число процессов, получаем размер блока - обозначим как block_size.
 
+Далее каждый процесс вычисляет block_size слагаемых, составляющих скалярное произведение. В случае, когда размер вектора не кратен n, то есть когда при делении остаётся остаток remainder, не равный 0, первым remainder процессам потребуется вычислить на 1 слагаемое больше.
 
-- For MPI: data distribution, communication pattern/topology, rank roles.
-- For threads: decomposition, scheduling, synchronization.
-Diagrams or short pseudocode are welcome.
+В конце работы результаты всех процессов складываются и записываются в ответ с помощью функции MPI_Allreduce().
 
-## 5. Implementation Details
-- Code structure (files, key classes/functions)
-- Important assumptions and corner cases
-- Memory usage considerations
-
-## 6. Experimental Setup
-- Hardware/OS: CPU model, cores/threads, RAM, OS version
+## 5. Experimental Setup
+- Hardware/OS: AMD Ryzen 5 7520U, 4 ядра, 16 GB RAM, Windows 10 x64
 - Toolchain: compiler, version, build type (Release/RelWithDebInfo)
-- Environment: PPC_NUM_THREADS / PPC_NUM_PROC, other relevant vars
-- Data: how test data is generated or sourced (relative paths)
+    - Cmake 3.28.3
+    - Компилятор: g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+    - Использовался Docker-контейнер.
+    - Режим сборки: Release.
+- Data: Для замера производительности использовались векторы размером 30.000.000, генерируемые следующим образом:
+    - Первый вектор состоит из натуральных чисел от 0 до 29.999.999 включительно.
+    - Второй вектор состоит из натуральных чётных чисел от 0 до 59.999.998.
 
-## 7. Results and Discussion
+## 6. Results and Discussion
 
-### 7.1 Correctness
-Briefly explain how correctness was verified (reference results, invariants, unit tests).
+### 6.1 Correctness
+Корректность работы проверена с помощью тестов Google Test на парах векторов размером от 1 до 10 включительно. 
 
-### 7.2 Performance
-Present time, speedup and efficiency. Example table:
-
+### 6.2 Performance
 | Mode        | Count | Time, s | Speedup | Efficiency |
 |-------------|-------|---------|---------|------------|
-| seq         | 1     | 1.234   | 1.00    | N/A        |
-| omp         | 2     | 0.700   | 1.76    | 88.0%      |
-| omp         | 4     | 0.390   | 3.16    | 79.0%      |
+| seq         | 1     | 0.039   | 1.00    | N/A        |
+| mpi         | 2     | 0.031   | 1.26    | 63.0%      |
+| mpi         | 4     | 0.021   | 1.85    | 46.25%     |
 
-Optionally add plots (use relative paths), and discuss bottlenecks and scalability limits.
+## 7. Conclusions
+Накладные расходы на работу с процессами сильно влияют на скорость работы программы, из-за чего эффективность mpi версии значительно меньше 100%.
 
-## 8. Conclusions
-Summarize findings and limitations.
-
-## 9. References
-1. <Article/Book/Doc URL>
-2. <Another source>
-
-## Appendix (Optional)
-```cpp
-// Short, readable code excerpts if needed
-```
+## 8. References
+1. Курс лекций ННГУ "Параллельное программирование для кластерных систем"
