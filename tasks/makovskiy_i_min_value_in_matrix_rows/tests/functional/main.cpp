@@ -68,7 +68,7 @@ TEST(MinValueNegativeTests, SeqThrowsOnEmptyMatrix) {
     GTEST_SKIP() << "Skipping constructor exception test under MPI";
   }
   InType empty_input = {};
-  ASSERT_THROW(std::make_shared<MinValueSEQ>(empty_input), std::invalid_argument);
+  ASSERT_THROW((void)std::make_shared<MinValueSEQ>(empty_input), std::invalid_argument);
 }
 
 auto GenerateTestName = [](const ::testing::TestParamInfo<UnifiedTestParam> &info) {
