@@ -34,8 +34,8 @@ TEST_P(GaseninLRunPerfTestsLexDif, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GaseninLLexDifMPI, GaseninLLexDifSEQ>(
-    PPC_SETTINGS_gasenin_l_lex_dif);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, GaseninLLexDifMPI, GaseninLLexDifSEQ>(PPC_SETTINGS_gasenin_l_lex_dif);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
