@@ -12,7 +12,7 @@
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
-enum class TestExpectation { SUCCESS, FAIL_VALIDATION, THROW_CONSTRUCTION };
+enum class TestExpectation { SUCCESS, FAIL_VALIDATION };
 
 using UnifiedTestParam =
     std::tuple<std::function<std::shared_ptr<BaseTask>(const InType &)>, std::string, InType, OutType, TestExpectation>;
@@ -50,12 +50,6 @@ TEST_P(MinValueAllTests, AllCases) {
       ASSERT_FALSE(task->Validation());
       break;
     }
-    case TestExpectation::THROW_CONSTRUCTION: {
-      if (!ppc::util::IsUnderMpirun()) {
-        ASSERT_THROW(task_factory(input_data), std::invalid_argument);
-      }
-      break;
-    }
   }
 }
 
@@ -91,7 +85,7 @@ INSTANTIATE_TEST_SUITE_P(
 
         UnifiedTestParam{[](const InType &in) {
                            return std::make_shared<MinValueSEQ>(in);
-                         }, "SEQ/Negative/EmptyMatrix", {}, {}, TestExpectation::THROW_CONSTRUCTION},
+                         }, "SEQ/Negative/EmptyMatrix", {}, {}, TestExpectation::FAIL_VALIDATION},
         UnifiedTestParam{[](const InType &in) {
                            return std::make_shared<MinValueMPI>(in);
                          }, "MPI/Negative/EmptyMatrix", {}, {}, TestExpectation::FAIL_VALIDATION},
