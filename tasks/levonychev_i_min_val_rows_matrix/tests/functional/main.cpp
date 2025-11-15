@@ -32,8 +32,8 @@ class LevonychevIMinValRowsMatrixFuncTests : public ppc::util::BaseRunFuncTests<
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     bool reverse = std::get<0>(params);
-    size_t rows = std::get<1>(params);
-    size_t cols = std::get<2>(params);
+    int rows = std::get<1>(params);
+    int cols = std::get<2>(params);
     std::vector<int> matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols));
     output_data_.resize(static_cast<size_t>(rows));
     if (reverse) {
