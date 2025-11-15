@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
@@ -67,5 +68,33 @@ const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFu
 INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
+
+TEST(MinValueFuncTest, Test_Empty_Matrix_Is_Invalid) {
+  InType invalid_input = {};
+
+  auto seq_task = MinValueSEQ(invalid_input);
+  ASSERT_FALSE(seq_task.Validation());
+
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    auto mpi_task = MinValueMPI(invalid_input);
+    ASSERT_FALSE(mpi_task.Validation());
+  }
+}
+
+TEST(MinValueFuncTest, Test_Matrix_With_Empty_Row_Is_Invalid) {
+  InType invalid_input = {{1, 2}, {}};
+
+  auto seq_task = MinValueSEQ(invalid_input);
+  ASSERT_FALSE(seq_task.Validation());
+
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    auto mpi_task = MinValueMPI(invalid_input);
+    ASSERT_FALSE(mpi_task.Validation());
+  }
+}
 
 }  // namespace makovskiy_i_min_value_in_matrix_rows
