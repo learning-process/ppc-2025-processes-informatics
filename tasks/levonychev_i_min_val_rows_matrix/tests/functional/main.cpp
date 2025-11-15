@@ -18,31 +18,40 @@ namespace levonychev_i_min_val_rows_matrix {
 class LevonychevIMinValRowsMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "____" + std::to_string(std::get<1>(test_param));
+    bool reverse = std::get<0>(test_param);
+    std::string flag = "";
+    if (reverse) {
+      flag = "reverse";
+    } else {
+      flag = "noreverse";
+    }
+    return flag + "_" + std::to_string(std::get<1>(test_param)) + "_" + std::to_string(std::get<2>(test_param));
   }
 
  protected:
   void SetUp() override {
-    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    size_t rows = std::get<0>(param);
-    size_t cols = std::get<1>(param);
-    input_data_ = std::make_tuple(std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, rows, cols);
-    if (rows == 4 && cols == 3) {
-      output_data_ = {1, 4, 7, 10};
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    bool reverse = std::get<0>(params);
+    size_t rows = std::get<1>(params);
+    size_t cols = std::get<2>(params);
+    std::vector<int> matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols));
+    output_data_.resize(static_cast<size_t>(rows));
+    if (reverse) {
+      for (int i = 0; i < rows * cols; ++i) {
+        matrix[i] = (rows * cols) - (i + 1);
+      }
+      for (int i = 0; i < rows; ++i) {
+        output_data_[i] = (rows * cols) - ((i + 1) * cols);
+      }
+    } else {
+      for (int i = 0; i < rows * cols; ++i) {
+        matrix[i] = i;
+      }
+      for (int i = 0; i < rows; ++i) {
+        output_data_[i] = i * cols;
+      }
     }
-    if (rows == 3 && cols == 4) {
-      input_data_ = std::make_tuple(std::vector<int>{12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1}, rows, cols);
-      output_data_ = {9, 5, 1};
-    }
-    if (rows == 6 && cols == 2) {
-      output_data_ = {1, 3, 5, 7, 9, 11};
-    }
-    if (rows == 12 && cols == 1) {
-      output_data_ = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    }
-    if (rows == 1 && cols == 12) {
-      output_data_ = {1};
-    }
+    input_data_ = std::make_tuple(matrix, rows, cols);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -64,8 +73,11 @@ TEST_P(LevonychevIMinValRowsMatrixFuncTests, MinValRowsMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(4, 3), std::make_tuple(3, 4), std::make_tuple(6, 2),
-                                            std::make_tuple(12, 1), std::make_tuple(1, 12)};
+const std::array<TestType, 10> kTestParam = {std::make_tuple(false, 1, 1),  std::make_tuple(false, 2, 1),
+                                             std::make_tuple(false, 4, 3),  std::make_tuple(false, 3, 4),
+                                             std::make_tuple(true, 6, 2),   std::make_tuple(false, 2, 6),
+                                             std::make_tuple(true, 12, 1),  std::make_tuple(true, 1, 12),
+                                             std::make_tuple(true, 10, 10), std::make_tuple(false, 10, 10)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LevonychevIMinValRowsMatrixMPI, InType>(
                                                kTestParam, PPC_SETTINGS_levonychev_i_min_val_rows_matrix),

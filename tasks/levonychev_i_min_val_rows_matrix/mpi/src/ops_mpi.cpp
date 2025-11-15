@@ -16,6 +16,9 @@ void LevonychevIMinValRowsMatrixMPI::SetLocalRows(int rows, int cols, int proc_r
     if (proc_rank < rows) {
       *local_rows = 1;
       *start_id = proc_rank * cols;
+    } else {
+      *local_rows = 0;
+      *start_id = 0;
     }
   } else {
     *local_rows = rows / proc_num;
