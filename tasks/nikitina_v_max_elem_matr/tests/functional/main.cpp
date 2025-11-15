@@ -20,13 +20,10 @@ using TestType = std::tuple<int, int, int>;
 
 class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  // ====================== КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ======================
   static std::string PrintTestParam(const testing::TestParamInfo<ParamType> &info) {
-    // Получаем имя таска (например, "nikitina_v_max_elem_matr_seq_enabled")
     auto task_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
 
-    // Извлекаем технологию (seq или mpi) из имени
     std::string tech = "unknown";
     if (task_name.find("seq") != std::string::npos) {
       tech = "seq";
@@ -35,12 +32,10 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
       tech = "mpi";
     }
 
-    // Добавляем технологию в имя теста, чтобы оно стало уникальным
     std::string test_name = "tech_" + tech + "_test_id_" + std::to_string(std::get<0>(params)) + "_rows_" +
                             std::to_string(std::get<1>(params)) + "_cols_" + std::to_string(std::get<2>(params));
     return test_name;
   }
-  // =================================================================
 
  protected:
   void SetUp() override {
@@ -92,9 +87,18 @@ TEST_P(NikitinaVMaxElemMatrFuncTests, FindMaxElement) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(1, 10, 10), std::make_tuple(2, 5, 15),
-                                            std::make_tuple(3, 1, 30), std::make_tuple(4, 30, 1),
-                                            std::make_tuple(5, 1, 1)};
+// ====================== ИЗМЕНЕНИЕ ЗДЕСЬ ======================
+// Добавляем тесты на граничные и некорректные случаи для увеличения покрытия
+const std::array<TestType, 8> kTestParam = {
+    // Стандартные тесты
+    std::make_tuple(1, 10, 10), std::make_tuple(2, 5, 15), std::make_tuple(3, 1, 30), std::make_tuple(4, 30, 1),
+    std::make_tuple(5, 1, 1),
+    // Новые тесты для покрытия "плохих" веток кода
+    std::make_tuple(6, 0, 10),  // Нулевое количество строк
+    std::make_tuple(7, 10, 0),  // Нулевое количество столбцов
+    std::make_tuple(8, 0, 0)    // Полностью пустая матрица
+};
+// ===============================================================
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MaxElementMatrSEQ, InType>(kTestParam, PPC_SETTINGS_nikitina_v_max_elem_matr),

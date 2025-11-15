@@ -18,17 +18,24 @@ bool MaxElementMatrSEQ::ValidationImpl() {
   }
   rows = in_[0];
   cols = in_[1];
-  if (rows <= 0 || cols <= 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
+  // ================== ИСПРАВЛЕНИЕ ЗДЕСЬ ==================
+  // Разрешаем нулевые размеры (это валидная пустая матрица),
+  // но запрещаем отрицательные.
+  if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
     return false;
   }
+  // =======================================================
   return true;
 }
 
 bool MaxElementMatrSEQ::PreProcessingImpl() {
   matrix_.clear();
-  matrix_.reserve(rows * cols);
-  const auto &in_ = GetInput();
-  std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
+  // Если матрица не пустая, копируем данные
+  if (rows > 0 && cols > 0) {
+    matrix_.reserve(rows * cols);
+    const auto &in_ = GetInput();
+    std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
+  }
   max_val = INT_MIN;
   return true;
 }
