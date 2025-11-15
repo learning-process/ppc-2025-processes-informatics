@@ -7,11 +7,10 @@
 ## 1. Introduction
 
 
-**Brief motivation, problem context, expected outcome.**
+- Brief motivation, problem context, expected outcome.**
 
 ## 2. Problem Statement
-
-Скалярное произведение двух векторов- это число, равное сумме произведений соответствующих координат этих векторов.
+Скалярное произведение двух векторов одной размерности - это число, равное сумме произведений соответствующих координат этих векторов.
 Требуется найти скалярное произведение двух заданных векторов.
 
 Формат входных данных:
@@ -20,12 +19,19 @@
 Формат выходных данных:
 Одно действительное число - скалярное произведение заданных векторов.
 
-**Formal task definition, input/output format, constraints.**
+- Formal task definition, input/output format, constraints.**
 
 ## 3. Baseline Algorithm (Sequential)
-Describe the base algorithm with enough detail to reproduce.
+Инициализируем результат значением 0. Затем последовательно проходим по векторам, добавляя к результату произведение соответствующих координат.
+
+- Describe the base algorithm with enough detail to reproduce.
 
 ## 4. Parallelization Scheme
+MPI:
+Делим размер одного из векторов нацело на n, где n - число процессов, получаем размер блока - обозначим как block_size.
+Далее каждый процесс вычисляет block_size слагаемых, составляющих скалярное произведение.
+
+
 - For MPI: data distribution, communication pattern/topology, rank roles.
 - For threads: decomposition, scheduling, synchronization.
 Diagrams or short pseudocode are welcome.
