@@ -5,6 +5,9 @@
 namespace makovskiy_i_min_value_in_matrix_rows {
 
 MinValueSEQ::MinValueSEQ(const InType &in) {
+  if (in.empty()) {
+    throw std::invalid_argument("Input matrix is empty");
+  }
   this->GetInput() = in;
   SetTypeOfTask(GetStaticTypeOfTask());
 }
