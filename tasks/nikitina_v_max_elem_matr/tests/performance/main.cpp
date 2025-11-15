@@ -4,21 +4,21 @@
 #include <random>
 #include <vector>
 
-// Убедись, что все три хедера подключены
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
 #include "nikitina_v_max_elem_matr/mpi/include/ops_mpi.hpp"
-#include "nikitina_v_max_elem_matr/seq/include/ops_seq.hpp"  // <--- И СЮДА ТОЖЕ
+#include "nikitina_v_max_elem_matr/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace nikitina_v_max_elem_matr {
-// ... остальной код файла без изменений ...
-// Полный код для копирования:
 
 class NikitinaVMaxElemMatrPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    int rows = 200;
-    int cols = 200;
+    // ================== ИСПРАВЛЕНИЕ ЗДЕСЬ ==================
+    // Увеличиваем размер матрицы, чтобы тест работал дольше 0.001с
+    int rows = 2000;
+    int cols = 2000;
+    // =======================================================
     int max_val = INT_MIN;
 
     std::mt19937 gen(1);
