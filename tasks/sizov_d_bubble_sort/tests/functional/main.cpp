@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -116,29 +119,93 @@ TEST_P(SizovDRunFuncTestsBubbleSort, CompareStringsFromFile) {
   ExecuteTest(GetParam());
 }
 
-constexpr int kNumTests = 20;
+std::vector<TestType> GetTestParamsFromData() {
+  namespace fs = std::filesystem;
 
-const std::array<TestType, kNumTests> kTestParam = [] {
-  std::array<TestType, kNumTests> arr{};
-  std::size_t idx = 0;
-  for (auto &elem : arr) {
-    elem = "test" + std::to_string(idx + 1);
-    ++idx;
+  const fs::path data_dir = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_bubble_sort, "");
+  std::error_code ec;
+  std::vector<std::pair<int, TestType>> numbered_tests;
+
+  for (const auto &entry : fs::directory_iterator(data_dir, ec)) {
+    if (ec) {
+      throw std::runtime_error("Failed to read data directory: " + data_dir.string());
+    }
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+
+    const fs::path &path = entry.path();
+    if (path.extension() != ".txt") {
+      continue;
+    }
+
+    const std::string stem = path.stem().string();  // e.g. "test7"
+    constexpr std::string_view kPrefix = "test";
+    if (!stem.starts_with(kPrefix)) {
+      continue;
+    }
+
+    const std::string number_part = stem.substr(kPrefix.size());
+    if (number_part.empty() || !std::ranges::all_of(number_part, [](char c) { return std::isdigit(c) != 0; })) {
+      continue;
+    }
+
+    numbered_tests.emplace_back(std::stoi(number_part), stem);
   }
-  return arr;
-}();
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<SizovDBubbleSortMPI, InType>(kTestParam, PPC_SETTINGS_sizov_d_bubble_sort),
-                   ppc::util::AddFuncTask<SizovDBubbleSortSEQ, InType>(kTestParam, PPC_SETTINGS_sizov_d_bubble_sort));
+  if (ec) {
+    throw std::runtime_error("Failed to iterate data directory: " + data_dir.string());
+  }
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+  if (numbered_tests.empty()) {
+    throw std::runtime_error("No test data files found in " + data_dir.string());
+  }
+
+  std::ranges::sort(numbered_tests, [](const auto &lhs, const auto &rhs) {
+    if (lhs.first != rhs.first) {
+      return lhs.first < rhs.first;
+    }
+    return lhs.second < rhs.second;
+  });
+
+  std::vector<TestType> params;
+  params.reserve(numbered_tests.size());
+  for (const auto &[_, name] : numbered_tests) {
+    params.push_back(name);
+  }
+
+  return params;
+}
+
+using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
+
+std::vector<FuncParam> BuildTestTasks(const std::vector<TestType> &tests) {
+  std::vector<FuncParam> tasks;
+  tasks.reserve(tests.size() * 2);
+
+  for (const auto &test : tests) {
+    tasks.emplace_back(
+        ppc::task::TaskGetter<SizovDBubbleSortMPI, InType>,
+        std::string(ppc::util::GetNamespace<SizovDBubbleSortMPI>()) + "_" +
+            ppc::task::GetStringTaskType(SizovDBubbleSortMPI::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_bubble_sort),
+        test);
+    tasks.emplace_back(
+        ppc::task::TaskGetter<SizovDBubbleSortSEQ, InType>,
+        std::string(ppc::util::GetNamespace<SizovDBubbleSortSEQ>()) + "_" +
+            ppc::task::GetStringTaskType(SizovDBubbleSortSEQ::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_bubble_sort),
+        test);
+  }
+
+  return tasks;
+}
+
+const auto kTestParam = GetTestParamsFromData();
+const auto kTestTasksList = BuildTestTasks(kTestParam);
+const auto kGtestValues = ::testing::ValuesIn(kTestTasksList);
 
 const auto kTestName = SizovDRunFuncTestsBubbleSort::PrintFuncTestName<SizovDRunFuncTestsBubbleSort>;
 
-INSTANTIATE_TEST_SUITE_P(SizovDBubbleSort, SizovDRunFuncTestsBubbleSort, kGtestValues,
-                         kTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
-                                      // misc-use-anonymous-namespace, modernize-type-traits)
+INSTANTIATE_TEST_SUITE_P(SizovDBubbleSort, SizovDRunFuncTestsBubbleSort, kGtestValues, kTestName);
 
 }  // namespace
 

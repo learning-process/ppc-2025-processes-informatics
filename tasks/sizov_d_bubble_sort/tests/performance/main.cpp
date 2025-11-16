@@ -40,7 +40,7 @@ class SizovDRunPerfTestsBubbleSort : public ppc::util::BaseRunPerfTests<InType, 
   OutType expected_result_;
 };
 
-namespace {  // namespace #1
+namespace {
 
 TEST_P(SizovDRunPerfTestsBubbleSort, RunPerfModes) {
   ExecuteTest(GetParam());
@@ -50,15 +50,10 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, SizovDBubbleSortMPI, SizovDBubbleSortSEQ>(PPC_SETTINGS_sizov_d_bubble_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
 const auto kPerfTestName = SizovDRunPerfTestsBubbleSort::CustomPerfTestName;
 
-namespace {  // namespace #2
-
-INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsBubbleSort, kGtestValues,
-                         kPerfTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
-                                          // misc-use-anonymous-namespace, modernize-type-traits)
-
-}  // namespace
+INSTANTIATE_TEST_SUITE_P(RunPerf, SizovDRunPerfTestsBubbleSort, kGtestValues, kPerfTestName);
 
 }  // namespace
 
