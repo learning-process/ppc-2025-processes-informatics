@@ -19,13 +19,8 @@ bool LevonychevIMinValRowsMatrixMPI::ValidationImpl() {
   const size_t vector_size = std::get<0>(GetInput()).size();
   const int rows = std::get<1>(GetInput());
   const int cols = std::get<2>(GetInput());
-  if (vector_size == 0 || rows == 0 || cols == 0) {
-    return false;
-  }
-  if (vector_size != static_cast<size_t>(rows) * static_cast<size_t>(cols)) {
-    return false;
-  }
-  return true;
+  return !(vector_size == 0 || rows == 0 || cols == 0 ||
+           (vector_size != static_cast<size_t>(rows) * static_cast<size_t>(cols)));
 }
 
 bool LevonychevIMinValRowsMatrixMPI::PreProcessingImpl() {
@@ -39,9 +34,6 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   const int cols = std::get<2>(GetInput());
   OutType &global_min_values = GetOutput();
 
-  if (global_min_values.size() != static_cast<size_t>(rows)) {
-    global_min_values.resize(rows);
-  }
   int proc_num = 0;
   int proc_rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
