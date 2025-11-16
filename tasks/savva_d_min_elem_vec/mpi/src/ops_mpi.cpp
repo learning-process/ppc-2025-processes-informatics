@@ -8,7 +8,6 @@
 
 #include "savva_d_min_elem_vec/common/include/common.hpp"
 
-
 namespace savva_d_min_elem_vec {
 
 SavvaDMinElemVecMPI::SavvaDMinElemVecMPI(const InType &in) {  // эта функция не изменяется в задачах

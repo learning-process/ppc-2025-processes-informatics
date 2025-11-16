@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <fstream>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #include "savva_d_min_elem_vec//common/include/common.hpp"
 #include "savva_d_min_elem_vec/mpi/include/ops_mpi.hpp"
