@@ -30,28 +30,22 @@ bool SizovDBubbleSortSEQ::RunImpl() {
     return true;
   }
 
-  // Odd-even transposition sort with a safe shrinking upper bound:
-  // после каждой полной пары проходов крайний элемент больше не участвует.
-  std::size_t limit = n - 1;
-  bool swapped = true;
-  while (swapped && limit > 0) {
-    swapped = false;
-    for (std::size_t i = 0; i + 1 <= limit; i += 2) {
+  auto pass = [&](std::size_t start) {
+    bool swapped = false;
+    for (std::size_t i = start; i + 1 < n; i += 2) {
       if (data_[i] > data_[i + 1]) {
         std::swap(data_[i], data_[i + 1]);
         swapped = true;
       }
     }
+    return swapped;
+  };
 
-    for (std::size_t i = 1; i + 1 <= limit; i += 2) {
-      if (data_[i] > data_[i + 1]) {
-        std::swap(data_[i], data_[i + 1]);
-        swapped = true;
-      }
-    }
-
-    if (swapped && limit > 0) {
-      --limit;  // после полного цикла максимальный элемент "всплыл" правее limit
+  while (true) {
+    bool swapped = pass(0);
+    swapped = pass(1) || swapped;
+    if (!swapped) {
+      break;
     }
   }
 
