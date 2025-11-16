@@ -28,38 +28,6 @@ bool KrykovEWordCountMPI::PreProcessingImpl() {
   return true;
 }
 
-namespace {
-
-bool IsWordChar(char c) {
-  return !std::isspace(static_cast<unsigned char>(c));
-}
-
-/*size_t CountLocalWords(const std::vector<char> &local_buf, int part_size) {
-  size_t count = 0;
-  bool in_word = false;
-
-  // Считаем слова только в основной части (part_size символов)
-  for (int i = 0; i < part_size; i++) {
-    if (IsWordChar(local_buf[i])) {
-      if (!in_word) {
-        in_word = true;
-        count++;
-      }
-    } else {
-      in_word = false;
-    }
-  }
-
-  // Коррекция: если слово продолжается в дополнительном символе, значит мы его разделили
-  if (in_word && IsWordChar(local_buf[part_size])) {
-    count--;
-  }
-
-  return count;
-}*/
-
-}  // namespace
-
 bool KrykovEWordCountMPI::RunImpl() {
   const std::string &text = GetInput();
   int world_size = 0, world_rank = 0;
