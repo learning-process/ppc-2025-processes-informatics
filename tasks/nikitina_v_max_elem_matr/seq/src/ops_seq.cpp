@@ -4,12 +4,13 @@
 #include <cstddef>
 #include <iterator>
 #include <limits>
+#include <vector>
 
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
 
 namespace nikitina_v_max_elem_matr {
 
-MaxElementMatrSEQ::MaxElementMatrSEQ(const InType &in) : BaseTask(), rows_{}, cols_{}, max_val_{} {
+MaxElementMatrSEQ::MaxElementMatrSEQ(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -21,7 +22,7 @@ bool MaxElementMatrSEQ::ValidationImpl() {
   }
   rows_ = in[0];
   cols_ = in[1];
-  return !(rows_ < 0 || cols_ < 0 || static_cast<size_t>(rows_) * cols_ != in.size() - 2);
+  return rows_ >= 0 && cols_ >= 0 && static_cast<size_t>(rows_) * cols_ == in.size() - 2;
 }
 
 bool MaxElementMatrSEQ::PreProcessingImpl() {

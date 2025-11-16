@@ -7,6 +7,7 @@
 #include <random>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
 #include "nikitina_v_max_elem_matr/mpi/include/ops_mpi.hpp"
@@ -59,7 +60,7 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
         std::uniform_int_distribution<> distrib(-1000, 1000);
         int max_val = std::numeric_limits<int>::min();
 
-        InType generated_matr(2 + static_cast<size_t>(rows) * cols);
+        InType generated_matr(2 + (static_cast<size_t>(rows) * cols));
         generated_matr[0] = rows;
         generated_matr[1] = cols;
 
@@ -75,7 +76,7 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
     }
 
     if (is_mpi_test) {
-      int input_size = input_data_.size();
+      int input_size = static_cast<int>(input_data_.size());
       MPI_Bcast(&input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
       if (rank != 0) {
@@ -96,8 +97,8 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_;
-  OutType expected_output_;
+  InType input_data_{};
+  OutType expected_output_{};
 };
 
 namespace {

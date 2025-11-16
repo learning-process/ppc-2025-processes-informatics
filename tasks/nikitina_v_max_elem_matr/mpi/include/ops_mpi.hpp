@@ -20,6 +20,10 @@ class MaxElementMatrMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  static void CalculateScatterParams(int total_elements, int world_size, std::vector<int> &sendcounts,
+                                     std::vector<int> &displs);
+  static int FindLocalMax(const std::vector<int> &data);
+
   int rows_{};
   int cols_{};
   int global_max_{};
