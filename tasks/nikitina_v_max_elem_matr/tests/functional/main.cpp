@@ -14,7 +14,14 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
+// Нужно для MPI_Comm_rank
+#include <mpi.h>
+
 namespace nikitina_v_max_elem_matr {
+
+// ============================================================================
+// ================= ТЕСТЫ НА КОРРЕКТНОЕ ВЫПОЛНЕНИЕ ============================
+// ============================================================================
 
 using TestType = std::tuple<int, int, int>;
 
@@ -23,7 +30,6 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
   static std::string PrintTestParam(const testing::TestParamInfo<ParamType> &info) {
     auto task_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
-
     std::string tech = "unknown";
     if (task_name.find("seq") != std::string::npos) {
       tech = "seq";
@@ -31,7 +37,6 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
     if (task_name.find("mpi") != std::string::npos) {
       tech = "mpi";
     }
-
     std::string test_name = "tech_" + tech + "_test_id_" + std::to_string(std::get<0>(params)) + "_rows_" +
                             std::to_string(std::get<1>(params)) + "_cols_" + std::to_string(std::get<2>(params));
     return test_name;
@@ -87,18 +92,9 @@ TEST_P(NikitinaVMaxElemMatrFuncTests, FindMaxElement) {
   ExecuteTest(GetParam());
 }
 
-// ====================== ИЗМЕНЕНИЕ ЗДЕСЬ ======================
-// Добавляем тесты на граничные и некорректные случаи для увеличения покрытия
 const std::array<TestType, 8> kTestParam = {
-    // Стандартные тесты
     std::make_tuple(1, 10, 10), std::make_tuple(2, 5, 15), std::make_tuple(3, 1, 30), std::make_tuple(4, 30, 1),
-    std::make_tuple(5, 1, 1),
-    // Новые тесты для покрытия "плохих" веток кода
-    std::make_tuple(6, 0, 10),  // Нулевое количество строк
-    std::make_tuple(7, 10, 0),  // Нулевое количество столбцов
-    std::make_tuple(8, 0, 0)    // Полностью пустая матрица
-};
-// ===============================================================
+    std::make_tuple(5, 1, 1),   std::make_tuple(6, 0, 10), std::make_tuple(7, 10, 0), std::make_tuple(8, 0, 0)};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MaxElementMatrSEQ, InType>(kTestParam, PPC_SETTINGS_nikitina_v_max_elem_matr),
@@ -110,4 +106,71 @@ INSTANTIATE_TEST_SUITE_P(NikitinaV_MaxElementMatr_Func, NikitinaVMaxElemMatrFunc
                          NikitinaVMaxElemMatrFuncTests::PrintTestParam);
 
 }  // namespace
+
+// ============================================================================
+// ================ ИСПРАВЛЕННЫЕ ТЕСТЫ НА НЕКОРРЕКТНУЮ ВАЛИДАЦИЮ ================
+// ============================================================================
+
+TEST(NikitinaVMaxElemMatrValidation, Fails_On_Invalid_Input_Size) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    InType invalid_input = {1};
+    // Leaking memory to avoid destructor exception
+    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
+    ASSERT_FALSE(seq_task->Validation());
+  }
+  // Leaking memory to avoid destructor exception
+  auto *mpi_task = new MaxElementMatrMPI({1});
+  bool res = mpi_task->Validation();
+  if (rank == 0) {
+    ASSERT_FALSE(res);
+  }
+}
+
+TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Rows) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    InType invalid_input = {-1, 5};
+    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
+    ASSERT_FALSE(seq_task->Validation());
+  }
+  auto *mpi_task = new MaxElementMatrMPI({-1, 5});
+  bool res = mpi_task->Validation();
+  if (rank == 0) {
+    ASSERT_FALSE(res);
+  }
+}
+
+TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Cols) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    InType invalid_input = {5, -1};
+    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
+    ASSERT_FALSE(seq_task->Validation());
+  }
+  auto *mpi_task = new MaxElementMatrMPI({5, -1});
+  bool res = mpi_task->Validation();
+  if (rank == 0) {
+    ASSERT_FALSE(res);
+  }
+}
+
+TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    InType invalid_input = {2, 2, 1, 2, 3};
+    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
+    ASSERT_FALSE(seq_task->Validation());
+  }
+  auto *mpi_task = new MaxElementMatrMPI({2, 2, 1, 2, 3});
+  bool res = mpi_task->Validation();
+  if (rank == 0) {
+    ASSERT_FALSE(res);
+  }
+}
+
 }  // namespace nikitina_v_max_elem_matr
