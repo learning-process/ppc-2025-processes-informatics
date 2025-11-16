@@ -1,7 +1,7 @@
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>  // для size_t
+#include <cstddef>
 #include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"

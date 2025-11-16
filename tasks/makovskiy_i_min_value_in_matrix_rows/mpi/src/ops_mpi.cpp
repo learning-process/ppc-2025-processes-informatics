@@ -9,11 +9,9 @@
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
-// ---> ИСПРАВЛЕНИЕ: Функция помещена в анонимное пространство имен <---
-// Это современный C++ способ сделать ее видимой только в этом файле.
 namespace {
 void SendDataToWorkers(const InType &matrix, int size, int rows_per_proc, int remaining_rows, int &current_row_idx) {
-  for (int i = 1; i < size; ++i) {  // Начинаем с 1, так как 0 - это главный процесс
+  for (int i = 1; i < size; ++i) {
     const int rows_for_this_proc = rows_per_proc + (i < remaining_rows ? 1 : 0);
     MPI_Send(&rows_for_this_proc, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
     for (int j = 0; j < rows_for_this_proc; ++j) {
@@ -42,7 +40,6 @@ void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
   const int remaining_rows = num_rows % size;
   int current_row_idx = 0;
 
-  // 1. Главный процесс обрабатывает свою часть данных
   const int rows_for_root = rows_per_proc + (0 < remaining_rows ? 1 : 0);
   for (int j = 0; j < rows_for_root; ++j) {
     const auto &row = matrix[current_row_idx++];
@@ -51,13 +48,11 @@ void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
     }
   }
 
-  // 2. Отправляем данные остальным процессам
   if (size > 1) {
     SendDataToWorkers(matrix, size, rows_per_proc, remaining_rows, current_row_idx);
   }
 }
 
-// ... остальная часть файла остается без изменений ...
 void MinValueMPI::ProcessWorkerRank(std::vector<int> &local_min_values) {
   int num_local_rows = 0;
   MPI_Recv(&num_local_rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

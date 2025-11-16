@@ -43,7 +43,7 @@ class MinValuePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
 
     // return output_data.size() == 100;
     // return output_data.size() == 1000;
-    // constexpr std::size_t kCols = 5000;
+    // return output_data.size() == 5000;
     return output_data.size() == 10000;
   }
 };

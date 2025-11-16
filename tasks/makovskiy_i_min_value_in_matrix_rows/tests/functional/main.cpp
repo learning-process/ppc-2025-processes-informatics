@@ -32,7 +32,7 @@ class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
-      int rank = 0;  // Переменная инициализирована
+      int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if (rank != 0) {
         return true;
@@ -68,8 +68,6 @@ const auto kTasks = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
 const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFuncTests>;
 
-// Подавление предупреждений clang-tidy для макроса GTest, который мы не контролируем
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
