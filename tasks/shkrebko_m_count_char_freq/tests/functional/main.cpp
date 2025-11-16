@@ -1,16 +1,9 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
-#include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "shkrebko_m_count_char_freq/common/include/common.hpp"
 #include "shkrebko_m_count_char_freq/mpi/include/ops_mpi.hpp"

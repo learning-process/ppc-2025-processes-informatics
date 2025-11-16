@@ -4,7 +4,6 @@
 #include <string>
 
 #include "shkrebko_m_count_char_freq/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace shkrebko_m_count_char_freq {
 
