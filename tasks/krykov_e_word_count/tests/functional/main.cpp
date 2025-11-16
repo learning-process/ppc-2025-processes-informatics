@@ -27,11 +27,11 @@ class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
-    // обрежем длинные строки
+
     if (text.size() > 20) {
       text = text.substr(0, 20);
     }
-    // заменим всё недопустимое
+
     for (char &ch : text) {
       if (!std::isalnum(static_cast<unsigned char>(ch)) && ch != '_') {
         ch = '_';
@@ -66,9 +66,35 @@ TEST_P(KrykovEWordCountFuncTests, WordCountTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 2> kTestParam = {
+const std::array<TestType, 22> kTestParam = {
     std::make_tuple(std::string("Hello world"), 2),
     std::make_tuple(std::string("One two  three   four"), 4),
+
+    std::make_tuple(std::string("Single"), 1),
+    std::make_tuple(std::string("  Leading"), 1),
+    std::make_tuple(std::string("Trailing  "), 1),
+    std::make_tuple(std::string("  Both  "), 1),
+
+    std::make_tuple(std::string("Word1\tWord2\nWord3"), 3),
+    std::make_tuple(std::string("Tab\t\t\tTabs"), 2),
+    std::make_tuple(std::string("Line1\nLine2\nLine3"), 3),
+    std::make_tuple(std::string("Mixed\t \nSpaces"), 2),
+
+    std::make_tuple(std::string("a b c d e f"), 6),
+    std::make_tuple(std::string("multiple     spaces"), 2),
+    std::make_tuple(std::string("one\ntwo\nthree\nfour"), 4),
+
+    std::make_tuple(std::string("A"), 1),
+    std::make_tuple(std::string(" A "), 1),
+    std::make_tuple(std::string("  A  B  "), 2),
+    std::make_tuple(std::string("VeryLongWordWithoutSpaces"), 1),
+
+    std::make_tuple(std::string("word-with-dash"), 1),
+    std::make_tuple(std::string("under_score_word"), 1),
+    std::make_tuple(std::string("mixed-dash_and_underscore"), 1),
+
+    std::make_tuple(std::string("split test"), 2),
+    std::make_tuple(std::string("abc def ghi jkl"), 4),
 };
 
 const auto kTestTasksList =
