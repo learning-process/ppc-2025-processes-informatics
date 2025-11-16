@@ -48,15 +48,15 @@ bool IsWordChar(char c) {
     } else {
       in_word = false;
     }
-  }*/
+  }
 
-// Коррекция: если слово продолжается в дополнительном символе, значит мы его разделили
-if (in_word && IsWordChar(local_buf[part_size])) {
-  count--;
-}
+  // Коррекция: если слово продолжается в дополнительном символе, значит мы его разделили
+  if (in_word && IsWordChar(local_buf[part_size])) {
+    count--;
+  }
 
-return count;
-}
+  return count;
+}*/
 
 }  // namespace
 
@@ -175,11 +175,11 @@ bool KrykovEWordCountMPI::RunImpl() {
     GetOutput() = result;
   }
 
-  return true;
+  return true;  // try17
 }
 
 bool KrykovEWordCountMPI::PostProcessingImpl() {
   return true;
-}  // try 16
+}
 
 }  // namespace krykov_e_word_count
