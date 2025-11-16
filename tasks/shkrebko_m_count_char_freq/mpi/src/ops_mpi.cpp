@@ -2,8 +2,8 @@
 
 #include <mpi.h>
 
-#include <string>
 #include <algorithm>
+#include <string>
 #include <vector>
 
 #include "shkrebko_m_count_char_freq/common/include/common.hpp"
