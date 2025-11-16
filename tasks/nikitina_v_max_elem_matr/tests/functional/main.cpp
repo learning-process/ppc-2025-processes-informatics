@@ -109,9 +109,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Empty_Input) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 
@@ -123,9 +124,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Too_Small_Input) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({1});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 
@@ -137,9 +139,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Rows) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({-1, 5});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 
@@ -151,9 +154,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Cols) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({5, -1});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 
@@ -165,9 +169,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Both_Negative_Dims) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({-5, -1});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 
@@ -179,9 +184,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch_Too_Few) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({2, 2, 1, 2, 3});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 
@@ -193,9 +199,10 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch_Too_Many) {
     ASSERT_FALSE(seq_task->Validation());
   }
   auto *mpi_task = new MaxElementMatrMPI({2, 2, 1, 2, 3, 4, 5});
-  bool res = mpi_task->Validation();
   if (rank == 0) {
-    ASSERT_FALSE(res);
+    ASSERT_FALSE(mpi_task->Validation());
+  } else {
+    mpi_task->Validation();
   }
 }
 

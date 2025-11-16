@@ -15,27 +15,16 @@ MaxElementMatrMPI::MaxElementMatrMPI(const InType &in) : BaseTask() {
 }
 
 bool MaxElementMatrMPI::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  int validation_result = 1;
-
-  if (rank == 0) {
-    const auto &in_ = GetInput();
-    if (in_.size() < 2) {
-      validation_result = 0;
-    } else {
-      rows = in_[0];
-      cols = in_[1];
-      if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
-        validation_result = 0;
-      }
-    }
+  const auto &in_ = GetInput();
+  if (in_.size() < 2) {
+    return false;
   }
-
-  MPI_Bcast(&validation_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  return validation_result == 1;
+  rows = in_[0];
+  cols = in_[1];
+  if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
+    return false;
+  }
+  return true;
 }
 
 bool MaxElementMatrMPI::PreProcessingImpl() {
@@ -44,18 +33,12 @@ bool MaxElementMatrMPI::PreProcessingImpl() {
 
   if (rank == 0) {
     const auto &in_ = GetInput();
-    rows = in_[0];
-    cols = in_[1];
     matrix_.clear();
     if (rows > 0 && cols > 0) {
       matrix_.reserve(rows * cols);
       std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
     }
   }
-
-  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   return true;
 }
 
