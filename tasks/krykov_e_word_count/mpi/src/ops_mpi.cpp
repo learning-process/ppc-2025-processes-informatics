@@ -34,7 +34,7 @@ bool IsWordChar(char c) {
   return !std::isspace(static_cast<unsigned char>(c));
 }
 
-size_t CountLocalWords(const std::vector<char> &local_buf, int part_size) {
+/*size_t CountLocalWords(const std::vector<char> &local_buf, int part_size) {
   size_t count = 0;
   bool in_word = false;
 
@@ -48,7 +48,7 @@ size_t CountLocalWords(const std::vector<char> &local_buf, int part_size) {
     } else {
       in_word = false;
     }
-  }
+  }*/
 
   // Коррекция: если слово продолжается в дополнительном символе, значит мы его разделили
   if (in_word && IsWordChar(local_buf[part_size])) {
