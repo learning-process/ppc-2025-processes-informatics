@@ -19,16 +19,27 @@ bool KrykovEWordCountMPI::ValidationImpl() {
 }
 
 bool KrykovEWordCountMPI::PreProcessingImpl() {
-  auto &input = GetInput();
-  input.erase(input.begin(), std::find_if(input.begin(), input.end(),
-                                          [](char ch) { return !std::isspace(static_cast<unsigned char>(ch)); }));
+  const auto& input = GetInput();
+    auto trimmed = input;
 
-  input.erase(std::find_if(input.rbegin(), input.rend(),
-                           [](char ch) {
-    return !std::isspace(static_cast<unsigned char>(ch));
-  }).base(),
-              input.end());
-  return true;
+    trimmed.erase(
+        trimmed.begin(),
+        std::find_if(trimmed.begin(), trimmed.end(),
+            [](char ch) {
+                return !std::isspace(static_cast<unsigned char>(ch));
+            })
+    );
+
+    trimmed.erase(
+        std::find_if(trimmed.rbegin(), trimmed.rend(),
+            [](char ch) {
+                return !std::isspace(static_cast<unsigned char>(ch));
+            }).base(),
+        trimmed.end()
+    );
+
+    GetInput() = trimmed;
+    return true;
 }
 
 bool KrykovEWordCountMPI::RunImpl() {
