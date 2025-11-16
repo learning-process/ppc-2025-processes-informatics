@@ -9,10 +9,10 @@
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
-// Статическая вспомогательная функция, видимая только в этом файле,
-// чтобы избежать ошибки -Wmissing-declarations.
-static void SendDataToWorkers(const InType &matrix, int size, int rows_per_proc, int remaining_rows,
-                              int &current_row_idx) {
+// ---> ИСПРАВЛЕНИЕ: Функция помещена в анонимное пространство имен <---
+// Это современный C++ способ сделать ее видимой только в этом файле.
+namespace {
+void SendDataToWorkers(const InType &matrix, int size, int rows_per_proc, int remaining_rows, int &current_row_idx) {
   for (int i = 1; i < size; ++i) {  // Начинаем с 1, так как 0 - это главный процесс
     const int rows_for_this_proc = rows_per_proc + (i < remaining_rows ? 1 : 0);
     MPI_Send(&rows_for_this_proc, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
@@ -26,6 +26,7 @@ static void SendDataToWorkers(const InType &matrix, int size, int rows_per_proc,
     }
   }
 }
+}  // namespace
 
 void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
   const auto &matrix = this->GetInput();
@@ -56,6 +57,7 @@ void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
   }
 }
 
+// ... остальная часть файла остается без изменений ...
 void MinValueMPI::ProcessWorkerRank(std::vector<int> &local_min_values) {
   int num_local_rows = 0;
   MPI_Recv(&num_local_rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
