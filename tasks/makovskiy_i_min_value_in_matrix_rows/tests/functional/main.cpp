@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
@@ -31,7 +32,7 @@ class MinValueRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
-      int rank;
+      int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if (rank != 0) {
         return true;
@@ -57,8 +58,7 @@ const auto kTestCases = std::array<TestType, 6>{
     TestType{InType{{8}}, OutType{8}},
 
     TestType{InType{{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}}, OutType{1, 6, 11}},
-    TestType{InType{{100, 200, 300}, {50, 60, 70}, {10, 20, 30}, {5, 6, 7}}, OutType{100, 50, 10, 5}},
-};
+    TestType{InType{{100, 200, 300}, {50, 60, 70}, {10, 20, 30}, {5, 6, 7}}, OutType{100, 50, 10, 5}}};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<MinValueSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows),

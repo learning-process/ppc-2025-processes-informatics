@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,10 @@ class MinValueMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void ProcessRankZero(std::vector<int> &local_min_values);
+  void ProcessWorkerRank(std::vector<int> &local_min_values);
+  void GatherResults(const std::vector<int> &local_min_values);
 };
 
 }  // namespace makovskiy_i_min_value_in_matrix_rows
