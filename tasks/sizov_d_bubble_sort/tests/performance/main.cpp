@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include "sizov_d_bubble_sort/common/include/common.hpp"
@@ -21,7 +20,7 @@ class SizovDRunPerfTestsBubbleSort : public ppc::util::BaseRunPerfTests<InType, 
     const std::string &test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
     const bool is_mpi = test_name.find("_mpi_") != std::string::npos;
 
-    const std::size_t n = is_mpi ? 500000 : 150000;
+    const std::size_t n = is_mpi ? 450000 : 185000;
 
     std::vector<int> data(n);
     for (std::size_t i = 0; i < n; ++i) {
