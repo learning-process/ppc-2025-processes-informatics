@@ -71,9 +71,9 @@ TEST_P(EgorovaLRunFuncTestsProcesses, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
-                   ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
+    ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

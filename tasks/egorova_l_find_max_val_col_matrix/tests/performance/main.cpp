@@ -29,7 +29,8 @@ TEST_P(EgorovaLRunPerfTestProcesses, EgorovaLRunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, EgorovaLFindMaxValColMatrixMPI, EgorovaLFindMaxValColMatrixSEQ>(PPC_SETTINGS_example_processes);
+    ppc::util::MakeAllPerfTasks<InType, EgorovaLFindMaxValColMatrixMPI, EgorovaLFindMaxValColMatrixSEQ>(
+        PPC_SETTINGS_example_processes);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
