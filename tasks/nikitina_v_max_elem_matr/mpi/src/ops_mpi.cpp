@@ -18,8 +18,7 @@ bool MaxElementMatrMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // Используем int для результата, т.к. MPI_Bcast с bool может быть капризным
-  int validation_result = 1;  // 1 = true, 0 = false
+  int validation_result = 1;
 
   if (rank == 0) {
     const auto &in_ = GetInput();
@@ -34,15 +33,17 @@ bool MaxElementMatrMPI::ValidationImpl() {
     }
   }
 
-  // ================== КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ ==================
-  // Процесс 0 рассылает результат валидации всем остальным процессам.
   MPI_Bcast(&validation_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  // =======================================================
 
-  return validation_result == 1;
+  validation_passed = (validation_result == 1);
+  return validation_passed;
 }
 
 bool MaxElementMatrMPI::PreProcessingImpl() {
+  if (!validation_passed) {
+    return true;
+  }
+
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -64,6 +65,10 @@ bool MaxElementMatrMPI::PreProcessingImpl() {
 }
 
 bool MaxElementMatrMPI::RunImpl() {
+  if (!validation_passed) {
+    return true;
+  }
+
   int world_size, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

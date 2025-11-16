@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -14,63 +15,42 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-// Нужно для MPI_Comm_rank
-#include <mpi.h>
-
 namespace nikitina_v_max_elem_matr {
 
-// ============================================================================
-// ================= ТЕСТЫ НА КОРРЕКТНОЕ ВЫПОЛНЕНИЕ ============================
-// ============================================================================
-
-using TestType = std::tuple<int, int, int>;
+using TestType = std::vector<int>;
 
 class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const testing::TestParamInfo<ParamType> &info) {
     auto task_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
-    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
-    std::string tech = "unknown";
-    if (task_name.find("seq") != std::string::npos) {
-      tech = "seq";
-    }
-    if (task_name.find("mpi") != std::string::npos) {
-      tech = "mpi";
-    }
-    std::string test_name = "tech_" + tech + "_test_id_" + std::to_string(std::get<0>(params)) + "_rows_" +
-                            std::to_string(std::get<1>(params)) + "_cols_" + std::to_string(std::get<2>(params));
-    return test_name;
+    std::string tech = (task_name.find("seq") != std::string::npos) ? "seq" : "mpi";
+    return tech + "_" + std::to_string(info.index);
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int rows = std::get<1>(params);
-    int cols = std::get<2>(params);
+    input_data_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    if (rows <= 0 || cols <= 0) {
-      input_data_ = {rows, cols};
-      expected_output_ = INT_MIN;
-      return;
-    }
-
-    std::mt19937 gen(1);
-    std::uniform_int_distribution<> distrib(-1000, 1000);
-    int max_val = INT_MIN;
-
-    InType generated_matr(2 + rows * cols);
-    generated_matr[0] = rows;
-    generated_matr[1] = cols;
-
-    for (int i = 0; i < rows * cols; ++i) {
-      generated_matr[i + 2] = distrib(gen);
-      if (i == 0 || generated_matr[i + 2] > max_val) {
-        max_val = generated_matr[i + 2];
+    bool is_valid = true;
+    if (input_data_.size() < 2) {
+      is_valid = false;
+    } else {
+      int rows = input_data_[0];
+      int cols = input_data_[1];
+      if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != input_data_.size() - 2) {
+        is_valid = false;
       }
     }
 
-    input_data_ = generated_matr;
-    expected_output_ = max_val;
+    if (is_valid) {
+      if (input_data_.size() == 2) {
+        expected_output_ = INT_MIN;
+      } else {
+        expected_output_ = *std::max_element(input_data_.begin() + 2, input_data_.end());
+      }
+    } else {
+      expected_output_ = 0;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
@@ -88,17 +68,77 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
+// ============================================================================
+// ==================== ИСПРАВЛЕННАЯ ЛОГИКА ТЕСТА ============================
+// ============================================================================
 TEST_P(NikitinaVMaxElemMatrFuncTests, FindMaxElement) {
-  ExecuteTest(GetParam());
+  auto test_param = GetParam();
+  auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param);
+  const auto &input_data = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(test_param);
+
+  auto task = task_getter(input_data);
+
+  bool validation_should_fail = false;
+  if (input_data.size() < 2) {
+    validation_should_fail = true;
+  } else {
+    int rows = input_data[0];
+    int cols = input_data[1];
+    if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != input_data.size() - 2) {
+      validation_should_fail = true;
+    }
+  }
+
+  if (validation_should_fail) {
+    ASSERT_FALSE(task->Validation());
+    // Все равно вызываем остальные этапы, чтобы деструктор был "доволен"
+    task->PreProcessing();
+    task->Run();
+    task->PostProcessing();
+  } else {
+    ASSERT_TRUE(task->Validation());
+    ASSERT_TRUE(task->PreProcessing());
+    ASSERT_TRUE(task->Run());
+    ASSERT_TRUE(task->PostProcessing());
+    ASSERT_TRUE(CheckTestOutputData(task->GetOutput()));
+  }
 }
 
-const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(1, 10, 10), std::make_tuple(2, 5, 15), std::make_tuple(3, 1, 30), std::make_tuple(4, 30, 1),
-    std::make_tuple(5, 1, 1),   std::make_tuple(6, 0, 10), std::make_tuple(7, 10, 0), std::make_tuple(8, 0, 0)};
+InType generate_matrix(int rows, int cols, int seed = 1) {
+  std::mt19937 gen(seed);
+  std::uniform_int_distribution<> distrib(-1000, 1000);
+  InType matrix(2 + rows * cols);
+  matrix[0] = rows;
+  matrix[1] = cols;
+  for (int i = 0; i < rows * cols; ++i) {
+    matrix[i + 2] = distrib(gen);
+  }
+  return matrix;
+}
+
+const std::array<TestType, 14> kTestCases = {{// --- Валидные случаи ---
+                                              generate_matrix(10, 10),
+                                              generate_matrix(5, 7),
+                                              generate_matrix(1, 1),
+                                              generate_matrix(10, 0),
+                                              generate_matrix(0, 10),
+                                              generate_matrix(0, 0),
+
+                                              // --- Детерминированные случаи для покрытия веток в цикле ---
+                                              {3, 2, 100, 1, 2, 3, 4, 5},
+                                              {3, 2, 1, 2, 3, 4, 5, 100},
+                                              {3, 2, 5, 5, 5, 5, 5, 5},
+
+                                              // --- Невалидные случаи ---
+                                              {1},
+                                              {-1, 5},
+                                              {5, -1},
+                                              {2, 2, 1, 2, 3},
+                                              {2, 2, 1, 2, 3, 4, 5}}};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<MaxElementMatrSEQ, InType>(kTestParam, PPC_SETTINGS_nikitina_v_max_elem_matr),
-    ppc::util::AddFuncTask<MaxElementMatrMPI, InType>(kTestParam, PPC_SETTINGS_nikitina_v_max_elem_matr));
+    ppc::util::AddFuncTask<MaxElementMatrSEQ, InType>(kTestCases, PPC_SETTINGS_nikitina_v_max_elem_matr),
+    ppc::util::AddFuncTask<MaxElementMatrMPI, InType>(kTestCases, PPC_SETTINGS_nikitina_v_max_elem_matr));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -106,71 +146,5 @@ INSTANTIATE_TEST_SUITE_P(NikitinaV_MaxElementMatr_Func, NikitinaVMaxElemMatrFunc
                          NikitinaVMaxElemMatrFuncTests::PrintTestParam);
 
 }  // namespace
-
-// ============================================================================
-// ================ ИСПРАВЛЕННЫЕ ТЕСТЫ НА НЕКОРРЕКТНУЮ ВАЛИДАЦИЮ ================
-// ============================================================================
-
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Invalid_Input_Size) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    InType invalid_input = {1};
-    // Leaking memory to avoid destructor exception
-    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
-    ASSERT_FALSE(seq_task->Validation());
-  }
-  // Leaking memory to avoid destructor exception
-  auto *mpi_task = new MaxElementMatrMPI({1});
-  bool res = mpi_task->Validation();
-  if (rank == 0) {
-    ASSERT_FALSE(res);
-  }
-}
-
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Rows) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    InType invalid_input = {-1, 5};
-    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
-    ASSERT_FALSE(seq_task->Validation());
-  }
-  auto *mpi_task = new MaxElementMatrMPI({-1, 5});
-  bool res = mpi_task->Validation();
-  if (rank == 0) {
-    ASSERT_FALSE(res);
-  }
-}
-
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Cols) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    InType invalid_input = {5, -1};
-    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
-    ASSERT_FALSE(seq_task->Validation());
-  }
-  auto *mpi_task = new MaxElementMatrMPI({5, -1});
-  bool res = mpi_task->Validation();
-  if (rank == 0) {
-    ASSERT_FALSE(res);
-  }
-}
-
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    InType invalid_input = {2, 2, 1, 2, 3};
-    auto *seq_task = new MaxElementMatrSEQ(invalid_input);
-    ASSERT_FALSE(seq_task->Validation());
-  }
-  auto *mpi_task = new MaxElementMatrMPI({2, 2, 1, 2, 3});
-  bool res = mpi_task->Validation();
-  if (rank == 0) {
-    ASSERT_FALSE(res);
-  }
-}
 
 }  // namespace nikitina_v_max_elem_matr
