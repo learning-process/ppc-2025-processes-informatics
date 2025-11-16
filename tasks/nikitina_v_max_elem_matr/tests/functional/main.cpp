@@ -7,7 +7,6 @@
 #include <random>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
 #include "nikitina_v_max_elem_matr/mpi/include/ops_mpi.hpp"
@@ -97,7 +96,7 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_output_{};
 };
 
