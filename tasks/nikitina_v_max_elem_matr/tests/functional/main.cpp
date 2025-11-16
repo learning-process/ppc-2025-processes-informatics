@@ -37,14 +37,19 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    auto task_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
+    bool is_mpi_test = task_name.find("mpi") != std::string::npos;
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int rows = std::get<1>(params);
-    int cols = std::get<2>(params);
+    int rank = 0;
+    if (is_mpi_test) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
 
     if (rank == 0) {
+      TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+      int rows = std::get<1>(params);
+      int cols = std::get<2>(params);
+
       if (rows <= 0 || cols <= 0) {
         input_data_ = {rows, cols};
         expected_output_ = std::numeric_limits<int>::min();
@@ -69,16 +74,17 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
       }
     }
 
-    int input_size = input_data_.size();
-    MPI_Bcast(&input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (is_mpi_test) {
+      int input_size = input_data_.size();
+      MPI_Bcast(&input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    if (rank != 0) {
-      input_data_.resize(input_size);
+      if (rank != 0) {
+        input_data_.resize(input_size);
+      }
+
+      MPI_Bcast(input_data_.data(), input_size, MPI_INT, 0, MPI_COMM_WORLD);
+      MPI_Bcast(&expected_output_, 1, MPI_INT, 0, MPI_COMM_WORLD);
     }
-
-    MPI_Bcast(input_data_.data(), input_size, MPI_INT, 0, MPI_COMM_WORLD);
-
-    MPI_Bcast(&expected_output_, 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
