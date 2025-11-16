@@ -2,8 +2,9 @@
 
 #include <mpi.h>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
+
 #include "zavyalov_a_scalar_product/common/include/common.hpp"
 
 namespace zavyalov_a_scalar_product {

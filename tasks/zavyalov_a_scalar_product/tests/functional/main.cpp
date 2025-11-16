@@ -3,11 +3,11 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
 #include <cmath>
+#include <cstddef>
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"

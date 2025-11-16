@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <cstdint>
-#include <vector>
-#include <tuple>
 #include <cmath>
+#include <cstdint>
+#include <tuple>
+#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "zavyalov_a_scalar_product/common/include/common.hpp"
