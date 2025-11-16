@@ -39,8 +39,9 @@ bool KrykovEWordCountMPI::RunImpl() {
   MPI_Bcast(&text_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
 
   if (text_size == 0) {
-    if (world_rank == 0)
+    if (world_rank == 0) {
       GetOutput() = 0;
+    }
     return true;
   }
 
@@ -50,7 +51,7 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   if (world_rank == 0) {
     int base = text_size / world_size;
-    int rem  = text_size % world_size;
+    int rem = text_size % world_size;
 
     int offset = 0;
     for (int i = 0; i < world_size; ++i) {
@@ -67,11 +68,8 @@ bool KrykovEWordCountMPI::RunImpl() {
   int local_size = chunk_sizes[world_rank];
   std::string local(local_size, '\0');
 
-  MPI_Scatterv(
-      world_rank == 0 ? text.data() : nullptr,
-      chunk_sizes.data(), displs.data(), MPI_CHAR,
-      local.data(), local_size, MPI_CHAR,
-      0, MPI_COMM_WORLD);
+  MPI_Scatterv(world_rank == 0 ? text.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR, local.data(),
+               local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   // ---- 4. Подсчёт внутри чанка ----
   bool in_word = false;
@@ -90,10 +88,9 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   // ---- 5. Узнаем, начинается/заканчивается ли чанк словом ----
   int starts_with_word = 0;
-  int ends_with_word   = in_word ? 1 : 0;
+  int ends_with_word = in_word ? 1 : 0;
 
-  if (local_size > 0 &&
-      !std::isspace((unsigned char)local[0])) {
+  if (local_size > 0 && !std::isspace((unsigned char)local[0])) {
     starts_with_word = 1;
   }
 
@@ -101,19 +98,13 @@ bool KrykovEWordCountMPI::RunImpl() {
   std::vector<int> all_starts(world_size, 0);
   std::vector<int> all_ends(world_size, 0);
 
-  MPI_Allgather(&starts_with_word, 1, MPI_INT,
-                all_starts.data(), 1, MPI_INT,
-                MPI_COMM_WORLD);
+  MPI_Allgather(&starts_with_word, 1, MPI_INT, all_starts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-  MPI_Allgather(&ends_with_word, 1, MPI_INT,
-                all_ends.data(), 1, MPI_INT,
-                MPI_COMM_WORLD);
+  MPI_Allgather(&ends_with_word, 1, MPI_INT, all_ends.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
   // ---- 7. Суммируем количество слов ----
   size_t total_count = 0;
-  MPI_Reduce(&local_count, &total_count, 1,
-             MPI_UNSIGNED_LONG_LONG, MPI_SUM,
-             0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_count, &total_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   // ---- 8. Коррекция пересечений чанков ----
   if (world_rank == 0) {
