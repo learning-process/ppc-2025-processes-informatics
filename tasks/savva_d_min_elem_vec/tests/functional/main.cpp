@@ -3,13 +3,8 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "savva_d_min_elem_vec/common/include/common.hpp"
@@ -24,7 +19,7 @@ class SavvaDMinElemVecFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   // тест один общий
  public:
   static std::string PrintTestParam(const TestType &test_param) {  // конструктор названия тестов
-    auto &vec = std::get<0>(test_param);
+    const auto &vec = std::get<0>(test_param);
     return "vec_size_" + std::to_string(vec.size()) + "_" + std::get<1>(test_param);
   }
 
@@ -38,7 +33,7 @@ class SavvaDMinElemVecFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     if (input_data_.empty()) {
       return false;
     }
-    int expected_min = *std::min_element(input_data_.begin(), input_data_.end());
+    int expected_min = *std::ranges::min_element(input_data_);
     return expected_min == output_data;
   }
 

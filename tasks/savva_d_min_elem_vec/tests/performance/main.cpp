@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <string>
+#include <stdexcept>
+
 #include "savva_d_min_elem_vec//common/include/common.hpp"
 #include "savva_d_min_elem_vec/mpi/include/ops_mpi.hpp"
 #include "savva_d_min_elem_vec/seq/include/ops_seq.hpp"
@@ -8,7 +12,7 @@
 namespace savva_d_min_elem_vec {
 
 class SavvaDMinElemVecPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   int expected_min_ = 0;
 
@@ -23,7 +27,7 @@ class SavvaDMinElemVecPerfTest : public ppc::util::BaseRunPerfTests<InType, OutT
     }
 
     // Читаем размер вектора
-    int vector_size;
+    int vector_size = 0;
     file >> vector_size;
 
     // Читаем ожидаемый минимум

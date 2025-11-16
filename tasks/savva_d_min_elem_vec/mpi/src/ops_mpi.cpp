@@ -2,11 +2,12 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "savva_d_min_elem_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
+
 
 namespace savva_d_min_elem_vec {
 
@@ -30,25 +31,24 @@ bool SavvaDMinElemVecMPI::RunImpl() {
     return false;
   }
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int n = input_vec.size();
+  const int n = static_cast<int>(input_vec.size());
   int elements_per_proc = n / size;
   int remainder = n % size;
 
-  int local_start = rank * elements_per_proc + std::min(rank, remainder);
+  int local_start = (rank * elements_per_proc) + std::min(rank, remainder);
   int local_end = local_start + elements_per_proc + (rank < remainder ? 1 : 0);
 
   int local_min = std::numeric_limits<int>::max();
   for (int i = local_start; i < local_end && i < n; ++i) {
-    if (input_vec[i] < local_min) {
-      local_min = input_vec[i];
-    }
+    local_min = std::min(input_vec[i], local_min);
   }
 
-  int global_min;
+  int global_min = 0;
   MPI_Allreduce(&local_min, &global_min, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 
   GetOutput() = global_min;

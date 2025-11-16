@@ -1,10 +1,10 @@
 #include "savva_d_min_elem_vec/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "savva_d_min_elem_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace savva_d_min_elem_vec {
 
@@ -29,9 +29,7 @@ bool SavvaDMinElemVecSEQ::RunImpl() {
 
   int min_val = GetInput()[0];
   for (size_t i = 1; i < GetInput().size(); ++i) {
-    if (GetInput()[i] < min_val) {
-      min_val = GetInput()[i];
-    }
+    min_val = std::min(GetInput()[i], min_val);
   }
   GetOutput() = min_val;
 
