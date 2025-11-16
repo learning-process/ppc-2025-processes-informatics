@@ -12,10 +12,9 @@ namespace sannikov_i_column_sum {
 
 SannikovIColumnSumMPI::SannikovIColumnSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  auto &dst = GetInput();
+  auto &input_buffer = GetInput();
   InType tmp(in);
-  dst.swap(tmp);
-
+  input_buffer.swap(tmp);
   GetOutput().clear();
 }
 
@@ -65,35 +64,31 @@ bool SannikovIColumnSumMPI::RunImpl() {
   if (rows <= 0 || columns <= 0) {
     return false;
   }
-  int rem = rows % size;
-  int pad = (rem == 0) ? 0 : (size - rem);
-  int total_rows = rows + pad;
-  int rows_per_proc = total_rows / size;
   std::vector<int> sendbuf;
   if (rank == 0) {
-    sendbuf.resize((total_rows * columns));
+    sendbuf.resize((rows * columns));
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < columns; j++) {
-        sendbuf[(i)*columns + j] = input_matrix[(i)][(j)];
-      }
-    }
-
-    for (int i = rows; i < total_rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        sendbuf[(i)*columns + j] = 0;
+        sendbuf[i * columns + j] = input_matrix[i][j];
       }
     }
   }
-
-  std::vector<int> recvbuf((rows_per_proc * columns), 0);
-  MPI_Scatter(rank == 0 ? sendbuf.data() : nullptr, rows_per_proc * columns, MPI_INT, recvbuf.data(),
-              rows_per_proc * columns, MPI_INT, 0, MPI_COMM_WORLD);
-  std::vector<int> sum((columns), 0);
-  for (int i = 0; i < rows_per_proc; i++) {
-    int local_id = i * columns;
-    for (int j = 0; j < columns; j++) {
-      sum[(j)] += recvbuf[local_id + j];
-    }
+  std::vector<int> elem_for_proc(size);
+  std::vector<int> id_elem(size);
+  int displacement = 0;
+  for (int i = 0; i < size; i++) {
+    elem_for_proc[i] = rows * columns / size + (i < rows * columns % size ? 1 : 0);
+    id_elem[i] = displacement;
+    displacement += elem_for_proc[i];
+  }
+  int mpi_displacement = id_elem[rank] % columns;
+  std::vector<int> buf(elem_for_proc[rank], 0);
+  MPI_Scatterv(rank == 0 ? sendbuf.data() : nullptr, elem_for_proc.data(), id_elem.data(), MPI_INT, buf.data(),
+               elem_for_proc[rank], MPI_INT, 0, MPI_COMM_WORLD);
+  std::vector<int> sum(columns, 0);
+  for (int i = 0; i < elem_for_proc[rank]; i++) {
+    int new_col = (i + mpi_displacement) % columns;
+    sum[new_col] += buf[i];
   }
   MPI_Allreduce(sum.data(), GetOutput().data(), columns, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   return !GetOutput().empty();
