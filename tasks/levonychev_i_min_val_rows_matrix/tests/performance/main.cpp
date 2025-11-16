@@ -23,6 +23,7 @@ class LevonychevIMinValRowsMatrixPerfTests : public ppc::util::BaseRunPerfTests<
       matrix[i] = i;
     }
     input_data_ = std::make_tuple(std::move(matrix), ROWS_, COLS_);
+    expected_result_.reserve(ROWS_);
     for (int i = 0; i < ROWS_ * COLS_; i += COLS_) {
       expected_result_.push_back(i);
     }
