@@ -1,6 +1,7 @@
 #include "zavyalov_a_scalar_product/seq/include/ops_seq.hpp"
 
-#include "util/include/util.hpp"
+#include <cstdlib>
+
 #include "zavyalov_a_scalar_product/common/include/common.hpp"
 
 namespace zavyalov_a_scalar_product {
@@ -12,7 +13,7 @@ ZavyalovAScalarProductSEQ::ZavyalovAScalarProductSEQ(const InType &in) {
 }
 
 bool ZavyalovAScalarProductSEQ::ValidationImpl() {
-  return (std::get<0>(GetInput()).size() > 0) && (std::get<0>(GetInput()).size() == std::get<1>(GetInput()).size());
+  return (!std::get<0>(GetInput()).empty()) && (std::get<0>(GetInput()).size() == std::get<1>(GetInput()).size());
 }
 
 bool ZavyalovAScalarProductSEQ::PreProcessingImpl() {

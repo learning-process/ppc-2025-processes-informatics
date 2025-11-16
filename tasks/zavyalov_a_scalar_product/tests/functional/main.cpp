@@ -2,8 +2,11 @@
 #include <stb/stb_image.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
+#include <cmath>
 #include <string>
+#include <vector>
 #include <tuple>
 
 #include "util/include/func_test_util.hpp"
@@ -28,8 +31,8 @@ class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
     double minus = -1.0;
     for (unsigned int i = 0; i < params; i++) {
-      left_vec[i] = i * 0.5 + 0.1;
-      right_vec[i] = double(i) + 1.0;
+      left_vec[i] = (i * 0.5) + 0.1;
+      right_vec[i] = static_cast<double>(i) + 1.0;
       right_vec[i] *= minus;
       minus *= -1.0;
     }
