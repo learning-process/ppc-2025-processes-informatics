@@ -1,8 +1,5 @@
 #include "zavyalov_a_scalar_product/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
-
 #include "util/include/util.hpp"
 #include "zavyalov_a_scalar_product/common/include/common.hpp"
 

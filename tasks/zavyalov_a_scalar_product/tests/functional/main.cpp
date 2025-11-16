@@ -2,15 +2,9 @@
 #include <stb/stb_image.h>
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -29,18 +23,18 @@ class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InTyp
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::vector<double> leftVec(params);
-    std::vector<double> rightVec(params);
+    std::vector<double> left_vec(params);
+    std::vector<double> right_vec(params);
 
     double minus = -1.0;
     for (unsigned int i = 0; i < params; i++) {
-      leftVec[i] = i * 0.5 + 0.1;
-      rightVec[i] = double(i) + 1.0;
-      rightVec[i] *= minus;
+      left_vec[i] = i * 0.5 + 0.1;
+      right_vec[i] = double(i) + 1.0;
+      right_vec[i] *= minus;
       minus *= -1.0;
     }
 
-    input_data_ = std::make_tuple(leftVec, rightVec);
+    input_data_ = std::make_tuple(left_vec, right_vec);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -67,7 +61,7 @@ TEST_P(ZavyalovAScalarProductFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u, 9u, 10u};
+const std::array<TestType, 10> kTestParam = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZavyalovAScalarProductMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_scalar_product),

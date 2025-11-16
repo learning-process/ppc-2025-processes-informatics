@@ -2,10 +2,6 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <string>
-#include <vector>
-
 #include "util/include/util.hpp"
 #include "zavyalov_a_scalar_product/common/include/common.hpp"
 
