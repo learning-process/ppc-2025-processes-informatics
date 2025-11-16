@@ -92,37 +92,30 @@ bool KrykovEWordCountMPI::RunImpl() {
     return true;
   }
 
-  // Дополняем текст пробелами до нужного размера
+  // Дополняем текст пробелами: нужно world_size - rem + 1 пробелов
   std::string padded_text = text;
   size_t text_size = text.size();
-  size_t part = (text_size + world_size - 1) / world_size;  // ceil division
-  size_t total_size = part * world_size;
+  size_t rem = text_size % static_cast<size_t>(world_size);
+  size_t total_size = text_size + (world_size - rem) + 1;
+  padded_text.append(total_size - text_size, ' ');
 
-  // Добавляем один дополнительный символ в конец для последнего процесса
-  padded_text.append(total_size - text_size + 1, ' ');
+  size_t part = padded_text.size() / static_cast<size_t>(world_size);
 
-  // Распределение данных: каждый процесс получает part символов
-  // Но последний процесс получает part + 1 символов для перекрытия
-  std::vector<int> send_counts(world_size);
+  // Каждый процесс получает part + 1 символов
+  std::vector<int> send_counts(world_size, static_cast<int>(part + 1));
   std::vector<int> displs(world_size);
 
   for (int i = 0; i < world_size; i++) {
     displs[i] = static_cast<int>(i * part);
-    send_counts[i] = static_cast<int>(part);
   }
 
-  // Последний процесс получает на 1 символ больше для перекрытия
-  send_counts[world_size - 1] = static_cast<int>(part + 1);
-
-  // Каждый процесс готовится принять максимальное количество символов
-  int recv_count = (world_rank == world_size - 1) ? static_cast<int>(part + 1) : static_cast<int>(part);
-  std::vector<char> local_buf(recv_count);
+  std::vector<char> local_buf(part + 1);
 
   // Распределяем данные
   MPI_Scatterv(world_rank == 0 ? padded_text.data() : nullptr, send_counts.data(), displs.data(), MPI_CHAR,
-               local_buf.data(), recv_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+               local_buf.data(), static_cast<int>(part + 1), MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  // Локальный подсчет: используем part символов для всех процессов
+  // Локальный подсчет
   size_t local_count = CountLocalWords(local_buf, static_cast<int>(part));
 
   // Суммируем результаты
