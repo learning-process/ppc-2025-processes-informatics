@@ -30,7 +30,8 @@ TEST_P(DorofeevIRunPerfTestProcesses, DorofeevIRunPerfModes) {
 }
 
 const auto kkAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DorofeevIMonteCarloIntegrationMPI, DorofeevIMonteCarloIntegrationSEQ>(PPC_SETTINGS_example_processes);
+    ppc::util::MakeAllPerfTasks<InType, DorofeevIMonteCarloIntegrationMPI, DorofeevIMonteCarloIntegrationSEQ>(
+        PPC_SETTINGS_example_processes);
 
 const auto kkGtestValues = ppc::util::TupleToGTestValues(kkAllPerfTasks);
 
@@ -38,5 +39,5 @@ const auto kkPerfTestName = DorofeevIRunPerfTestProcesses::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(DorofeevIRunModeTests, DorofeevIRunPerfTestProcesses, kkGtestValues, kkPerfTestName);
 
-} // namespace
+}  // namespace
 }  // namespace dorofeev_i_monte_carlo_integration_processes
