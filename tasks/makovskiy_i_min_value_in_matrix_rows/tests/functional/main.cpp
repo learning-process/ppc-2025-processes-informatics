@@ -68,6 +68,7 @@ const auto kTasks = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
 const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFuncTests>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
