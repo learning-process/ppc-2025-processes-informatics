@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <string>
+#include <tuple>
+
 #include "shkrebko_m_count_char_freq/common/include/common.hpp"
 #include "shkrebko_m_count_char_freq/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_count_char_freq/seq/include/ops_seq.hpp"
@@ -8,8 +11,8 @@
 namespace shkrebko_m_count_char_freq {
 
 class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_;
-  OutType expected_data_;
+  InType input_data_{};
+  OutType expected_data_{};
 
   void SetUp() override {
     std::string large_text;

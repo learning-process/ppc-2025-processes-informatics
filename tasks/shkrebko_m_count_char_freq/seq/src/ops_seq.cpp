@@ -1,7 +1,7 @@
 #include "shkrebko_m_count_char_freq/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <string> 
+#include <algorithm>
 
 #include "shkrebko_m_count_char_freq/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -26,7 +26,7 @@ bool ShkrebkoMCountCharFreqSEQ::RunImpl() {
   std::string str = std::get<0>(GetInput());
   std::string symbol_str = std::get<1>(GetInput());
   char symbol = symbol_str[0];
-  int result = std::count(str.begin(), str.end(), symbol);
+  auto  result = std::count(str.begin(), str.end(), symbol);
   GetOutput() = result;
   return true;
 }

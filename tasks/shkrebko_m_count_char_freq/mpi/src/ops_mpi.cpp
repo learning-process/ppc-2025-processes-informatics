@@ -2,7 +2,8 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <string>
+#include <algorithm>
 #include <vector>
 
 #include "shkrebko_m_count_char_freq/common/include/common.hpp"
@@ -31,7 +32,7 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   std::string input_text;
-  char target_char;
+  char target_char = 0;
   int total_size = 0;
 
   if (rank == 0) {
