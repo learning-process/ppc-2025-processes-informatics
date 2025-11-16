@@ -8,6 +8,7 @@
 #include "savva_d_min_elem_vec/mpi/include/ops_mpi.hpp"
 #include "savva_d_min_elem_vec/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace savva_d_min_elem_vec {
 
