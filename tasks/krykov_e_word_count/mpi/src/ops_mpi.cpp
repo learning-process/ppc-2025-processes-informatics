@@ -66,10 +66,10 @@ bool KrykovEWordCountMPI::RunImpl() {
   // Вычисление размеров чанков
   int base_size = text_size / world_size;
   int remainder = text_size % world_size;
-  
+
   std::vector<int> chunk_sizes(world_size);
   std::vector<int> displs(world_size);
-  
+
   int offset = 0;
   for (int i = 0; i < world_size; ++i) {
     chunk_sizes[i] = base_size + (i < remainder ? 1 : 0);
@@ -80,11 +80,9 @@ bool KrykovEWordCountMPI::RunImpl() {
   // Каждый процесс получает свой чанк
   int local_size = chunk_sizes[world_rank];
   std::vector<char> local_chunk(local_size);
-  
-  MPI_Scatterv(world_rank == 0 ? text.data() : nullptr,
-               chunk_sizes.data(), displs.data(), MPI_CHAR,
-               local_chunk.data(), local_size, MPI_CHAR,
-               0, MPI_COMM_WORLD);
+
+  MPI_Scatterv(world_rank == 0 ? text.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR, local_chunk.data(),
+               local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   // Локальный подсчет слов
   size_t local_count = 0;
@@ -104,7 +102,7 @@ bool KrykovEWordCountMPI::RunImpl() {
   // Важно: анализируем реальные символы на границах
   bool starts_with_letter = false;
   bool ends_with_letter = false;
-  
+
   if (local_size > 0) {
     starts_with_letter = !std::isspace(static_cast<unsigned char>(local_chunk[0]));
     ends_with_letter = !std::isspace(static_cast<unsigned char>(local_chunk[local_size - 1]));
@@ -116,16 +114,14 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   std::vector<int> all_starts(world_size);
   std::vector<int> all_ends(world_size);
-  
-  MPI_Gather(&starts_int, 1, MPI_INT, 
-             world_rank == 0 ? all_starts.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Gather(&ends_int, 1, MPI_INT, 
-             world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  MPI_Gather(&starts_int, 1, MPI_INT, world_rank == 0 ? all_starts.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&ends_int, 1, MPI_INT, world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   // Сбор локальных счетчиков
   std::vector<size_t> all_counts(world_size);
-  MPI_Gather(&local_count, 1, MPI_UNSIGNED_LONG_LONG,
-             world_rank == 0 ? all_counts.data() : nullptr, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Gather(&local_count, 1, MPI_UNSIGNED_LONG_LONG, world_rank == 0 ? all_counts.data() : nullptr, 1,
+             MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
 
   // Коррекция на процессе 0
   size_t total_count = 0;
@@ -134,7 +130,7 @@ bool KrykovEWordCountMPI::RunImpl() {
     for (size_t count : all_counts) {
       total_count += count;
     }
-    
+
     // Коррекция разделенных слов
     // Если предыдущий чанк заканчивается буквой И текущий начинается с буквы,
     // значит слово было разделено и посчитано дважды
@@ -165,7 +161,7 @@ bool KrykovEWordCountMPI::RunImpl() {
     result = GetOutput();
   }
   MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  
+
   if (world_rank != 0) {
     GetOutput() = result;
   }
