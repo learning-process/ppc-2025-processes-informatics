@@ -74,24 +74,29 @@ bool KrykovEWordCountMPI::RunImpl() {
     }
   }
 
-  // 3. Проверка начала и конца чанка
-  int starts_inside_word = 0, ends_inside_word = 0;
-  if (local_size > 0) {
-    starts_inside_word = !std::isspace((unsigned char)local[0]);
-    ends_inside_word = !std::isspace((unsigned char)local.back());
-  }
+  // 3. Определение состояния границ для коррекции
+  // Получаем первый и последний символ соседних чанков для корректной обработки границ
+  char first_char = local_size > 0 ? local[0] : ' ';
+  char last_char = local_size > 0 ? local[local_size - 1] : ' ';
 
-  std::vector<int> all_starts(world_size), all_ends(world_size);
-  MPI_Allgather(&starts_inside_word, 1, MPI_INT, all_starts.data(), 1, MPI_INT, MPI_COMM_WORLD);
-  MPI_Allgather(&ends_inside_word, 1, MPI_INT, all_ends.data(), 1, MPI_INT, MPI_COMM_WORLD);
+  // Собираем последние символы всех чанков (кроме последнего)
+  std::vector<char> prev_chars(world_size, ' ');
+  MPI_Allgather(&last_char, 1, MPI_CHAR, prev_chars.data(), 1, MPI_CHAR, MPI_COMM_WORLD);
 
+  // Собираем первые символы всех чанков (кроме первого)
+  std::vector<char> next_chars(world_size, ' ');
+  MPI_Allgather(&first_char, 1, MPI_CHAR, next_chars.data(), 1, MPI_CHAR, MPI_COMM_WORLD);
+
+  // 4. Подсчет общего количества и коррекция
   size_t total_count = 0;
   MPI_Reduce(&local_count, &total_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  // 4. Коррекция пересечений
   if (world_rank == 0) {
+    // Корректируем слова, которые были разделены между процессами
     for (int i = 1; i < world_size; ++i) {
-      if (all_ends[i - 1] && all_starts[i]) {
+      // Если последний символ предыдущего чанка не пробел и первый символ текущего чанка не пробел,
+      // значит слово было разделено между процессами и мы его посчитали дважды
+      if (!std::isspace((unsigned char)prev_chars[i - 1]) && !std::isspace((unsigned char)next_chars[i])) {
         total_count--;
       }
     }
