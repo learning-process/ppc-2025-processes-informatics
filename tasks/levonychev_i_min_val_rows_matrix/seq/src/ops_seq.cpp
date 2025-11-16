@@ -18,8 +18,8 @@ bool LevonychevIMinValRowsMatrixSEQ::ValidationImpl() {
   const size_t vector_size = std::get<0>(GetInput()).size();
   const int rows = std::get<1>(GetInput());
   const int cols = std::get<2>(GetInput());
-  return !(vector_size == 0 || rows == 0 || cols == 0 ||
-           (vector_size != static_cast<size_t>(rows) * static_cast<size_t>(cols)));
+  return vector_size != 0 && rows != 0 && cols != 0 &&
+         (vector_size == static_cast<size_t>(rows) * static_cast<size_t>(cols));
 }
 
 bool LevonychevIMinValRowsMatrixSEQ::PreProcessingImpl() {
