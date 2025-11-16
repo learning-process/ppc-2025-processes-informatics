@@ -180,6 +180,6 @@ bool KrykovEWordCountMPI::RunImpl() {
 
 bool KrykovEWordCountMPI::PostProcessingImpl() {
   return true;
-}
+}  // try 16
 
 }  // namespace krykov_e_word_count
