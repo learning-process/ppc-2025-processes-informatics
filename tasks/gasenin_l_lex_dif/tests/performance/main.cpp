@@ -12,9 +12,9 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
 
   void SetUp() override {
     // Генерируем длинные строки для тестирования производительности
-    std::string long_str1(100000000, 'a');
-    std::string long_str2(100000000, 'a');
-    long_str2[9999] = 'b';  // Различие в последнем символе
+    std::string long_str1(10000000000000000, 'a');
+    std::string long_str2(10000000000000000, 'a');
+    long_str2[5000000] = 'b';  // Различие в последнем символе
 
     input_data_ = {long_str1, long_str2};
   }
