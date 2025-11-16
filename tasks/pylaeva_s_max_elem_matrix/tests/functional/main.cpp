@@ -82,9 +82,11 @@ TEST_P(PylaevaSMaxElemMatrixFuncTests, MaxElemMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 2> kTestParam = {
+const std::array<TestType, 4> kTestParam = {
     "matrix_3x3",
     "matrix_5x5", 
+    "matrix_100x100",
+    "matrix_1000x1000"
 };
 
 const auto kTestTasksList =

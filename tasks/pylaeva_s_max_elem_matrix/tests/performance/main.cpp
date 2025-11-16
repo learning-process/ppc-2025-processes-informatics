@@ -8,12 +8,11 @@
 namespace pylaeva_s_max_elem_matrix {
 
 class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{0, {}};
   OutType expected_data_;
 
   void SetUp() override {
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_5x5.txt");
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_1000x1000.txt");
 
     std::ifstream file(filename);
     if (!file.is_open()) {
