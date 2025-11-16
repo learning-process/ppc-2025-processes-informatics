@@ -45,9 +45,9 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
     cur_res += left[i] * right[i];
   }
 
-  double globRes = 0.0;
-  MPI_Allreduce(&cur_res, &globRes, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-  GetOutput() = globRes;
+  double glob_res = 0.0;
+  MPI_Allreduce(&cur_res, &glob_res, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  GetOutput() = glob_res;
   return true;
 }
 
