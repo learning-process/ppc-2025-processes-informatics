@@ -50,11 +50,14 @@ TEST_P(MinValueRunFuncTests, MinPerRow) {
 
 namespace {
 
-const auto kTestCases = std::array<TestType, 4>{
+const auto kTestCases = std::array<TestType, 6>{
     TestType{InType{{1, 2, 3}, {4, 5, 6}}, OutType{1, 4}},
     TestType{InType{{-1, 0}, {10, 2}, {7}}, OutType{-1, 2, 7}},
     TestType{InType{{5, 5, 5}}, OutType{5}},
     TestType{InType{{8}}, OutType{8}},
+
+    TestType{InType{{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}}, OutType{1, 6, 11}},
+    TestType{InType{{100, 200, 300}, {50, 60, 70}, {10, 20, 30}, {5, 6, 7}}, OutType{100, 50, 10, 5}},
 };
 
 const auto kTasks = std::tuple_cat(
