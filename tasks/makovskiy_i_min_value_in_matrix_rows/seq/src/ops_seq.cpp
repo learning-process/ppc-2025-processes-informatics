@@ -2,14 +2,11 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <stdexcept>
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
 MinValueSEQ::MinValueSEQ(const InType &in) {
-  InType temp(in);
-  this->GetOutput() = {};
-  this->GetInput().swap(temp);
+  this->GetInput() = in;
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
@@ -28,28 +25,21 @@ bool MinValueSEQ::ValidationImpl() {
 
 bool MinValueSEQ::PreProcessingImpl() {
   const auto &mat = this->GetInput();
-  if (!mat.empty()) {
-    this->GetOutput().resize(mat.size(), 0);
-  }
+  this->GetOutput().clear();
+  this->GetOutput().resize(mat.size());
   return true;
 }
 
 bool MinValueSEQ::RunImpl() {
   const auto &mat = this->GetInput();
   auto &out = this->GetOutput();
-
-  for (const auto &row : mat) {
-    if (row.empty()) {
-      out.clear();
-      return true;
-    }
-  }
-
   for (std::size_t i = 0; i < mat.size(); ++i) {
     const auto &row = mat[i];
     int minv = row[0];
     for (std::size_t j = 1; j < row.size(); ++j) {
-      minv = std::min(minv, row[j]);
+      if (row[j] < minv) {
+        minv = row[j];
+      }
     }
     out[i] = minv;
   }

@@ -2,15 +2,12 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-#include <stdexcept>
 #include <vector>
 
 namespace makovskiy_i_min_value_in_matrix_rows {
 
 MinValueMPI::MinValueMPI(const InType &in) {
-  InType temp(in);
-  this->GetInput().swap(temp);
+  this->GetInput() = in;
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
@@ -48,23 +45,13 @@ bool MinValueMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (rank == 0) {
-    const auto &mat = this->GetInput();
-    for (const auto &row : mat) {
-      if (row.empty()) {
-        this->GetOutput().clear();
-        return true;
-      }
-    }
-  }
-
   std::vector<int> local_min_values;
 
   if (rank == 0) {
     const auto &matrix = this->GetInput();
-    const int num_rows = static_cast<int>(matrix.size());
-    const int rows_per_proc = num_rows / size;
-    const int remaining_rows = num_rows % size;
+    int num_rows = matrix.size();
+    int rows_per_proc = num_rows / size;
+    int remaining_rows = num_rows % size;
 
     int current_row_idx = 0;
     for (int i = 0; i < size; ++i) {
@@ -78,17 +65,17 @@ bool MinValueMPI::RunImpl() {
         MPI_Send(&rows_for_this_proc, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
         for (int j = 0; j < rows_for_this_proc; ++j) {
           const auto &row = matrix[current_row_idx++];
-          const int row_size = static_cast<int>(row.size());
+          int row_size = row.size();
           MPI_Send(&row_size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
           MPI_Send(row.data(), row_size, MPI_INT, i, 2, MPI_COMM_WORLD);
         }
       }
     }
   } else {
-    int num_local_rows = 0;
+    int num_local_rows;
     MPI_Recv(&num_local_rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     for (int i = 0; i < num_local_rows; ++i) {
-      int row_size = 0;
+      int row_size;
       MPI_Recv(&row_size, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       std::vector<int> received_row(row_size);
       MPI_Recv(received_row.data(), row_size, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -96,7 +83,7 @@ bool MinValueMPI::RunImpl() {
     }
   }
 
-  const int local_results_count = static_cast<int>(local_min_values.size());
+  int local_results_count = local_min_values.size();
   std::vector<int> recvcounts;
   if (rank == 0) {
     recvcounts.resize(size);
