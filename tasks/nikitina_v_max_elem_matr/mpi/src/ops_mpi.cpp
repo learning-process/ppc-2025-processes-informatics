@@ -3,28 +3,28 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <climits>
-#include <stdexcept>
+#include <cstddef>
+#include <iterator>
+#include <limits>
 #include <vector>
+
+#include "nikitina_v_max_elem_matr/common/include/common.hpp"
 
 namespace nikitina_v_max_elem_matr {
 
-MaxElementMatrMPI::MaxElementMatrMPI(const InType &in) : BaseTask() {
+MaxElementMatrMPI::MaxElementMatrMPI(const InType &in) : BaseTask(), rows_{}, cols_{}, global_max_{} {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool MaxElementMatrMPI::ValidationImpl() {
-  const auto &in_ = GetInput();
-  if (in_.size() < 2) {
+  const auto &in = GetInput();
+  if (in.size() < 2) {
     return false;
   }
-  rows = in_[0];
-  cols = in_[1];
-  if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
-    return false;
-  }
-  return true;
+  rows_ = in[0];
+  cols_ = in[1];
+  return !(rows_ < 0 || cols_ < 0 || static_cast<size_t>(rows_) * cols_ != in.size() - 2);
 }
 
 bool MaxElementMatrMPI::PreProcessingImpl() {
@@ -32,25 +32,26 @@ bool MaxElementMatrMPI::PreProcessingImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (rank == 0) {
-    const auto &in_ = GetInput();
+    const auto &in = GetInput();
     matrix_.clear();
-    if (rows > 0 && cols > 0) {
-      matrix_.reserve(rows * cols);
-      std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
+    if (rows_ > 0 && cols_ > 0) {
+      matrix_.reserve(static_cast<size_t>(rows_) * cols_);
+      std::copy(in.begin() + 2, in.end(), std::back_inserter(matrix_));
     }
   }
   return true;
 }
 
 bool MaxElementMatrMPI::RunImpl() {
-  int world_size, rank;
+  int world_size = 0;
+  int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (rows * cols == 0) {
-    global_max = INT_MIN;
+  if (static_cast<size_t>(rows_) * cols_ == 0) {
+    global_max_ = std::numeric_limits<int>::min();
   } else {
-    const int total_elements = rows * cols;
+    const int total_elements = rows_ * cols_;
     const int elements_per_proc = total_elements / world_size;
     const int remainder_elements = total_elements % world_size;
 
@@ -66,26 +67,28 @@ bool MaxElementMatrMPI::RunImpl() {
 
     std::vector<int> recv_buf(sendcounts[rank]);
 
-    MPI_Scatterv(matrix_.data(), sendcounts.data(), displs.data(), MPI_INT, recv_buf.data(), sendcounts[rank], MPI_INT,
-                 0, MPI_COMM_WORLD);
+    const int *send_buf = (rank == 0) ? matrix_.data() : nullptr;
+    const int *send_counts_buf = (rank == 0) ? sendcounts.data() : nullptr;
+    const int *displs_buf = (rank == 0) ? displs.data() : nullptr;
 
-    int local_max = (recv_buf.empty()) ? INT_MIN : recv_buf[0];
+    MPI_Scatterv(send_buf, send_counts_buf, displs_buf, MPI_INT, recv_buf.data(), sendcounts[rank], MPI_INT, 0,
+                 MPI_COMM_WORLD);
+
+    int local_max = (recv_buf.empty()) ? std::numeric_limits<int>::min() : recv_buf[0];
     for (int val : recv_buf) {
-      if (val > local_max) {
-        local_max = val;
-      }
+      local_max = std::max(local_max, val);
     }
 
-    MPI_Reduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&local_max, &global_max_, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
   }
 
-  MPI_Bcast(&global_max, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_max_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;
 }
 
 bool MaxElementMatrMPI::PostProcessingImpl() {
-  GetOutput() = global_max;
+  GetOutput() = global_max_;
   return true;
 }
 

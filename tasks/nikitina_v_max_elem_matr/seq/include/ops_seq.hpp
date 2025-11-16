@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace nikitina_v_max_elem_matr {
 
@@ -19,8 +20,9 @@ class MaxElementMatrSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int rows, cols;
-  int max_val;
+  int rows_{};
+  int cols_{};
+  int max_val_{};
   std::vector<int> matrix_;
 };
 

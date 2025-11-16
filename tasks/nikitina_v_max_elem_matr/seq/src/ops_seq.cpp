@@ -1,56 +1,54 @@
 #include "nikitina_v_max_elem_matr/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <climits>
-#include <stdexcept>
+#include <cstddef>
+#include <iterator>
+#include <limits>
+
+#include "nikitina_v_max_elem_matr/common/include/common.hpp"
 
 namespace nikitina_v_max_elem_matr {
 
-MaxElementMatrSEQ::MaxElementMatrSEQ(const InType &in) : BaseTask() {
+MaxElementMatrSEQ::MaxElementMatrSEQ(const InType &in) : BaseTask(), rows_{}, cols_{}, max_val_{} {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool MaxElementMatrSEQ::ValidationImpl() {
-  const auto &in_ = GetInput();
-  if (in_.size() < 2) {
+  const auto &in = GetInput();
+  if (in.size() < 2) {
     return false;
   }
-  rows = in_[0];
-  cols = in_[1];
-  if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
-    return false;
-  }
-  return true;
+  rows_ = in[0];
+  cols_ = in[1];
+  return !(rows_ < 0 || cols_ < 0 || static_cast<size_t>(rows_) * cols_ != in.size() - 2);
 }
 
 bool MaxElementMatrSEQ::PreProcessingImpl() {
-  const auto &in_ = GetInput();
+  const auto &in = GetInput();
   matrix_.clear();
-  if (rows > 0 && cols > 0) {
-    matrix_.reserve(rows * cols);
-    std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
+  if (rows_ > 0 && cols_ > 0) {
+    matrix_.reserve(static_cast<size_t>(rows_) * cols_);
+    std::copy(in.begin() + 2, in.end(), std::back_inserter(matrix_));
   }
-  max_val = INT_MIN;
+  max_val_ = std::numeric_limits<int>::min();
   return true;
 }
 
 bool MaxElementMatrSEQ::RunImpl() {
   if (matrix_.empty()) {
-    max_val = INT_MIN;
+    max_val_ = std::numeric_limits<int>::min();
     return true;
   }
-  max_val = matrix_[0];
+  max_val_ = matrix_[0];
   for (size_t i = 1; i < matrix_.size(); ++i) {
-    if (matrix_[i] > max_val) {
-      max_val = matrix_[i];
-    }
+    max_val_ = std::max(max_val_, matrix_[i]);
   }
   return true;
 }
 
 bool MaxElementMatrSEQ::PostProcessingImpl() {
-  GetOutput() = max_val;
+  GetOutput() = max_val_;
   return true;
 }
 

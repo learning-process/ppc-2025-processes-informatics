@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <array>
-#include <climits>
+#include <cstddef>
+#include <limits>
 #include <random>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
 #include "nikitina_v_max_elem_matr/mpi/include/ops_mpi.hpp"
@@ -38,33 +37,48 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int rows = std::get<1>(params);
     int cols = std::get<2>(params);
 
-    if (rows <= 0 || cols <= 0) {
-      input_data_ = {rows, cols};
-      expected_output_ = INT_MIN;
-      return;
-    }
+    if (rank == 0) {
+      if (rows <= 0 || cols <= 0) {
+        input_data_ = {rows, cols};
+        expected_output_ = std::numeric_limits<int>::min();
+      } else {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> distrib(-1000, 1000);
+        int max_val = std::numeric_limits<int>::min();
 
-    std::mt19937 gen(1);
-    std::uniform_int_distribution<> distrib(-1000, 1000);
-    int max_val = INT_MIN;
+        InType generated_matr(2 + static_cast<size_t>(rows) * cols);
+        generated_matr[0] = rows;
+        generated_matr[1] = cols;
 
-    InType generated_matr(2 + rows * cols);
-    generated_matr[0] = rows;
-    generated_matr[1] = cols;
-
-    for (int i = 0; i < rows * cols; ++i) {
-      generated_matr[i + 2] = distrib(gen);
-      if (i == 0 || generated_matr[i + 2] > max_val) {
-        max_val = generated_matr[i + 2];
+        for (int i = 0; i < rows * cols; ++i) {
+          generated_matr[i + 2] = distrib(gen);
+          if (i == 0 || generated_matr[i + 2] > max_val) {
+            max_val = generated_matr[i + 2];
+          }
+        }
+        input_data_ = generated_matr;
+        expected_output_ = max_val;
       }
     }
 
-    input_data_ = generated_matr;
-    expected_output_ = max_val;
+    int input_size = input_data_.size();
+    MPI_Bcast(&input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank != 0) {
+      input_data_.resize(input_size);
+    }
+
+    MPI_Bcast(input_data_.data(), input_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+    MPI_Bcast(&expected_output_, 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
@@ -76,8 +90,8 @@ class NikitinaVMaxElemMatrFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_{};
-  OutType expected_output_{};
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
@@ -101,7 +115,7 @@ INSTANTIATE_TEST_SUITE_P(NikitinaV_MaxElementMatr_Func, NikitinaVMaxElemMatrFunc
 
 }  // namespace
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Empty_Input) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnEmptyInput) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
@@ -116,7 +130,7 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Empty_Input) {
   }
 }
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Too_Small_Input) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnTooSmallInput) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
@@ -131,7 +145,7 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Too_Small_Input) {
   }
 }
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Rows) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnNegativeRows) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
@@ -146,7 +160,7 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Rows) {
   }
 }
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Cols) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnNegativeCols) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
@@ -161,7 +175,7 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Negative_Cols) {
   }
 }
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Both_Negative_Dims) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnBothNegativeDims) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
@@ -176,7 +190,7 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Both_Negative_Dims) {
   }
 }
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch_Too_Few) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnSizeMismatchTooFew) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
@@ -191,7 +205,7 @@ TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch_Too_Few) {
   }
 }
 
-TEST(NikitinaVMaxElemMatrValidation, Fails_On_Size_Mismatch_Too_Many) {
+TEST(NikitinaVMaxElemMatrValidation, FailsOnSizeMismatchTooMany) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
