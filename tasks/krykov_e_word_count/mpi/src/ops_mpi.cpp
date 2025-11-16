@@ -28,41 +28,64 @@ bool KrykovEWordCountMPI::PreProcessingImpl() {
 }
 
 bool KrykovEWordCountMPI::RunImpl() {
-  int rank = 0;
-  int size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  const std::string &text = GetInput();
+  int world_size = 0;
+  int world_rank = 0;
 
-  const std::string &input = GetInput();
-  const size_t total_length = input.size();
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  // Разделяем строку на подстроки для каждого процесса
-  size_t chunk_size = total_length / size;
-  size_t start = rank * chunk_size;
-  size_t end = (rank == size - 1) ? total_length : start + chunk_size;
+  // ------------------------------
+  // 1. Проверка пустого ввода
+  // ------------------------------
+  size_t text_size = text.size();
+  MPI_Bcast(&text_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
 
-  // Корректируем границы, чтобы не разорвать слова
-  // Если не первый процесс и текущий символ не пробел, отодвигаем начало до следующего пробела
-  if (rank != 0 && start < total_length) {
-    while (start < total_length && !std::isspace(static_cast<unsigned char>(input[start]))) {
-      start++;
+  if (text_size == 0) {
+    if (world_rank == 0) {
+      GetOutput() = 0;
     }
-  }
-  // Если не последний процесс и не дошли до конца, продлеваем кусок до ближайшего пробела
-  if (rank != size - 1 && end < total_length) {
-    while (end < total_length && !std::isspace(static_cast<unsigned char>(input[end]))) {
-      end++;
-    }
+    return true;
   }
 
-  // Подстрока для данного процесса
-  std::string local_str = input.substr(start, end - start);
+  // ------------------------------
+  // 2. Раздача размеров чанков
+  // ------------------------------
+  std::vector<int> chunk_sizes(world_size, 0);
+  std::vector<int> displs(world_size, 0);
 
-  // Подсчёт слов в локальной части
-  size_t local_count = 0;
+  if (world_rank == 0) {
+    int base = text_size / world_size;
+    int rem = text_size % world_size;
+
+    int offset = 0;
+    for (int i = 0; i < world_size; ++i) {
+      chunk_sizes[i] = base + (i < rem ? 1 : 0);
+      displs[i] = offset;
+      offset += chunk_sizes[i];
+    }
+  }
+
+  // Рассылаем размеры
+  MPI_Bcast(chunk_sizes.data(), world_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  // ------------------------------
+  // 3. Получаем локальный чанк
+  // ------------------------------
+  int local_size = chunk_sizes[world_rank];
+  std::string local(local_size, '\0');
+
+  MPI_Scatterv(world_rank == 0 ? text.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR, local.data(),
+               local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  // ------------------------------
+  // 4. Локальный подсчёт слов
+  // ------------------------------
   bool in_word = false;
-  for (char ch : local_str) {
-    if (std::isspace(static_cast<unsigned char>(ch))) {
+  size_t local_count = 0;
+
+  for (char c : local) {
+    if (std::isspace(static_cast<unsigned char>(c))) {
       if (in_word) {
         in_word = false;
       }
@@ -74,15 +97,49 @@ bool KrykovEWordCountMPI::RunImpl() {
     }
   }
 
-  // Суммируем количество слов со всех процессов
-  size_t global_count = 0;
-  MPI_Reduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  // ------------------------------------------------------------
+  // 5. Коррекция границы между чанками
+  // ------------------------------------------------------------
+  // Если наш чанк начинается НЕ с начала текста
+  // нужно спросить у предыдущего чанка, заканчивался ли он словом
 
-  if (rank == 0) {
-    GetOutput() = global_count;
+  int starts_with_word = 0;  // 1 если local[0] не пробел и мы в начале слова
+  if (local_size > 0 && !std::isspace(static_cast<unsigned char>(local[0]))) {
+    starts_with_word = 1;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  // Узнать, заканчивался ли предыдущий блок словом
+  int prev_ended_in_word = 0;
+
+  if (world_rank > 0) {
+    // Получаем флаг от предыдущего процесса
+    MPI_Recv(&prev_ended_in_word, 1, MPI_INT, world_rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
+
+  // Проверяем, заканчиваемся ли мы словом
+  int ended_in_word = in_word ? 1 : 0;
+
+  // Посылаем свой ended_in_word следующему процессу
+  if (world_rank < world_size - 1) {
+    MPI_Send(&ended_in_word, 1, MPI_INT, world_rank + 1, 0, MPI_COMM_WORLD);
+  }
+
+  // Если начало нашего чанка выглядит как начало слова,
+  // но предыдущий чанк заканчивался словом — значит мы *не начинаем новое слово*
+  if (starts_with_word && prev_ended_in_word) {
+    local_count--;
+  }
+
+  // ------------------------------
+  // 6. Суммирование результата
+  // ------------------------------
+  size_t total_count = 0;
+  MPI_Reduce(&local_count, &total_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if (world_rank == 0) {
+    GetOutput() = total_count;
+  }
+
   return true;
 }
 
