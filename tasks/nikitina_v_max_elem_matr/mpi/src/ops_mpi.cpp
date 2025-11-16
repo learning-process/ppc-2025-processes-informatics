@@ -35,15 +35,10 @@ bool MaxElementMatrMPI::ValidationImpl() {
 
   MPI_Bcast(&validation_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  validation_passed = (validation_result == 1);
-  return validation_passed;
+  return validation_result == 1;
 }
 
 bool MaxElementMatrMPI::PreProcessingImpl() {
-  if (!validation_passed) {
-    return true;
-  }
-
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -51,8 +46,8 @@ bool MaxElementMatrMPI::PreProcessingImpl() {
     const auto &in_ = GetInput();
     rows = in_[0];
     cols = in_[1];
+    matrix_.clear();
     if (rows > 0 && cols > 0) {
-      matrix_.clear();
       matrix_.reserve(rows * cols);
       std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
     }
@@ -65,10 +60,6 @@ bool MaxElementMatrMPI::PreProcessingImpl() {
 }
 
 bool MaxElementMatrMPI::RunImpl() {
-  if (!validation_passed) {
-    return true;
-  }
-
   int world_size, rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

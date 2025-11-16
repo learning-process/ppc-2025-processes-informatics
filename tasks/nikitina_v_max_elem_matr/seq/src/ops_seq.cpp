@@ -14,27 +14,21 @@ MaxElementMatrSEQ::MaxElementMatrSEQ(const InType &in) : BaseTask() {
 bool MaxElementMatrSEQ::ValidationImpl() {
   const auto &in_ = GetInput();
   if (in_.size() < 2) {
-    validation_passed = false;
     return false;
   }
   rows = in_[0];
   cols = in_[1];
   if (rows < 0 || cols < 0 || static_cast<size_t>(rows * cols) != in_.size() - 2) {
-    validation_passed = false;
     return false;
   }
-  validation_passed = true;
   return true;
 }
 
 bool MaxElementMatrSEQ::PreProcessingImpl() {
-  if (!validation_passed) {
-    return true;
-  }
+  const auto &in_ = GetInput();
   matrix_.clear();
   if (rows > 0 && cols > 0) {
     matrix_.reserve(rows * cols);
-    const auto &in_ = GetInput();
     std::copy(in_.begin() + 2, in_.end(), std::back_inserter(matrix_));
   }
   max_val = INT_MIN;
@@ -42,9 +36,6 @@ bool MaxElementMatrSEQ::PreProcessingImpl() {
 }
 
 bool MaxElementMatrSEQ::RunImpl() {
-  if (!validation_passed) {
-    return true;
-  }
   if (matrix_.empty()) {
     max_val = INT_MIN;
     return true;

@@ -22,7 +22,6 @@ class MaxElementMatrSEQ : public BaseTask {
   int rows, cols;
   int max_val;
   std::vector<int> matrix_;
-  bool validation_passed = false;  // <--- ДОБАВЛЕНО
 };
 
 }  // namespace nikitina_v_max_elem_matr

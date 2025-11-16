@@ -22,7 +22,6 @@ class MaxElementMatrMPI : public BaseTask {
   int rows, cols;
   int global_max;
   std::vector<int> matrix_;
-  bool validation_passed = false;  // <--- ДОБАВЛЕНО
 };
 
 }  // namespace nikitina_v_max_elem_matr
