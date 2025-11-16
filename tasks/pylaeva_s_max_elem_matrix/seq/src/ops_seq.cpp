@@ -24,8 +24,8 @@ bool PylaevaSMaxElemMatrixSEQ::PreProcessingImpl() {
 }
 
 bool PylaevaSMaxElemMatrixSEQ::RunImpl() {
+  const auto& matrix_size = static_cast<size_t>(std::get<0>(GetInput()));
   const auto& matrix_data = std::get<1>(GetInput());
-  const auto& matrix_size = std::get<0>(GetInput());
   
   if (matrix_data.empty() || matrix_size == 0 || matrix_data.size()!=matrix_size) {
     return false;

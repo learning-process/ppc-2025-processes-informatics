@@ -20,17 +20,25 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Cannot open file: " + filename);
     }
     
-    size_t size = 0;
+    size_t rows;
+    size_t columns;
+    size_t size;
     std::vector<int> input;
-    input.reserve(size);
+    
     int max;
 
-    file >> size;
+    file >> rows;
+    file >> columns;
     file >> max;
 
-    int elem = 0;
-    while (file >> elem) {
-      input.push_back(elem);
+    size = rows * columns;
+
+    input.resize(size);
+
+    for (size_t i = 0; i < size; ++i) {
+      if (!(file >> input[i])) {
+          throw std::runtime_error("Not enough elements in file");
+      }
     }
 
     input_data_ = std::make_tuple(size, input);
