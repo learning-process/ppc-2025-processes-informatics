@@ -17,7 +17,6 @@ class LevonychevIMinValRowsMatrixMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static void SetLocalRows(int rows, int cols, int proc_rank, int proc_num, int *local_rows, int *start_id);
 };
 
 }  // namespace levonychev_i_min_val_rows_matrix

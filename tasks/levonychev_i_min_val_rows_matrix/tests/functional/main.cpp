@@ -19,7 +19,7 @@ class LevonychevIMinValRowsMatrixFuncTests : public ppc::util::BaseRunFuncTests<
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     bool reverse = std::get<0>(test_param);
-    std::string flag = "";
+    std::string flag;
     if (reverse) {
       flag = "reverse";
     } else {
