@@ -139,7 +139,7 @@ std::vector<TestType> GetTestParamsFromData() {
       continue;
     }
 
-    const std::string stem = path.stem().string();  // e.g. "test7"
+    const std::string stem = path.stem().string();
     constexpr std::string_view kPrefix = "test";
     if (!stem.starts_with(kPrefix)) {
       continue;
