@@ -36,20 +36,20 @@ void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, in
   }
 
   const int local_n = static_cast<int>(local.size());
-  const int pn = counts[partner];
+  const int partner_n = counts[partner];
 
-  std::vector<int> recvbuf(pn);
+  std::vector<int> recvbuf(partner_n);
 
-  MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 0, recvbuf.data(), pn, MPI_INT, partner, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+  MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 2, recvbuf.data(), partner_n, MPI_INT, partner, 2,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  std::vector<int> merged(local_n + pn);
+  std::vector<int> merged(local_n + partner_n);
   std::ranges::merge(local, recvbuf, merged.begin());
 
   if (rank < partner) {
     std::ranges::copy(merged | std::views::take(local_n), local.begin());
   } else {
-    std::ranges::copy(merged | std::views::drop(pn), local.begin());
+    std::ranges::copy(merged | std::views::drop(partner_n), local.begin());
   }
 }
 
