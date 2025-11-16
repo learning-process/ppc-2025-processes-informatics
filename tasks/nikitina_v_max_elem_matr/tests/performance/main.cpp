@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <limits>
 #include <random>
-#include <vector>
 
 #include "nikitina_v_max_elem_matr/common/include/common.hpp"
 #include "nikitina_v_max_elem_matr/mpi/include/ops_mpi.hpp"
@@ -47,7 +46,7 @@ class NikitinaVMaxElemMatrPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_output_{};
 };
 
