@@ -6,7 +6,8 @@
 namespace makovskiy_i_min_value_in_matrix_rows {
 
 MinValueSEQ::MinValueSEQ(const InType &in) {
-  this->GetInput() = in;
+  InType temp(in);
+  this->GetInput().swap(temp);
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
