@@ -1,7 +1,7 @@
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <limits>
+#include <cstddef>  // для size_t
 #include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
@@ -19,7 +19,7 @@ bool MinValueSEQ::ValidationImpl() {
   if (mat.empty()) {
     return false;
   }
-  return std::all_of(mat.begin(), mat.end(), [](const auto &row) { return !row.empty(); });
+  return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
 }
 
 bool MinValueSEQ::PreProcessingImpl() {
@@ -34,7 +34,9 @@ bool MinValueSEQ::RunImpl() {
   auto &out = this->GetOutput();
   for (size_t i = 0; i < mat.size(); ++i) {
     const auto &row = mat[i];
-    out[i] = *std::min_element(row.begin(), row.end());
+    if (!row.empty()) {
+      out[i] = *std::ranges::min_element(row);
+    }
   }
   return true;
 }

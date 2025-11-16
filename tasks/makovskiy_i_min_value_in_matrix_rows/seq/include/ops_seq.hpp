@@ -7,6 +7,7 @@ namespace makovskiy_i_min_value_in_matrix_rows {
 
 class MinValueSEQ : public BaseTask {
  public:
+  // ---> ИСПРАВЛЕНИЕ: Заменено '.' на '::' <---
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }

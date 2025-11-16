@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <cstddef>
+#include <vector>
+
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_min_value_in_matrix_rows/seq/include/ops_seq.hpp"
@@ -31,7 +34,7 @@ class MinValuePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
-      int rank;
+      int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if (rank != 0) {
         return true;
@@ -56,6 +59,7 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = MinValuePerfTests::CustomPerfTestName;
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MinValuePerf, MinValuePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace

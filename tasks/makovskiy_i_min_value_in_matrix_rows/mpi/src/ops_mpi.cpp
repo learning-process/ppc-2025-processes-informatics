@@ -3,12 +3,29 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <numeric>
 #include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
 
 namespace makovskiy_i_min_value_in_matrix_rows {
+
+// Статическая вспомогательная функция, видимая только в этом файле,
+// чтобы избежать ошибки -Wmissing-declarations.
+static void SendDataToWorkers(const InType &matrix, int size, int rows_per_proc, int remaining_rows,
+                              int &current_row_idx) {
+  for (int i = 1; i < size; ++i) {  // Начинаем с 1, так как 0 - это главный процесс
+    const int rows_for_this_proc = rows_per_proc + (i < remaining_rows ? 1 : 0);
+    MPI_Send(&rows_for_this_proc, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+    for (int j = 0; j < rows_for_this_proc; ++j) {
+      const auto &row = matrix[current_row_idx++];
+      const auto row_size = static_cast<int>(row.size());
+      MPI_Send(&row_size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+      if (row_size > 0) {
+        MPI_Send(row.data(), row_size, MPI_INT, i, 2, MPI_COMM_WORLD);
+      }
+    }
+  }
+}
 
 void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
   const auto &matrix = this->GetInput();
@@ -22,28 +39,20 @@ void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
   const auto num_rows = static_cast<int>(matrix.size());
   const int rows_per_proc = num_rows / size;
   const int remaining_rows = num_rows % size;
-
   int current_row_idx = 0;
-  for (int i = 0; i < size; ++i) {
-    const int rows_for_this_proc = rows_per_proc + (i < remaining_rows ? 1 : 0);
-    if (i == 0) {
-      for (int j = 0; j < rows_for_this_proc; ++j) {
-        const auto &row = matrix[current_row_idx++];
-        if (!row.empty()) {
-          local_min_values.push_back(*std::min_element(row.begin(), row.end()));
-        }
-      }
-    } else {
-      MPI_Send(&rows_for_this_proc, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-      for (int j = 0; j < rows_for_this_proc; ++j) {
-        const auto &row = matrix[current_row_idx++];
-        const auto row_size = static_cast<int>(row.size());
-        MPI_Send(&row_size, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
-        if (row_size > 0) {
-          MPI_Send(row.data(), row_size, MPI_INT, i, 2, MPI_COMM_WORLD);
-        }
-      }
+
+  // 1. Главный процесс обрабатывает свою часть данных
+  const int rows_for_root = rows_per_proc + (0 < remaining_rows ? 1 : 0);
+  for (int j = 0; j < rows_for_root; ++j) {
+    const auto &row = matrix[current_row_idx++];
+    if (!row.empty()) {
+      local_min_values.push_back(*std::ranges::min_element(row));
     }
+  }
+
+  // 2. Отправляем данные остальным процессам
+  if (size > 1) {
+    SendDataToWorkers(matrix, size, rows_per_proc, remaining_rows, current_row_idx);
   }
 }
 
@@ -56,7 +65,7 @@ void MinValueMPI::ProcessWorkerRank(std::vector<int> &local_min_values) {
     if (row_size > 0) {
       std::vector<int> received_row(row_size);
       MPI_Recv(received_row.data(), row_size, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      local_min_values.push_back(*std::min_element(received_row.begin(), received_row.end()));
+      local_min_values.push_back(*std::ranges::min_element(received_row));
     }
   }
 }
@@ -103,7 +112,7 @@ bool MinValueMPI::ValidationImpl() {
     if (mat.empty()) {
       return false;
     }
-    return std::all_of(mat.begin(), mat.end(), [](const auto &row) { return !row.empty(); });
+    return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
   }
   return true;
 }
