@@ -12,7 +12,6 @@ class GaseninLLexDifSEQ : public BaseTask {
   }
   explicit GaseninLLexDifSEQ(const InType &in);
 
-  // Статические методы для работы с пользовательским вводом
   static InType ReadInteractive();
   static InType ReadFromFile(const std::string &filename);
   static void PrintResult(const InType &input, OutType result);

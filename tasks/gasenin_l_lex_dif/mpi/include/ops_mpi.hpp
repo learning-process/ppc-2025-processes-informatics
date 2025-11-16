@@ -23,7 +23,6 @@ class GaseninLLexDifMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // Вспомогательные методы
   void RunSequentialComparison(const std::string &str1, const std::string &str2);
   bool RunParallelComparison(const std::string &str1, const std::string &str2, int rank, int size);
 };

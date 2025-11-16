@@ -30,7 +30,6 @@ bool GaseninLLexDifSEQ::PreProcessingImpl() {
 bool GaseninLLexDifSEQ::RunImpl() {
   const auto &[str1, str2] = GetInput();
 
-  // Оптимизированное лексикографическое сравнение
   size_t min_len = std::min(str1.length(), str2.length());
 
   for (size_t i = 0; i < min_len; ++i) {
@@ -40,7 +39,6 @@ bool GaseninLLexDifSEQ::RunImpl() {
     }
   }
 
-  // Если дошли до конца, сравниваем длины
   if (str1.length() < str2.length()) {
     GetOutput() = -1;
   } else if (str1.length() > str2.length()) {
@@ -70,7 +68,6 @@ InType GaseninLLexDifSEQ::ReadInteractive() {
     throw std::runtime_error("Ошибка чтения второй строки");
   }
 
-  // Обрезаем строки если превысили лимит
   if (input.first.length() > 10000) {
     input.first = input.first.substr(0, 10000);
     std::cout << "Предупреждение: первая строка обрезана до 10000 символов\n";
@@ -102,7 +99,6 @@ InType GaseninLLexDifSEQ::ReadFromFile(const std::string &filename) {
 
   file.close();
 
-  // Обрезаем строки если превысили лимит
   if (input.first.length() > 10000) {
     input.first = input.first.substr(0, 10000);
   }
@@ -133,13 +129,11 @@ void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
       std::cout << "Результат: Неизвестный результат\n";
   }
 
-  // Дополнительная информация
   std::cout << "\n--- Дополнительная информация ---\n";
   std::cout << "Длина первой строки: " << input.first.length() << " символов\n";
   std::cout << "Длина второй строки: " << input.second.length() << " символов\n";
 
   if (result != 0) {
-    // Найдем позицию первого различия
     size_t min_len = std::min(input.first.length(), input.second.length());
     size_t diff_pos = min_len;
 
@@ -189,7 +183,6 @@ int main(int argc, char *argv[]) {
   try {
     gasenin_l_lex_dif::InType input;
 
-    // Определяем режим работы
     if (argc > 1) {
       std::string arg = argv[1];
       if (arg == "--file" || arg == "-f") {
@@ -211,11 +204,9 @@ int main(int argc, char *argv[]) {
         return 1;
       }
     } else {
-      // Интерактивный режим
       input = gasenin_l_lex_dif::GaseninLLexDifSEQ::ReadInteractive();
     }
 
-    // Создаем и выполняем задачу
     gasenin_l_lex_dif::GaseninLLexDifSEQ task(input);
 
     if (!task.Validation()) {
@@ -238,7 +229,6 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    // Выводим результат
     gasenin_l_lex_dif::GaseninLLexDifSEQ::PrintResult(input, task.GetOutput());
 
   } catch (const std::exception &e) {

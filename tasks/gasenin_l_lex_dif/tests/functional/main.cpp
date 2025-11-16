@@ -58,10 +58,10 @@ class GaseninLRunFuncTestsLexDif : public ppc::util::BaseRunFuncTests<InType, Ou
       expected_output_ = -1;
     } else if (test_name == "unicode_test") {
       input_data_ = {"привет", "пока"};
-      expected_output_ = 1;  // 'р' > 'о' в Unicode
+      expected_output_ = 1;
     } else if (test_name == "case_sensitive") {
       input_data_ = {"Apple", "apple"};
-      expected_output_ = -1;  // 'A' < 'a' в ASCII
+      expected_output_ = -1;
     } else {
       input_data_ = {"test", "test"};
       expected_output_ = 0;

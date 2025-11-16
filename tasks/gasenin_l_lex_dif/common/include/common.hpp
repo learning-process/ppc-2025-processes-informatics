@@ -8,7 +8,7 @@
 namespace gasenin_l_lex_dif {
 
 using InType = std::pair<std::string, std::string>;
-using OutType = int;  // -1: первая меньше, 0: равны, 1: первая больше
+using OutType = int;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
