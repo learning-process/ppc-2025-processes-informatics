@@ -50,12 +50,12 @@ bool IsWordChar(char c) {
     }
   }*/
 
-  // Коррекция: если слово продолжается в дополнительном символе, значит мы его разделили
-  if (in_word && IsWordChar(local_buf[part_size])) {
-    count--;
-  }
+// Коррекция: если слово продолжается в дополнительном символе, значит мы его разделили
+if (in_word && IsWordChar(local_buf[part_size])) {
+  count--;
+}
 
-  return count;
+return count;
 }
 
 }  // namespace
