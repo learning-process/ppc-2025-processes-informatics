@@ -2,13 +2,13 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <limits>
 #include <string>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace gasenin_l_lex_dif {
 
@@ -147,7 +147,7 @@ void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
     if (diff_pos < min_len) {
       std::cout << "Первое различие на позиции: " << diff_pos << "\n";
       std::cout << "Символ в первой строке: '";
-      if (std::isprint(input.first[diff_pos])) {
+      if (std::isprint(static_cast<unsigned char>(input.first[diff_pos]))) {
         std::cout << input.first[diff_pos];
       } else {
         std::cout << "\\x" << std::hex << static_cast<int>(input.first[diff_pos]);
@@ -155,7 +155,7 @@ void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
       std::cout << "' (код: " << std::dec << static_cast<int>(input.first[diff_pos]) << ")\n";
 
       std::cout << "Символ во второй строке: '";
-      if (std::isprint(input.second[diff_pos])) {
+      if (std::isprint(static_cast<unsigned char>(input.second[diff_pos]))) {
         std::cout << input.second[diff_pos];
       } else {
         std::cout << "\\x" << std::hex << static_cast<int>(input.second[diff_pos]);

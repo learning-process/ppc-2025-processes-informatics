@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
 #include "task/include/task.hpp"

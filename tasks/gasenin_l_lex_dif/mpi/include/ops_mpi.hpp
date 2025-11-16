@@ -5,10 +5,10 @@
 
 namespace gasenin_l_lex_dif {
 
-struct DiffInfo {
+/*struct DiffInfo {
   size_t pos;
   int result;
-};
+};*/
 
 class GaseninLLexDifMPI : public BaseTask {
  public:
@@ -23,8 +23,8 @@ class GaseninLLexDifMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void RunSequentialComparison(const std::string &str1, const std::string &str2);
-  bool RunParallelComparison(const std::string &str1, const std::string &str2, int rank, int size);
+  // void RunSequentialComparison(const std::string &str1, const std::string &str2);
+  // bool RunParallelComparison(const std::string &str1, const std::string &str2, int rank, int size);
 };
 
 }  // namespace gasenin_l_lex_dif

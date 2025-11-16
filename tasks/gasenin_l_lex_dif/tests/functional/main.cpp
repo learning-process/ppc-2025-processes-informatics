@@ -62,6 +62,15 @@ class GaseninLRunFuncTestsLexDif : public ppc::util::BaseRunFuncTests<InType, Ou
     } else if (test_name == "case_sensitive") {
       input_data_ = {"Apple", "apple"};
       expected_output_ = -1;
+    } else if (test_name == "max_len_equal") {  // НОВЫЙ ТЕСТ: Максимальная длина, равны
+      std::string long_str(10000, 'a');
+      input_data_ = {long_str, long_str};
+      expected_output_ = 0;
+    } else if (test_name == "max_len_diff_end") {  // НОВЫЙ ТЕСТ: Максимальная длина, различие в конце
+      std::string str1 = std::string(9999, 'a') + 'b';
+      std::string str2 = std::string(9999, 'a') + 'c';
+      input_data_ = {str1, str2};
+      expected_output_ = -1;
     } else {
       input_data_ = {"test", "test"};
       expected_output_ = 0;
@@ -87,11 +96,13 @@ TEST_P(GaseninLRunFuncTestsLexDif, LexicographicComparison) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {
-    std::make_tuple(1, "apple_banana"),     std::make_tuple(2, "hello_hello"),  std::make_tuple(3, "zebra_apple"),
-    std::make_tuple(4, "empty_first"),      std::make_tuple(5, "empty_second"), std::make_tuple(6, "both_empty"),
-    std::make_tuple(7, "different_length"), std::make_tuple(8, "same_prefix"),  std::make_tuple(9, "unicode_test"),
-    std::make_tuple(10, "case_sensitive")};
+// Увеличение массива до 12 тестов
+const std::array<TestType, 12> kTestParam = {
+    std::make_tuple(1, "apple_banana"),     std::make_tuple(2, "hello_hello"),    std::make_tuple(3, "zebra_apple"),
+    std::make_tuple(4, "empty_first"),      std::make_tuple(5, "empty_second"),   std::make_tuple(6, "both_empty"),
+    std::make_tuple(7, "different_length"), std::make_tuple(8, "same_prefix"),    std::make_tuple(9, "unicode_test"),
+    std::make_tuple(10, "case_sensitive"),  std::make_tuple(11, "max_len_equal"),  // НОВЫЙ ЭЛЕМЕНТ
+    std::make_tuple(12, "max_len_diff_end")};                                      // НОВЫЙ ЭЛЕМЕНТ
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GaseninLLexDifMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_lex_dif),
