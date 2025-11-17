@@ -17,7 +17,7 @@ namespace krykov_e_word_count {
 
 class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  KrykovEWordCountFuncTests() = default;
+  KrykovEWordCountFuncTests() : input_data_(), expected_output_() {}
 
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
