@@ -25,14 +25,13 @@ bool KutuzovIElemVecAverageMPI::PreProcessingImpl() {
 }
 
 bool KutuzovIElemVecAverageMPI::RunImpl() {
-
-  const auto& input = GetInput();
+  const auto &input = GetInput();
 
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   double global_sum = 0.0;
-  
+
   int num_processes;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
@@ -43,14 +42,16 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   MPI_Scatter(input.data(), batch_size, MPI_DOUBLE, recv_buffer.data(), batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double sum = 0.0;
-  for (size_t i = 0; i < batch_size; i++)
+  for (size_t i = 0; i < batch_size; i++) {
     sum += recv_buffer[i];
+  }
 
   MPI_Reduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    for (size_t i = num_processes * batch_size; i < input.size(); i++)
+    for (size_t i = num_processes * batch_size; i < input.size(); i++) {
       global_sum += input[i];
+    }
 
     GetOutput() = global_sum / input.size();
   }

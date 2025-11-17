@@ -28,19 +28,19 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
  protected:
   void SetUp() override {
-    
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::vector<double>(param);
 
-    for (size_t i = 0; i < param; i++)
+    for (size_t i = 0; i < param; i++) {
       input_data_[i] = i * i - (double)param / 2;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-
     double average = 0.0;
-    for (size_t i = 0; i < input_data_.size(); i++)
+    for (size_t i = 0; i < input_data_.size(); i++) {
       average += input_data_[i];
+    }
 
     average /= input_data_.size();
 
@@ -63,9 +63,9 @@ TEST_P(KutuzovIElemVecAverageFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 4> kTestParam = {1, 10, 1000, 10000};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KutuzovIElemVecAverageMPI, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_elem_vec_average),
-                   ppc::util::AddFuncTask<KutuzovIElemVecAverageSEQ, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_elem_vec_average));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KutuzovIElemVecAverageMPI, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_elem_vec_average),
+    ppc::util::AddFuncTask<KutuzovIElemVecAverageSEQ, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_elem_vec_average));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
