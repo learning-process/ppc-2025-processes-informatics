@@ -11,50 +11,29 @@ namespace kutuzov_i_elem_vec_average {
 KutuzovIElemVecAverageSEQ::KutuzovIElemVecAverageSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = 0.0;
 }
 
 bool KutuzovIElemVecAverageSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput().size() > 0;
 }
 
 bool KutuzovIElemVecAverageSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool KutuzovIElemVecAverageSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  GetOutput() = 0.0;
+  for (size_t i = 0; i < GetInput().size(); i++)
+    GetOutput() += GetInput()[i];
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
+  GetOutput() /= GetInput().size();
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool KutuzovIElemVecAverageSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace kutuzov_i_elem_vec_average

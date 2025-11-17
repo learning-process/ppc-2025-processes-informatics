@@ -23,36 +23,28 @@ namespace kutuzov_i_elem_vec_average {
 class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_kutuzov_i_elem_vec_average, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = std::vector<double>(param);
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    for (size_t i = 0; i < param; i++)
+      input_data_[i] = i * i - (double)param / 2;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+
+    double average = 0.0;
+    for (size_t i = 0; i < input_data_.size(); i++)
+      average += input_data_[i];
+
+    average /= input_data_.size();
+
+    return abs(output_data - average) < 0.0001;
   }
 
   InType GetTestInputData() final {
@@ -60,7 +52,7 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_ = {};
 };
 
 namespace {
@@ -69,7 +61,7 @@ TEST_P(KutuzovIElemVecAverageFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 4> kTestParam = {1, 10, 1000, 10000};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KutuzovIElemVecAverageMPI, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_elem_vec_average),
