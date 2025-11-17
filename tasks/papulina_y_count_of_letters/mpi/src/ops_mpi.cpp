@@ -80,10 +80,10 @@ bool PapulinaYCountOfLettersMPI::RunImpl() {
     part_of_string.resize(true_len);
     MPI_Recv(part_of_string.data(), static_cast<int>(true_len), MPI_CHAR, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
-  std::cout << "part_of_string for " << proc_rank << " :" << part_of_string << '\n';
-  std::cout << "true_len for " << proc_rank << " :" << true_len << '\n';
+  // std::cout << "part_of_string for " << proc_rank << " :" << part_of_string << '\n';
+  // std::cout << "true_len for " << proc_rank << " :" << true_len << '\n';
   int local_result = CountOfLetters(part_of_string.data(), static_cast<int>(part_of_string.size()));
-  std::cout << "local_result for " << proc_rank << " :" << local_result << '\n';
+  // std::cout << "local_result for " << proc_rank << " :" << local_result << '\n';
   MPI_Reduce(&local_result, &result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = result;
