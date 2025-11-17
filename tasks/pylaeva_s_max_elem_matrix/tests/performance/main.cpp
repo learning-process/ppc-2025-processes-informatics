@@ -12,18 +12,18 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
   OutType expected_data_;
 
   void SetUp() override {
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_1000x1000.txt");
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_2048x2048.txt");
 
     std::ifstream file(filename);
     if (!file.is_open()) {
       throw std::runtime_error("Cannot open file: " + filename);
     }
-    
+
     size_t rows;
     size_t columns;
     size_t size;
     std::vector<int> input;
-    
+
     int max;
 
     file >> rows;
@@ -36,7 +36,7 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
 
     for (size_t i = 0; i < size; ++i) {
       if (!(file >> input[i])) {
-          throw std::runtime_error("Not enough elements in file");
+        throw std::runtime_error("Not enough elements in file");
       }
     }
 
@@ -59,8 +59,8 @@ TEST_P(PylaevaSMaxElemMatrixPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PylaevaSMaxElemMatrixMPI, PylaevaSMaxElemMatrixSEQ>(PPC_SETTINGS_pylaeva_s_max_elem_matrix);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PylaevaSMaxElemMatrixMPI, PylaevaSMaxElemMatrixSEQ>(
+    PPC_SETTINGS_pylaeva_s_max_elem_matrix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

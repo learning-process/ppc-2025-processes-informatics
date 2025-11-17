@@ -15,7 +15,8 @@ PylaevaSMaxElemMatrixSEQ::PylaevaSMaxElemMatrixSEQ(const InType &in) {
 }
 
 bool PylaevaSMaxElemMatrixSEQ::ValidationImpl() {
-  return (static_cast<size_t>(std::get<0>(GetInput()))==std::get<1>(GetInput()).size()) && (static_cast<size_t>(std::get<0>(GetInput()))>0) && (GetOutput() == 0);
+  return (static_cast<size_t>(std::get<0>(GetInput())) == std::get<1>(GetInput()).size()) &&
+         (static_cast<size_t>(std::get<0>(GetInput())) > 0) && (GetOutput() == 0);
 }
 
 bool PylaevaSMaxElemMatrixSEQ::PreProcessingImpl() {
@@ -24,21 +25,21 @@ bool PylaevaSMaxElemMatrixSEQ::PreProcessingImpl() {
 }
 
 bool PylaevaSMaxElemMatrixSEQ::RunImpl() {
-  const auto& matrix_size = static_cast<size_t>(std::get<0>(GetInput()));
-  const auto& matrix_data = std::get<1>(GetInput());
-  
-  if (matrix_data.empty() || matrix_size == 0 || matrix_data.size()!=matrix_size) {
+  const auto &matrix_size = static_cast<size_t>(std::get<0>(GetInput()));
+  const auto &matrix_data = std::get<1>(GetInput());
+
+  if (matrix_data.empty() || matrix_size == 0 || matrix_data.size() != matrix_size) {
     return false;
   }
 
-  int max_element = matrix_data[0];  
-  
+  int max_element = matrix_data[0];
+
   for (size_t i = 1; i < std::get<0>(GetInput()); ++i) {
     if (std::get<1>(GetInput())[i] > max_element) {
       max_element = std::get<1>(GetInput())[i];
     }
   }
-  
+
   GetOutput() = max_element;
   return true;
 }

@@ -17,7 +17,8 @@ PylaevaSMaxElemMatrixMPI::PylaevaSMaxElemMatrixMPI(const InType &in) {
 }
 
 bool PylaevaSMaxElemMatrixMPI::ValidationImpl() {
-  return (static_cast<size_t>(std::get<0>(GetInput()))==std::get<1>(GetInput()).size()) && (static_cast<size_t>(std::get<0>(GetInput()))>0) && (GetOutput() == 0);
+  return (static_cast<size_t>(std::get<0>(GetInput())) == std::get<1>(GetInput()).size()) &&
+         (static_cast<size_t>(std::get<0>(GetInput())) > 0) && (GetOutput() == 0);
 }
 
 bool PylaevaSMaxElemMatrixMPI::PreProcessingImpl() {
@@ -33,11 +34,11 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
 
   int matrix_size = 0;
   std::vector<int> matrix_data;
-  
+
   if (rank == 0) {
     matrix_size = static_cast<int>(std::get<0>(GetInput()));
     matrix_data = std::get<1>(GetInput());
-    
+
     if (matrix_size <= 0 || static_cast<size_t>(matrix_size) != matrix_data.size()) {
       return false;
     }
@@ -73,7 +74,7 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   end_idx = std::min(end_idx, matrix_size);
 
   int local_max = std::numeric_limits<int>::min();
-  
+
   if (start_idx < end_idx) {
     for (int i = start_idx; i < end_idx; i++) {
       if (local_matrix_data[i] > local_max) {

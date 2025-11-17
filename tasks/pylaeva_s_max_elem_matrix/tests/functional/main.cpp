@@ -29,18 +29,18 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, param  + ".txt");
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, param + ".txt");
 
     std::ifstream file(filename);
     if (!file.is_open()) {
       throw std::runtime_error("Cannot open file: " + filename);
     }
-    
+
     size_t rows;
     size_t columns;
     size_t size;
     std::vector<int> input;
-    
+
     int max;
 
     file >> rows;
@@ -53,7 +53,7 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
 
     for (size_t i = 0; i < size; ++i) {
       if (!(file >> input[i])) {
-          throw std::runtime_error("Not enough elements in file");
+        throw std::runtime_error("Not enough elements in file");
       }
     }
 
@@ -82,16 +82,12 @@ TEST_P(PylaevaSMaxElemMatrixFuncTests, MaxElemMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    "matrix_3x3",
-    "matrix_5x5", 
-    "matrix_100x100",
-    "matrix_1000x1000"
-};
+const std::array<TestType, 5> kTestParam = {"matrix_3x3", "matrix_5x5", "matrix_100x100", "matrix_1000x1000",
+                                            "matrix_2048x2048"};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PylaevaSMaxElemMatrixMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_max_elem_matrix),
-                   ppc::util::AddFuncTask<PylaevaSMaxElemMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_max_elem_matrix));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<PylaevaSMaxElemMatrixMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_max_elem_matrix),
+    ppc::util::AddFuncTask<PylaevaSMaxElemMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_max_elem_matrix));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
