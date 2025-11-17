@@ -11,7 +11,7 @@
 namespace shkrebko_m_count_char_freq {
 
 class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
   OutType expected_data_{0};
 
   void SetUp() override {

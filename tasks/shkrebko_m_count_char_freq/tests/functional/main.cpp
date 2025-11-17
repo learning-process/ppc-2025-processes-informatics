@@ -51,7 +51,7 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_data_{0};
 };
 
