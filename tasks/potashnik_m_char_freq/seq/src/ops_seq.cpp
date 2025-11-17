@@ -3,7 +3,6 @@
 #include <string>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace potashnik_m_char_freq {
 
