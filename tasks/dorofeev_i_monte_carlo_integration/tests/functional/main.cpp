@@ -1,16 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
-
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
 #include "dorofeev_i_monte_carlo_integration/mpi/include/ops_mpi.hpp"
@@ -20,38 +8,36 @@
 
 namespace dorofeev_i_monte_carlo_integration_processes {
 
-class DorofeevIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class MonteCarloFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  static std::string PrintTestParam(
+      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
+    const auto &full = info.param;
+
+    const TestType &t = std::get<2>(full);
+    std::string size_name = std::get<1>(t);
+
+    std::string task_name = std::get<1>(full);
+
+    return task_name + "_" + size_name;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_example_processes, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    auto full_param = GetParam();
+    TestType t = std::get<2>(full_param);
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    int samples = std::get<0>(t);
+
+    input_data_.a = {0.0};
+    input_data_.b = {1.0};
+    input_data_.samples = samples;
+    input_data_.func = [](const std::vector<double> &x) { return x[0] * x[0]; };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    double expected = 1.0 / 3.0;
+    return std::abs(output_data - expected) < 0.05;  // tolerance
   }
 
   InType GetTestInputData() final {
@@ -59,27 +45,27 @@ class DorofeevIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
 
-TEST_P(DorofeevIRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(MonteCarloFuncTests, IntegrationTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kParams = {
+    std::make_tuple(1000, "small"),
+    std::make_tuple(5000, "medium"),
+    std::make_tuple(20000, "large"),
+};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<DorofeevIMonteCarloIntegrationMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
-    ppc::util::AddFuncTask<DorofeevIMonteCarloIntegrationSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+const auto kTaskList = std::tuple_cat(
+    ppc::util::AddFuncTask<DorofeevIMonteCarloIntegrationSEQ, InType>(kParams, PPC_SETTINGS_example_processes),
+    ppc::util::AddFuncTask<DorofeevIMonteCarloIntegrationMPI, InType>(kParams, PPC_SETTINGS_example_processes));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
-const auto kPerfTestName = DorofeevIRunFuncTestsProcesses::PrintFuncTestName<DorofeevIRunFuncTestsProcesses>;
-
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DorofeevIRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(IntegrationTests, MonteCarloFuncTests, ppc::util::ExpandToValues(kTaskList),
+                         MonteCarloFuncTests::PrintTestParam);
 
 }  // namespace
-
 }  // namespace dorofeev_i_monte_carlo_integration_processes

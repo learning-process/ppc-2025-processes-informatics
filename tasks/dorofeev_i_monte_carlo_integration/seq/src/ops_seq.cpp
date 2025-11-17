@@ -1,7 +1,6 @@
 #include "dorofeev_i_monte_carlo_integration/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <random>
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -11,50 +10,72 @@ namespace dorofeev_i_monte_carlo_integration_processes {
 DorofeevIMonteCarloIntegrationSEQ::DorofeevIMonteCarloIntegrationSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = 0.0;
 }
 
 bool DorofeevIMonteCarloIntegrationSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
+  const auto &in = GetInput();
 
-bool DorofeevIMonteCarloIntegrationSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
-}
-
-bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  // Размерности должны совпадать
+  if (in.a.size() != in.b.size()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  // Должен быть хотя бы 1 семпл
+  if (in.samples <= 0) {
+    return false;
+  }
+
+  // Интервалы должны быть корректны
+  for (size_t i = 0; i < in.a.size(); i++) {
+    if (in.b[i] <= in.a[i]) {
+      return false;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  return true;
+}
 
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
+bool DorofeevIMonteCarloIntegrationSEQ::PreProcessingImpl() {
+  GetOutput() = 0.0;
+  return true;
+}
+
+bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
+  const auto &in = GetInput();
+  const int dims = in.a.size();
+  const int N = in.samples;
+
+  std::mt19937 gen(12345);
+  std::vector<std::uniform_real_distribution<double>> dist;
+  dist.reserve(dims);
+
+  for (int i = 0; i < dims; i++) {
+    dist.emplace_back(in.a[i], in.b[i]);
   }
 
-  if (counter != 0) {
-    GetOutput() /= counter;
+  double sum = 0.0;
+  std::vector<double> point(dims);
+
+  for (int s = 0; s < N; s++) {
+    for (int d = 0; d < dims; d++) {
+      point[d] = dist[d](gen);
+    }
+    sum += in.func(point);
   }
-  return GetOutput() > 0;
+
+  // Объём гиперпрямоугольника
+  double volume = 1.0;
+  for (int i = 0; i < dims; i++) {
+    volume *= (in.b[i] - in.a[i]);
+  }
+
+  GetOutput() = volume * (sum / N);
+  return true;
 }
 
 bool DorofeevIMonteCarloIntegrationSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace dorofeev_i_monte_carlo_integration_processes

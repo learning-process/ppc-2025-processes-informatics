@@ -2,8 +2,7 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
+#include <random>
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -17,56 +16,86 @@ DorofeevIMonteCarloIntegrationMPI::DorofeevIMonteCarloIntegrationMPI(const InTyp
 }
 
 bool DorofeevIMonteCarloIntegrationMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
+  const auto &in = GetInput();
 
-bool DorofeevIMonteCarloIntegrationMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
-}
-
-bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
+  if (!in.func) {
+    return false;
+  }
+  if (in.a.size() == 0 || in.a.size() != in.b.size()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (size_t i = 0; i < in.a.size(); i++) {
+    if (in.b[i] <= in.a[i]) {
+      return false;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  if (in.samples <= 0) {
+    return false;
+  }
 
-  int rank = 0;
+  return true;
+}
+
+bool DorofeevIMonteCarloIntegrationMPI::PreProcessingImpl() {
+  GetOutput() = 0.0;
+  return true;
+}
+
+bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
+  const auto in = GetInput();
+  const int dims = in.a.size();
+  const int N_total = in.samples;
+
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
-
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
+  int N_local = N_total / size;
+  if (rank == size - 1) {
+    N_local += N_total % size;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  std::vector<std::uniform_real_distribution<double>> dist;
+  dist.reserve(dims);
+  for (int d = 0; d < dims; ++d) {
+    dist.emplace_back(in.a[d], in.b[d]);
+  }
+
+  std::mt19937 gen(rank + 123);
+  double local_sum = 0.0;
+
+  for (int i = 0; i < N_local; ++i) {
+    std::vector<double> x(dims);
+    for (int d = 0; d < dims; d++) {
+      x[d] = dist[d](gen);
+    }
+    local_sum += in.func(x);
+  }
+
+  double global_sum = 0.0;
+
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  double volume = 1.0;
+  for (int d = 0; d < dims; d++) {
+    volume *= (in.b[d] - in.a[d]);
+  }
+
+  double result = 0.0;
+  if (rank == 0) {
+    result = (global_sum / N_total) * volume;
+  }
+
+  MPI_Bcast(&result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  GetOutput() = result;
+  return true;
 }
 
 bool DorofeevIMonteCarloIntegrationMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace dorofeev_i_monte_carlo_integration_processes

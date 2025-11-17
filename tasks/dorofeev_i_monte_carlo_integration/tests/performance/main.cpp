@@ -8,16 +8,28 @@
 namespace dorofeev_i_monte_carlo_integration_processes {
 namespace {
 
-class DorofeevIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+class MonteCarloPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ public:
+  MonteCarloPerfTests() = default;
+
+ private:
+  // samples for performance test
+  static constexpr int kSamples = 200000;
+
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_.a = {0.0};
+    input_data_.b = {1.0};
+    input_data_.samples = kSamples;
+    input_data_.func = [](const std::vector<double> &x) {
+      return x[0] * x[0];  // integrating x^2 on [0,1]
+    };
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    double expected = 1.0 / 3.0;
+    return std::abs(output_data - expected) < 0.05;
   }
 
   InType GetTestInputData() final {
@@ -25,19 +37,22 @@ class DorofeevIRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(DorofeevIRunPerfTestProcesses, DorofeevIRunPerfModes) {
+TEST_P(MonteCarloPerfTests, PerfTestModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kkAllPerfTasks =
+// making performance probs: MPI + SEQ
+const auto PerfTasks =
     ppc::util::MakeAllPerfTasks<InType, DorofeevIMonteCarloIntegrationMPI, DorofeevIMonteCarloIntegrationSEQ>(
         PPC_SETTINGS_example_processes);
 
-const auto kkGtestValues = ppc::util::TupleToGTestValues(kkAllPerfTasks);
+// converting to GTest values
+const auto GTestValues = ppc::util::TupleToGTestValues(PerfTasks);
 
-const auto kkPerfTestName = DorofeevIRunPerfTestProcesses::CustomPerfTestName;
+// test naming function
+const auto TestName = MonteCarloPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(DorofeevIRunModeTests, DorofeevIRunPerfTestProcesses, kkGtestValues, kkPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MonteCarloPerf, MonteCarloPerfTests, GTestValues, TestName);
 
 }  // namespace
 }  // namespace dorofeev_i_monte_carlo_integration_processes
