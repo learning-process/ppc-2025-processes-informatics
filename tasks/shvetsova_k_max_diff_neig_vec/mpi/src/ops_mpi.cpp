@@ -107,15 +107,21 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   }
 
   std::pair<double, int> ValInd{LocalMx, LocInd};
+  double GlobMx = 0;
+  MPI_Reduce(&LocalMx, &GlobMx, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-  MPI_Reduce(&ValInd.first, &ValInd.second, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0,
-             MPI_COMM_WORLD);  // MPIMAXLOC выбирает максимум из всех результатов процессов
+  int candidateIndex = (LocalMx == GlobMx) ? LocInd : -1;
+  int globalIndex = -1;
+  MPI_Reduce(&candidateIndex, &globalIndex, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  // MPI_Reduce(&ValInd.first, &ValInd.second, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0,
+  //            MPI_COMM_WORLD);  // MPIMAXLOC выбирает максимум из всех результатов процессов
 
   // Запись результата 0 процессом
   if (rank == 0) {
-    GetOutput().first = ValInd.first;
-    GetOutput().second.first = ValInd.second;
-    GetOutput().second.second = ValInd.second + 1;
+    GetOutput().first = GlobMx;
+    GetOutput().second.first = globalIndex;
+    GetOutput().second.second = globalIndex + 1;
   }
 
   return true;
