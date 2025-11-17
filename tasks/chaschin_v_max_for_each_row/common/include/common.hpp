@@ -7,9 +7,8 @@
 
 namespace chaschin_v_max_for_each_row {
 
-using InType = int;
-using OutType = int;
-int f = 1;
+using InType = std::Vector<std::Vector<float>>;
+using OutType = std::Vector<float>;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

@@ -15,46 +15,35 @@ ChaschinVMaxForEachRowSEQ::ChaschinVMaxForEachRowSEQ(const InType &in) {
 }
 
 bool ChaschinVMaxForEachRowSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+   const auto& mat = GetInput();
+  if (mat.empty()) return false;
+
+  for (const auto& row : mat) {
+    if (row.empty()) return false;
+  }
+
+  return true;
 }
 
 bool ChaschinVMaxForEachRowSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  const auto& mat = GetInput();
+  GetOutput().assign(mat.size(), 0.0f);
+  return true;
 }
 
 bool ChaschinVMaxForEachRowSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  const auto& mat = GetInput();
+  auto& out = GetOutput();
+
+  for (size_t i = 0; i < mat.size(); i++) {
+    out[i] = *std::max_element(mat[i].begin(), mat[i].end());
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool ChaschinVMaxForEachRowSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace chaschin_v_max_for_each_row
