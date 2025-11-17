@@ -79,7 +79,7 @@ TEST_P(PylaevaSMaxElemMatrixFuncTests, MaxElemMatrix) {
 }
 
 const std::array<TestType, 5> kTestParam = {"matrix_3x3", "matrix_5x5", "matrix_100x100", "matrix_1000x1000",
-                                            "matrix_3000x3000"};
+                                            "matrix_2048x2048"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PylaevaSMaxElemMatrixMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_max_elem_matrix),
