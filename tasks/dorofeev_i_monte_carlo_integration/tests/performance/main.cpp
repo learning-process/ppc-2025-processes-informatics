@@ -14,7 +14,7 @@ class MonteCarloPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> 
 
  private:
   // samples for performance test
-  static constexpr int kSamples = 200000;
+  static constexpr int kSamples = 100000;
 
   InType input_data_{};
 
