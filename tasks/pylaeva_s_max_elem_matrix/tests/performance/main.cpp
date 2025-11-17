@@ -11,6 +11,7 @@
 #include "pylaeva_s_max_elem_matrix/mpi/include/ops_mpi.hpp"
 #include "pylaeva_s_max_elem_matrix/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace pylaeva_s_max_elem_matrix {
 
@@ -19,7 +20,7 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
   OutType expected_data_{};
 
   void SetUp() override {
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_2048x2048.txt");
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_3000x3000.txt");
 
     std::ifstream file(filename);
     if (!file.is_open()) {
