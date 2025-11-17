@@ -13,7 +13,7 @@ class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
  private:
   const int kRepeatCount_ = 2000000;
   InType input_data_{};
-  OutType expected_result_;
+  OutType expected_result_{};
 
   void SetUp() override {
     std::string base_text = "word ";

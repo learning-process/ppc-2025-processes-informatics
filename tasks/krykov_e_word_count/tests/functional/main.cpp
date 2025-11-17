@@ -1,17 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <ostream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "krykov_e_word_count/common/include/common.hpp"
 #include "krykov_e_word_count/mpi/include/ops_mpi.hpp"
@@ -33,7 +27,7 @@ class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     }
 
     for (char &ch : text) {
-      if (!std::isalnum(static_cast<unsigned char>(ch)) && ch != '_') {
+      if ((std::isalnum(static_cast<unsigned char>(ch)) == 0) && ch != '_') {
         ch = '_';
       }
     }

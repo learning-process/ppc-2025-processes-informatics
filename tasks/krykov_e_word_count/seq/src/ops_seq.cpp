@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <string>
 
 #include "krykov_e_word_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace krykov_e_word_count {
 
@@ -21,10 +21,10 @@ bool KrykovEWordCountSEQ::ValidationImpl() {
 
 bool KrykovEWordCountSEQ::PreProcessingImpl() {
   auto &input = GetInput();
-  input.erase(input.begin(),
-              std::find_if(input.begin(), input.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-  input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(),
-              input.end());
+  input.erase(input.begin(), std::ranges::find_if(input, [](unsigned char ch) { return !std::isspace(ch); }));
+  input.erase(
+      std::ranges::find_if(std::ranges::reverse_view(input), [](unsigned char ch) { return !std::isspace(ch); }).base(),
+      input.end());
   return true;
 }
 
@@ -38,7 +38,7 @@ bool KrykovEWordCountSEQ::RunImpl() {
   size_t word_count = 0;
 
   for (char c : text) {
-    if (std::isspace(static_cast<unsigned char>(c))) {
+    if (std::isspace(static_cast<unsigned char>(c)) != 0) {
       if (in_word) {
         in_word = false;
       }
@@ -50,7 +50,7 @@ bool KrykovEWordCountSEQ::RunImpl() {
     }
   }
 
-  GetOutput() = word_count;
+  GetOutput() = static_cast<int>(word_count);
   return true;
 }
 
