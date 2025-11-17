@@ -1,7 +1,6 @@
 #include "potashnik_m_char_freq/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <string>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -15,7 +14,7 @@ PotashnikMCharFreqSEQ::PotashnikMCharFreqSEQ(const InType &in) {
 }
 
 bool PotashnikMCharFreqSEQ::ValidationImpl() {
-  return (std::get<0>(GetInput()).size() > 0);
+  return !std::get<0>(GetInput()).empty();
 }
 
 bool PotashnikMCharFreqSEQ::PreProcessingImpl() {

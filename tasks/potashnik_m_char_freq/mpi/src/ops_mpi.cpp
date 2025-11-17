@@ -2,12 +2,9 @@
 
 #include <mpi.h>
 
-#include <numeric>
 #include <string>
-#include <vector>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace potashnik_m_char_freq {
 
@@ -18,7 +15,7 @@ PotashnikMCharFreqMPI::PotashnikMCharFreqMPI(const InType &in) {
 }
 
 bool PotashnikMCharFreqMPI::ValidationImpl() {
-  return (std::get<0>(GetInput()).size() > 0);
+  return !std::get<0>(GetInput()).empty();
 }
 
 bool PotashnikMCharFreqMPI::PreProcessingImpl() {
@@ -39,7 +36,7 @@ bool PotashnikMCharFreqMPI::RunImpl() {
   int block_size = string_size / world_size;
 
   int start_pos = block_size * rank;
-  int end_pos;
+  int end_pos = 0;
   if (rank == world_size - 1) {
     end_pos = string_size;
   } else {

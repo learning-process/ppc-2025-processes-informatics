@@ -2,7 +2,6 @@
 
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
 #include "potashnik_m_char_freq/mpi/include/ops_mpi.hpp"
@@ -13,15 +12,15 @@ namespace potashnik_m_char_freq {
 
 class PotashnikMCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 30000000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     std::string str;
-    char chr;
+    char chr = 0;
 
     chr = 'k';
     for (int i = 0; i < kCount_; i++) {
-      char c = 'a' + ((i * 7 + 13) % 26);
+      char c = static_cast<char>('a' + ((i * 7 + 13) % 26));
       str += c;
     }
 

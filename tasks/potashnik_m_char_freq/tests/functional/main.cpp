@@ -1,16 +1,10 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
 #include "potashnik_m_char_freq/mpi/include/ops_mpi.hpp"
@@ -30,16 +24,16 @@ class PotashnikMCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::string str;
-    char chr;
+    char chr = 0;
 
     int seed = params;
 
     // Generating character
-    chr = 'a' + (seed % 26);
+    chr = static_cast<char>('a' + (seed % 26));
 
     // Generating string
     for (int i = 0; i < params; i++) {
-      char c = 'a' + ((i * 7 + 13 + seed / 2) % 26);
+      char c = static_cast<char>('a' + ((i * 7 + 13 + seed / 2) % 26));
       str += c;
     }
 
