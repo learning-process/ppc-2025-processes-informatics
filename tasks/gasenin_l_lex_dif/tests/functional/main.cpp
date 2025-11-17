@@ -1,17 +1,18 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
+// Убираем stb_image если не используется, но в логах его не было.
+// Логи ругались на стандартные библиотеки:
 
-#include <algorithm>
+// #include <algorithm> //
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <iostream>
-#include <numeric>
-#include <stdexcept>
+// #include <cstddef>
+// #include <cstdint> //
+// #include <iostream> //
+// #include <numeric> //
+// #include <stdexcept> //
 #include <string>
 #include <tuple>
 #include <utility>
-#include <vector>
+// #include <vector> //
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
 #include "gasenin_l_lex_dif/mpi/include/ops_mpi.hpp"

@@ -6,7 +6,7 @@
 #include <cstdint>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
-#include "util/include/util.hpp"
+// Удален лишний include util.hpp
 
 namespace gasenin_l_lex_dif {
 
@@ -27,8 +27,11 @@ bool GaseninLLexDifMPI::PreProcessingImpl() {
 
 bool GaseninLLexDifMPI::RunImpl() {
   const auto &[str1, str2] = GetInput();
-
-  int rank, size;
+  // size_t должна быть явно подключена, но она есть в cstdint/stddef.
+  // Здесь используем auto для длины, чтобы избежать дублирования типов, если это уместно,
+  // но size_t стандартен. Исправим инициализацию rank/size .
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -46,6 +49,7 @@ bool GaseninLLexDifMPI::RunImpl() {
   int local_result = 0;
   size_t local_diff_pos = total_len;
 
+  // Цикл оставим, он достаточно прост, сложность давали вложенные if/else ниже
   for (size_t i = start; i < end; ++i) {
     char c1 = (i < str1.length()) ? str1[i] : '\0';
     char c2 = (i < str2.length()) ? str2[i] : '\0';
@@ -57,33 +61,30 @@ bool GaseninLLexDifMPI::RunImpl() {
     }
   }
 
-  uint64_t local_pos_64 = static_cast<uint64_t>(local_diff_pos);
+  // Использование auto при cast
+  auto local_pos_64 = static_cast<uint64_t>(local_diff_pos);
   uint64_t global_min_pos_64 = 0;
 
   MPI_Allreduce(&local_pos_64, &global_min_pos_64, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD);
 
-  size_t global_min_pos = static_cast<size_t>(global_min_pos_64);
+  // Использование auto при cast
+  auto global_min_pos = static_cast<size_t>(global_min_pos_64);
 
-  int result_for_sum = 0;
-  if (local_diff_pos == global_min_pos) {
-    result_for_sum = local_result;
-  }
+  int result_for_sum = (local_diff_pos == global_min_pos) ? local_result : 0;
 
   int final_result = 0;
   MPI_Allreduce(&result_for_sum, &final_result, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
+  // Упрощение логики для снижения Cognitive Complexity
   if (global_min_pos == total_len) {
-    if (str1.length() < str2.length()) {
-      final_result = -1;
-    } else if (str1.length() > str2.length()) {
-      final_result = 1;
+    if (str1.length() != str2.length()) {
+      final_result = (str1.length() < str2.length()) ? -1 : 1;
     } else {
       final_result = 0;
     }
   }
 
   GetOutput() = final_result;
-
   return true;
 }
 

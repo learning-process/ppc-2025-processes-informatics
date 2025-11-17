@@ -5,10 +5,10 @@
 #include <cstddef>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>  // Добавлено
 #include <string>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
-// #include "util/include/util.hpp"
 
 namespace gasenin_l_lex_dif {
 
@@ -110,6 +110,27 @@ InType GaseninLLexDifSEQ::ReadFromFile(const std::string &filename) {
   return input;
 }
 
+static void PrintDiffDetail(const InType &input, size_t diff_pos) {
+  std::cout << "Первое различие на позиции: " << diff_pos << "\n";
+
+  auto print_char_info = [](char c) {
+    std::cout << "'";
+    // Явное сравнение с 0 для isprint
+    if (std::isprint(static_cast<unsigned char>(c)) != 0) {
+      std::cout << c;
+    } else {
+      std::cout << "\\x" << std::hex << static_cast<int>(c);
+    }
+    std::cout << "' (код: " << std::dec << static_cast<int>(c) << ")\n";
+  };
+
+  std::cout << "Символ в первой строке: ";
+  print_char_info(input.first[diff_pos]);
+
+  std::cout << "Символ во второй строке: ";
+  print_char_info(input.second[diff_pos]);
+}
+
 void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
   std::cout << "\n=== Результат сравнения ===\n";
   std::cout << "Первая строка: \"" << input.first << "\"\n";
@@ -127,6 +148,7 @@ void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
       break;
     default:
       std::cout << "Результат: Неизвестный результат\n";
+      break;
   }
 
   std::cout << "\n--- Дополнительная информация ---\n";
@@ -145,22 +167,7 @@ void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
     }
 
     if (diff_pos < min_len) {
-      std::cout << "Первое различие на позиции: " << diff_pos << "\n";
-      std::cout << "Символ в первой строке: '";
-      if (std::isprint(static_cast<unsigned char>(input.first[diff_pos]))) {
-        std::cout << input.first[diff_pos];
-      } else {
-        std::cout << "\\x" << std::hex << static_cast<int>(input.first[diff_pos]);
-      }
-      std::cout << "' (код: " << std::dec << static_cast<int>(input.first[diff_pos]) << ")\n";
-
-      std::cout << "Символ во второй строке: '";
-      if (std::isprint(static_cast<unsigned char>(input.second[diff_pos]))) {
-        std::cout << input.second[diff_pos];
-      } else {
-        std::cout << "\\x" << std::hex << static_cast<int>(input.second[diff_pos]);
-      }
-      std::cout << "' (код: " << std::dec << static_cast<int>(input.second[diff_pos]) << ")\n";
+      PrintDiffDetail(input, diff_pos);  // Вызов вынесенной функции
     } else if (input.first.length() != input.second.length()) {
       std::cout << "Различие из-за разной длины строк\n";
       std::cout << "Более длинная строка: \"";
