@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <stdexcept>  // Добавлено
+#include <stdexcept>
 #include <string>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
@@ -110,12 +110,15 @@ InType GaseninLLexDifSEQ::ReadFromFile(const std::string &filename) {
   return input;
 }
 
-static void PrintDiffDetail(const InType &input, size_t diff_pos) {
+}  // namespace gasenin_l_lex_dif
+
+// Анонимный namespace для вспомогательной функции (вместо static)
+namespace {
+void PrintDiffDetail(const gasenin_l_lex_dif::InType &input, size_t diff_pos) {
   std::cout << "Первое различие на позиции: " << diff_pos << "\n";
 
   auto print_char_info = [](char c) {
     std::cout << "'";
-    // Явное сравнение с 0 для isprint
     if (std::isprint(static_cast<unsigned char>(c)) != 0) {
       std::cout << c;
     } else {
@@ -130,6 +133,9 @@ static void PrintDiffDetail(const InType &input, size_t diff_pos) {
   std::cout << "Символ во второй строке: ";
   print_char_info(input.second[diff_pos]);
 }
+}  // namespace
+
+namespace gasenin_l_lex_dif {
 
 void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
   std::cout << "\n=== Результат сравнения ===\n";
@@ -167,7 +173,7 @@ void GaseninLLexDifSEQ::PrintResult(const InType &input, OutType result) {
     }
 
     if (diff_pos < min_len) {
-      PrintDiffDetail(input, diff_pos);  // Вызов вынесенной функции
+      PrintDiffDetail(input, diff_pos);  // Теперь корректно видна из анонимного namespace
     } else if (input.first.length() != input.second.length()) {
       std::cout << "Различие из-за разной длины строк\n";
       std::cout << "Более длинная строка: \"";
