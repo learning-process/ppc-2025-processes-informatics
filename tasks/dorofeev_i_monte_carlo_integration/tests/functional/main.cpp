@@ -37,7 +37,7 @@ class MonteCarloFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
 
   bool CheckTestOutputData(OutType &output_data) final {
     double expected = 1.0 / 3.0;
-    return std::abs(output_data - expected) < 0.05;  // tolerance
+    return std::abs(output_data - expected) < 0.05;
   }
 
   InType GetTestInputData() final {

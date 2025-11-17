@@ -16,17 +16,14 @@ DorofeevIMonteCarloIntegrationSEQ::DorofeevIMonteCarloIntegrationSEQ(const InTyp
 bool DorofeevIMonteCarloIntegrationSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
-  // Размерности должны совпадать
   if (in.a.size() != in.b.size()) {
     return false;
   }
 
-  // Должен быть хотя бы 1 семпл
   if (in.samples <= 0) {
     return false;
   }
 
-  // Интервалы должны быть корректны
   for (size_t i = 0; i < in.a.size(); i++) {
     if (in.b[i] <= in.a[i]) {
       return false;
@@ -64,7 +61,6 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
     sum += in.func(point);
   }
 
-  // Объём гиперпрямоугольника
   double volume = 1.0;
   for (int i = 0; i < dims; i++) {
     volume *= (in.b[i] - in.a[i]);
