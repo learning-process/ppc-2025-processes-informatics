@@ -34,7 +34,6 @@ class MostDiffNeighVecElemsRunFuncTestsProcesses : public ppc::util::BaseRunFunc
 
  protected:
   void SetUp() override {
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     input_data = std::get<1>(params);
@@ -62,10 +61,10 @@ TEST_P(MostDiffNeighVecElemsRunFuncTestsProcesses, RunFuncTests) {
 }
 
 const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(std::make_tuple(1, 10), std::vector<int>{1, 10, 3, 10, 5}), 
-    std::make_tuple(std::make_tuple(5, 20), std::vector<int>{5, 20, 15, 10}), 
-    std::make_tuple(std::make_tuple(7, 7), std::vector<int>{7}), 
-    std::make_tuple(std::make_tuple(0, 100), std::vector<int>{0, 100, 100, 25}), 
+    std::make_tuple(std::make_tuple(1, 10), std::vector<int>{1, 10, 3, 10, 5}),
+    std::make_tuple(std::make_tuple(5, 20), std::vector<int>{5, 20, 15, 10}),
+    std::make_tuple(std::make_tuple(7, 7), std::vector<int>{7}),
+    std::make_tuple(std::make_tuple(0, 100), std::vector<int>{0, 100, 100, 25}),
     std::make_tuple(std::make_tuple(-10, -5), std::vector<int>{-10, -5, -1, 3, 0, 0})};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LeonovaAMostDiffNeighVecElemsMPI, InType>(

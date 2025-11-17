@@ -24,8 +24,7 @@ bool LeonovaAMostDiffNeighVecElemsSEQ::PreProcessingImpl() {
 }
 
 bool LeonovaAMostDiffNeighVecElemsSEQ::RunImpl() {
-  if (GetInput().size() == 1)
-  {
+  if (GetInput().size() == 1) {
     std::get<0>(GetOutput()) = GetInput()[0];
     std::get<1>(GetOutput()) = GetInput()[0];
     return true;
@@ -35,8 +34,7 @@ bool LeonovaAMostDiffNeighVecElemsSEQ::RunImpl() {
   for (std::vector<int>::size_type i = 0; i < GetInput().size() - 1; i++) {
     std::tuple<int, int> curr_elems(GetInput()[i], GetInput()[i + 1]);
     int curr_diff = abs(std::get<0>(curr_elems) - std::get<1>(curr_elems));
-    if (curr_diff > max_diff)
-    {
+    if (curr_diff > max_diff) {
       max_diff = curr_diff;
       GetOutput() = curr_elems;
     }

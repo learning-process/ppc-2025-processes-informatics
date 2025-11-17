@@ -1,6 +1,7 @@
 #include "leonova_a_most_diff_neigh_vec_elems/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <algorithm>
 #include <cmath>
 #include <tuple>
@@ -47,7 +48,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
     // Рассылаем все данные всем процессам через MPI_Bcast
     int total_size = static_cast<int>(input_vec.size());
     MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    
+
     std::vector<int> all_data(total_size);
     if (rank == 0) {
       all_data = input_vec;
@@ -57,10 +58,10 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
     // Каждый процесс обрабатывает свою часть
     int local_size = total_size / size;
     int remainder = total_size % size;
-    
+
     int start = rank * local_size + std::min(rank, remainder);
     int end = start + local_size + (rank < remainder ? 1 : 0);
-    
+
     // Убедимся что end не превышает total_size - 1
     if (end > total_size - 1) {
       end = total_size - 1;
