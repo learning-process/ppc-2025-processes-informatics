@@ -26,17 +26,21 @@ bool KutuzovIElemVecAverageMPI::PreProcessingImpl() {
 
 bool KutuzovIElemVecAverageMPI::RunImpl() {
 
+  const auto& input = GetInput();
+
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   double global_sum = 0.0;
   
-  size_t num_threads = ppc::util::GetNumThreads();
-  size_t batch_size = GetInput().size() / num_threads;
+  int num_processes;
+  MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+
+  size_t batch_size = input.size() / num_processes;
 
   std::vector<double> recv_buffer(batch_size);
 
-  MPI_Scatter(GetInput().data(), GetInput().size(), MPI_DOUBLE, recv_buffer.data(), batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatter(input.data(), batch_size, MPI_DOUBLE, recv_buffer.data(), batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double sum = 0.0;
   for (size_t i = 0; i < batch_size; i++)
@@ -44,8 +48,14 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
 
   MPI_Reduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (rank == 0)
-    GetOutput() = global_sum / GetInput().size();
+  if (rank == 0) {
+    for (size_t i = num_processes * batch_size; i < input.size(); i++)
+      global_sum += input[i];
+
+    GetOutput() = global_sum / input.size();
+  }
+
+  MPI_Bcast(&GetOutput(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
