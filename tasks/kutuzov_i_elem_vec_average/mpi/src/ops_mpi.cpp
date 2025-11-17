@@ -51,7 +51,7 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
 
     MPI_Reduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
   }
- 
+
   if (rank == 0) {
     for (int i = num_processes * batch_size; i < input.size(); i++) {
       global_sum += input[i];
