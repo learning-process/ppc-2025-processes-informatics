@@ -52,7 +52,6 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   InType input_data_;
   OutType expectedResult_ = 0;
   static std::string GenerateData(size_t count) {
-    std::random_device rd;
     std::mt19937 gen(count);  // константный, чтобы у всех потоков была одна и та же строка при генерации
     std::uniform_int_distribution<size_t> length_dist(100, 500);
     std::uniform_int_distribution<size_t> char_dist(32, 126);
