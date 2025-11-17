@@ -7,6 +7,7 @@
 #include "shkrebko_m_count_char_freq/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_count_char_freq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace shkrebko_m_count_char_freq {
 
