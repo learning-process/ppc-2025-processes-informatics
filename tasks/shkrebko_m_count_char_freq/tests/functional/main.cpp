@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <array>
 #include <cstddef>
 #include <string>
 #include <tuple>
@@ -47,8 +48,8 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_{};
-  OutType expected_data_{};
+  InType input_data_;
+  OutType expected_data_;
 };
 
 namespace {
