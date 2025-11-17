@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <string>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
 
