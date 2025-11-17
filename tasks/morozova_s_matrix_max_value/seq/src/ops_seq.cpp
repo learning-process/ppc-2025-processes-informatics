@@ -31,7 +31,7 @@ bool MorozovaSMatrixMaxValueSEQ::RunImpl() {
   }
 
   int max_value = std::numeric_limits<int>::min();
-  
+
   for (const auto &row : matrix) {
     for (int value : row) {
       max_value = std::max(max_value, value);

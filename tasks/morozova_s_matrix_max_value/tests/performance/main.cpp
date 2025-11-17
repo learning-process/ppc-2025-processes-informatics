@@ -22,7 +22,7 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
         input_data_[i][j] = value++;
       }
     }
-    input_data_[size/2][size/2] = 1000000;
+    input_data_[size / 2][size / 2] = 1000000;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -38,8 +38,8 @@ TEST_P(MorozovaSRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MorozovaSMatrixMaxValueMPI, MorozovaSMatrixMaxValueSEQ>(PPC_SETTINGS_morozova_s_matrix_max_value);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MorozovaSMatrixMaxValueMPI, MorozovaSMatrixMaxValueSEQ>(
+    PPC_SETTINGS_morozova_s_matrix_max_value);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

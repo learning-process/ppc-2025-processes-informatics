@@ -42,7 +42,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
 
   int elements_per_process = total_elements / size;
   int remainder = total_elements % size;
-  
+
   int start_element = rank * elements_per_process + std::min(rank, remainder);
   int end_element = start_element + elements_per_process + (rank < remainder ? 1 : 0);
 
@@ -57,7 +57,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   }
 
   int global_max = 0;
-  
+
   if (rank == 0) {
     global_max = local_max;
     for (int i = 1; i < size; ++i) {
