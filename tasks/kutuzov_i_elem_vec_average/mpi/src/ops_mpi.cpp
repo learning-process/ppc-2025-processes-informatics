@@ -2,9 +2,9 @@
 
 #include <mpi.h>
 
+#include <cmath>
 #include <cstddef>
 #include <vector>
-#include <cmath>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
 #include "util/include/util.hpp"
