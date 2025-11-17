@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <iostream>
+#include <random>
 #include <string>
 #include <tuple>
 // #include <stdexcept>
@@ -25,17 +27,20 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::cout << "SetUp for " << std::get<1>(params) << '\n';
-    input_data_ = std::string(std::get<0>(std::get<0>(params)));
-    std::cout << "We set input data:  " << input_data_ << '\n';
-    expectedResult_ = std::get<1>(std::get<0>(params));
-    std::cout << "We set expected result:  " << expectedResult_ << '\n';
+    std::string s = std::string(std::get<0>(std::get<0>(params)));
+    if (s != "generate") {
+      input_data_ = std::string(std::get<0>(std::get<0>(params)));
+      expectedResult_ = std::get<1>(std::get<0>(params));
+    } else {
+      std::string data = GenerateData(100);  // будет генерироваться строка, в которой буквенных символов ровно 100
+      input_data_ = data;
+      expectedResult_ = 100;
+      std::cout << "Generated string: " << input_data_ << "\n";
+      std::cout << "Expected result: " << expectedResult_ << "\n";
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::cout << "CheckTestOutputData for "
-              << std::get<1>(std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()))
-              << '\n';
     return (expectedResult_ == output_data);
   }
 
@@ -46,6 +51,31 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
  private:
   InType input_data_;
   OutType expectedResult_ = 0;
+  static std::string GenerateData(size_t count) {
+    std::random_device rd;
+    std::mt19937 gen(count);  // константный, чтобы у всех потоков была одна и та же строка при генерации
+    std::uniform_int_distribution<size_t> length_dist(100, 500);
+    std::uniform_int_distribution<size_t> char_dist(32, 126);
+
+    size_t length = length_dist(gen);
+    std::string generated_string;
+    generated_string.reserve(length);
+
+    std::string all_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    std::uniform_int_distribution<size_t> letter_dist(0, all_letters.size() - 1);
+    // добавляем все буквы
+    for (size_t i = 0; i < count; i++) {
+      char c = all_letters[letter_dist(gen)];
+      generated_string += c;
+    }
+    std::uniform_int_distribution<> non_letter_dist(48, 57);  // цифры 0-9
+    for (size_t i = count; i < length; ++i) {
+      char c = static_cast<char>(non_letter_dist(gen));
+      generated_string += c;
+    }
+    std::shuffle(generated_string.begin(), generated_string.end(), gen);
+    return generated_string;
+  }
 };
 
 namespace {
@@ -54,7 +84,7 @@ TEST_P(PapulinaYRunFuncTestsProcesses, CountOfLetters) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 16> kTestParam = {
+const std::array<TestType, 20> kTestParam = {
     std::make_tuple(std::make_tuple("", 0), "test1"),
     std::make_tuple(std::make_tuple("abcd", 4), "test2"),
     std::make_tuple(std::make_tuple("aabcd123abcd123abcd", 13), "test3"),
@@ -75,7 +105,10 @@ const std::array<TestType, 16> kTestParam = {
             100),
         "test15"),
     std::make_tuple(std::make_tuple("фбсдуащуо", 0), "test16"),
-};
+    std::make_tuple(std::make_tuple("aa", 2), "test17"),
+    std::make_tuple(std::make_tuple("aaa", 3), "test18"),
+    std::make_tuple(std::make_tuple("aabb0123456789", 4), "test19"),
+    std::make_tuple(std::make_tuple("generate", 4), "test20")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYCountOfLettersMPI, InType>(kTestParam, PPC_SETTINGS_papulina_y_count_of_letters),
