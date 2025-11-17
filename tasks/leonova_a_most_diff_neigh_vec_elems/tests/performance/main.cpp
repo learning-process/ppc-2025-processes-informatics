@@ -195,7 +195,6 @@ namespace leonova_a_most_diff_neigh_vec_elems {
 
 class MostDiffNeighVecElemsRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const size_t kVectorSize_ = 10000000;  // Увеличили в 10 раз
-  const int kNumIterations_ = 100;       // Добавили итерации для увеличения времени
   InType input_data_{};
   OutType expected_output_{};
 
