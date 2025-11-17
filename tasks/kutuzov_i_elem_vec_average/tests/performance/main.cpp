@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <vector>
+#include <cmath>
+
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
 #include "kutuzov_i_elem_vec_average/mpi/include/ops_mpi.hpp"
 #include "kutuzov_i_elem_vec_average/seq/include/ops_seq.hpp"
@@ -15,7 +19,7 @@ class KutuzovIElemVecAveragePerfTests : public ppc::util::BaseRunPerfTests<InTyp
     input_data_ = std::vector<double>(kCount_);
 
     for (int i = 0; i < kCount_; i++) {
-      input_data_[i] = i * i - (double)kCount_ / 2;
+      input_data_[i] = i * i - static_cast<double>(kCount_) / 2;
     }
   }
 

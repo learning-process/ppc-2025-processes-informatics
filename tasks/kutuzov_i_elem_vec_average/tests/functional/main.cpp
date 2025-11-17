@@ -11,6 +11,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <cmath>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
 #include "kutuzov_i_elem_vec_average/mpi/include/ops_mpi.hpp"
@@ -32,7 +33,7 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     input_data_ = std::vector<double>(param);
 
     for (size_t i = 0; i < param; i++) {
-      input_data_[i] = i * i - (double)param / 2;
+      input_data_[i] = i * i - static_cast<double>(param) / 2;
     }
   }
 
@@ -52,7 +53,7 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_ = {};
+  InType input_data_;
 };
 
 namespace {
