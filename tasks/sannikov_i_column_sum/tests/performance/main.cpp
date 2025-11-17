@@ -1,28 +1,30 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <vector>
+
 #include "sannikov_i_column_sum/common/include/common.hpp"
 #include "sannikov_i_column_sum/mpi/include/ops_mpi.hpp"
 #include "sannikov_i_column_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-
 namespace sannikov_i_column_sum {
 
 class SannikovIColumnSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     input_data_ = InType(10000, std::vector<int>(10000));
-    for (size_t i = 0; i < 10000; i++) {
-      for (size_t j = 0; j < 10000; j++) {
-        input_data_[i][j] = (size_t)(i * 14 + j * 21);
+    for (int i = 0; i < 10000; i++) {
+      for (int j = 0; j < 10000; j++) {
+        input_data_[i][j] = (i * 14) + (j * 21);
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     OutType sums_vec(input_data_.front().size(), 0);
-    for (size_t i = 0; i < (size_t)input_data_.size(); i++) {
-      for (size_t j = 0; j < (size_t)input_data_[i].size(); j++) {
+    for (std::size_t i = 0; i < input_data_.size(); i++) {
+      for (std::size_t j = 0; j < input_data_[i].size(); j++) {
         sums_vec[j] += input_data_[i][j];
       }
     }

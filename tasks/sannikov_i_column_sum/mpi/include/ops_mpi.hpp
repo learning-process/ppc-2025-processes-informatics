@@ -17,6 +17,8 @@ class SannikovIColumnSumMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static void PrepareSendBuffer(const InType &input_matrix, int rank, int rows, int columns, std::vector<int> &sendbuf);
 };
 
 }  // namespace sannikov_i_column_sum

@@ -1,10 +1,9 @@
 #include "sannikov_i_column_sum/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <vector>
 
 #include "sannikov_i_column_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
-
 namespace sannikov_i_column_sum {
 
 SannikovIColumnSumSEQ::SannikovIColumnSumSEQ(const InType &in) {
@@ -18,7 +17,7 @@ SannikovIColumnSumSEQ::SannikovIColumnSumSEQ(const InType &in) {
 
 bool SannikovIColumnSumSEQ::ValidationImpl() {
   const auto &input_matrix = GetInput();
-  return (!input_matrix.empty()) && (input_matrix.front().size() != 0);
+  return (!input_matrix.empty()) && (!input_matrix.front().empty());
 }
 
 bool SannikovIColumnSumSEQ::PreProcessingImpl() {
@@ -34,9 +33,11 @@ bool SannikovIColumnSumSEQ::RunImpl() {
     return false;
   }
 
-  for (int i = 0; i < static_cast<int>(input_matrix.size()); i++) {
-    for (int j = 0; j < static_cast<int>(input_matrix[i].size()); j++) {
-      GetOutput()[j] += input_matrix[i][j];
+  for (const auto &row : input_matrix) {
+    std::size_t column = 0;
+    for (const auto &value : row) {
+      GetOutput()[column] += value;
+      column++;
     }
   }
   return !GetOutput().empty();

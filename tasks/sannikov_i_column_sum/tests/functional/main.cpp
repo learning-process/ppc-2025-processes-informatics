@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "sannikov_i_column_sum/common/include/common.hpp"
@@ -34,8 +29,8 @@ class SannikovIColumnSumFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
   bool CheckTestOutputData(OutType &output_data) final {
     OutType sums_vec(input_data_.front().size(), 0);
-    for (size_t i = 0; i < (size_t)input_data_.size(); i++) {
-      for (size_t j = 0; j < (size_t)input_data_[i].size(); j++) {
+    for (std::size_t i = 0; i < (input_data_.size()); i++) {
+      for (std::size_t j = 0; j < (input_data_[i].size()); j++) {
         sums_vec[j] += input_data_[i][j];
       }
     }
@@ -47,7 +42,7 @@ class SannikovIColumnSumFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {
