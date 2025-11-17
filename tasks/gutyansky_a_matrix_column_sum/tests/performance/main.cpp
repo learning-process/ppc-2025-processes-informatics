@@ -28,7 +28,7 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   }
 
  private:
-  const size_t kSize_ = 4000;
+  const size_t kSize_ = 8000;
   InType input_data_ = {};
   OutType output_data_;
 };

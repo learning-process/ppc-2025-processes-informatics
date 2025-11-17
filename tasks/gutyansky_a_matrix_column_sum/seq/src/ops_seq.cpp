@@ -32,8 +32,10 @@ bool GutyanskyAMatrixColumnSumSEQ::RunImpl() {
 
   std::fill(GetOutput().begin(), GetOutput().end(), 0);
 
-  for (size_t i = 0; i < GetInput().rows * GetInput().cols; i++) {
-    GetOutput()[i % GetInput().cols] += GetInput().data[i];
+  for (size_t i = 0; i < GetInput().rows; i++) {
+    for (size_t j = 0; j < GetInput().cols; j++) {
+      GetOutput()[j] += GetInput().data[(i * GetInput().cols) + j];
+    }
   }
 
   return true;
