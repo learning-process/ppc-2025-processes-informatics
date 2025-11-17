@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <ranges>
 #include <string>
 
 #include "krykov_e_word_count/common/include/common.hpp"
