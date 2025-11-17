@@ -53,7 +53,7 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   }
 
   if (rank == 0) {
-    for (int i = num_processes * batch_size; i < input.size(); i++) {
+    for (int i = num_processes * batch_size; i < (int)(input.size()); i++) {
       global_sum += input[i];
     }
 
