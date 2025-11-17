@@ -51,40 +51,30 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
     return true;
   }
 
-  std::vector<int> local_matrix_data(matrix_size);
-  if (rank == 0) {
-    local_matrix_data = matrix_data;
-  }
-  MPI_Bcast(local_matrix_data.data(), matrix_size, MPI_INT, 0, MPI_COMM_WORLD);
-
   int local_size = matrix_size / size;
   int remainder = matrix_size % size;
 
-  int start_idx = 0;
-  int end_idx = 0;
-
-  if (rank < remainder) {
-    start_idx = rank * (local_size + 1);
-    end_idx = start_idx + local_size + 1;
-  } else {
-    start_idx = remainder * (local_size + 1) + (rank - remainder) * local_size;
-    end_idx = start_idx + local_size;
+  std::vector<int> sendcounts(size), displs(size);
+  for (int i = 0; i < size; i++) {
+    sendcounts[i] = (i < remainder) ? local_size + 1 : local_size;
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + sendcounts[i - 1];
   }
 
-  end_idx = std::min(end_idx, matrix_size);
+  std::vector<int> local_data(sendcounts[rank]);
+
+  if (rank == 0) {
+    MPI_Scatterv(matrix_data.data(), sendcounts.data(), displs.data(), MPI_INT, local_data.data(), sendcounts[rank],
+                 MPI_INT, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Scatterv(nullptr, sendcounts.data(), displs.data(), MPI_INT, local_data.data(), sendcounts[rank], MPI_INT, 0,
+                 MPI_COMM_WORLD);
+  }
 
   int local_max = std::numeric_limits<int>::min();
-
-  if (start_idx < end_idx) {
-    for (int i = start_idx; i < end_idx; i++) {
-      if (local_matrix_data[i] > local_max) {
-        local_max = local_matrix_data[i];
-      }
+  for (int val : local_data) {
+    if (val > local_max) {
+      local_max = val;
     }
-  }
-
-  if (rank >= matrix_size) {
-    local_max = std::numeric_limits<int>::min();
   }
 
   int global_max = 0;
