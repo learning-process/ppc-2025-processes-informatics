@@ -15,6 +15,9 @@ class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InTyp
   InType input_data_;
   OutType expected_data_;
 
+ protected:
+  ShkrebkoMCountCharFreqPerfTests() : input_data_(), expected_data_(0) {}
+
   void SetUp() override {
     std::string large_text;
     const int target_size = 300000000;

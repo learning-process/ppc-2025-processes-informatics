@@ -21,6 +21,9 @@ class ShkrebkoMCountCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  protected:
+  ShkrebkoMCountCharFreqFuncTests() : input_data_(), expected_data_(0) {}
+
+ protected:
   void SetUp() override {
     TestType test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
