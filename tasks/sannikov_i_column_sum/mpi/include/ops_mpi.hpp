@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "sannikov_i_column_sum/common/include/common.hpp"
 #include "task/include/task.hpp"
 
