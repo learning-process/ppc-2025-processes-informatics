@@ -3,10 +3,32 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
-// Удален лишний include util.hpp
+
+namespace {
+
+// Выносим логику локального поиска различий, чтобы снизить Cognitive Complexity
+struct LocalDiff {
+  size_t diff_pos;
+  int result;
+};
+
+LocalDiff FindLocalDifference(const std::string &str1, const std::string &str2, size_t start, size_t end) {
+  for (size_t i = start; i < end; ++i) {
+    char c1 = (i < str1.length()) ? str1[i] : '\0';
+    char c2 = (i < str2.length()) ? str2[i] : '\0';
+
+    if (c1 != c2) {
+      return {i, (c1 < c2) ? -1 : 1};
+    }
+  }
+  return {std::string::npos, 0};
+}
+
+}  // namespace
 
 namespace gasenin_l_lex_dif {
 
@@ -27,9 +49,6 @@ bool GaseninLLexDifMPI::PreProcessingImpl() {
 
 bool GaseninLLexDifMPI::RunImpl() {
   const auto &[str1, str2] = GetInput();
-  // size_t должна быть явно подключена, но она есть в cstdint/stddef.
-  // Здесь используем auto для длины, чтобы избежать дублирования типов, если это уместно,
-  // но size_t стандартен. Исправим инициализацию rank/size .
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -46,36 +65,22 @@ bool GaseninLLexDifMPI::RunImpl() {
   size_t start = rank * chunk_size;
   size_t end = std::min(start + chunk_size, total_len);
 
-  int local_result = 0;
-  size_t local_diff_pos = total_len;
+  // Используем вспомогательную функцию вместо вложенного цикла
+  LocalDiff local_diff = FindLocalDifference(str1, str2, start, end);
+  size_t local_diff_pos = (local_diff.diff_pos == std::string::npos) ? total_len : local_diff.diff_pos;
+  int local_result = local_diff.result;
 
-  // Цикл оставим, он достаточно прост, сложность давали вложенные if/else ниже
-  for (size_t i = start; i < end; ++i) {
-    char c1 = (i < str1.length()) ? str1[i] : '\0';
-    char c2 = (i < str2.length()) ? str2[i] : '\0';
-
-    if (c1 != c2) {
-      local_diff_pos = i;
-      local_result = (c1 < c2) ? -1 : 1;
-      break;
-    }
-  }
-
-  // Использование auto при cast
   auto local_pos_64 = static_cast<uint64_t>(local_diff_pos);
   uint64_t global_min_pos_64 = 0;
 
   MPI_Allreduce(&local_pos_64, &global_min_pos_64, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD);
 
-  // Использование auto при cast
   auto global_min_pos = static_cast<size_t>(global_min_pos_64);
-
   int result_for_sum = (local_diff_pos == global_min_pos) ? local_result : 0;
 
   int final_result = 0;
   MPI_Allreduce(&result_for_sum, &final_result, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  // Упрощение логики для снижения Cognitive Complexity
   if (global_min_pos == total_len) {
     if (str1.length() != str2.length()) {
       final_result = (str1.length() < str2.length()) ? -1 : 1;

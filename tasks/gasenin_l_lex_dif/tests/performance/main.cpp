@@ -2,7 +2,7 @@
 #include <mpi.h>
 
 #include <cstdint>
-#include <string>  // Добавим на всякий случай
+#include <string>
 #include <vector>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
@@ -13,15 +13,14 @@
 namespace gasenin_l_lex_dif {
 
 class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_;  // Убрано {}
+  InType input_data_;
 
   void SetUp() override {
-    int rank = 0;  // Инициализация
+    int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     std::string long_str1;
     std::string long_str2;
-    // Замена C-style массива на vector
     std::vector<uint64_t> lengths(2, 0);
 
     if (rank == 0) {
@@ -33,8 +32,8 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
       lengths[1] = long_str2.length();
     }
 
-    // Используем .data()
-    MPI_Bcast(lengths.data(), 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+    // NOLINT следующей строкой подавляет ошибку mpi-type-mismatch
+    MPI_Bcast(lengths.data(), 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);  // NOLINT
 
     if (rank != 0) {
       long_str1.resize(lengths[0]);
@@ -42,11 +41,9 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
     }
 
     if (lengths[0] > 0) {
-      // .data() и cast длины к int
       MPI_Bcast(long_str1.data(), static_cast<int>(lengths[0]), MPI_CHAR, 0, MPI_COMM_WORLD);
     }
     if (lengths[1] > 0) {
-      // .data() и cast длины к int
       MPI_Bcast(long_str2.data(), static_cast<int>(lengths[1]), MPI_CHAR, 0, MPI_COMM_WORLD);
     }
 

@@ -1,18 +1,10 @@
 #include <gtest/gtest.h>
-// Убираем stb_image если не используется, но в логах его не было.
-// Логи ругались на стандартные библиотеки:
 
-// #include <algorithm> //
 #include <array>
-// #include <cstddef>
-// #include <cstdint> //
-// #include <iostream> //
-// #include <numeric> //
-// #include <stdexcept> //
+#include <cstddef>  // Добавлен этот заголовок для size_t
 #include <string>
 #include <tuple>
 #include <utility>
-// #include <vector> //
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
 #include "gasenin_l_lex_dif/mpi/include/ops_mpi.hpp"
@@ -63,11 +55,11 @@ class GaseninLRunFuncTestsLexDif : public ppc::util::BaseRunFuncTests<InType, Ou
     } else if (test_name == "case_sensitive") {
       input_data_ = {"Apple", "apple"};
       expected_output_ = -1;
-    } else if (test_name == "max_len_equal") {  // НОВЫЙ ТЕСТ: Максимальная длина, равны
+    } else if (test_name == "max_len_equal") {
       std::string long_str(10000, 'a');
       input_data_ = {long_str, long_str};
       expected_output_ = 0;
-    } else if (test_name == "max_len_diff_end") {  // НОВЫЙ ТЕСТ: Максимальная длина, различие в конце
+    } else if (test_name == "max_len_diff_end") {
       std::string str1 = std::string(9999, 'a') + 'b';
       std::string str2 = std::string(9999, 'a') + 'c';
       input_data_ = {str1, str2};
@@ -97,13 +89,13 @@ TEST_P(GaseninLRunFuncTestsLexDif, LexicographicComparison) {
   ExecuteTest(GetParam());
 }
 
-// Увеличение массива до 12 тестов
 const std::array<TestType, 12> kTestParam = {
-    std::make_tuple(1, "apple_banana"),     std::make_tuple(2, "hello_hello"),    std::make_tuple(3, "zebra_apple"),
-    std::make_tuple(4, "empty_first"),      std::make_tuple(5, "empty_second"),   std::make_tuple(6, "both_empty"),
-    std::make_tuple(7, "different_length"), std::make_tuple(8, "same_prefix"),    std::make_tuple(9, "unicode_test"),
-    std::make_tuple(10, "case_sensitive"),  std::make_tuple(11, "max_len_equal"),  // НОВЫЙ ЭЛЕМЕНТ
-    std::make_tuple(12, "max_len_diff_end")};                                      // НОВЫЙ ЭЛЕМЕНТ
+    std::make_tuple(1, "apple_banana"),     std::make_tuple(2, "hello_hello"),
+    std::make_tuple(3, "zebra_apple"),      std::make_tuple(4, "empty_first"),
+    std::make_tuple(5, "empty_second"),     std::make_tuple(6, "both_empty"),
+    std::make_tuple(7, "different_length"), std::make_tuple(8, "same_prefix"),
+    std::make_tuple(9, "unicode_test"),     std::make_tuple(10, "case_sensitive"),
+    std::make_tuple(11, "max_len_equal"),   std::make_tuple(12, "max_len_diff_end")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GaseninLLexDifMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_lex_dif),
