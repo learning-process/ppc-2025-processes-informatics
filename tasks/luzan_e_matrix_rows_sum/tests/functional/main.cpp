@@ -23,36 +23,36 @@ namespace luzan_e_matrix_rows_sum {
 class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(std::get<0>(test_param)) + "_" +  std::to_string(std::get<1>(test_param));
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_luzan_e_matrix_rows_sum, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    int height = std::get<0>(params);
+    int width = std::get<1>(params);
+    std::tuple_element_t<0, InType> mat(height*width); 
+
+    for (int elem = 0; elem < height * width; elem++) {
+      mat[elem] = (elem * 2) - 42;
+    }
+  
+    input_data_ = std::make_tuple(mat, height, width);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    int height = std::get<1>(input_data_);
+    int width = std::get<2>(input_data_);
+    std::vector<int> sum(height, 0);
+    std::tuple_element_t<0, InType> mat = std::get<0>(input_data_); 
+
+    for (int row = 0; row < height; row++) {
+	   for (int col = 0; col < width; col++) {
+		   sum[row] += mat[width * row + col];
+     }
+    }
+
+    return (output_data == sum);
   }
 
   InType GetTestInputData() final {
@@ -60,7 +60,7 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
@@ -69,7 +69,7 @@ TEST_P(LuzanEMatrixRowsSumFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, 3), std::make_tuple(2, 5), std::make_tuple(10, 70)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LuzanEMatrixRowsSumMPI, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_rows_sum),

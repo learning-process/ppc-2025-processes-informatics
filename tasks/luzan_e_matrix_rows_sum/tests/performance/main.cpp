@@ -8,15 +8,30 @@
 namespace luzan_e_matrix_rows_sum {
 
 class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const int HEIGHT = 100;
+  const int WIDTH = 1000;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::tuple_element_t<0, InType> mat(HEIGHT*WIDTH); 
+    for (int elem = 0; elem < HEIGHT * WIDTH; elem++) {
+      mat[elem] = elem - 42;
+    }
+  
+    input_data_ = std::make_tuple(mat, HEIGHT, WIDTH);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    std::vector<int> sum(HEIGHT);
+    std::tuple_element_t<0, InType> mat = std::get<0>(input_data_); 
+
+    for (int row = 0; row < HEIGHT; row++) {
+	   for (int col = 0; col < WIDTH; col++) {
+		   sum[row] += mat[WIDTH * row + col];
+     }
+    }
+
+    return (output_data == sum);
   }
 
   InType GetTestInputData() final {

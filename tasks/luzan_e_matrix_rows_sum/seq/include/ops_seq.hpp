@@ -13,10 +13,10 @@ class LuzanEMatrixRowsSumSEQ : public BaseTask {
   explicit LuzanEMatrixRowsSumSEQ(const InType &in);
 
  private:
-  bool ValidationImpl() override;
-  bool PreProcessingImpl() override;
-  bool RunImpl() override;
-  bool PostProcessingImpl() override;
+  bool ValidationImpl() override; //= input data check 
+  bool PreProcessingImpl() override; //= pre proc 
+  bool RunImpl() override; //= PARALLEL
+  bool PostProcessingImpl() override; //= back to reality
 };
 
 }  // namespace luzan_e_matrix_rows_sum

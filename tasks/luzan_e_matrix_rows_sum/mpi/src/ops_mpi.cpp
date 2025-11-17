@@ -4,6 +4,7 @@
 
 #include <numeric>
 #include <vector>
+#include <tuple>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -13,60 +14,54 @@ namespace luzan_e_matrix_rows_sum {
 LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool LuzanEMatrixRowsSumMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  int height = std::get<1>(GetInput());
+  int width = std::get<2>(GetInput());
+
+  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && 
+    height != 0 && width != 0;
 }
 
 bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  int height = std::get<1>(GetInput());
+  GetOutput().resize(height);
+  for (int row = 0; row < height; row++) {
+    GetOutput()[row] = 0;
+  }
+  return true;
 }
 
 bool LuzanEMatrixRowsSumMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
+  const int height = std::get<1>(GetInput());
+  const int width = std::get<2>(GetInput());
+  const std::tuple_element_t<0, InType>& mat = std::get<0>(GetInput()); 
+  OutType& sum_vec = GetOutput(); 
+  OutType part_sum_vec = GetOutput(); 
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int rank = 0;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  int rest = height % size;
+  int rows_per_proc = height / size;
+  int begin = rank * rows_per_proc + (rest > rank ? rank : rest);
+  int end = begin + rows_per_proc + (rest > rank ? 1 : 0);
 
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
-  }
+  for (int i = begin; i < end; i++)
+    for (int s = 0; s < width; s++)
+      part_sum_vec[i] += mat[width * i + s];
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  MPI_Reduce(part_sum_vec.data(), sum_vec.data(), height, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(sum_vec.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
+
+  return true;
 }
 
 bool LuzanEMatrixRowsSumMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace luzan_e_matrix_rows_sum
