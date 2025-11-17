@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <numeric>
@@ -11,7 +12,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <cmath>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
 #include "kutuzov_i_elem_vec_average/mpi/include/ops_mpi.hpp"
