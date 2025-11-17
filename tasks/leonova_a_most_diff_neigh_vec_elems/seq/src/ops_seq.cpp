@@ -34,7 +34,7 @@ bool LeonovaAMostDiffNeighVecElemsSEQ::RunImpl() {
 
   int max_diff = -1;  // фиктивная разница
   for (std::vector<int>::size_type i = 0; i < GetInput().size() - 1; i++) {
-    std::tuple<int, int> curr_elems(GetInput()[i], GetInput()[i + 1]);  // текущая пара елементов
+    std::tuple<int, int> curr_elems(GetInput()[i], GetInput()[i + 1]);       // текущая пара елементов
     int curr_diff = abs(std::get<0>(curr_elems) - std::get<1>(curr_elems));  // разница очевидно считается по модулю
     if (curr_diff > max_diff)  // берем первую пару с наибольшей разницей в значениях
     {

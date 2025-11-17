@@ -1,10 +1,11 @@
 #include "leonova_a_most_diff_neigh_vec_elems/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-#include <vector>
-#include <tuple>
+
 #include <algorithm>
 #include <cmath>
+#include <tuple>
+#include <vector>
 
 #include "leonova_a_most_diff_neigh_vec_elems/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -26,14 +27,14 @@ bool LeonovaAMostDiffNeighVecElemsMPI::PreProcessingImpl() {
 }
 
 bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
-  const auto& input_vec = GetInput();
-  
+  const auto &input_vec = GetInput();
+
   // Обработка особых случаев
   if (input_vec.empty()) {
     GetOutput() = std::make_tuple(0, 0);
     return true;
   }
-  
+
   if (input_vec.size() == 1) {
     GetOutput() = std::make_tuple(input_vec[0], input_vec[0]);
     return true;
@@ -50,7 +51,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
       // Процесс 0 обрабатывает все данные
       int max_diff = -1;
       std::tuple<int, int> best_pair(0, 0);
-      
+
       for (size_t i = 0; i < input_vec.size() - 1; ++i) {
         int diff = std::abs(input_vec[i] - input_vec[i + 1]);
         if (diff > max_diff) {
@@ -58,9 +59,9 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
           best_pair = std::make_tuple(input_vec[i], input_vec[i + 1]);
         }
       }
-      
+
       GetOutput() = best_pair;
-      
+
       // Рассылаем результат всем процессам
       int result_first = std::get<0>(best_pair);
       int result_second = std::get<1>(best_pair);
@@ -79,7 +80,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
     // Только один процесс - обрабатываем последовательно
     int max_diff = -1;
     std::tuple<int, int> best_pair(0, 0);
-    
+
     for (size_t i = 0; i < input_vec.size() - 1; ++i) {
       int diff = std::abs(input_vec[i] - input_vec[i + 1]);
       if (diff > max_diff) {
@@ -87,7 +88,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
         best_pair = std::make_tuple(input_vec[i], input_vec[i + 1]);
       }
     }
-    
+
     GetOutput() = best_pair;
   }
 
