@@ -13,10 +13,10 @@ namespace gutyansky_a_matrix_column_sum {
 class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    input_data_.rows = kSize;
-    input_data_.cols = kSize;
-    input_data_.data.assign(kSize * kSize, 1);
-    output_data_.assign(kSize, static_cast<int64_t>(kSize));
+    input_data_.rows = kSize_;
+    input_data_.cols = kSize_;
+    input_data_.data.assign(kSize_ * kSize_, 1);
+    output_data_.assign(kSize_, static_cast<int64_t>(kSize_));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -28,7 +28,7 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   }
 
  private:
-  const size_t kSize = 4000;
+  const size_t kSize_ = 4000;
   InType input_data_ = {};
   OutType output_data_;
 };
