@@ -13,60 +13,46 @@ namespace kutuzov_i_elem_vec_average {
 KutuzovIElemVecAverageMPI::KutuzovIElemVecAverageMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = 0.0;
 }
 
 bool KutuzovIElemVecAverageMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput().size() > 0;
 }
 
 bool KutuzovIElemVecAverageMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool KutuzovIElemVecAverageMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
 
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  double global_sum = 0.0;
+  
+  size_t num_threads = ppc::util::GetNumThreads();
+  size_t batch_size = GetInput().size() / num_threads;
 
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
-  }
+  std::vector<double> recv_buffer(batch_size);
+
+  MPI_Scatter(GetInput().data(), GetInput().size(), MPI_DOUBLE, recv_buffer.data(), batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  double sum = 0.0;
+  for (size_t i = 0; i < batch_size; i++)
+    sum += recv_buffer[i];
+
+  MPI_Reduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if (rank == 0)
+    GetOutput() = global_sum / GetInput().size();
 
   MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  return true;
 }
 
 bool KutuzovIElemVecAverageMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace kutuzov_i_elem_vec_average
