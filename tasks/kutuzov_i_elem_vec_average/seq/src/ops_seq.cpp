@@ -24,8 +24,9 @@ bool KutuzovIElemVecAverageSEQ::PreProcessingImpl() {
 
 bool KutuzovIElemVecAverageSEQ::RunImpl() {
   GetOutput() = 0.0;
-  for (size_t i = 0; i < GetInput().size(); i++)
+  for (size_t i = 0; i < GetInput().size(); i++) {
     GetOutput() += GetInput()[i];
+  }
 
   GetOutput() /= GetInput().size();
 

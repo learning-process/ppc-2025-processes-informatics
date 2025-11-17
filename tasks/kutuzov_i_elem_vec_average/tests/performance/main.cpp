@@ -12,17 +12,18 @@ class KutuzovIElemVecAveragePerfTests : public ppc::util::BaseRunPerfTests<InTyp
   InType input_data_{};
 
   void SetUp() override {
-
     input_data_ = std::vector<double>(kCount_);
 
-    for (int i = 0; i < kCount_; i++)
+    for (int i = 0; i < kCount_; i++) {
       input_data_[i] = i * i - (double)kCount_ / 2;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     double average = 0.0;
-    for (size_t i = 0; i < input_data_.size(); i++)
+    for (size_t i = 0; i < input_data_.size(); i++) {
       average += input_data_[i];
+    }
 
     average /= input_data_.size();
 
@@ -38,8 +39,8 @@ TEST_P(KutuzovIElemVecAveragePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KutuzovIElemVecAverageMPI, KutuzovIElemVecAverageSEQ>(PPC_SETTINGS_kutuzov_i_elem_vec_average);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KutuzovIElemVecAverageMPI, KutuzovIElemVecAverageSEQ>(
+    PPC_SETTINGS_kutuzov_i_elem_vec_average);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
