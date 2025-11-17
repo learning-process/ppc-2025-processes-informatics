@@ -56,7 +56,7 @@ TEST_P(SannikovIColumnSumFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 8> kTestParam = {
+const std::array<TestType, 12> kTestParam = {
     std::make_tuple(std::vector<std::vector<int>>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, "matrix3x3"),
     std::make_tuple(std::vector<std::vector<int>>{{-1, -2, -3}, {-4, -5, -6}, {-7, -8, -9}}, "matrix3x3negative"),
     std::make_tuple(std::vector<std::vector<int>>{{1, 2}, {1, 2}, {1, 2}, {1, 2}}, "matrix4x2"),
@@ -66,7 +66,12 @@ const std::array<TestType, 8> kTestParam = {
     std::make_tuple(std::vector<std::vector<int>>{{1037, 2385, 8543}, {286, 629, 1094}, {8306, 6290, 375}},
                     "matrix3x3big_nums"),
     std::make_tuple(std::vector<std::vector<int>>{{1037, -2385, 8543}, {-286, 629, -1094}, {8306, 6290, -375}},
-                    "matrix3x3big_nums_with_negative")};
+                    "matrix3x3big_nums_with_negative"),
+    std::make_tuple(std::vector<std::vector<int>>{{-5, 0, 7, -3, 10}}, "matrix1x5_mix"),
+    std::make_tuple(std::vector<std::vector<int>>{{1}, {2}, {-3}, {4}, {-5}}, "matrix5x1_column"),
+    std::make_tuple(std::vector<std::vector<int>>{{0, -1, 2, -3}, {4, 0, -5, 6}}, "matrix2x4_mix"),
+    std::make_tuple(std::vector<std::vector<int>>{{1, 2, 3, 4, 5}, {-1, 0, 7, -2, 3}, {10, -5, 8, 0, -4}},
+                    "matrix3x5_mix")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SannikovIColumnSumMPI, InType>(kTestParam, PPC_SETTINGS_sannikov_i_column_sum),

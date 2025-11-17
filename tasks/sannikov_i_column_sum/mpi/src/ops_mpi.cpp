@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <numeric>
 #include <vector>
 
 #include "sannikov_i_column_sum/common/include/common.hpp"
@@ -53,7 +52,7 @@ bool SannikovIColumnSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   if (rank == 0) {
-    if (input_matrix.empty() || (int)input_matrix.front().size() != columns) {
+    if (input_matrix.empty() || static_cast<int>(input_matrix.front().size()) != columns) {
       return false;
     }
     rows = (input_matrix.size());
@@ -81,7 +80,8 @@ bool SannikovIColumnSumMPI::RunImpl() {
     id_elem[i] = displacement;
     displacement += elem_for_proc[i];
   }
-  int mpi_displacement = id_elem[rank] % columns;
+  int mpi_displacement = 0;
+  mpi_displacement = id_elem[rank] % columns;
   std::vector<int> buf(elem_for_proc[rank], 0);
   MPI_Scatterv(rank == 0 ? sendbuf.data() : nullptr, elem_for_proc.data(), id_elem.data(), MPI_INT, buf.data(),
                elem_for_proc[rank], MPI_INT, 0, MPI_COMM_WORLD);

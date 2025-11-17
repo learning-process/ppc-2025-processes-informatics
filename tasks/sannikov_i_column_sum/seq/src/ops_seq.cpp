@@ -1,6 +1,5 @@
 #include "sannikov_i_column_sum/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <vector>
 
 #include "sannikov_i_column_sum/common/include/common.hpp"
@@ -35,8 +34,8 @@ bool SannikovIColumnSumSEQ::RunImpl() {
     return false;
   }
 
-  for (int i = 0; i < (int)input_matrix.size(); i++) {
-    for (int j = 0; j < (int)input_matrix[i].size(); j++) {
+  for (int i = 0; i < static_cast<int>(input_matrix.size()); i++) {
+    for (int j = 0; j < static_cast<int>(input_matrix[i].size()); j++) {
       GetOutput()[j] += input_matrix[i][j];
     }
   }
