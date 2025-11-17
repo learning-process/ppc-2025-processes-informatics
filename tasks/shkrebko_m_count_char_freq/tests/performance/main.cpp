@@ -7,16 +7,12 @@
 #include "shkrebko_m_count_char_freq/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_count_char_freq/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace shkrebko_m_count_char_freq {
 
 class ShkrebkoMCountCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_;
-  OutType expected_data_;
-
- protected:
-  ShkrebkoMCountCharFreqPerfTests() : input_data_(), expected_data_(0) {}
+  InType input_data_{};
+  OutType expected_data_{0};
 
   void SetUp() override {
     std::string large_text;
