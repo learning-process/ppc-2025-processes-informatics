@@ -2,11 +2,15 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>  // для std::max
+#include <cstddef>    // для size_t
+#include <limits>     // для std::numeric_limits
+
+// #include <numeric>
 #include <vector>
 
 #include "pylaeva_s_max_elem_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace pylaeva_s_max_elem_matrix {
 
@@ -54,7 +58,9 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   int local_size = matrix_size / size;
   int remainder = matrix_size % size;
 
-  std::vector<int> sendcounts(size), displs(size);
+  std::vector<int> sendcounts(size);
+  std::vector<int> displs(size);
+
   for (int i = 0; i < size; i++) {
     sendcounts[i] = (i < remainder) ? local_size + 1 : local_size;
     displs[i] = (i == 0) ? 0 : displs[i - 1] + sendcounts[i - 1];
@@ -72,9 +78,7 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
 
   int local_max = std::numeric_limits<int>::min();
   for (int val : local_data) {
-    if (val > local_max) {
-      local_max = val;
-    }
+    local_max = std::max(val, local_max);
   }
 
   int global_max = 0;

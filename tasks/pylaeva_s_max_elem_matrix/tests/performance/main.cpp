@@ -1,5 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>    // для size_t
+#include <fstream>    // для std::ifstream
+#include <stdexcept>  // для std::runtime_error
+#include <string>     // для std::string
+#include <tuple>      // для std::make_tuple
+#include <vector>     // для std::vector
+
 #include "pylaeva_s_max_elem_matrix/common/include/common.hpp"
 #include "pylaeva_s_max_elem_matrix/mpi/include/ops_mpi.hpp"
 #include "pylaeva_s_max_elem_matrix/seq/include/ops_seq.hpp"
@@ -9,7 +16,7 @@ namespace pylaeva_s_max_elem_matrix {
 
 class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{0, {}};
-  OutType expected_data_;
+  OutType expected_data_{};
 
   void SetUp() override {
     std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_2048x2048.txt");
@@ -19,12 +26,11 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Cannot open file: " + filename);
     }
 
-    size_t rows;
-    size_t columns;
-    size_t size;
+    size_t rows = 0;
+    size_t columns = 0;
+    size_t size = 0;
+    int max = 0;
     std::vector<int> input;
-
-    int max;
 
     file >> rows;
     file >> columns;

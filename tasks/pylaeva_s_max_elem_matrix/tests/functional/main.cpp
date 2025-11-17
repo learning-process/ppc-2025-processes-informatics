@@ -1,15 +1,16 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
+// #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
+// #include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
+// #include <utility>
+#include <fstream>  // для std::ifstream
 #include <vector>
 
 #include "pylaeva_s_max_elem_matrix/common/include/common.hpp"
@@ -36,12 +37,11 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
       throw std::runtime_error("Cannot open file: " + filename);
     }
 
-    size_t rows;
-    size_t columns;
-    size_t size;
+    size_t rows = 0;
+    size_t columns = 0;
+    size_t size = 0;
+    int max = 0;
     std::vector<int> input;
-
-    int max;
 
     file >> rows;
     file >> columns;
@@ -73,7 +73,7 @@ class PylaevaSMaxElemMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
 
  private:
   InType input_data_;
-  OutType expected_data_;
+  OutType expected_data_{};
 };
 
 namespace {
