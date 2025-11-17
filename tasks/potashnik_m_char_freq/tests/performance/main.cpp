@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <tuple>
+#include <vector>
+#include <string>
+
 #include "potashnik_m_char_freq/common/include/common.hpp"
 #include "potashnik_m_char_freq/mpi/include/ops_mpi.hpp"
 #include "potashnik_m_char_freq/seq/include/ops_seq.hpp"
@@ -8,15 +12,33 @@
 namespace potashnik_m_char_freq {
 
 class PotashnikMCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const int kCount_ = 1000000000;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::string str;
+    char chr;
+
+    chr = 'k';
+    for (int i = 0; i < kCount_; i++) {
+      char c = 'a' + ((i * 7 + 13) % 26);
+      str += c;
+    }
+
+    input_data_ = std::make_tuple(str, chr);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    int res = 0;
+    std::string str = std::get<0>(input_data_);
+    char chr = std::get<1>(input_data_);
+    
+    int string_size = static_cast<int>(str.size());
+    for (int i = 0; i < string_size; i++) {
+      if (str[i] == chr) res++;    
+    } 
+
+    return (res == output_data);
   }
 
   InType GetTestInputData() final {

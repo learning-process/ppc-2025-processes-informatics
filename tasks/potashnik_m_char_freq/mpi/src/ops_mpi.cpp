@@ -4,6 +4,7 @@
 
 #include <numeric>
 #include <vector>
+#include <string>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -17,56 +18,49 @@ PotashnikMCharFreqMPI::PotashnikMCharFreqMPI(const InType &in) {
 }
 
 bool PotashnikMCharFreqMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return (std::get<0>(GetInput()).size() > 0);
 }
 
 bool PotashnikMCharFreqMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool PotashnikMCharFreqMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
+  auto &input = GetInput();
+  std::string str = std::get<0>(input);
+  char chr = std::get<1>(input);
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
+  int world_size = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
-
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
+  int string_size = static_cast<int>(str.size());
+  int block_size = string_size / world_size;
+  
+  int start_pos = block_size * rank;
+  int end_pos;
+  if (rank == world_size - 1) {
+    end_pos = string_size;
+  }
+  else {
+    end_pos = start_pos + block_size;
+  }
+  int cur_res = 0;
+  
+  for (int i = start_pos; i < end_pos; i++) {
+    if (str[i] == chr) cur_res++;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  int total_res = 0;
+  MPI_Allreduce(&cur_res, &total_res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  GetOutput() = total_res;
+
+  return true;
 }
 
 bool PotashnikMCharFreqMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace potashnik_m_char_freq

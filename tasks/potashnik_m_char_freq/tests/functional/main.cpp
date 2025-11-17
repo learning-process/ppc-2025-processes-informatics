@@ -23,36 +23,40 @@ namespace potashnik_m_char_freq {
 class PotashnikMCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_potashnik_m_char_freq, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string str;
+    char chr;
+
+    int seed = params;
+
+    // Generating character
+    chr = 'a' + (seed % 26);
+
+    // Generating string
+    for (int i = 0; i < params; i++) {
+      char c = 'a' + ((i * 7 + 13 + seed / 2) % 26);
+      str += c;
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::make_tuple(str, chr);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    int res = 0;
+    std::string str = std::get<0>(input_data_);
+    char chr = std::get<1>(input_data_);
+    
+    int string_size = static_cast<int>(str.size());
+    for (int i = 0; i < string_size; i++) {
+      if (str[i] == chr) res++;    
+    } 
+
+    return (res == output_data);
   }
 
   InType GetTestInputData() final {
@@ -60,7 +64,7 @@ class PotashnikMCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
@@ -69,7 +73,7 @@ TEST_P(PotashnikMCharFreqFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 10> kTestParam = {1, 5, 10, 20, 100, 1000, 2000, 5000, 10000, 20000};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<PotashnikMCharFreqMPI, InType>(kTestParam, PPC_SETTINGS_potashnik_m_char_freq),
