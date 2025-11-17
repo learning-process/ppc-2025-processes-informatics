@@ -101,13 +101,11 @@ bool KrykovEWordCountMPI::RunImpl() {
     for (size_t count : all_counts) {
       total_count += count;
     }
-
     for (int i = 1; i < world_size; ++i) {
       if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
         total_count--;
       }
     }
-
     GetOutput() = static_cast<int>(total_count);
   }
 
@@ -125,7 +123,7 @@ bool KrykovEWordCountMPI::RunImpl() {
 }
 
 bool KrykovEWordCountMPI::PostProcessingImpl() {
-  return true;  // try with merge
+  return true;
 }
 
 }  // namespace krykov_e_word_count
