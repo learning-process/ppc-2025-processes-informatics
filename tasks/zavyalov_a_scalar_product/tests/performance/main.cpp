@@ -14,7 +14,7 @@
 namespace zavyalov_a_scalar_product {
 
 class ZavyalovAScalarProductPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const uint64_t kCount_ = 30000000ULL;
+  const uint64_t kCount_ = 150000000ULL;
   InType input_data_;
 
   void SetUp() override {
