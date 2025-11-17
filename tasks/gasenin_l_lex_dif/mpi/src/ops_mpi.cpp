@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <string>  // Исправление 1: Явное подключение string
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
 
@@ -22,10 +23,12 @@ LocalDiff FindLocalDifference(const std::string &str1, const std::string &str2, 
     char c2 = (i < str2.length()) ? str2[i] : '\0';
 
     if (c1 != c2) {
-      return {i, (c1 < c2) ? -1 : 1};
+      // Исправление 2: Используем designated initializers (.field = value)
+      return {.diff_pos = i, .result = (c1 < c2) ? -1 : 1};
     }
   }
-  return {std::string::npos, 0};
+  // Исправление 3: Используем designated initializers
+  return {.diff_pos = std::string::npos, .result = 0};
 }
 
 }  // namespace
@@ -65,7 +68,7 @@ bool GaseninLLexDifMPI::RunImpl() {
   size_t start = rank * chunk_size;
   size_t end = std::min(start + chunk_size, total_len);
 
-  // Используем вспомогательную функцию вместо вложенного цикла
+  // Используем вспомогательную функцию
   LocalDiff local_diff = FindLocalDifference(str1, str2, start, end);
   size_t local_diff_pos = (local_diff.diff_pos == std::string::npos) ? total_len : local_diff.diff_pos;
   int local_result = local_diff.result;
