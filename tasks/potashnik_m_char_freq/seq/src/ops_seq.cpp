@@ -26,14 +26,16 @@ bool PotashnikMCharFreqSEQ::RunImpl() {
   auto &input = GetInput();
   std::string str = std::get<0>(input);
   char chr = std::get<1>(input);
-  
+
   int string_size = static_cast<int>(str.size());
   int res = 0;
-  for(int i = 0; i < string_size; i++) {
-    if (str[i] == chr) res++;
+  for (int i = 0; i < string_size; i++) {
+    if (str[i] == chr) {
+      res++;
+    }
   }
   GetOutput() = res;
-  
+
   return true;
 }
 

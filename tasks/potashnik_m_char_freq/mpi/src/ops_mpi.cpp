@@ -3,8 +3,8 @@
 #include <mpi.h>
 
 #include <numeric>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -37,19 +37,20 @@ bool PotashnikMCharFreqMPI::RunImpl() {
 
   int string_size = static_cast<int>(str.size());
   int block_size = string_size / world_size;
-  
+
   int start_pos = block_size * rank;
   int end_pos;
   if (rank == world_size - 1) {
     end_pos = string_size;
-  }
-  else {
+  } else {
     end_pos = start_pos + block_size;
   }
   int cur_res = 0;
-  
+
   for (int i = start_pos; i < end_pos; i++) {
-    if (str[i] == chr) cur_res++;
+    if (str[i] == chr) {
+      cur_res++;
+    }
   }
 
   int total_res = 0;

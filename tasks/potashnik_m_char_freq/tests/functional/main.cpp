@@ -50,11 +50,13 @@ class PotashnikMCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     int res = 0;
     std::string str = std::get<0>(input_data_);
     char chr = std::get<1>(input_data_);
-    
+
     int string_size = static_cast<int>(str.size());
     for (int i = 0; i < string_size; i++) {
-      if (str[i] == chr) res++;    
-    } 
+      if (str[i] == chr) {
+        res++;
+      }
+    }
 
     return (res == output_data);
   }
@@ -75,9 +77,9 @@ TEST_P(PotashnikMCharFreqFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 10> kTestParam = {1, 5, 10, 20, 100, 1000, 2000, 5000, 10000, 20000};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<PotashnikMCharFreqMPI, InType>(kTestParam, PPC_SETTINGS_potashnik_m_char_freq),
-                   ppc::util::AddFuncTask<PotashnikMCharFreqSEQ, InType>(kTestParam, PPC_SETTINGS_potashnik_m_char_freq));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<PotashnikMCharFreqMPI, InType>(kTestParam, PPC_SETTINGS_potashnik_m_char_freq),
+    ppc::util::AddFuncTask<PotashnikMCharFreqSEQ, InType>(kTestParam, PPC_SETTINGS_potashnik_m_char_freq));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
