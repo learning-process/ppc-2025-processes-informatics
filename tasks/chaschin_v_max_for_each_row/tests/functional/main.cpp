@@ -28,11 +28,13 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
  protected:
   void SetUp() override {
-    // создаём квадратную матрицу size x size
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    input_data_.assign(size, std::vector<float>(size));
+    input_data_.resize(size);
+    for (int i = 0; i < size; ++i) {
+      input_data_[i].resize(size);
+    }
 
     // заполним матрицу
     for (int i = 0; i < size; i++) {
