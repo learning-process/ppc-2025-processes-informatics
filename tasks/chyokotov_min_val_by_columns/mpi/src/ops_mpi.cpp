@@ -12,7 +12,12 @@ namespace chyokotov_min_val_by_columns {
 
 ChyokotovMinValByColumnsMPI::ChyokotovMinValByColumnsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput().clear();
+  GetInput().reserve(in.size());
+  for (const auto &row : in) {
+    GetInput().push_back(row);
+  }
+
   GetOutput().clear();
 }
 

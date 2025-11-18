@@ -10,12 +10,17 @@ namespace chyokotov_min_val_by_columns {
 
 ChyokotovMinValByColumnsSEQ::ChyokotovMinValByColumnsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput().clear();
+  GetInput().reserve(in.size());
+  for (const auto &row : in) {
+    GetInput().push_back(row);
+  }
+
   GetOutput().clear();
 }
 
 bool ChyokotovMinValByColumnsSEQ::ValidationImpl() {
-  const auto input = GetInput();
+  const auto &input = GetInput();
   if (input.empty()) {
     return true;
   }
@@ -25,12 +30,14 @@ bool ChyokotovMinValByColumnsSEQ::ValidationImpl() {
 }
 
 bool ChyokotovMinValByColumnsSEQ::PreProcessingImpl() {
-  const auto input = GetInput();
+  const auto &input = GetInput();
   if (input.empty()) {
     return true;
   }
   if (!input[0].empty()) {
     GetOutput().resize(input[0].size(), INT_MAX);
+  } else {
+    GetOutput().clear()
   }
   return true;
 }
@@ -42,9 +49,9 @@ bool ChyokotovMinValByColumnsSEQ::RunImpl() {
   }
   auto &output = GetOutput();
 
-  for (size_t i = 0; i < matrix[0].size(); i++) {
-    for (size_t j = 0; j < matrix.size(); j++) {
-      output[i] = std::min(output[i], matrix[j][i]);
+  for (size_t i = 0; i < output.size(); i++) {
+    for (const auto j : matrix) {
+      output[i] = std::min(output[i], j);
     }
   }
 
