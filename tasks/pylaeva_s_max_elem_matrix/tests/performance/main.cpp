@@ -1,17 +1,13 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>    // для size_t
-#include <fstream>    // для std::ifstream
-#include <stdexcept>  // для std::runtime_error
-#include <string>     // для std::string
-#include <tuple>      // для std::make_tuple
-#include <vector>     // для std::vector
+#include <cstddef>  // для size_t
+#include <tuple>
+#include <vector>
 
 #include "pylaeva_s_max_elem_matrix/common/include/common.hpp"
 #include "pylaeva_s_max_elem_matrix/mpi/include/ops_mpi.hpp"
 #include "pylaeva_s_max_elem_matrix/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace pylaeva_s_max_elem_matrix {
 
@@ -19,7 +15,7 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
   InType input_data_{0, {}};
   const size_t kMatrixSize_ = 7000;
   const size_t kTotalElements_ = kMatrixSize_ * kMatrixSize_;
-  OutType expected_data_ = kTotalElements_ - 1;
+  OutType expected_data_ = static_cast<OutType>(static_cast<int>(kTotalElements_) - 1);
 
   void SetUp() override {
     std::vector<int> matrix_data;

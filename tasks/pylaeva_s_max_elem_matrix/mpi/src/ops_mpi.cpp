@@ -42,7 +42,7 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   int local_size = matrix_size / size;
   int remainder = matrix_size % size;
 
-  int start = rank * local_size + std::min(rank, remainder);
+  int start = (rank * local_size) + std::min(rank, remainder);
   int end = start + local_size + (rank < remainder ? 1 : 0);
 
   int local_max = std::numeric_limits<int>::min();
