@@ -13,60 +13,65 @@ namespace chyokotov_min_val_by_columns {
 ChyokotovMinValByColumnsMPI::ChyokotovMinValByColumnsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput().clear();
 }
 
 bool ChyokotovMinValByColumnsMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  if (GetInput().empty()) {
+    return true;
+  }
+
+  size_t lengthRow = GetInput()[0].size();
+  return std::ranges::all_of(GetInput(), [lengthRow](const auto &row) { return row.size() == lengthRow; });
 }
 
 bool ChyokotovMinValByColumnsMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  if (GetInput().empty()) {
+    return true;
+  }
+  GetOutput().resize(GetInput()[0].size(), INT_MAX);
+  return true;
 }
 
 bool ChyokotovMinValByColumnsMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
+  const auto &matrix = GetInput();
+  if (matrix.empty()) {
+    return true;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int rank = 0;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  size_t rows = matrix.size();
+  size_t cols = matrix[0].size();
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+  size_t base = cols / size;
+  int rem = cols % size;
+  size_t locCols = base + (rank < rem);
+  size_t locStart = rank * base + std::min(rank, rem);
+
+  std::vector<int> local_mins(locCols, INT_MAX);
+  for (size_t i = 0; i < locCols; i++) {
+    for (size_t j = 0; j < rows; j++) {
+      local_mins[i] = std::min(local_mins[i], matrix[j][locStart + i]);
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  std::vector<int> counts(size), displs(size);
+  for (int i = 0; i < size; i++) {
+    counts[i] = base + (i < rem);
+    displs[i] = i * base + std::min(i, rem);
+  }
+
+  MPI_Allgatherv(local_mins.data(), locCols, MPI_INT, GetOutput().data(), counts.data(), displs.data(), MPI_INT,
+                 MPI_COMM_WORLD);
+
+  return true;
 }
 
 bool ChyokotovMinValByColumnsMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace chyokotov_min_val_by_columns

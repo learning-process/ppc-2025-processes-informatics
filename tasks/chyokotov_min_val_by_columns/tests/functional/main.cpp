@@ -23,35 +23,22 @@ namespace chyokotov_min_val_by_columns {
 class ChyokotovMinValFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    const auto &matrix = std::get<0>(test_param);
+    if (matrix.empty()) {
+      return "empty_matrix";
+    }
+    return "size_of_matrix_" + std::to_string(matrix.size()) + "x" + std::to_string(matrix[0].size());
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_chyokotov_min_val_by_columns, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
+    expected_output_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == expected_output_;
   }
 
   InType GetTestInputData() final {
@@ -59,26 +46,55 @@ class ChyokotovMinValFuncTest : public ppc::util::BaseRunFuncTests<InType, OutTy
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
 
-TEST_P(ChyokotovMinValFuncTest, MatmulFromPic) {
+TEST_P(ChyokotovMinValFuncTest, MinValuesByColumnsOfMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::vector<std::vector<int>> kEmptyMatrix = {};
+const std::vector<int> kExpectedEmpty = {};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ChyokotovMinValByColumnsMPI, InType>(kTestParam, PPC_SETTINGS_chyokotov_min_val_by_columns),
-                   ppc::util::AddFuncTask<ChyokotovMinValByColumnsSEQ, InType>(kTestParam, PPC_SETTINGS_chyokotov_min_val_by_columns));
+const std::vector<std::vector<int>> kOneElement = {{0}};
+const std::vector<int> kExpectedOneElement = {0};
+
+const std::vector<std::vector<int>> kSqurMatrix = {{0, 1}, {-1, 0}};
+const std::vector<int> kExpectedSqurMatrix = {-1, 0};
+
+const std::vector<std::vector<int>> krecMatrix = {{0, 1, 2, 3}, {-1, 0, 1, 2}};
+const std::vector<int> kExpectedrecMatrix = {-1, 0, 1, 2};
+
+const std::vector<std::vector<int>> kMaxMatrix = {{INT_MAX, INT_MAX}, {INT_MAX, INT_MAX}, {INT_MAX, INT_MAX}};
+const std::vector<int> kExpectedMaxMatrix = {INT_MAX, INT_MAX};
+
+const std::vector<std::vector<int>> kMinMatrix = {{INT_MIN, INT_MIN, INT_MIN}, {INT_MIN, INT_MIN, INT_MIN}};
+const std::vector<int> kExpectedMinMatrix = {INT_MIN, INT_MIN, INT_MIN};
+
+const std::vector<std::vector<int>> kOneColumn = {{0}, {1}, {2}, {3}, {4}};
+const std::vector<int> kExpectedOneColumn = {0};
+
+const std::vector<std::vector<int>> kOneRow = {{0, 1, 2, 3, 4}};
+const std::vector<int> kExpectedOneRow = {0, 1, 2, 3, 4};
+
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple(kEmptyMatrix, kExpectedEmpty),     std::make_tuple(kOneElement, kExpectedOneElement),
+    std::make_tuple(kSqurMatrix, kExpectedSqurMatrix), std::make_tuple(krecMatrix, kExpectedrecMatrix),
+    std::make_tuple(kMaxMatrix, kExpectedMaxMatrix),   std::make_tuple(kMinMatrix, kExpectedMinMatrix),
+    std::make_tuple(kOneColumn, kExpectedOneColumn),   std::make_tuple(kOneRow, kExpectedOneRow)};
+
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ChyokotovMinValByColumnsMPI, InType>(kTestParam, PPC_SETTINGS_chyokotov_min_val_by_columns),
+    ppc::util::AddFuncTask<ChyokotovMinValByColumnsSEQ, InType>(kTestParam, PPC_SETTINGS_chyokotov_min_val_by_columns));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = ChyokotovMinValFuncTest::PrintFuncTestName<ChyokotovMinValFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ChyokotovMinValFuncTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MinValuesTests, ChyokotovMinValFuncTest, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -11,50 +11,44 @@ namespace chyokotov_min_val_by_columns {
 ChyokotovMinValByColumnsSEQ::ChyokotovMinValByColumnsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput().clear();
 }
 
 bool ChyokotovMinValByColumnsSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  if (GetInput().empty()) {
+    return true;
+  }
+
+  size_t lengthRow = GetInput()[0].size();
+  return std::ranges::all_of(GetInput(), [lengthRow](const auto &row) { return row.size() == lengthRow; });
 }
 
 bool ChyokotovMinValByColumnsSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  if (GetInput().empty()) {
+    return true;
+  }
+  GetOutput().resize(GetInput()[0].size(), INT_MAX);
+  return true;
 }
 
 bool ChyokotovMinValByColumnsSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  const auto &matrix = GetInput();
+  if (matrix.empty()) {
+    return true;
   }
+  auto &output = GetOutput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (int i = 0; i < matrix[0].size(); i++) {
+    for (int j = 0; j < matrix.size(); j++) {
+      output[i] = std::min(output[i], matrix[j][i]);
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool ChyokotovMinValByColumnsSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace chyokotov_min_val_by_columns

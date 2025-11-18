@@ -8,15 +8,40 @@
 namespace chyokotov_min_val_by_columns {
 
 class ChyokotovMinValPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    const size_t cols = 4000, rows = 4000;
+
+    std::vector<std::vector<int>> matrix(rows, std::vector<int>(cols));
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        matrix[i][j] = i + j * i;
+      }
+    }
+    input_data_ = matrix;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    const auto &matrix = input_data_;
+
+    if (output_data.empty()) {
+      return false;
+    }
+
+    if (output_data.size() != matrix[0].size()) {
+      return false;
+    }
+
+    std::vector<int> expected_output(matrix[0].size(), INT_MAX);
+
+    for (int i = 0; i < matrix[0].size(); i++) {
+      for (int j = 0; j < matrix.size(); j++) {
+        expected_output[i] = std::min(expected_output[i], matrix[j][i]);
+      }
+    }
+
+    return output_data == expected_output;
   }
 
   InType GetTestInputData() final {
@@ -29,7 +54,8 @@ TEST_P(ChyokotovMinValPerfTest, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChyokotovMinValByColumnsMPI, ChyokotovMinValByColumnsSEQ>(PPC_SETTINGS_chyokotov_min_val_by_columns);
+    ppc::util::MakeAllPerfTasks<InType, ChyokotovMinValByColumnsMPI, ChyokotovMinValByColumnsSEQ>(
+        PPC_SETTINGS_chyokotov_min_val_by_columns);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
