@@ -14,7 +14,7 @@ namespace egorova_l_find_max_val_col_matrix {
 #  pragma GCC diagnostic ignored "-Wnull-dereference"
 #endif
 
-EgorovaLFindMaxValColMatrixMPI::EgorovaLFindMaxValColMatrixMPI(const InType &in) {
+EgorovaLFindMaxValColMatrixSEQ::EgorovaLFindMaxValColMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   InType temp = in;              // Создаем временную копию
   GetInput() = std::move(temp);  // Перемещаем
