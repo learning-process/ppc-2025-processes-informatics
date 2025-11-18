@@ -85,7 +85,7 @@ TEST_P(GutyanskyAMatrixColumnSumFuncTests, MatrixColumnSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {"test_1", "test_2", "test_3", "test_4", "test_5"};
+const std::array<TestType, 7> kTestParam = {"test_1", "test_2", "test_3", "test_4", "test_5", "test_6", "test_7"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GutyanskyAMatrixColumnSumMPI, InType>(
                                                kTestParam, PPC_SETTINGS_gutyansky_a_matrix_column_sum),
