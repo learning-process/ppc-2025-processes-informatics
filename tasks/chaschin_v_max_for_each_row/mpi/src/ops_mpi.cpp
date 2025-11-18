@@ -141,6 +141,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   // ----------------------------
   if (rank == 0) {
     auto &out = GetOutput();
+    out.resize(nrows);
     for (int i = 0; i < count; i++) {
       out[start + i] = local_out[i];
     }
