@@ -40,7 +40,7 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   int batch_size = static_cast<int>(input.size() / num_processes);
   MPI_Bcast(&batch_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  double* recv_buffer = new double[batch_size];
+  double *recv_buffer = new double[batch_size];
 
   if (batch_size > 0) {
     MPI_Scatter(input.data(), batch_size, MPI_DOUBLE, recv_buffer, batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
