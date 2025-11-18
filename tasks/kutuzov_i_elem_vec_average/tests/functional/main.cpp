@@ -12,6 +12,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
 #include "kutuzov_i_elem_vec_average/mpi/include/ops_mpi.hpp"
@@ -44,8 +45,12 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     }
 
     average /= input_data_.size();
-
-    return abs(output_data - average) < 0.0001;
+    bool result = abs(output_data - average) < 0.0001;
+    if (!result) {
+      std::cout << output_data << " " << average;
+    }
+    
+    return result;
   }
 
   InType GetTestInputData() final {
