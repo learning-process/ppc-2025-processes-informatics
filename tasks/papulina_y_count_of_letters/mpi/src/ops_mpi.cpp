@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <iostream>
 #include <string>
 
 #include "papulina_y_count_of_letters/common/include/common.hpp"
@@ -56,14 +55,14 @@ bool PapulinaYCountOfLettersMPI::RunImpl() {
     MPI_Bcast(&len, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
     MPI_Bcast(&remainder, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
-    unsigned int begin_0 = 0 * len + std::min(static_cast<unsigned int>(0), remainder);
-    unsigned int end_0 = (0 + 1) * len + std::min(static_cast<unsigned int>(0 + 1), remainder);
+    unsigned int begin_0 = (0 * len) + std::min(static_cast<unsigned int>(0), remainder);
+    unsigned int end_0 = ((0 + 1) * len) + std::min(static_cast<unsigned int>(0 + 1), remainder);
     true_len = end_0 - begin_0;
     part_of_string = (true_len > 0) ? s.substr(begin_0, true_len) : "";
 
     for (int i = 1; i < procNum_; i++) {
-      unsigned int begin = i * len + std::min(static_cast<unsigned int>(i), remainder);
-      unsigned int end = (i + 1) * len + std::min(static_cast<unsigned int>(i + 1), remainder);
+      unsigned int begin = (i * len) + std::min(static_cast<unsigned int>(i), remainder);
+      unsigned int end = ((i + 1) * len) + std::min(static_cast<unsigned int>(i + 1), remainder);
       unsigned int pre_true_len = end - begin;  // предварительная длина обрабатываемой части
 
       MPI_Send(&pre_true_len, 1, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
