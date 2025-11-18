@@ -55,18 +55,6 @@ std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
   return {starts_with_space, ends_with_space};
 }
 
-void AdjustTotalCount(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
-                      const std::vector<int> &all_ends, uint64_t &total_count) {
-  const std::size_t world_size = all_counts.size();
-  for (std::size_t i = 1; i < world_size; ++i) {
-    if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
-      if (total_count > 0) {
-        --total_count;
-      }
-    }
-  }
-}
-
 }  // namespace
 
 KrykovEWordCountMPI::KrykovEWordCountMPI(const InType &in) {
@@ -130,32 +118,35 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   uint64_t local_count = CountWordsInChunk(local_chunk);
 
-  auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);
+  auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);  // отсюда меняем
 
-  std::vector<int> all_starts(world_size);
-  std::vector<int> all_ends(world_size);
+  uint8_t start_flag = static_cast<uint8_t>(starts_with_space == 0 ? 1 : 0);
+  uint8_t end_flag = static_cast<uint8_t>(ends_with_space == 0 ? 1 : 0);
 
-  MPI_Gather(&starts_with_space, 1, MPI_INT, world_rank == 0 ? all_starts.data() : nullptr, 1, MPI_INT, 0,
-             MPI_COMM_WORLD);
-  MPI_Gather(&ends_with_space, 1, MPI_INT, world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  std::vector<uint8_t> all_starts(world_size);
+  std::vector<uint8_t> all_ends(world_size);
 
-  std::vector<uint64_t> all_counts_ull(world_size);
-  MPI_Gather(&local_count, 1, MPI_UNSIGNED_LONG, world_rank == 0 ? all_counts_ull.data() : nullptr, 1,
-             MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Allgather(&start_flag, 1, MPI_UINT8_T, all_starts.data(), 1, MPI_UINT8_T, MPI_COMM_WORLD);
+
+  MPI_Allgather(&end_flag, 1, MPI_UINT8_T, all_ends.data(), 1, MPI_UINT8_T, MPI_COMM_WORLD);
+
+  uint64_t total_words = 0;
+  MPI_Allreduce(&local_count, &total_words, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+
+  uint64_t boundary_fixes = 0;
+  if (world_rank > 0) {
+    if (all_ends[world_rank - 1] == 1 && all_starts[world_rank] == 1) {
+      boundary_fixes = 1;
+    }
+  }
+
+  uint64_t total_boundary_fixes = 0;
+  MPI_Allreduce(&boundary_fixes, &total_boundary_fixes, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+
+  total_words -= total_boundary_fixes;
 
   if (world_rank == 0) {
-    uint64_t total_count = 0;
-    for (uint64_t count_ull : all_counts_ull) {
-      total_count += count_ull;
-    }
-
-    std::vector<uint64_t> all_counts(world_size);
-    for (int i = 0; i < world_size; ++i) {
-      all_counts[i] = static_cast<uint64_t>(all_counts_ull[i]);
-    }
-
-    AdjustTotalCount(all_counts, all_starts, all_ends, total_count);
-    GetOutput() = static_cast<int>(total_count);
+    GetOutput() = static_cast<int>(total_words);
   }
 
   int result = 0;
