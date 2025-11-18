@@ -15,8 +15,7 @@
 namespace krykov_e_word_count {
 
 namespace {
-void ComputeChunkSizesAndDispls(int text_size, int world_size, std::vector<int> &chunk_sizes,
-                                std::vector<int> &displs) {
+void ChunkSizesAndDispls(int text_size, int world_size, std::vector<int> &chunk_sizes, std::vector<int> &displs) {
   int base_size = text_size / world_size;
   int remainder = text_size % world_size;
 
@@ -102,7 +101,7 @@ bool KrykovEWordCountMPI::RunImpl() {
   std::vector<int> chunk_sizes(world_size);
   std::vector<int> displs(world_size);
 
-  ComputeChunkSizesAndDispls(text_size, world_size, chunk_sizes, displs);
+  ChunkSizesAndDispls(text_size, world_size, chunk_sizes, displs);
 
   int local_size = chunk_sizes[world_rank];
   std::vector<char> local_chunk(local_size);
@@ -117,7 +116,7 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   uint64_t local_count = CountWordsInChunk(local_chunk);
 
-  auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);  // отсюда меняем
+  auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);
 
   auto start_flag = static_cast<unsigned char>(starts_with_space == 0 ? 1 : 0);
   auto end_flag = static_cast<unsigned char>(ends_with_space == 0 ? 1 : 0);

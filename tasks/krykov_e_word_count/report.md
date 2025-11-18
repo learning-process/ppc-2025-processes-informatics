@@ -25,7 +25,7 @@
 
 ## Описание схемы параллельного алгоритма
 
-Параллельная реализация с использованием MPI основывается на распределении исходной строки между доступными процессами. Процесс с рангом 0 выполняет роль координатора, передавая размер данные всем процессам. Каждый процесс независимо подсчитывает слова в своем блоке(чанке) данных, используя тот же алгоритм, что и последовательная версия. Для обеспечения корректности учета слов, пересекающих границы блоков, собирается информация о граничных символах каждого блока через MPI_Gather. Если блок заканчивается непробельным символом, а следующий блок начинается также с непробельного символа, осуществляется коррекция общего количества слов путем уменьшения счетчика. Финальный результат собирается на процессе с рангом 0 и распространяется среди всех процессов.
+Параллельная реализация с использованием MPI основывается на равномерном распределении входной строки между процессами с последующим локальным подсчётом слов. Каждый процесс получает свой участок текста с помощью MPI_Scatterv и независимо выполняет анализ аналогично последовательной версии. Корректировка слов, пересекающих границы блоков, выполняется на основе дополнительной информации: каждый процесс отправляет флаг «первый символ — пробел / не пробел» и «последний символ — пробел / не пробел». После этого каждый процесс может определить, разорвал ли его блок слово, начавшееся в предыдущем блоке.
 
 
 ## Результаты экспериментов
@@ -106,10 +106,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <ranges>
 #include <string>
 
 #include "krykov_e_word_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace krykov_e_word_count {
 
@@ -125,10 +126,10 @@ bool KrykovEWordCountSEQ::ValidationImpl() {
 
 bool KrykovEWordCountSEQ::PreProcessingImpl() {
   auto &input = GetInput();
-  input.erase(input.begin(),
-              std::find_if(input.begin(), input.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-  input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(),
-              input.end());
+  input.erase(input.begin(), std::ranges::find_if(input, [](unsigned char ch) { return !std::isspace(ch); }));
+  input.erase(
+      std::ranges::find_if(std::ranges::reverse_view(input), [](unsigned char ch) { return !std::isspace(ch); }).base(),
+      input.end());
   return true;
 }
 
@@ -142,7 +143,7 @@ bool KrykovEWordCountSEQ::RunImpl() {
   size_t word_count = 0;
 
   for (char c : text) {
-    if (std::isspace(static_cast<unsigned char>(c))) {
+    if (std::isspace(static_cast<unsigned char>(c)) != 0) {
       if (in_word) {
         in_word = false;
       }
@@ -154,7 +155,7 @@ bool KrykovEWordCountSEQ::RunImpl() {
     }
   }
 
-  GetOutput() = word_count;
+  GetOutput() = static_cast<int>(word_count);
   return true;
 }
 
@@ -173,10 +174,58 @@ bool KrykovEWordCountSEQ::PostProcessingImpl() {
 #include <mpi.h>
 
 #include <algorithm>
-#include <numeric>
+#include <cctype>
+#include <cstdint>
+#include <ranges>
+#include <string>
+#include <utility>
 #include <vector>
 
+#include "krykov_e_word_count/common/include/common.hpp"
+
 namespace krykov_e_word_count {
+
+namespace {
+void ChunkSizesAndDispls(int text_size, int world_size, std::vector<int> &chunk_sizes,
+                                std::vector<int> &displs) {
+  int base_size = text_size / world_size;
+  int remainder = text_size % world_size;
+
+  int offset = 0;
+  for (int i = 0; i < world_size; ++i) {
+    chunk_sizes[i] = base_size + (i < remainder ? 1 : 0);
+    displs[i] = offset;
+    offset += chunk_sizes[i];
+  }
+}
+
+uint64_t CountWordsInChunk(const std::vector<char> &local_chunk) {
+  uint64_t local_count = 0;
+  bool in_word = false;
+  for (char c : local_chunk) {
+    if (std::isspace(static_cast<unsigned char>(c)) != 0) {
+      in_word = false;
+    } else {
+      if (!in_word) {
+        in_word = true;
+        ++local_count;
+      }
+    }
+  }
+  return local_count;
+}
+
+std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
+  int starts_with_space = 1;
+  int ends_with_space = 1;
+  if (!local_chunk.empty()) {
+    starts_with_space = (std::isspace(static_cast<unsigned char>(local_chunk.front())) != 0) ? 1 : 0;
+    ends_with_space = (std::isspace(static_cast<unsigned char>(local_chunk.back())) != 0) ? 1 : 0;
+  }
+  return {starts_with_space, ends_with_space};
+}
+
+}  // namespace
 
 KrykovEWordCountMPI::KrykovEWordCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -192,11 +241,11 @@ bool KrykovEWordCountMPI::PreProcessingImpl() {
   const auto &input = GetInput();
   auto trimmed = input;
 
-  trimmed.erase(trimmed.begin(), std::find_if(trimmed.begin(), trimmed.end(),
-                                              [](char ch) { return !std::isspace(static_cast<unsigned char>(ch)); }));
+  trimmed.erase(trimmed.begin(),
+                std::ranges::find_if(trimmed, [](char ch) { return !std::isspace(static_cast<unsigned char>(ch)); }));
 
-  trimmed.erase(std::find_if(trimmed.rbegin(), trimmed.rend(),
-                             [](char ch) {
+  trimmed.erase(std::ranges::find_if(std::ranges::reverse_view(trimmed),
+                                     [](char ch) {
     return !std::isspace(static_cast<unsigned char>(ch));
   }).base(),
                 trimmed.end());
@@ -207,7 +256,9 @@ bool KrykovEWordCountMPI::PreProcessingImpl() {
 
 bool KrykovEWordCountMPI::RunImpl() {
   const std::string &text = GetInput();
-  int world_size = 0, world_rank = 0;
+
+  int world_size = 0;
+  int world_rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
@@ -219,64 +270,53 @@ bool KrykovEWordCountMPI::RunImpl() {
   int text_size = static_cast<int>(text.size());
   MPI_Bcast(&text_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int base_size = text_size / world_size;
-  int remainder = text_size % world_size;
-
   std::vector<int> chunk_sizes(world_size);
   std::vector<int> displs(world_size);
 
-  int offset = 0;
-  for (int i = 0; i < world_size; ++i) {
-    chunk_sizes[i] = base_size + (i < remainder ? 1 : 0);
-    displs[i] = offset;
-    offset += chunk_sizes[i];
-  }
+  ChunkSizesAndDispls(text_size, world_size, chunk_sizes, displs);
 
   int local_size = chunk_sizes[world_rank];
   std::vector<char> local_chunk(local_size);
 
-  MPI_Scatterv(world_rank == 0 ? text.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR, local_chunk.data(),
-               local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  std::vector<char> text_buf;
+  if (world_rank == 0) {
+    text_buf.assign(text.begin(), text.end());
+  }
 
-  size_t local_count = 0;
-  bool in_word = false;
-  for (char c : local_chunk) {
-    if (std::isspace(static_cast<unsigned char>(c))) {
-      in_word = false;
-    } else {
-      if (!in_word) {
-        in_word = true;
-        local_count++;
-      }
+  MPI_Scatterv(world_rank == 0 ? text_buf.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR,
+               local_chunk.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  uint64_t local_count = CountWordsInChunk(local_chunk);
+
+  auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk); 
+
+  auto start_flag = static_cast<unsigned char>(starts_with_space == 0 ? 1 : 0);
+  auto end_flag = static_cast<unsigned char>(ends_with_space == 0 ? 1 : 0);
+
+  std::vector<unsigned char> all_starts(world_size);
+  std::vector<unsigned char> all_ends(world_size);
+
+  MPI_Allgather(&start_flag, 1, MPI_UNSIGNED_CHAR, all_starts.data(), 1, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+
+  MPI_Allgather(&end_flag, 1, MPI_UNSIGNED_CHAR, all_ends.data(), 1, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
+
+  uint64_t total_words = 0;
+  MPI_Allreduce(&local_count, &total_words, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
+
+  uint64_t boundary_fixes = 0;
+  if (world_rank > 0) {
+    if (all_ends[world_rank - 1] == 1 && all_starts[world_rank] == 1) {
+      boundary_fixes = 1;
     }
   }
 
-  int starts_with_space = local_size > 0 ? (std::isspace(static_cast<unsigned char>(local_chunk[0])) ? 1 : 0) : 1;
-  int ends_with_space =
-      local_size > 0 ? (std::isspace(static_cast<unsigned char>(local_chunk[local_size - 1])) ? 1 : 0) : 1;
+  uint64_t total_boundary_fixes = 0;
+  MPI_Allreduce(&boundary_fixes, &total_boundary_fixes, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-  std::vector<int> all_starts(world_size);
-  std::vector<int> all_ends(world_size);
-
-  MPI_Gather(&starts_with_space, 1, MPI_INT, world_rank == 0 ? all_starts.data() : nullptr, 1, MPI_INT, 0,
-             MPI_COMM_WORLD);
-  MPI_Gather(&ends_with_space, 1, MPI_INT, world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  std::vector<size_t> all_counts(world_size);
-  MPI_Gather(&local_count, 1, MPI_UNSIGNED_LONG_LONG, world_rank == 0 ? all_counts.data() : nullptr, 1,
-             MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+  total_words -= total_boundary_fixes;
 
   if (world_rank == 0) {
-    size_t total_count = 0;
-    for (size_t count : all_counts) {
-      total_count += count;
-    }
-    for (int i = 1; i < world_size; ++i) {
-      if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
-        total_count--;
-      }
-    }
-    GetOutput() = static_cast<int>(total_count);
+    GetOutput() = static_cast<int>(total_words);
   }
 
   int result = 0;
