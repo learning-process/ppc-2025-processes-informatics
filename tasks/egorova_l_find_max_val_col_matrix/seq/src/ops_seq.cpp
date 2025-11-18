@@ -9,11 +9,13 @@
 
 namespace egorova_l_find_max_val_col_matrix {
 
+#ifdef __GNUC__
+__attribute__((noinline))
+#endif
 EgorovaLFindMaxValColMatrixSEQ::EgorovaLFindMaxValColMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  // Инициализируем выходной вектор явно
-  GetOutput() = OutType();
+  GetOutput() = std::vector<int>();
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::ValidationImpl() {

@@ -11,11 +11,13 @@
 
 namespace egorova_l_find_max_val_col_matrix {
 
+#ifdef __GNUC__
+__attribute__((noinline))
+#endif
 EgorovaLFindMaxValColMatrixMPI::EgorovaLFindMaxValColMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  // Используем явную инициализацию для избежания предупреждений
-  GetOutput() = OutType{};
+  GetOutput() = std::vector<int>();
 }
 
 bool EgorovaLFindMaxValColMatrixMPI::ValidationImpl() {
