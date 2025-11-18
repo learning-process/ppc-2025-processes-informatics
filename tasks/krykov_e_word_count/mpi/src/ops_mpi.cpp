@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstddef>
 #include <cstdint>
 #include <ranges>
 #include <string>
@@ -120,15 +119,15 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);  // отсюда меняем
 
-  uint8_t start_flag = static_cast<uint8_t>(starts_with_space == 0 ? 1 : 0);
-  uint8_t end_flag = static_cast<uint8_t>(ends_with_space == 0 ? 1 : 0);
+  auto start_flag = static_cast<unsigned char>(starts_with_space == 0 ? 1 : 0);
+  auto end_flag = static_cast<unsigned char>(ends_with_space == 0 ? 1 : 0);
 
-  std::vector<uint8_t> all_starts(world_size);
-  std::vector<uint8_t> all_ends(world_size);
+  std::vector<unsigned char> all_starts(world_size);
+  std::vector<unsigned char> all_ends(world_size);
 
-  MPI_Allgather(&start_flag, 1, MPI_UINT8_T, all_starts.data(), 1, MPI_UINT8_T, MPI_COMM_WORLD);
+  MPI_Allgather(&start_flag, 1, MPI_UNSIGNED_CHAR, all_starts.data(), 1, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
-  MPI_Allgather(&end_flag, 1, MPI_UINT8_T, all_ends.data(), 1, MPI_UINT8_T, MPI_COMM_WORLD);
+  MPI_Allgather(&end_flag, 1, MPI_UNSIGNED_CHAR, all_ends.data(), 1, MPI_UNSIGNED_CHAR, MPI_COMM_WORLD);
 
   uint64_t total_words = 0;
   MPI_Allreduce(&local_count, &total_words, 1, MPI_UINT64_T, MPI_SUM, MPI_COMM_WORLD);
