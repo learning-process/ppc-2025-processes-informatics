@@ -37,12 +37,11 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   int num_processes = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
-  int batch_size = static_cast<int>(input.size() / num_processes);
+  int batch_size = static_cast<int>(input.size()) / num_processes;
   MPI_Bcast(&batch_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  double *recv_buffer = new double[batch_size];
-
   if (batch_size > 0) {
+    double *recv_buffer = new double[batch_size];
     MPI_Scatter(input.data(), batch_size, MPI_DOUBLE, recv_buffer, batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     double sum = 0.0;
@@ -51,9 +50,8 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
     }
 
     MPI_Reduce(&sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    delete[] recv_buffer;
   }
-
-  delete[] recv_buffer;
 
   if (rank == 0) {
     for (int i = num_processes * batch_size; i < static_cast<int>(input.size()); i++) {
