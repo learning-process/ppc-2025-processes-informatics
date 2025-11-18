@@ -15,7 +15,7 @@ RomanovaVMinByMatrixRowsSEQ::RomanovaVMinByMatrixRowsSEQ(const InType &in) {
 }
 
 bool RomanovaVMinByMatrixRowsSEQ::ValidationImpl() {
-  return !GetInput().empty() && !GetInput().empty();
+  return !GetInput().empty() && !GetInput()[0].empty();
 }
 
 bool RomanovaVMinByMatrixRowsSEQ::PreProcessingImpl() {
