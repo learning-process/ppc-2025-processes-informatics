@@ -2,6 +2,8 @@
 
 #include <numeric>
 #include <vector>
+#include <string>    
+#include <utility>   
 
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -15,46 +17,30 @@ MaslovaUCharFrequencyCountSEQ::MaslovaUCharFrequencyCountSEQ(const InType &in) {
 }
 
 bool MaslovaUCharFrequencyCountSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool MaslovaUCharFrequencyCountSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool MaslovaUCharFrequencyCountSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  std::string& input_string = GetInput().first;
+  char input_char = GetInput().second; //получили данные
+  size_t frequency_count = 0;
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (const char c : input_string) {
+    if (c == input_char) {
+      frequency_count++;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = frequency_count; //отправили данные
+  return true;
 }
 
 bool MaslovaUCharFrequencyCountSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace maslova_u_char_frequency_count
