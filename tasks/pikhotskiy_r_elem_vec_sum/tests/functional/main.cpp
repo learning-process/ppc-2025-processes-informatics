@@ -20,7 +20,7 @@
 
 namespace pikhotskiy_r_elem_vec_sum {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class PikhotskiyRElelmVecSumTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -65,7 +65,7 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(PikhotskiyRElelmVecSumTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -77,9 +77,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName = PikhotskiyRElelmVecSumTests::PrintFuncTestName<PikhotskiyRElelmVecSumTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, PikhotskiyRElelmVecSumTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
