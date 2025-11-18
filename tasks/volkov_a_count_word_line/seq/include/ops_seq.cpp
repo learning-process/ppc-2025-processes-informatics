@@ -1,0 +1,21 @@
+#pragma once
+
+#include "volkov_a_count_word_line/common/include/common.hpp"
+
+namespace volkov_a_count_word_line {
+
+class MyTaskSEQ : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { 
+        return ppc::task::TypeOfTask::kSEQ; 
+    }
+  explicit VolkovACountWordLineSEQ(const InType& in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+ };
+
+}
