@@ -31,7 +31,7 @@ $\int_{a}^{b} f(x) dx \approx \sum_{i=1}^{n} f(x_{i}^{\*}) \cdot \Delta x_{i}$,�
 
 В данной работе реализуется метод средних прямоугольников.
 ## 4. Схема паралеллизации
-- For MPI: data distribution, communication pattern/topology, rank roles.
+- For MPI: data distribution, communication pattern/topology, rank roles..
 - For threads: decomposition, scheduling, synchronization.
 Diagrams or short pseudocode are welcome.
 
