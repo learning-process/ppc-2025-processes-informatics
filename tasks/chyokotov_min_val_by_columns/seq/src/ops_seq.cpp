@@ -15,19 +15,23 @@ ChyokotovMinValByColumnsSEQ::ChyokotovMinValByColumnsSEQ(const InType &in) {
 }
 
 bool ChyokotovMinValByColumnsSEQ::ValidationImpl() {
-  if (GetInput().empty()) {
+  const auto input = GetInput();
+  if (input.empty()) {
     return true;
   }
 
-  size_t lengthRow = GetInput()[0].size();
-  return std::ranges::all_of(GetInput(), [lengthRow](const auto &row) { return row.size() == lengthRow; });
+  size_t lengthRow = input[0].size();
+  return std::ranges::all_of(input, [lengthRow](const auto &row) { return row.size() == lengthRow; });
 }
 
 bool ChyokotovMinValByColumnsSEQ::PreProcessingImpl() {
-  if (GetInput().empty()) {
+  const auto input = GetInput();
+  if (input.empty()) {
     return true;
   }
-  GetOutput().resize(GetInput()[0].size(), INT_MAX);
+  if(!input[0].empty()){
+    GetOutput().resize(input[0].size(), INT_MAX);
+  }
   return true;
 }
 
