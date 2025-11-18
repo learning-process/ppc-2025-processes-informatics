@@ -38,8 +38,8 @@ bool ChyokotovMinValByColumnsSEQ::RunImpl() {
   }
   auto &output = GetOutput();
 
-  for (int i = 0; i < matrix[0].size(); i++) {
-    for (int j = 0; j < matrix.size(); j++) {
+  for (size_t i = 0; i < matrix[0].size(); i++) {
+    for (size_t j = 0; j < matrix.size(); j++) {
       output[i] = std::min(output[i], matrix[j][i]);
     }
   }
