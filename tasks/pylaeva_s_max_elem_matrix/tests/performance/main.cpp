@@ -17,40 +17,19 @@ namespace pylaeva_s_max_elem_matrix {
 
 class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{0, {}};
-  OutType expected_data_{};
+  const size_t kMatrixSize_ = 7000;
+  const size_t kTotalElements_ = kMatrixSize_ * kMatrixSize_;
+  OutType expected_data_ = kTotalElements_ - 1;
 
   void SetUp() override {
-    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_max_elem_matrix, "matrix_3500x3500.txt");
+    std::vector<int> matrix_data;
+    matrix_data.reserve(kTotalElements_);
 
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-      throw std::runtime_error("Cannot open file: " + filename);
+    for (size_t i = 0; i < kTotalElements_; i++) {
+      matrix_data.push_back(static_cast<int>(i));
     }
 
-    size_t rows = 0;
-    size_t columns = 0;
-    size_t size = 0;
-    int max = 0;
-    std::vector<int> input;
-
-    file >> rows;
-    file >> columns;
-    file >> max;
-
-    size = rows * columns;
-
-    input.resize(size);
-
-    for (size_t i = 0; i < size; ++i) {
-      if (!(file >> input[i])) {
-        throw std::runtime_error("Not enough elements in file");
-      }
-    }
-
-    input_data_ = std::make_tuple(size, input);
-    expected_data_ = max;
-
-    file.close();
+    input_data_ = std::make_tuple(kTotalElements_, matrix_data);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

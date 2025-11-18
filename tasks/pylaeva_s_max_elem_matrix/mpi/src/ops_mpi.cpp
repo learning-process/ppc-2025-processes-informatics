@@ -36,55 +36,27 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int matrix_size = 0;
-  std::vector<int> matrix_data;
-
-  if (rank == 0) {
-    matrix_size = static_cast<int>(std::get<0>(GetInput()));
-    matrix_data = std::get<1>(GetInput());
-
-    if (matrix_size <= 0 || static_cast<size_t>(matrix_size) != matrix_data.size()) {
-      return false;
-    }
-  }
-
-  MPI_Bcast(&matrix_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (matrix_size == 0) {
-    GetOutput() = std::numeric_limits<int>::min();
-    return true;
-  }
+  int matrix_size = static_cast<int>(std::get<0>(GetInput()));
+  std::vector<int> matrix_data = std::get<1>(GetInput());
 
   int local_size = matrix_size / size;
   int remainder = matrix_size % size;
 
-  std::vector<int> sendcounts(size);
-  std::vector<int> displs(size);
-
-  for (int i = 0; i < size; i++) {
-    sendcounts[i] = (i < remainder) ? local_size + 1 : local_size;
-    displs[i] = (i == 0) ? 0 : displs[i - 1] + sendcounts[i - 1];
-  }
-
-  std::vector<int> local_data(sendcounts[rank]);
-
-  if (rank == 0) {
-    MPI_Scatterv(matrix_data.data(), sendcounts.data(), displs.data(), MPI_INT, local_data.data(), sendcounts[rank],
-                 MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Scatterv(nullptr, sendcounts.data(), displs.data(), MPI_INT, local_data.data(), sendcounts[rank], MPI_INT, 0,
-                 MPI_COMM_WORLD);
-  }
+  int start = rank * local_size + std::min(rank, remainder);
+  int end = start + local_size + (rank < remainder ? 1 : 0);
 
   int local_max = std::numeric_limits<int>::min();
-  for (int val : local_data) {
-    local_max = std::max(val, local_max);
+  for (int i = start; i < end; i++) {
+    local_max = std::max(local_max, matrix_data[i]);
   }
 
-  int global_max = 0;
-  MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  int global_max = std::numeric_limits<int>::min();
+  MPI_Reduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(&global_max, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   GetOutput() = global_max;
+
   return true;
 }
 
