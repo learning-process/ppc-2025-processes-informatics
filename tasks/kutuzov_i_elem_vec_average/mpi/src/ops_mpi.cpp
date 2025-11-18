@@ -27,6 +27,7 @@ bool KutuzovIElemVecAverageMPI::PreProcessingImpl() {
 
 bool KutuzovIElemVecAverageMPI::RunImpl() {
   const auto &input = GetInput();
+  GetOutput() = 0.0;
 
   double result = 0.0;
   double global_sum = 0.0;
