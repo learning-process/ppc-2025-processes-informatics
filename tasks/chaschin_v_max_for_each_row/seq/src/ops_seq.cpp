@@ -15,25 +15,29 @@ ChaschinVMaxForEachRowSEQ::ChaschinVMaxForEachRowSEQ(const InType &in) {
 }
 
 bool ChaschinVMaxForEachRowSEQ::ValidationImpl() {
-   const auto& mat = GetInput();
-  if (mat.empty()) return false;
+  const auto &mat = GetInput();
+  if (mat.empty()) {
+    return false;
+  }
 
-  for (const auto& row : mat) {
-    if (row.empty()) return false;
+  for (const auto &row : mat) {
+    if (row.empty()) {
+      return false;
+    }
   }
 
   return true;
 }
 
 bool ChaschinVMaxForEachRowSEQ::PreProcessingImpl() {
-  const auto& mat = GetInput();
+  const auto &mat = GetInput();
   GetOutput().assign(mat.size(), 0.0f);
   return true;
 }
 
 bool ChaschinVMaxForEachRowSEQ::RunImpl() {
-  const auto& mat = GetInput();
-  auto& out = GetOutput();
+  const auto &mat = GetInput();
+  auto &out = GetOutput();
 
   for (size_t i = 0; i < mat.size(); i++) {
     out[i] = *std::max_element(mat[i].begin(), mat[i].end());

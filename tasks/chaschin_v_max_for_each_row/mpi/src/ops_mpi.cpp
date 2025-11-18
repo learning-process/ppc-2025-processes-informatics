@@ -17,56 +17,145 @@ ChaschinVMaxForEachRow::ChaschinVMaxForEachRow(const InType &in) {
 }
 
 bool ChaschinVMaxForEachRow::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-bool ChaschinVMaxForEachRow::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
-}
+  if (rank != 0) {
+    return true;
+  }
 
-bool ChaschinVMaxForEachRow::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
+  const auto &mat = GetInput();
+  if (mat.empty()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (const auto &row : mat) {
+    if (row.empty()) {
+      return false;
     }
   }
+  return true;
+}
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int rank = 0;
+bool ChaschinVMaxForEachRow::PreProcessingImpl() {
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  const auto &mat = GetInput();
+
+  int nrows = 0;
+  if (rank == 0) {
+    nrows = mat.size();
+  }
+
+  // Broadcast number of rows
+  MPI_Bcast(&nrows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  // Determine distribution of rows
+  int base = nrows / size;
+  int rem = nrows % size;
+
+  int start = rank * base + std::min(rank, rem);
+  int count = base + (rank < rem ? 1 : 0);
+  int end = start + count;
+
+  // ----------------------------
+  // Send/recv row sizes
+  // ----------------------------
+  std::vector<int> row_sizes(count);
 
   if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
+    for (int p = 1; p < size; p++) {
+      int p_start = p * base + std::min(p, rem);
+      int p_count = base + (p < rem ? 1 : 0);
+      std::vector<int> tmp(p_count);
+
+      for (int i = 0; i < p_count; i++) {
+        tmp[i] = mat[p_start + i].size();
+      }
+
+      MPI_Send(tmp.data(), p_count, MPI_INT, p, 0, MPI_COMM_WORLD);
     }
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+    for (int i = 0; i < count; i++) {
+      row_sizes[i] = mat[start + i].size();
+    }
+
+  } else {
+    if (count > 0) {
+      MPI_Recv(row_sizes.data(), count, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  // ----------------------------
+  // Receive actual rows
+  // ----------------------------
+  std::vector<std::vector<float>> local_mat(count);
+
+  if (rank == 0) {
+    // send to others
+    for (int p = 1; p < size; p++) {
+      int p_start = p * base + std::min(p, rem);
+      int p_count = base + (p < rem ? 1 : 0);
+      for (int i = 0; i < p_count; i++) {
+        MPI_Send(mat[p_start + i].data(), row_sizes_for_rank(p, base, rem, mat)[i], MPI_FLOAT, p, 1, MPI_COMM_WORLD);
+      }
+    }
+
+    // copy own
+    for (int i = 0; i < count; i++) {
+      local_mat[i] = mat[start + i];
+    }
+
+  } else {
+    for (int i = 0; i < count; i++) {
+      local_mat[i].resize(row_sizes[i]);
+      MPI_Recv(local_mat[i].data(), row_sizes[i], MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+  }
+
+  // ----------------------------
+  // Compute local maxima
+  // ----------------------------
+  std::vector<float> local_out(count);
+
+  for (int i = 0; i < count; i++) {
+    local_out[i] = *std::max_element(local_mat[i].begin(), local_mat[i].end());
+  }
+
+  // ----------------------------
+  // Send local results to root
+  // ----------------------------
+  if (rank == 0) {
+    auto &out = GetOutput();
+    for (int i = 0; i < count; i++) {
+      out[start + i] = local_out[i];
+    }
+
+    for (int p = 1; p < size; p++) {
+      int p_start = p * base + std::min(p, rem);
+      int p_count = base + (p < rem ? 1 : 0);
+
+      if (p_count > 0) {
+        std::vector<float> tmp(p_count);
+        MPI_Recv(tmp.data(), p_count, MPI_FLOAT, p, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        for (int i = 0; i < p_count; i++) {
+          out[p_start + i] = tmp[i];
+        }
+      }
+    }
+
+  } else {
+    MPI_Send(local_out.data(), count, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+  }
+
+  return true;
 }
 
 bool ChaschinVMaxForEachRow::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
-
 }  // namespace chaschin_v_max_for_each_row
