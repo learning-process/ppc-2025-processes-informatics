@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <random>
+#include <utility>
 #include <vector>
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
@@ -49,7 +50,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   std::vector<std::uniform_real_distribution<double>> dist;
   dist.reserve(dims);
 
-  for (int i = 0; i < dims; i++) {
+  for (std::size_t i = 0; std::cmp_less(i, dims); i++) {
     dist.emplace_back(in.a[i], in.b[i]);
   }
 
@@ -64,7 +65,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   }
 
   double volume = 1.0;
-  for (int i = 0; i < dims; i++) {
+  for (std::size_t i = 0; std::cmp_less(i, dims); i++) {
     volume *= (in.b[i] - in.a[i]);
   }
 
