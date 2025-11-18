@@ -10,6 +10,8 @@
 namespace romanova_v_min_by_matrix_rows_processes {
 
 RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
+  n_ = 0;
+  m_ = 0;
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType(in.size());
@@ -28,11 +30,16 @@ bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
-  int n, rank;
-  int delta, extra = 0;
-  std::vector<int> recv_counts, displs;
+  int n = 0;
+  int rank = 0;
+  int delta = 0;
+  int extra = 0;
+
   MPI_Comm_size(MPI_COMM_WORLD, &n);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  std::vector<int> recv_counts;
+  std::vector<int> displs;
   if (rank == 0) {
     delta = n_ / n;
     extra = n_ % n;
@@ -66,8 +73,8 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
     temp[i] = min_val;
   }
 
-  MPI_Gatherv(temp.data(), temp.size(), MPI_INT, res_.data(), recv_counts.data(), displs.data(), MPI_INT, 0,
-              MPI_COMM_WORLD);
+  MPI_Gatherv(temp.data(), static_cast<int>(temp.size()), MPI_INT, res_.data(), recv_counts.data(), displs.data(),
+              MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(res_.data(), n_, MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;

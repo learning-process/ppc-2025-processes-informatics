@@ -18,7 +18,8 @@ class RomanovaVMinByMatrixRowsSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int n_, m_;
+  size_t n_;
+  size_t m_;
   InType in_data_;
   OutType res_;
 };

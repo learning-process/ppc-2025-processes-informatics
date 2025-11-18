@@ -19,7 +19,8 @@ class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfT
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_min_by_matrix_rows_processes, path);
     std::ifstream file(abs_path);
     if (file.is_open()) {
-      int rows, columns;
+      int rows = 0;
+      int columns;
       file >> rows >> columns;
 
       exp_answer_ = OutType(rows);

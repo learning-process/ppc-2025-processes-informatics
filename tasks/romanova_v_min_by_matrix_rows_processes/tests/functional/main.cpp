@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <fstream>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
@@ -32,7 +27,8 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_min_by_matrix_rows_processes, params);
     std::ifstream file(abs_path + ".txt");
     if (file.is_open()) {
-      int rows, columns;
+      int rows = 0;
+      int columns = 0;
       file >> rows >> columns;
       exp_answer_ = OutType(rows);
       for (int i = 0; i < rows; i++) {
