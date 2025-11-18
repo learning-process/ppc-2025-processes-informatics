@@ -33,18 +33,18 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::vector<double>(param);
 
-    for (size_t i = 0; i < param; i++) {
-      input_data_[i] = i * i - static_cast<double>(param) / 2;
+    for (int i = 0; i < static_cast<int>(param); i++) {
+      input_data_[i] = i * i - static_cast<double>(param) / 2.0;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     double average = 0.0;
-    for (size_t i = 0; i < input_data_.size(); i++) {
+    for (int i = 0; i < static_cast<int>(input_data_.size()); i++) {
       average += input_data_[i];
     }
 
-    average /= input_data_.size();
+    average /=  static_cast<double>(input_data_.size());
     bool result = abs(output_data - average) < 0.0001;
     if (!result) {
       std::cout << output_data << " " << average;
