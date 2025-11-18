@@ -51,9 +51,7 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   }
 
   int global_max = std::numeric_limits<int>::min();
-  MPI_Reduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-
-  MPI_Bcast(&global_max, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
   GetOutput() = global_max;
 
