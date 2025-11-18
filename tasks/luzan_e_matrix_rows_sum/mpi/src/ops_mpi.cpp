@@ -11,7 +11,7 @@
 
 namespace luzan_e_matrix_rows_sum {
 
-LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType& in) {
+LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
@@ -36,8 +36,8 @@ bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
 bool LuzanEMatrixRowsSumMPI::RunImpl() {
   const int height = std::get<1>(GetInput());
   const int width = std::get<2>(GetInput());
-  const std::tuple_element_t<0, InType>& mat = std::get<0>(GetInput());
-  OutType& sum_vec = GetOutput();
+  const std::tuple_element_t<0, InType> &mat = std::get<0>(GetInput());
+  OutType &sum_vec = GetOutput();
   OutType part_sum_vec = GetOutput();
 
   int rank, size;
