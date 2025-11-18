@@ -8,6 +8,8 @@
 #include <tuple>
 #include <vector>
 
+#include "leonova_a_most_diff_neigh_vec_elems/common/include/common.hpp"
+
 namespace leonova_a_most_diff_neigh_vec_elems {
 
 LeonovaAMostDiffNeighVecElemsMPI::LeonovaAMostDiffNeighVecElemsMPI(const InType &in) {

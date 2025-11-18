@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <random>
 #include <tuple>
-#include <vector>
 
 #include "leonova_a_most_diff_neigh_vec_elems/common/include/common.hpp"
 #include "leonova_a_most_diff_neigh_vec_elems/mpi/include/ops_mpi.hpp"

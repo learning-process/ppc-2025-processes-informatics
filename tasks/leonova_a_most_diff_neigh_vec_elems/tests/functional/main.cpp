@@ -10,6 +10,7 @@
 #include "leonova_a_most_diff_neigh_vec_elems/mpi/include/ops_mpi.hpp"
 #include "leonova_a_most_diff_neigh_vec_elems/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace leonova_a_most_diff_neigh_vec_elems {
 
