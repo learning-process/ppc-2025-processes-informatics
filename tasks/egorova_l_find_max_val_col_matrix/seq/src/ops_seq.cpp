@@ -9,11 +9,20 @@
 
 namespace egorova_l_find_max_val_col_matrix {
 
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 EgorovaLFindMaxValColMatrixSEQ::EgorovaLFindMaxValColMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<int>(0);
 }
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
 
 bool EgorovaLFindMaxValColMatrixSEQ::ValidationImpl() {
   if (GetInput().empty()) {
