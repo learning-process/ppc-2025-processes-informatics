@@ -13,7 +13,7 @@ namespace egorova_l_find_max_val_col_matrix {
 
 EgorovaLFindMaxValColMatrixMPI::EgorovaLFindMaxValColMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = std::move(in);  // Используем перемещение вместо копирования
+  GetInput() = in;  // копирование (безопасно)
   GetOutput() = std::vector<int>();
 }
 
