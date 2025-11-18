@@ -29,8 +29,8 @@ void ComputeChunkSizesAndDispls(int text_size, int world_size, std::vector<int> 
   }
 }
 
-uint64_t CountWordsInChunk(const std::vector<char> &local_chunk) {
-  uint64_t local_count = 0;
+unsigned long CountWordsInChunk(const std::vector<char> &local_chunk) {
+  unsigned long local_count = 0;
   bool in_word = false;
   for (char c : local_chunk) {
     if (std::isspace(static_cast<unsigned char>(c)) != 0) {
@@ -55,8 +55,8 @@ std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
   return {starts_with_space, ends_with_space};
 }
 
-void AdjustTotalCountForBoundaries(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
-                                   const std::vector<int> &all_ends, uint64_t &total_count) {
+void AdjustTotalCountForBoundaries(const std::vector<unsigned long> &all_counts, const std::vector<int> &all_starts,
+                                   const std::vector<int> &all_ends, unsigned long &total_count) {
   const std::size_t world_size = all_counts.size();
   for (std::size_t i = 1; i < world_size; ++i) {
     if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
@@ -120,10 +120,15 @@ bool KrykovEWordCountMPI::RunImpl() {
   int local_size = chunk_sizes[world_rank];
   std::vector<char> local_chunk(local_size);
 
-  MPI_Scatterv(world_rank == 0 ? const_cast<char *>(text.data()) : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR,
+  std::vector<char> sendbuf;
+  if (world_rank == 0) {
+    sendbuf.assign(text.begin(), text.end());
+  }
+
+  MPI_Scatterv(world_rank == 0 ? sendbuf.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR,
                local_chunk.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  uint64_t local_count = CountWordsInChunk(local_chunk);
+  unsigned long local_count = CountWordsInChunk(local_chunk);
 
   auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);
 
@@ -134,12 +139,12 @@ bool KrykovEWordCountMPI::RunImpl() {
              MPI_COMM_WORLD);
   MPI_Gather(&ends_with_space, 1, MPI_INT, world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<uint64_t> all_counts(world_size);
-  MPI_Gather(&local_count, 1, MPI_UINT64_T, world_rank == 0 ? all_counts.data() : nullptr, 1, MPI_UINT64_T, 0,
+  std::vector<unsigned long> all_counts(world_size);
+  MPI_Gather(&local_count, 1, MPI_UNSIGNED_LONG, world_rank == 0 ? all_counts.data() : nullptr, 1, MPI_UNSIGNED_LONG, 0,
              MPI_COMM_WORLD);
 
   if (world_rank == 0) {
-    uint64_t total_count = 0;
+    unsigned long total_count = 0;
     for (auto count : all_counts) {
       total_count += count;
     }

@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <string>
 
 #include "krykov_e_word_count/common/include/common.hpp"
