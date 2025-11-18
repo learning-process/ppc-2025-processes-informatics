@@ -14,8 +14,8 @@ namespace egorova_l_find_max_val_col_matrix {
 EgorovaLFindMaxValColMatrixMPI::EgorovaLFindMaxValColMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  // Инициализируем выходной вектор явно, чтобы избежать предупреждений
-  GetOutput() = OutType();
+  // Используем явную инициализацию для избежания предупреждений
+  GetOutput() = OutType{};
 }
 
 bool EgorovaLFindMaxValColMatrixMPI::ValidationImpl() {
