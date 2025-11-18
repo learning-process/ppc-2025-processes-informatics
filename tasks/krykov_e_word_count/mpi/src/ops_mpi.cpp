@@ -55,8 +55,8 @@ std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
   return {starts_with_space, ends_with_space};
 }
 
-void AdjustTotalCountForBoundaries(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
-                                   const std::vector<int> &all_ends, uint64_t &total_count) {
+void AdjustTotalCount(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
+                      const std::vector<int> &all_ends, uint64_t &total_count) {
   const std::size_t world_size = all_counts.size();
   for (std::size_t i = 1; i < world_size; ++i) {
     if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
@@ -139,27 +139,13 @@ bool KrykovEWordCountMPI::RunImpl() {
              MPI_COMM_WORLD);
   MPI_Gather(&ends_with_space, 1, MPI_INT, world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  uint64_t local_count_ull = local_count;
-  /*std::vector<uint64_t> all_counts_ull(world_size);
-  MPI_Gather(&local_count_ull, 1, MPI_UINT64_T, world_rank == 0 ? all_counts_ull.data() : nullptr, 1,
-             MPI_UINT64_T, 0, MPI_COMM_WORLD);*/
-
-  unsigned long long local_count_mpi = static_cast<unsigned long long>(local_count_ull);
-  std::vector<unsigned long long> all_counts_mpi(world_size);
-
-  MPI_Gather(&local_count_mpi, 1, MPI_UNSIGNED_LONG_LONG, world_rank == 0 ? all_counts_mpi.data() : nullptr, 1,
-             MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
-
   std::vector<uint64_t> all_counts_ull(world_size);
-  if (world_rank == 0) {
-    for (int i = 0; i < world_size; ++i) {
-      all_counts_ull[i] = static_cast<uint64_t>(all_counts_mpi[i]);
-    }
-  }
+  MPI_Gather(&local_count, 1, MPI_UINT64_T, world_rank == 0 ? all_counts_ull.data() : nullptr, 1, MPI_UINT64_T, 0,
+             MPI_COMM_WORLD);
 
   if (world_rank == 0) {
     uint64_t total_count = 0;
-    for (auto count_ull : all_counts_ull) {
+    for (uint64_t count_ull : all_counts_ull) {
       total_count += static_cast<uint64_t>(count_ull);
     }
 
@@ -168,7 +154,7 @@ bool KrykovEWordCountMPI::RunImpl() {
       all_counts[i] = static_cast<uint64_t>(all_counts_ull[i]);
     }
 
-    AdjustTotalCountForBoundaries(all_counts, all_starts, all_ends, total_count);
+    AdjustTotalCount(all_counts, all_starts, all_ends, total_count);
     GetOutput() = static_cast<int>(total_count);
   }
 
