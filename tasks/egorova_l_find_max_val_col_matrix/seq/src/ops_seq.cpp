@@ -1,6 +1,7 @@
 #include "egorova_l_find_max_val_col_matrix/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "egorova_l_find_max_val_col_matrix/common/include/common.hpp"
@@ -11,50 +12,57 @@ namespace egorova_l_find_max_val_col_matrix {
 EgorovaLFindMaxValColMatrixSEQ::EgorovaLFindMaxValColMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = std::vector<int>();
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  // Разрешаем пустую матрицу
+  if (GetInput().empty()) {
+    return true;
+  }
+
+  // Проверяем, что все строки имеют одинаковую длину
+  size_t cols = GetInput()[0].size();
+  for (const auto &row : GetInput()) {
+    if (row.size() != cols) {
+      return false;
+    }
+  }
+
+  return GetOutput().empty();
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  const auto &matrix = GetInput();
+
+  // Обрабатываем пустую матрицу
+  if (matrix.empty()) {
+    GetOutput() = std::vector<int>();
+    return true;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  size_t rows = matrix.size();
+  size_t cols = matrix[0].size();
+  std::vector<int> result(cols, std::numeric_limits<int>::min());
+
+  for (size_t j = 0; j < cols; ++j) {
+    for (size_t i = 0; i < rows; ++i) {
+      if (matrix[i][j] > result[j]) {
+        result[j] = matrix[i][j];
       }
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = result;
+  return true;
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace egorova_l_find_max_val_col_matrix
