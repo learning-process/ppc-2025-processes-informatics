@@ -44,7 +44,7 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
       average += input_data_[i];
     }
 
-    average /=  static_cast<double>(input_data_.size());
+    average /= static_cast<double>(input_data_.size());
     bool result = abs(output_data - average) < 0.0001;
     if (!result) {
       std::cout << output_data << " " << average;
