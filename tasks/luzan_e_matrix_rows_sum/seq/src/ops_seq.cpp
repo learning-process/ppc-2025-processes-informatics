@@ -18,8 +18,7 @@ bool LuzanEMatrixRowsSumSEQ::ValidationImpl() {
   int height = std::get<1>(GetInput());
   int width = std::get<2>(GetInput());
 
-  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && 
-    height != 0 && width != 0;
+  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && height != 0 && width != 0;
 }
 
 bool LuzanEMatrixRowsSumSEQ::PreProcessingImpl() {
@@ -34,11 +33,11 @@ bool LuzanEMatrixRowsSumSEQ::PreProcessingImpl() {
 bool LuzanEMatrixRowsSumSEQ::RunImpl() {
   int height = std::get<1>(GetInput());
   int width = std::get<2>(GetInput());
-  const std::tuple_element_t<0, InType>& mat = std::get<0>(GetInput()); 
+  const std::tuple_element_t<0, InType> &mat = std::get<0>(GetInput());
 
   for (int row = 0; row < height; row++) {
-	  for (int col = 0; col < width; col++) {
-		  GetOutput()[row] += mat[width * row + col];
+    for (int col = 0; col < width; col++) {
+      GetOutput()[row] += mat[width * row + col];
     }
   }
   return true;

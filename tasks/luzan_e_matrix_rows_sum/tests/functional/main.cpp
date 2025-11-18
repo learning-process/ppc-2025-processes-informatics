@@ -23,7 +23,7 @@ namespace luzan_e_matrix_rows_sum {
 class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" +  std::to_string(std::get<1>(test_param));
+    return std::to_string(std::get<0>(test_param)) + "_" + std::to_string(std::get<1>(test_param));
   }
 
  protected:
@@ -31,12 +31,12 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int height = std::get<0>(params);
     int width = std::get<1>(params);
-    std::tuple_element_t<0, InType> mat(height*width); 
+    std::tuple_element_t<0, InType> mat(height * width);
 
     for (int elem = 0; elem < height * width; elem++) {
       mat[elem] = (elem * 2) - 42;
     }
-  
+
     input_data_ = std::make_tuple(mat, height, width);
   }
 
@@ -44,12 +44,12 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     int height = std::get<1>(input_data_);
     int width = std::get<2>(input_data_);
     std::vector<int> sum(height, 0);
-    std::tuple_element_t<0, InType> mat = std::get<0>(input_data_); 
+    std::tuple_element_t<0, InType> mat = std::get<0>(input_data_);
 
     for (int row = 0; row < height; row++) {
-	   for (int col = 0; col < width; col++) {
-		   sum[row] += mat[width * row + col];
-     }
+      for (int col = 0; col < width; col++) {
+        sum[row] += mat[width * row + col];
+      }
     }
 
     return (output_data == sum);
@@ -71,9 +71,9 @@ TEST_P(LuzanEMatrixRowsSumFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, 3), std::make_tuple(2, 5), std::make_tuple(10, 70)};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<LuzanEMatrixRowsSumMPI, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_rows_sum),
-                   ppc::util::AddFuncTask<LuzanEMatrixRowsSumSEQ, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_rows_sum));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<LuzanEMatrixRowsSumMPI, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_rows_sum),
+    ppc::util::AddFuncTask<LuzanEMatrixRowsSumSEQ, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_rows_sum));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

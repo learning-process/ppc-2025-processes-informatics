@@ -3,15 +3,15 @@
 #include <mpi.h>
 
 #include <numeric>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace luzan_e_matrix_rows_sum {
 
-LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType &in) {
+LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
@@ -21,8 +21,7 @@ bool LuzanEMatrixRowsSumMPI::ValidationImpl() {
   int height = std::get<1>(GetInput());
   int width = std::get<2>(GetInput());
 
-  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && 
-    height != 0 && width != 0;
+  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && height != 0 && width != 0;
 }
 
 bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
@@ -37,9 +36,9 @@ bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
 bool LuzanEMatrixRowsSumMPI::RunImpl() {
   const int height = std::get<1>(GetInput());
   const int width = std::get<2>(GetInput());
-  const std::tuple_element_t<0, InType>& mat = std::get<0>(GetInput()); 
-  OutType& sum_vec = GetOutput(); 
-  OutType part_sum_vec = GetOutput(); 
+  const std::tuple_element_t<0, InType>& mat = std::get<0>(GetInput());
+  OutType& sum_vec = GetOutput();
+  OutType part_sum_vec = GetOutput();
 
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -50,9 +49,11 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   int begin = rank * rows_per_proc + (rest > rank ? rank : rest);
   int end = begin + rows_per_proc + (rest > rank ? 1 : 0);
 
-  for (int i = begin; i < end; i++)
-    for (int s = 0; s < width; s++)
+  for (int i = begin; i < end; i++) {
+    for (int s = 0; s < width; s++) {
       part_sum_vec[i] += mat[width * i + s];
+    }
+  }
 
   MPI_Reduce(part_sum_vec.data(), sum_vec.data(), height, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(sum_vec.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
