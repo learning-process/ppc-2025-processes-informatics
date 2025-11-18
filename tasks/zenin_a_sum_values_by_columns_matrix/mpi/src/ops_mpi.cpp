@@ -32,17 +32,6 @@ bool ZeninASumValuesByColumnsMatrixMPI::PreProcessingImpl() {
   return true;
 }
 
-void ZeninASumValuesByColumnsMatrixMPI::CalculateLocalSums(const std::vector<double> &matrix_data, size_t columns,
-                                                           size_t total_rows, size_t start_column,
-                                                           size_t cols_this_process, std::vector<double> &local_sums) {
-  for (size_t local_column = 0; local_column < cols_this_process; ++local_column) {
-    size_t global_col = start_column + local_column;
-    for (size_t row = 0; row < total_rows; ++row) {
-      local_sums[local_column] += matrix_data[(row * columns) + global_col];
-    }
-  }
-}
-
 void ZeninASumValuesByColumnsMatrixMPI::PrepareGathervParameters(int world_size, size_t base_cols_per_process,
                                                                  size_t remain, std::vector<int> &recv_counts,
                                                                  std::vector<int> &displacements) {
@@ -106,7 +95,13 @@ bool ZeninASumValuesByColumnsMatrixMPI::RunImpl() {
   MPI_Bcast(matrix_data.data(), static_cast<int>(matrix_data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   std::vector<double> local_sums(cols_this_process, 0.0);
-  CalculateLocalSums(matrix_data, columns, total_rows, start_column, cols_this_process, local_sums);
+
+  for (size_t local_column = 0; local_column < cols_this_process; ++local_column) {
+    size_t global_col = start_column + local_column;
+    for (size_t row = 0; row < total_rows; ++row) {
+      local_sums[local_column] += matrix_data[row * columns + global_col];
+    }
+  }
 
   std::vector<double> global_sums;
   if (rank == 0) {
