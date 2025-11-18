@@ -12,7 +12,7 @@ namespace kosolapov_v_max_values_in_col_matrix {
 
 KosolapovVMaxValuesInColMatrixMPI::KosolapovVMaxValuesInColMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput() = InType(in);
   GetOutput() = {};
 }
 
