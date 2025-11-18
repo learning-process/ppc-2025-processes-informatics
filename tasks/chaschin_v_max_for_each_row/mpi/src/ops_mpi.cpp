@@ -13,7 +13,8 @@ namespace chaschin_v_max_for_each_row {
 
 ChaschinVMaxForEachRow::ChaschinVMaxForEachRow(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  auto in_copy = in;
+  GetInput() = std::move(in_copy);
   this->GetOutput().clear();
 }
 
