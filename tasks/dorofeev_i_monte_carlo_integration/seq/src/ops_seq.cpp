@@ -41,10 +41,11 @@ bool DorofeevIMonteCarloIntegrationSEQ::PreProcessingImpl() {
 
 bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   const auto &in = GetInput();
-  const int dims = in.a.size();
+  const std::size_t dims = in.a.size();
   const int n = in.samples;
 
-  std::mt19937 gen(12345);
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::vector<std::uniform_real_distribution<double>> dist;
   dist.reserve(dims);
 
@@ -55,9 +56,9 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   double sum = 0.0;
   std::vector<double> point(dims);
 
-  for (int s = 0; s < n; s++) {
-    for (int d = 0; d < dims; d++) {
-      point[d] = dist[d](gen);
+  for (int sample = 0; sample < n; sample++) {
+    for (std::size_t dim = 0; dim < dims; dim++) {
+      point[dim] = dist[dim](gen);
     }
     sum += in.func(point);
   }
