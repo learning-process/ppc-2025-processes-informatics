@@ -12,16 +12,15 @@ namespace egorova_l_find_max_val_col_matrix {
 EgorovaLFindMaxValColMatrixSEQ::EgorovaLFindMaxValColMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = std::vector<int>();
+  // Инициализируем выходной вектор явно
+  GetOutput() = OutType();
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::ValidationImpl() {
-  // Разрешаем пустую матрицу
   if (GetInput().empty()) {
     return true;
   }
 
-  // Проверяем, что все строки имеют одинаковую длину
   size_t cols = GetInput()[0].size();
   for (const auto &row : GetInput()) {
     if (row.size() != cols) {
@@ -39,7 +38,6 @@ bool EgorovaLFindMaxValColMatrixSEQ::PreProcessingImpl() {
 bool EgorovaLFindMaxValColMatrixSEQ::RunImpl() {
   const auto &matrix = GetInput();
 
-  // Обрабатываем пустую матрицу
   if (matrix.empty()) {
     GetOutput() = std::vector<int>();
     return true;
