@@ -1,11 +1,10 @@
 #include "chaschin_v_max_for_each_row/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <numeric>
-#include <vector>
+#include <cstddef>
+#include <utility>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace chaschin_v_max_for_each_row {
 
@@ -18,22 +17,12 @@ ChaschinVMaxForEachRowSEQ::ChaschinVMaxForEachRowSEQ(const InType &in) {
 
 bool ChaschinVMaxForEachRowSEQ::ValidationImpl() {
   const auto &mat = GetInput();
-  if (mat.empty()) {
-    return false;
-  }
-
-  for (const auto &row : mat) {
-    if (row.empty()) {
-      return false;
-    }
-  }
-
-  return true;
+  return !mat.empty();
 }
 
 bool ChaschinVMaxForEachRowSEQ::PreProcessingImpl() {
   const auto &mat = GetInput();
-  GetOutput().assign(mat.size(), 0.0f);
+  GetOutput().assign(mat.size(), 0.0F);
   return true;
 }
 

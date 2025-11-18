@@ -4,13 +4,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "chaschin_v_max_for_each_row/mpi/include/ops_mpi.hpp"
@@ -31,22 +26,22 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    input_data_.resize(size);
+    inputData_.resize(size);
     for (int i = 0; i < size; ++i) {
-      input_data_[i].resize(size);
+      inputData_[i].resize(size);
     }
 
     // заполним матрицу
     for (int i = 0; i < size; i++) {
       for (int j = 0; j < size; j++) {
-        input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
+        inputData_[i][j] = static_cast<float>((i + 1) * (j + 2));
       }
     }
 
     // заранее считаем эталон — максимум по каждой строке
     expected_output_.resize(size);
     for (int i = 0; i < size; i++) {
-      expected_output_[i] = *std::max_element(input_data_[i].begin(), input_data_[i].end());
+      expected_output_[i] = *std::max_element(inputData_[i].begin(), inputData_[i].end());
     }
   }
 
@@ -64,11 +59,11 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return inputData_;
   }
 
  private:
-  InType input_data_;
+  InType inputData_;
   OutType expected_output_;
 };
 

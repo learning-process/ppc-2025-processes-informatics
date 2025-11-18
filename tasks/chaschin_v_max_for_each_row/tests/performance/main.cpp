@@ -1,4 +1,6 @@
 #include <gtest/gtest.h>
+#include <cstddef>
+#include <algorithm>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "chaschin_v_max_for_each_row/mpi/include/ops_mpi.hpp"
@@ -9,30 +11,30 @@ namespace chaschin_v_max_for_each_row {
 
 class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int kCount_ = 100;  // размер матрицы: kCount_ x kCount_
-  InType input_data_{};
+  const int kCount = 100;  // размер матрицы: kCount x kCount
+  InType inputData_;
 
   void SetUp() override {
-    // создаём квадратную матрицу kCount_ x kCount_
-    input_data_.resize(kCount_);
-    for (int i = 0; i < kCount_; ++i) {
-      input_data_[i].resize(kCount_);
+    // создаём квадратную матрицу kCount x kCount
+    inputData_.resize(kCount);
+    for (int i = 0; i < kCount; ++i) {
+      inputData_[i].resize(kCount);
     }
 
-    for (int i = 0; i < kCount_; i++) {
-      for (int j = 0; j < kCount_; j++) {
-        input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
+    for (int i = 0; i < kCount; i++) {
+      for (int j = 0; j < kCount; j++) {
+        inputData_[i][j] = static_cast<float>((i + 1) * (j + 2));
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != input_data_.size()) {
+    if (output_data.size() != inputData_.size()) {
       return false;
     }
 
     for (size_t i = 0; i < output_data.size(); i++) {
-      if (output_data[i] != *std::max_element(input_data_[i].begin(), input_data_[i].end())) {
+      if (output_data[i] != *std::max_element(inputData_[i].begin(), inputData_[i].end())) {
         return false;
       }
     }
@@ -40,7 +42,7 @@ class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return inputData_;
   }
 };
 
