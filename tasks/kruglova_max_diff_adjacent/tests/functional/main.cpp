@@ -1,3 +1,4 @@
+
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
@@ -20,7 +21,7 @@
 
 namespace kruglova_max_diff_adjacent {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KruglovaAMaxDiffAdjacentTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -65,7 +66,7 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(KruglovaAMaxDiffAdjacentTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -77,9 +78,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName = KruglovaAMaxDiffAdjacentTests::PrintFuncTestName<KruglovaAMaxDiffAdjacentTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KruglovaAMaxDiffAdjacentTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
