@@ -2,11 +2,9 @@
 
 #include <mpi.h>
 
-#include <numeric>
 #include <vector>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace romanova_v_min_by_matrix_rows_processes {
 
@@ -17,7 +15,7 @@ RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
-  return GetInput().size() != 0 && GetInput()[0].size() >= 1;
+  return !GetInput().empty() && !GetInput()[0].empty();
 }
 
 bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
@@ -57,7 +55,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
 
   OutType temp(en_row - st_row);
 
-  int min_val;
+  int min_val = 0;
 
   for (int i = 0; i < en_row - st_row; i++) {
     min_val = in_data_[st_row + i][0];

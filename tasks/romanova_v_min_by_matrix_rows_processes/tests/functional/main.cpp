@@ -34,9 +34,9 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
     if (file.is_open()) {
       int rows, columns;
       file >> rows >> columns;
-      exp_answer = OutType(rows);
+      exp_answer_ = OutType(rows);
       for (int i = 0; i < rows; i++) {
-        file >> exp_answer[i];
+        file >> exp_answer_[i];
       }
 
       input_data_ = InType(rows, std::vector<int>(columns));
@@ -51,11 +51,11 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (exp_answer.size() != output_data.size()) {
+    if (exp_answer_.size() != output_data.size()) {
       return false;
     }
-    for (size_t i = 0; i < exp_answer.size(); i++) {
-      if (exp_answer[i] != output_data[i]) {
+    for (size_t i = 0; i < exp_answer_.size(); i++) {
+      if (exp_answer_[i] != output_data[i]) {
         return false;
       }
     }
@@ -68,7 +68,7 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
 
  private:
   InType input_data_;
-  OutType exp_answer;
+  OutType exp_answer_;
 };
 
 namespace {
