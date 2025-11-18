@@ -11,12 +11,22 @@
 
 namespace egorova_l_find_max_val_col_matrix {
 
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 EgorovaLFindMaxValColMatrixMPI::EgorovaLFindMaxValColMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   InType temp = in;              // Создаем временную копию
   GetInput() = std::move(temp);  // Перемещаем
   GetOutput() = std::vector<int>(0);
 }
+
+#ifdef __GNUC__
+#  pragma GCC diagnostic pop
+#endif
+
 bool EgorovaLFindMaxValColMatrixMPI::ValidationImpl() {
   if (GetInput().empty()) {
     return true;
