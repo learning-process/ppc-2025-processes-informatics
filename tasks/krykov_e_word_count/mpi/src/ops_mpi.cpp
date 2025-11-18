@@ -4,20 +4,20 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <ranges>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "krykov_e_word_count/common/include/common.hpp"
 
 namespace krykov_e_word_count {
 
-namespace {  // helper functions to reduce RunImpl cognitive complexity
-
-// compute chunk sizes and displacements for Scatterv
-static void ComputeChunkSizesAndDispls(int text_size, int world_size, std::vector<int> &chunk_sizes,
-                                       std::vector<int> &displs) {
+namespace {
+void ComputeChunkSizesAndDispls(int text_size, int world_size, std::vector<int> &chunk_sizes,
+                                std::vector<int> &displs) {
   int base_size = text_size / world_size;
   int remainder = text_size % world_size;
 
@@ -29,8 +29,7 @@ static void ComputeChunkSizesAndDispls(int text_size, int world_size, std::vecto
   }
 }
 
-// count words in a local chunk
-static uint64_t CountWordsInChunk(const std::vector<char> &local_chunk) {
+uint64_t CountWordsInChunk(const std::vector<char> &local_chunk) {
   uint64_t local_count = 0;
   bool in_word = false;
   for (char c : local_chunk) {
@@ -46,8 +45,7 @@ static uint64_t CountWordsInChunk(const std::vector<char> &local_chunk) {
   return local_count;
 }
 
-// compute whether chunk starts/ends with space
-static std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
+std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
   int starts_with_space = 1;
   int ends_with_space = 1;
   if (!local_chunk.empty()) {
@@ -57,11 +55,8 @@ static std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_ch
   return {starts_with_space, ends_with_space};
 }
 
-// adjust total count for words split across chunk boundaries
-static void AdjustTotalCountForBoundaries(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
-                                          const std::vector<int> &all_ends, uint64_t &total_count) {
-  // if previous chunk ends with non-space and next chunk starts with non-space,
-  // then the boundary was counted as two words -> subtract one
+void AdjustTotalCountForBoundaries(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
+                                   const std::vector<int> &all_ends, uint64_t &total_count) {
   const std::size_t world_size = all_counts.size();
   for (std::size_t i = 1; i < world_size; ++i) {
     if (all_ends[i - 1] == 0 && all_starts[i] == 0) {

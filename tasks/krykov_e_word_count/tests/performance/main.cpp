@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string>
 
 #include "krykov_e_word_count/common/include/common.hpp"
@@ -12,7 +13,7 @@ namespace krykov_e_word_count {
 class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   const int kRepeatCount_ = 2000000;
-  InType input_data_{};
+  InType input_data_;
   OutType expected_result_ = 0;
 
   void SetUp() override {

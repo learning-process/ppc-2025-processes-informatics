@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <tuple>
 
@@ -50,8 +51,8 @@ class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   }
 
  private:
-  InType input_data_{};        // default member initializer
-  OutType expected_output_{};  // default member initializer
+  InType input_data_;
+  OutType expected_output_{};
 };
 
 namespace {
