@@ -1,6 +1,7 @@
 #include "leonova_a_most_diff_neigh_vec_elems/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <cmath>
 #include <tuple>
 #include <vector>
@@ -46,7 +47,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
     // распределяем данные по кусочкам
     int chunk_size = total_size / size;
     int remainder = total_size % size;
-    
+
     // получаем на 1 элемент больше для проверки соседних пар на границах чанков
     int my_size = chunk_size + (rank < remainder ? 1 : 0) + 1;
     int my_offset = rank * chunk_size + std::min(rank, remainder);
@@ -69,7 +70,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
         if (dest == size - 1 && dest_offset + dest_size > total_size) {
           dest_size = total_size - dest_offset;
         }
-        
+
         MPI_Send(input_vec.data() + dest_offset, dest_size, MPI_INT, dest, 0, MPI_COMM_WORLD);
       }
     } else {
