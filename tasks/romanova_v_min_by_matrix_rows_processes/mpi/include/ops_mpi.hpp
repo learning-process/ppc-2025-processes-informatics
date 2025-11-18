@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,8 +20,8 @@ class RomanovaVMinByMatrixRowsMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int n_;
-  int m_;
+  size_t n_{0};
+  size_t m_{0};
   InType in_data_;
   OutType res_;
 };
