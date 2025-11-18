@@ -1,21 +1,15 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "leonova_a_most_diff_neigh_vec_elems/common/include/common.hpp"
 #include "leonova_a_most_diff_neigh_vec_elems/mpi/include/ops_mpi.hpp"
 #include "leonova_a_most_diff_neigh_vec_elems/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace leonova_a_most_diff_neigh_vec_elems {
 
@@ -36,22 +30,21 @@ class MostDiffNeighVecElemsRunFuncTestsProcesses : public ppc::util::BaseRunFunc
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    input_data = std::get<1>(params);
-
-    expected_output = std::get<0>(params);
+    input_data_ = std::get<1>(params);
+    expected_output_ = std::get<0>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (expected_output == output_data);
+    return (expected_output_ == output_data);
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data = std::vector<int>();
-  OutType expected_output = std::tuple<int, int>(0, 0);
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
