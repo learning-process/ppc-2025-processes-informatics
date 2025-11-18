@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
 #include "romanova_v_min_by_matrix_rows_processes/mpi/include/ops_mpi.hpp"
@@ -20,7 +22,7 @@ class RomanovaVMinByMatrixRowsPerfTestProcesses : public ppc::util::BaseRunPerfT
     std::ifstream file(abs_path);
     if (file.is_open()) {
       int rows = 0;
-      int columns;
+      int columns = 0;
       file >> rows >> columns;
 
       exp_answer_ = OutType(rows);
@@ -67,7 +69,7 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = RomanovaVMinByMatrixRowsPerfTestProcesses::CustomPerfTestName;
-
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(RunModeTests, RomanovaVMinByMatrixRowsPerfTestProcesses, kGtestValues, kPerfTestName);
-
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits, misc-use-anonymous-namespace)
 }  // namespace romanova_v_min_by_matrix_rows_processes

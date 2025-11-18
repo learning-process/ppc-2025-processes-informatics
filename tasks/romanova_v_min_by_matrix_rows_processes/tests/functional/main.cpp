@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
@@ -50,7 +51,7 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
     if (exp_answer_.size() != output_data.size()) {
       return false;
     }
-    for (int i = 0; std::cmp_less(i, exp_answer_.size()); i++) {
+    for (size_t i = 0; i < exp_answer_.size(); i++) {
       if (exp_answer_[i] != output_data[i]) {
         return false;
       }
@@ -86,9 +87,9 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName =
     RomanovaVMinByMatrixRowsFuncTestsProcesses::PrintFuncTestName<RomanovaVMinByMatrixRowsFuncTestsProcesses>;
-
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(FileTests, RomanovaVMinByMatrixRowsFuncTestsProcesses, kGtestValues, kFuncTestName);
-
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 }  // namespace
 
 }  // namespace romanova_v_min_by_matrix_rows_processes

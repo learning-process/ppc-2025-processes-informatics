@@ -3,13 +3,14 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
 
 namespace romanova_v_min_by_matrix_rows_processes {
 
-RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) : n_(0), m_(0) {
+RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType(in.size());
@@ -39,8 +40,8 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   std::vector<int> recv_counts;
   std::vector<int> displs;
   if (rank == 0) {
-    delta = n_ / n;
-    extra = n_ % n;
+    delta = static_cast<int>(n_ / n);
+    extra = static_cast<int>(n_ % n);
 
     recv_counts = std::vector<int>(n, delta);
     recv_counts[n - 1] += extra;
