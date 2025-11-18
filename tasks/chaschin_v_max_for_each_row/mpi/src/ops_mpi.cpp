@@ -2,9 +2,9 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <numeric>
 #include <vector>
-#include <algorithm>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -63,7 +63,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 
   int start = rank * base + std::min(rank, rem);
   int count = base + (rank < rem ? 1 : 0);
-  //int end = start + count;
+  // int end = start + count;
 
   // ----------------------------
   // Send/recv row sizes
@@ -73,24 +73,23 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 
   if (rank == 0) {
     for (int p = 1; p < size; p++) {
-        int p_start = p * base + std::min(p, rem);
-        int p_count = base + (p < rem ? 1 : 0);
-        all_row_sizes[p].resize(p_count);
+      int p_start = p * base + std::min(p, rem);
+      int p_count = base + (p < rem ? 1 : 0);
+      all_row_sizes[p].resize(p_count);
 
-        for (int i = 0; i < p_count; i++) {
-            all_row_sizes[p][i] = mat[p_start + i].size();
-        }
+      for (int i = 0; i < p_count; i++) {
+        all_row_sizes[p][i] = mat[p_start + i].size();
+      }
 
-        MPI_Send(all_row_sizes[p].data(), p_count, MPI_INT, p, 0, MPI_COMM_WORLD);
+      MPI_Send(all_row_sizes[p].data(), p_count, MPI_INT, p, 0, MPI_COMM_WORLD);
     }
 
     // own sizes
     all_row_sizes[0].resize(count);
     for (int i = 0; i < count; i++) {
-        all_row_sizes[0][i] = mat[start + i].size();
+      all_row_sizes[0][i] = mat[start + i].size();
     }
-  }
-  else {
+  } else {
     if (count > 0) {
       MPI_Recv(row_sizes.data(), count, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
@@ -103,19 +102,18 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 
   if (rank == 0) {
     for (int p = 1; p < size; p++) {
-        int p_start = p * base + std::min(p, rem);
-        int p_count = base + (p < rem ? 1 : 0);
-        for (int i = 0; i < p_count; i++) {
-            MPI_Send(mat[p_start + i].data(), all_row_sizes[p][i], MPI_FLOAT, p, 1, MPI_COMM_WORLD);
-        }
+      int p_start = p * base + std::min(p, rem);
+      int p_count = base + (p < rem ? 1 : 0);
+      for (int i = 0; i < p_count; i++) {
+        MPI_Send(mat[p_start + i].data(), all_row_sizes[p][i], MPI_FLOAT, p, 1, MPI_COMM_WORLD);
+      }
     }
 
     // copy own rows
     for (int i = 0; i < count; i++) {
-        local_mat[i] = mat[start + i];
+      local_mat[i] = mat[start + i];
     }
-  }
-  else {
+  } else {
     for (int i = 0; i < count; i++) {
       local_mat[i].resize(row_sizes[i]);
       MPI_Recv(local_mat[i].data(), row_sizes[i], MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

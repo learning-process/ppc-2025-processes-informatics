@@ -1,8 +1,8 @@
 #include "chaschin_v_max_for_each_row/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <numeric>
 #include <vector>
-#include <algorithm>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "util/include/util.hpp"
