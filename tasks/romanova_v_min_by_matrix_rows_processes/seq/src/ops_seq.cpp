@@ -7,9 +7,7 @@
 
 namespace romanova_v_min_by_matrix_rows_processes {
 
-RomanovaVMinByMatrixRowsSEQ::RomanovaVMinByMatrixRowsSEQ(const InType &in) {
-  n_ = 0;
-  m_ = 0;
+RomanovaVMinByMatrixRowsSEQ::RomanovaVMinByMatrixRowsSEQ(const InType &in) : n_(0), m_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType(in.size());
@@ -21,17 +19,17 @@ bool RomanovaVMinByMatrixRowsSEQ::ValidationImpl() {
 
 bool RomanovaVMinByMatrixRowsSEQ::PreProcessingImpl() {
   in_data_ = GetInput();
-  n_ = in_data_.size();
-  m_ = in_data_[0].size();
+  n_ = static_cast<int>(in_data_.size());
+  m_ = static_cast<int>(in_data_[0].size());
   res_ = OutType(n_);
   return true;
 }
 
 bool RomanovaVMinByMatrixRowsSEQ::RunImpl() {
   int min_val = 0;
-  for (size_t i = 0; i < n_; i++) {
+  for (int i = 0; i < n_; i++) {
     min_val = in_data_[i][0];
-    for (size_t j = 1; j < m_; j++) {
+    for (int j = 1; j < m_; j++) {
       min_val = std::min(min_val, in_data_[i][j]);
     }
     res_[i] = min_val;

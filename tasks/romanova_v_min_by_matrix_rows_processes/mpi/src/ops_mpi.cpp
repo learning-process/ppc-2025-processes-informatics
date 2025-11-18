@@ -9,9 +9,7 @@
 
 namespace romanova_v_min_by_matrix_rows_processes {
 
-RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
-  n_ = 0;
-  m_ = 0;
+RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) : n_(0), m_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType(in.size());
@@ -23,8 +21,8 @@ bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
 
 bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
   in_data_ = GetInput();
-  n_ = in_data_.size();
-  m_ = in_data_[0].size();
+  n_ = static_cast<int>(in_data_.size());
+  m_ = static_cast<int>(in_data_[0].size());
   res_ = OutType(n_);
   return true;
 }
@@ -67,7 +65,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
 
   for (int i = 0; i < en_row - st_row; i++) {
     min_val = in_data_[st_row + i][0];
-    for (size_t j = 1; j < m_; j++) {
+    for (int j = 1; j < m_; j++) {
       min_val = std::min(min_val, in_data_[st_row + i][j]);
     }
     temp[i] = min_val;
