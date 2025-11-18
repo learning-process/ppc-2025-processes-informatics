@@ -1,0 +1,22 @@
+#pragma once
+
+#include "kruglova_max_diff_adjacent/common/include/common.hpp"
+#include "task/include/task.hpp"
+
+namespace kruglova_max_diff_adjacent {
+
+class KruglovaAMaxDiffAdjacentMPI : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+  explicit KruglovaAMaxDiffAdjacentMPI(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+};
+
+}  // namespace kruglova_max_diff_adjacent
