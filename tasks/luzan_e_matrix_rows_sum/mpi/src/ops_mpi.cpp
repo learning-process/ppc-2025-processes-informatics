@@ -59,7 +59,7 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
 
   MPI_Reduce(part_sum_vec.data(), sum_vec.data(), height, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(sum_vec.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
-  //MPI_Barrier(MPI_COMM_WORLD);
+  // MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
