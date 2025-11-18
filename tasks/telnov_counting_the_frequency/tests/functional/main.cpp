@@ -20,7 +20,7 @@
 
 namespace telnov_counting_the_frequency {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class TelnovCountingTheFrequencyFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -32,23 +32,33 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     int height = -1;
     int channels = -1;
     std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
+
     {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_telnov_counting_the_frequency, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
+        std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_telnov_counting_the_frequency, "pic.jpg");
+        auto* data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
+        if (data == nullptr) {
+            throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
+        }
+        channels = STBI_rgb;
+        img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
+        stbi_image_free(data);
+
+        if (width != height) {
+            throw std::runtime_error("width != height");
+        }
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    TestType params =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ =
+        width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+
+    telnov_counting_the_frequency::g_data_string.clear();
+    telnov_counting_the_frequency::g_data_string.resize(2'000'000, 'a');
+
+    for (int i = 0; i < input_data_; i++) {
+        telnov_counting_the_frequency::g_data_string[i] = 'X';
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -65,7 +75,7 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(TelnovCountingTheFrequencyFuncTestsProcesses, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -77,9 +87,9 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName = TelnovCountingTheFrequencyFuncTestsProcesses::PrintFuncTestName<TelnovCountingTheFrequencyFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, TelnovCountingTheFrequencyFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -13,3 +13,7 @@ using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace telnov_counting_the_frequency
+
+namespace telnov_counting_the_frequency {
+inline std::string g_data_string;
+}

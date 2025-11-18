@@ -24,37 +24,17 @@ bool TelnovCountingTheFrequencySEQ::PreProcessingImpl() {
 }
 
 bool TelnovCountingTheFrequencySEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  const std::string& s = g_data_string;
+    long long cnt = 0;
+    for (char c : s)
+        if (c == 'X') cnt++;
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+    GetOutput() = cnt;
+    return true;
 }
 
 bool TelnovCountingTheFrequencySEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return GetOutput() == GetInput();
 }
 
 }  // namespace telnov_counting_the_frequency

@@ -7,11 +7,18 @@
 
 namespace telnov_counting_the_frequency {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class TelnovCountingTheFrequencyPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
 
   void SetUp() override {
+    telnov_counting_the_frequency::g_data_string.clear();
+    telnov_counting_the_frequency::g_data_string.resize(5'000'000, 'a');
+
+    for (int i = 0; i < kCount_; i++) {
+        telnov_counting_the_frequency::g_data_string[i] = 'X';
+    }
+
     input_data_ = kCount_;
   }
 
@@ -24,7 +31,7 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
+TEST_P(TelnovCountingTheFrequencyPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -33,8 +40,8 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = TelnovCountingTheFrequencyPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, TelnovCountingTheFrequencyPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace telnov_counting_the_frequency

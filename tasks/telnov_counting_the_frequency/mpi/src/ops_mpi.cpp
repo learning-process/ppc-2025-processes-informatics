@@ -21,52 +21,36 @@ bool TelnovCountingTheFrequencyMPI::ValidationImpl() {
 }
 
 bool TelnovCountingTheFrequencyMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+    GetOutput() = 0;
+    return true;
 }
 
 bool TelnovCountingTheFrequencyMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
+    const std::string& s = g_data_string;
+    size_t n = s.size();
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+    size_t chunk = n / size;
+    size_t start = rank * chunk;
+    size_t end = (rank == size - 1 ? n : start + chunk);
 
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    long long local = 0;
+    for (size_t i = start; i < end; i++)
+        if (s[i] == 'X') local++;
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+    long long total = 0;
+    MPI_Allreduce(&local, &total, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+    GetOutput() = total;
+    
+    return true;
 }
 
 bool TelnovCountingTheFrequencyMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+    return GetOutput() == GetInput();
 }
 
 }  // namespace telnov_counting_the_frequency
