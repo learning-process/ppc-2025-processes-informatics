@@ -17,56 +17,81 @@ MaslovaUCharFrequencyCountMPI::MaslovaUCharFrequencyCountMPI(const InType &in) {
 }
 
 bool MaslovaUCharFrequencyCountMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool MaslovaUCharFrequencyCountMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool MaslovaUCharFrequencyCountMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
   int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int proc_size = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank); // id процесса
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_size); // количество процессов
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  std::string input_string;
+  char input_char = 0;
+  size_t global_str_size = 0;
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+  if (rank == 0) { 
+    input_string = GetInput().first;
+    input_char = GetInput().second;
+    global_str_size = input_string.size(); // получили данные
+    
+    if (input_string.empty()) {
+      GetOutput() = 0; 
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
-}
+  MPI_Bcast(&global_str_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD); // отправляем размер строки
+  if (global_str_size == 0) {
+    return true; 
+  }
 
-bool MaslovaUCharFrequencyCountMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  MPI_Bcast(&input_char, 1, MPI_CHAR, 0, MPI_COMM_WORLD); // отправляем нужный символ
+
+  if (global_str_size < (size_t)proc_size) { //если слишком маленькая строка
+    if (rank == 0) {
+      size_t first_res_count = std::count(input_string.begin(), input_string.end(), input_char);
+      GetOutput() = first_res_count; 
+    }
+    return true;
+  }
+  
+  std::vector<int> send_counts(proc_size); //здесь размеры всех порций
+  std::vector<int> displs(proc_size); //смещения
+  if (rank == 0) {
+    size_t part = global_str_size / proc_size;
+    size_t rem = global_str_size % proc_size;
+    for (int i = 0; i < proc_size; ++i) {
+      send_counts[i] = part + (i < rem ? 1 : 0); //общий размер, включающий остаток, если он входит
+    }
+    displs[0] = 0;
+    for (int i = 1; i < proc_size; ++i) {
+      displs[i] = displs[i-1] + send_counts[i-1];
+    }
+  }
+
+  MPI_Bcast(send_counts.data(), proc_size, MPI_INT, 0, MPI_COMM_WORLD); //отправляем размеры порций
+  std::vector<char> local_str(send_counts[rank]);
+  MPI_Scatterv(
+      (rank == 0) ? input_string.data() : nullptr,
+      send_counts.data(), displs.data(), MPI_CHAR,
+      local_str.data(), local_str.size(), MPI_CHAR,
+      0, MPI_COMM_WORLD //распределяем данные
+  );
+
+  size_t local_count = std::count(local_str.begin(), local_str.end(), input_char);
+
+  size_t global_count = 0;
+  MPI_Allreduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+  //собрали данные со всех процессов
+  if (rank == 0) {
+    GetOutput() = global_count;
+  }
+
+  return true;
 }
 
 }  // namespace maslova_u_char_frequency_count
