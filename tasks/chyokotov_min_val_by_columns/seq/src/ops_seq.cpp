@@ -37,7 +37,7 @@ bool ChyokotovMinValByColumnsSEQ::PreProcessingImpl() {
   if (!input[0].empty()) {
     GetOutput().resize(input[0].size(), INT_MAX);
   } else {
-    GetOutput().clear()
+    GetOutput().clear();
   }
   return true;
 }
@@ -50,8 +50,8 @@ bool ChyokotovMinValByColumnsSEQ::RunImpl() {
   auto &output = GetOutput();
 
   for (size_t i = 0; i < output.size(); i++) {
-    for (const auto j : matrix) {
-      output[i] = std::min(output[i], j);
+    for (const auto &row : matrix) {
+      output[i] = std::min(output[i], row[i]);
     }
   }
 
