@@ -141,8 +141,8 @@ bool KrykovEWordCountMPI::RunImpl() {
 
   uint64_t local_count_ull = local_count;
   std::vector<uint64_t> all_counts_ull(world_size);
-  MPI_Gather(&local_count_ull, 1, MPI_UINT64_T, world_rank == 0 ? all_counts_ull.data() : nullptr, 1,
-             MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Gather(&local_count_ull, 1, MPI_UINT64_T, world_rank == 0 ? all_counts_ull.data() : nullptr, 1, MPI_UINT64_T, 0,
+             MPI_COMM_WORLD);
 
   if (world_rank == 0) {
     uint64_t total_count = 0;
