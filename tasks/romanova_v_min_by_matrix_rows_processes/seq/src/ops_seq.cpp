@@ -29,9 +29,9 @@ bool RomanovaVMinByMatrixRowsSEQ::PreProcessingImpl() {
 
 bool RomanovaVMinByMatrixRowsSEQ::RunImpl() {
   int min_val = 0;
-  for (int i = 0; i < n_; i++) {
+  for (size_t i = 0; i < n_; i++) {
     min_val = in_data_[i][0];
-    for (int j = 1; j < m_; j++) {
+    for (size_t j = 1; j < m_; j++) {
       min_val = std::min(min_val, in_data_[i][j]);
     }
     res_[i] = min_val;
