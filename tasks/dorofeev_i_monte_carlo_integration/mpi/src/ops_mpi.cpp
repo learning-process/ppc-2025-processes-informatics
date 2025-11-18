@@ -42,7 +42,7 @@ bool DorofeevIMonteCarloIntegrationMPI::PreProcessingImpl() {
 
 bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
   const auto in = GetInput();
-  const int dims = in.a.size();
+  const std::size_t dims = in.a.size();
   const int n_total = in.samples;
 
   int rank = 0;
@@ -57,8 +57,8 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
 
   std::vector<std::uniform_real_distribution<double>> dist;
   dist.reserve(dims);
-  for (int d = 0; d < dims; ++d) {
-    dist.emplace_back(in.a[d], in.b[d]);
+  for (std::size_t dim = 0; dim < dims; ++dim) {
+    dist.emplace_back(in.a[dim], in.b[dim]);
   }
 
   std::mt19937 gen(rank + 123);
@@ -66,8 +66,8 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
 
   for (int i = 0; i < n_local; ++i) {
     std::vector<double> x(dims);
-    for (int d = 0; d < dims; d++) {
-      x[d] = dist[d](gen);
+    for (std::size_t dim = 0; dim < dims; dim++) {
+      x[dim] = dist[dim](gen);
     }
     local_sum += in.func(x);
   }
@@ -77,8 +77,8 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   double volume = 1.0;
-  for (int d = 0; d < dims; d++) {
-    volume *= (in.b[d] - in.a[d]);
+  for (std::size_t dim = 0; dim < dims; dim++) {
+    volume *= (in.b[dim] - in.a[dim]);
   }
 
   double result = 0.0;
