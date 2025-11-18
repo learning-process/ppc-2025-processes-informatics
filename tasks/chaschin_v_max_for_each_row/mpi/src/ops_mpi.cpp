@@ -117,9 +117,11 @@ bool ChaschinVMaxForEachRow::RunImpl() {
       local_mat[i] = mat[start + i];
     }
   } else {
-    for (int i = 0; i < count; i++) {
-      local_mat[i].resize(row_sizes[i]);
-      MPI_Recv(local_mat[i].data(), row_sizes[i], MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (count > 0) {
+      for (int i = 0; i < count; i++) {
+        local_mat[i].resize(row_sizes[i]);
+        MPI_Recv(local_mat[i].data(), row_sizes[i], MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      }
     }
   }
 
@@ -132,7 +134,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
     if (!local_mat[i].empty()) {
       local_out[i] = *std::max_element(local_mat[i].begin(), local_mat[i].end());
     } else {
-      local_out[i] = std::numeric_limits<float>::lowest();  // или другое безопасное значение
+      local_out[i] = std::numeric_limits<float>::lowest();  // или 0, по логике задачи
     }
   }
 
@@ -161,13 +163,20 @@ bool ChaschinVMaxForEachRow::RunImpl() {
     }
 
   } else {
-    MPI_Send(local_out.data(), count, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+    if (count > 0) {
+      MPI_Send(local_out.data(), count, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+    }
   }
 
   return true;
 }
 
 bool ChaschinVMaxForEachRow::PostProcessingImpl() {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank != 0) {
+    return true;
+  }
   return !GetOutput().empty();
 }
 }  // namespace chaschin_v_max_for_each_row
