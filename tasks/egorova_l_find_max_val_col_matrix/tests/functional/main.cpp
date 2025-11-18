@@ -28,48 +28,81 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_type = std::get<0>(test_params);
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(10, 50);  // Уменьшим диапазон
-
     switch (test_type) {
-      case 0: {  // Пустая матрица
+      case 0:  // Пустая матрица
         input_data_ = {};
         break;
-      }
-      case 1: {  // Большая матрица (4x4)
-        input_data_ = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}, {13, 14, 15, 16}};
+
+      case 1:  // Нулевая матрица (1x0)
+        input_data_ = {{}};
         break;
-      }
-      case 2: {  // 1 столбец
-        input_data_ = {{1}, {5}, {3}, {7}};
+
+      case 2:  // Один столбец
+        input_data_ = {{5}, {-3}, {10}, {1}};
         break;
-      }
-      case 3: {  // Неквадратная матрица (3x2)
-        input_data_ = {{1, 2}, {3, 4}, {5, 6}};
+
+      case 3:  // Одна строка
+        input_data_ = {{8, -2, 15, 0, -7}};
         break;
-      }
-      case 4: {  // Квадратная матрица (2x2) с известными максимумами
-        input_data_ = {{10, 20}, {30, 40}};
+
+      case 4:  // Квадратная матрица 3x3
+        input_data_ = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
         break;
-      }
+
+      case 5:  // Неквадратная матрица (2x4)
+        input_data_ = {{10, 20, 30, 40}, {50, 60, 70, 80}};
+        break;
+
+      case 6:  // Матрица с отрицательными значениями
+        input_data_ = {{-5, -2, -10}, {-1, -8, -3}, {-7, -4, -6}};
+        break;
+
+      case 7:  // Матрица с одинаковыми значениями
+        input_data_ = {{5, 5, 5}, {5, 5, 5}, {5, 5, 5}};
+        break;
+
+      case 8:  // Матрица с максимальным элементом в разных столбцах
+        input_data_ = {{1, 100, 2}, {50, 3, 200}, {10, 4, 5}};
+        break;
+
+      case 9:  // Большая матрица 5x5
+        input_data_ = {
+            {15, 8, 22, 4, 19}, {7, 25, 11, 3, 14}, {9, 2, 30, 17, 6}, {12, 5, 1, 28, 10}, {20, 13, 16, 21, 0}};
+        break;
+
+      case 10:  // Матрица с одним элементом
+        input_data_ = {{42}};
+        break;
+
+      case 11:  // Матрица где максимум в первом столбце
+        input_data_ = {{99, 1, 2}, {88, 3, 4}, {77, 5, 6}};
+        break;
+
+      case 12:  // Матрица где максимум в последнем столбце
+        input_data_ = {{1, 2, 100}, {3, 4, 90}, {5, 6, 80}};
+        break;
+
+      case 13:  // Матрица с нулевыми значениями
+        input_data_ = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+        break;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix = GetTestInputData();
 
-    // Отладочный вывод
-    std::cout << "Testing matrix: " << matrix.size() << "x" << (matrix.empty() ? 0 : matrix[0].size()) << std::endl;
-
+    // Проверка пустой матрицы
     if (matrix.empty()) {
-      bool result = output_data.empty();
-      std::cout << "Empty matrix test: " << (result ? "PASS" : "FAIL") << std::endl;
-      return result;
+      return output_data.empty();
     }
 
+    // Проверка нулевой матрицы (столбцы нулевой длины)
+    if (matrix[0].empty()) {
+      return output_data.empty();
+    }
+
+    // Проверка размера выходного вектора
     if (output_data.size() != matrix[0].size()) {
-      std::cout << "Size mismatch: expected " << matrix[0].size() << ", got " << output_data.size() << std::endl;
       return false;
     }
 
@@ -86,12 +119,10 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     // Сравниваем результаты
     for (size_t i = 0; i < output_data.size(); ++i) {
       if (output_data[i] != expected[i]) {
-        std::cout << "Column " << i << ": expected " << expected[i] << ", got " << output_data[i] << std::endl;
         return false;
       }
     }
 
-    std::cout << "Test PASSED" << std::endl;
     return true;
   }
 
@@ -110,13 +141,25 @@ TEST_P(EgorovaLRunFuncTestsProcesses, FindMaxValColMatrix) {
 }
 
 // Тестовые случаи: (тип_теста, описание)
-const std::array<TestType, 5> kTestParam = {
-    std::make_tuple(0, "empty_matrix"), std::make_tuple(1, "large_matrix"), std::make_tuple(2, "single_column"),
-    std::make_tuple(3, "non_square_matrix"), std::make_tuple(4, "square_matrix")};
+const std::array<TestType, 14> kTestParam = {std::make_tuple(0, "empty_matrix"),
+                                             std::make_tuple(1, "zero_matrix"),
+                                             std::make_tuple(2, "single_column"),
+                                             std::make_tuple(3, "single_row"),
+                                             std::make_tuple(4, "square_3x3"),
+                                             std::make_tuple(5, "non_square_2x4"),
+                                             std::make_tuple(6, "negative_values"),
+                                             std::make_tuple(7, "same_values"),
+                                             std::make_tuple(8, "max_in_different_cols"),
+                                             std::make_tuple(9, "large_5x5"),
+                                             std::make_tuple(10, "single_element"),
+                                             std::make_tuple(11, "max_in_first_col"),
+                                             std::make_tuple(12, "max_in_last_col"),
+                                             std::make_tuple(13, "zero_values")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
-    ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_egorova_l_find_max_val_col_matrix),
+                                           ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_egorova_l_find_max_val_col_matrix));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

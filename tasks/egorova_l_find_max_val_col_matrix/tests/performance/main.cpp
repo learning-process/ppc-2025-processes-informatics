@@ -10,7 +10,7 @@
 namespace egorova_l_find_max_val_col_matrix {
 
 class EgorovaLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kMatrixSize_ = 10;  // Очень маленькая матрица для теста
+  const int kMatrixSize_ = 5000;  // большая матрица
   InType input_data_{};
 
   void SetUp() override {
@@ -65,7 +65,7 @@ TEST_P(EgorovaLRunPerfTestProcesses, EgorovaLRunPerfModes) {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, EgorovaLFindMaxValColMatrixMPI, EgorovaLFindMaxValColMatrixSEQ>(
-        PPC_SETTINGS_example_processes);
+        PPC_SETTINGS_egorova_l_find_max_val_col_matrix);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
