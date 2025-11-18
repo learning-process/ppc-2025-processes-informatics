@@ -67,67 +67,71 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   // int end = start + count;
 
   // ----------------------------
-  // Send/recv row sizes
-  // ----------------------------
-  std::vector<int> row_sizes(count);
-  std::vector<std::vector<int>> all_row_sizes(size);
-
-  if (rank == 0) {
-    for (int p = 1; p < size; p++) {
-      int p_start = p * base + std::min(p, rem);
-      int p_count = base + (p < rem ? 1 : 0);
-      all_row_sizes[p].resize(p_count);
-
-      for (int i = 0; i < p_count; i++) {
-        all_row_sizes[p][i] = mat[p_start + i].size();
-      }
-
-      MPI_Send(all_row_sizes[p].data(), p_count, MPI_INT, p, 0, MPI_COMM_WORLD);
-    }
-
-    // own sizes
-    all_row_sizes[0].resize(count);
-    for (int i = 0; i < count; i++) {
-      all_row_sizes[0][i] = mat[start + i].size();
-    }
-  } else {
-    if (count > 0) {
-      MPI_Recv(row_sizes.data(), count, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-  }
-
-  // ----------------------------
-  // Receive actual rows
+  // Exchange rows with explicit per-row handshake (length -> data)
   // ----------------------------
   std::vector<std::vector<float>> local_mat(count);
 
+// DEBUG: print assignment info
+#ifndef NDEBUG
+  {
+    int dbg_rank = rank;
+    fprintf(stderr, "DEBUG rank=%d nrows=%d size=%d base=%d rem=%d start=%d count=%d\n", dbg_rank, nrows, size, base,
+            rem, start, count);
+    fflush(stderr);
+  }
+#endif
+
   if (rank == 0) {
-    for (int p = 1; p < size; p++) {
+    // root: for each other rank, send rows assigned to that rank
+    for (int p = 1; p < size; ++p) {
       int p_start = p * base + std::min(p, rem);
       int p_count = base + (p < rem ? 1 : 0);
-      for (int i = 0; i < p_count; i++) {
-        if (!mat[p_start + i].empty()) {
-          MPI_Send(mat[p_start + i].data(), all_row_sizes[p][i], MPI_FLOAT, p, 1, MPI_COMM_WORLD);
+      if (p_count <= 0) {
+        continue;
+      }
+
+      for (int i = 0; i < p_count; ++i) {
+        const auto &row = mat[p_start + i];
+        int len = static_cast<int>(row.size());
+        // send length first (tag 100)
+        MPI_Send(&len, 1, MPI_INT, p, 100, MPI_COMM_WORLD);
+        // then send data if any (tag 101)
+        if (len > 0) {
+          MPI_Send(row.data(), len, MPI_FLOAT, p, 101, MPI_COMM_WORLD);
         }
       }
     }
 
-    // copy own rows
-    for (int i = 0; i < count; i++) {
+    // copy own rows into local_mat
+    for (int i = 0; i < count; ++i) {
       local_mat[i] = mat[start + i];
     }
+
   } else {
+    // worker: receive p_count rows (length then data for each)
     if (count > 0) {
-      for (int i = 0; i < count; i++) {
-        local_mat[i].resize(row_sizes[i]);
-        MPI_Recv(local_mat[i].data(), row_sizes[i], MPI_FLOAT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      for (int i = 0; i < count; ++i) {
+        int len = 0;
+        MPI_Recv(&len, 1, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (len > 0) {
+          local_mat[i].resize(len);
+          MPI_Recv(local_mat[i].data(), len, MPI_FLOAT, 0, 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        } else {
+          local_mat[i].clear();
+        }
       }
     }
   }
 
+// optional barrier to make debugging deterministic
+#ifndef NDEBUG
+  MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
   // ----------------------------
   // Compute local maxima
   // ----------------------------
+
   std::vector<float> local_out(count);
 
   for (int i = 0; i < count; i++) {
@@ -166,6 +170,21 @@ bool ChaschinVMaxForEachRow::RunImpl() {
     if (count > 0) {
       MPI_Send(local_out.data(), count, MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
     }
+  }
+
+  // --- BROADCAST final output from root to all ranks so CheckTestOutputData passes on every rank ---
+  // Ensure out exists on root and allocate on workers
+  if (rank == 0) {
+    // out is already filled on root and resized to nrows earlier
+    // nothing to do here
+  } else {
+    // Workers must have a vector with correct size and contiguous storage
+    GetOutput().assign(nrows, 0.0f);
+  }
+
+  if (nrows > 0) {
+    // Broadcast raw float data (contiguous)
+    MPI_Bcast(GetOutput().data(), nrows, MPI_FLOAT, 0, MPI_COMM_WORLD);
   }
 
   return true;
