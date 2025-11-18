@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <vector>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
@@ -60,9 +61,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   for (int i = 0; i < en_row - st_row; i++) {
     min_val = in_data_[st_row + i][0];
     for (int j = 1; j < m_; j++) {
-      if (min_val > in_data_[st_row + i][j]) {
-        min_val = in_data_[st_row + i][j];
-      }
+      min_val = std::min(min_val, in_data_[st_row + i][j]);
     }
     temp[i] = min_val;
   }

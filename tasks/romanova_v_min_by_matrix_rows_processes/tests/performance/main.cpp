@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <fstream>
+#include <string>
 
 #include "romanova_v_min_by_matrix_rows_processes/common/include/common.hpp"
 #include "romanova_v_min_by_matrix_rows_processes/mpi/include/ops_mpi.hpp"
