@@ -120,8 +120,8 @@ void GatherResults(std::vector<float> &out, const std::vector<float> &local_out,
 }
 
 bool ChaschinVMaxForEachRow::RunImpl() {
-  int rank = 0 ;
-  int size =0 ;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -137,9 +137,11 @@ bool ChaschinVMaxForEachRow::RunImpl() {
     GetOutput().resize(nrows);
   }
   GatherResults(GetOutput(), local_out, rank, size, range);
-    // --- ensure output buffer exists on all ranks before broadcasting ---
+  // --- ensure output buffer exists on all ranks before broadcasting ---
   auto &out = GetOutput();
-  if (rank != 0) out.resize(nrows);   // <- ключевая строка: выделяем память на воркерах
+  if (rank != 0) {
+    out.resize(nrows);  // <- ключевая строка: выделяем память на воркерах
+  }
 
   if (nrows > 0) {
     MPI_Bcast(out.data(), nrows, MPI_FLOAT, 0, MPI_COMM_WORLD);

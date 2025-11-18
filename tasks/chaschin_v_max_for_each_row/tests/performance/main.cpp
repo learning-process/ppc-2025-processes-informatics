@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <cstddef>
+
 #include <algorithm>
+#include <cstddef>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "chaschin_v_max_for_each_row/mpi/include/ops_mpi.hpp"
