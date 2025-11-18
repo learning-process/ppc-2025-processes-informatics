@@ -106,7 +106,9 @@ bool ChaschinVMaxForEachRow::RunImpl() {
       int p_start = p * base + std::min(p, rem);
       int p_count = base + (p < rem ? 1 : 0);
       for (int i = 0; i < p_count; i++) {
-        MPI_Send(mat[p_start + i].data(), all_row_sizes[p][i], MPI_FLOAT, p, 1, MPI_COMM_WORLD);
+        if (!mat[p_start + i].empty()) {
+          MPI_Send(mat[p_start + i].data(), all_row_sizes[p][i], MPI_FLOAT, p, 1, MPI_COMM_WORLD);
+        }
       }
     }
 
@@ -127,7 +129,11 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   std::vector<float> local_out(count);
 
   for (int i = 0; i < count; i++) {
-    local_out[i] = *std::max_element(local_mat[i].begin(), local_mat[i].end());
+    if (!local_mat[i].empty()) {
+      local_out[i] = *std::max_element(local_mat[i].begin(), local_mat[i].end());
+    } else {
+      local_out[i] = std::numeric_limits<float>::lowest();  // или другое безопасное значение
+    }
   }
 
   // ----------------------------
