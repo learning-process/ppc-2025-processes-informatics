@@ -29,7 +29,7 @@ bool ChyokotovMinValByColumnsSEQ::PreProcessingImpl() {
   if (input.empty()) {
     return true;
   }
-  if(!input[0].empty()){
+  if (!input[0].empty()) {
     GetOutput().resize(input[0].size(), INT_MAX);
   }
   return true;
