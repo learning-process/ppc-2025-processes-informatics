@@ -6,13 +6,13 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
 #include "kutuzov_i_elem_vec_average/mpi/include/ops_mpi.hpp"
@@ -49,7 +49,7 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     if (!result) {
       std::cout << output_data << " " << average;
     }
-    
+
     return result;
   }
 
