@@ -9,6 +9,7 @@
 #include "romanova_v_min_by_matrix_rows_processes/mpi/include/ops_mpi.hpp"
 #include "romanova_v_min_by_matrix_rows_processes/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace romanova_v_min_by_matrix_rows_processes {
 
