@@ -8,7 +8,7 @@
 namespace romanov_a_integration_rect_method {
 
 class RomanovAIntegrationRectMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 10'000'000;
+  const int kCount_ = 500'000'000;
   InType input_data_{};
 
   void SetUp() override {

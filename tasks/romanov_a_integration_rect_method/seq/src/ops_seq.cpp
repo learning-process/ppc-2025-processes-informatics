@@ -17,7 +17,16 @@ RomanovAIntegrationRectMethodSEQ::RomanovAIntegrationRectMethodSEQ(const InType 
 }
 
 bool RomanovAIntegrationRectMethodSEQ::ValidationImpl() {
-  return (std::get<3>(GetInput()) > 0) && (IsEqual(GetOutput(), 0.0));
+  if (!IsEqual(GetOutput(), 0.0)) {
+    return false;
+  }
+  else if (std::get<3>(GetInput()) <= 0) {
+    return false;
+  }
+  else if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
+    return false;
+  }
+  return true;
 }
 
 bool RomanovAIntegrationRectMethodSEQ::PreProcessingImpl() {
@@ -25,24 +34,19 @@ bool RomanovAIntegrationRectMethodSEQ::PreProcessingImpl() {
 }
 
 bool RomanovAIntegrationRectMethodSEQ::RunImpl() {
-  auto [f, a, b, n] = GetInput();
-
-  double sgn = 1.0;
-  if (a > b) {
-    std::swap(a, b);
-    sgn = -1.0;
-  }
+  const auto& [f, a, b, n] = GetInput();
 
   double delta_x = (b - a) / static_cast<double>(n);
-
   double mid = a + delta_x / 2.0;
 
+  double result = 0.0;
+
   for (int i = 0; i < n; ++i) {
-    GetOutput() += f(mid) * delta_x;
+    result += f(mid) * delta_x;
     mid += delta_x;
   }
 
-  GetOutput() *= sgn;
+  GetOutput() = result;
 
   return true;
 }

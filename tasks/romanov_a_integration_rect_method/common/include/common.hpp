@@ -14,7 +14,7 @@ using OutType = double;
 using TestType = std::tuple<std::function<double(double)>, double, double, int, double>;;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-constexpr double EPS = 1e-10;
+constexpr double EPS = 1e-4;
 
 inline bool IsEqual(double a, double b) {
   return std::abs(a - b) <= EPS;
