@@ -17,7 +17,6 @@ namespace krykov_e_word_count {
 
 class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  // default constructor is fine; members have default member initializers
   KrykovEWordCountFuncTests() = default;
 
   static std::string PrintTestParam(const TestType &test_param) {
