@@ -7,8 +7,7 @@
 
 namespace chaschin_v_max_for_each_row {
 
-class ChaschinVRunPerfTestProcesses
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   const int kCount_ = 100;  // размер матрицы: kCount_ x kCount_
   InType input_data_{};
@@ -24,11 +23,14 @@ class ChaschinVRunPerfTestProcesses
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != input_data_.size()) return false;
+    if (output_data.size() != input_data_.size()) {
+      return false;
+    }
 
     for (size_t i = 0; i < output_data.size(); i++) {
-      if (output_data[i] != *std::max_element(input_data_[i].begin(), input_data_[i].end()))
+      if (output_data[i] != *std::max_element(input_data_[i].begin(), input_data_[i].end())) {
         return false;
+      }
     }
     return true;
   }
@@ -42,18 +44,13 @@ TEST_P(ChaschinVRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChaschinVMaxForEachRow, ChaschinVMaxForEachRowSEQ>(
-        PPC_SETTINGS_example_processes);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVMaxForEachRow, ChaschinVMaxForEachRowSEQ>(
+    PPC_SETTINGS_example_processes);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ChaschinVRunPerfTestProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests,
-                         ChaschinVRunPerfTestProcesses,
-                         kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace chaschin_v_max_for_each_row
-

@@ -20,8 +20,7 @@
 
 namespace chaschin_v_max_for_each_row {
 
-class ChaschinVRunFuncTestsProcesses
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -30,8 +29,7 @@ class ChaschinVRunFuncTestsProcesses
  protected:
   void SetUp() override {
     // создаём квадратную матрицу size x size
-    TestType params =
-        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
     input_data_.assign(size, std::vector<float>(size));
@@ -51,10 +49,14 @@ class ChaschinVRunFuncTestsProcesses
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != expected_output_.size()) return false;
+    if (output_data.size() != expected_output_.size()) {
+      return false;
+    }
 
     for (size_t i = 0; i < output_data.size(); i++) {
-      if (output_data[i] != expected_output_[i]) return false;
+      if (output_data[i] != expected_output_[i]) {
+        return false;
+      }
     }
     return true;
   }
@@ -74,24 +76,17 @@ TEST_P(ChaschinVRunFuncTestsProcesses, MaxInRowsFromMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(3, "3"),
-    std::make_tuple(5, "5"),
-    std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ChaschinVMaxForEachRow, InType>(kTestParam, PPC_SETTINGS_example_processes),
-                   ppc::util::AddFuncTask<ChaschinVMaxForEachRowSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ChaschinVMaxForEachRow, InType>(kTestParam, PPC_SETTINGS_example_processes),
+    ppc::util::AddFuncTask<ChaschinVMaxForEachRowSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    ChaschinVRunFuncTestsProcesses::PrintFuncTestName<ChaschinVRunFuncTestsProcesses>;
+const auto kPerfTestName = ChaschinVRunFuncTestsProcesses::PrintFuncTestName<ChaschinVRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(MatrixRowMaxTests,
-                         ChaschinVRunFuncTestsProcesses,
-                         kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MatrixRowMaxTests, ChaschinVRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
