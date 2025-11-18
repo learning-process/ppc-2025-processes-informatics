@@ -14,7 +14,11 @@ class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
 
   void SetUp() override {
     // создаём квадратную матрицу kCount_ x kCount_
-    input_data_.assign(kCount_, std::vector<float>(kCount_));
+    input_data_.resize(kCount_);
+    for (int i = 0; i < kCount_; ++i) {
+      input_data_[i].resize(kCount_);
+    }
+
     for (int i = 0; i < kCount_; i++) {
       for (int j = 0; j < kCount_; j++) {
         input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
