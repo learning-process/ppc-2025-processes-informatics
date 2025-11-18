@@ -38,18 +38,15 @@ class KosolapovVMaxValuesInColMatrixRunFuncTestsProcesses
     int columns = 0;
     file >> columns;
     std::vector<std::vector<int>> input_matrix(rows, std::vector<int>(columns));
-    for (int i = 0; i < rows; i++)
-    {
-      for (int j = 0; j < columns; j++)
-      {
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < columns; j++) {
         int elem = 0;
         file >> elem;
         input_matrix[i][j] = elem;
       }
     }
     std::vector<int> vector_max(columns);
-    for (int i = 0; i < columns; i++)
-    {
+    for (int i = 0; i < columns; i++) {
       int elem = 0;
       file >> elem;
       vector_max[i] = elem;
@@ -91,9 +88,8 @@ const std::array<TestType, 13> kTestParam = {"big_matrix",
                                              "max_on_diagonal",
                                              "simple_matrix"};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<KosolapovVMaxValuesInColMatrixMPI, InType>(
-        kTestParam, PPC_SETTINGS_kosolapov_v_max_values_in_col_matrix),
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KosolapovVMaxValuesInColMatrixMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_kosolapov_v_max_values_in_col_matrix),
                                            ppc::util::AddFuncTask<KosolapovVMaxValuesInColMatrixSEQ, InType>(
                                                kTestParam, PPC_SETTINGS_kosolapov_v_max_values_in_col_matrix));
 

@@ -51,46 +51,36 @@ bool KosolapovVMaxValuesInColMatrixMPI::RunImpl() {
   const int end = start + columns_per_proc + (rank < remainder ? 1 : 0);
 
   std::vector<int> local_maxs(end - start);
-  for (int i = start; i < end; i++)
-  {
+  for (int i = start; i < end; i++) {
     int temp_max = matrix[0][i];
-    for (int j = 0; j < rows; j++)
-    {
-      if (matrix[j][i] > temp_max)
-      {
+    for (int j = 0; j < rows; j++) {
+      if (matrix[j][i] > temp_max) {
         temp_max = matrix[j][i];
-      }      
+      }
     }
     local_maxs[i - start] = temp_max;
   }
   std::vector<int> global_maxs;
-  if (rank == 0)
-  {
+  if (rank == 0) {
     global_maxs.resize(columns);
-    for (int i = 0; i < local_maxs.size(); i++)
-    {
+    for (int i = 0; i < local_maxs.size(); i++) {
       global_maxs[start + i] = local_maxs[i];
     }
 
-    for (int proc = 1; proc < processes_count; proc++)
-    {
+    for (int proc = 1; proc < processes_count; proc++) {
       const int proc_start = proc * columns_per_proc + std::min(proc, remainder);
       const int proc_end = proc_start + columns_per_proc + (proc < remainder ? 1 : 0);
       const int proc_columns_count = proc_end - proc_start;
       std::vector<int> proc_maxs(proc_columns_count);
-      MPI_Recv(proc_maxs.data(), proc_columns_count, MPI_INT, proc, 0,
-        MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      for (int i = 0; i < proc_columns_count; i++)
-      {
+      MPI_Recv(proc_maxs.data(), proc_columns_count, MPI_INT, proc, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      for (int i = 0; i < proc_columns_count; i++) {
         global_maxs[proc_start + i] = proc_maxs[i];
       }
     }
     for (int proc = 1; proc < processes_count; proc++) {
       MPI_Send(global_maxs.data(), columns, MPI_INT, proc, 1, MPI_COMM_WORLD);
     }
-  }
-  else
-  {
+  } else {
     MPI_Send(local_maxs.data(), local_maxs.size(), MPI_INT, 0, 0, MPI_COMM_WORLD);
     global_maxs.resize(columns);
     MPI_Recv(global_maxs.data(), columns, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);

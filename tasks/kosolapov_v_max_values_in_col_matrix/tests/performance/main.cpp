@@ -15,11 +15,9 @@ class KosolapovVMaxValuesInColMatrixRunPerfTestProcesses : public ppc::util::Bas
   void SetUp() override {
     input_data_.resize(kMatrix_size_);
     expected_res_.resize(kMatrix_size_);
-    for (int i = 0; i < kMatrix_size_; i++)
-    {
+    for (int i = 0; i < kMatrix_size_; i++) {
       input_data_[i].resize(kMatrix_size_);
-      for (int j = 0; j < kMatrix_size_; j++)
-      {
+      for (int j = 0; j < kMatrix_size_; j++) {
         input_data_[i][j] = i;
       }
       expected_res_[i] = kMatrix_size_ - 1;
