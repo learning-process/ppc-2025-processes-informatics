@@ -104,7 +104,11 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 
     // copy own rows into local_mat
     for (int i = 0; i < count; ++i) {
-      local_mat[i] = mat[start + i];
+      if (!mat[start + i].empty()) {
+        local_mat[i] = mat[start + i];
+      } else {
+        local_mat[i].clear();
+      }
     }
 
   } else {
