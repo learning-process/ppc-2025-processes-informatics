@@ -20,7 +20,8 @@
 
 namespace chaschin_v_max_for_each_row {
 
-class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ChaschinVRunFuncTestsProcesses
+    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -28,31 +29,34 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_example_processes, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
+    // создаём квадратную матрицу size x size
+    TestType params =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int size = std::get<0>(params);
+
+    input_data_.assign(size, std::vector<float>(size));
+
+    // заполним матрицу
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
       }
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    // заранее считаем эталон — максимум по каждой строке
+    expected_output_.resize(size);
+    for (int i = 0; i < size; i++) {
+      expected_output_[i] = *std::max_element(input_data_[i].begin(), input_data_[i].end());
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    if (output_data.size() != expected_output_.size()) return false;
+
+    for (size_t i = 0; i < output_data.size(); i++) {
+      if (output_data[i] != expected_output_[i]) return false;
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -60,16 +64,20 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
 
-TEST_P(ChaschinVRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(ChaschinVRunFuncTestsProcesses, MaxInRowsFromMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(3, "3"),
+    std::make_tuple(5, "5"),
+    std::make_tuple(7, "7")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ChaschinVMaxForEachRow, InType>(kTestParam, PPC_SETTINGS_example_processes),
@@ -77,9 +85,13 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ChaschinVRunFuncTestsProcesses::PrintFuncTestName<ChaschinVRunFuncTestsProcesses>;
+const auto kPerfTestName =
+    ChaschinVRunFuncTestsProcesses::PrintFuncTestName<ChaschinVRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ChaschinVRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MatrixRowMaxTests,
+                         ChaschinVRunFuncTestsProcesses,
+                         kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
