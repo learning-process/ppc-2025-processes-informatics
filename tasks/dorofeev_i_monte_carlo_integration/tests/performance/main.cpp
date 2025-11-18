@@ -45,17 +45,17 @@ TEST_P(MonteCarloPerfTests, PerfTestModes) {
 }
 
 // making performance probs: MPI + SEQ
-const auto PerfTasks =
+const auto kPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, DorofeevIMonteCarloIntegrationMPI, DorofeevIMonteCarloIntegrationSEQ>(
         PPC_SETTINGS_example_processes);
 
 // converting to GTest values
-const auto GTestValues = ppc::util::TupleToGTestValues(PerfTasks);
+const auto kGTestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
 // test naming function
-const auto TestName = MonteCarloPerfTests::CustomPerfTestName;
+const auto kTestName = MonteCarloPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(MonteCarloPerf, MonteCarloPerfTests, GTestValues, TestName);
+INSTANTIATE_TEST_SUITE_P(MonteCarloPerf, MonteCarloPerfTests, kGTestValues, kTestName);
 
 }  // namespace
 }  // namespace dorofeev_i_monte_carlo_integration_processes

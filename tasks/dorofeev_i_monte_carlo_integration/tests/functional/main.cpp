@@ -10,7 +10,6 @@
 #include "dorofeev_i_monte_carlo_integration/mpi/include/ops_mpi.hpp"
 #include "dorofeev_i_monte_carlo_integration/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace dorofeev_i_monte_carlo_integration_processes {
 

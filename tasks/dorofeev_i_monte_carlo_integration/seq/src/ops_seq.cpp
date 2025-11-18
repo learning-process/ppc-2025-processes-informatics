@@ -1,9 +1,10 @@
 #include "dorofeev_i_monte_carlo_integration/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <random>
+#include <vector>
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace dorofeev_i_monte_carlo_integration_processes {
 
@@ -41,7 +42,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::PreProcessingImpl() {
 bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   const auto &in = GetInput();
   const int dims = in.a.size();
-  const int N = in.samples;
+  const int n = in.samples;
 
   std::mt19937 gen(12345);
   std::vector<std::uniform_real_distribution<double>> dist;
@@ -54,7 +55,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   double sum = 0.0;
   std::vector<double> point(dims);
 
-  for (int s = 0; s < N; s++) {
+  for (int s = 0; s < n; s++) {
     for (int d = 0; d < dims; d++) {
       point[d] = dist[d](gen);
     }
@@ -66,7 +67,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
     volume *= (in.b[i] - in.a[i]);
   }
 
-  GetOutput() = volume * (sum / N);
+  GetOutput() = volume * (sum / n);
   return true;
 }
 

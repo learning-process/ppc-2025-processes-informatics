@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <random>
+#include <vector>
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
 
