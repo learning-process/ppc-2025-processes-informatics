@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cctype>
-#include <cstddef>
 #include <string>
 #include <tuple>
 
@@ -17,7 +16,8 @@ namespace krykov_e_word_count {
 
 class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  KrykovEWordCountFuncTests() : input_data_(), expected_output_() {}
+  // default constructor is fine; members have default member initializers
+  KrykovEWordCountFuncTests() = default;
 
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
@@ -50,8 +50,8 @@ class KrykovEWordCountFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   }
 
  private:
-  InType input_data_;
-  OutType expected_output_;
+  InType input_data_{};        // default member initializer
+  OutType expected_output_{};  // default member initializer
 };
 
 namespace {

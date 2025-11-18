@@ -12,12 +12,12 @@ namespace krykov_e_word_count {
 class KrykovEWordCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   const int kRepeatCount_ = 2000000;
-  InType input_data_;
-  OutType expected_result_;
+  InType input_data_{};
+  OutType expected_result_ = 0;
 
   void SetUp() override {
     std::string base_text = "word ";
-    input_data_ = "";
+    input_data_.clear();
     for (int i = 0; i < kRepeatCount_; i++) {
       input_data_ += base_text;
     }

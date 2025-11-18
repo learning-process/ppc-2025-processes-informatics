@@ -4,7 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstddef>
+#include <cstdint>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -12,6 +12,67 @@
 #include "krykov_e_word_count/common/include/common.hpp"
 
 namespace krykov_e_word_count {
+
+namespace {  // helper functions to reduce RunImpl cognitive complexity
+
+// compute chunk sizes and displacements for Scatterv
+static void ComputeChunkSizesAndDispls(int text_size, int world_size, std::vector<int> &chunk_sizes,
+                                       std::vector<int> &displs) {
+  int base_size = text_size / world_size;
+  int remainder = text_size % world_size;
+
+  int offset = 0;
+  for (int i = 0; i < world_size; ++i) {
+    chunk_sizes[i] = base_size + (i < remainder ? 1 : 0);
+    displs[i] = offset;
+    offset += chunk_sizes[i];
+  }
+}
+
+// count words in a local chunk
+static uint64_t CountWordsInChunk(const std::vector<char> &local_chunk) {
+  uint64_t local_count = 0;
+  bool in_word = false;
+  for (char c : local_chunk) {
+    if (std::isspace(static_cast<unsigned char>(c)) != 0) {
+      in_word = false;
+    } else {
+      if (!in_word) {
+        in_word = true;
+        ++local_count;
+      }
+    }
+  }
+  return local_count;
+}
+
+// compute whether chunk starts/ends with space
+static std::pair<int, int> StartsEndsFromChunk(const std::vector<char> &local_chunk) {
+  int starts_with_space = 1;
+  int ends_with_space = 1;
+  if (!local_chunk.empty()) {
+    starts_with_space = (std::isspace(static_cast<unsigned char>(local_chunk.front())) != 0) ? 1 : 0;
+    ends_with_space = (std::isspace(static_cast<unsigned char>(local_chunk.back())) != 0) ? 1 : 0;
+  }
+  return {starts_with_space, ends_with_space};
+}
+
+// adjust total count for words split across chunk boundaries
+static void AdjustTotalCountForBoundaries(const std::vector<uint64_t> &all_counts, const std::vector<int> &all_starts,
+                                          const std::vector<int> &all_ends, uint64_t &total_count) {
+  // if previous chunk ends with non-space and next chunk starts with non-space,
+  // then the boundary was counted as two words -> subtract one
+  const std::size_t world_size = all_counts.size();
+  for (std::size_t i = 1; i < world_size; ++i) {
+    if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
+      if (total_count > 0) {
+        --total_count;
+      }
+    }
+  }
+}
+
+}  // namespace
 
 KrykovEWordCountMPI::KrykovEWordCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -56,46 +117,20 @@ bool KrykovEWordCountMPI::RunImpl() {
   int text_size = static_cast<int>(text.size());
   MPI_Bcast(&text_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int base_size = text_size / world_size;
-  int remainder = text_size % world_size;
-
   std::vector<int> chunk_sizes(world_size);
   std::vector<int> displs(world_size);
 
-  int offset = 0;
-  for (int i = 0; i < world_size; ++i) {
-    chunk_sizes[i] = base_size + (i < remainder ? 1 : 0);
-    displs[i] = offset;
-    offset += chunk_sizes[i];
-  }
+  ComputeChunkSizesAndDispls(text_size, world_size, chunk_sizes, displs);
 
   int local_size = chunk_sizes[world_rank];
   std::vector<char> local_chunk(local_size);
 
-  MPI_Scatterv(world_rank == 0 ? text.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR, local_chunk.data(),
-               local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(world_rank == 0 ? const_cast<char *>(text.data()) : nullptr, chunk_sizes.data(), displs.data(), MPI_CHAR,
+               local_chunk.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  unsigned long long local_count = 0ULL;
-  bool in_word = false;
-  for (char c : local_chunk) {
-    if (std::isspace(static_cast<unsigned char>(c)) != 0) {
-      in_word = false;
-    } else {
-      if (!in_word) {
-        in_word = true;
-        local_count++;
-      }
-    }
-  }
+  uint64_t local_count = CountWordsInChunk(local_chunk);
 
-  int starts_with_space = 1;
-  if (local_size > 0) {
-    starts_with_space = (std::isspace(static_cast<unsigned char>(local_chunk[0])) != 0) ? 1 : 0;
-  }
-  int ends_with_space = 1;
-  if (local_size > 0) {
-    ends_with_space = (std::isspace(static_cast<unsigned char>(local_chunk[local_size - 1])) != 0) ? 1 : 0;
-  }
+  auto [starts_with_space, ends_with_space] = StartsEndsFromChunk(local_chunk);
 
   std::vector<int> all_starts(world_size);
   std::vector<int> all_ends(world_size);
@@ -104,22 +139,16 @@ bool KrykovEWordCountMPI::RunImpl() {
              MPI_COMM_WORLD);
   MPI_Gather(&ends_with_space, 1, MPI_INT, world_rank == 0 ? all_ends.data() : nullptr, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<unsigned long long> all_counts(world_size);
-  MPI_Gather(&local_count, 1, MPI_UNSIGNED_LONG_LONG, world_rank == 0 ? all_counts.data() : nullptr, 1,
-             MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+  std::vector<uint64_t> all_counts(world_size);
+  MPI_Gather(&local_count, 1, MPI_UINT64_T, world_rank == 0 ? all_counts.data() : nullptr, 1, MPI_UINT64_T, 0,
+             MPI_COMM_WORLD);
 
   if (world_rank == 0) {
-    unsigned long long total_count = 0ULL;
+    uint64_t total_count = 0;
     for (auto count : all_counts) {
       total_count += count;
     }
-    for (int i = 1; i < world_size; ++i) {
-      if (all_ends[i - 1] == 0 && all_starts[i] == 0) {
-        if (total_count > 0) {
-          total_count--;
-        }
-      }
-    }
+    AdjustTotalCountForBoundaries(all_counts, all_starts, all_ends, total_count);
     GetOutput() = static_cast<int>(total_count);
   }
 
