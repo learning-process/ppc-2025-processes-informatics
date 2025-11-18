@@ -4,6 +4,7 @@
 
 #include <numeric>
 #include <vector>
+#include <iostream>
 
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -32,38 +33,30 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
 
   std::string input_string;
   char input_char = 0;
-  size_t global_str_size = 0;
+  size_t input_str_size = 0;
 
   if (rank == 0) { 
     input_string = GetInput().first;
     input_char = GetInput().second;
-    global_str_size = input_string.size(); // получили данные
+    input_str_size = input_string.size(); // получили данные
     
     if (input_string.empty()) {
-      GetOutput() = 0; 
+      GetOutput() = 0; //если строка пустая, выводим сразу 0
     }
   }
 
-  MPI_Bcast(&global_str_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD); // отправляем размер строки
-  if (global_str_size == 0) {
+  MPI_Bcast(&input_str_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD); // отправляем размер строки
+  if (input_str_size == 0) {
     return true; 
   }
 
   MPI_Bcast(&input_char, 1, MPI_CHAR, 0, MPI_COMM_WORLD); // отправляем нужный символ
-
-  if (global_str_size < (size_t)proc_size) { //если слишком маленькая строка
-    if (rank == 0) {
-      size_t first_res_count = std::count(input_string.begin(), input_string.end(), input_char);
-      GetOutput() = first_res_count; 
-    }
-    return true;
-  }
   
   std::vector<int> send_counts(proc_size); //здесь размеры всех порций
   std::vector<int> displs(proc_size); //смещения
   if (rank == 0) {
-    size_t part = global_str_size / proc_size;
-    size_t rem = global_str_size % proc_size;
+    size_t part = input_str_size / proc_size;
+    size_t rem = input_str_size % proc_size;
     for (int i = 0; i < proc_size; ++i) {
       send_counts[i] = part + (i < rem ? 1 : 0); //общий размер, включающий остаток, если он входит
     }
@@ -85,12 +78,14 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   size_t local_count = std::count(local_str.begin(), local_str.end(), input_char);
 
   size_t global_count = 0;
-  MPI_Allreduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
-  //собрали данные со всех процессов
-  if (rank == 0) {
-    GetOutput() = global_count;
-  }
+  MPI_Allreduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD); //собрали данные со всех процессов
+  
+  GetOutput() = global_count; //вывели результат
 
+  return true;
+}
+
+bool MaslovaUCharFrequencyCountMPI::PostProcessingImpl() {
   return true;
 }
 
