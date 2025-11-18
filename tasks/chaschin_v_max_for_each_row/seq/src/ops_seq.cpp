@@ -2,6 +2,7 @@
 
 #include <numeric>
 #include <vector>
+#include <algorithm>
 
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -11,7 +12,7 @@ namespace chaschin_v_max_for_each_row {
 ChaschinVMaxForEachRowSEQ::ChaschinVMaxForEachRowSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  this->GetOutput().clear();
 }
 
 bool ChaschinVMaxForEachRowSEQ::ValidationImpl() {
