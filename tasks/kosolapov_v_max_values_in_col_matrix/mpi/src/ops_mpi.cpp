@@ -18,7 +18,7 @@ KosolapovVMaxValuesInColMatrixMPI::KosolapovVMaxValuesInColMatrixMPI(const InTyp
 
 bool KosolapovVMaxValuesInColMatrixMPI::ValidationImpl() {
   const auto &matrix = GetInput();
-  for (int i = 0; i < matrix.size() - 1; i++) {
+  for (size_t i = 0; i < matrix.size() - 1; i++) {
     if (matrix[i].size() != matrix[i + 1].size()) {
       return false;
     }
@@ -41,8 +41,8 @@ bool KosolapovVMaxValuesInColMatrixMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &processes_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  const int rows = matrix.size();
-  const int columns = matrix[0].size();
+  const int rows = (int)matrix.size();
+  const int columns = (int)matrix[0].size();
 
   const int columns_per_proc = columns / processes_count;
   const int remainder = columns % processes_count;
@@ -63,7 +63,7 @@ bool KosolapovVMaxValuesInColMatrixMPI::RunImpl() {
   std::vector<int> global_maxs;
   if (rank == 0) {
     global_maxs.resize(columns);
-    for (int i = 0; i < local_maxs.size(); i++) {
+    for (size_t i = 0; i < local_maxs.size(); i++) {
       global_maxs[start + i] = local_maxs[i];
     }
 

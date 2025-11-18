@@ -16,7 +16,7 @@ KosolapovVMaxValuesInColMatrixSEQ::KosolapovVMaxValuesInColMatrixSEQ(const InTyp
 
 bool KosolapovVMaxValuesInColMatrixSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
-  for (int i = 0; i < matrix.size() - 1; i++) {
+  for (size_t i = 0; i < matrix.size() - 1; i++) {
     if (matrix[i].size() != matrix[i + 1].size()) {
       return false;
     }
@@ -36,9 +36,9 @@ bool KosolapovVMaxValuesInColMatrixSEQ::RunImpl() {
     return false;
   }
 
-  for (int i = 0; i < matrix[0].size(); i++) {
+  for (size_t i = 0; i < matrix[0].size(); i++) {
     int temp_max = matrix[0][i];
-    for (int j = 0; j < matrix.size(); j++) {
+    for (size_t j = 0; j < matrix.size(); j++) {
       if (matrix[j][i] > temp_max) {
         temp_max = matrix[j][i];
       }
