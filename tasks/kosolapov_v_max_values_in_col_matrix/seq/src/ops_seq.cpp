@@ -1,10 +1,10 @@
 #include "kosolapov_v_max_values_in_col_matrix/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <vector>
+#include <cstddef>
+#include <algorithm>
 
 #include "kosolapov_v_max_values_in_col_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kosolapov_v_max_values_in_col_matrix {
 
@@ -39,9 +39,7 @@ bool KosolapovVMaxValuesInColMatrixSEQ::RunImpl() {
   for (size_t i = 0; i < matrix[0].size(); i++) {
     int temp_max = matrix[0][i];
     for (size_t j = 0; j < matrix.size(); j++) {
-      if (matrix[j][i] > temp_max) {
-        temp_max = matrix[j][i];
-      }
+      temp_max = std::max(matrix[j][i], temp_max);
     }
     GetOutput()[i] = temp_max;
   }

@@ -1,16 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
+#include <fstream>
 
 #include "kosolapov_v_max_values_in_col_matrix/common/include/common.hpp"
 #include "kosolapov_v_max_values_in_col_matrix/mpi/include/ops_mpi.hpp"
@@ -65,7 +61,7 @@ class KosolapovVMaxValuesInColMatrixRunFuncTestsProcesses
 
  private:
   InType input_data_;
-  OutType expected_res_ = {};
+  OutType expected_res_;
 };
 
 namespace {
