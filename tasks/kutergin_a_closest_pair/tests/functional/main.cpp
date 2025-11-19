@@ -22,6 +22,9 @@ namespace kutergin_a_closest_pair {
 
 class KuterginAClosestPairFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  
+  KuterginAClosestPairFuncTests() : input_data_(), expected_(0) {}
+
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
   }

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "kutergin_a_closest_pair/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -15,7 +13,7 @@ class KuterginAClosestPairSEQ : public BaseTask {
   explicit KuterginAClosestPairSEQ(const InType &in);
 
  private:
-  std::vector<int> _data;
+  std::vector<int> data_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
