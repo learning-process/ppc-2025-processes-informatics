@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
