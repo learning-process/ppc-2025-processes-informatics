@@ -1,3 +1,5 @@
+#include "egorova_l_find_max_val_col_matrix/mpi/include/ops_mpi.hpp"
+
 #include <mpi.h>
 
 #include <algorithm>
@@ -36,14 +38,19 @@ bool EgorovaLFindMaxValColMatrixMPI::ValidationImpl() {
   }
 
   const std::size_t cols = matrix[0].size();
-  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
+  for (const auto &row : matrix) {
+    if (row.size() != cols) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool EgorovaLFindMaxValColMatrixMPI::PreProcessingImpl() {
   return true;
 }
 
-// Разделим сложную функцию на части для уменьшения cognitive complexity
 bool EgorovaLFindMaxValColMatrixMPI::RunImpl() {
   if (!ValidationImpl()) {
     GetOutput() = std::vector<int>();
@@ -84,7 +91,7 @@ bool EgorovaLFindMaxValColMatrixMPI::RunMPIAlgorithm() {
   std::vector<int> flat_matrix = CreateAndBroadcastMatrix(rank, rows, cols);
   auto [start_col, local_cols_count] = CalculateColumnDistribution(rank, size, cols);
   std::vector<int> local_max = CalculateLocalMaxima(flat_matrix, rows, cols, start_col, local_cols_count);
-  std::vector<int> all_max = GatherResults(local_max, rank, size, cols);
+  std::vector<int> all_max = GatherResults(local_max, size, cols);
 
   GetOutput() = all_max;
   MPI_Barrier(MPI_COMM_WORLD);
@@ -134,15 +141,16 @@ std::vector<int> EgorovaLFindMaxValColMatrixMPI::CalculateLocalMaxima(const std:
     const int global_col = start_col + local_idx;
     for (int row = 0; row < rows; ++row) {
       const int value = flat_matrix[(row * cols) + global_col];
-      local_max[local_idx] = std::max(value, local_max[local_idx]);
+      if (value > local_max[local_idx]) {
+        local_max[local_idx] = value;
+      }
     }
   }
 
   return local_max;
 }
 
-std::vector<int> EgorovaLFindMaxValColMatrixMPI::GatherResults(const std::vector<int> &local_max, int rank, int size,
-                                                               int cols) {
+std::vector<int> EgorovaLFindMaxValColMatrixMPI::GatherResults(const std::vector<int> &local_max, int size, int cols) {
   const int cols_per_proc = cols / size;
   const int remainder = cols % size;
 

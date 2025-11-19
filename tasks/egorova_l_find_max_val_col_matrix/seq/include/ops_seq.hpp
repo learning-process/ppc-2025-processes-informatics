@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "egorova_l_find_max_val_col_matrix/common/include/common.hpp"
 #include "task/include/task.hpp"
 
