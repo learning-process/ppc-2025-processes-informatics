@@ -12,14 +12,14 @@
 namespace luzan_e_matrix_rows_sum {
 
 class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t height_ = 3000000;
-  const size_t width_ = 10;
+  const size_t height_ = 10000;
+  const size_t width_ = 10000;
   InType input_data_;
 
   void SetUp() override {
     std::tuple_element_t<0, InType> mat(height_ * width_);
     for (size_t elem = 0; elem < height_ * width_; elem++) {
-      mat[elem] = static_cast<int>(elem) - 42;
+      mat[elem] = static_cast<int>(elem) % 42000;
     }
 
     input_data_ = std::make_tuple(mat, height_, width_);
