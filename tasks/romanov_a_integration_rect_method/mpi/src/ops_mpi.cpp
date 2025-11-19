@@ -40,8 +40,6 @@ bool RomanovAIntegrationRectMethodMPI::RunImpl() {
   int num_processes = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
-  double result = 0.0;
-
   int left_border = rank * (n / num_processes);
   int right_border = std::min(n, (rank + 1) * (n / num_processes));
 
@@ -55,6 +53,7 @@ bool RomanovAIntegrationRectMethodMPI::RunImpl() {
     mid += delta_x;
   }
 
+  double result = 0.0;
   MPI_Allreduce(&current_result, &result, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
   GetOutput() = result;
 
