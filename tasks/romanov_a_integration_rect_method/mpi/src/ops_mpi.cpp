@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <cmath>
+#include <algorithm>
 
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
 
@@ -32,28 +32,15 @@ bool RomanovAIntegrationRectMethodMPI::PreProcessingImpl() {
 }
 
 bool RomanovAIntegrationRectMethodMPI::RunImpl() {
+  const auto &[f, a, b, n] = GetInput();
+
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   int num_processes = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
-  double a = 0.0;
-  double b = 0.0;
-  int n = 0;
-
   double result = 0.0;
-
-  if (rank == 0) {
-    a = std::get<1>(GetInput());
-    b = std::get<2>(GetInput());
-    n = std::get<3>(GetInput());
-  }
-  MPI_Bcast(&a, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  auto f = std::get<0>(GetInput());
 
   int left_border = rank * (n / num_processes);
   int right_border = std::min(n, (rank + 1) * (n / num_processes));
