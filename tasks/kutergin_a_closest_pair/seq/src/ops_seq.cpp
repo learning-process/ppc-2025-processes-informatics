@@ -17,11 +17,11 @@ KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) {
 }
 
 bool KuterginAClosestPairSEQ::ValidationImpl() {
- return true;
+  return true;
 }
 
 bool KuterginAClosestPairSEQ::PreProcessingImpl() {
-   return true;
+  return true;
 }
 
 bool KuterginAClosestPairSEQ::RunImpl() {
@@ -29,7 +29,7 @@ bool KuterginAClosestPairSEQ::RunImpl() {
   if (v.size() < 2) {
     GetOutput() = -1;
     return true;
-}
+  }
 
   int best_idx = 0;
   int min_diff = std::abs(v[1] - v[0]);

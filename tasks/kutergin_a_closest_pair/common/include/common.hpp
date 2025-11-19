@@ -8,7 +8,8 @@
 
 namespace kutergin_a_closest_pair {
 
-using InType = std::vector<int>;;
+using InType = std::vector<int>;
+;
 using OutType = int;
 using TestType = std::tuple<std::tuple<InType, int>, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;

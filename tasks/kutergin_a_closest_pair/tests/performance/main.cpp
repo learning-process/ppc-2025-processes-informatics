@@ -10,26 +10,26 @@
 namespace kutergin_a_closest_pair {
 
 class KuterginAClosestPairPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  public:
+ public:
   void SetUp() override {
     const size_t vector_size = 100000000;
     std::vector<int> vector(vector_size);
-    
+
     for (size_t i = 0; i < vector_size; i++) {
-        vector[i] = static_cast<int>(i % 1000) + ((i & 1) == 0 ? 1 : -1);
+      vector[i] = static_cast<int>(i % 1000) + ((i & 1) == 0 ? 1 : -1);
     }
-    input_data_ = std::move(vector); 
-}
+    input_data_ = std::move(vector);
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
-     return output_data == 0;
+    return output_data == 0;
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
 
-  private:
+ private:
   InType input_data_;
 };
 
@@ -37,8 +37,8 @@ TEST_P(KuterginAClosestPairPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KuterginAClosestPairMPI, KuterginAClosestPairSEQ>(PPC_SETTINGS_kutergin_a_closest_pair);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KuterginAClosestPairMPI, KuterginAClosestPairSEQ>(
+    PPC_SETTINGS_kutergin_a_closest_pair);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
