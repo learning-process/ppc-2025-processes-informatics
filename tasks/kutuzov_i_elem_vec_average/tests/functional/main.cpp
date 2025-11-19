@@ -34,13 +34,14 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     input_data_ = std::vector<double>(param, 0.0);
 
     answer = 0.0;
-    for (int i = 0; i < static_cast<int>(param); i++) {
+    int num = static_cast<int>(param);
+    for (int i = 0; i < num; i++) {
       double value = static_cast<double>(i * i) - static_cast<double>(param) / 2.0;
       input_data_[i] = value;
       answer += value;
     }
-
     answer /= static_cast<double>(param);
+    std::cout << num << " : Expected answer: " << answer << std::endl;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
