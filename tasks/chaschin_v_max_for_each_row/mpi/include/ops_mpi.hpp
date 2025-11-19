@@ -23,13 +23,15 @@ class ChaschinVMaxForEachRow : public BaseTask {
     int count;
   };
 
-  RowRange ComputeRange(int nrows, int rank, int size);
+  static RowRange ComputeRange(int nrows, int rank, int size);
   std::vector<std::vector<float>> DistributeRows(const std::vector<std::vector<float>> &mat, int rank, int size,
                                                  const RowRange &range);
   std::vector<float> ComputeLocalMax(const std::vector<std::vector<float>> &local_mat);
 
   void GatherResults(std::vector<float> &out, const std::vector<float> &local_out, int rank, int size,
                      const RowRange &range);
+  static void SendRowsToWorkers(const std::vector<std::vector<float>> &mat, int size);
+  void ReceiveRowsFromRoot(std::vector<std::vector<float>> &local_mat)
 };
 
 }  // namespace chaschin_v_max_for_each_row

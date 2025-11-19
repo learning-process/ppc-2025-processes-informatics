@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -42,9 +41,39 @@ chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::RowRange
 chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeRange(int nrows, int rank, int size) {
   int base = nrows / size;
   int rem = nrows % size;
-  int start = rank * base + std::min(rank, rem);
+  int start = (rank * base) + std::min(rank, rem);
   int count = base + (rank < rem ? 1 : 0);
-  return {start, count};
+  return RowRange{.start = start, .count = count};
+}
+
+void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::SendRowsToWorkers(const std::vector<std::vector<float>> &mat,
+                                                                            int size) {
+  for (int p = 1; p < size; ++p) {
+    RowRange r = ComputeRange(mat.size(), p, size);
+
+    for (int i = 0; i < r.count; ++i) {
+      const auto &row = mat[r.start + i];
+      int len = static_cast<int>(row.size());
+
+      MPI_Send(&len, 1, MPI_INT, p, 100, MPI_COMM_WORLD);
+      if (len > 0) {
+        MPI_Send(row.data(), len, MPI_FLOAT, p, 101, MPI_COMM_WORLD);
+      }
+    }
+  }
+}
+
+void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ReceiveRowsFromRoot(
+    std::vector<std::vector<float>> &local_mat) {
+  for (auto &row : local_mat) {
+    int len;
+    MPI_Recv(&len, 1, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    row.resize(len);
+    if (len > 0) {
+      MPI_Recv(row.data(), len, MPI_FLOAT, 0, 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+  }
 }
 
 std::vector<std::vector<float>> chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::DistributeRows(
@@ -52,31 +81,13 @@ std::vector<std::vector<float>> chaschin_v_max_for_each_row::ChaschinVMaxForEach
   std::vector<std::vector<float>> local_mat(range.count);
 
   if (rank == 0) {
-    // root: send rows to other ranks
-    for (int p = 1; p < size; ++p) {
-      RowRange r = ComputeRange(mat.size(), p, size);
-      for (int i = 0; i < r.count; ++i) {
-        int len = static_cast<int>(mat[r.start + i].size());
-        MPI_Send(&len, 1, MPI_INT, p, 100, MPI_COMM_WORLD);
-        if (len > 0) {
-          MPI_Send(mat[r.start + i].data(), len, MPI_FLOAT, p, 101, MPI_COMM_WORLD);
-        }
-      }
-    }
-    // copy own rows
+    SendRowsToWorkers(mat, size);
+
     for (int i = 0; i < range.count; ++i) {
       local_mat[i] = mat[range.start + i];
     }
   } else {
-    // worker: receive rows
-    for (int i = 0; i < range.count; ++i) {
-      int len;
-      MPI_Recv(&len, 1, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      local_mat[i].resize(len);
-      if (len > 0) {
-        MPI_Recv(local_mat[i].data(), len, MPI_FLOAT, 0, 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      }
-    }
+    ReceiveRowsFromRoot(local_mat);
   }
 
   return local_mat;
