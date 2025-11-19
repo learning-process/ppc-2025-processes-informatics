@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "kutergin_a_closest_pair/common/include/common.hpp"

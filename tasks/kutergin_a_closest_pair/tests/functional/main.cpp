@@ -1,12 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <iostream>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -16,13 +12,12 @@
 #include "kutergin_a_closest_pair/mpi/include/ops_mpi.hpp"
 #include "kutergin_a_closest_pair/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kutergin_a_closest_pair {
 
 class KuterginAClosestPairFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  KuterginAClosestPairFuncTests() : input_data_(), expected_(0) {}
+  KuterginAClosestPairFuncTests() : expected_(0) {}
 
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
@@ -34,17 +29,17 @@ class KuterginAClosestPairFuncTests : public ppc::util::BaseRunFuncTests<InType,
     input_data_ = std::get<0>(std::get<0>(params));
     expected_ = std::get<1>(std::get<0>(params));
     std::cout << "Test: " << std::get<1>(params) << "\nInput: ";
-    for (auto v : input_data_) {
+    for (const auto &v : input_data_) {
       std::cout << v << ' ';
     }
     std::cout << "\nExpected index: " << expected_ << "\n";
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) override {
     return output_data == expected_;
   }
 
-  InType GetTestInputData() final {
+  InType GetTestInputData() override {
     return input_data_;
   }
 

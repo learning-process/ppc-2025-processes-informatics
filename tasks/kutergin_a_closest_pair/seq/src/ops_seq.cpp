@@ -1,8 +1,7 @@
 #include "kutergin_a_closest_pair/seq/include/ops_seq.hpp"
 
-#include <algorithm>
+#include <cmath>
 #include <limits>
-#include <random>
 #include <vector>
 
 #include "kutergin_a_closest_pair/common/include/common.hpp"
