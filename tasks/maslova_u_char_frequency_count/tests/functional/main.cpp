@@ -15,7 +15,7 @@ namespace maslova_u_char_frequency_count {
 class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   MaslovaURunFuncTestsProcesses() = default;
-  
+
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<2>(test_param);
   }
