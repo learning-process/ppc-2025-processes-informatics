@@ -1,8 +1,11 @@
 #include "luzan_e_matrix_rows_sum/seq/include/ops_seq.hpp"
-#include <vector>
-#include "luzan_e_matrix_rows_sum/common/include/common.hpp"
-#include <tuple>
+
 #include <stddef.h>
+
+#include <tuple>
+#include <vector>
+
+#include "luzan_e_matrix_rows_sum/common/include/common.hpp"
 
 namespace luzan_e_matrix_rows_sum {
 

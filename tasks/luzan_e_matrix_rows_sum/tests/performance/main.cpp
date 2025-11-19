@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
+#include <stddef.h>
+
+#include <tuple>
+#include <vector>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
 #include "luzan_e_matrix_rows_sum/mpi/include/ops_mpi.hpp"
 #include "luzan_e_matrix_rows_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include <stddef.h>
-#include <tuple>
-#include <vector>
-
 
 namespace luzan_e_matrix_rows_sum {
 

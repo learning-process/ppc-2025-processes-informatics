@@ -1,10 +1,10 @@
 #include "luzan_e_matrix_rows_sum/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+#include <stddef.h>
 
 #include <tuple>
 #include <vector>
-#include <stddef.h>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
 
