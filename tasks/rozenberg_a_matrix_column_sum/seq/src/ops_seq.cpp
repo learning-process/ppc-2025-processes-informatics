@@ -11,50 +11,43 @@ namespace rozenberg_a_matrix_column_sum {
 RozenbergAMatrixColumnSumSEQ::RozenbergAMatrixColumnSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool RozenbergAMatrixColumnSumSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  bool rows_empty = false;
+  for (size_t i = 0; i < GetInput().size(); i++) {
+    if (GetInput()[i].empty()) {
+      rows_empty = true;
+      break;
+    }
+  }
+  return (!(GetInput().empty())) && (GetOutput().empty()) && (!rows_empty);
 }
 
 bool RozenbergAMatrixColumnSumSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput().resize(GetInput()[0].size());
+  return GetOutput().size() == GetInput()[0].size();
 }
 
 bool RozenbergAMatrixColumnSumSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  if (GetInput().empty()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  std::fill(GetOutput().begin(), GetOutput().end(), 0);
+
+  for (size_t i = 0; i < GetInput().size(); i++) { 
+    for (size_t j = 0; j < GetInput()[i].size(); j++) {
+      GetOutput()[j] += GetInput()[i][j];
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return !(GetOutput().empty());
 }
 
 bool RozenbergAMatrixColumnSumSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return !(GetOutput().empty());
 }
 
 }  // namespace rozenberg_a_matrix_column_sum

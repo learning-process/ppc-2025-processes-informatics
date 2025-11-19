@@ -13,60 +13,58 @@ namespace rozenberg_a_matrix_column_sum {
 RozenbergAMatrixColumnSumMPI::RozenbergAMatrixColumnSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool RozenbergAMatrixColumnSumMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  bool rows_empty = false;
+  for (size_t i = 0; i < GetInput().size(); i++) {
+    if (GetInput()[i].empty()) {
+      rows_empty = true;
+      break;
+    }
+  }
+  return (!(GetInput().empty())) && (GetOutput().empty()) && (!rows_empty);
 }
 
 bool RozenbergAMatrixColumnSumMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput().resize(GetInput()[0].size());
+  return GetOutput().size() == GetInput()[0].size();
 }
 
 bool RozenbergAMatrixColumnSumMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
+  if (GetInput().empty()) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
   int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  int rows = GetInput().size();
+  int columns = GetInput()[0].size();
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+  int chunk = rows / size;
+  int remainder = rows % size;
+
+  int begin = (chunk * rank) + std::min(rank, remainder);
+  int end = begin + chunk + (rank < remainder ? 1 : 0);
+
+  OutType local_res(columns, 0);
+  for (int i = begin; i < end; i++) {
+    for (int j = 0; j < columns; j++) {
+      local_res[j] += GetInput()[i][j];
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  MPI_Allreduce(local_res.data(), GetOutput().data(), columns, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  return !(GetOutput().empty());
 }
 
 bool RozenbergAMatrixColumnSumMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return !(GetOutput().empty());
 }
 
 }  // namespace rozenberg_a_matrix_column_sum

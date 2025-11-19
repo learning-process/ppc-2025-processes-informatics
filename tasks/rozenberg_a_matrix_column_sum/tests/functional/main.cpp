@@ -23,35 +23,38 @@ namespace rozenberg_a_matrix_column_sum {
 class RozenbergAMatrixColumnFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_rozenberg_a_matrix_column_sum, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    TestType filename = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_rozenberg_a_matrix_column_sum, filename);
+    std::ifstream file(abs_path);
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    if (file.is_open()) {
+      int rows = 0;
+      int columns = 0;
+      file >> rows >> columns;
+
+      InType input_data(rows, std::vector<int>(columns));
+      for (size_t i = 0; i < rows; i++) {
+        for (size_t j = 0; j < columns; j++) {
+          file >> input_data[i][j]; 
+        }
+      }
+
+      OutType output_data(columns);
+      for (size_t i = 0; i < columns; i++) {
+        file >> output_data[i];
+      }
+      input_data_ = input_data;
+      output_data_ = output_data;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return (output_data_ == output_data);
   }
 
   InType GetTestInputData() final {
@@ -59,20 +62,22 @@ class RozenbergAMatrixColumnFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_{};
+  OutType output_data_;
 };
 
 namespace {
 
-TEST_P(RozenbergAMatrixColumnFuncTests, MatmulFromPic) {
+TEST_P(RozenbergAMatrixColumnFuncTests, MatrixColumnSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 6> kTestParam = {"basic_test", "large_test", "same_value_test", "single_column_test", "single_row_test", "single_value_test"};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<RozenbergAMatrixColumnSumMPI, InType>(kTestParam, PPC_SETTINGS_rozenberg_a_matrix_column_sum),
-                   ppc::util::AddFuncTask<RozenbergAMatrixColumnSumSEQ, InType>(kTestParam, PPC_SETTINGS_rozenberg_a_matrix_column_sum));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergAMatrixColumnSumMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_rozenberg_a_matrix_column_sum),
+                                           ppc::util::AddFuncTask<RozenbergAMatrixColumnSumSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_rozenberg_a_matrix_column_sum));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
