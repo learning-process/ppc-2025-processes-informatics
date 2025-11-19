@@ -38,12 +38,8 @@ bool ChaschinVMaxForEachRow::PreProcessingImpl() {
   return true;
 }
 
-struct RowRange {
-  int start;
-  int count;
-};
-
-RowRange ComputeRange(int nrows, int rank, int size) {
+chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::RowRange
+chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeRange(int nrows, int rank, int size) {
   int base = nrows / size;
   int rem = nrows % size;
   int start = rank * base + std::min(rank, rem);
@@ -51,8 +47,8 @@ RowRange ComputeRange(int nrows, int rank, int size) {
   return {start, count};
 }
 
-std::vector<std::vector<float>> DistributeRows(const std::vector<std::vector<float>> &mat, int rank, int size,
-                                               const RowRange &range) {
+std::vector<std::vector<float>> chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::DistributeRows(
+    const std::vector<std::vector<float>> &mat, int rank, int size, const RowRange &range) {
   std::vector<std::vector<float>> local_mat(range.count);
 
   if (rank == 0) {
@@ -86,7 +82,7 @@ std::vector<std::vector<float>> DistributeRows(const std::vector<std::vector<flo
   return local_mat;
 }
 
-std::vector<float> ComputeLocalMax(const std::vector<std::vector<float>> &local_mat) {
+std::vector<float> chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeLocalMax {
   std::vector<float> local_out(local_mat.size());
   for (size_t i = 0; i < local_mat.size(); ++i) {
     local_out[i] = local_mat[i].empty() ? std::numeric_limits<float>::lowest()
@@ -95,8 +91,9 @@ std::vector<float> ComputeLocalMax(const std::vector<std::vector<float>> &local_
   return local_out;
 }
 
-void GatherResults(std::vector<float> &out, const std::vector<float> &local_out, int rank, int size,
-                   const RowRange &range) {
+void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::GatherResults(std::vector<float> &out,
+                                                                        const std::vector<float> &local_out, int rank,
+                                                                        int size, const RowRange &range) {
   if (rank == 0) {
     for (int i = 0; i < range.count; ++i) {
       out[range.start + i] = local_out[i];
