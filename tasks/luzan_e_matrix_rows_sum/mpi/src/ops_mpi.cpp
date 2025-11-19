@@ -2,12 +2,11 @@
 
 #include <mpi.h>
 
-#include <numeric>
 #include <tuple>
 #include <vector>
+#include <stddef.h>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace luzan_e_matrix_rows_sum {
 
@@ -40,26 +39,26 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   OutType &sum_vec = GetOutput();
   OutType part_sum_vec = GetOutput();
 
-  int rank_, size_;
+  int rank_ = 0;
+  int size_ = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
   MPI_Comm_size(MPI_COMM_WORLD, &size_);
 
-  size_t rank = static_cast<size_t>(rank_);
-  size_t size = static_cast<size_t>(size_);
+  auto rank = static_cast<size_t>(rank_);
+  auto size = static_cast<size_t>(size_);
   size_t rest = height % size;
   size_t rows_per_proc = height / size;
-  size_t begin = rank * rows_per_proc + (rest > rank ? rank : rest);
+  size_t begin = (rank * rows_per_proc) + (rest > rank ? rank : rest);
   size_t end = begin + rows_per_proc + (rest > rank ? 1 : 0);
 
-  for (size_t i = begin; i < end; i++) {
-    for (size_t s = 0; s < width; s++) {
-      part_sum_vec[i] += mat[width * i + s];
+  for (size_t row = begin; row < end; row++) {
+    for (size_t col = 0; col < width; col++) {
+      part_sum_vec[row] += mat[(width * row) + col];
     }
   }
 
-  MPI_Reduce(part_sum_vec.data(), sum_vec.data(), height, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(sum_vec.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
-  // MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Reduce(part_sum_vec.data(), sum_vec.data(), static_cast<int>(height), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(sum_vec.data(), static_cast<int>(height), MPI_INT, 0, MPI_COMM_WORLD);
   return true;
 }
 

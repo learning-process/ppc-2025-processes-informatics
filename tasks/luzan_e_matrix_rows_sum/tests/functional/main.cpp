@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
@@ -34,7 +29,7 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     std::tuple_element_t<0, InType> mat(height * width);
 
     for (size_t elem = 0; elem < height * width; elem++) {
-      mat[elem] = (elem * 2) - 42;
+      mat[elem] = (static_cast<int>(elem) * 2) - 42;
     }
 
     input_data_ = std::make_tuple(mat, height, width);
@@ -48,7 +43,7 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
     for (size_t row = 0; row < height; row++) {
       for (size_t col = 0; col < width; col++) {
-        sum[row] += mat[width * row + col];
+        sum[row] += mat[(width * row) + col];
       }
     }
 

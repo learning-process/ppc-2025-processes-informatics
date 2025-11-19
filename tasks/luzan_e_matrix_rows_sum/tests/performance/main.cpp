@@ -4,30 +4,34 @@
 #include "luzan_e_matrix_rows_sum/mpi/include/ops_mpi.hpp"
 #include "luzan_e_matrix_rows_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include <stddef.h>
+#include <tuple>
+#include <vector>
+
 
 namespace luzan_e_matrix_rows_sum {
 
 class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t HEIGHT = 3000000;
-  const size_t WIDTH = 10;
-  InType input_data_{};
+  const size_t height = 3000000;
+  const size_t width = 10;
+  InType input_data_;
 
   void SetUp() override {
-    std::tuple_element_t<0, InType> mat(HEIGHT * WIDTH);
-    for (size_t elem = 0; elem < HEIGHT * WIDTH; elem++) {
-      mat[elem] = elem - 42;
+    std::tuple_element_t<0, InType> mat(height * width);
+    for (size_t elem = 0; elem < height * width; elem++) {
+      mat[elem] = static_cast<int>(elem) - 42;
     }
 
-    input_data_ = std::make_tuple(mat, HEIGHT, WIDTH);
+    input_data_ = std::make_tuple(mat, height, width);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::vector<int> sum(HEIGHT);
+    std::vector<int> sum(height);
     std::tuple_element_t<0, InType> mat = std::get<0>(input_data_);
 
-    for (size_t row = 0; row < HEIGHT; row++) {
-      for (size_t col = 0; col < WIDTH; col++) {
-        sum[row] += mat[WIDTH * row + col];
+    for (size_t row = 0; row < height; row++) {
+      for (size_t col = 0; col < width; col++) {
+        sum[row] += mat[(width * row) + col];
       }
     }
 

@@ -1,10 +1,8 @@
 #include "luzan_e_matrix_rows_sum/seq/include/ops_seq.hpp"
-
-#include <numeric>
 #include <vector>
-
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
+#include <tuple>
+#include <stddef.h>
 
 namespace luzan_e_matrix_rows_sum {
 
@@ -37,7 +35,7 @@ bool LuzanEMatrixRowsSumSEQ::RunImpl() {
 
   for (size_t row = 0; row < height; row++) {
     for (size_t col = 0; col < width; col++) {
-      GetOutput()[row] += mat[width * row + col];
+      GetOutput()[row] += mat[(width * row) + col];
     }
   }
   return true;
