@@ -149,7 +149,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 
 bool ChaschinVMaxForEachRow::PostProcessingImpl() {
   int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);//s
   return true;
 }
 }  // namespace chaschin_v_max_for_each_row
