@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string>
-#include <vector>
 
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "maslova_u_char_frequency_count/mpi/include/ops_mpi.hpp"
 #include "maslova_u_char_frequency_count/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace maslova_u_char_frequency_count {
 
@@ -18,7 +17,7 @@ class MaslovaUPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
 
  protected:
   void SetUp() override {
-    const size_t str_size = 50000000;
+    const size_t str_size = 100000000;
     const char input_char = 'y';
 
     std::string generated_string(str_size, 'a');

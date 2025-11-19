@@ -2,8 +2,12 @@
 
 #include <mpi.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <string>
+#include <vector>
+
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace maslova_u_char_frequency_count {
 
@@ -51,13 +55,13 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   std::vector<int> send_counts(proc_size);  // здесь размеры всех порций
   std::vector<int> displs(proc_size);       // смещения
   if (rank == 0) {
-    int part = input_str_size / proc_size;
-    int rem = input_str_size % proc_size;
-    for (int i = 0; i < proc_size; ++i) {
-      send_counts[i] = part + (i < rem ? 1 : 0);  // общий размер, включающий остаток, если он входит
+    size_t part = input_str_size / proc_size;
+    size_t rem = input_str_size % proc_size;
+    for (size_t i = 0; i < static_cast<size_t>(proc_size); ++i) {
+      send_counts[i] = static_cast<int>(part + (i < rem ? 1 : 0));  // общий размер, включающий остаток, если он входит
     }
     displs[0] = 0;
-    for (int i = 1; i < proc_size; ++i) {
+    for (size_t i = 1; i < static_cast<size_t>(proc_size); ++i) {
       displs[i] = displs[i - 1] + send_counts[i - 1];
     }
   }
