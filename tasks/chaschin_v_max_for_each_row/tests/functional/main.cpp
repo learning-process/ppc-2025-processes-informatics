@@ -26,22 +26,22 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int size = std::get<0>(params);
 
-    input_data.resize(size);
+    input_data_.resize(size);
     for (int i = 0; i < size; ++i) {
-      input_data[i].resize(size);
+      input_data_[i].resize(size);
     }
 
     // заполним матрицу
     for (int i = 0; i < size; i++) {
       for (int j = 0; j < size; j++) {
-        input_data[i][j] = static_cast<float>((i + 1) * (j + 2));
+        input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
       }
     }
 
     // заранее считаем эталон — максимум по каждой строке
     expected_output_.resize(size);
     for (int i = 0; i < size; i++) {
-      expected_output_[i] = *std::max_element(input_data[i].begin(), input_data[i].end());
+      expected_output_[i] = *std::max_element(input_data_[i].begin(), input_data_[i].end());
     }
   }
 
@@ -59,11 +59,11 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data;
+  InType input_data_;
   OutType expected_output_;
 };
 
