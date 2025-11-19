@@ -55,9 +55,9 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   std::vector<int> send_counts(proc_size); //здесь размеры всех порций
   std::vector<int> displs(proc_size); //смещения
   if (rank == 0) {
-    size_t part = input_str_size / proc_size;
-    size_t rem = input_str_size % proc_size;
-    for (size_t i = 0; i < proc_size; ++i) {
+    int part = input_str_size / proc_size;
+    int rem = input_str_size % proc_size;
+    for (int i = 0; i < proc_size; ++i) {
       send_counts[i] = part + (i < rem ? 1 : 0); //общий размер, включающий остаток, если он входит
     }
     displs[0] = 0;
