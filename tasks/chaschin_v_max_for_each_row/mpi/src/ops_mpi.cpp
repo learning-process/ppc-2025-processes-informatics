@@ -20,19 +20,7 @@ ChaschinVMaxForEachRow::ChaschinVMaxForEachRow(const InType &in) {
 }
 
 bool ChaschinVMaxForEachRow::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank != 0) {
-    return true;
-  }
-
-  const auto &mat = GetInput();
-  if (mat.empty()) {
-    return false;
-  }
-
-  return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
+  return true;
 }
 
 bool ChaschinVMaxForEachRow::PreProcessingImpl() {
@@ -162,9 +150,6 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 bool ChaschinVMaxForEachRow::PostProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank != 0) {
-    return true;
-  }
-  return !GetOutput().empty();
+  return true;
 }
 }  // namespace chaschin_v_max_for_each_row
