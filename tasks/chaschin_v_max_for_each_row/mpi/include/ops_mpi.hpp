@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "chaschin_v_max_for_each_row/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -24,8 +26,8 @@ class ChaschinVMaxForEachRow : public BaseTask {
   };
 
   static RowRange ComputeRange(int nrows, int rank, int size);
-  std::vector<std::vector<float>> DistributeRows(const std::vector<std::vector<float>> &mat, int rank, int size,
-                                                 const RowRange &range);
+  static std::vector<std::vector<float>> DistributeRows(const std::vector<std::vector<float>> &mat, int rank, int size,
+                                                        const RowRange &range);
   static std::vector<float> ComputeLocalMax(const std::vector<std::vector<float>> &local_mat);
 
   static void GatherResults(std::vector<float> &out, const std::vector<float> &local_out, int rank, int size,
