@@ -32,6 +32,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
     return false;
   }
 
+
   if (input_vec.size() == 1) {
     GetOutput() = std::make_tuple(input_vec[0], input_vec[0]);
     return true;
