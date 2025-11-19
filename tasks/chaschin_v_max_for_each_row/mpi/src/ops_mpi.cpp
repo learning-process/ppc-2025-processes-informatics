@@ -82,7 +82,8 @@ std::vector<std::vector<float>> chaschin_v_max_for_each_row::ChaschinVMaxForEach
   return local_mat;
 }
 
-std::vector<float> chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeLocalMax {
+std::vector<float> chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeLocalMax(
+    const std::vector<std::vector<float>> &local_mat) {
   std::vector<float> local_out(local_mat.size());
   for (size_t i = 0; i < local_mat.size(); ++i) {
     local_out[i] = local_mat[i].empty() ? std::numeric_limits<float>::lowest()
