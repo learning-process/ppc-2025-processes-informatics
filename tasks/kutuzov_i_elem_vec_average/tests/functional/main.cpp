@@ -6,7 +6,6 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <numeric>
 #include <stdexcept>
 #include <string>
@@ -41,14 +40,10 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
       answer += value;
     }
     answer /= static_cast<double>(param);
-    std::cout << num << " : Expected answer: " << answer << std::endl;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     bool result = abs(output_data - answer) < 0.0001;
-    if (!result) {
-      std::cout << output_data << " " << answer;
-    }
 
     return result;
   }

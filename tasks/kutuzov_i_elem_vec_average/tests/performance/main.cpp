@@ -12,26 +12,26 @@
 namespace kutuzov_i_elem_vec_average {
 
 class KutuzovIElemVecAveragePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 10000;
+  const int kCount_ = 100000000;
   InType input_data_{};
+  double answer = 0.0;
 
   void SetUp() override {
-    input_data_ = std::vector<double>(kCount_);
+    input_data_ = std::vector<double>(kCount_, 0.0);
 
+    answer = 0.0;
     for (int i = 0; i < kCount_; i++) {
-      input_data_[i] = i * i - static_cast<double>(kCount_) / 2;
+      double value = static_cast<double>(i * i) - static_cast<double>(kCount_) / 2.0;
+      input_data_[i] = value;
+      answer += value;
     }
+    answer /= static_cast<double>(kCount_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    double average = 0.0;
-    for (size_t i = 0; i < input_data_.size(); i++) {
-      average += input_data_[i];
-    }
+    bool result = abs(output_data - answer) < 0.0001;
 
-    average /= input_data_.size();
-
-    return abs(output_data - average) < 0.0001;
+    return result;
   }
 
   InType GetTestInputData() final {
