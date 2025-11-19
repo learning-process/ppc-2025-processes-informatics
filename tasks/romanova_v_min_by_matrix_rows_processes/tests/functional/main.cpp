@@ -74,7 +74,7 @@ TEST_P(RomanovaVMinByMatrixRowsFuncTestsProcesses, MinByMatrixRowsFromFile) {
 }
 
 const std::array<TestType, 6> kTestParam = {
-    "reallySmallTest", "simpleTest",       "averageTest", "increasingValuesInRowsTest", "decreasingValuesInRowsTest",
+    "reallySmallTest", "simpleTest", "averageTest", "increasingValuesInRowsTest", "decreasingValuesInRowsTest",
     "sameValuesTest"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RomanovaVMinByMatrixRowsMPI, InType>(
