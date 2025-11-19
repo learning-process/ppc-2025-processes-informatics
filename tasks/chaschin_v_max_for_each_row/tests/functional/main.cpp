@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <string>
 #include <tuple>
@@ -31,14 +32,12 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
       input_data_[i].resize(size);
     }
 
-    // заполним матрицу
-    for (int i = 0; i < size; i++) {
-      for (int j = 0; j < size; j++) {
-        input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
+    for (int i = 0; i < size; ++i) {
+      for (int j = 0; j < size; ++j) {
+        input_data_[i][j] = static_cast<float>((i * i % 7) * 1.5F + (j * j % 5) * 0.7F);
       }
     }
 
-    // заранее считаем эталон — максимум по каждой строке
     expected_output_.resize(size);
     for (int i = 0; i < size; i++) {
       expected_output_[i] = *std::max_element(input_data_[i].begin(), input_data_[i].end());
@@ -73,7 +72,8 @@ TEST_P(ChaschinVRunFuncTestsProcesses, MaxInRowsFromMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7"),
+                                            std::make_tuple(0, "0"), std::make_tuple(1, "1")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ChaschinVMaxForEachRow, InType>(kTestParam, PPC_SETTINGS_example_processes),
