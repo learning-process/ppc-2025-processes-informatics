@@ -18,7 +18,7 @@ class MaslovaUPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
 
  protected:
   void SetUp() override {
-    const size_t str_size = 5000000;
+    const size_t str_size = 50000000;
     const char input_char = 'y';
 
     std::string generated_string(str_size, 'a');
