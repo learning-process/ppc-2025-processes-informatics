@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <climits>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "chyokotov_min_val_by_columns/common/include/common.hpp"
@@ -65,7 +61,7 @@ const std::vector<int> kExpectedOneElement = {0};
 const std::vector<std::vector<int>> kSqurMatrix = {{0, 1}, {-1, 0}};
 const std::vector<int> kExpectedSqurMatrix = {-1, 0};
 
-const std::vector<std::vector<int>> krecMatrix = {{0, 1, 2, 3}, {-1, 0, 1, 2}};
+const std::vector<std::vector<int>> kRecMatrix = {{0, 1, 2, 3}, {-1, 0, 1, 2}};
 const std::vector<int> kExpectedrecMatrix = {-1, 0, 1, 2};
 
 const std::vector<std::vector<int>> kMaxMatrix = {{INT_MAX, INT_MAX}, {INT_MAX, INT_MAX}, {INT_MAX, INT_MAX}};
@@ -82,7 +78,7 @@ const std::vector<int> kExpectedOneRow = {0, 1, 2, 3, 4};
 
 const std::array<TestType, 8> kTestParam = {
     std::make_tuple(kEmptyMatrix, kExpectedEmpty),     std::make_tuple(kOneElement, kExpectedOneElement),
-    std::make_tuple(kSqurMatrix, kExpectedSqurMatrix), std::make_tuple(krecMatrix, kExpectedrecMatrix),
+    std::make_tuple(kSqurMatrix, kExpectedSqurMatrix), std::make_tuple(kRecMatrix, kExpectedrecMatrix),
     std::make_tuple(kMaxMatrix, kExpectedMaxMatrix),   std::make_tuple(kMinMatrix, kExpectedMinMatrix),
     std::make_tuple(kOneColumn, kExpectedOneColumn),   std::make_tuple(kOneRow, kExpectedOneRow)};
 

@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <climits>
+#include <cstddef>
+
 #include "chyokotov_min_val_by_columns/common/include/common.hpp"
 #include "chyokotov_min_val_by_columns/mpi/include/ops_mpi.hpp"
 #include "chyokotov_min_val_by_columns/seq/include/ops_seq.hpp"
@@ -8,18 +12,19 @@
 namespace chyokotov_min_val_by_columns {
 
 class ChyokotovMinValPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
-    const int cols = 4000, rows = 4000;
+    const int cols = 4000;
+    const int rows = 4000;
 
-    std::vector<std::vector<int>> matrix(rows, std::vector<int>(cols));
+    input_data_.resize(rows);
     for (int i = 0; i < rows; i++) {
+      input_data_[i].resize(cols);
       for (int j = 0; j < cols; j++) {
-        matrix[i][j] = i + j * i;
+        input_data_[i][j] = i + j;
       }
     }
-    input_data_ = matrix;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

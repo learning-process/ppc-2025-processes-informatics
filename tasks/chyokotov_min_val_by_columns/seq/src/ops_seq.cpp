@@ -1,10 +1,11 @@
 #include "chyokotov_min_val_by_columns/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <climits>
+#include <cstddef>
 #include <vector>
 
 #include "chyokotov_min_val_by_columns/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace chyokotov_min_val_by_columns {
 
@@ -25,20 +26,15 @@ bool ChyokotovMinValByColumnsSEQ::ValidationImpl() {
     return true;
   }
 
-  size_t lengthRow = input[0].size();
-  return std::ranges::all_of(input, [lengthRow](const auto &row) { return row.size() == lengthRow; });
+  size_t length_row = input[0].size();
+  return std::ranges::all_of(input, [length_row](const auto &row) { return row.size() == length_row; });
 }
 
 bool ChyokotovMinValByColumnsSEQ::PreProcessingImpl() {
-  const auto &input = GetInput();
-  if (input.empty()) {
+  if (GetInput().empty()) {
     return true;
   }
-  if (!input[0].empty()) {
-    GetOutput().resize(input[0].size(), INT_MAX);
-  } else {
-    GetOutput().clear();
-  }
+  GetOutput().resize(GetInput()[0].size(), INT_MAX);
   return true;
 }
 
