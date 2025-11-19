@@ -51,7 +51,7 @@ chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeRange(int nrows, int
 void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::SendRowsToWorkers(const std::vector<std::vector<float>> &mat,
                                                                             int size) {
   for (int pi = 1; pi < size; ++pi) {
-    RowRange r = ComputeRange(mat.size(), pi, size);
+    RowRange r = ComputeRange(static_cast<int>(mat.size()), pi, size);
 
     for (int ii = 0; ii < r.count; ++ii) {
       const auto &row = mat[r.start + ii];
@@ -114,7 +114,7 @@ void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::GatherResults(std::vec
     }
 
     for (int pi = 1; pi < size; ++pi) {
-      RowRange r = ComputeRange(static_cast<int>(mat.size()), p, size);
+      RowRange r = ComputeRange(static_cast<int>(out.size()), pi, size);
       if (r.count > 0) {
         std::vector<float> tmp(r.count);
         MPI_Recv(tmp.data(), r.count, MPI_FLOAT, pi, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
