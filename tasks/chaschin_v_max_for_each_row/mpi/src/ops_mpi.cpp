@@ -148,10 +148,9 @@ bool ChaschinVMaxForEachRow::RunImpl() {
     GetOutput().resize(nrows);
   }
   GatherResults(GetOutput(), local_out, rank, size, range);
-  // --- ensure output buffer exists on all ranks before broadcasting ---
   auto &out = GetOutput();
   if (rank != 0) {
-    out.resize(nrows);  // <- ключевая строка: выделяем память на воркерах
+    out.resize(nrows);
   }
 
   if (nrows > 0) {

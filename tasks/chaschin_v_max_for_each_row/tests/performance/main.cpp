@@ -12,11 +12,10 @@ namespace chaschin_v_max_for_each_row {
 
 class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int k_count = 5000;  // размер матрицы: k_count x k_count
+  const int k_count = 5000;
   InType input_data;
 
   void SetUp() override {
-    // создаём квадратную матрицу k_count x k_count
     input_data.resize(k_count);
     for (int i = 0; i < k_count; ++i) {
       input_data[i].resize(k_count);
