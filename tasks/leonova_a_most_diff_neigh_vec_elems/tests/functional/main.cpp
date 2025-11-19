@@ -54,12 +54,14 @@ TEST_P(MostDiffNeighVecElemsRunFuncTestsProcesses, RunFuncTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
+const std::array<TestType, 7> kTestParam = {
     std::make_tuple(std::make_tuple(1, 10), std::vector<int>{1, 10, 3, 10, 5}),
     std::make_tuple(std::make_tuple(5, 20), std::vector<int>{5, 20, 15, 10}),
     std::make_tuple(std::make_tuple(7, 7), std::vector<int>{7}),
     std::make_tuple(std::make_tuple(0, 100), std::vector<int>{0, 100, 100, 25}),
-    std::make_tuple(std::make_tuple(-10, -5), std::vector<int>{-10, -5, -1, 3, 0, 0})};
+    std::make_tuple(std::make_tuple(-10, -5), std::vector<int>{-10, -5, -1, 3, 0, 0}),
+    std::make_tuple(std::make_tuple(1, 2), std::vector<int>{1, 2}),
+    std::make_tuple(std::make_tuple(10, 1), std::vector<int>{10, 1, 5, 3})};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LeonovaAMostDiffNeighVecElemsMPI, InType>(
                                                kTestParam, PPC_SETTINGS_leonova_a_most_diff_neigh_vec_elems),
