@@ -2,9 +2,9 @@
 
 #include <mpi.h>
 
-#include <vector>
-#include <cstddef>
 #include <algorithm>
+#include <cstddef>
+#include <vector>
 
 #include "kosolapov_v_max_values_in_col_matrix/common/include/common.hpp"
 

@@ -1,12 +1,11 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <array>
 #include <cstddef>
+#include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <fstream>
 
 #include "kosolapov_v_max_values_in_col_matrix/common/include/common.hpp"
 #include "kosolapov_v_max_values_in_col_matrix/mpi/include/ops_mpi.hpp"
