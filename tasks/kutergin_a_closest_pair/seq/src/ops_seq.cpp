@@ -14,7 +14,7 @@ KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) : data_() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = -1;
-  data_ = in;  
+  data_ = in;
 }
 
 bool KuterginAClosestPairSEQ::ValidationImpl() {
@@ -26,9 +26,9 @@ bool KuterginAClosestPairSEQ::PreProcessingImpl() {
 }
 
 bool KuterginAClosestPairSEQ::RunImpl() {
-  const auto& v = GetInput();
+  const auto &v = GetInput();
   int n = static_cast<int>(v.size());
-  
+
   if (n < 2) {
     GetOutput() = -1;
     return true;
