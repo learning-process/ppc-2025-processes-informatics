@@ -1,9 +1,9 @@
 #include "maslova_u_char_frequency_count/seq/include/ops_seq.hpp"
 
 #include <numeric>
+#include <string>
+#include <utility>
 #include <vector>
-#include <string>    
-#include <utility>   
 
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -25,8 +25,8 @@ bool MaslovaUCharFrequencyCountSEQ::PreProcessingImpl() {
 }
 
 bool MaslovaUCharFrequencyCountSEQ::RunImpl() {
-  std::string& input_string = GetInput().first;
-  char input_char = GetInput().second; //получили данные
+  std::string &input_string = GetInput().first;
+  char input_char = GetInput().second;  // получили данные
   size_t frequency_count = 0;
 
   for (const char c : input_string) {
@@ -35,7 +35,7 @@ bool MaslovaUCharFrequencyCountSEQ::RunImpl() {
     }
   }
 
-  GetOutput() = frequency_count; //отправили данные
+  GetOutput() = frequency_count;  // отправили данные
   return true;
 }
 

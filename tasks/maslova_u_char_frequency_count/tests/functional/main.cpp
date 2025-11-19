@@ -45,22 +45,21 @@ TEST_P(MaslovaURunFuncTestsProcesses, CharFrequencyCount) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {{
-    std::make_tuple(InType("", 'a'), 0, "empty_string"),
-    std::make_tuple(InType("a", 'a'), 1, "single_char_match"),
-    std::make_tuple(InType("b", 'x'), 0, "single_char_no_match"),
-    std::make_tuple(InType("maslova", 'a'), 2, "normal_string_az"),
-    std::make_tuple(InType("zzzzzzzz", 'u'), 0, "all_other_chars"),
-    std::make_tuple(InType("aaaaaaaa", 'a'), 8, "all_input_chars"),
-    std::make_tuple(InType("Hello World!", 'l'), 3, "mixed_symbols"),
-    std::make_tuple(InType("1234567890", '1'), 1, "string_with_numbers"),
-    std::make_tuple(InType("1234567890sexdcrfvgbhjnkml", '1'), 1, "string_with_lettes_and_numbers"),
-    std::make_tuple(InType(std::string(100, 'x') + std::string(50, 'a'), 'x'), 100, "long_string")
-}}; 
+const std::array<TestType, 10> kTestParam = {
+    {std::make_tuple(InType("", 'a'), 0, "empty_string"), std::make_tuple(InType("a", 'a'), 1, "single_char_match"),
+     std::make_tuple(InType("b", 'x'), 0, "single_char_no_match"),
+     std::make_tuple(InType("maslova", 'a'), 2, "normal_string_az"),
+     std::make_tuple(InType("zzzzzzzz", 'u'), 0, "all_other_chars"),
+     std::make_tuple(InType("aaaaaaaa", 'a'), 8, "all_input_chars"),
+     std::make_tuple(InType("Hello World!", 'l'), 3, "mixed_symbols"),
+     std::make_tuple(InType("1234567890", '1'), 1, "string_with_numbers"),
+     std::make_tuple(InType("1234567890sexdcrfvgbhjnkml", '1'), 1, "string_with_lettes_and_numbers"),
+     std::make_tuple(InType(std::string(100, 'x') + std::string(50, 'a'), 'x'), 100, "long_string")}};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<MaslovaUCharFrequencyCountMPI, InType>(kTestParam, PPC_SETTINGS_maslova_u_char_frequency_count),
-                   ppc::util::AddFuncTask<MaslovaUCharFrequencyCountSEQ, InType>(kTestParam, PPC_SETTINGS_maslova_u_char_frequency_count));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MaslovaUCharFrequencyCountMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_maslova_u_char_frequency_count),
+                                           ppc::util::AddFuncTask<MaslovaUCharFrequencyCountSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_maslova_u_char_frequency_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = MaslovaURunFuncTestsProcesses::PrintFuncTestName<MaslovaURunFuncTestsProcesses>;

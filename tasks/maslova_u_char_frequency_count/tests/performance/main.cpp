@@ -11,8 +11,7 @@
 
 namespace maslova_u_char_frequency_count {
 
-class MaslovaUPerfTests
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class MaslovaUPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
   OutType expected_output_{};
@@ -50,7 +49,8 @@ TEST_P(MaslovaUPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MaslovaUCharFrequencyCountMPI, MaslovaUCharFrequencyCountSEQ>(PPC_SETTINGS_maslova_u_char_frequency_count);
+    ppc::util::MakeAllPerfTasks<InType, MaslovaUCharFrequencyCountMPI, MaslovaUCharFrequencyCountSEQ>(
+        PPC_SETTINGS_maslova_u_char_frequency_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
