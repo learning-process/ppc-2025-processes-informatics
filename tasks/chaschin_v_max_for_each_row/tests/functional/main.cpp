@@ -72,7 +72,7 @@ TEST_P(ChaschinVRunFuncTestsProcesses, MaxInRowsFromMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7"),
+const std::array<TestType, 5> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7"),
                                             std::make_tuple(0, "0"), std::make_tuple(1, "1")};
 
 const auto kTestTasksList = std::tuple_cat(
