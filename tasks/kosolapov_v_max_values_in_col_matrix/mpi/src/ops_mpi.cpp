@@ -41,23 +41,14 @@ bool KosolapovVMaxValuesInColMatrixMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &processes_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  const int rows = static_cast<int>(matrix.size());
   const int columns = static_cast<int>(matrix[0].size());
 
   const int columns_per_proc = columns / processes_count;
   const int remainder = columns % processes_count;
 
   const int start = (rank * columns_per_proc) + std::min(rank, remainder);
-  const int end = start + columns_per_proc + (rank < remainder ? 1 : 0);
 
-  std::vector<int> local_maxs(end - start);
-  for (int i = start; i < end; i++) {
-    int temp_max = matrix[0][i];
-    for (int j = 0; j < rows; j++) {
-      temp_max = std::max(matrix[j][i], temp_max);
-    }
-    local_maxs[i - start] = temp_max;
-  }
+  auto local_maxs = CalculateLocalMax(matrix, rank, processes_count, columns);
   std::vector<int> global_maxs;
   if (rank == 0) {
     global_maxs.resize(columns);
@@ -91,4 +82,21 @@ bool KosolapovVMaxValuesInColMatrixMPI::PostProcessingImpl() {
   return true;
 }
 
+std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix,
+                                    int rank, int processes_count, int columns){
+  const int columns_per_proc = columns / processes_count;
+  const int remainder = columns % processes_count;
+
+  const int start = (rank * columns_per_proc) + std::min(rank, remainder);
+  const int end = start + columns_per_proc + (rank < remainder ? 1 : 0);
+  std::vector<int> local_maxs(end - start);
+  for (int i = start; i < end; i++) {
+    int temp_max = matrix[0][i];
+    for (const auto& row: matrix) {
+      temp_max = std::max(row[i], temp_max);
+    }
+    local_maxs[i - start] = temp_max;
+  }
+  return local_maxs;
+}
 }  // namespace kosolapov_v_max_values_in_col_matrix
