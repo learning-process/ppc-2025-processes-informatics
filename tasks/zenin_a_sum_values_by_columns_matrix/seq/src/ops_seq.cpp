@@ -30,10 +30,10 @@ bool ZeninASumValuesByColumnsMatrixSEQ::RunImpl() {
   auto &input = GetInput();
   auto &rows = std::get<0>(input);
   auto &columns = std::get<1>(input);
-  auto &matrix = std::get<2>(input);
+  auto &matrix_data = std::get<2>(input);
   for (size_t row = 0; row < rows; ++row) {
     for (size_t col = 0; col < columns; ++col) {
-      GetOutput()[col] += matrix[(row * columns) + col];
+      GetOutput()[col] += matrix_data[(row * columns) + col];
     }
   }
   return true;
