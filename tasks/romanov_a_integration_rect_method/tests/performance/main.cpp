@@ -21,7 +21,7 @@ class RomanovAIntegrationRectMethodPerfTests : public ppc::util::BaseRunPerfTest
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return IsEqual(static_cast<double>(output_data), 1.0/3.0);
+    return IsEqual(static_cast<double>(output_data), 1.0 / 3.0);
   }
 
   InType GetTestInputData() final {
@@ -34,7 +34,8 @@ TEST_P(RomanovAIntegrationRectMethodPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovAIntegrationRectMethodMPI, RomanovAIntegrationRectMethodSEQ>(PPC_SETTINGS_romanov_a_integration_rect_method);
+    ppc::util::MakeAllPerfTasks<InType, RomanovAIntegrationRectMethodMPI, RomanovAIntegrationRectMethodSEQ>(
+        PPC_SETTINGS_romanov_a_integration_rect_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

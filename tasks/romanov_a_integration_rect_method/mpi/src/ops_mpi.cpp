@@ -19,11 +19,9 @@ RomanovAIntegrationRectMethodMPI::RomanovAIntegrationRectMethodMPI(const InType 
 bool RomanovAIntegrationRectMethodMPI::ValidationImpl() {
   if (!IsEqual(GetOutput(), 0.0)) {
     return false;
-  }
-  else if (std::get<3>(GetInput()) <= 0) {
+  } else if (std::get<3>(GetInput()) <= 0) {
     return false;
-  }
-  else if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
+  } else if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
     return false;
   }
   return true;
@@ -34,10 +32,9 @@ bool RomanovAIntegrationRectMethodMPI::PreProcessingImpl() {
 }
 
 bool RomanovAIntegrationRectMethodMPI::RunImpl() {
-  
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+
   int num_processes = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 

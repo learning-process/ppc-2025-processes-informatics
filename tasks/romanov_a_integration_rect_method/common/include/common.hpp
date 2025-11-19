@@ -1,9 +1,8 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <tuple>
-
-#include <functional>
 
 #include "task/include/task.hpp"
 
@@ -11,7 +10,8 @@ namespace romanov_a_integration_rect_method {
 
 using InType = std::tuple<std::function<double(double)>, double, double, int>;
 using OutType = double;
-using TestType = std::tuple<std::function<double(double)>, double, double, int, double>;;
+using TestType = std::tuple<std::function<double(double)>, double, double, int, double>;
+;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 constexpr double EPS = 1e-4;

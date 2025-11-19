@@ -6,12 +6,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <numeric>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <random>
 
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
 #include "romanov_a_integration_rect_method/mpi/include/ops_mpi.hpp"
@@ -26,8 +26,9 @@ class RomanovAIntegrationRectMethodFuncTests : public ppc::util::BaseRunFuncTest
   static std::string PrintTestParam(const TestType &test_param) {
     auto [f, a, b, n, result] = test_param;
 
-    // Минус (-) от отрицательных чисел в имени gtest нельзя, функцию в имя gtest не поместить, точку (.) тоже... Как жить то?
-    return "_id" + std::to_string((int)(std::abs((result - a + 2.0 * b + 4.0) * 334)))  + "_n" + std::to_string(n);
+    // Минус (-) от отрицательных чисел в имени gtest нельзя, функцию в имя gtest не поместить, точку (.) тоже... Как
+    // жить то?
+    return "_id" + std::to_string((int)(std::abs((result - a + 2.0 * b + 4.0) * 334))) + "_n" + std::to_string(n);
   }
 
  protected:
@@ -64,17 +65,19 @@ const std::array<TestType, 5> kTestParam = {
     std::make_tuple([](double x) { return x; }, 0.0, 1.0, 1000000, 0.5),
     std::make_tuple([](double x) { return x * x; }, 0.0, 1.0, 1000000 + 1, 1.0 / 3.0),
     std::make_tuple([](double x) { return std::sin(x) * x - std::sqrt(x); }, 0.0, 3.1415, 1000000 + 2, -0.570462),
-    std::make_tuple([](double x) { return std::exp(x) - x; }, -1.0, 3.0, 1000000 + 3, -4.0 - 1.0 / std::exp(1.0) + std::exp(3.0)),
-    std::make_tuple([](double x) { return std::cos(x) * std::sqrt(x); }, 0.0, 3.1415, 1000000 + 4, -0.894667)
-};
+    std::make_tuple([](double x) { return std::exp(x) - x; }, -1.0, 3.0, 1000000 + 3,
+                    -4.0 - 1.0 / std::exp(1.0) + std::exp(3.0)),
+    std::make_tuple([](double x) { return std::cos(x) * std::sqrt(x); }, 0.0, 3.1415, 1000000 + 4, -0.894667)};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<RomanovAIntegrationRectMethodMPI, InType>(kTestParam, PPC_SETTINGS_romanov_a_integration_rect_method),
-                   ppc::util::AddFuncTask<RomanovAIntegrationRectMethodSEQ, InType>(kTestParam, PPC_SETTINGS_romanov_a_integration_rect_method));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RomanovAIntegrationRectMethodMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_romanov_a_integration_rect_method),
+                                           ppc::util::AddFuncTask<RomanovAIntegrationRectMethodSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_romanov_a_integration_rect_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = RomanovAIntegrationRectMethodFuncTests::PrintFuncTestName<RomanovAIntegrationRectMethodFuncTests>;
+const auto kPerfTestName =
+    RomanovAIntegrationRectMethodFuncTests::PrintFuncTestName<RomanovAIntegrationRectMethodFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, RomanovAIntegrationRectMethodFuncTests, kGtestValues, kPerfTestName);
 
