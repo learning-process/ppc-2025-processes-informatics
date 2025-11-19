@@ -61,7 +61,7 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
       send_counts[i] = part + (i < rem ? 1 : 0); //общий размер, включающий остаток, если он входит
     }
     displs[0] = 0;
-    for (size_t i = 1; i < proc_size; ++i) {
+    for (int i = 1; i < proc_size; ++i) {
       displs[i] = displs[i-1] + send_counts[i-1];
     }
   }
