@@ -30,8 +30,6 @@ class LeonovaAMostDiffNeighVecElemsMPI : public BaseTask {
                                int &local_second);
   void GatherAndProcessResults(int rank, int actual_processes, int local_max_diff, int local_first, int local_second,
                                int size);
-  void FindGlobalMaxDiff(const std::vector<int> &all_diffs, const std::vector<int> &all_firsts,
-                         const std::vector<int> &all_seconds, int actual_processes);
   void BroadcastResult(int rank);
 };
 

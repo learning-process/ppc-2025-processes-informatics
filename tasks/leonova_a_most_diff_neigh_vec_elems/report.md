@@ -276,28 +276,20 @@ void LeonovaAMostDiffNeighVecElemsMPI::GatherAndProcessResults(int rank, int act
   MPI_Gather(&local_second, 1, MPI_INT, all_seconds.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    FindGlobalMaxDiff(all_diffs, all_firsts, all_seconds, actual_processes);
-  }
+        int global_max_diff = -1;
+        int global_first = 0;
+        int global_second = 0;
 
+        for (int index = 0; index < actual_processes; ++index) {
+            if (all_diffs[index] > global_max_diff) {
+                global_max_diff = all_diffs[index];
+                global_first = all_firsts[index];
+                global_second = all_seconds[index];
+            }
+        }
+        GetOutput() = std::make_tuple(global_first, global_second);
+      }
   BroadcastResult(rank);
-}
-
-void LeonovaAMostDiffNeighVecElemsMPI::FindGlobalMaxDiff(const std::vector<int> &all_diffs,
-                                                         const std::vector<int> &all_firsts,
-                                                         const std::vector<int> &all_seconds, int actual_processes) {
-  int global_max_diff = -1;
-  int global_first = 0;
-  int global_second = 0;
-
-  for (int index = 0; index < actual_processes; ++index) {
-    if (all_diffs[index] > global_max_diff) {
-      global_max_diff = all_diffs[index];
-      global_first = all_firsts[index];
-      global_second = all_seconds[index];
-    }
-  }
-
-  GetOutput() = std::make_tuple(global_first, global_second);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::BroadcastResult(int rank) {
