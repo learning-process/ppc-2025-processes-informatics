@@ -29,7 +29,8 @@ TEST_P(KonstantinovSElemVecSignChangeTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KonstantinovSElemVecSignChangeMPI, KonstantinovSElemVecSignChangeSEQ>(PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count);
+    ppc::util::MakeAllPerfTasks<InType, KonstantinovSElemVecSignChangeMPI, KonstantinovSElemVecSignChangeSEQ>(
+        PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

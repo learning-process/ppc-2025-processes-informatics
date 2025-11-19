@@ -34,7 +34,8 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
     std::vector<uint8_t> img;
     // Read image in RGB to ensure consistent channel count
     {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_konstantinov_s_elem_vec_sign_change_count, "pic.jpg");
+      std::string abs_path =
+          ppc::util::GetAbsoluteTaskPath(PPC_ID_konstantinov_s_elem_vec_sign_change_count, "pic.jpg");
       auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
       if (data == nullptr) {
         throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
@@ -71,9 +72,10 @@ TEST_P(KonstantinovSElemVecSignChangeTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KonstantinovSElemVecSignChangeMPI, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count),
-                   ppc::util::AddFuncTask<KonstantinovSElemVecSignChangeSEQ, InType>(kTestParam, PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KonstantinovSElemVecSignChangeMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count),
+                                           ppc::util::AddFuncTask<KonstantinovSElemVecSignChangeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
