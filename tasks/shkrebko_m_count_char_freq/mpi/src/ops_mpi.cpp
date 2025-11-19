@@ -43,11 +43,6 @@ bool ShkrebkoMCountCharFreqMPI::RunImpl() {
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&target_char, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  if (total_size == 0) {
-    GetOutput() = 0;
-    return true;
-  }
-
   const int base = total_size / size;
   const int remainder = total_size % size;
 
