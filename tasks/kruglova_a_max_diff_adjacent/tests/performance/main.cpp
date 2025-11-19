@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include "kruglova_max_diff_adjacent/common/include/common.hpp"
-#include "kruglova_max_diff_adjacent/mpi/include/ops_mpi.hpp"
-#include "kruglova_max_diff_adjacent/seq/include/ops_seq.hpp"
+#include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
+#include "kruglova_a_max_diff_adjacent/mpi/include/ops_mpi.hpp"
+#include "kruglova_a_max_diff_adjacent/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace kruglova_max_diff_adjacent {
+namespace kruglova_a_max_diff_adjacent {
 
 class KruglovaAMaxDiffAdjacentPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
@@ -29,7 +29,7 @@ TEST_P(KruglovaAMaxDiffAdjacentPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KruglovaAMaxDiffAdjacentMPI, KruglovaAMaxDiffAdjacentSEQ>(PPC_SETTINGS_kruglova_max_diff_adjacent);
+    ppc::util::MakeAllPerfTasks<InType, KruglovaAMaxDiffAdjacentMPI, KruglovaAMaxDiffAdjacentSEQ>(PPC_SETTINGS_kruglova_a_max_diff_adjacent);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -37,4 +37,4 @@ const auto kPerfTestName = KruglovaAMaxDiffAdjacentPerfTests::CustomPerfTestName
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, KruglovaAMaxDiffAdjacentPerfTests, kGtestValues, kPerfTestName);
 
-}  // namespace kruglova_max_diff_adjacent
+}  // namespace kruglova_a_max_diff_adjacent

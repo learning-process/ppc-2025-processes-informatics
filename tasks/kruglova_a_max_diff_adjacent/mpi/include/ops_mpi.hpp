@@ -1,9 +1,9 @@
 #pragma once
 
-#include "kruglova_max_diff_adjacent/common/include/common.hpp"
+#include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kruglova_max_diff_adjacent {
+namespace kruglova_a_max_diff_adjacent {
 
 class KruglovaAMaxDiffAdjacentMPI : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class KruglovaAMaxDiffAdjacentMPI : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace kruglova_max_diff_adjacent
+}  // namespace kruglova_a_max_diff_adjacent

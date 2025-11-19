@@ -1,12 +1,12 @@
-#include "kruglova_max_diff_adjacent/seq/include/ops_seq.hpp"
+#include "kruglova_a_max_diff_adjacent/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
 
-#include "kruglova_max_diff_adjacent/common/include/common.hpp"
+#include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace kruglova_max_diff_adjacent {
+namespace kruglova_a_max_diff_adjacent {
 
 KruglovaAMaxDiffAdjacentSEQ::KruglovaAMaxDiffAdjacentSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -57,4 +57,4 @@ bool KruglovaAMaxDiffAdjacentSEQ::PostProcessingImpl() {
   return GetOutput() > 0;
 }
 
-}  // namespace kruglova_max_diff_adjacent
+}  // namespace kruglova_a_max_diff_adjacent
