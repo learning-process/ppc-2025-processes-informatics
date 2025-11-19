@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <stddef.h>
+#include <cstddef>
 
 #include <tuple>
 #include <vector>
@@ -12,26 +12,26 @@
 namespace luzan_e_matrix_rows_sum {
 
 class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t height = 3000000;
-  const size_t width = 10;
+  const size_t height_ = 3000000;
+  const size_t width_ = 10;
   InType input_data_;
 
   void SetUp() override {
-    std::tuple_element_t<0, InType> mat(height * width);
-    for (size_t elem = 0; elem < height * width; elem++) {
+    std::tuple_element_t<0, InType> mat(height_ * width_);
+    for (size_t elem = 0; elem < height_ * width_; elem++) {
       mat[elem] = static_cast<int>(elem) - 42;
     }
 
-    input_data_ = std::make_tuple(mat, height, width);
+    input_data_ = std::make_tuple(mat, height_, width_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::vector<int> sum(height);
+    std::vector<int> sum(height_);
     std::tuple_element_t<0, InType> mat = std::get<0>(input_data_);
 
-    for (size_t row = 0; row < height; row++) {
-      for (size_t col = 0; col < width; col++) {
-        sum[row] += mat[(width * row) + col];
+    for (size_t row = 0; row < height_; row++) {
+      for (size_t col = 0; col < width_; col++) {
+        sum[row] += mat[(width_ * row) + col];
       }
     }
 

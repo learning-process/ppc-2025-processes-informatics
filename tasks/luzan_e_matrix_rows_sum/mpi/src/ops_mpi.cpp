@@ -1,7 +1,7 @@
 #include "luzan_e_matrix_rows_sum/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-#include <stddef.h>
+#include <cstddef>
 
 #include <tuple>
 #include <vector>
@@ -39,13 +39,13 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   OutType &sum_vec = GetOutput();
   OutType part_sum_vec = GetOutput();
 
-  int rank_ = 0;
-  int size_ = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
-  MPI_Comm_size(MPI_COMM_WORLD, &size_);
+  int rank_int = 0;
+  int size_int = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank_int);
+  MPI_Comm_size(MPI_COMM_WORLD, &size_int);
 
-  auto rank = static_cast<size_t>(rank_);
-  auto size = static_cast<size_t>(size_);
+  auto rank = static_cast<size_t>(rank_int);
+  auto size = static_cast<size_t>(size_int);
   size_t rest = height % size;
   size_t rows_per_proc = height / size;
   size_t begin = (rank * rows_per_proc) + (rest > rank ? rank : rest);
