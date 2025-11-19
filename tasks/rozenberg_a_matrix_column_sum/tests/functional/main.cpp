@@ -28,7 +28,8 @@ class RozenbergAMatrixColumnFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
  protected:
   void SetUp() override {
-    TestType filename = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
+    TestType filename =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_rozenberg_a_matrix_column_sum, filename);
     std::ifstream file(abs_path);
 
@@ -40,7 +41,7 @@ class RozenbergAMatrixColumnFuncTests : public ppc::util::BaseRunFuncTests<InTyp
       InType input_data(rows, std::vector<int>(columns));
       for (size_t i = 0; i < rows; i++) {
         for (size_t j = 0; j < columns; j++) {
-          file >> input_data[i][j]; 
+          file >> input_data[i][j];
         }
       }
 
@@ -72,7 +73,8 @@ TEST_P(RozenbergAMatrixColumnFuncTests, MatrixColumnSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {"basic_test", "large_test", "same_value_test", "single_column_test", "single_row_test", "single_value_test"};
+const std::array<TestType, 6> kTestParam = {"basic_test",         "large_test",      "same_value_test",
+                                            "single_column_test", "single_row_test", "single_value_test"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergAMatrixColumnSumMPI, InType>(
                                                kTestParam, PPC_SETTINGS_rozenberg_a_matrix_column_sum),

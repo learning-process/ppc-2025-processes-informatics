@@ -37,7 +37,7 @@ bool RozenbergAMatrixColumnSumSEQ::RunImpl() {
 
   std::fill(GetOutput().begin(), GetOutput().end(), 0);
 
-  for (size_t i = 0; i < GetInput().size(); i++) { 
+  for (size_t i = 0; i < GetInput().size(); i++) {
     for (size_t j = 0; j < GetInput()[i].size(); j++) {
       GetOutput()[j] += GetInput()[i][j];
     }
