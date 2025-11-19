@@ -16,8 +16,7 @@ ChaschinVMaxForEachRowSEQ::ChaschinVMaxForEachRowSEQ(const InType &in) {
 }
 
 bool ChaschinVMaxForEachRowSEQ::ValidationImpl() {
-  const auto &mat = GetInput();
-  return !mat.empty();
+  return true;
 }
 
 bool ChaschinVMaxForEachRowSEQ::PreProcessingImpl() {
