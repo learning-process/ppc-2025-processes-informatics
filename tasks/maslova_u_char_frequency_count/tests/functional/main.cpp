@@ -3,7 +3,6 @@
 #include <array>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "maslova_u_char_frequency_count/mpi/include/ops_mpi.hpp"
@@ -15,6 +14,8 @@ namespace maslova_u_char_frequency_count {
 
 class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  MaslovaURunFuncTestsProcesses() = default;
+  
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<2>(test_param);
   }
@@ -41,7 +42,7 @@ class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(MaslovaURunFuncTestsProcesses, CharFrequencyCount) {
+TEST_P(MaslovaURunFuncTestsProcesses, charFrequencyCount) {
   ExecuteTest(GetParam());
 }
 
@@ -63,7 +64,7 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MaslovaUCharFr
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = MaslovaURunFuncTestsProcesses::PrintFuncTestName<MaslovaURunFuncTestsProcesses>;
-INSTANTIATE_TEST_SUITE_P(CharFreqTests, MaslovaURunFuncTestsProcesses, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(charFreqTests, MaslovaURunFuncTestsProcesses, kGtestValues, kTestName);
 
 }  // namespace
 }  // namespace maslova_u_char_frequency_count

@@ -1,10 +1,5 @@
 #include "maslova_u_char_frequency_count/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "util/include/util.hpp"
 

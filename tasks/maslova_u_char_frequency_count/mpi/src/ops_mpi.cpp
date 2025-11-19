@@ -2,10 +2,6 @@
 
 #include <mpi.h>
 
-#include <iostream>
-#include <numeric>
-#include <vector>
-
 #include "maslova_u_char_frequency_count/common/include/common.hpp"
 #include "util/include/util.hpp"
 
