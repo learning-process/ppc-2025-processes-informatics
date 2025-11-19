@@ -31,10 +31,10 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::vector<double>(param);
+    input_data_ = std::vector<double>(param, 0.0);
 
     for (int i = 0; i < static_cast<int>(param); i++) {
-      input_data_[i] = i * i - static_cast<double>(param) / 2.0;
+      input_data_[i] = static_cast<double>(i * i) - static_cast<double>(param) / 2.0;
     }
   }
 
