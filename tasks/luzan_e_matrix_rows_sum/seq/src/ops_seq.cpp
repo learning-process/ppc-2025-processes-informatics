@@ -1,7 +1,6 @@
 #include "luzan_e_matrix_rows_sum/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-
 #include <tuple>
 #include <vector>
 

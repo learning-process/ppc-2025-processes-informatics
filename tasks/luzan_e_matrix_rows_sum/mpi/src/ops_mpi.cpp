@@ -1,8 +1,8 @@
 #include "luzan_e_matrix_rows_sum/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-#include <cstddef>
 
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
