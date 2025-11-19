@@ -2,12 +2,12 @@
 #include <stb/stb_image.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <tuple>
-#include <numbers>
-#include <cmath>
 #include <functional>
+#include <numbers>
+#include <tuple>
 
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
 #include "romanov_a_integration_rect_method/mpi/include/ops_mpi.hpp"
@@ -24,7 +24,8 @@ class RomanovAIntegrationRectMethodFuncTests : public ppc::util::BaseRunFuncTest
 
     // Минус (-) от отрицательных чисел в имени gtest нельзя, функцию в имя gtest не поместить, точку (.) тоже... Как
     // жить то?
-    return "_id" + std::to_string(static_cast<int>(std::abs((result - a + (2.0 * b) + 4.0) * 334))) + "_n" + std::to_string(n);
+    return "_id" + std::to_string(static_cast<int>(std::abs((result - a + (2.0 * b) + 4.0) * 334))) + "_n" +
+           std::to_string(n);
   }
 
  protected:

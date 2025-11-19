@@ -1,6 +1,7 @@
 #include "romanov_a_integration_rect_method/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <cmath>
 
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
