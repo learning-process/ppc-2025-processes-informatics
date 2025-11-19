@@ -1,6 +1,5 @@
 #include "maslova_u_char_frequency_count/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <string>
 

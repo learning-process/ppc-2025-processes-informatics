@@ -57,11 +57,11 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   if (rank == 0) {
     size_t part = input_str_size / proc_size;
     size_t rem = input_str_size % proc_size;
-    for (size_t i = 0; i < static_cast<size_t>(proc_size); ++i) {
+    for (size_t i = 0; std::cmp_less(i, proc_size); ++i) {
       send_counts[i] = static_cast<int>(part + (i < rem ? 1 : 0));  // общий размер, включающий остаток, если он входит
     }
     displs[0] = 0;
-    for (size_t i = 1; i < static_cast<size_t>(proc_size); ++i) {
+    for (size_t i = 1; std::cmp_less(i, proc_size); ++i) {
       displs[i] = displs[i - 1] + send_counts[i - 1];
     }
   }
@@ -69,7 +69,7 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   MPI_Bcast(send_counts.data(), proc_size, MPI_INT, 0, MPI_COMM_WORLD);  // отправляем размеры порций
   std::vector<char> local_str(send_counts[rank]);
   MPI_Scatterv((rank == 0) ? input_string.data() : nullptr, send_counts.data(), displs.data(), MPI_CHAR,
-               local_str.data(), local_str.size(), MPI_CHAR, 0, MPI_COMM_WORLD  // распределяем данные
+               local_str.data(), static_cast<int>(local_str.size()), MPI_CHAR, 0, MPI_COMM_WORLD  // распределяем данные
   );
 
   size_t local_count = std::count(local_str.begin(), local_str.end(), input_char);
