@@ -64,7 +64,7 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   MPI_Bcast(&result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   GetOutput() = result;
 
-  std::cout << input.size() << " : "  << "Answer: " << rank << " " << GetOutput() << std::endl;
+  std::cout << input.size() << " : " << "Answer: " << rank << " " << GetOutput() << std::endl;
 
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
