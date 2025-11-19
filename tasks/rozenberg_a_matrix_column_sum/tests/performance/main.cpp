@@ -21,14 +21,14 @@ class RozenbergAMatrixColumnSumPerfTests : public ppc::util::BaseRunPerfTests<In
       file >> rows >> columns;
 
       InType input_data(rows, std::vector<int>(columns));
-      for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < columns; j++) {
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
           file >> input_data[i][j];
         }
       }
 
       OutType output_data(columns);
-      for (size_t i = 0; i < columns; i++) {
+      for (int i = 0; i < columns; i++) {
         file >> output_data[i];
       }
       input_data_ = input_data;
