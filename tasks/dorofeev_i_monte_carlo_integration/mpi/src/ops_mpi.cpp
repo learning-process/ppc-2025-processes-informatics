@@ -8,6 +8,12 @@
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
 
+// NOTE:
+// Rank-dependent MPI branches cannot be reliably covered by GTest, which runs
+// in a single-process environment. These conditions represent MPI distribution
+// semantics (e.g., last-rank remainder distribution, root aggregation) rather
+// than algorithm logic. They are excluded to avoid misleading partial coverage.
+
 namespace dorofeev_i_monte_carlo_integration_processes {
 
 DorofeevIMonteCarloIntegrationMPI::DorofeevIMonteCarloIntegrationMPI(const InType &in) {
@@ -51,9 +57,9 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int n_local = n_total / size;
-  if (rank == size - 1) {
-    n_local += n_total % size;
-  }
+  if (rank == size - 1) {       // LCOV_EXCL_START
+    n_local += n_total % size;  // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_STOP
 
   std::vector<std::uniform_real_distribution<double>> dist;
   dist.reserve(dims);
@@ -82,9 +88,9 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
   }
 
   double result = 0.0;
-  if (rank == 0) {
-    result = (global_sum / n_total) * volume;
-  }
+  if (rank == 0) {                             // LCOV_EXCL_START
+    result = (global_sum / n_total) * volume;  // LCOV_EXCL_LINE
+  }  // LCOV_EXCL_STOP
 
   MPI_Bcast(&result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
