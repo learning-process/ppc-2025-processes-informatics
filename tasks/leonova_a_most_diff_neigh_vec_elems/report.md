@@ -26,8 +26,8 @@ max_diff = -1
 for i от 0 до n-2:
     curr_diff = |v[i] - v[i+1]|
     если curr_diff > max_diff:
-        max_diff = curr_diff
-        best_pair = (v[i], v[i+1])
+        max_diff = curr_diff;
+        best_pair = (v[i], v[i+1]);
 
 Результатом выполнения алгоритма будет пара элементов с максимальной разницей - best_pair.
 Вычислительная сложность алгоритма - O(n).
