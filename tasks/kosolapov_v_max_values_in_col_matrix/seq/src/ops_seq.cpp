@@ -38,7 +38,7 @@ bool KosolapovVMaxValuesInColMatrixSEQ::RunImpl() {
 
   for (size_t i = 0; i < matrix[0].size(); i++) {
     int temp_max = matrix[0][i];
-    for (const auto& row : matrix) {
+    for (const auto &row : matrix) {
       temp_max = std::max(row[i], temp_max);
     }
     GetOutput()[i] = temp_max;

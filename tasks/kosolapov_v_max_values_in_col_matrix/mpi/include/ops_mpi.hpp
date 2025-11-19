@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "kosolapov_v_max_values_in_col_matrix/common/include/common.hpp"
 #include "task/include/task.hpp"
-
-#include <vector>
 
 namespace kosolapov_v_max_values_in_col_matrix {
 
@@ -19,7 +19,8 @@ class KosolapovVMaxValuesInColMatrixMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static std::vector<int> CalculateLocalMax(const std::vector<std::vector<int>>& matrix,int rank, int processes_count, int columns);
+  static std::vector<int> CalculateLocalMax(const std::vector<std::vector<int>> &matrix, int rank, int processes_count,
+                                            int columns);
 };
 
 }  // namespace kosolapov_v_max_values_in_col_matrix

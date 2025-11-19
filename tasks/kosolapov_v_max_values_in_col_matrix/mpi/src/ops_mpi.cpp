@@ -82,7 +82,8 @@ bool KosolapovVMaxValuesInColMatrixMPI::PostProcessingImpl() {
   return true;
 }
 
-std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix, int rank, int processes_count, int columns){
+std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix,
+                                                                      int rank, int processes_count, int columns) {
   const int columns_per_proc = columns / processes_count;
   const int remainder = columns % processes_count;
 
@@ -91,7 +92,7 @@ std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std:
   std::vector<int> local_maxs(end - start);
   for (int i = start; i < end; i++) {
     int temp_max = matrix[0][i];
-    for (const auto& row: matrix) {
+    for (const auto &row : matrix) {
       temp_max = std::max(row[i], temp_max);
     }
     local_maxs[i - start] = temp_max;
