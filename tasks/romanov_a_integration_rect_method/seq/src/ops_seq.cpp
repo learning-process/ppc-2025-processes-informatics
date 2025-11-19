@@ -1,11 +1,8 @@
 #include "romanov_a_integration_rect_method/seq/include/ops_seq.hpp"
 
 #include <cmath>
-#include <numeric>
-#include <vector>
 
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace romanov_a_integration_rect_method {
 
@@ -18,9 +15,11 @@ RomanovAIntegrationRectMethodSEQ::RomanovAIntegrationRectMethodSEQ(const InType 
 bool RomanovAIntegrationRectMethodSEQ::ValidationImpl() {
   if (!IsEqual(GetOutput(), 0.0)) {
     return false;
-  } else if (std::get<3>(GetInput()) <= 0) {
+  }
+  if (std::get<3>(GetInput()) <= 0) {
     return false;
-  } else if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
+  }
+  if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
     return false;
   }
   return true;
@@ -34,7 +33,7 @@ bool RomanovAIntegrationRectMethodSEQ::RunImpl() {
   const auto &[f, a, b, n] = GetInput();
 
   double delta_x = (b - a) / static_cast<double>(n);
-  double mid = a + delta_x / 2.0;
+  double mid = a + (delta_x / 2.0);
 
   double result = 0.0;
 

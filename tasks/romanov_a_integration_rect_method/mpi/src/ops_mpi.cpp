@@ -1,12 +1,9 @@
 #include "romanov_a_integration_rect_method/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-
-#include <numeric>
-#include <vector>
+#include <cmath>
 
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace romanov_a_integration_rect_method {
 
@@ -19,9 +16,11 @@ RomanovAIntegrationRectMethodMPI::RomanovAIntegrationRectMethodMPI(const InType 
 bool RomanovAIntegrationRectMethodMPI::ValidationImpl() {
   if (!IsEqual(GetOutput(), 0.0)) {
     return false;
-  } else if (std::get<3>(GetInput()) <= 0) {
+  }
+  if (std::get<3>(GetInput()) <= 0) {
     return false;
-  } else if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
+  }
+  if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
     return false;
   }
   return true;
@@ -38,8 +37,9 @@ bool RomanovAIntegrationRectMethodMPI::RunImpl() {
   int num_processes = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
-  double a, b;
-  int n;
+  double a = 0.0;
+  double b = 0.0;
+  int n = 0;
 
   double result = 0.0;
 
@@ -58,7 +58,7 @@ bool RomanovAIntegrationRectMethodMPI::RunImpl() {
   int right_border = std::min(n, (rank + 1) * (n / num_processes));
 
   double delta_x = (b - a) / static_cast<double>(n);
-  double mid = a + delta_x * static_cast<double>(left_border) + delta_x / 2.0;
+  double mid = a + (delta_x * static_cast<double>(left_border)) + (delta_x / 2.0);
 
   double current_result = 0.0;
 

@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <functional>
+#include <tuple>
+
 #include "romanov_a_integration_rect_method/common/include/common.hpp"
 #include "romanov_a_integration_rect_method/mpi/include/ops_mpi.hpp"
 #include "romanov_a_integration_rect_method/seq/include/ops_seq.hpp"
@@ -9,7 +12,7 @@ namespace romanov_a_integration_rect_method {
 
 class RomanovAIntegrationRectMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 500'000'000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     auto f = std::function<double(double)>([](double x) { return x * x; });

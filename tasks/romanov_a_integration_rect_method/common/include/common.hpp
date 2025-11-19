@@ -1,7 +1,6 @@
 #pragma once
 
 #include <functional>
-#include <string>
 #include <tuple>
 
 #include "task/include/task.hpp"
@@ -14,10 +13,10 @@ using TestType = std::tuple<std::function<double(double)>, double, double, int, 
 ;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-constexpr double EPS = 1e-4;
+constexpr double kEps = 1e-4;
 
 inline bool IsEqual(double a, double b) {
-  return std::abs(a - b) <= EPS;
+  return std::abs(a - b) <= kEps;
 }
 
 }  // namespace romanov_a_integration_rect_method
