@@ -31,7 +31,7 @@ class ChaschinVMaxForEachRow : public BaseTask {
   void GatherResults(std::vector<float> &out, const std::vector<float> &local_out, int rank, int size,
                      const RowRange &range);
   static void SendRowsToWorkers(const std::vector<std::vector<float>> &mat, int size);
-  void ReceiveRowsFromRoot(std::vector<std::vector<float>> &local_mat)
+  void ReceiveRowsFromRoot(std::vector<std::vector<float>> &local_mat);
 };
 
 }  // namespace chaschin_v_max_for_each_row
