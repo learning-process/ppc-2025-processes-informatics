@@ -47,7 +47,7 @@ TEST_P(MaslovaURunFuncTestsProcesses, charFrequencyCount) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {
+const std::array<TestType, 13> kTestParam = {
     {std::make_tuple(InType("", 'a'), 0, "empty_string"), std::make_tuple(InType("a", 'a'), 1, "single_char_match"),
      std::make_tuple(InType("b", 'x'), 0, "single_char_no_match"),
      std::make_tuple(InType("maslova", 'a'), 2, "normal_string_az"),
@@ -55,6 +55,9 @@ const std::array<TestType, 10> kTestParam = {
      std::make_tuple(InType("aaaaaaaa", 'a'), 8, "all_input_chars"),
      std::make_tuple(InType("Hello World!", 'l'), 3, "mixed_symbols"),
      std::make_tuple(InType("1234567890", '1'), 1, "string_with_numbers"),
+     std::make_tuple(InType("123456789abcdlfn", 'a'), 1, "aligned_string_16"),
+     std::make_tuple(InType("123456789abcd", 'a'), 1, "unaligned_string_13"),
+     std::make_tuple(InType("+++--!", '+'), 3, "string_with_oper"),
      std::make_tuple(InType("1234567890sexdcrfvgbhjnkml", '1'), 1, "string_with_lettes_and_numbers"),
      std::make_tuple(InType(std::string(100, 'x') + std::string(50, 'a'), 'x'), 100, "long_string")}};
 
