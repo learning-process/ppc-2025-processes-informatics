@@ -32,12 +32,10 @@ bool FatehovKMatrixMaxElemSEQ::RunImpl() {
   auto &data = GetInput();
   size_t rows = std::get<0>(data);
   size_t columns = std::get<1>(data);
-  std::vector<double> matrix = std::get<2>(data);
+  std::vector<double> &matrix = std::get<2>(data);
   double max = matrix[0];
-  for (size_t i = 0; i < rows; i++) {
-    for (size_t j = 0; j < columns; j++) {
-      max = std::max(matrix[(i * columns) + j], max);
-    }
+  for (size_t i = 0; i < rows * columns; i++) {
+    max = std::max(matrix[i], max);
   }
   GetOutput() = max;
   return true;

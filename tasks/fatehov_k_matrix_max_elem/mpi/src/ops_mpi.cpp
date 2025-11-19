@@ -37,7 +37,7 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   auto &data = GetInput();
   size_t rows = std::get<0>(data);
   size_t columns = std::get<1>(data);
-  std::vector<double> matrix = std::get<2>(data);
+  const std::vector<double> &matrix = std::get<2>(data);
 
   int world_rank = 0;
   int world_size = 0;

@@ -19,7 +19,7 @@ class FatehovKMatrixMaxElemSEQ : public BaseTask {
   bool PostProcessingImpl() override;
   static const int kMaxRows = 10000;
   static const int kMaxCols = 10000;
-  static const int kMaxMatrixSize = 1000000;
+  static const int kMaxMatrixSize = 100000000;
 };
 
 }  // namespace fatehov_k_matrix_max_elem
