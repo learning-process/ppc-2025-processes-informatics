@@ -21,8 +21,8 @@ class LeonovaAMostDiffNeighVecElemsMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   void ProcessWithMultipleProcesses(int rank, int size, int total_size, const std::vector<int> &input_vec);
-  void ProcessLocalData(int rank, int actual_processes, int total_size, const std::vector<int> &input_vec,
-                        int &local_max_diff, int &local_first, int &local_second);
+  static void ProcessLocalData(int rank, int actual_processes, int total_size, const std::vector<int> &input_vec,
+                               int &local_max_diff, int &local_first, int &local_second);
   static void ReceiveLocalData(int rank, int actual_processes, const std::vector<int> &input_vec, int my_size,
                                std::vector<int> &local_data, int total_size);
   static void SendDataToProcess(int dest, int actual_processes, const std::vector<int> &input_vec, int total_size);
