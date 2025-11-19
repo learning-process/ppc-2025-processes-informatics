@@ -179,12 +179,7 @@ bool LeonovaAMostDiffNeighVecElemsMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int total_size = static_cast<int>(input_vec.size());
-  if (size > 1) {
-    ProcessWithMultipleProcesses(rank, size, total_size, input_vec);
-  } else {
-    ProcessSequentially(input_vec);
-  }
-
+  ProcessWithMultipleProcesses(rank, size, total_size, input_vec);
   return true;
 }
 
@@ -317,17 +312,8 @@ void LeonovaAMostDiffNeighVecElemsMPI::BroadcastResult(int rank) {
   }
 }
 
-void LeonovaAMostDiffNeighVecElemsMPI::ProcessSequentially(const std::vector<int> &input_vec) {
-  int max_diff = -1;
-  std::tuple<int, int> best_pair(0, 0);
-
-  for (std::size_t index = 0; index < input_vec.size() - 1; ++index) {
-    int diff = std::abs(input_vec[index] - input_vec[index + 1]);
-    if (diff > max_diff) {
-      max_diff = diff;
-      best_pair = std::make_tuple(input_vec[index], input_vec[index + 1]);
-    }
-  }
-
-  GetOutput() = best_pair;
+bool LeonovaAMostDiffNeighVecElemsMPI::PostProcessingImpl() {
+  return true;
 }
+
+}  // namespace leonova_a_most_diff_neigh_vec_elems

@@ -33,7 +33,6 @@ class LeonovaAMostDiffNeighVecElemsMPI : public BaseTask {
   void FindGlobalMaxDiff(const std::vector<int> &all_diffs, const std::vector<int> &all_firsts,
                          const std::vector<int> &all_seconds, int actual_processes);
   void BroadcastResult(int rank);
-  void ProcessSequentially(const std::vector<int> &input_vec);
 };
 
 }  // namespace leonova_a_most_diff_neigh_vec_elems
