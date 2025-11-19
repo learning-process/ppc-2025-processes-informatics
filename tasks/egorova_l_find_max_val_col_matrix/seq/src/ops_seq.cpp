@@ -1,11 +1,9 @@
-#include "egorova_l_find_max_val_col_matrix/seq/include/ops_seq.hpp"
-
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
 #include "egorova_l_find_max_val_col_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace egorova_l_find_max_val_col_matrix {
 
@@ -25,18 +23,18 @@ EgorovaLFindMaxValColMatrixSEQ::EgorovaLFindMaxValColMatrixSEQ(const InType &in)
 #endif
 
 bool EgorovaLFindMaxValColMatrixSEQ::ValidationImpl() {
-  if (GetInput().empty()) {
+  const auto &matrix = GetInput();
+
+  if (matrix.empty()) {
     return true;
   }
 
-  size_t cols = GetInput()[0].size();
-  for (const auto &row : GetInput()) {
-    if (row.size() != cols) {
-      return false;
-    }
+  if (matrix[0].empty()) {
+    return true;
   }
 
-  return GetOutput().empty();
+  const std::size_t cols = matrix[0].size();
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool EgorovaLFindMaxValColMatrixSEQ::PreProcessingImpl() {
@@ -46,20 +44,23 @@ bool EgorovaLFindMaxValColMatrixSEQ::PreProcessingImpl() {
 bool EgorovaLFindMaxValColMatrixSEQ::RunImpl() {
   const auto &matrix = GetInput();
 
-  if (matrix.empty()) {
+  if (!ValidationImpl()) {
     GetOutput() = std::vector<int>();
     return true;
   }
 
-  size_t rows = matrix.size();
-  size_t cols = matrix[0].size();
+  if (matrix.empty() || matrix[0].empty()) {
+    GetOutput() = std::vector<int>();
+    return true;
+  }
+
+  const std::size_t rows = matrix.size();
+  const std::size_t cols = matrix[0].size();
   std::vector<int> result(cols, std::numeric_limits<int>::min());
 
-  for (size_t j = 0; j < cols; ++j) {
-    for (size_t i = 0; i < rows; ++i) {
-      if (matrix[i][j] > result[j]) {
-        result[j] = matrix[i][j];
-      }
+  for (std::size_t jj = 0; jj < cols; ++jj) {
+    for (std::size_t ii = 0; ii < rows; ++ii) {
+      result[jj] = std::max(matrix[ii][jj], result[jj]);
     }
   }
 

@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <iostream>
-#include <random>
+#include <limits>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -85,6 +84,9 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
       case 13:  // Матрица с нулевыми значениями
         input_data_ = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
         break;
+
+      default:
+        break;
     }
   }
 
@@ -108,17 +110,15 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
 
     // Вычисляем ожидаемый результат
     std::vector<int> expected(matrix[0].size(), std::numeric_limits<int>::min());
-    for (size_t j = 0; j < matrix[0].size(); ++j) {
-      for (size_t i = 0; i < matrix.size(); ++i) {
-        if (matrix[i][j] > expected[j]) {
-          expected[j] = matrix[i][j];
-        }
+    for (std::size_t jj = 0; jj < matrix[0].size(); ++jj) {
+      for (std::size_t ii = 0; ii < matrix.size(); ++ii) {
+        expected[jj] = std::max(matrix[ii][jj], expected[jj]);
       }
     }
 
     // Сравниваем результаты
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (output_data[i] != expected[i]) {
+    for (std::size_t ii = 0; ii < output_data.size(); ++ii) {
+      if (output_data[ii] != expected[ii]) {
         return false;
       }
     }

@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <random>
+#include <algorithm>
+#include <cstddef>
+#include <limits>
+#include <vector>
 
 #include "egorova_l_find_max_val_col_matrix/common/include/common.hpp"
 #include "egorova_l_find_max_val_col_matrix/mpi/include/ops_mpi.hpp"
@@ -10,17 +13,17 @@
 namespace egorova_l_find_max_val_col_matrix {
 
 class EgorovaLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kMatrixSize_ = 5000;  // большая матрица
-  InType input_data_{};
+  const std::size_t kMatrixSize_ = 5000;  // большая матрица
+  InType input_data_;
 
   void SetUp() override {
     // Создаем простую детерминированную матрицу
     input_data_.resize(kMatrixSize_, std::vector<int>(kMatrixSize_));
 
     int counter = 1;
-    for (int i = 0; i < kMatrixSize_; ++i) {
-      for (int j = 0; j < kMatrixSize_; ++j) {
-        input_data_[i][j] = counter++;
+    for (std::size_t ii = 0; ii < kMatrixSize_; ++ii) {
+      for (std::size_t jj = 0; jj < kMatrixSize_; ++jj) {
+        input_data_[ii][jj] = counter++;
       }
     }
   }
@@ -38,16 +41,14 @@ class EgorovaLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, 
 
     // Вычисляем ожидаемый результат
     std::vector<int> expected(matrix[0].size(), std::numeric_limits<int>::min());
-    for (size_t j = 0; j < matrix[0].size(); ++j) {
-      for (size_t i = 0; i < matrix.size(); ++i) {
-        if (matrix[i][j] > expected[j]) {
-          expected[j] = matrix[i][j];
-        }
+    for (size_t jj = 0; jj < matrix[0].size(); ++jj) {
+      for (size_t ii = 0; ii < matrix.size(); ++ii) {
+        expected[jj] = std::max(matrix[ii][jj], expected[jj]);
       }
     }
 
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (output_data[i] != expected[i]) {
+    for (size_t ii = 0; ii < output_data.size(); ++ii) {
+      if (output_data[ii] != expected[ii]) {
         return false;
       }
     }
