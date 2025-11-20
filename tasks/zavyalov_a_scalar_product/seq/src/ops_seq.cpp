@@ -22,7 +22,7 @@ bool ZavyalovAScalarProductSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAScalarProductSEQ::RunImpl() {
-  const auto &input = GetInput();
+  const auto& input = GetInput();
   const std::vector<double> &left = std::get<0>(input);
   const std::vector<double> &right = std::get<1>(input);
 

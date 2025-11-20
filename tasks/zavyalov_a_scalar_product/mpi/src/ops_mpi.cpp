@@ -31,10 +31,9 @@ bool ZavyalovAScalarProductMPI::PreProcessingImpl() {
   return true;
 }
 bool ZavyalovAScalarProductMPI::RunImpl() {
-  std::vector<double> left;
-  std::vector<double> right;
+  const double* left_data = nullptr;
+  const double* right_data = nullptr;
 
-  // int worldSize = ppc::util::GetNumThreads();
   int worldSize;
   MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
   int rank;
@@ -46,12 +45,12 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
     GetOutput() = 0.0;
     const auto &input = GetInput();
     if (!std::get<0>(input).empty()) {  // it does not compile in ubuntu without this line
-      left = std::get<0>(input);
+      left_data = std::get<0>(input).data();
     }
     if (!std::get<1>(input).empty()) {  // it does not compile in ubuntu without this line
-      right = std::get<1>(input);
+      right_data = std::get<1>(input).data();
     }
-    vectorSize = left.size();
+    vectorSize = std::get<0>(input).size();
   }
 
   MPI_Bcast(&vectorSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -73,9 +72,9 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
   std::vector<double> local_left(elements_count);
   std::vector<double> local_right(elements_count);
 
-  MPI_Scatterv(left.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, local_left.data(), elements_count, MPI_DOUBLE,
+  MPI_Scatterv(left_data, sendcounts.data(), displs.data(), MPI_DOUBLE, local_left.data(), elements_count, MPI_DOUBLE,
                0, MPI_COMM_WORLD);
-  MPI_Scatterv(right.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, local_right.data(), elements_count,
+  MPI_Scatterv(right_data, sendcounts.data(), displs.data(), MPI_DOUBLE, local_right.data(), elements_count,
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double curRes = 0.0;
@@ -84,7 +83,7 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
   }
 
   double globRes = 0.0;
-  MPI_Reduce(&curRes, &globRes, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Allreduce(&curRes, &globRes, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = globRes;
 
