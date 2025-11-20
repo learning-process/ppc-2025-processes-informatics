@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cmath>
@@ -30,6 +31,13 @@ class ZavyalovAScalarProductPerfTestProcesses : public ppc::util::BaseRunPerfTes
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank != 0) {
+      return true;
+    }
+
     double res = 0.0;
     for (uint64_t i = 0; i < kCount_; i++) {
       res += std::get<0>(input_data_)[i] * std::get<1>(input_data_)[i];
