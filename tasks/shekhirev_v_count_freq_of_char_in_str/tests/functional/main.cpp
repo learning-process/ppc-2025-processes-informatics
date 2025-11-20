@@ -57,8 +57,8 @@ class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_{};
-  OutType expected_output_{};
+  InType input_data_;
+  OutType expected_output_ = 0;
 };
 
 namespace {
@@ -99,4 +99,5 @@ const auto kTestName = ShekhirevVCharFreqFuncTests::PrintFuncTestName<ShekhirevV
 INSTANTIATE_TEST_SUITE_P(CharFreqTests, ShekhirevVCharFreqFuncTests, kGtestValues, kTestName);
 
 }  // namespace
+
 }  // namespace shekhirev_v_char_freq_seq

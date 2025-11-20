@@ -30,7 +30,6 @@ bool CharFreqMPI::RunImpl() {
 
   const auto &str = GetInput().str;
   char target = GetInput().target;
-
   int n = static_cast<int>(str.size());
 
   if (n == 0) {
@@ -40,8 +39,8 @@ bool CharFreqMPI::RunImpl() {
     return true;
   }
 
-  int delta = n / process_count;
-  int remainder = n % process_count;
+  const int delta = n / process_count;
+  const int remainder = n % process_count;
 
   int start_index = 0;
   int end_index = 0;
@@ -50,13 +49,13 @@ bool CharFreqMPI::RunImpl() {
     start_index = process_rank * (delta + 1);
     end_index = start_index + delta + 1;
   } else {
-    start_index = process_rank * delta + remainder;
+    start_index = (process_rank * delta) + remainder;
     end_index = start_index + delta;
   }
 
   int local_count = 0;
   if (start_index < end_index) {
-    local_count = (int)std::count(str.begin() + start_index, str.begin() + end_index, target);
+    local_count = static_cast<int>(std::count(str.begin() + start_index, str.begin() + end_index, target));
   }
 
   int global_count = 0;
