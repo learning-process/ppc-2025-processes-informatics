@@ -23,7 +23,18 @@ namespace kichanova_k_count_letters_in_str {
 class KichanovaKCountLettersInStrFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    std::string input_str = std::get<1>(test_param);
+    std::string safe_name;
+    
+    for (char c : input_str) {
+      if (std::isalnum(static_cast<unsigned char>(c))) {
+        safe_name += c;
+      } else {
+        safe_name += '_';
+      }
+    }
+    
+    return std::to_string(std::get<0>(test_param)) + "_" + safe_name;
   }
 
  protected:
@@ -63,11 +74,15 @@ TEST_P(KichanovaKCountLettersInStrFuncTests, CountLettersInString) {
 }
 
 
-const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(5, "Hello"),           
-    std::make_tuple(10, "Hello World"),    
-    std::make_tuple(8, "Test123!"),        
-    std::make_tuple(0, "123!@#")           
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple(5, "Hello"),
+    std::make_tuple(10, "Hello World"), 
+    std::make_tuple(8, "Test123!"),
+    std::make_tuple(0, "123!@#"),
+    std::make_tuple(0, " "),
+    std::make_tuple(4, "a.b,c!d"),
+    std::make_tuple(50, std::string(100, 'a') + std::string(100, '1')),    
+    std::make_tuple(1000, std::string(1000, 'x')),    
 };
 
 const auto kTestTasksList =

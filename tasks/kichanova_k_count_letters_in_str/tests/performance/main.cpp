@@ -8,18 +8,25 @@
 namespace kichanova_k_count_letters_in_str {
 
 class KichanovaKCountLettersInStrPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const std::string kTestString_ = "test string with letters and numbers 12345 and symbols !@#$%";
   InType input_data_{};
   int expected_output_{};
 
-  void SetUp() override {
-    input_data_ = kTestString_;
-    expected_output_ = 0;
-    for (char c : kTestString_) {
-      if (std::isalpha(static_cast<unsigned char>(c))) {
-        expected_output_++;
-      }
+   void SetUp() override {
+    const size_t str_size = 5000000; 
+    
+    std::string generated_string;
+    generated_string.reserve(str_size);
+    
+    for (size_t i = 0; i < str_size; ++i) {
+        if (i % 3 == 0) {
+            generated_string += (i % 2 == 0) ? 'a' + (i % 26) : 'A' + (i % 26);
+            expected_output_++;
+        } else {
+            generated_string += (i % 2 == 0) ? '0' + (i % 10) : '!' + (i % 15);
+        }
     }
+    
+    input_data_ = generated_string;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
