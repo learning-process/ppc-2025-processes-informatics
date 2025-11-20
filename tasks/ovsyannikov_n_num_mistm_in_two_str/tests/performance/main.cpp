@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <string>
+#include <utility>
+
 #include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
 #include "ovsyannikov_n_num_mistm_in_two_str/mpi/include/ops_mpi.hpp"
 #include "ovsyannikov_n_num_mistm_in_two_str/seq/include/ops_seq.hpp"
@@ -8,33 +11,50 @@
 namespace ovsyannikov_n_num_mistm_in_two_str {
 
 class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
-
+ protected:
   void SetUp() override {
-    input_data_ = kCount_;
+    // Размер 10 миллионов символов
+    const int kBenchmarkSize = 10000000; 
+    
+    std::string sample_a(kBenchmarkSize, 'a');
+    std::string sample_b(kBenchmarkSize, 'a');
+    
+    // Чередуем a и b в str2 
+    target_val_ = 0;
+    for(int i = 0; i < kBenchmarkSize; ++i) {
+        if (i % 2 == 0) {
+             sample_b[i] = 'b';
+             target_val_++;
+        }
+    }
+    
+    bench_data_ = std::make_pair(sample_a, sample_b);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+  bool CheckTestOutputData(OutType &calculated_res) final {
+    return calculated_res == target_val_;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return bench_data_;
   }
+
+ private:
+  InType bench_data_;
+  OutType target_val_;
 };
 
 TEST_P(OvsyannikovNRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNNumMistmInTwoStrMPI, OvsyannikovNNumMistmInTwoStrSEQ>(PPC_SETTINGS_example_processes);
+const auto kPerfTaskList =
+    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNNumMistmInTwoStrMPI, OvsyannikovNNumMistmInTwoStrSEQ>(PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kTestParams = ppc::util::TupleToGTestValues(kPerfTaskList);
 
-const auto kPerfTestName = OvsyannikovNRunPerfTestProcesses::CustomPerfTestName;
+const auto kCustomName = OvsyannikovNRunPerfTestProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, OvsyannikovNRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, OvsyannikovNRunPerfTestProcesses, kTestParams, kCustomName);
 
 }  // namespace ovsyannikov_n_num_mistm_in_two_str

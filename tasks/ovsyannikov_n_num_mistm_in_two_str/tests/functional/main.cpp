@@ -1,72 +1,81 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
-#include <tuple>
 #include <utility>
-#include <vector>
 
 #include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
 #include "ovsyannikov_n_num_mistm_in_two_str/mpi/include/ops_mpi.hpp"
 #include "ovsyannikov_n_num_mistm_in_two_str/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace ovsyannikov_n_num_mistm_in_two_str {
 
-class OvsyannikovNRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
-  }
-
+class OvsyannikovNRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, int> {
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
- 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    int elem_count = std::get<2>(GetParam());
+    std::string seq_a(elem_count, 'a');
+    std::string seq_b(elem_count, 'a');
+    ref_val_ = 0;
+
+    if (elem_count > 0) {
+        // Несовпадения в первой половине строки
+        int limit = elem_count / 2;
+        for(int i = 0; i < limit; ++i) {
+            seq_b[i] = 'b';
+            ref_val_++;
+        }
+        // Несовпадение в конце
+        if (elem_count > 5) {
+            seq_b[elem_count - 1] = 'c';
+            ref_val_++;
+        }
+    }
+    
+    task_data_ = std::make_pair(seq_a, seq_b);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+  bool CheckTestOutputData(OutType &actual_res) final {
+    return actual_res == ref_val_;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return task_data_;
   }
 
  private:
-  InType input_data_ = 0;
+  InType task_data_;
+  int ref_val_ = 0;
 };
 
-namespace {
-
-TEST_P(OvsyannikovNRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(OvsyannikovNRunFuncTestsProcesses, CalculateMismatches) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+// Расширенный набор тестов
+const std::array<int, 14> kTestLengths = {
+    0,          // Пустая строка
+    1,          // Минимальная строка
+    3,          // Нечетное, малое
+    17,         // Простое число
+    64,         // Степень двойки 
+    100,        // Стандартное
+    127,        // Простое число около степени двойки
+    1024,       
+    54321,      
+    100000,     
+    1000000,    
+    1234567,    
+    10000000,   
+    50000000    
+};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrMPI, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str),
-                   ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrSEQ, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str));
+const auto kTaskBundle =
+    std::tuple_cat(ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrMPI, InType>(kTestLengths, PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str),
+                   ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrSEQ, InType>(kTestLengths, PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
-const auto kPerfTestName = OvsyannikovNRunFuncTestsProcesses::PrintFuncTestName<OvsyannikovNRunFuncTestsProcesses>;
-
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, OvsyannikovNRunFuncTestsProcesses, kGtestValues, kPerfTestName);
-
-}  // namespace
+INSTANTIATE_TEST_SUITE_P(AllTests, OvsyannikovNRunFuncTestsProcesses, 
+                         ppc::util::ExpandToValues(kTaskBundle));
 
 }  // namespace ovsyannikov_n_num_mistm_in_two_str

@@ -1,11 +1,5 @@
 #include "ovsyannikov_n_num_mistm_in_two_str/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
-
-#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
-#include "util/include/util.hpp"
-
 namespace ovsyannikov_n_num_mistm_in_two_str {
 
 OvsyannikovNNumMistmInTwoStrSEQ::OvsyannikovNNumMistmInTwoStrSEQ(const InType &in) {
@@ -15,46 +9,33 @@ OvsyannikovNNumMistmInTwoStrSEQ::OvsyannikovNNumMistmInTwoStrSEQ(const InType &i
 }
 
 bool OvsyannikovNNumMistmInTwoStrSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  // Длины строк должны совпадать
+  return GetInput().first.size() == GetInput().second.size();
 }
 
 bool OvsyannikovNNumMistmInTwoStrSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput() = 0;
+  return true;
 }
 
 bool OvsyannikovNNumMistmInTwoStrSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  const auto& seq_one = GetInput().first;
+  const auto& seq_two = GetInput().second;
+  int diff_cnt = 0;
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  size_t length = seq_one.size();
+  for (size_t i = 0; i < length; ++i) {
+    if (seq_one[i] != seq_two[i]) {
+      diff_cnt++;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = diff_cnt;
+  return true;
 }
 
 bool OvsyannikovNNumMistmInTwoStrSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace ovsyannikov_n_num_mistm_in_two_str
