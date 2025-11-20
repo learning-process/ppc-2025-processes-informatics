@@ -36,7 +36,6 @@ bool EgorovaLFindMaxValColMatrixSEQ::ValidationImpl() {
   }
 
   const std::size_t cols = matrix[0].size();
-  // ЗАМЕНИ цикл на std::ranges::all_of
   return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
