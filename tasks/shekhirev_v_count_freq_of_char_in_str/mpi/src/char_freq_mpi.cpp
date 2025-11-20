@@ -2,7 +2,8 @@
 
 #include <mpi.h>
 
-#include "../../common/include/common.hpp"  // Добавили явный инклуд
+#include <algorithm>
+#include <vector>
 
 namespace shekhirev_v_char_freq_mpi {
 
@@ -20,21 +21,18 @@ bool CharFreqMPI::PreProcessingImpl() {
   int process_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
 
-  // Используем int, так как MPI принимает int для количества
-  int str_size = 0;
+  unsigned long str_size = 0;
   if (process_rank == 0) {
-    // Явное приведение типа, чтобы clang-tidy не ругался на сужение
-    str_size = static_cast<int>(GetInput().str.size());
+    str_size = GetInput().str.size();
   }
 
-  MPI_Bcast(&str_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&str_size, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
   if (process_rank != 0) {
     GetInput().str.resize(str_size);
   }
 
-  // const_cast нужен для отправки, data() возвращает const char*
-  MPI_Bcast(const_cast<char *>(GetInput().str.data()), str_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Bcast(GetInput().str.data(), str_size, MPI_CHAR, 0, MPI_COMM_WORLD);
   MPI_Bcast(&GetInput().target, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   return true;
@@ -48,8 +46,7 @@ bool CharFreqMPI::RunImpl() {
 
   const auto &str = GetInput().str;
   char target = GetInput().target;
-  // Явное приведение к int
-  int n = static_cast<int>(str.size());
+  int n = str.size();
 
   const int base_n = n / process_count;
   const int remainder = n % process_count;

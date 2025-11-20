@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <cstddef>
 #include <string>
+#include <vector>
 
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/char_freq_mpi.hpp"
@@ -15,7 +15,7 @@ namespace shekhirev_v_char_freq_seq {
 class ShekhirevVCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const size_t size = 10000000;
+    const size_t size = 50000000;
     input_data_.str.resize(size, 'a');
     input_data_.str[size / 2] = 'b';
     input_data_.str[size - 1] = 'b';
@@ -51,7 +51,6 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, shekhirev_v_char_freq_mpi::CharFreqMPI, CharFreqSequential>(
         PPC_SETTINGS_shekhirev_v_count_freq_of_char_in_str);
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CharFreqPerf, ShekhirevVCharFreqPerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          ShekhirevVCharFreqPerfTests::CustomPerfTestName);
 

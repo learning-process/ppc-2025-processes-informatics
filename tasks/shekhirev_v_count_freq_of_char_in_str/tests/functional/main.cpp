@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstddef>
+#include <sstream>
 #include <string>
 #include <tuple>
 
@@ -13,6 +14,19 @@
 #include "util/include/util.hpp"
 
 namespace shekhirev_v_char_freq_seq {
+
+TEST(ShekhirevVCharFreqCommon, InputDataStruct) {
+  InputData d1("test", 't');
+  InputData d2("test", 't');
+  InputData d3("diff", 'd');
+
+  ASSERT_TRUE(d1 == d2);
+  ASSERT_FALSE(d1 == d3);
+
+  std::stringstream ss;
+  ss << d1;
+  ASSERT_FALSE(ss.str().empty());
+}
 
 class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -66,14 +80,12 @@ TEST_P(ShekhirevVCharFreqFuncTests, Test) {
   ASSERT_TRUE(CheckTestOutputData(task->GetOutput()));
 }
 
-// Исправлена инициализация на designated initializers (.str=..., .target=...)
-const std::array<TestType, 6> kTestCases = {
-    std::make_tuple(InputData{.str = "hello world", .target = 'l'}, 3, "simple_word"),
-    std::make_tuple(InputData{.str = "hello world", .target = 'z'}, 0, "not_found"),
-    std::make_tuple(InputData{.str = "", .target = 'a'}, 0, "empty_string"),
-    std::make_tuple(InputData{.str = "aaaaa", .target = 'a'}, 5, "all_target"),
-    std::make_tuple(InputData{.str = "abacabadabacaba", .target = 'a'}, 8, "longer_string"),
-    std::make_tuple(InputData{.str = "zaaaaaaz", .target = 'z'}, 2, "edges")};
+const std::array<TestType, 6> kTestCases = {std::make_tuple(InputData("hello world", 'l'), 3, "simple_word"),
+                                            std::make_tuple(InputData("hello world", 'z'), 0, "not_found"),
+                                            std::make_tuple(InputData("", 'a'), 0, "empty_string"),
+                                            std::make_tuple(InputData("aaaaa", 'a'), 5, "all_target"),
+                                            std::make_tuple(InputData("abacabadabacaba", 'a'), 8, "longer_string"),
+                                            std::make_tuple(InputData("zaaaaaaz", 'z'), 2, "edges")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<CharFreqSequential, InType>(kTestCases, PPC_SETTINGS_shekhirev_v_count_freq_of_char_in_str),

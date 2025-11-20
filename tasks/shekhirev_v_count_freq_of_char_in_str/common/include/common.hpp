@@ -1,6 +1,7 @@
 #pragma once
 
-#include <iostream>  // Добавили
+#include <cstring>
+#include <iostream>
 #include <string>
 #include <tuple>
 
@@ -12,15 +13,19 @@ struct InputData {
   std::string str;
   char target;
 
+  InputData() : str(), target(0) {}
+
+  InputData(std::string s, char t) : str(std::move(s)), target(t) {}
+
   bool operator==(const InputData &other) const {
     return str == other.str && target == other.target;
   }
-};
 
-inline std::ostream &operator<<(std::ostream &os, const InputData &data) {
-  os << "{ str: \"" << data.str << "\", target: '" << data.target << "' }";
-  return os;
-}
+  friend std::ostream &operator<<(std::ostream &os, const InputData &data) {
+    os << "{ str: \"" << data.str << "\", target: '" << data.target << "' }";
+    return os;
+  }
+};
 
 using InType = InputData;
 using OutType = int;
