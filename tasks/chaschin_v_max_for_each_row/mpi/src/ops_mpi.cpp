@@ -93,12 +93,10 @@ void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::GatherResults(std::vec
                                                                         const std::vector<float> &local_out, int rank,
                                                                         int size, const RowRange &range) {
   if (rank == 0) {
-    // Сначала заполняем свои строки
     for (int ii = 0; ii < range.count; ++ii) {
       out[range.start + ii] = local_out[ii];
     }
 
-    // Получаем результаты от других процессов
     for (int pi = 1; pi < size; ++pi) {
       int nrows = static_cast<int>(out.size());
       int base = nrows / size;
@@ -136,7 +134,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   int rem = nrows % size;
   int start = (rank * base) + std::min(rank, rem);
   int count = base + (rank < rem ? 1 : 0);
-  RowRange range{start, count};
+  RowRange range{.start = start, .count = count};
 
   auto local_mat = DistributeRows(mat, rank, size, range);
   auto local_out = ComputeLocalMax(local_mat);
