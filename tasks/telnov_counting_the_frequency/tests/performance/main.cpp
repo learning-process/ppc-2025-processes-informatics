@@ -16,7 +16,7 @@ class TelnovCountingTheFrequencyPerfTests : public ppc::util::BaseRunPerfTests<I
     telnov_counting_the_frequency::g_data_string.resize(5'000'000, 'a');
 
     for (int i = 0; i < kCount_; i++) {
-        telnov_counting_the_frequency::g_data_string[i] = 'X';
+      telnov_counting_the_frequency::g_data_string[i] = 'X';
     }
 
     input_data_ = kCount_;
@@ -36,7 +36,8 @@ TEST_P(TelnovCountingTheFrequencyPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TelnovCountingTheFrequencyMPI, TelnovCountingTheFrequencySEQ>(PPC_SETTINGS_telnov_counting_the_frequency);
+    ppc::util::MakeAllPerfTasks<InType, TelnovCountingTheFrequencyMPI, TelnovCountingTheFrequencySEQ>(
+        PPC_SETTINGS_telnov_counting_the_frequency);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

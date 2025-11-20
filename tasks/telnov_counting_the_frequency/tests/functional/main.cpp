@@ -34,18 +34,18 @@ class TelnovCountingTheFrequencyFuncTestsProcesses : public ppc::util::BaseRunFu
     std::vector<uint8_t> img;
 
     {
-        std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_telnov_counting_the_frequency, "pic.jpg");
-        auto* data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-        if (data == nullptr) {
-            throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-        }
-        channels = STBI_rgb;
-        img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-        stbi_image_free(data);
+      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_telnov_counting_the_frequency, "pic.jpg");
+      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
+      if (data == nullptr) {
+        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
+      }
+      channels = STBI_rgb;
+      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
+      stbi_image_free(data);
 
-        if (width != height) {
-            throw std::runtime_error("width != height");
-        }
+      if (width != height) {
+        throw std::runtime_error("width != height");
+      }
     }
 
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -55,7 +55,7 @@ class TelnovCountingTheFrequencyFuncTestsProcesses : public ppc::util::BaseRunFu
     telnov_counting_the_frequency::g_data_string.resize(2'000'000, 'a');
 
     for (int i = 0; i < input_data_; i++) {
-        telnov_counting_the_frequency::g_data_string[i] = 'X';
+      telnov_counting_the_frequency::g_data_string[i] = 'X';
     }
   }
 
@@ -79,13 +79,15 @@ TEST_P(TelnovCountingTheFrequencyFuncTestsProcesses, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<TelnovCountingTheFrequencyMPI, InType>(kTestParam, PPC_SETTINGS_telnov_counting_the_frequency),
-                   ppc::util::AddFuncTask<TelnovCountingTheFrequencySEQ, InType>(kTestParam, PPC_SETTINGS_telnov_counting_the_frequency));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TelnovCountingTheFrequencyMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_telnov_counting_the_frequency),
+                                           ppc::util::AddFuncTask<TelnovCountingTheFrequencySEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_telnov_counting_the_frequency));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = TelnovCountingTheFrequencyFuncTestsProcesses::PrintFuncTestName<TelnovCountingTheFrequencyFuncTestsProcesses>;
+const auto kPerfTestName =
+    TelnovCountingTheFrequencyFuncTestsProcesses::PrintFuncTestName<TelnovCountingTheFrequencyFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, TelnovCountingTheFrequencyFuncTestsProcesses, kGtestValues, kPerfTestName);
 
