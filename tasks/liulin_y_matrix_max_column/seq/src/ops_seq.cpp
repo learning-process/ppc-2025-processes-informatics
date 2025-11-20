@@ -16,15 +16,18 @@ LiulinYMatrixMaxColumnSEQ::LiulinYMatrixMaxColumnSEQ(const InType &in) {
 }
 
 bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
 
-  if (in.empty() || in[0].empty())
+  if (in.empty() || in[0].empty()) {
     return false;
+  }
 
   size_t cols = in[0].size();
-  for (const auto& row : in)
-    if (row.size() != cols)
+  for (const auto &row : in) {
+    if (row.size() != cols) {
       return false;
+    }
+  }
 
   return GetOutput().empty();
 }
@@ -36,8 +39,8 @@ bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() {
 }
 
 bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
-  const auto& matrix = GetInput();
-  auto& out = GetOutput();
+  const auto &matrix = GetInput();
+  auto &out = GetOutput();
 
   const int rows = matrix.size();
   const int cols = matrix[0].size();
@@ -54,10 +57,11 @@ bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
     while (size > 1) {
       int new_size = 0;
       for (int i = 0; i < size; i += 2) {
-        if (i + 1 < size)
+        if (i + 1 < size) {
           temp[new_size] = std::max(temp[i], temp[i + 1]);
-        else
+        } else {
           temp[new_size] = temp[i];
+        }
 
         new_size++;
       }

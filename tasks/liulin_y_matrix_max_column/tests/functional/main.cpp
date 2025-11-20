@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <array>
 #include <cstddef>
 #include <fstream>
@@ -14,62 +15,54 @@
 
 namespace liulin_y_matrix_max_column {
 
-class LiulinYMatrixMaxColumnFuncTestsFromFile
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> 
-{
+class LiulinYMatrixMaxColumnFuncTestsFromFile : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
-    return std::get<1>(p);  // возвращаем string из tuple<int, string>
-}
+    return std::get<1>(p);
+  }
 
  protected:
   void SetUp() override {
-        // Получаем параметры теста
-        TestType params = std::get<
-            static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(
-                GetParam());
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-        // Берем имя файла (второй элемент tuple)
-        std::string filename = std::get<1>(params);
+    std::string filename = std::get<1>(params);
 
-        // Получаем абсолютный путь
-        std::string abs_path = ppc::util::GetAbsoluteTaskPath(
-            PPC_ID_liulin_y_matrix_max_column, filename);
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_liulin_y_matrix_max_column, filename);
 
-        // Открываем файл
-        std::ifstream file(abs_path + ".txt");
-        if (!file.is_open()) {
-            throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
-        }
-
-        int rows = 0;
-        int cols = 0;
-        file >> rows >> cols;
-
-        input_data_ = InType(rows, std::vector<int>(cols));
-
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                file >> input_data_[i][j];
-            }
-        }
-
-        // Вычисляем эталонный результат: max по каждому столбцу
-        exp_output_ = OutType(cols, std::numeric_limits<int>::min());
-        for (int c = 0; c < cols; c++) {
-            for (int r = 0; r < rows; r++) {
-                exp_output_[c] = std::max(exp_output_[c], input_data_[r][c]);
-            }
-        }
-
-        file.close();
+    std::ifstream file(abs_path + ".txt");
+    if (!file.is_open()) {
+      throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
     }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+    int rows = 0;
+    int cols = 0;
+    file >> rows >> cols;
+
+    input_data_ = InType(rows, std::vector<int>(cols));
+
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        file >> input_data_[i][j];
+      }
+    }
+
+    exp_output_ = OutType(cols, std::numeric_limits<int>::min());
+    for (int c = 0; c < cols; c++) {
+      for (int r = 0; r < rows; r++) {
+        exp_output_[c] = std::max(exp_output_[c], input_data_[r][c]);
+      }
+    }
+
+    file.close();
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
     return output_data == exp_output_;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  private:
   InType input_data_;
@@ -82,30 +75,19 @@ TEST_P(LiulinYMatrixMaxColumnFuncTestsFromFile, MaxByColumnsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(0, "tinyMatrix"),
-    std::make_tuple(1, "simpleMatrix"),
-    std::make_tuple(2, "randomMatrix"),
-    std::make_tuple(3, "bigMatrix")
-};
+const std::array<TestType, 4> kTestParam = {std::make_tuple(0, "tinyMatrix"), std::make_tuple(1, "simpleMatrix"),
+                                            std::make_tuple(2, "randomMatrix"), std::make_tuple(3, "bigMatrix")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<LiulinYMatrixMaxColumnMPI, InType>(
-        kTestParam, PPC_SETTINGS_liulin_y_matrix_max_column),
-    ppc::util::AddFuncTask<LiulinYMatrixMaxColumnSEQ, InType>(
-        kTestParam, PPC_SETTINGS_liulin_y_matrix_max_column));
+    ppc::util::AddFuncTask<LiulinYMatrixMaxColumnMPI, InType>(kTestParam, PPC_SETTINGS_liulin_y_matrix_max_column),
+    ppc::util::AddFuncTask<LiulinYMatrixMaxColumnSEQ, InType>(kTestParam, PPC_SETTINGS_liulin_y_matrix_max_column));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName =
-    LiulinYMatrixMaxColumnFuncTestsFromFile::PrintFuncTestName<
-        LiulinYMatrixMaxColumnFuncTestsFromFile>;
+    LiulinYMatrixMaxColumnFuncTestsFromFile::PrintFuncTestName<LiulinYMatrixMaxColumnFuncTestsFromFile>;
 
-INSTANTIATE_TEST_SUITE_P(
-    FileTests,
-    LiulinYMatrixMaxColumnFuncTestsFromFile,
-    kGtestValues,
-    kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYMatrixMaxColumnFuncTestsFromFile, kGtestValues, kFuncTestName);
 
 }  // namespace
 }  // namespace liulin_y_matrix_max_column
