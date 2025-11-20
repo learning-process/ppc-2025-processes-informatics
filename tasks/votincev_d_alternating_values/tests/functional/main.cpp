@@ -49,6 +49,12 @@ class VotincevDAlternatigValuesRunFuncTestsProcesses : public ppc::util::BaseRun
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    // процессы (кроме 0-го) не сверяются с ответом
+    if (output_data == -1) {
+      return true;
+    }
+
+    // 0й процесс должен иметь правильный результат
     return output_data == expected_res_;
   }
 

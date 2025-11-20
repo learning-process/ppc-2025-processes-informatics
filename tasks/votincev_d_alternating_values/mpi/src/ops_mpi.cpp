@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <array>
 #include <vector>
 
 #include "votincev_d_alternating_values/common/include/common.hpp"
@@ -16,141 +15,148 @@ VotincevDAlternatingValuesMPI::VotincevDAlternatingValuesMPI(const InType &in) {
   GetOutput() = 0;
 }
 
-// проверка данных на адекватность
+// проверка входных данных не нужна - пустой вектор тоже обрабатывается
 bool VotincevDAlternatingValuesMPI::ValidationImpl() {
   return true;
 }
 
-// препроцессинг (например в КГ)
+// нет ничего в PreProcessing
 bool VotincevDAlternatingValuesMPI::PreProcessingImpl() {
-  vect_data_ = GetInput();
-  GetOutput() = -1;  // специальное значение
   return true;
 }
 
 // код MPI
 bool VotincevDAlternatingValuesMPI::RunImpl() {
-  // double start_time = 0, end_time = 0;
-  // start_time = MPI_Wtime();
-
-  int all_swaps = 0;
-
+  // получаю кол-во процессов
   int process_n = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &process_n);  // получаю кол-во процессов
+  MPI_Comm_size(MPI_COMM_WORLD, &process_n);
 
+  // получаю ранг процесса
   int proc_rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);  // получаю ранк процесса
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
-  // если процессов больше, чем размер вектора
-  const int vector_size = static_cast<int>(vect_data_.size());
-  process_n = std::min(vector_size, process_n);
+  // вектор значений (его заполняет только 0й процесс)
+  std::vector<double> vect_data;
 
-  if (proc_rank == 0 && process_n > 0) {
-    all_swaps = ProcessMaster(process_n);  // главный процесс (распределяет + считает часть)
+  if (proc_rank != 0) {
+    GetOutput() = -1;  // специальное значение
+  }
+
+  // 0й процесс получает данные
+  if (proc_rank == 0) {
+    vect_data = GetInput();
+
+    // если процессов больше, чем размер вектора — уменьшаем
+    // например: вектор = 2 элемента, а процессов запущено 4
+    process_n = std::min<int>(process_n, static_cast<int>(vect_data.size()));
+  }
+
+  // рассылаю всем "актуальное" число процессов
+  // т.к. его мог уменьшить процесс 0
+  MPI_Bcast(&process_n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  // если вектор пустой
+  if (process_n == 0) {
+    return true;
+  }
+
+  if (proc_rank == 0) {
+    GetOutput() = ProcessMaster(process_n, vect_data);  // работа 0-го процесса
   } else if (proc_rank < process_n) {
-    ProcessWorker();  // процессы-рабочие (только считают)
+    ProcessWorker();  // работа процессов-работников
   }
-  MPI_Barrier(MPI_COMM_WORLD);
 
-  // end_time = MPI_Wtime();
-  // if(proc_rank == 0) {
-  //   std::cout << "MPI was working: " << end_time-start_time << "\n";
-  // }
-
-  SyncResults(all_swaps);  // посылаю результат всем процессам
   return true;
-}
-
-// работа 0-го процесса
-int VotincevDAlternatingValuesMPI::ProcessMaster(int process_n) {
-  int all_swaps = 0;
-  const int vector_size = static_cast<int>(vect_data_.size());
-  const int base = vector_size / process_n;
-  int remain = vector_size % process_n;
-  int start_id = 0;
-
-  // распределяем работу между процессами
-  for (int i = 1; i < process_n; i++) {
-    int part_size = base;
-    if (remain != 0) {
-      part_size++;
-      remain--;
-    }
-    part_size++;
-
-    // пересылаю индекс начала и конца процессу ранка i
-    SendRangeToWorker(start_id, start_id + part_size, i);
-    start_id += part_size - 1;
-  }
-
-  // считаем свою часть
-  all_swaps += CountSwaps(start_id + 1, vector_size);
-
-  // собираем результаты с процессов-работников
-  all_swaps += CollectWorkerResults(process_n);
-  return all_swaps;
-}
-
-// работа 1,2.. N-1 процессов
-void VotincevDAlternatingValuesMPI::ProcessWorker() {
-  std::array<int, 2> indices = ReceiveRange();
-  int swap_count = CountSwaps(indices[0] + 1, indices[1]);
-  SendResult(swap_count);
-}
-
-// отправка части вектора на обработку рабочему процессу
-void VotincevDAlternatingValuesMPI::SendRangeToWorker(int start, int end, int worker) {
-  std::array<int, 2> indices{start, end};
-  MPI_Send(indices.data(), 2, MPI_INT, worker, 0, MPI_COMM_WORLD);
-}
-
-// рабочие процессы получают данные
-std::array<int, 2> VotincevDAlternatingValuesMPI::ReceiveRange() {
-  std::array<int, 2> indices{0, 0};
-  MPI_Recv(indices.data(), 2, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  return {indices[0], indices[1]};
-}
-
-// подсчет числа чередований знаков между соседними элементами вектора (его части)
-int VotincevDAlternatingValuesMPI::CountSwaps(int start, int end) {
-  int count = 0;
-  const int vector_size = static_cast<int>(vect_data_.size());
-  const int safe_end = std::min(end, vector_size);
-
-  for (int j = start; j < safe_end; j++) {
-    if ((vect_data_[j - 1] < 0 && vect_data_[j] >= 0) || (vect_data_[j - 1] >= 0 && vect_data_[j] < 0)) {
-      count++;
-    }
-  }
-  return count;
-}
-
-// сбор с процессов-работников сколько каждый насчитал чередований
-int VotincevDAlternatingValuesMPI::CollectWorkerResults(int process_n) {
-  int total = 0;
-  for (int i = 1; i < process_n; i++) {
-    int tmp = 0;
-    MPI_Recv(&tmp, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    total += tmp;
-  }
-  return total;
-}
-
-// для отправки результата (кол-во чередований, которое насчитал рабочий процесс)
-void VotincevDAlternatingValuesMPI::SendResult(int result) {
-  MPI_Send(&result, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-}
-
-// 0й процесс делится результатом с процессами-работниками
-void VotincevDAlternatingValuesMPI::SyncResults(int &all_swaps) {
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(&all_swaps, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  GetOutput() = all_swaps;
-  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 bool VotincevDAlternatingValuesMPI::PostProcessingImpl() {
   return true;
+}
+
+// ============ дополнительные функции ============
+
+// вспомогательная, if с такими условиями выглядит страшно
+bool VotincevDAlternatingValuesMPI::IsSignChange(const double &a, const double &b) {
+  return ((a < 0 && b >= 0) || (a >= 0 && b < 0));
+}
+
+// работа 0-го процесса (главного)
+int VotincevDAlternatingValuesMPI::ProcessMaster(int process_n, const std::vector<double> &vect_data) {
+  int all_swaps = 0;
+  const int n = static_cast<int>(vect_data.size());
+
+  // делим на части
+  const int base = n / process_n;  // минимум на обработку
+  int remain = n % process_n;      // остаток (распределяем между первыми)
+
+  int start_id = 0;
+
+  // распределяем работу между процессами-рабочими
+  for (int worker = 1; worker < process_n; worker++) {
+    int part_size = base;
+
+    // если остались "лишние" элементы — раздаём по одному первым процессам
+    if (remain > 0) {
+      part_size++;
+      remain--;
+    }
+
+    // каждому процессу (кроме последнего) даём ещё +1 элемент справа,
+    // чтобы проверить возможное чередование между границами блоков
+    part_size++;
+
+    // отправляем размер части
+    MPI_Send(&part_size, 1, MPI_INT, worker, 0, MPI_COMM_WORLD);
+
+    // отправляем сами данные
+    MPI_Send(vect_data.data() + start_id, part_size, MPI_DOUBLE, worker, 0, MPI_COMM_WORLD);
+
+    // сдвигаем начало следующего куска
+    start_id += part_size - 1;  // -1 потому что правый сосед был добавлен
+  }
+
+  // 0й процесс считает пересесчения в своей части
+  int part_size = n - start_id;
+  for (int i = start_id + 1; i < start_id + part_size; i++) {
+    if (IsSignChange(vect_data[i - 1], vect_data[i])) {
+      all_swaps++;
+    }
+  }
+
+  // собираем ответы от всех рабочих процессов
+  for (int worker = 1; worker < process_n; worker++) {
+    int tmp = 0;
+    MPI_Recv(&tmp, 1, MPI_INT, worker, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    all_swaps += tmp;
+  }
+
+  return all_swaps;
+}
+
+// работа процессов 1,2, ...
+void VotincevDAlternatingValuesMPI::ProcessWorker() {
+  int part_size = 0;
+
+  // получаю, сколько элементов прислал процесс 0
+  MPI_Recv(&part_size, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  // выделяю память под кусок
+  std::vector<double> data(part_size);
+
+  // получаю свою часть вектора
+  MPI_Recv(data.data(), part_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  int swap_count = 0;
+
+  // считаю чередования знаков
+  for (int i = 1; i < part_size; i++) {
+    if (IsSignChange(data[i - 1], data[i])) {
+      swap_count++;
+    }
+  }
+
+  // отправляю результат назад 0-му процессу
+  MPI_Send(&swap_count, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 }
 
 }  // namespace votincev_d_alternating_values

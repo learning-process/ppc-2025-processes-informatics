@@ -18,23 +18,24 @@ bool VotincevDAlternatingValuesSEQ::ValidationImpl() {
 }
 
 bool VotincevDAlternatingValuesSEQ::PreProcessingImpl() {
-  vect_data_ = GetInput();
   return true;
 }
 
 bool VotincevDAlternatingValuesSEQ::RunImpl() {
-  // auto start_time = std::chrono::high_resolution_clock::now();
   int all_swaps = 0;
-  for (size_t j = 1; j < vect_data_.size(); j++) {
-    if ((vect_data_[j - 1] < 0 && vect_data_[j] >= 0) || (vect_data_[j - 1] >= 0 && vect_data_[j] < 0)) {
+  std::vector<double> vect_data = GetInput();
+  for (size_t i = 1; i < vect_data.size(); i++) {
+    if (IsSignChange(vect_data[i - 1], vect_data[i])) {
       all_swaps++;
     }
   }
-  // auto end_time = std::chrono::high_resolution_clock::now();
-  // auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-  // std::cout << "SEQ was working:" << duration.count() / 1000000.0 << " seconds" << std::endl;
   GetOutput() = all_swaps;
   return true;
+}
+
+// вспомогательная, if с такими условиями выглядит страшно
+bool VotincevDAlternatingValuesSEQ::IsSignChange(const double &a, const double &b) {
+  return ((a < 0 && b >= 0) || (a >= 0 && b < 0));
 }
 
 bool VotincevDAlternatingValuesSEQ::PostProcessingImpl() {
