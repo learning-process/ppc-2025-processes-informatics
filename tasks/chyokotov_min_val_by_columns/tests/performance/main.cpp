@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <climits>
 #include <cstddef>
+#include <vector>
 
 #include "chyokotov_min_val_by_columns/common/include/common.hpp"
 #include "chyokotov_min_val_by_columns/mpi/include/ops_mpi.hpp"
