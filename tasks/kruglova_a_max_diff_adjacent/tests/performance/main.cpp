@@ -1,47 +1,45 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 #include "kruglova_a_max_diff_adjacent/mpi/include/ops_mpi.hpp"
 #include "kruglova_a_max_diff_adjacent/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"  // <-- PERF header
+#include "util/include/perf_test_util.hpp"
 
 namespace kruglova_a_max_diff_adjacent {
 
 class KruglovaAMaxDiffAdjacentPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  static constexpr int k_count = 4000000;
-  InType input_data_;
-  OutType expected_output_;
+  static constexpr int kCount = 4000000;
+  InType input_data;
+  OutType expected_output = 0.0F;
 
   void SetUp() override {
-    input_data_.resize(k_count);
+    input_data.resize(kCount);
 
-    float acc = 0.0f;
-    for (int i = 0; i < k_count; ++i) {
-      float step = ((i % 5) - 2) * 0.7f + ((i % 3) - 1) * 0.3f;
+    float acc = 0.0F;
+    for (int i = 0; i < kCount; ++i) {
+      float step = (static_cast<float>((i % 5) - 2) * 0.7F) + (static_cast<float>((i % 3) - 1) * 0.3F);
       acc += step;
-      input_data_[i] = acc;
+      input_data[i] = acc;
     }
 
-    expected_output_ = 0.0f;
-    if (input_data_.size() > 1) {
-      for (size_t i = 0; i + 1 < input_data_.size(); ++i) {
-        float diff = std::abs(input_data_[i + 1] - input_data_[i]);
-        if (diff > expected_output_) {
-          expected_output_ = diff;
-        }
+    if (input_data.size() > 1) {
+      for (size_t i = 0; i + 1 < input_data.size(); ++i) {
+        float diff = std::abs(input_data[i + 1] - input_data[i]);
+        expected_output = std::max(diff, expected_output);
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_output_;
+    return output_data == expected_output;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 

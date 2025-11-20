@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -17,7 +18,7 @@ class KruglovaAMaxDiffAdjacentMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  float LocalMaxDiff(std::vector<float> &local_vec);
+  static float LocalMaxDiff(const std::vector<float> &local_vec);
 };
 
 }  // namespace kruglova_a_max_diff_adjacent

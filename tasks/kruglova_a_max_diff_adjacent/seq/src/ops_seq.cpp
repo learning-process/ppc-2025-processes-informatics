@@ -1,7 +1,7 @@
 #include "../include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
-#include <numeric>
 #include <vector>
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
@@ -12,7 +12,7 @@ namespace kruglova_a_max_diff_adjacent {
 KruglovaAMaxDiffAdjacentSEQ::KruglovaAMaxDiffAdjacentSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0.0f;
+  GetOutput() = 0.0F;
 }
 
 bool KruglovaAMaxDiffAdjacentSEQ::ValidationImpl() {
@@ -21,7 +21,7 @@ bool KruglovaAMaxDiffAdjacentSEQ::ValidationImpl() {
 }
 
 bool KruglovaAMaxDiffAdjacentSEQ::PreProcessingImpl() {
-  GetOutput() = 0.0f;
+  GetOutput() = 0.0F;
   return true;
 }
 
@@ -32,9 +32,7 @@ bool KruglovaAMaxDiffAdjacentSEQ::RunImpl() {
   float max_diff = std::abs(vec[1] - vec[0]);
   for (size_t i = 1; i < vec.size(); ++i) {
     float diff = std::abs(vec[i] - vec[i - 1]);
-    if (diff > max_diff) {
-      max_diff = diff;
-    }
+    max_diff = std::max(diff, max_diff);
   }
   out = max_diff;
   return true;
