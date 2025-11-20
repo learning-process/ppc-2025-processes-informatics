@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <string>
 
 #include "lifanov_k_adj_inv_count/common/include/common.hpp"
 #include "lifanov_k_adj_inv_count/mpi/include/ops_mpi.hpp"

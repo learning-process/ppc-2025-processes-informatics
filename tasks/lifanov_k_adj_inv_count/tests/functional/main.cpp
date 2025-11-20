@@ -41,7 +41,7 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
  private:
   OutType expected_{};
-  InType data_{};
+  InType data_;
 };
 
 namespace {
@@ -72,7 +72,7 @@ std::vector<FuncParam> LoadTestParams() {
   return cases;
 }
 
-static const std::vector<FuncParam> kFuncParams = LoadTestParams();
+const std::vector<FuncParam> kFuncParams = LoadTestParams();
 
 }  // namespace
 
@@ -80,7 +80,27 @@ TEST_P(LifanovKRunFuncTests, AdjacentInversionCount) {
   ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(kFuncParams),
-                         LifanovKRunFuncTests::PrintTestParam);
+namespace {
+
+using FuncParamGenerator = ::testing::internal::ParamGenerator<FuncParam>;
+
+FuncParamGenerator MakeFuncParamsGenerator() {
+  return ::testing::ValuesIn(kFuncParams);
+}
+
+std::string MakeFuncParamName(const ::testing::TestParamInfo<FuncParam> &info) {
+  return LifanovKRunFuncTests::PrintTestParam(info);
+}
+
+const int kFunctionalTestsRegistered = [] {
+  auto &registry = ::testing::UnitTest::GetInstance()->parameterized_test_registry();
+  auto *holder = registry.GetTestSuitePatternHolder<LifanovKRunFuncTests>(
+      "LifanovKRunFuncTests", ::testing::internal::CodeLocation(__FILE__, __LINE__));
+  holder->AddTestSuiteInstantiation("FunctionalTests", &MakeFuncParamsGenerator, &MakeFuncParamName, __FILE__,
+                                    __LINE__);
+  return 0;
+}();
+
+}  // namespace
 
 }  // namespace lifanov_k_adj_inv_count
