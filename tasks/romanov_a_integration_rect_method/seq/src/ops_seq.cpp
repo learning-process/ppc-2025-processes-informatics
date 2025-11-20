@@ -13,16 +13,8 @@ RomanovAIntegrationRectMethodSEQ::RomanovAIntegrationRectMethodSEQ(const InType 
 }
 
 bool RomanovAIntegrationRectMethodSEQ::ValidationImpl() {
-  if (!IsEqual(GetOutput(), 0.0)) {
-    return false;
-  }
-  if (std::get<3>(GetInput()) <= 0) {
-    return false;
-  }
-  if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
-    return false;
-  }
-  return true;
+  return (IsEqual(GetOutput(), 0.0) && (std::get<3>(GetInput()) > 0) &&
+          (std::get<1>(GetInput()) < std::get<2>(GetInput())));
 }
 
 bool RomanovAIntegrationRectMethodSEQ::PreProcessingImpl() {
