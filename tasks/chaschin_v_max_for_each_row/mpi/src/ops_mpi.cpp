@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -93,14 +94,14 @@ namespace {
 inline void GetRangeForRank(int rank, int total, int world_size, int &start, int &count) {
   int base = total / world_size;
   int rem = total % world_size;
-  start = rank * base + std::min(rank, rem);
+  start = (rank * base) + std::min(rank, rem);
   count = base + (rank < rem ? 1 : 0);
 }
 
-inline void RecvRows(int srcRank, std::vector<float> &out, int start, int count) {
+inline void RecvRows(int src_rank, std::vector<float> &out, int start, int count) {
   std::vector<float> tmp(count);
-  MPI_Recv(tmp.data(), count, MPI_FLOAT, srcRank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  std::copy(tmp.begin(), tmp.end(), out.begin() + start);
+  MPI_Recv(tmp.data(), count, MPI_FLOAT, src_rank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  std::ranges::copy(tmp, out.begin() + start);
 }
 }  // namespace
 
@@ -120,7 +121,9 @@ void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::GatherResults(std::vec
 
   int total = static_cast<int>(out.size());
   for (int pi = 1; pi < size; ++pi) {
-    int start, count;
+    int start = 0;
+    int count = 0;
+
     GetRangeForRank(pi, total, size, start, count);
     if (count > 0) {
       RecvRows(pi, out, start, count);
