@@ -1,6 +1,7 @@
 #include "ovsyannikov_n_num_mistm_in_two_str/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <algorithm>
 #include <vector>
 
@@ -60,8 +61,8 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
 
   if (proc_rank == 0) {
     main_buff.resize(static_cast<size_t>(total_len) * 2);
-    const auto& seq_one = GetInput().first;
-    const auto& seq_two = GetInput().second;
+    const auto &seq_one = GetInput().first;
+    const auto &seq_two = GetInput().second;
     int iter_pos = 0;
 
     for (int i = 0; i < proc_num; ++i) {
@@ -69,8 +70,7 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
       int read_from = shifts[i];
 
       if (part_len > 0) {
-        std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len,
-                  main_buff.begin() + iter_pos);
+        std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, main_buff.begin() + iter_pos);
       }
       if (part_len > 0) {
         std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len,
@@ -86,8 +86,8 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
   int my_chunk = elems_per_proc[proc_rank];
   std::vector<char> local_store(static_cast<size_t>(my_chunk) * 2);
 
-  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR,
-               local_store.data(), 2 * my_chunk, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR, local_store.data(), 2 * my_chunk,
+               MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int priv_err_cnt = 0;
   for (int i = 0; i < my_chunk; ++i) {

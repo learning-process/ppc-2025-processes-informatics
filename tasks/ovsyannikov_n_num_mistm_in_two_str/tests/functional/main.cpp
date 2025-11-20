@@ -55,28 +55,19 @@ TEST_P(OvsyannikovNRunFuncTestsProcesses, CalculateMismatches) {
 }
 
 // Расширенный набор тестов
-const std::array<int, 14> kTestLengths = {
-    0,          // Пустая строка
-    1,          // Минимальная строка
-    3,          // Нечетное, малое
-    17,         // Простое число
-    64,         // Степень двойки
-    100,        // Стандартное
-    127,        // Простое число около степени двойки
-    1024,
-    54321,
-    100000,
-    1000000,
-    1234567,
-    10000000,
-    50000000
-};
+const std::array<int, 14> kTestLengths = {0,    // Пустая строка
+                                          1,    // Минимальная строка
+                                          3,    // Нечетное, малое
+                                          17,   // Простое число
+                                          64,   // Степень двойки
+                                          100,  // Стандартное
+                                          127,  // Простое число около степени двойки
+                                          1024, 54321, 100000, 1000000, 1234567, 10000000, 50000000};
 
-const auto kTaskBundle = std::tuple_cat(
-    ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrMPI, InType>(kTestLengths,
-                                                                    PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str),
-    ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrSEQ, InType>(kTestLengths,
-                                                                    PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str));
+const auto kTaskBundle = std::tuple_cat(ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrMPI, InType>(
+                                            kTestLengths, PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str),
+                                        ppc::util::AddFuncTask<OvsyannikovNNumMistmInTwoStrSEQ, InType>(
+                                            kTestLengths, PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str));
 
 INSTANTIATE_TEST_SUITE_P(AllTests, OvsyannikovNRunFuncTestsProcesses, ppc::util::ExpandToValues(kTaskBundle));
 
