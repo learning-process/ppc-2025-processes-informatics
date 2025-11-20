@@ -1,15 +1,9 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
-
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "liulin_y_matrix_max_column/common/include/common.hpp"
@@ -20,90 +14,80 @@
 
 namespace liulin_y_matrix_max_column {
 
-class LiulinYMatrixMaxColumnFuncTests
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class LiulinYMatrixMaxColumnFuncTestsFromFile
+    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> 
+{
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" +
-           std::get<1>(test_param);
-  }
+  static std::string PrintTestParam(const TestType &p) {
+    return std::get<1>(p);  // возвращаем string из tuple<int, string>
+}
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
+        // Получаем параметры теста
+        TestType params = std::get<
+            static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(
+                GetParam());
 
-    {
-      std::string abs_path =
-          ppc::util::GetAbsoluteTaskPath(PPC_ID_liulin_y_matrix_max_column,
-                                         "pic.jpg");
-      auto *data =
-          stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " +
-                                 std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(
-          data,
-          data + static_cast<ptrdiff_t>(width * height * channels));
-      stbi_image_free(data);
+        // Берем имя файла (второй элемент tuple)
+        std::string filename = std::get<1>(params);
 
-      if (width != height) {
-        throw std::runtime_error("Test requires square image");
-      }
+        // Получаем абсолютный путь
+        std::string abs_path = ppc::util::GetAbsoluteTaskPath(
+            PPC_ID_liulin_y_matrix_max_column, filename);
+
+        // Открываем файл
+        std::ifstream file(abs_path + ".txt");
+        if (!file.is_open()) {
+            throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
+        }
+
+        int rows = 0;
+        int cols = 0;
+        file >> rows >> cols;
+
+        input_data_ = InType(rows, std::vector<int>(cols));
+
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                file >> input_data_[i][j];
+            }
+        }
+
+        // Вычисляем эталонный результат: max по каждому столбцу
+        exp_output_ = OutType(cols, std::numeric_limits<int>::min());
+        for (int c = 0; c < cols; c++) {
+            for (int r = 0; r < rows; r++) {
+                exp_output_[c] = std::max(exp_output_[c], input_data_[r][c]);
+            }
+        }
+
+        file.close();
     }
 
-    const int N = width;
-
-    // ---------- Создание матрицы (InType) ----------
-    input_data_.assign(N, std::vector<int>(N, 0));
-
-    // Комбинируем 3 RGB канала → одно число (например сумма)
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        int idx = (i * N + j) * channels;
-        int pixel = img[idx] + img[idx + 1] + img[idx + 2];
-        input_data_[i][j] = pixel;
-      }
-    }
-
-    // ---------- Ожидаемый результат (OutType) ----------
-    expected_output_.assign(N, 0);
-    for (int col = 0; col < N; col++) {
-      int mx = input_data_[0][col];
-      for (int row = 1; row < N; row++) {
-        mx = std::max(mx, input_data_[row][col]);
-      }
-      expected_output_[col] = mx;
-    }
+  bool CheckTestOutputData(OutType& output_data) final {
+    return output_data == exp_output_;
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_output_;
-  }
-
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 
  private:
   InType input_data_;
-  OutType expected_output_;
+  OutType exp_output_;
 };
 
 namespace {
 
-TEST_P(LiulinYMatrixMaxColumnFuncTests, MatmulFromPic) {
+TEST_P(LiulinYMatrixMaxColumnFuncTestsFromFile, MaxByColumnsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(3, "3"),
-    std::make_tuple(5, "5"),
-    std::make_tuple(7, "7")};
+const std::array<TestType, 4> kTestParam = {
+    std::make_tuple(0, "tinyMatrix"),
+    std::make_tuple(1, "simpleMatrix"),
+    std::make_tuple(2, "randomMatrix"),
+    std::make_tuple(3, "bigMatrix")
+};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LiulinYMatrixMaxColumnMPI, InType>(
@@ -113,15 +97,15 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    LiulinYMatrixMaxColumnFuncTests::PrintFuncTestName<
-        LiulinYMatrixMaxColumnFuncTests>;
+const auto kFuncTestName =
+    LiulinYMatrixMaxColumnFuncTestsFromFile::PrintFuncTestName<
+        LiulinYMatrixMaxColumnFuncTestsFromFile>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests,
-                         LiulinYMatrixMaxColumnFuncTests,
-                         kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(
+    FileTests,
+    LiulinYMatrixMaxColumnFuncTestsFromFile,
+    kGtestValues,
+    kFuncTestName);
 
 }  // namespace
-
 }  // namespace liulin_y_matrix_max_column

@@ -1,22 +1,26 @@
 #include <mpi.h>
 #include <vector>
 #include <algorithm>
+#include <limits>
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
 #include "util/include/util.hpp"
 
 namespace liulin_y_matrix_max_column {
 
-// Турнирный максимум для одного столбца
 int LiulinYMatrixMaxColumnMPI::tournament_max(const std::vector<int>& column) {
+    if (column.empty()) return std::numeric_limits<int>::min();
+    
     int size = column.size();
     std::vector<int> temp = column;
+    
     while (size > 1) {
         int new_size = 0;
         for (int i = 0; i < size; i += 2) {
-            if (i + 1 < size)
+            if (i + 1 < size) {
                 temp[new_size] = std::max(temp[i], temp[i + 1]);
-            else
+            } else {
                 temp[new_size] = temp[i];
+            }
             new_size++;
         }
         size = new_size;
@@ -32,18 +36,18 @@ LiulinYMatrixMaxColumnMPI::LiulinYMatrixMaxColumnMPI(const InType &in) {
 
 bool LiulinYMatrixMaxColumnMPI::ValidationImpl() {
     const auto& in = GetInput();
-    if (in.empty() || in[0].empty()) return false;
+    if (in.empty()) return false;
 
     size_t cols = in[0].size();
-    for (const auto& row : in)
+    for (const auto& row : in) {
         if (row.size() != cols) return false;
+    }
 
-    return GetOutput().empty();
+    return true;
 }
 
 bool LiulinYMatrixMaxColumnMPI::PreProcessingImpl() {
-    size_t cols = GetInput()[0].size();
-    GetOutput().assign(cols, std::numeric_limits<int>::min());
+    // Инициализация выхода будет в RunImpl после определения cols
     return true;
 }
 
@@ -51,63 +55,114 @@ bool LiulinYMatrixMaxColumnMPI::RunImpl() {
     const auto& in = GetInput();
     auto& out = GetOutput();
 
-    if (in.empty()) return false;
-
-    int rows = static_cast<int>(in.size());
-    int cols = static_cast<int>(in[0].size());
-
-    MPI_Init(nullptr, nullptr);
-
-    int world_size, world_rank;
+    int world_size = 0, world_rank = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    // Вычисляем, сколько столбцов на процесс
-    std::vector<int> sendcounts(world_size), displs(world_size);
-    int base = cols / world_size;
-    int rem = cols % world_size;
-    for (int i = 0; i < world_size; ++i) {
-        int local_cols = base + (i < rem ? 1 : 0);
-        sendcounts[i] = local_cols * rows;
-        displs[i] = (i == 0 ? 0 : displs[i - 1] + sendcounts[i - 1]);
+    // Определяем размеры матрицы
+    int rows = 0, cols = 0;
+    if (world_rank == 0) {
+        if (!in.empty() && !in[0].empty()) {
+            rows = static_cast<int>(in.size());
+            cols = static_cast<int>(in[0].size());
+        }
     }
 
-    // Flatten column-major
+    // Рассылаем размеры всем процессам
+    MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Проверяем валидность размеров
+    if (rows <= 0 || cols <= 0) {
+        out.clear();
+        return true;
+    }
+
+    // Инициализируем выходной вектор на всех процессах
+    out.resize(cols, std::numeric_limits<int>::min());
+
+    // Распределение столбцов по процессам
+    std::vector<int> sendcounts(world_size, 0);
+    std::vector<int> displs(world_size, 0);
+    
+    int base_cols = cols / world_size;
+    int remainder = cols % world_size;
+    
+    for (int i = 0; i < world_size; ++i) {
+        int local_cols = base_cols + (i < remainder ? 1 : 0);
+        sendcounts[i] = local_cols * rows;
+        if (i > 0) {
+            displs[i] = displs[i-1] + sendcounts[i-1];
+        }
+    }
+
+    // Подготовка данных для рассылки (только на root)
     std::vector<int> flat_matrix;
     if (world_rank == 0) {
         flat_matrix.resize(rows * cols);
-        for (int j = 0; j < cols; ++j)
-            for (int i = 0; i < rows; ++i)
+        // Column-major order
+        for (int j = 0; j < cols; ++j) {
+            for (int i = 0; i < rows; ++i) {
                 flat_matrix[j * rows + i] = in[i][j];
+            }
+        }
     }
 
+    // Определяем локальные размеры
     int local_cols = sendcounts[world_rank] / rows;
-    std::vector<int> local_flat(local_cols * rows);
+    int local_elements = local_cols * rows;
+    std::vector<int> local_data(local_elements);
 
-    MPI_Scatterv(flat_matrix.data(), sendcounts.data(), displs.data(), MPI_INT,
-                 local_flat.data(), local_flat.size(), MPI_INT, 0, MPI_COMM_WORLD);
+    // Рассылаем данные
+    MPI_Scatterv(
+        world_rank == 0 ? flat_matrix.data() : nullptr,
+        sendcounts.data(),
+        displs.data(),
+        MPI_INT,
+        local_data.data(),
+        local_elements,
+        MPI_INT,
+        0,
+        MPI_COMM_WORLD
+    );
 
-    // Каждый процесс считает максимум по своим столбцам
-    std::vector<int> local_max(local_cols);
+    // Вычисляем локальные максимумы
+    std::vector<int> local_maxes(local_cols, std::numeric_limits<int>::min());
     for (int j = 0; j < local_cols; ++j) {
-        std::vector<int> col(rows);
-        for (int i = 0; i < rows; ++i)
-            col[i] = local_flat[j * rows + i];
-        local_max[j] = tournament_max(col);
+        std::vector<int> column(rows);
+        for (int i = 0; i < rows; ++i) {
+            column[i] = local_data[j * rows + i];
+        }
+        local_maxes[j] = tournament_max(column);
     }
 
-    // Собираем результаты обратно на root
-    std::vector<int> recvcounts(world_size), displs_gather(world_size);
-    for (int i = 0; i < world_size; ++i)
-        recvcounts[i] = sendcounts[i] / rows;
-    for (int i = 0; i < world_size; ++i)
-        displs_gather[i] = (i == 0 ? 0 : displs_gather[i - 1] + recvcounts[i - 1]);
+    // Подготавливаем параметры для сбора
+    std::vector<int> recvcounts(world_size);
+    std::vector<int> displs_gather(world_size, 0);
+    
+    for (int i = 0; i < world_size; ++i) {
+        recvcounts[i] = sendcounts[i] / rows; // количество столбцов
+        if (i > 0) {
+            displs_gather[i] = displs_gather[i-1] + recvcounts[i-1];
+        }
+    }
 
-    MPI_Gatherv(local_max.data(), local_max.size(), MPI_INT,
-                out.data(), recvcounts.data(), displs_gather.data(), MPI_INT,
-                0, MPI_COMM_WORLD);
+    // Собираем результаты
+    MPI_Gatherv(
+        local_maxes.data(),
+        local_cols,
+        MPI_INT,
+        out.data(),
+        recvcounts.data(),
+        displs_gather.data(),
+        MPI_INT,
+        0,
+        MPI_COMM_WORLD
+    );
 
-    MPI_Finalize();
+    // Синхронизируем результаты на всех процессах
+    MPI_Bcast(out.data(), cols, MPI_INT, 0, MPI_COMM_WORLD);
+
     return true;
 }
 
