@@ -16,14 +16,7 @@ RozenbergAMatrixColumnSumMPI::RozenbergAMatrixColumnSumMPI(const InType &in) {
 }
 
 bool RozenbergAMatrixColumnSumMPI::ValidationImpl() {
-  bool rows_empty = false;
-  for (const auto &i : GetInput()) {
-    if (i.empty()) {
-      rows_empty = true;
-      break;
-    }
-  }
-  return (!(GetInput().empty())) && (GetOutput().empty()) && (!rows_empty);
+  return (!(GetInput().empty())) && (GetOutput().empty());
 }
 
 bool RozenbergAMatrixColumnSumMPI::PreProcessingImpl() {
@@ -59,11 +52,11 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
 
   MPI_Allreduce(local_res.data(), GetOutput().data(), columns, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  return !(GetOutput().empty());
+  return true;
 }
 
 bool RozenbergAMatrixColumnSumMPI::PostProcessingImpl() {
-  return !(GetOutput().empty());
+  return true;
 }
 
 }  // namespace rozenberg_a_matrix_column_sum
