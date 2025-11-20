@@ -11,7 +11,6 @@ OvsyannikovNNumMistmInTwoStrSEQ::OvsyannikovNNumMistmInTwoStrSEQ(const InType &i
 }
 
 bool OvsyannikovNNumMistmInTwoStrSEQ::ValidationImpl() {
-  // Длины строк должны совпадать
   return GetInput().first.size() == GetInput().second.size();
 }
 

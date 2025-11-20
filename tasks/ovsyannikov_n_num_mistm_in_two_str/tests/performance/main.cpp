@@ -13,13 +13,11 @@ namespace ovsyannikov_n_num_mistm_in_two_str {
 class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    // Размер 10 миллионов символов
     const int benchmark_size = 10000000;
 
     std::string sample_a(benchmark_size, 'a');
     std::string sample_b(benchmark_size, 'a');
 
-    // Чередуем a и b в str2
     target_val_ = 0;
     for (int i = 0; i < benchmark_size; ++i) {
       if (i % 2 == 0) {
