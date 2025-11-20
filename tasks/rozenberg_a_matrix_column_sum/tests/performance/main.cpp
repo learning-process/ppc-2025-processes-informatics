@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <string>
+#include <vector>
+
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
 #include "rozenberg_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
 #include "rozenberg_a_matrix_column_sum/seq/include/ops_seq.hpp"
@@ -8,8 +12,8 @@
 namespace rozenberg_a_matrix_column_sum {
 
 class RozenbergAMatrixColumnSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
-  OutType output_data_{};
+  InType input_data_;
+  OutType output_data_;
 
   void SetUp() override {
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_rozenberg_a_matrix_column_sum, "perf_test.txt");

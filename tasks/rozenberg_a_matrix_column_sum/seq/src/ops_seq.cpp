@@ -1,10 +1,10 @@
 #include "rozenberg_a_matrix_column_sum/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace rozenberg_a_matrix_column_sum {
 
@@ -16,8 +16,8 @@ RozenbergAMatrixColumnSumSEQ::RozenbergAMatrixColumnSumSEQ(const InType &in) {
 
 bool RozenbergAMatrixColumnSumSEQ::ValidationImpl() {
   bool rows_empty = false;
-  for (size_t i = 0; i < GetInput().size(); i++) {
-    if (GetInput()[i].empty()) {
+  for (const auto &i : GetInput()) {
+    if (i.empty()) {
       rows_empty = true;
       break;
     }
@@ -37,9 +37,9 @@ bool RozenbergAMatrixColumnSumSEQ::RunImpl() {
 
   std::fill(GetOutput().begin(), GetOutput().end(), 0);
 
-  for (size_t i = 0; i < GetInput().size(); i++) {
-    for (size_t j = 0; j < GetInput()[i].size(); j++) {
-      GetOutput()[j] += GetInput()[i][j];
+  for (auto &i : GetInput()) {
+    for (size_t j = 0; j < i.size(); j++) {
+      GetOutput()[j] += i[j];
     }
   }
 

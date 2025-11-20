@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
@@ -63,7 +59,7 @@ class RozenbergAMatrixColumnFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType output_data_;
 };
 

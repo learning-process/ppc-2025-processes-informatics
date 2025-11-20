@@ -2,11 +2,11 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace rozenberg_a_matrix_column_sum {
 
@@ -18,8 +18,8 @@ RozenbergAMatrixColumnSumMPI::RozenbergAMatrixColumnSumMPI(const InType &in) {
 
 bool RozenbergAMatrixColumnSumMPI::ValidationImpl() {
   bool rows_empty = false;
-  for (size_t i = 0; i < GetInput().size(); i++) {
-    if (GetInput()[i].empty()) {
+  for (const auto &i : GetInput()) {
+    if (i.empty()) {
       rows_empty = true;
       break;
     }
@@ -42,11 +42,11 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int rows = GetInput().size();
-  int columns = GetInput()[0].size();
+  size_t rows = GetInput().size();
+  size_t columns = GetInput()[0].size();
 
-  int chunk = rows / size;
-  int remainder = rows % size;
+  int chunk = (int)rows / size;
+  int remainder = (int)rows % size;
 
   int begin = (chunk * rank) + std::min(rank, remainder);
   int end = begin + chunk + (rank < remainder ? 1 : 0);
