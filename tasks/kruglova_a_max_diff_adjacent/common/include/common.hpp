@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "task/include/task.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace kruglova_a_max_diff_adjacent {
 
