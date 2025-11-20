@@ -31,10 +31,6 @@ bool RozenbergAMatrixColumnSumSEQ::PreProcessingImpl() {
 }
 
 bool RozenbergAMatrixColumnSumSEQ::RunImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
-
   std::fill(GetOutput().begin(), GetOutput().end(), 0);
 
   for (auto &i : GetInput()) {

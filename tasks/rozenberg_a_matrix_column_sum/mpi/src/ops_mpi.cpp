@@ -32,10 +32,6 @@ bool RozenbergAMatrixColumnSumMPI::PreProcessingImpl() {
 }
 
 bool RozenbergAMatrixColumnSumMPI::RunImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
-
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
