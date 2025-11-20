@@ -34,7 +34,7 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
     for (int i = 0; i < size; ++i) {
       for (int j = 0; j < size; ++j) {
-        input_data_[i][j] = static_cast<float>((i * i % 7) * 1.5F + (j * j % 5) * 0.7F);
+        input_data[i][j] = static_cast<float>((i + 1) * (j + 2));
       }
     }
 
