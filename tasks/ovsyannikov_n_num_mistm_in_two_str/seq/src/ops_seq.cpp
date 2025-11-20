@@ -2,6 +2,9 @@
 
 #include <cstddef>
 
+// Clang-Tidy требует явного подключения файла, где определен InType
+#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
+
 namespace ovsyannikov_n_num_mistm_in_two_str {
 
 OvsyannikovNNumMistmInTwoStrSEQ::OvsyannikovNNumMistmInTwoStrSEQ(const InType &in) {
