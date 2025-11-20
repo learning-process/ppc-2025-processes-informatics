@@ -39,7 +39,7 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   InType input_data_ = {};
   OutType output_data_;
 
-  bool IsMPINonRootProcess() const {
+  [[nodiscard]] static bool IsMPINonRootProcess() {
     return ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0;
   }
 
