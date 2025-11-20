@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace morozova_s_matrix_max_value {
 

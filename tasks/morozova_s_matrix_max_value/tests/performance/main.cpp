@@ -11,7 +11,7 @@
 namespace morozova_s_matrix_max_value {
 
 class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     int size = 500;
