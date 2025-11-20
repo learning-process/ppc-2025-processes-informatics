@@ -1,6 +1,6 @@
 #include "../include/char_freq_seq.hpp"
 
-#include "../../common/include/common.hpp"
+#include <algorithm>
 
 namespace shekhirev_v_char_freq_seq {
 

@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <tuple>
-#include <utility>  // для std::move
 
 #include "task/include/task.hpp"
 
@@ -14,7 +13,7 @@ struct InputData {
   std::string str;
   char target;
 
-  InputData() : target(0) {}
+  InputData() : str(), target(0) {}
 
   InputData(std::string s, char t) : str(std::move(s)), target(t) {}
 
@@ -22,11 +21,15 @@ struct InputData {
     return str == other.str && target == other.target;
   }
 
+  // Определяем operator<< как friend ПРЯМО ВНУТРИ структуры.
+  // Это позволяет ADL (Argument Dependent Lookup) находить его мгновенно из любого места.
   friend std::ostream &operator<<(std::ostream &os, const InputData &data) {
     os << "{ str: \"" << data.str << "\", target: '" << data.target << "' }";
     return os;
   }
 };
+
+// (Старое определение operator<< удали отсюда, оно теперь внутри структуры)
 
 using InType = InputData;
 using OutType = int;
