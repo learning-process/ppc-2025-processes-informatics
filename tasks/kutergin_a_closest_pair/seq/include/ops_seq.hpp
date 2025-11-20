@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "kutergin_a_closest_pair/common/include/common.hpp"
 #include "task/include/task.hpp"
 

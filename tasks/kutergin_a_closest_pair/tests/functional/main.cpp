@@ -1,23 +1,20 @@
 #include <gtest/gtest.h>
-
 #include <array>
 #include <cstddef>
 #include <iostream>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
-
+#include <vector>  
 #include "kutergin_a_closest_pair/common/include/common.hpp"
 #include "kutergin_a_closest_pair/mpi/include/ops_mpi.hpp"
 #include "kutergin_a_closest_pair/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
+#include "util/include/func_test_util.hpp"  
 
 namespace kutergin_a_closest_pair {
 
 class KuterginAClosestPairFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  KuterginAClosestPairFuncTests() : expected_(0) {}
+  KuterginAClosestPairFuncTests() = default;
 
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
@@ -45,7 +42,7 @@ class KuterginAClosestPairFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  private:
   InType input_data_;
-  OutType expected_;
+  OutType expected_ = 0;
 };
 
 namespace {
@@ -66,6 +63,15 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(std::make_tuple(v5, -1), "test5"), std::make_tuple(std::make_tuple(v6, -1), "test6"),
     std::make_tuple(std::make_tuple(v7, 0), "test7"),  std::make_tuple(std::make_tuple(v8, 1), "test8"),
     std::make_tuple(std::make_tuple(v9, 0), "test9"),  std::make_tuple(std::make_tuple(v10, 2), "test10")};
+
+
+TEST(KuterginAClosestPairMPIFuncTestsEmpty, LocalDataEmptyTest) {
+    InType input_data{42};
+    KuterginAClosestPairMPI task(input_data);
+
+    ASSERT_TRUE(task.Run());
+    EXPECT_EQ(task.GetOutput(), -1);
+}
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KuterginAClosestPairMPI, InType>(kTestParam, PPC_SETTINGS_kutergin_a_closest_pair),

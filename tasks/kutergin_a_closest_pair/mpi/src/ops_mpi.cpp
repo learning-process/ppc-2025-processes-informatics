@@ -1,14 +1,12 @@
 #include "kutergin_a_closest_pair/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-
 #include <algorithm>
 #include <limits>
-#include <random>
 #include <vector>
+#include <cmath>  
 
 #include "kutergin_a_closest_pair/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kutergin_a_closest_pair {
 
@@ -26,14 +24,13 @@ bool KuterginAClosestPairMPI::PreProcessingImpl() {
   return true;
 }
 
-// Вспомогательные функции (не методы класса)
 namespace {
 
 std::vector<int> DistributeData(int rank, int size, int n, const std::vector<int> &v) {
   int local_size = n / size;
   int remainder = n % size;
 
-  int start = rank * local_size + std::min(rank, remainder);
+  int start = (rank * local_size) + std::min(rank, remainder);
   int end = start + local_size + (rank < remainder ? 1 : 0);
 
   if (rank == size - 1) {
@@ -45,7 +42,7 @@ std::vector<int> DistributeData(int rank, int size, int n, const std::vector<int
     std::copy(v.begin() + start, v.begin() + end, local_data.begin());
 
     for (int i = 1; i < size; ++i) {
-      int other_start = i * local_size + std::min(i, remainder);
+      int other_start = (i * local_size) + std::min(i, remainder);
       int other_end = other_start + local_size + (i < remainder ? 1 : 0);
       if (i == size - 1) {
         other_end = n;
@@ -78,7 +75,7 @@ int FindLocalMin(const std::vector<int> &local_data, int start_idx, int &found_i
 int CalculateStartIndex(int rank, int size, int n) {
   int local_size = n / size;
   int remainder = n % size;
-  return rank * local_size + std::min(rank, remainder);
+  return (rank * local_size) + std::min(rank, remainder);
 }
 
 int CalculateEndIndex(int rank, int size, int n) {
@@ -121,23 +118,19 @@ bool KuterginAClosestPairMPI::RunImpl() {
     return true;
   }
 
-  // Распределение данных
   auto local_data = DistributeData(rank, size, n, v);
   if (local_data.empty()) {
     GetOutput() = -1;
     return true;
   }
 
-  // Локальный поиск
   int start_idx = CalculateStartIndex(rank, size, n);
   int local_idx = -1;
   int local_min = FindLocalMin(local_data, start_idx, local_idx);
 
-  // Проверка границ
   int end = CalculateEndIndex(rank, size, n);
   local_min = CheckBoundary(rank, size, end, n, v, local_data, local_min, local_idx);
 
-  // Глобальная редукция
   struct MinIndex {
     int val = 0;
     int idx = -1;

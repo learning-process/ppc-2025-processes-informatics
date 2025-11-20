@@ -13,7 +13,7 @@ KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) : data_() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = -1;
-  data_ = in;
+  data_(in);
 }
 
 bool KuterginAClosestPairSEQ::ValidationImpl() {
