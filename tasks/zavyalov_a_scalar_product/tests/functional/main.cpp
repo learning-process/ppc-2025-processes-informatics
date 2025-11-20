@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 #include <stb/stb_image.h>
 
 #include <algorithm>

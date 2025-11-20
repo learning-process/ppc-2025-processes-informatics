@@ -31,8 +31,8 @@ bool ZavyalovAScalarProductMPI::PreProcessingImpl() {
   return true;
 }
 bool ZavyalovAScalarProductMPI::RunImpl() {
-  const double* left_data = nullptr;
-  const double* right_data = nullptr;
+  const double *left_data = nullptr;
+  const double *right_data = nullptr;
 
   int worldSize;
   MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
@@ -74,8 +74,8 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
 
   MPI_Scatterv(left_data, sendcounts.data(), displs.data(), MPI_DOUBLE, local_left.data(), elements_count, MPI_DOUBLE,
                0, MPI_COMM_WORLD);
-  MPI_Scatterv(right_data, sendcounts.data(), displs.data(), MPI_DOUBLE, local_right.data(), elements_count,
-               MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(right_data, sendcounts.data(), displs.data(), MPI_DOUBLE, local_right.data(), elements_count, MPI_DOUBLE,
+               0, MPI_COMM_WORLD);
 
   double curRes = 0.0;
   for (int i = 0; i < elements_count; i++) {
