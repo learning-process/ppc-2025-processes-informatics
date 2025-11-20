@@ -11,7 +11,7 @@ namespace kruglova_a_max_diff_adjacent {
 
 class KruglovaAMaxDiffAdjacentPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  static constexpr int k_count = 2000000;
+  static constexpr int k_count = 4000000;
   InType input_data_;
   OutType expected_output_;
 
