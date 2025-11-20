@@ -7,8 +7,8 @@
 
 namespace kruglova_a_max_diff_adjacent {
 
-using InType = int;
-using OutType = int;
+using InType = std::vector<float>;
+using OutType = float;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
