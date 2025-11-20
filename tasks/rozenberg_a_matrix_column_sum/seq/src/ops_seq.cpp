@@ -10,7 +10,7 @@ namespace rozenberg_a_matrix_column_sum {
 
 RozenbergAMatrixColumnSumSEQ::RozenbergAMatrixColumnSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput().assign(in.begin(), in.end());
   GetOutput().clear();
 }
 
