@@ -89,32 +89,41 @@ std::vector<float> chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeL
   return local_out;
 }
 
+namespace {
+inline void GetRangeForRank(int rank, int total, int world_size, int &start, int &count) {
+  int base = total / world_size;
+  int rem = total % world_size;
+  start = rank * base + std::min(rank, rem);
+  count = base + (rank < rem ? 1 : 0);
+}
+
+inline void RecvRows(int srcRank, std::vector<float> &out, int start, int count) {
+  std::vector<float> tmp(count);
+  MPI_Recv(tmp.data(), count, MPI_FLOAT, srcRank, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  std::copy(tmp.begin(), tmp.end(), out.begin() + start);
+}
+}  // namespace
+
 void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::GatherResults(std::vector<float> &out,
                                                                         const std::vector<float> &local_out, int rank,
                                                                         int size, const RowRange &range) {
-  if (rank == 0) {
-    for (int ii = 0; ii < range.count; ++ii) {
-      out[range.start + ii] = local_out[ii];
-    }
-
-    for (int pi = 1; pi < size; ++pi) {
-      int nrows = static_cast<int>(out.size());
-      int base = nrows / size;
-      int rem = nrows % size;
-      int start = (pi * base) + std::min(pi, rem);
-      int count = base + (pi < rem ? 1 : 0);
-
-      if (count > 0) {
-        std::vector<float> tmp(count);
-        MPI_Recv(tmp.data(), count, MPI_FLOAT, pi, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        for (int ii = 0; ii < count; ++ii) {
-          out[start + ii] = tmp[ii];
-        }
-      }
-    }
-  } else {
+  if (rank != 0) {
     if (!local_out.empty()) {
       MPI_Send(local_out.data(), static_cast<int>(local_out.size()), MPI_FLOAT, 0, 2, MPI_COMM_WORLD);
+    }
+    return;
+  }
+
+  for (int i = 0; i < range.count; ++i) {
+    out[range.start + i] = local_out[i];
+  }
+
+  int total = static_cast<int>(out.size());
+  for (int pi = 1; pi < size; ++pi) {
+    int start, count;
+    GetRangeForRank(pi, total, size, start, count);
+    if (count > 0) {
+      RecvRows(pi, out, start, count);
     }
   }
 }
