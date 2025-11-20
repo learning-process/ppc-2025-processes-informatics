@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <vector>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
