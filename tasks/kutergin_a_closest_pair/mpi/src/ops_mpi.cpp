@@ -1,10 +1,11 @@
 #include "kutergin_a_closest_pair/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <vector>
-#include <cmath>  
 
 #include "kutergin_a_closest_pair/common/include/common.hpp"
 
