@@ -234,7 +234,6 @@ void LeonovaAMostDiffNeighVecElemsMPI::ReceiveLocalData(int rank, int actual_pro
                                                         const std::vector<int> &input_vec,
                                                         const std::vector<int> &sizes, const std::vector<int> &offsets,
                                                         std::vector<int> &local_data, int size) {
-
   std::vector<int> send_counts(size, 0);
   std::vector<int> displacements(size, 0);
   std::vector<int> recv_counts(size, 0);
@@ -245,16 +244,16 @@ void LeonovaAMostDiffNeighVecElemsMPI::ReceiveLocalData(int rank, int actual_pro
     recv_counts[i] = sizes[i];
   }
 
-
   if (rank == 0) {
     if (!local_data.empty()) {
       std::copy(input_vec.begin() + offsets[0], input_vec.begin() + offsets[0] + sizes[0], local_data.begin());
     }
   }
 
-  MPI_Scatterv(
-    (rank == 0) ? input_vec.data() : nullptr, send_counts.data(), displacements.data(), MPI_INT,
-    local_data.data(), recv_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
+  // Явное преобразование размера для избежания narrowing conversion
+  int recv_count = static_cast<int>(local_data.size());
+  MPI_Scatterv((rank == 0) ? input_vec.data() : nullptr, send_counts.data(), displacements.data(), MPI_INT,
+               local_data.data(), recv_count, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::FindLocalMaxDiff(const std::vector<int> &local_data, int &local_max_diff,
@@ -277,7 +276,8 @@ void LeonovaAMostDiffNeighVecElemsMPI::GatherAndProcessResults(int rank, int act
     int second;
   };
 
-  ProcessResult local_result{local_max_diff, local_first, local_second};
+  // Используем designated initializers
+  ProcessResult local_result{.diff = local_max_diff, .first = local_first, .second = local_second};
   std::vector<ProcessResult> all_results(size);
 
   MPI_Gather(&local_result, 3, MPI_INT, all_results.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
@@ -304,16 +304,24 @@ void LeonovaAMostDiffNeighVecElemsMPI::GatherAndProcessResults(int rank, int act
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::BroadcastResult(int rank) {
-  int result_data[2] = {0, 0};
+  // Используем std::array вместо C-style array
+  std::array<int, 2> result_data{0, 0};
 
   if (rank == 0) {
     result_data[0] = std::get<0>(GetOutput());
     result_data[1] = std::get<1>(GetOutput());
   }
 
-  MPI_Bcast(result_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
+  // Используем data() для получения указателя на массив
+  MPI_Bcast(result_data.data(), 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     GetOutput() = std::make_tuple(result_data[0], result_data[1]);
   }
 }
+
+bool LeonovaAMostDiffNeighVecElemsMPI::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace leonova_a_most_diff_neigh_vec_elems
