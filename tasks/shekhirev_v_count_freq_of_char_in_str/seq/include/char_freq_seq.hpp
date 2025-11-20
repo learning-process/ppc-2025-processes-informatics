@@ -19,4 +19,4 @@ class CharFreqSequential : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}
+}  // namespace shekhirev_v_char_freq_seq
