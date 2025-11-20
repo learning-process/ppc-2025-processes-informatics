@@ -42,6 +42,8 @@ TEST_P(LifanovKRunPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
+namespace {
+
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LifanovKAdjacentInversionCountMPI, LifanovKAdjacentInversionCountSEQ>(
         PPC_SETTINGS_lifanov_k_adj_inv_count);
@@ -51,5 +53,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = LifanovKRunPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, LifanovKRunPerfTests, kGtestValues, kPerfTestName);
+
+}  // namespace
 
 }  // namespace lifanov_k_adj_inv_count
