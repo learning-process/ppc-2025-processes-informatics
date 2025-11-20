@@ -11,7 +11,7 @@ namespace rozenberg_a_matrix_column_sum {
 RozenbergAMatrixColumnSumSEQ::RozenbergAMatrixColumnSumSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = {};
+  GetOutput().clear();
 }
 
 bool RozenbergAMatrixColumnSumSEQ::ValidationImpl() {
