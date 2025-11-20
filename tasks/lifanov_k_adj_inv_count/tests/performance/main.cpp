@@ -10,14 +10,14 @@
 namespace lifanov_k_adj_inv_count {
 
 class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr std::size_t kSize = 200'000'000;
+  static constexpr std::size_t kSize = 250'000'000;
   InType input_data_;
   OutType expected_{0};
 
   void SetUp() override {
     input_data_.resize(kSize);
 
-    input_data_[0] = 100;
+    input_data_[0] = 1000;
     for (std::size_t i = 1; i + 1 < kSize; ++i) {
       input_data_[i] = static_cast<int>(i);
     }
