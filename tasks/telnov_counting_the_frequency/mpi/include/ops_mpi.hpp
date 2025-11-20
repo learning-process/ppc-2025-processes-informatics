@@ -1,7 +1,7 @@
 #pragma once
 
-#include "telnov_counting_the_frequency/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "telnov_counting_the_frequency/common/include/common.hpp"
 
 namespace telnov_counting_the_frequency {
 

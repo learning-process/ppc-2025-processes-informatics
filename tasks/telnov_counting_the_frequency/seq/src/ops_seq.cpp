@@ -24,13 +24,16 @@ bool TelnovCountingTheFrequencySEQ::PreProcessingImpl() {
 }
 
 bool TelnovCountingTheFrequencySEQ::RunImpl() {
-  const std::string& s = g_data_string;
-    long long cnt = 0;
-    for (char c : s)
-        if (c == 'X') cnt++;
+  const std::string &s = g_data_string;
+  long long cnt = 0;
+  for (char c : s) {
+    if (c == 'X') {
+      cnt++;
+    }
+  }
 
-    GetOutput() = cnt;
-    return true;
+  GetOutput() = cnt;
+  return true;
 }
 
 bool TelnovCountingTheFrequencySEQ::PostProcessingImpl() {
