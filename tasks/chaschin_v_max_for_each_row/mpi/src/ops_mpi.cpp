@@ -27,22 +27,18 @@ bool ChaschinVMaxForEachRow::PreProcessingImpl() {
   return true;
 }
 
-chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::RowRange
-chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::ComputeRange(int nrows, int rank, int size) {
-  int base = nrows / size;
-  int rem = nrows % size;
-  int start = (rank * base) + std::min(rank, rem);
-  int count = base + (rank < rem ? 1 : 0);
-  return RowRange{.start = start, .count = count};
-}
-
 void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::SendRowsToWorkers(const std::vector<std::vector<float>> &mat,
                                                                             int size) {
   for (int pi = 1; pi < size; ++pi) {
-    RowRange r = ComputeRange(static_cast<int>(mat.size()), pi, size);
+    // Inline ComputeRange
+    int nrows = static_cast<int>(mat.size());
+    int base = nrows / size;
+    int rem = nrows % size;
+    int start = (pi * base) + std::min(pi, rem);
+    int count = base + (pi < rem ? 1 : 0);
 
-    for (int ii = 0; ii < r.count; ++ii) {
-      const auto &row = mat[r.start + ii];
+    for (int ii = 0; ii < count; ++ii) {
+      const auto &row = mat[start + ii];
       int len = static_cast<int>(row.size());
 
       MPI_Send(&len, 1, MPI_INT, pi, 100, MPI_COMM_WORLD);
@@ -97,17 +93,24 @@ void chaschin_v_max_for_each_row::ChaschinVMaxForEachRow::GatherResults(std::vec
                                                                         const std::vector<float> &local_out, int rank,
                                                                         int size, const RowRange &range) {
   if (rank == 0) {
+    // Сначала заполняем свои строки
     for (int ii = 0; ii < range.count; ++ii) {
       out[range.start + ii] = local_out[ii];
     }
 
+    // Получаем результаты от других процессов
     for (int pi = 1; pi < size; ++pi) {
-      RowRange r = ComputeRange(static_cast<int>(out.size()), pi, size);
-      if (r.count > 0) {
-        std::vector<float> tmp(r.count);
-        MPI_Recv(tmp.data(), r.count, MPI_FLOAT, pi, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        for (int ii = 0; ii < r.count; ++ii) {
-          out[r.start + ii] = tmp[ii];
+      int nrows = static_cast<int>(out.size());
+      int base = nrows / size;
+      int rem = nrows % size;
+      int start = (pi * base) + std::min(pi, rem);
+      int count = base + (pi < rem ? 1 : 0);
+
+      if (count > 0) {
+        std::vector<float> tmp(count);
+        MPI_Recv(tmp.data(), count, MPI_FLOAT, pi, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        for (int ii = 0; ii < count; ++ii) {
+          out[start + ii] = tmp[ii];
         }
       }
     }
@@ -128,7 +131,13 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   int nrows = (rank == 0) ? static_cast<int>(mat.size()) : 0;
   MPI_Bcast(&nrows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  RowRange range = ComputeRange(nrows, rank, size);
+  // Inline вычисление RowRange
+  int base = nrows / size;
+  int rem = nrows % size;
+  int start = (rank * base) + std::min(rank, rem);
+  int count = base + (rank < rem ? 1 : 0);
+  RowRange range{start, count};
+
   auto local_mat = DistributeRows(mat, rank, size, range);
   auto local_out = ComputeLocalMax(local_mat);
 
@@ -136,6 +145,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
     GetOutput().resize(nrows);
   }
   GatherResults(GetOutput(), local_out, rank, size, range);
+
   auto &out = GetOutput();
   if (rank != 0) {
     out.resize(nrows);
@@ -144,6 +154,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   if (nrows > 0) {
     MPI_Bcast(out.data(), nrows, MPI_FLOAT, 0, MPI_COMM_WORLD);
   }
+
   return true;
 }
 
