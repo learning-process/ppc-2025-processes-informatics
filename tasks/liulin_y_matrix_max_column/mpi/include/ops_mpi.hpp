@@ -13,10 +13,13 @@ class LiulinYMatrixMaxColumnMPI : public BaseTask {
   explicit LiulinYMatrixMaxColumnMPI(const InType &in);
 
  private:
+  static int tournament_max(const std::vector<int>& column);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-};
+  
 
+};
+  
 }  // namespace liulin_y_matrix_max_column
