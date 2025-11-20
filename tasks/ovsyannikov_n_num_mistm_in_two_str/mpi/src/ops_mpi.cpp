@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
+
 namespace ovsyannikov_n_num_mistm_in_two_str {
 
 OvsyannikovNNumMistmInTwoStrMPI::OvsyannikovNNumMistmInTwoStrMPI(const InType &in) {
@@ -70,13 +72,10 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
       int part_len = elems_per_proc[i];
       int read_from = shifts[i];
 
-      if (part_len > 0) {
-        std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, main_buff.begin() + iter_pos);
-      }
-      if (part_len > 0) {
-        std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len,
-                  main_buff.begin() + iter_pos + part_len);
-      }
+      std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, main_buff.begin() + iter_pos);
+
+      std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len,
+                main_buff.begin() + iter_pos + part_len);
 
       byte_counts[i] = 2 * part_len;
       byte_shifts[i] = iter_pos;
