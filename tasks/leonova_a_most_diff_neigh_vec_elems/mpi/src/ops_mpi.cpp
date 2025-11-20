@@ -67,48 +67,50 @@ void LeonovaAMostDiffNeighVecElemsMPI::ProcessLocalData(int rank, int actual_pro
   int chunk_size = total_size / actual_processes;
   int remainder = total_size % actual_processes;
 
-  int my_size = chunk_size + (rank < remainder ? 1 : 0) + 1;
-  int my_offset = (rank * chunk_size) + std::min(rank, remainder);
+  std::vector<int> sizes(actual_processes);
+  std::vector<int> offsets(actual_processes);
 
-  if (rank == actual_processes - 1) {
-    my_size = total_size - my_offset;
+  int offset = 0;
+  for (int i = 0; i < actual_processes; ++i) {
+    sizes[i] = chunk_size + (i < remainder ? 1 : 0) + 1;
+    offsets[i] = offset;
+    offset += sizes[i] - 1;
   }
 
-  std::vector<int> local_data(my_size);
-  ReceiveLocalData(rank, actual_processes, input_vec, my_size, local_data, total_size);
+  if (actual_processes > 0) {
+    sizes[actual_processes - 1] = total_size - offsets[actual_processes - 1];
+  }
 
+  int my_size = (rank < actual_processes) ? sizes[rank] : 0;
+  std::vector<int> local_data(my_size);
+
+  ReceiveLocalData(rank, actual_processes, input_vec, sizes, offsets, local_data);
   FindLocalMaxDiff(local_data, local_max_diff, local_first, local_second);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::ReceiveLocalData(int rank, int actual_processes,
-                                                        const std::vector<int> &input_vec, int my_size,
-                                                        std::vector<int> &local_data, int total_size) {
+                                                        const std::vector<int> &input_vec,
+                                                        const std::vector<int> &sizes, const std::vector<int> &offsets,
+                                                        std::vector<int> &local_data) {
   if (rank == 0) {
-    for (int index = 0; index < my_size; ++index) {
-      local_data[index] = input_vec[index];
+    if (!local_data.empty()) {
+      std::copy(input_vec.begin() + offsets[0], input_vec.begin() + offsets[0] + sizes[0], local_data.begin());
     }
 
-    for (int dest = 1; dest < actual_processes; ++dest) {
-      SendDataToProcess(dest, actual_processes, input_vec, total_size);
+    if (actual_processes > 1) {
+      std::vector<int> send_counts(actual_processes);
+      std::vector<int> displacements(actual_processes);
+
+      for (int i = 0; i < actual_processes; ++i) {
+        send_counts[i] = sizes[i];
+        displacements[i] = offsets[i];
+      }
+      MPI_Scatterv(input_vec.data(), send_counts.data(), displacements.data(), MPI_INT, local_data.data(),
+                   (rank < actual_processes) ? sizes[rank] : 0, MPI_INT, 0, MPI_COMM_WORLD);
     }
   } else {
-    MPI_Recv(local_data.data(), my_size, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INT, local_data.data(), local_data.size(), MPI_INT, 0, MPI_COMM_WORLD);
   }
-}
-
-void LeonovaAMostDiffNeighVecElemsMPI::SendDataToProcess(int dest, int actual_processes,
-                                                         const std::vector<int> &input_vec, int total_size) {
-  int chunk_size = total_size / actual_processes;
-  int remainder = total_size % actual_processes;
-
-  int dest_size = chunk_size + (dest < remainder ? 1 : 0) + 1;
-  int dest_offset = (dest * chunk_size) + std::min(dest, remainder);
-
-  if (dest == actual_processes - 1) {
-    dest_size = total_size - dest_offset;
-  }
-
-  MPI_Send(input_vec.data() + dest_offset, dest_size, MPI_INT, dest, 0, MPI_COMM_WORLD);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::FindLocalMaxDiff(const std::vector<int> &local_data, int &local_max_diff,
@@ -125,47 +127,50 @@ void LeonovaAMostDiffNeighVecElemsMPI::FindLocalMaxDiff(const std::vector<int> &
 
 void LeonovaAMostDiffNeighVecElemsMPI::GatherAndProcessResults(int rank, int actual_processes, int local_max_diff,
                                                                int local_first, int local_second, int size) {
-  if (rank >= actual_processes) {
-    local_max_diff = -1;
-    local_first = 0;
-    local_second = 0;
-  }
+  struct ProcessResult {
+    int diff;
+    int first;
+    int second;
+  };
 
-  std::vector<int> all_diffs(size);
-  std::vector<int> all_firsts(size);
-  std::vector<int> all_seconds(size);
+  ProcessResult local_result{local_max_diff, local_first, local_second};
+  std::vector<ProcessResult> all_results(size);
 
-  MPI_Gather(&local_max_diff, 1, MPI_INT, all_diffs.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Gather(&local_first, 1, MPI_INT, all_firsts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Gather(&local_second, 1, MPI_INT, all_seconds.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&local_result, 3, MPI_INT, all_results.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     int global_max_diff = -1;
-    int global_first = 0;
-    int global_second = 0;
+    int best_index = -1;
 
     for (int index = 0; index < actual_processes; ++index) {
-      if (all_diffs[index] > global_max_diff) {
-        global_max_diff = all_diffs[index];
-        global_first = all_firsts[index];
-        global_second = all_seconds[index];
+      if (all_results[index].diff > global_max_diff) {
+        global_max_diff = all_results[index].diff;
+        best_index = index;
       }
     }
-    GetOutput() = std::make_tuple(global_first, global_second);
+
+    if (best_index != -1) {
+      GetOutput() = std::make_tuple(all_results[best_index].first, all_results[best_index].second);
+    } else {
+      GetOutput() = std::make_tuple(0, 0);
+    }
   }
 
   BroadcastResult(rank);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::BroadcastResult(int rank) {
-  int result_first = std::get<0>(GetOutput());
-  int result_second = std::get<1>(GetOutput());
+  int result_data[2] = {0, 0};
 
-  MPI_Bcast(&result_first, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&result_second, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (rank == 0) {
+    result_data[0] = std::get<0>(GetOutput());
+    result_data[1] = std::get<1>(GetOutput());
+  }
+
+  MPI_Bcast(result_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
-    GetOutput() = std::make_tuple(result_first, result_second);
+    GetOutput() = std::make_tuple(result_data[0], result_data[1]);
   }
 }
 

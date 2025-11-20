@@ -112,10 +112,10 @@ for i от 0 до n-2:
 
 |Режим	|Процессы |Время, с	|Ускорение  |Эффективность|
 |-------|---------|---------|-----------|-------------|
-|seq	  |1	      |0.00867  |1.00	      |N/A          |
-|mpi	  |2	      |0.01478  |0.59       |29.5%        |
-|mpi	  |4	      |0.02194  |0.40       |10.0%        |
-|mpi	  |8	      |0.04191  |0.21	      |2.6%         |
+|seq	  |1	      |0.00806  |1.00	      |N/A          |
+|mpi	  |2	      |0.01625  |0.50       |25.0%        |
+|mpi	  |4	      |0.01551  |0.52       |13.0%        |
+|mpi	  |8	      |0.05420  |0.15	      |1.9%         |
 
 2. n = 30 000 000
 
@@ -126,24 +126,28 @@ for i от 0 до n-2:
 |mpi   |4        |0.13068  |0.18      |4.5%         |
 |mpi   |8        |0.18740  |0.13      |1.6%         |
 
+3. n = 50 000 000
+
+|Режим |Процессы |Время, с |Ускорение |Эффективность|
+|------|---------|---------|----------|-------------|
+|seq   |1        |0.04052  |1.00      |N/A          |
+|mpi   |2        |0.12003  |0.34	    |17.0%        |
+|mpi   |4        |0.13024  |0.31      |7.8%         |
+|mpi   |8        |0.29564  |0.14      |1.8%         |
+
 Ускорение вычислялось по формуле (seq_time / mpi_time)
 Эффективность вычислялась по формуле (Ускорение / N) * 100%, где N - количество процессов
 
 ### 7.3 Анализ результатов
-MPI версия демонстрирует замедление по сравнению с последовательной реализацией. Лучшая эффективность достигалась на 2 процессах: 19.5-29.5%. Эффективность падает с ростом количества процессов: на 8 процессах эффективность падает до 1.6-2.6%.
+MPI версия демонстрирует замедление по сравнению с последовательной реализацией. Лучшая эффективность достигалась на 2 процессах: 17.0-25.0%. Эффективность падает с ростом количества процессов: на 8 процессах эффективность падает до 1.6-1.9%.
 
-Для большего размера вектора (30M) эффективность стала заметно ниже.
+Для большего размера вектора (30M и 50М) эффективность стала заметно ниже.
 
 Возможные причины низкой производительности:
-- Высокие накладные расходы на распределение данных и сбор результатов перекрывают выгоду от параллельного исполнения;
-- Относительно небольшая вычислительная линейная сложность алгоритма O(n);
-- Нехватка свободных ядер для вычислений;
+- Высокие накладные расходы на коммуникацию между процессами перекрывают выгоду от параллельного исполнения;
+- Относительно небольшая вычислительная линейная сложность алгоритма O(n) и выполнение простых операций;
+- Нехватка свободных ядер для вычислений (использование флага --oversubscribe);
 - Нехватка оперативной памяти.
-
-Основные узкие места производительности:
-- Распределение данных через последовательные MPI_Send/MPI_Recv;
-- Сбор результатов через MPI_Gather (3 отдельных вызова);
-- Рассылка результата через 2 отдельных MPI_Bcast.
 
 ## 8. Conclusions
 Был разработан алгоритм для нахождения наиболее отличающихся по значению соседних элементов вектора. Реализованные последовательная и параллельная MPI-реализации успешно проходят все функциональные тесты, включая обработку граничных случаев и работу с отрицательными числами.
@@ -203,48 +207,56 @@ void LeonovaAMostDiffNeighVecElemsMPI::ProcessLocalData(int rank, int actual_pro
   int chunk_size = total_size / actual_processes;
   int remainder = total_size % actual_processes;
 
-  int my_size = chunk_size + (rank < remainder ? 1 : 0) + 1;
-  int my_offset = (rank * chunk_size) + std::min(rank, remainder);
-
-  if (rank == actual_processes - 1) {
-    my_size = total_size - my_offset;
+  std::vector<int> sizes(actual_processes);
+  std::vector<int> offsets(actual_processes);
+  
+  int offset = 0;
+  for (int i = 0; i < actual_processes; ++i) {
+    sizes[i] = chunk_size + (i < remainder ? 1 : 0) + 1;
+    offsets[i] = offset;
+    offset += sizes[i] - 1;
+  }
+  
+  if (actual_processes > 0) {
+    sizes[actual_processes - 1] = total_size - offsets[actual_processes - 1];
   }
 
+  int my_size = (rank < actual_processes) ? sizes[rank] : 0;
   std::vector<int> local_data(my_size);
-  ReceiveLocalData(rank, actual_processes, input_vec, my_size, local_data, total_size);
-
+  
+  ReceiveLocalData(rank, actual_processes, input_vec, sizes, offsets, local_data);
   FindLocalMaxDiff(local_data, local_max_diff, local_first, local_second);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::ReceiveLocalData(int rank, int actual_processes,
-                                                        const std::vector<int> &input_vec, int my_size,
-                                                        std::vector<int> &local_data, int total_size) {
+                                                        const std::vector<int> &input_vec, 
+                                                        const std::vector<int>& sizes,
+                                                        const std::vector<int>& offsets,
+                                                        std::vector<int> &local_data) {
   if (rank == 0) {
-    for (int index = 0; index < my_size; ++index) {
-      local_data[index] = input_vec[index];
+    if (!local_data.empty()) {
+      std::copy(input_vec.begin() + offsets[0], 
+                input_vec.begin() + offsets[0] + sizes[0], 
+                local_data.begin());
     }
-
-    for (int dest = 1; dest < actual_processes; ++dest) {
-      SendDataToProcess(dest, actual_processes, input_vec, total_size);
+    
+    if (actual_processes > 1) {
+      std::vector<int> send_counts(actual_processes);
+      std::vector<int> displacements(actual_processes);
+      
+      for (int i = 0; i < actual_processes; ++i) {
+        send_counts[i] = sizes[i];
+        displacements[i] = offsets[i];
+      }
+      MPI_Scatterv(input_vec.data(), send_counts.data(), displacements.data(), MPI_INT,
+                   local_data.data(), (rank < actual_processes) ? sizes[rank] : 0, MPI_INT,
+                   0, MPI_COMM_WORLD);
     }
   } else {
-    MPI_Recv(local_data.data(), my_size, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INT,
+                 local_data.data(), local_data.size(), MPI_INT,
+                 0, MPI_COMM_WORLD);
   }
-}
-
-void LeonovaAMostDiffNeighVecElemsMPI::SendDataToProcess(int dest, int actual_processes,
-                                                         const std::vector<int> &input_vec, int total_size) {
-  int chunk_size = total_size / actual_processes;
-  int remainder = total_size % actual_processes;
-
-  int dest_size = chunk_size + (dest < remainder ? 1 : 0) + 1;
-  int dest_offset = (dest * chunk_size) + std::min(dest, remainder);
-
-  if (dest == actual_processes - 1) {
-    dest_size = total_size - dest_offset;
-  }
-
-  MPI_Send(input_vec.data() + dest_offset, dest_size, MPI_INT, dest, 0, MPI_COMM_WORLD);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::FindLocalMaxDiff(const std::vector<int> &local_data, int &local_max_diff,
@@ -261,51 +273,50 @@ void LeonovaAMostDiffNeighVecElemsMPI::FindLocalMaxDiff(const std::vector<int> &
 
 void LeonovaAMostDiffNeighVecElemsMPI::GatherAndProcessResults(int rank, int actual_processes, int local_max_diff,
                                                                int local_first, int local_second, int size) {
-  if (rank >= actual_processes) {
-    local_max_diff = -1;
-    local_first = 0;
-    local_second = 0;
-  }
+  struct ProcessResult {
+    int diff;
+    int first;
+    int second;
+  };
+  
+  ProcessResult local_result{local_max_diff, local_first, local_second};
+  std::vector<ProcessResult> all_results(size);
 
-  std::vector<int> all_diffs(size);
-  std::vector<int> all_firsts(size);
-  std::vector<int> all_seconds(size);
-
-  MPI_Gather(&local_max_diff, 1, MPI_INT, all_diffs.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Gather(&local_first, 1, MPI_INT, all_firsts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Gather(&local_second, 1, MPI_INT, all_seconds.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gather(&local_result, 3, MPI_INT, all_results.data(), 3, MPI_INT, 
+             0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-        int global_max_diff = -1;
-        int global_first = 0;
-        int global_second = 0;
+    int global_max_diff = -1;
+    int best_index = -1;
 
-        for (int index = 0; index < actual_processes; ++index) {
-            if (all_diffs[index] > global_max_diff) {
-                global_max_diff = all_diffs[index];
-                global_first = all_firsts[index];
-                global_second = all_seconds[index];
-            }
-        }
-        GetOutput() = std::make_tuple(global_first, global_second);
+    for (int index = 0; index < actual_processes; ++index) {
+      if (all_results[index].diff > global_max_diff) {
+        global_max_diff = all_results[index].diff;
+        best_index = index;
       }
+    }
+
+    if (best_index != -1) {
+      GetOutput() = std::make_tuple(all_results[best_index].first, all_results[best_index].second);
+    } else {
+      GetOutput() = std::make_tuple(0, 0);
+    }
+  }
+
   BroadcastResult(rank);
 }
 
 void LeonovaAMostDiffNeighVecElemsMPI::BroadcastResult(int rank) {
-  int result_first = std::get<0>(GetOutput());
-  int result_second = std::get<1>(GetOutput());
+  int result_data[2] = {0, 0};
+  
+  if (rank == 0) {
+    result_data[0] = std::get<0>(GetOutput());
+    result_data[1] = std::get<1>(GetOutput());
+  }
 
-  MPI_Bcast(&result_first, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&result_second, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(result_data, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
-    GetOutput() = std::make_tuple(result_first, result_second);
+    GetOutput() = std::make_tuple(result_data[0], result_data[1]);
   }
 }
-
-bool LeonovaAMostDiffNeighVecElemsMPI::PostProcessingImpl() {
-  return true;
-}
-
-}  // namespace leonova_a_most_diff_neigh_vec_elems
