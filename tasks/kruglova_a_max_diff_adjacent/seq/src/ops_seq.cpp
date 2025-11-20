@@ -3,9 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+#include <cstddef>
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
-#include "util/include/util.hpp"
+
 
 namespace kruglova_a_max_diff_adjacent {
 

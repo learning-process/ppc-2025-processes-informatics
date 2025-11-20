@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 #include "kruglova_a_max_diff_adjacent/mpi/include/ops_mpi.hpp"
