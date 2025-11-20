@@ -66,8 +66,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   }
 
   long long global_sum = 0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0,
-             MPI_COMM_WORLD);
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     GetOutput() = global_sum;
@@ -82,5 +81,3 @@ bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
 }
 
 }  // namespace frolova_s_sum_elem_matrix
-
-
