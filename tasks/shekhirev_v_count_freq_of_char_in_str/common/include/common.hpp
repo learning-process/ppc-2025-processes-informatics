@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <utility>  // для std::move
 
 #include "task/include/task.hpp"
 
@@ -13,7 +14,7 @@ struct InputData {
   std::string str;
   char target;
 
-  InputData() : str(), target(0) {}
+  InputData() : target(0) {}
 
   InputData(std::string s, char t) : str(std::move(s)), target(t) {}
 
