@@ -34,7 +34,7 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_{};
 };
 
@@ -44,16 +44,32 @@ TEST_P(LifanovKRunPerfTests, RunPerfModes) {
 
 namespace {
 
-static const auto kAllPerfTasks =
+const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LifanovKAdjacentInversionCountMPI, LifanovKAdjacentInversionCountSEQ>(
         PPC_SETTINGS_lifanov_k_adj_inv_count);
 
-static const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-static const auto kPerfTestName = LifanovKRunPerfTests::CustomPerfTestName;
+const auto kPerfTestName = LifanovKRunPerfTests::CustomPerfTestName;
+
+using PerfParamGenerator = ::testing::internal::ParamGenerator<LifanovKRunPerfTests::ParamType>;
+
+PerfParamGenerator MakePerfParamsGenerator() {
+  return kGtestValues;
+}
+
+std::string MakePerfParamName(const ::testing::TestParamInfo<LifanovKRunPerfTests::ParamType> &info) {
+  return kPerfTestName(info);
+}
+
+const int kPerfTestsRegistered = [] {
+  auto &registry = ::testing::UnitTest::GetInstance()->parameterized_test_registry();
+  auto *holder = registry.GetTestSuitePatternHolder<LifanovKRunPerfTests>(
+      "LifanovKRunPerfTests", ::testing::internal::CodeLocation(__FILE__, __LINE__));
+  holder->AddTestSuiteInstantiation("RunModeTests", &MakePerfParamsGenerator, &MakePerfParamName, __FILE__, __LINE__);
+  return 0;
+}();
 
 }  // namespace
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, LifanovKRunPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace lifanov_k_adj_inv_count
