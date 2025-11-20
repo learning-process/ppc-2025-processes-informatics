@@ -9,12 +9,7 @@
 
 namespace kutergin_a_closest_pair {
 
-KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) : data_() {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = -1;
-  data_(in);
-}
+KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) : data_(in) {}
 
 bool KuterginAClosestPairSEQ::ValidationImpl() {
   return true;
@@ -25,26 +20,23 @@ bool KuterginAClosestPairSEQ::PreProcessingImpl() {
 }
 
 bool KuterginAClosestPairSEQ::RunImpl() {
-  const auto &v = GetInput();
-  int n = static_cast<int>(v.size());
-
-  if (n < 2) {
+  if (data_.size() < 2) {
     GetOutput() = -1;
     return true;
   }
 
   int min_diff = std::numeric_limits<int>::max();
-  int best_idx = -1;
+  int min_idx = -1;
 
-  for (int i = 0; i < n - 1; ++i) {
-    int diff = std::abs(v[i + 1] - v[i]);
+  for (size_t i = 0; i < data_.size() - 1; ++i) {
+    int diff = std::abs(data_[i + 1] - data_[i]);
     if (diff < min_diff) {
       min_diff = diff;
-      best_idx = i;
+      min_idx = static_cast<int>(i);
     }
   }
 
-  GetOutput() = best_idx;
+  GetOutput() = min_idx;
   return true;
 }
 
