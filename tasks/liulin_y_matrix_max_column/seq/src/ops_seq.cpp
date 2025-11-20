@@ -1,6 +1,7 @@
 #include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "liulin_y_matrix_max_column/common/include/common.hpp"
@@ -11,50 +12,66 @@ namespace liulin_y_matrix_max_column {
 LiulinYMatrixMaxColumnSEQ::LiulinYMatrixMaxColumnSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput().clear();
 }
 
 bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto& in = GetInput();
+
+  if (in.empty() || in[0].empty())
+    return false;
+
+  size_t cols = in[0].size();
+  for (const auto& row : in)
+    if (row.size() != cols)
+      return false;
+
+  return GetOutput().empty();
 }
 
 bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  const size_t cols = GetInput()[0].size();
+  GetOutput().assign(cols, std::numeric_limits<int>::min());
+  return true;
 }
 
 bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  const auto& matrix = GetInput();
+  auto& out = GetOutput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  const int rows = matrix.size();
+  const int cols = matrix[0].size();
+
+  for (int col = 0; col < cols; col++) {
+    std::vector<int> column(rows);
+    for (int r = 0; r < rows; r++) {
+      column[r] = matrix[r][col];
     }
+
+    int size = rows;
+    std::vector<int> temp = column;
+
+    while (size > 1) {
+      int new_size = 0;
+      for (int i = 0; i < size; i += 2) {
+        if (i + 1 < size)
+          temp[new_size] = std::max(temp[i], temp[i + 1]);
+        else
+          temp[new_size] = temp[i];
+
+        new_size++;
+      }
+      size = new_size;
+    }
+
+    out[col] = temp[0];
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool LiulinYMatrixMaxColumnSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace liulin_y_matrix_max_column
