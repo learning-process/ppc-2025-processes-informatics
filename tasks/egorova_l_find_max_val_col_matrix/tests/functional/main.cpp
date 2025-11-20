@@ -116,6 +116,15 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix = GetTestInputData();
 
+    // Получаем тип теста
+    auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int test_type = std::get<0>(test_params);
+
+    // Для некорректной матрицы (test case 20) ожидаем пустой результат
+    if (test_type == 20) {
+      return output_data.empty();
+    }
+
     // Для пустых матриц ожидаем пустой результат
     if (matrix.empty() || matrix[0].empty()) {
       return output_data.empty();
@@ -157,7 +166,7 @@ TEST_P(EgorovaLRunFuncTestsProcesses, FindMaxValColMatrix) {
 }
 
 // тип теста, описание
-const std::array<TestType, 20> kTestParam = {std::make_tuple(0, "empty_matrix"),
+const std::array<TestType, 21> kTestParam = {std::make_tuple(0, "empty_matrix"),
                                              std::make_tuple(1, "zero_matrix"),
                                              std::make_tuple(2, "single_column"),
                                              std::make_tuple(3, "single_row"),
@@ -188,6 +197,33 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = EgorovaLRunFuncTestsProcesses::PrintFuncTestName<EgorovaLRunFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(MatrixTests, EgorovaLRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+
+// ОТДЕЛЬНЫЙ ТЕСТ ДЛЯ НЕКОРРЕКТНЫХ МАТРИЦ
+TEST(EgorovaLInvalidMatrixTests, MPI_InvalidMatrixRagged) {
+  InType invalid_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8}};
+  EgorovaLFindMaxValColMatrixMPI task(invalid_matrix);
+
+  // Ожидаем, что валидация вернет false для некорректной матрицы
+  EXPECT_FALSE(task.Validation());
+
+  // Проверяем, что вывод пустой
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+  EXPECT_TRUE(task.GetOutput().empty());
+}
+
+TEST(EgorovaLInvalidMatrixTests, SEQ_InvalidMatrixRagged) {
+  InType invalid_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8}};
+  EgorovaLFindMaxValColMatrixSEQ task(invalid_matrix);
+
+  EXPECT_FALSE(task.Validation());
+
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+  EXPECT_TRUE(task.GetOutput().empty());
+}
 
 }  // namespace
 
