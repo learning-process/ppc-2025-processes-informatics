@@ -213,4 +213,3 @@ tasks/lifanov_k_adj_inv_count
 1. Куликов Г. — «Параллельное программирование».  
 2. Peter S. Pacheco — *Parallel Programming with MPI*.  
 3. Kumar V. — *Introduction to Parallel Computing*, 2nd edition.
-
