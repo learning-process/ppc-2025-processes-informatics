@@ -16,18 +16,21 @@ KruglovaAMaxDiffAdjacentSEQ::KruglovaAMaxDiffAdjacentSEQ(const InType &in) {
 }
 
 bool KruglovaAMaxDiffAdjacentSEQ::ValidationImpl() {
-  const auto &vec = GetInput();
-  return vec.size() >= 2;
+  return true;
 }
 
 bool KruglovaAMaxDiffAdjacentSEQ::PreProcessingImpl() {
-  GetOutput() = 0.0F;
   return true;
 }
 
 bool KruglovaAMaxDiffAdjacentSEQ::RunImpl() {
   const auto &vec = this->GetInput();
   auto &out = this->GetOutput();
+
+  if (vec.size() < 2) {
+    out = 0.0F;
+    return true;
+  }
 
   float max_diff = std::abs(vec[1] - vec[0]);
   for (size_t i = 1; i < vec.size(); ++i) {
