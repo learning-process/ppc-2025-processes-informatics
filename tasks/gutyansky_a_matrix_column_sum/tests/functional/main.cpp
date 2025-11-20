@@ -96,7 +96,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = GutyanskyAMatrixColumnSumFuncTests::PrintFuncTestName<GutyanskyAMatrixColumnSumFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, GutyanskyAMatrixColumnSumFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ColumnSumTests, GutyanskyAMatrixColumnSumFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
