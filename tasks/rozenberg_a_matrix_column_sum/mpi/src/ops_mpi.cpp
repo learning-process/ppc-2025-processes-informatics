@@ -42,11 +42,11 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  size_t rows = GetInput().size();
-  size_t columns = GetInput()[0].size();
+  int rows = static_cast<int>(GetInput().size());
+  int columns = static_cast<int>(GetInput()[0].size());
 
-  int chunk = (int)rows / size;
-  int remainder = (int)rows % size;
+  int chunk = rows / size;
+  int remainder = rows % size;
 
   int begin = (chunk * rank) + std::min(rank, remainder);
   int end = begin + chunk + (rank < remainder ? 1 : 0);
