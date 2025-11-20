@@ -1,10 +1,8 @@
 #include "telnov_counting_the_frequency/seq/include/ops_seq.hpp"
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <string>
-#include <thread>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
 
@@ -34,12 +32,11 @@ bool TelnovCountingTheFrequencySEQ::RunImpl() {
     }
   }
 
-  GetOutput() = cnt;
+  GetOutput() = static_cast<int>(cnt);
 
-  using clock = std::chrono::high_resolution_clock;
-  auto delay_start = clock::now();
-  while (std::chrono::duration<double>(clock::now() - delay_start).count() < 0.001) {
-  }
+  using Clock = std::chrono::high_resolution_clock;
+  auto delay_start = Clock::now();
+  while (std::chrono::duration<double>(Clock::now() - delay_start).count() < 0.001) {}
 
   return true;
 }

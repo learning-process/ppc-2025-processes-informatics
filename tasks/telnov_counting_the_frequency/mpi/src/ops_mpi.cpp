@@ -5,7 +5,7 @@
 #include <chrono>
 #include <cstddef>
 #include <string>
-#include <thread>
+#include <cstdint>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
 
@@ -47,14 +47,13 @@ bool TelnovCountingTheFrequencyMPI::RunImpl() {
   }
 
   int64_t total = 0;
-  MPI_Allreduce(&local, &total, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&local, &total, 1, MPI_INT64_T, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<int>(total);
 
-  using clock = std::chrono::high_resolution_clock;
-  auto delay_start = clock::now();
-  while (std::chrono::duration<double>(clock::now() - delay_start).count() < 0.001) {
-  }
+  using Clock = std::chrono::high_resolution_clock;
+  auto delay_start = Clock::now();
+  while (std::chrono::duration<double>(Clock::now() - delay_start).count() < 0.001) {}
 
   return true;
 }
