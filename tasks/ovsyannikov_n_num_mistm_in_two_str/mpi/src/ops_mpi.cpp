@@ -1,7 +1,6 @@
 #include "ovsyannikov_n_num_mistm_in_two_str/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-
 #include <algorithm>
 #include <vector>
 
@@ -14,7 +13,7 @@ OvsyannikovNNumMistmInTwoStrMPI::OvsyannikovNNumMistmInTwoStrMPI(const InType &i
 }
 
 bool OvsyannikovNNumMistmInTwoStrMPI::ValidationImpl() {
-  int proc_rank;
+  int proc_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
   if (proc_rank == 0) {
     return GetInput().first.size() == GetInput().second.size();
@@ -28,8 +27,8 @@ bool OvsyannikovNNumMistmInTwoStrMPI::PreProcessingImpl() {
 }
 
 bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
-  int proc_rank;
-  int proc_num;
+  int proc_rank = 0;
+  int proc_num = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
 
@@ -55,28 +54,24 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
     accum += elems_per_proc[i];
   }
 
-  // Подготовка данных
   std::vector<char> main_buff;
   std::vector<int> byte_counts(proc_num);
   std::vector<int> byte_shifts(proc_num);
 
   if (proc_rank == 0) {
-    main_buff.resize(2 * total_len);
-    const auto &seq_one = GetInput().first;
-    const auto &seq_two = GetInput().second;
-
+    main_buff.resize(static_cast<size_t>(total_len) * 2);
+    const auto& seq_one = GetInput().first;
+    const auto& seq_two = GetInput().second;
     int iter_pos = 0;
 
-    // Собираем данные
     for (int i = 0; i < proc_num; ++i) {
       int part_len = elems_per_proc[i];
       int read_from = shifts[i];
 
-      // Копируем кусок 1 строки
       if (part_len > 0) {
-        std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, main_buff.begin() + iter_pos);
+        std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len,
+                  main_buff.begin() + iter_pos);
       }
-      // Копируем кусок 2 строки
       if (part_len > 0) {
         std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len,
                   main_buff.begin() + iter_pos + part_len);
@@ -84,27 +79,23 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
 
       byte_counts[i] = 2 * part_len;
       byte_shifts[i] = iter_pos;
-
       iter_pos += (2 * part_len);
     }
   }
 
-  // Прием данных
   int my_chunk = elems_per_proc[proc_rank];
-  std::vector<char> local_store(2 * my_chunk);
+  std::vector<char> local_store(static_cast<size_t>(my_chunk) * 2);
 
-  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR, local_store.data(), 2 * my_chunk,
-               MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR,
+               local_store.data(), 2 * my_chunk, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int priv_err_cnt = 0;
   for (int i = 0; i < my_chunk; ++i) {
-    // Сравниваем элемент из первой половины с элементом из второй половины
     if (local_store[i] != local_store[my_chunk + i]) {
       priv_err_cnt++;
     }
   }
 
-  // Сборка результата
   int total_err_cnt = 0;
   MPI_Allreduce(&priv_err_cnt, &total_err_cnt, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   GetOutput() = total_err_cnt;

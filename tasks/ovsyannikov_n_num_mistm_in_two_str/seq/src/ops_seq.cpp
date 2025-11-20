@@ -1,5 +1,7 @@
 #include "ovsyannikov_n_num_mistm_in_two_str/seq/include/ops_seq.hpp"
 
+#include <cstddef>
+
 namespace ovsyannikov_n_num_mistm_in_two_str {
 
 OvsyannikovNNumMistmInTwoStrSEQ::OvsyannikovNNumMistmInTwoStrSEQ(const InType &in) {
@@ -19,8 +21,8 @@ bool OvsyannikovNNumMistmInTwoStrSEQ::PreProcessingImpl() {
 }
 
 bool OvsyannikovNNumMistmInTwoStrSEQ::RunImpl() {
-  const auto &seq_one = GetInput().first;
-  const auto &seq_two = GetInput().second;
+  const auto& seq_one = GetInput().first;
+  const auto& seq_two = GetInput().second;
   int diff_cnt = 0;
 
   size_t length = seq_one.size();

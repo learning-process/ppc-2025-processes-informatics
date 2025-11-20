@@ -14,14 +14,14 @@ class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
  protected:
   void SetUp() override {
     // Размер 10 миллионов символов
-    const int kBenchmarkSize = 10000000;
+    const int benchmark_size = 10000000;
 
-    std::string sample_a(kBenchmarkSize, 'a');
-    std::string sample_b(kBenchmarkSize, 'a');
+    std::string sample_a(benchmark_size, 'a');
+    std::string sample_b(benchmark_size, 'a');
 
     // Чередуем a и b в str2
     target_val_ = 0;
-    for (int i = 0; i < kBenchmarkSize; ++i) {
+    for (int i = 0; i < benchmark_size; ++i) {
       if (i % 2 == 0) {
         sample_b[i] = 'b';
         target_val_++;
@@ -41,7 +41,7 @@ class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
 
  private:
   InType bench_data_;
-  OutType target_val_;
+  OutType target_val_ = 0;
 };
 
 TEST_P(OvsyannikovNRunPerfTestProcesses, RunPerfModes) {
