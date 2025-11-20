@@ -5,7 +5,6 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "lifanov_k_adj_inv_count/common/include/common.hpp"
@@ -28,7 +27,6 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
  protected:
   void SetUp() override {
     const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
     data_ = std::get<0>(params);
     expected_ = std::get<1>(params);
   }
@@ -42,15 +40,11 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
  private:
-  OutType expected_{0};
+  OutType expected_{};
   InType data_{};
 };
 
-namespace {  // anonymous namespace
-
-TEST_P(LifanovKRunFuncTests, AdjacentInversionCount) {
-  ExecuteTest(GetParam());
-}
+namespace {
 
 std::vector<FuncParam> LoadTestParams() {
   const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lifanov_k_adj_inv_count, "tests.json");
@@ -60,33 +54,33 @@ std::vector<FuncParam> LoadTestParams() {
     throw std::runtime_error("Cannot open file: " + path);
   }
 
-  nlohmann::json json_data;
-  fin >> json_data;
+  nlohmann::json j;
+  fin >> j;
 
-  std::vector<FuncParam> params;
-  params.reserve(json_data.size() * 2);
+  std::vector<FuncParam> cases;
+  cases.reserve(j.size() * 2);
 
-  for (const auto &item : json_data) {
-    TestType test_case{item.at("input").get<InType>(), item.at("expected").get<OutType>(),
-                       item.at("name").get<std::string>()};
+  for (const auto &item : j) {
+    TestType tc{item.at("input").get<InType>(), item.at("expected").get<OutType>(), item.at("name").get<std::string>()};
 
-    const auto &base_name = std::get<2>(test_case);
+    const auto &tname = std::get<2>(tc);
 
-    params.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, base_name + "_mpi",
-                        test_case);
-
-    params.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, base_name + "_seq",
-                        test_case);
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, tname + "_mpi", tc);
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, tname + "_seq", tc);
   }
 
-  return params;
+  return cases;
 }
 
-const auto kFuncParams = LoadTestParams();
+static const std::vector<FuncParam> kFuncParams = LoadTestParams();
+
+}  // namespace
+
+TEST_P(LifanovKRunFuncTests, AdjacentInversionCount) {
+  ExecuteTest(GetParam());
+}
 
 INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(kFuncParams),
                          LifanovKRunFuncTests::PrintTestParam);
-
-}  // namespace
 
 }  // namespace lifanov_k_adj_inv_count
