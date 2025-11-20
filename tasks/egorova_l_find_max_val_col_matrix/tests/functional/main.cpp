@@ -199,7 +199,7 @@ const auto kPerfTestName = EgorovaLRunFuncTestsProcesses::PrintFuncTestName<Egor
 INSTANTIATE_TEST_SUITE_P(MatrixTests, EgorovaLRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 // ОТДЕЛЬНЫЙ ТЕСТ ДЛЯ НЕКОРРЕКТНЫХ МАТРИЦ
-TEST(EgorovaLInvalidMatrixTests, MPI_InvalidMatrixRagged) {
+TEST(EgorovaLInvalidMatrixTests, MPIInvalidMatrixRagged) {
   InType invalid_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8}};
   EgorovaLFindMaxValColMatrixMPI task(invalid_matrix);
 
@@ -213,7 +213,7 @@ TEST(EgorovaLInvalidMatrixTests, MPI_InvalidMatrixRagged) {
   EXPECT_TRUE(task.GetOutput().empty());
 }
 
-TEST(EgorovaLInvalidMatrixTests, SEQ_InvalidMatrixRagged) {
+TEST(EgorovaLInvalidMatrixTests, SEQInvalidMatrixRagged) {
   InType invalid_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8}};
   EgorovaLFindMaxValColMatrixSEQ task(invalid_matrix);
 
