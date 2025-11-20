@@ -1,4 +1,4 @@
-#include "lifanov_k_adj_inv_count/mpi/include/ops_mpi.hpp"
+#include "lifanov_k_adj_inv_count_restore/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
@@ -7,9 +7,9 @@
 #include <utility>
 #include <vector>
 
-#include "lifanov_k_adj_inv_count/common/include/common.hpp"
+#include "lifanov_k_adj_inv_count_restore/common/include/common.hpp"
 
-namespace lifanov_k_adj_inv_count {
+namespace lifanov_k_adj_inv_count_restore {
 
 LifanovKAdjacentInversionCountMPI::LifanovKAdjacentInversionCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -65,4 +65,4 @@ bool LifanovKAdjacentInversionCountMPI::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace lifanov_k_adj_inv_count
+}  // namespace lifanov_k_adj_inv_count_restore

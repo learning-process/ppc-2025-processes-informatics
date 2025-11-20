@@ -1,11 +1,11 @@
-#include "lifanov_k_adj_inv_count/seq/include/ops_seq.hpp"
+#include "lifanov_k_adj_inv_count_restore/seq/include/ops_seq.hpp"
 
 #include <cstddef>
 #include <vector>
 
-#include "lifanov_k_adj_inv_count/common/include/common.hpp"
+#include "lifanov_k_adj_inv_count_restore/common/include/common.hpp"
 
-namespace lifanov_k_adj_inv_count {
+namespace lifanov_k_adj_inv_count_restore {
 
 LifanovKAdjacentInversionCountSEQ::LifanovKAdjacentInversionCountSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -40,4 +40,4 @@ bool LifanovKAdjacentInversionCountSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace lifanov_k_adj_inv_count
+}  // namespace lifanov_k_adj_inv_count_restore

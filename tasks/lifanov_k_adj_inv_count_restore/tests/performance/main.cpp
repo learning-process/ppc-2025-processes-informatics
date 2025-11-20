@@ -3,12 +3,12 @@
 #include <cstddef>
 #include <string>
 
-#include "lifanov_k_adj_inv_count/common/include/common.hpp"
-#include "lifanov_k_adj_inv_count/mpi/include/ops_mpi.hpp"
-#include "lifanov_k_adj_inv_count/seq/include/ops_seq.hpp"
+#include "lifanov_k_adj_inv_count_restore/common/include/common.hpp"
+#include "lifanov_k_adj_inv_count_restore/mpi/include/ops_mpi.hpp"
+#include "lifanov_k_adj_inv_count_restore/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace lifanov_k_adj_inv_count {
+namespace lifanov_k_adj_inv_count_restore {
 
 class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
@@ -47,7 +47,7 @@ namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LifanovKAdjacentInversionCountMPI, LifanovKAdjacentInversionCountSEQ>(
-        PPC_SETTINGS_lifanov_k_adj_inv_count);
+        PPC_SETTINGS_lifanov_k_adj_inv_count_restore);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -73,4 +73,4 @@ const int kPerfTestsRegistered = [] {
 
 }  // namespace
 
-}  // namespace lifanov_k_adj_inv_count
+}  // namespace lifanov_k_adj_inv_count_restore

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "lifanov_k_adj_inv_count/common/include/common.hpp"
+#include "lifanov_k_adj_inv_count_restore/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace lifanov_k_adj_inv_count {
+namespace lifanov_k_adj_inv_count_restore {
 
 class LifanovKAdjacentInversionCountSEQ : public BaseTask {
  public:
@@ -20,4 +20,4 @@ class LifanovKAdjacentInversionCountSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace lifanov_k_adj_inv_count
+}  // namespace lifanov_k_adj_inv_count_restore

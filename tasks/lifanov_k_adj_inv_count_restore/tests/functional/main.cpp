@@ -7,14 +7,14 @@
 #include <string>
 #include <vector>
 
-#include "lifanov_k_adj_inv_count/common/include/common.hpp"
-#include "lifanov_k_adj_inv_count/mpi/include/ops_mpi.hpp"
-#include "lifanov_k_adj_inv_count/seq/include/ops_seq.hpp"
+#include "lifanov_k_adj_inv_count_restore/common/include/common.hpp"
+#include "lifanov_k_adj_inv_count_restore/mpi/include/ops_mpi.hpp"
+#include "lifanov_k_adj_inv_count_restore/seq/include/ops_seq.hpp"
 #include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace lifanov_k_adj_inv_count {
+namespace lifanov_k_adj_inv_count_restore {
 
 using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
 
@@ -47,7 +47,7 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 namespace {
 
 std::vector<FuncParam> LoadTestParams() {
-  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lifanov_k_adj_inv_count, "tests.json");
+  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lifanov_k_adj_inv_count_restore, "tests.json");
 
   std::ifstream fin(path);
   if (!fin.is_open()) {
@@ -103,4 +103,4 @@ const int kFunctionalTestsRegistered = [] {
 
 }  // namespace
 
-}  // namespace lifanov_k_adj_inv_count
+}  // namespace lifanov_k_adj_inv_count_restore

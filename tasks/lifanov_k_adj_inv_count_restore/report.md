@@ -119,7 +119,7 @@ for (i = 0; i + 1 < local_size; ++i)
 ## 5. Структура проекта
 
 ```
-tasks/lifanov_k_adj_inv_count
+tasks/lifanov_k_adj_inv_count_restore
 ├── common
 │   └── include
 │       └── common.hpp
