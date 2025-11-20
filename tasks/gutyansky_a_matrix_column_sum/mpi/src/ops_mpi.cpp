@@ -20,20 +20,31 @@ GutyanskyAMatrixColumnSumMPI::GutyanskyAMatrixColumnSumMPI(const InType &in) {
 }
 
 bool GutyanskyAMatrixColumnSumMPI::ValidationImpl() {
-  return GetInput().rows > 0 && GetInput().cols > 0 && GetInput().data.size() == GetInput().rows * GetInput().cols;
+  int rank = -1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0) {
+    return GetInput().rows > 0 &&
+      GetInput().cols > 0 && 
+      GetInput().data.size() == GetInput().rows * GetInput().cols;
+  }
+
+  return true;
 }
 
 bool GutyanskyAMatrixColumnSumMPI::PreProcessingImpl() {
-  GetOutput().resize(GetInput().cols);
+  int rank = -1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  return GetOutput().size() == GetInput().cols;
+  if (rank == 0) {
+    GetOutput().resize(GetInput().cols);
+    return GetOutput().size() == GetInput().cols;
+  }
+
+  return true;
 }
 
 bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
-  if (GetInput().rows == 0 || GetInput().cols == 0) {
-    return false;
-  }
-
   int rank = -1;
   int p_count = -1;
 
@@ -43,21 +54,40 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
   size_t row_count = GetInput().rows;
   size_t col_count = GetInput().cols;
 
-  size_t rows_chunk_size = row_count / p_count;
-  size_t remainder_size = row_count % p_count;
+  MPI_Bcast(&row_count, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&col_count, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
-  size_t start_row_index = (rows_chunk_size * rank) + std::min(static_cast<size_t>(rank), remainder_size);
-  size_t end_row_index = start_row_index + rows_chunk_size + (std::cmp_less(rank, remainder_size) ? 1 : 0);
+  if (row_count == 0 || col_count == 0) {
+    return false;
+  }
 
-  std::vector<int64_t> partial_res(col_count, 0.0);
+  size_t chunk_size = row_count / static_cast<size_t>(p_count);
+  size_t remainder_size = row_count % static_cast<size_t>(p_count);
+  size_t elements_count = col_count * chunk_size;
 
-  for (size_t i = start_row_index; i < end_row_index; i++) {
+  std::vector<int32_t> input_data_chunk(elements_count);
+  std::vector<int32_t> partial_res(col_count, static_cast<int32_t>(0));
+
+  MPI_Scatter(GetInput().data.data(), static_cast<int>(elements_count), MPI_INTEGER4, 
+    input_data_chunk.data(), static_cast<int>(elements_count), MPI_INTEGER4, 0, MPI_COMM_WORLD);
+
+  for (size_t i = 0; i < chunk_size; i++) {
     for (size_t j = 0; j < col_count; j++) {
-      partial_res[j] += GetInput().data[(i * col_count) + j];
+      partial_res[j] += input_data_chunk[(i * col_count) + j];
     }
   }
 
-  MPI_Reduce(partial_res.data(), GetOutput().data(), static_cast<int>(col_count), MPI_INTEGER8, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (rank == 0 && remainder_size > 0) {
+    size_t remainder_offset = chunk_size * static_cast<size_t>(p_count);
+    for (size_t i = remainder_offset; i < row_count; i++) {
+      for (size_t j = 0; j < col_count; j++) {
+        partial_res[j] += GetInput().data[(i * col_count) + j];
+      }
+    }  
+  }
+
+  MPI_Reduce(partial_res.data(), GetOutput().data(),
+    static_cast<int>(col_count), MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD);
 
   return true;
 }

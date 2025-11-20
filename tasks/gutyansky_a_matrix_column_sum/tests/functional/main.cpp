@@ -27,52 +27,20 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
 
  protected:
   void SetUp() override {
-    size_t rows = 0;
-    size_t cols = 0;
-    std::vector<int64_t> input_elements;
-    std::vector<int64_t> output_elements;
-
-    // Read test data
-    {
-      std::string file_name =
-          std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gutyansky_a_matrix_column_sum, file_name);
-
-      std::ifstream ifs(abs_path);
-
-      if (!ifs.is_open()) {
-        throw std::runtime_error("Failed to open test file: " + file_name);
-      }
-
-      ifs >> rows >> cols;
-
-      if (rows == 0 || cols == 0) {
-        throw std::runtime_error("Both dimensions of matrix must be positive integers");
-      }
-
-      input_elements.resize(rows * cols);
-
-      for (size_t i = 0; i < input_elements.size(); i++) {
-        ifs >> input_elements[i];
-      }
-
-      output_elements.resize(cols);
-
-      for (size_t i = 0; i < output_elements.size(); i++) {
-        ifs >> output_elements[i];
-      }
+    if (IsMPINonRootProcess()) {
+      InitializeEmptyData();
+      return;
     }
 
-    input_data_ = {.rows = rows, .cols = cols, .data = input_elements};
-    output_data_ = output_elements;
+    LoadTestDataFromFile();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0) {
+    if (IsMPINonRootProcess()) {
       return true;
     }
 
-    return (output_data_ == output_data);
+    return output_data_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -82,6 +50,48 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
  private:
   InType input_data_ = {};
   OutType output_data_;
+
+  bool IsMPINonRootProcess() const {
+    return ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0;
+  }
+
+  void InitializeEmptyData() {
+    input_data_ = {.rows = 0, .cols = 0, .data = {}};
+    output_data_.clear();
+  }
+
+  void LoadTestDataFromFile() {
+    std::string file_name =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam()) + ".txt";
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gutyansky_a_matrix_column_sum, file_name);
+
+    std::ifstream ifs(abs_path);
+
+    if (!ifs.is_open()) {
+      throw std::runtime_error("Failed to open test file: " + file_name);
+    }
+
+    size_t rows = 0;
+    size_t cols = 0;
+    ifs >> rows >> cols;
+
+    if (rows == 0 || cols == 0) {
+      throw std::runtime_error("Both dimensions of matrix must be positive integers");
+    }
+
+    std::vector<int32_t> input_elements(rows * cols);
+    for (size_t i = 0; i < input_elements.size(); i++) {
+      ifs >> input_elements[i];
+    }
+
+    std::vector<int32_t> output_elements(cols);
+    for (size_t i = 0; i < output_elements.size(); i++) {
+      ifs >> output_elements[i];
+    }
+
+    input_data_ = {.rows = rows, .cols = cols, .data = input_elements};
+    output_data_ = output_elements;
+  }
 };
 
 namespace {

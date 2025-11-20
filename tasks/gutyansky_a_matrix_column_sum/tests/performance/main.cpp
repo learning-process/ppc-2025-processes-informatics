@@ -14,18 +14,20 @@ namespace gutyansky_a_matrix_column_sum {
 class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    input_data_.rows = kSize_;
-    input_data_.cols = kSize_;
-    input_data_.data.assign(kSize_ * kSize_, 1);
-    output_data_.assign(kSize_, static_cast<int64_t>(kSize_));
+    if (IsMPINonRootProcess()) {
+      InitializeEmptyData();
+      return;
+    }
+
+    LoadTestData();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0) {
+    if (IsMPINonRootProcess()) {
       return true;
     }
 
-    return (output_data_ == output_data);
+    return output_data_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -33,9 +35,25 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   }
 
  private:
-  const size_t kSize_ = 8000;
+  const size_t kSize_ = 16000;
   InType input_data_ = {};
   OutType output_data_;
+
+  bool IsMPINonRootProcess() const {
+    return ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0;
+  }
+
+  void InitializeEmptyData() {
+    input_data_ = {.rows = 0, .cols = 0, .data = {}};
+    output_data_.clear();
+  }
+
+  void LoadTestData() {
+    input_data_.rows = kSize_;
+    input_data_.cols = kSize_;
+    input_data_.data.assign(kSize_ * kSize_, 1);
+    output_data_.assign(kSize_, static_cast<int32_t>(kSize_));
+  }
 };
 
 TEST_P(GutyanskyAMatrixColumnSumPerfTest, RunPerfModes) {
