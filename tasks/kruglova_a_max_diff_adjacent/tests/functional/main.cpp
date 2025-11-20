@@ -3,10 +3,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <string>
 #include <cstddef>
+#include <string>
 #include <tuple>
-
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 #include "kruglova_a_max_diff_adjacent/mpi/include/ops_mpi.hpp"

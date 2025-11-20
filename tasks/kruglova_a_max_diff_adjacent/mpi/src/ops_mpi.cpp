@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 #include "kruglova_a_max_diff_adjacent/common/include/common.hpp"
 
