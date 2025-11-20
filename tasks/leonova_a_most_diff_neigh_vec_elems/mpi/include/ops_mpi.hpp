@@ -22,10 +22,10 @@ class LeonovaAMostDiffNeighVecElemsMPI : public BaseTask {
 
   void ProcessWithMultipleProcesses(int rank, int size, int total_size, const std::vector<int> &input_vec);
   static void ProcessLocalData(int rank, int actual_processes, int total_size, const std::vector<int> &input_vec,
-                               int &local_max_diff, int &local_first, int &local_second);
+                               int &local_max_diff, int &local_first, int &local_second, int size);
   static void ReceiveLocalData(int rank, int actual_processes, const std::vector<int> &input_vec,
                                const std::vector<int> &sizes, const std::vector<int> &offsets,
-                               std::vector<int> &local_data);
+                               std::vector<int> &local_data, int size);
   static void FindLocalMaxDiff(const std::vector<int> &local_data, int &local_max_diff, int &local_first,
                                int &local_second);
   void GatherAndProcessResults(int rank, int actual_processes, int local_max_diff, int local_first, int local_second,
