@@ -8,6 +8,7 @@
 #include "rozenberg_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
 #include "rozenberg_a_matrix_column_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace rozenberg_a_matrix_column_sum {
 
