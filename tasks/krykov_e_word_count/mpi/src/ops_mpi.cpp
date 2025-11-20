@@ -90,11 +90,6 @@ bool KrykovEWordCountMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  if (text.empty()) {
-    GetOutput() = 0;
-    return true;
-  }
-
   int text_size = static_cast<int>(text.size());
   MPI_Bcast(&text_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
