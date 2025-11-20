@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "egorova_l_find_max_val_col_matrix/common/include/common.hpp"
@@ -38,13 +39,7 @@ bool EgorovaLFindMaxValColMatrixMPI::ValidationImpl() {
   }
 
   const std::size_t cols = matrix[0].size();
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-
-  return true;
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool EgorovaLFindMaxValColMatrixMPI::PreProcessingImpl() {
@@ -105,7 +100,7 @@ std::vector<int> EgorovaLFindMaxValColMatrixMPI::CreateAndBroadcastMatrix(int ra
     const auto &matrix = GetInput();
     for (int ii = 0; ii < rows; ++ii) {
       for (int jj = 0; jj < cols; ++jj) {
-        flat_matrix[static_cast<std::size_t>(ii) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(jj)] =
+        flat_matrix[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(jj)] =
             matrix[ii][jj];
       }
     }
@@ -141,9 +136,7 @@ std::vector<int> EgorovaLFindMaxValColMatrixMPI::CalculateLocalMaxima(const std:
     const int global_col = start_col + local_idx;
     for (int row = 0; row < rows; ++row) {
       const int value = flat_matrix[(row * cols) + global_col];
-      if (value > local_max[local_idx]) {
-        local_max[local_idx] = value;
-      }
+      local_max[local_idx] = std::max(value, local_max[local_idx]);
     }
   }
 

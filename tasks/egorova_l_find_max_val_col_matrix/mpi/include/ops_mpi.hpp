@@ -24,10 +24,10 @@ class EgorovaLFindMaxValColMatrixMPI : public BaseTask {
   // Объявления вспомогательных методов
   bool RunMPIAlgorithm();
   std::vector<int> CreateAndBroadcastMatrix(int rank, int rows, int cols);
-  std::pair<int, int> CalculateColumnDistribution(int rank, int size, int cols);
-  std::vector<int> CalculateLocalMaxima(const std::vector<int> &flat_matrix, int rows, int cols, int start_col,
-                                        int local_cols_count);
-  std::vector<int> GatherResults(const std::vector<int> &local_max, int size, int cols);
+  static std::pair<int, int> CalculateColumnDistribution(int rank, int size, int cols);
+  static std::vector<int> CalculateLocalMaxima(const std::vector<int> &flat_matrix, int rows, int cols, int start_col,
+                                               int local_cols_count);
+  static std::vector<int> GatherResults(const std::vector<int> &local_max, int size, int cols);
 };
 
 }  // namespace egorova_l_find_max_val_col_matrix
