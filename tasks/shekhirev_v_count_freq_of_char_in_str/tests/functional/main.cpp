@@ -30,6 +30,8 @@ TEST(ShekhirevVCharFreqCommon, InputDataStruct) {
 
 class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  ShekhirevVCharFreqFuncTests() : expected_output_(0) {}
+
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<2>(test_param);
   }
