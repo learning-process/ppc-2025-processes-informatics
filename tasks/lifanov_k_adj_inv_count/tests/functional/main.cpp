@@ -70,9 +70,12 @@ std::vector<FuncParam> LoadTestParams() {
   return cases;
 }
 
-const auto kTestParams = LoadTestParams();
+static const std::vector<FuncParam> &GetTestParams() {
+  static const std::vector<FuncParam> params = LoadTestParams();
+  return params;
+}
 
-INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(kTestParams),
+INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(GetTestParams()),
                          LifanovKRunFuncTests::PrintTestParam);
 
 }  // namespace
