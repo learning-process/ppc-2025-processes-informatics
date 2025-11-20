@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "makovskiy_i_min_value_in_matrix_rows/common/include/common.hpp"
@@ -45,6 +46,8 @@ void MinValueMPI::ProcessRankZero(std::vector<int> &local_min_values) {
     const auto &row = matrix[current_row_idx++];
     if (!row.empty()) {
       local_min_values.push_back(*std::ranges::min_element(row));
+    } else {
+      local_min_values.push_back(std::numeric_limits<int>::max());
     }
   }
 
@@ -63,6 +66,8 @@ void MinValueMPI::ProcessWorkerRank(std::vector<int> &local_min_values) {
       std::vector<int> received_row(row_size);
       MPI_Recv(received_row.data(), row_size, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       local_min_values.push_back(*std::ranges::min_element(received_row));
+    } else {
+      local_min_values.push_back(std::numeric_limits<int>::max());
     }
   }
 }
@@ -109,7 +114,8 @@ bool MinValueMPI::ValidationImpl() {
     if (mat.empty()) {
       return false;
     }
-    return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
+    // return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
+    return true;
   }
   return true;
 }
