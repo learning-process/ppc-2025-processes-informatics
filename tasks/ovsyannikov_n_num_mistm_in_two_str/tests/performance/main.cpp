@@ -14,20 +14,20 @@ class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
  protected:
   void SetUp() override {
     // Размер 10 миллионов символов
-    const int kBenchmarkSize = 10000000; 
-    
+    const int kBenchmarkSize = 10000000;
+
     std::string sample_a(kBenchmarkSize, 'a');
     std::string sample_b(kBenchmarkSize, 'a');
-    
-    // Чередуем a и b в str2 
+
+    // Чередуем a и b в str2
     target_val_ = 0;
-    for(int i = 0; i < kBenchmarkSize; ++i) {
-        if (i % 2 == 0) {
-             sample_b[i] = 'b';
-             target_val_++;
-        }
+    for (int i = 0; i < kBenchmarkSize; ++i) {
+      if (i % 2 == 0) {
+        sample_b[i] = 'b';
+        target_val_++;
+      }
     }
-    
+
     bench_data_ = std::make_pair(sample_a, sample_b);
   }
 
@@ -49,7 +49,8 @@ TEST_P(OvsyannikovNRunPerfTestProcesses, RunPerfModes) {
 }
 
 const auto kPerfTaskList =
-    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNNumMistmInTwoStrMPI, OvsyannikovNNumMistmInTwoStrSEQ>(PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str);
+    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNNumMistmInTwoStrMPI, OvsyannikovNNumMistmInTwoStrSEQ>(
+        PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str);
 
 const auto kTestParams = ppc::util::TupleToGTestValues(kPerfTaskList);
 

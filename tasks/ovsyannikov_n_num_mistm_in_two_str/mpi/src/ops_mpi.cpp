@@ -1,6 +1,7 @@
 #include "ovsyannikov_n_num_mistm_in_two_str/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <algorithm>
 #include <vector>
 
@@ -54,37 +55,36 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
     accum += elems_per_proc[i];
   }
 
-  // Подготовка данных   
-  std::vector<char> main_buff; 
-  std::vector<int> byte_counts(proc_num); 
-  std::vector<int> byte_shifts(proc_num);     
+  // Подготовка данных
+  std::vector<char> main_buff;
+  std::vector<int> byte_counts(proc_num);
+  std::vector<int> byte_shifts(proc_num);
 
   if (proc_rank == 0) {
     main_buff.resize(2 * total_len);
-    const auto& seq_one = GetInput().first;
-    const auto& seq_two = GetInput().second;
-    
+    const auto &seq_one = GetInput().first;
+    const auto &seq_two = GetInput().second;
+
     int iter_pos = 0;
 
-    // Собираем данные 
+    // Собираем данные
     for (int i = 0; i < proc_num; ++i) {
-      int part_len = elems_per_proc[i]; 
-      int read_from = shifts[i]; 
+      int part_len = elems_per_proc[i];
+      int read_from = shifts[i];
 
       // Копируем кусок 1 строки
       if (part_len > 0) {
-          std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, 
-                    main_buff.begin() + iter_pos);
+        std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, main_buff.begin() + iter_pos);
       }
-      // Копируем кусок 2 строки 
+      // Копируем кусок 2 строки
       if (part_len > 0) {
-          std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len, 
-                    main_buff.begin() + iter_pos + part_len);
+        std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len,
+                  main_buff.begin() + iter_pos + part_len);
       }
 
-      byte_counts[i] = 2 * part_len; 
+      byte_counts[i] = 2 * part_len;
       byte_shifts[i] = iter_pos;
-      
+
       iter_pos += (2 * part_len);
     }
   }
@@ -93,8 +93,8 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
   int my_chunk = elems_per_proc[proc_rank];
   std::vector<char> local_store(2 * my_chunk);
 
-  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR,
-               local_store.data(), 2 * my_chunk, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR, local_store.data(), 2 * my_chunk,
+               MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int priv_err_cnt = 0;
   for (int i = 0; i < my_chunk; ++i) {
