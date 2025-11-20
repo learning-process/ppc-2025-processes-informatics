@@ -12,7 +12,7 @@ namespace morozova_s_matrix_max_value {
 
 MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = InType(in.begin(), in.end());
+  GetInput() = InType(in);
   GetOutput() = 0;
 }
 
