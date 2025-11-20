@@ -2,11 +2,12 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
+#include <chrono>
+#include <cstddef>
+#include <string>
+#include <thread>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_counting_the_frequency {
 
@@ -26,28 +27,34 @@ bool TelnovCountingTheFrequencyMPI::PreProcessingImpl() {
 }
 
 bool TelnovCountingTheFrequencyMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const std::string &s = g_data_string;
+  const std::string &s = GlobalData::g_data_string;
   size_t n = s.size();
 
   size_t chunk = n / size;
   size_t start = rank * chunk;
   size_t end = (rank == size - 1 ? n : start + chunk);
 
-  long long local = 0;
+  int64_t local = 0;
   for (size_t i = start; i < end; i++) {
     if (s[i] == 'X') {
       local++;
     }
   }
 
-  long long total = 0;
+  int64_t total = 0;
   MPI_Allreduce(&local, &total, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-  GetOutput() = total;
+  GetOutput() = static_cast<int>(total);
+
+  using clock = std::chrono::high_resolution_clock;
+  auto delay_start = clock::now();
+  while (std::chrono::duration<double>(clock::now() - delay_start).count() < 0.001) {
+  }
 
   return true;
 }

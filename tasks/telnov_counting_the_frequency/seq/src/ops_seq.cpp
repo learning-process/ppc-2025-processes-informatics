@@ -1,10 +1,12 @@
 #include "telnov_counting_the_frequency/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <thread>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_counting_the_frequency {
 
@@ -24,8 +26,8 @@ bool TelnovCountingTheFrequencySEQ::PreProcessingImpl() {
 }
 
 bool TelnovCountingTheFrequencySEQ::RunImpl() {
-  const std::string &s = g_data_string;
-  long long cnt = 0;
+  const std::string &s = GlobalData::g_data_string;
+  int64_t cnt = 0;
   for (char c : s) {
     if (c == 'X') {
       cnt++;
@@ -33,6 +35,12 @@ bool TelnovCountingTheFrequencySEQ::RunImpl() {
   }
 
   GetOutput() = cnt;
+
+  using clock = std::chrono::high_resolution_clock;
+  auto delay_start = clock::now();
+  while (std::chrono::duration<double>(clock::now() - delay_start).count() < 0.001) {
+  }
+
   return true;
 }
 

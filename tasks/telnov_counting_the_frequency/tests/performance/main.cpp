@@ -12,11 +12,11 @@ class TelnovCountingTheFrequencyPerfTests : public ppc::util::BaseRunPerfTests<I
   InType input_data_{};
 
   void SetUp() override {
-    telnov_counting_the_frequency::g_data_string.clear();
-    telnov_counting_the_frequency::g_data_string.resize(5'000'000, 'a');
+    telnov_counting_the_frequency::GlobalData::g_data_string.clear();
+    telnov_counting_the_frequency::GlobalData::g_data_string.resize(5'000'000, 'a');
 
     for (int i = 0; i < kCount_; i++) {
-      telnov_counting_the_frequency::g_data_string[i] = 'X';
+      telnov_counting_the_frequency::GlobalData::g_data_string[i] = 'X';
     }
 
     input_data_ = kCount_;

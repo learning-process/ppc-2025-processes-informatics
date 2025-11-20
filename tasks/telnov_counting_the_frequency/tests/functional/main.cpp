@@ -9,7 +9,6 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
@@ -51,11 +50,11 @@ class TelnovCountingTheFrequencyFuncTestsProcesses : public ppc::util::BaseRunFu
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
 
-    telnov_counting_the_frequency::g_data_string.clear();
-    telnov_counting_the_frequency::g_data_string.resize(2'000'000, 'a');
+    telnov_counting_the_frequency::GlobalData::g_data_string.clear();
+    telnov_counting_the_frequency::GlobalData::g_data_string.resize(2'000'000, 'a');
 
     for (int i = 0; i < input_data_; i++) {
-      telnov_counting_the_frequency::g_data_string[i] = 'X';
+      telnov_counting_the_frequency::GlobalData::g_data_string[i] = 'X';
     }
   }
 
