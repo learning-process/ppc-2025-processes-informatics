@@ -48,10 +48,8 @@ class TelnovCountingTheFrequencyFuncTestsProcesses : public ppc::util::BaseRunFu
         }
     }
 
-    TestType params =
-        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ =
-        width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
 
     telnov_counting_the_frequency::g_data_string.clear();
     telnov_counting_the_frequency::g_data_string.resize(2'000'000, 'a');
