@@ -97,6 +97,17 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
         input_data_ = {{-1, 5, -3}, {2, -8, 10}, {7, 0, -5}};
         break;
 
+      case 17:  // Явно пустая матрица (для покрытия ValidationImpl)
+        input_data_ = {};
+        break;
+
+      case 18:               // Матрица с 0 столбцов (для coverage rows == 0 || cols == 0)
+        input_data_ = {{}};  // 1x0 матрица
+        break;
+      case 19:  // Матрица для неравномерного распределения столбцов
+        input_data_ = {{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}};  // 3x5 матрица
+        break;
+
       default:
         break;
     }
@@ -105,14 +116,12 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix = GetTestInputData();
 
-    if (matrix.empty()) {
+    // Для пустых матриц ожидаем пустой результат
+    if (matrix.empty() || matrix[0].empty()) {
       return output_data.empty();
     }
 
-    if (matrix[0].empty()) {
-      return output_data.empty();
-    }
-
+    // Для обычных матриц проверяем корректность результата
     if (output_data.size() != matrix[0].size()) {
       return false;
     }
@@ -148,7 +157,7 @@ TEST_P(EgorovaLRunFuncTestsProcesses, FindMaxValColMatrix) {
 }
 
 // тип теста, описание
-const std::array<TestType, 17> kTestParam = {std::make_tuple(0, "empty_matrix"),
+const std::array<TestType, 20> kTestParam = {std::make_tuple(0, "empty_matrix"),
                                              std::make_tuple(1, "zero_matrix"),
                                              std::make_tuple(2, "single_column"),
                                              std::make_tuple(3, "single_row"),
@@ -164,7 +173,10 @@ const std::array<TestType, 17> kTestParam = {std::make_tuple(0, "empty_matrix"),
                                              std::make_tuple(13, "zero_values"),
                                              std::make_tuple(14, "single_row_large"),
                                              std::make_tuple(15, "single_column_large"),
-                                             std::make_tuple(16, "mixed_positive_negative")};
+                                             std::make_tuple(16, "mixed_positive_negative"),
+                                             std::make_tuple(17, "empty_matrix_explicit"),
+                                             std::make_tuple(18, "zero_cols_matrix"),
+                                             std::make_tuple(19, "uneven_column_distribution")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixMPI, InType>(
                                                kTestParam, PPC_SETTINGS_egorova_l_find_max_val_col_matrix),
