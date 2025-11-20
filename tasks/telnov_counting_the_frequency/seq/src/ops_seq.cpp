@@ -36,7 +36,8 @@ bool TelnovCountingTheFrequencySEQ::RunImpl() {
 
   using Clock = std::chrono::high_resolution_clock;
   auto delay_start = Clock::now();
-  while (std::chrono::duration<double>(Clock::now() - delay_start).count() < 0.001) {}
+  while (std::chrono::duration<double>(Clock::now() - delay_start).count() < 0.001) {
+  }
 
   return true;
 }

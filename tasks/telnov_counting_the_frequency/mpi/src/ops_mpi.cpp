@@ -4,8 +4,8 @@
 
 #include <chrono>
 #include <cstddef>
-#include <string>
 #include <cstdint>
+#include <string>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
 
@@ -53,7 +53,8 @@ bool TelnovCountingTheFrequencyMPI::RunImpl() {
 
   using Clock = std::chrono::high_resolution_clock;
   auto delay_start = Clock::now();
-  while (std::chrono::duration<double>(Clock::now() - delay_start).count() < 0.001) {}
+  while (std::chrono::duration<double>(Clock::now() - delay_start).count() < 0.001) {
+  }
 
   return true;
 }
