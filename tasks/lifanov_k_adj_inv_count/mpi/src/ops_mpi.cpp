@@ -41,8 +41,7 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   const std::size_t base = total_pairs / static_cast<std::size_t>(size);
   const std::size_t rem = total_pairs % static_cast<std::size_t>(size);
 
-  const std::size_t start_pair =
-      (static_cast<std::size_t>(rank) * base) + std::min<std::size_t>(rank, rem);
+  const std::size_t start_pair = (static_cast<std::size_t>(rank) * base) + std::min<std::size_t>(rank, rem);
   const std::size_t count = base + (std::cmp_less(rank, static_cast<int>(rem)) ? 1 : 0);
   const std::size_t end_pair = start_pair + count;
 
