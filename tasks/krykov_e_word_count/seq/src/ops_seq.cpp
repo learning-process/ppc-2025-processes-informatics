@@ -31,9 +31,6 @@ bool KrykovEWordCountSEQ::PreProcessingImpl() {
 
 bool KrykovEWordCountSEQ::RunImpl() {
   const std::string &text = GetInput();
-  if (text.empty()) {
-    return false;
-  }
 
   bool in_word = false;
   size_t word_count = 0;
