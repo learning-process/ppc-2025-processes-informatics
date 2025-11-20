@@ -13,11 +13,10 @@
 namespace egorova_l_find_max_val_col_matrix {
 
 class EgorovaLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const std::size_t kMatrixSize_ = 5000;  // большая матрица
+  const std::size_t kMatrixSize_ = 5000;
   InType input_data_;
 
   void SetUp() override {
-    // Создаем простую детерминированную матрицу
     input_data_.resize(kMatrixSize_, std::vector<int>(kMatrixSize_));
 
     int counter = 1;
@@ -39,7 +38,6 @@ class EgorovaLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, 
       return false;
     }
 
-    // Вычисляем ожидаемый результат
     std::vector<int> expected(matrix[0].size(), std::numeric_limits<int>::min());
     for (size_t jj = 0; jj < matrix[0].size(); ++jj) {
       for (size_t ii = 0; ii < matrix.size(); ++ii) {

@@ -105,22 +105,18 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix = GetTestInputData();
 
-    // Проверка пустой матрицы
     if (matrix.empty()) {
       return output_data.empty();
     }
 
-    // Проверка нулевой матрицы (столбцы нулевой длины)
     if (matrix[0].empty()) {
       return output_data.empty();
     }
 
-    // Проверка размера выходного вектора
     if (output_data.size() != matrix[0].size()) {
       return false;
     }
 
-    // Вычисляем ожидаемый результат
     std::vector<int> expected(matrix[0].size(), std::numeric_limits<int>::min());
     for (std::size_t jj = 0; jj < matrix[0].size(); ++jj) {
       for (std::size_t ii = 0; ii < matrix.size(); ++ii) {
@@ -128,7 +124,6 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
       }
     }
 
-    // Сравниваем результаты
     for (std::size_t ii = 0; ii < output_data.size(); ++ii) {
       if (output_data[ii] != expected[ii]) {
         return false;
@@ -152,7 +147,7 @@ TEST_P(EgorovaLRunFuncTestsProcesses, FindMaxValColMatrix) {
   ExecuteTest(GetParam());
 }
 
-// Тестовые случаи: (тип_теста, описание)
+// тип теста, описание
 const std::array<TestType, 17> kTestParam = {std::make_tuple(0, "empty_matrix"),
                                              std::make_tuple(1, "zero_matrix"),
                                              std::make_tuple(2, "single_column"),
