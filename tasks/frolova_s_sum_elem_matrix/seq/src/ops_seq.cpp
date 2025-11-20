@@ -5,11 +5,22 @@
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
 #include "util/include/util.hpp"
 
+#ifdef __GNUC__
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+
 namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixSEQ::FrolovaSSumElemMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+
+  // Используем resize и копирование вместо прямого присваивания
+  GetInput().resize(in.size());
+  for (size_t i = 0; i < in.size(); ++i) {
+    GetInput()[i] = in[i];
+  }
+
   GetOutput() = 0;
 }
 
