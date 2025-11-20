@@ -11,7 +11,14 @@ namespace rozenberg_a_matrix_column_sum {
 
 RozenbergAMatrixColumnSumMPI::RozenbergAMatrixColumnSumMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput().assign(in.begin(), in.end());
+  
+  InType empty;
+  GetInput().swap(empty);
+
+  for (const auto& row : in) {
+    GetInput().push_back(row);
+  }
+
   GetOutput().clear();
 }
 
