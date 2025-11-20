@@ -10,7 +10,7 @@ namespace morozova_s_matrix_max_value {
 
 MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput().assign(in.begin(), in.end());
+  GetInput() = InType(in.begin(), in.end());
   GetOutput() = 0;
 }
 
