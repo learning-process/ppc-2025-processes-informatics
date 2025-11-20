@@ -7,6 +7,7 @@
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
 #include "gutyansky_a_matrix_column_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace gutyansky_a_matrix_column_sum {
 
@@ -20,7 +21,11 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data_ == output_data;
+    if (ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0) {
+      return true;
+    }
+
+    return (output_data_ == output_data);
   }
 
   InType GetTestInputData() final {

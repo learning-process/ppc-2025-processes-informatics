@@ -57,8 +57,7 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
     }
   }
 
-  MPI_Allreduce(partial_res.data(), GetOutput().data(), static_cast<int>(col_count), MPI_INTEGER8, MPI_SUM,
-                MPI_COMM_WORLD);
+  MPI_Reduce(partial_res.data(), GetOutput().data(), static_cast<int>(col_count), MPI_INTEGER8, MPI_SUM, 0, MPI_COMM_WORLD);
 
   return true;
 }
