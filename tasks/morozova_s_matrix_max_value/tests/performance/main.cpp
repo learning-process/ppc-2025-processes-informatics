@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"

@@ -26,27 +26,26 @@ bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
 }
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
-  auto &matrix = GetInput();
-  int rank, size;
+  const auto &matrix = GetInput();
+  int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  int rows = matrix.size();
-  int cols = matrix[0].size();
-  int rows_per_process = rows / size;
-  int remainder = rows % size;
-  int start_row = rank * rows_per_process + std::min(rank, remainder);
-  int end_row = start_row + rows_per_process + (rank < remainder ? 1 : 0);
+  const int rows = static_cast<int>(matrix.size());
+  const int cols = static_cast<int>(matrix[0].size());
+  const int rows_per_process = rows / size;
+  const int remainder = rows % size;
+  const int start_row = (rank * rows_per_process) + std::min(rank, remainder);
+  const int end_row = start_row + rows_per_process + ((rank < remainder) ? 1 : 0);
   int local_max = std::numeric_limits<int>::min();
-  for (int i = start_row; i < end_row; ++i) {
-    for (int j = 0; j < cols; ++j) {
+  for (int i = start_row; i < end_row; i++) {
+    for (int j = 0; j < cols; j++) {
       local_max = std::max(local_max, matrix[i][j]);
     }
   }
-  int global_max;
-  MPI_Reduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-  if (rank == 0) {
-    GetOutput() = global_max;
-  }
+  int global_max = std::numeric_limits<int>::min();
+  MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  GetOutput() = global_max;
   return true;
 }
 

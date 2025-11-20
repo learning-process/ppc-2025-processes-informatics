@@ -1,10 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
+#include <limits>
+#include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
 #include "morozova_s_matrix_max_value/mpi/include/ops_mpi.hpp"
