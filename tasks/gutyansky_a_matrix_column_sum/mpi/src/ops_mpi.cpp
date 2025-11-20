@@ -24,9 +24,7 @@ bool GutyanskyAMatrixColumnSumMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (rank == 0) {
-    return GetInput().rows > 0 &&
-      GetInput().cols > 0 && 
-      GetInput().data.size() == GetInput().rows * GetInput().cols;
+    return GetInput().rows > 0 && GetInput().cols > 0 && GetInput().data.size() == GetInput().rows * GetInput().cols;
   }
 
   return true;
@@ -68,8 +66,8 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
   std::vector<int32_t> input_data_chunk(elements_count);
   std::vector<int32_t> partial_res(col_count, static_cast<int32_t>(0));
 
-  MPI_Scatter(GetInput().data.data(), static_cast<int>(elements_count), MPI_INTEGER4, 
-    input_data_chunk.data(), static_cast<int>(elements_count), MPI_INTEGER4, 0, MPI_COMM_WORLD);
+  MPI_Scatter(GetInput().data.data(), static_cast<int>(elements_count), MPI_INTEGER4, input_data_chunk.data(),
+              static_cast<int>(elements_count), MPI_INTEGER4, 0, MPI_COMM_WORLD);
 
   for (size_t i = 0; i < chunk_size; i++) {
     for (size_t j = 0; j < col_count; j++) {
@@ -83,11 +81,11 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
       for (size_t j = 0; j < col_count; j++) {
         partial_res[j] += GetInput().data[(i * col_count) + j];
       }
-    }  
+    }
   }
 
-  MPI_Reduce(partial_res.data(), GetOutput().data(),
-    static_cast<int>(col_count), MPI_INTEGER4, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(partial_res.data(), GetOutput().data(), static_cast<int>(col_count), MPI_INTEGER4, MPI_SUM, 0,
+             MPI_COMM_WORLD);
 
   return true;
 }
