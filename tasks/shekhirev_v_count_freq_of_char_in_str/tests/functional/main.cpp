@@ -2,9 +2,9 @@
 #include <mpi.h>
 
 #include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/char_freq_mpi.hpp"
@@ -49,6 +49,7 @@ class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_P(ShekhirevVCharFreqFuncTests, Test) {
   auto test_param = GetParam();
   auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param);
@@ -65,12 +66,14 @@ TEST_P(ShekhirevVCharFreqFuncTests, Test) {
   ASSERT_TRUE(CheckTestOutputData(task->GetOutput()));
 }
 
-const std::array<TestType, 6> kTestCases = {std::make_tuple(InputData{"hello world", 'l'}, 3, "simple_word"),
-                                            std::make_tuple(InputData{"hello world", 'z'}, 0, "not_found"),
-                                            std::make_tuple(InputData{"", 'a'}, 0, "empty_string"),
-                                            std::make_tuple(InputData{"aaaaa", 'a'}, 5, "all_target"),
-                                            std::make_tuple(InputData{"abacabadabacaba", 'a'}, 8, "longer_string"),
-                                            std::make_tuple(InputData{"zaaaaaaz", 'z'}, 2, "edges")};
+// Исправлена инициализация на designated initializers (.str=..., .target=...)
+const std::array<TestType, 6> kTestCases = {
+    std::make_tuple(InputData{.str = "hello world", .target = 'l'}, 3, "simple_word"),
+    std::make_tuple(InputData{.str = "hello world", .target = 'z'}, 0, "not_found"),
+    std::make_tuple(InputData{.str = "", .target = 'a'}, 0, "empty_string"),
+    std::make_tuple(InputData{.str = "aaaaa", .target = 'a'}, 5, "all_target"),
+    std::make_tuple(InputData{.str = "abacabadabacaba", .target = 'a'}, 8, "longer_string"),
+    std::make_tuple(InputData{.str = "zaaaaaaz", .target = 'z'}, 2, "edges")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<CharFreqSequential, InType>(kTestCases, PPC_SETTINGS_shekhirev_v_count_freq_of_char_in_str),
@@ -80,6 +83,7 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = ShekhirevVCharFreqFuncTests::PrintFuncTestName<ShekhirevVCharFreqFuncTests>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CharFreqTests, ShekhirevVCharFreqFuncTests, kGtestValues, kTestName);
 
 }  // namespace
