@@ -5,6 +5,7 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "lifanov_k_adj_inv_count/common/include/common.hpp"
@@ -27,6 +28,7 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
  protected:
   void SetUp() override {
     const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
     data_ = std::get<0>(params);
     expected_ = std::get<1>(params);
   }
@@ -41,11 +43,10 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
  private:
   OutType expected_{0};
-  std::string filename_;
-  InType data_;
+  InType data_{};
 };
 
-namespace {
+namespace {  // anonymous namespace
 
 TEST_P(LifanovKRunFuncTests, AdjacentInversionCount) {
   ExecuteTest(GetParam());
@@ -59,32 +60,31 @@ std::vector<FuncParam> LoadTestParams() {
     throw std::runtime_error("Cannot open file: " + path);
   }
 
-  nlohmann::json j;
-  fin >> j;
+  nlohmann::json json_data;
+  fin >> json_data;
 
-  std::vector<FuncParam> cases;
-  cases.reserve(j.size() * 2);
+  std::vector<FuncParam> params;
+  params.reserve(json_data.size() * 2);
 
-  for (const auto &item : j) {
+  for (const auto &item : json_data) {
     TestType test_case{item.at("input").get<InType>(), item.at("expected").get<OutType>(),
                        item.at("name").get<std::string>()};
 
-    const auto &task_name = std::get<2>(test_case);
+    const auto &base_name = std::get<2>(test_case);
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, task_name + "_mpi", test_case);
+    params.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, base_name + "_mpi",
+                        test_case);
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, task_name + "_seq", test_case);
+    params.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, base_name + "_seq",
+                        test_case);
   }
 
-  return cases;
+  return params;
 }
 
-const std::vector<FuncParam> &GetTestParams() {
-  static const std::vector<FuncParam> kParams = LoadTestParams();
-  return kParams;
-}
+const auto kFuncParams = LoadTestParams();
 
-INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(GetTestParams()),
+INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(kFuncParams),
                          LifanovKRunFuncTests::PrintTestParam);
 
 }  // namespace

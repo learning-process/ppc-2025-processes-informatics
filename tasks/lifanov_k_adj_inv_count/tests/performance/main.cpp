@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <vector>
 
 #include "lifanov_k_adj_inv_count/common/include/common.hpp"
 #include "lifanov_k_adj_inv_count/mpi/include/ops_mpi.hpp"
@@ -34,15 +35,15 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
  private:
-  InType input_data_;
+  InType input_data_{};
   OutType expected_{};
 };
+
+namespace {  // anonymous namespace
 
 TEST_P(LifanovKRunPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
-
-namespace {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LifanovKAdjacentInversionCountMPI, LifanovKAdjacentInversionCountSEQ>(
