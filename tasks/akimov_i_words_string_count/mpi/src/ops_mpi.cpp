@@ -11,6 +11,8 @@
 
 namespace akimov_i_words_string_count {
 
+namespace {
+
 inline bool IsSpaceChar(char ch) {
   return ch == ' ' || ch == '\n' || ch == '\t';
 }
@@ -31,6 +33,8 @@ int CountWordsInBuffer(const InType &buf) {
   }
   return count;
 }
+
+}  // namespace
 
 AkimovIWordsStringCountMPI::AkimovIWordsStringCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
