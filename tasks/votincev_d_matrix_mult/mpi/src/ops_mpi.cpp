@@ -158,8 +158,8 @@ bool VotincevDMatrixMultMPI::RunImpl() {
 
   
   // теперь каждый владеет своим куском (local_matrix)
-  // вызываем обычное перемножение
-  MatrixPartMult(k, n, local_matrix, matrix_B); // ????
+  // вызываем обычное перемножение, результат умножение кладется в local_matrix
+  MatrixPartMult(k, n, local_matrix, matrix_B); 
 
   // сбор результатов назад к 0му
     if (proc_rank == 0) {

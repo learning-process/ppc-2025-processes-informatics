@@ -54,6 +54,13 @@ class VotincevDMatrixMultRunPerfTestsProcesses
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    // 1,2... процессы не владеют нужным результатом
+    if(output_data.size() != expected_res_.size()) {
+      return true;
+    }
+
+    //std::cout << "\n\nProcess0 is checking result\n\n";
+    // 0й процесс должен иметь корректную матрицу после умножения
     return output_data == expected_res_;
   }
 };
