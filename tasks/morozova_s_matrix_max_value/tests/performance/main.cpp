@@ -13,7 +13,7 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_;
 
   void SetUp() override {
-     const int size = 500;
+    const int size = 500;
     input_data_ = InType(size, std::vector<int>(size));
     int value = 1;
     for (int i = 0; i < size; ++i) {
