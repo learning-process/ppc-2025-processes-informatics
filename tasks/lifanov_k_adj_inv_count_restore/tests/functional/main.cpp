@@ -49,6 +49,11 @@ namespace {
 
 std::vector<FuncParam> LoadTestParams() {
   const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lifanov_k_adj_inv_count_restore, "tests.json");
+  const std::string settings_path = PPC_SETTINGS_lifanov_k_adj_inv_count_restore;
+  const std::string mpi_suffix =
+      ppc::task::GetStringTaskType(LifanovKAdjacentInversionCountMPI::GetStaticTypeOfTask(), settings_path);
+  const std::string seq_suffix =
+      ppc::task::GetStringTaskType(LifanovKAdjacentInversionCountSEQ::GetStaticTypeOfTask(), settings_path);
 
   std::ifstream fin(path);
   if (!fin.is_open()) {
@@ -66,15 +71,9 @@ std::vector<FuncParam> LoadTestParams() {
 
     const std::string &tname = std::get<2>(tc);
 
-    std::string mpi_name = tname;
-    mpi_name += "_mpi";
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, tname + "_" + mpi_suffix, tc);
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, mpi_name, tc);
-
-    std::string seq_name = tname;
-    seq_name += "_seq";
-
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, seq_name, tc);
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, tname + "_" + seq_suffix, tc);
   }
 
   return cases;
