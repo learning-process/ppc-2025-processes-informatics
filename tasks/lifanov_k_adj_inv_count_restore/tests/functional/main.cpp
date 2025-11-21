@@ -27,21 +27,22 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
  protected:
   void SetUp() override {
     const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
     data_ = std::get<0>(params);
     expected_ = std::get<1>(params);
-  }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_;
   }
 
   InType GetTestInputData() final {
     return data_;
   }
 
+  bool CheckTestOutputData(OutType &output_data) final {
+    return output_data == expected_;
+  }
+
  private:
+  InType data_{};
   OutType expected_{};
-  InType data_;
 };
 
 namespace {
@@ -66,6 +67,7 @@ std::vector<FuncParam> LoadTestParams() {
     const auto &tname = std::get<2>(tc);
 
     cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, tname + "_mpi", tc);
+
     cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, tname + "_seq", tc);
   }
 
@@ -74,33 +76,12 @@ std::vector<FuncParam> LoadTestParams() {
 
 const std::vector<FuncParam> kFuncParams = LoadTestParams();
 
-}  // namespace
-
 TEST_P(LifanovKRunFuncTests, AdjacentInversionCount) {
   ExecuteTest(GetParam());
 }
 
-namespace {
-
-using FuncParamGenerator = ::testing::internal::ParamGenerator<FuncParam>;
-
-FuncParamGenerator MakeFuncParamsGenerator() {
-  return ::testing::ValuesIn(kFuncParams);
-}
-
-std::string MakeFuncParamName(const ::testing::TestParamInfo<FuncParam> &info) {
-  return LifanovKRunFuncTests::PrintTestParam(info);
-}
-
-const int kFunctionalTestsRegistered = [] {
-  auto &registry = ::testing::UnitTest::GetInstance()->parameterized_test_registry();
-  auto *holder = registry.GetTestSuitePatternHolder<LifanovKRunFuncTests>(
-      "LifanovKRunFuncTests", ::testing::internal::CodeLocation(__FILE__, __LINE__));
-  holder->AddTestSuiteInstantiation("FunctionalTests", &MakeFuncParamsGenerator, &MakeFuncParamName, __FILE__,
-                                    __LINE__);
-  return 0;
-}();
+INSTANTIATE_TEST_SUITE_P(FunctionalTests, LifanovKRunFuncTests, ::testing::ValuesIn(kFuncParams),
+                         LifanovKRunFuncTests::PrintTestParam);
 
 }  // namespace
-
 }  // namespace lifanov_k_adj_inv_count_restore

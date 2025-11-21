@@ -14,10 +14,11 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
  public:
   static constexpr std::size_t kSize = 100'000'000;
 
+ protected:
   void SetUp() override {
     input_data_.resize(kSize);
-    input_data_[0] = 1000;
 
+    input_data_[0] = 100000;
     for (std::size_t i = 1; i + 1 < kSize; ++i) {
       input_data_[i] = static_cast<int>(i);
     }
@@ -45,32 +46,21 @@ TEST_P(LifanovKRunPerfTests, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LifanovKAdjacentInversionCountMPI, LifanovKAdjacentInversionCountSEQ>(
-        PPC_SETTINGS_lifanov_k_adj_inv_count_restore);
+auto BuildPerfParams() {
+  const auto all_tasks =
+      ppc::util::MakeAllPerfTasks<InType, LifanovKAdjacentInversionCountMPI, LifanovKAdjacentInversionCountSEQ>(
+          PPC_SETTINGS_lifanov_k_adj_inv_count_restore);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
-const auto kPerfTestName = LifanovKRunPerfTests::CustomPerfTestName;
-
-using PerfParamGenerator = ::testing::internal::ParamGenerator<LifanovKRunPerfTests::ParamType>;
-
-PerfParamGenerator MakePerfParamsGenerator() {
-  return kGtestValues;
+  return ppc::util::TupleToGTestValues(all_tasks);
 }
 
-std::string MakePerfParamName(const ::testing::TestParamInfo<LifanovKRunPerfTests::ParamType> &info) {
-  return kPerfTestName(info);
+const auto kPerfParams = BuildPerfParams();
+
+std::string PerfName(const ::testing::TestParamInfo<LifanovKRunPerfTests::ParamType> &info) {
+  return LifanovKRunPerfTests::CustomPerfTestName(info);
 }
 
-const int kPerfTestsRegistered = [] {
-  auto &registry = ::testing::UnitTest::GetInstance()->parameterized_test_registry();
-  auto *holder = registry.GetTestSuitePatternHolder<LifanovKRunPerfTests>(
-      "LifanovKRunPerfTests", ::testing::internal::CodeLocation(__FILE__, __LINE__));
-  holder->AddTestSuiteInstantiation("RunModeTests", &MakePerfParamsGenerator, &MakePerfParamName, __FILE__, __LINE__);
-  return 0;
-}();
+INSTANTIATE_TEST_SUITE_P(RunModeTests, LifanovKRunPerfTests, kPerfParams, PerfName);
 
 }  // namespace
-
 }  // namespace lifanov_k_adj_inv_count_restore
