@@ -41,22 +41,18 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
  private:
-  InType data_{};
-  OutType expected_{};
+  InType data_;
+  OutType expected_;
 };
 
 namespace {
 
 std::vector<FuncParam> LoadTestParams() {
-  const std::string tests_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lifanov_k_adj_inv_count_restore, "tests.json");
-  const std::string settings_path = PPC_SETTINGS_lifanov_k_adj_inv_count_restore;
+  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_lifanov_k_adj_inv_count_restore, "tests.json");
 
-  const auto mpi_tag = ppc::task::GetStringTaskType(ppc::task::TypeOfTask::kMPI, settings_path);
-  const auto seq_tag = ppc::task::GetStringTaskType(ppc::task::TypeOfTask::kSEQ, settings_path);
-
-  std::ifstream fin(tests_path);
+  std::ifstream fin(path);
   if (!fin.is_open()) {
-    throw std::runtime_error("Cannot open file: " + tests_path);
+    throw std::runtime_error("Cannot open file: " + path);
   }
 
   nlohmann::json j;
@@ -68,11 +64,17 @@ std::vector<FuncParam> LoadTestParams() {
   for (const auto &item : j) {
     TestType tc{item.at("input").get<InType>(), item.at("expected").get<OutType>(), item.at("name").get<std::string>()};
 
-    const auto &tname = std::get<2>(tc);
+    const std::string &tname = std::get<2>(tc);
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, tname + "_" + mpi_tag, tc);
+    std::string mpi_name = tname;
+    mpi_name += "_mpi";
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, tname + "_" + seq_tag, tc);
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, mpi_name, tc);
+
+    std::string seq_name = tname;
+    seq_name += "_seq";
+
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, seq_name, tc);
   }
 
   return cases;

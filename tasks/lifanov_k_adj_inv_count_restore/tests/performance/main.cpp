@@ -18,7 +18,7 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   void SetUp() override {
     input_data_.resize(kSize);
 
-    input_data_[0] = 100000;
+    input_data_[0] = 1000000;
     for (std::size_t i = 1; i + 1 < kSize; ++i) {
       input_data_[i] = static_cast<int>(i);
     }
@@ -37,7 +37,7 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
 
  private:
   InType input_data_;
-  OutType expected_{};
+  OutType expected_;
 };
 
 TEST_P(LifanovKRunPerfTests, RunPerfModes) {
