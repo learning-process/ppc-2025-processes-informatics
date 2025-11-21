@@ -13,7 +13,7 @@ struct Matrix {
   size_t cols;
   std::vector<int32_t> data;
 
-  bool IsValid() const {
+  [[nodiscard]] bool IsValid() const {
     return rows > 0 && cols > 0 && data.size() == rows * cols;
   }
 
