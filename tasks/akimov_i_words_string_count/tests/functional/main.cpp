@@ -76,7 +76,7 @@ class AkimovIWordsStringCountFromFileFuncTests : public ppc::util::BaseRunFuncTe
     int mpi_initialized = 0;
 
     MPI_Initialized(&mpi_initialized);
-    if (mpi_initialized) {
+    if (mpi_initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     } else {
       rank = 0;
