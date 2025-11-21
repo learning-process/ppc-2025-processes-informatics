@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <utility>
 #include <vector>
 
 #include "egorova_l_find_max_val_col_matrix/common/include/common.hpp"
@@ -47,11 +46,6 @@ bool EgorovaLFindMaxValColMatrixMPI::PreProcessingImpl() {
 }
 
 bool EgorovaLFindMaxValColMatrixMPI::RunImpl() {
-  if (!ValidationImpl()) {
-    GetOutput() = std::vector<int>();
-    return true;
-  }
-
   const auto &matrix = GetInput();
 
   if (matrix.empty() || matrix[0].empty()) {
@@ -78,13 +72,21 @@ bool EgorovaLFindMaxValColMatrixMPI::RunMPIAlgorithm() {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (rows == 0 || cols == 0) {
-    GetOutput() = std::vector<int>();
-    return true;
+  std::vector<int> flat_matrix = CreateAndBroadcastMatrix(rank, rows, cols);
+
+  const int cols_per_proc = cols / size;
+  const int remainder = cols % size;
+  int start_col = 0;
+  int local_cols_count = 0;
+
+  if (rank < remainder) {
+    start_col = rank * (cols_per_proc + 1);
+    local_cols_count = cols_per_proc + 1;
+  } else {
+    start_col = (remainder * (cols_per_proc + 1)) + ((rank - remainder) * cols_per_proc);
+    local_cols_count = cols_per_proc;
   }
 
-  std::vector<int> flat_matrix = CreateAndBroadcastMatrix(rank, rows, cols);
-  auto [start_col, local_cols_count] = CalculateColumnDistribution(rank, size, cols);
   std::vector<int> local_max = CalculateLocalMaxima(flat_matrix, rows, cols, start_col, local_cols_count);
   std::vector<int> all_max = GatherResults(local_max, size, cols);
 
@@ -108,24 +110,6 @@ std::vector<int> EgorovaLFindMaxValColMatrixMPI::CreateAndBroadcastMatrix(int ra
 
   MPI_Bcast(flat_matrix.data(), rows * cols, MPI_INT, 0, MPI_COMM_WORLD);
   return flat_matrix;
-}
-
-std::pair<int, int> EgorovaLFindMaxValColMatrixMPI::CalculateColumnDistribution(int rank, int size, int cols) {
-  const int cols_per_proc = cols / size;
-  const int remainder = cols % size;
-
-  int start_col = 0;
-  int local_cols_count = 0;
-
-  if (rank < remainder) {
-    start_col = rank * (cols_per_proc + 1);
-    local_cols_count = cols_per_proc + 1;
-  } else {
-    start_col = (remainder * (cols_per_proc + 1)) + ((rank - remainder) * cols_per_proc);
-    local_cols_count = cols_per_proc;
-  }
-
-  return {start_col, local_cols_count};
 }
 
 std::vector<int> EgorovaLFindMaxValColMatrixMPI::CalculateLocalMaxima(const std::vector<int> &flat_matrix, int rows,

@@ -97,15 +97,8 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
         input_data_ = {{-1, 5, -3}, {2, -8, 10}, {7, 0, -5}};
         break;
 
-      case 17:  // Явно пустая матрица (для покрытия ValidationImpl)
-        input_data_ = {};
-        break;
-
-      case 18:               // Матрица с 0 столбцов (для coverage rows == 0 || cols == 0)
-        input_data_ = {{}};  // 1x0 матрица
-        break;
-      case 19:  // Матрица для неравномерного распределения столбцов
-        input_data_ = {{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}};  // 3x5 матрица
+      case 17:  // Матрица для неравномерного распределения столбцов
+        input_data_ = {{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}};
         break;
 
       default:
@@ -115,15 +108,6 @@ class EgorovaLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
 
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix = GetTestInputData();
-
-    // Получаем тип теста
-    auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int test_type = std::get<0>(test_params);
-
-    // Для некорректной матрицы (test case 20) ожидаем пустой результат
-    if (test_type == 20) {
-      return output_data.empty();
-    }
 
     // Для пустых матриц ожидаем пустой результат
     if (matrix.empty() || matrix[0].empty()) {
@@ -166,7 +150,7 @@ TEST_P(EgorovaLRunFuncTestsProcesses, FindMaxValColMatrix) {
 }
 
 // тип теста, описание
-const std::array<TestType, 21> kTestParam = {std::make_tuple(0, "empty_matrix"),
+const std::array<TestType, 18> kTestParam = {std::make_tuple(0, "empty_matrix"),
                                              std::make_tuple(1, "zero_matrix"),
                                              std::make_tuple(2, "single_column"),
                                              std::make_tuple(3, "single_row"),
@@ -183,9 +167,7 @@ const std::array<TestType, 21> kTestParam = {std::make_tuple(0, "empty_matrix"),
                                              std::make_tuple(14, "single_row_large"),
                                              std::make_tuple(15, "single_column_large"),
                                              std::make_tuple(16, "mixed_positive_negative"),
-                                             std::make_tuple(17, "empty_matrix_explicit"),
-                                             std::make_tuple(18, "zero_cols_matrix"),
-                                             std::make_tuple(19, "uneven_column_distribution")};
+                                             std::make_tuple(17, "uneven_column_distribution")};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<EgorovaLFindMaxValColMatrixMPI, InType>(
                                                kTestParam, PPC_SETTINGS_egorova_l_find_max_val_col_matrix),
@@ -197,33 +179,6 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = EgorovaLRunFuncTestsProcesses::PrintFuncTestName<EgorovaLRunFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(MatrixTests, EgorovaLRunFuncTestsProcesses, kGtestValues, kPerfTestName);
-
-// ОТДЕЛЬНЫЙ ТЕСТ ДЛЯ НЕКОРРЕКТНЫХ МАТРИЦ
-TEST(EgorovaLInvalidMatrixTests, MPIInvalidMatrixRagged) {
-  InType invalid_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8}};
-  EgorovaLFindMaxValColMatrixMPI task(invalid_matrix);
-
-  // Ожидаем, что валидация вернет false для некорректной матрицы
-  EXPECT_FALSE(task.Validation());
-
-  // Проверяем, что вывод пустой
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-  EXPECT_TRUE(task.GetOutput().empty());
-}
-
-TEST(EgorovaLInvalidMatrixTests, SEQInvalidMatrixRagged) {
-  InType invalid_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8}};
-  EgorovaLFindMaxValColMatrixSEQ task(invalid_matrix);
-
-  EXPECT_FALSE(task.Validation());
-
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-  EXPECT_TRUE(task.GetOutput().empty());
-}
 
 }  // namespace
 

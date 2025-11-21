@@ -46,11 +46,7 @@ bool EgorovaLFindMaxValColMatrixSEQ::PreProcessingImpl() {
 bool EgorovaLFindMaxValColMatrixSEQ::RunImpl() {
   const auto &matrix = GetInput();
 
-  if (!ValidationImpl()) {
-    GetOutput() = std::vector<int>();
-    return true;
-  }
-
+  // Оставляем только проверку на пустоту
   if (matrix.empty() || matrix[0].empty()) {
     GetOutput() = std::vector<int>();
     return true;
