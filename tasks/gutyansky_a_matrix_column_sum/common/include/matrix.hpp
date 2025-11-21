@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cmath>
-#include <tuple>
 #include <cstddef>
 #include <cstdint>
+#include <tuple>
 #include <vector>
 
 namespace gutyansky_a_matrix_column_sum {

@@ -53,7 +53,7 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
 
   [[nodiscard]] static bool ShouldLoadDataAndTest() {
     const std::string &test_name =
-      std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
 
     if (test_name.find("_mpi") == std::string::npos) {
       return true;
