@@ -100,9 +100,10 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = AkimovIWordsStringCountFromFileFuncTests::PrintTestParam;
+const auto kPerfTestName =
+    AkimovIWordsStringCountFromFileFuncTests::PrintFuncTestName<AkimovIWordsStringCountFromFileFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(CountFromFile, AkimovIWordsStringCountFromFileFuncTests, kGtestValues);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, AkimovIWordsStringCountFromFileFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
