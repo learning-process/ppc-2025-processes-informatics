@@ -3,10 +3,10 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <numeric>
 #include <vector>
-#include <cctype>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -74,7 +74,8 @@ bool AkimovIWordsStringCountMPI::PreProcessingImpl() {
     sendbuf = input_buffer_.data();
   }
 
-  MPI_Scatterv(sendbuf, counts.data(), displs.data(), MPI_CHAR, local_buffer_.data(), my_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(sendbuf, counts.data(), displs.data(), MPI_CHAR, local_buffer_.data(), my_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   return true;
 }
@@ -102,13 +103,17 @@ bool AkimovIWordsStringCountMPI::RunImpl() {
   int dest = (rank + 1 < size) ? rank + 1 : MPI_PROC_NULL;
   int src = (rank - 1 >= 0) ? rank - 1 : MPI_PROC_NULL;
 
-  MPI_Sendrecv(&send_last, 1, MPI_CHAR, dest, 0, &recv_prev_last, 1, MPI_CHAR, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(&send_last, 1, MPI_CHAR, dest, 0, &recv_prev_last, 1, MPI_CHAR, src, 0, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
 
   if (!local_buffer_.empty()) {
     char first_char = local_buffer_.front();
-    if (!std::isspace(static_cast<unsigned char>(recv_prev_last)) && !std::isspace(static_cast<unsigned char>(first_char))) {
+    if (!std::isspace(static_cast<unsigned char>(recv_prev_last)) &&
+        !std::isspace(static_cast<unsigned char>(first_char))) {
       --local_word_count;
-      if (local_word_count < 0) local_word_count = 0;
+      if (local_word_count < 0) {
+        local_word_count = 0;
+      }
     }
   }
 
