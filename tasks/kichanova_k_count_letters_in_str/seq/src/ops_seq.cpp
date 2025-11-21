@@ -8,7 +8,8 @@
 
 namespace kichanova_k_count_letters_in_str {
 
-KichanovaKCountLettersInStrSEQ::KichanovaKCountLettersInStrSEQ(const InType &in) {
+KichanovaKCountLettersInStrSEQ::KichanovaKCountLettersInStrSEQ(
+    const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
@@ -24,14 +25,14 @@ bool KichanovaKCountLettersInStrSEQ::PreProcessingImpl() {
 }
 
 bool KichanovaKCountLettersInStrSEQ::RunImpl() {
-const std::string& input_str = GetInput();
-  
+  const std::string &input_str = GetInput();
+
   for (char c : input_str) {
     if (std::isalpha(static_cast<unsigned char>(c))) {
       GetOutput()++;
     }
   }
-  
+
   return GetOutput() >= 0;
 }
 
@@ -39,4 +40,4 @@ bool KichanovaKCountLettersInStrSEQ::PostProcessingImpl() {
   return GetOutput() >= 0;
 }
 
-}  // namespace kichanova_k_count_letters_in_str
+} // namespace kichanova_k_count_letters_in_str

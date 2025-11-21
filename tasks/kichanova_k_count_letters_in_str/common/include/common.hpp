@@ -12,4 +12,4 @@ using OutType = int;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace kichanova_k_count_letters_in_str
+} // namespace kichanova_k_count_letters_in_str

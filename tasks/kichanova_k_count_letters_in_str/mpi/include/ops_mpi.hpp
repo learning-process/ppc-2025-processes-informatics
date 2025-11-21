@@ -6,17 +6,17 @@
 namespace kichanova_k_count_letters_in_str {
 
 class KichanovaKCountLettersInStrMPI : public BaseTask {
- public:
+public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit KichanovaKCountLettersInStrMPI(const InType &in);
 
- private:
+private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 };
 
-}  // namespace kichanova_k_count_letters_in_str
+} // namespace kichanova_k_count_letters_in_str
