@@ -71,9 +71,15 @@ std::vector<FuncParam> LoadTestParams() {
 
     const std::string &tname = std::get<2>(tc);
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, tname + "_" + mpi_suffix, tc);
+    std::string mpi_name = tname;
+    mpi_name += '_';
+    mpi_name += mpi_suffix;
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountMPI, InType>, std::move(mpi_name), tc);
 
-    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, tname + "_" + seq_suffix, tc);
+    std::string seq_name = tname;
+    seq_name += '_';
+    seq_name += seq_suffix;
+    cases.emplace_back(ppc::task::TaskGetter<LifanovKAdjacentInversionCountSEQ, InType>, std::move(seq_name), tc);
   }
 
   return cases;
