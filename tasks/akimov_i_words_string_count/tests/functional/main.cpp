@@ -73,7 +73,15 @@ class AkimovIWordsStringCountFromFileFuncTests : public ppc::util::BaseRunFuncTe
 
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int mpi_initialized = 0;
+
+    MPI_Initialized(&mpi_initialized);
+    if (mpi_initialized) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    } else {
+      rank = 0;
+    }
+
     if (!is_valid_ || rank != 0) {
       return true;
     }
