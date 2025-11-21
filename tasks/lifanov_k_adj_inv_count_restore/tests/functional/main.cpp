@@ -20,6 +20,8 @@ using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
 
 class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  LifanovKRunFuncTests() : data_{}, expected_{} {}
+
   static std::string PrintTestParam(const ::testing::TestParamInfo<FuncParam> &info) {
     return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
   }
@@ -41,8 +43,8 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
  private:
-  InType data_{};
-  OutType expected_{0};
+  InType data_;
+  OutType expected_;
 };
 
 namespace {

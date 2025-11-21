@@ -12,13 +12,15 @@ namespace lifanov_k_adj_inv_count_restore {
 
 class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
+  LifanovKRunPerfTests() : input_data_{}, expected_{} {}
+
   static constexpr std::size_t kSize = 100'000'000;
 
  protected:
   void SetUp() override {
     input_data_.resize(kSize);
 
-    input_data_[0] = 1000000;
+    input_data_[0] = 100000000;
     for (std::size_t i = 1; i + 1 < kSize; ++i) {
       input_data_[i] = static_cast<int>(i);
     }
@@ -36,8 +38,8 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
  private:
-  InType input_data_{};
-  OutType expected_{0};
+  InType input_data_;
+  OutType expected_;
 };
 
 TEST_P(LifanovKRunPerfTests, RunPerfModes) {
