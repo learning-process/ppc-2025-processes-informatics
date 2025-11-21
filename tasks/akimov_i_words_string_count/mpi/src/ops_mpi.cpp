@@ -4,14 +4,29 @@
 
 #include <algorithm>
 #include <cctype>
-#include <cstring>
-#include <numeric>
 #include <vector>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace akimov_i_words_string_count {
+
+static inline bool IsSpaceChar(char ch) {
+  return std::isspace(static_cast<unsigned char>(ch)) != 0;
+}
+
+static int CountWordsInBuffer(const InType &buf) {
+  int count = 0;
+  bool in_word = false;
+  for (char ch : buf) {
+    if (!IsSpaceChar(ch) && !in_word) {
+      in_word = true;
+      ++count;
+    } else if (IsSpaceChar(ch) && in_word) {
+      in_word = false;
+    }
+  }
+  return count;
+}
 
 AkimovIWordsStringCountMPI::AkimovIWordsStringCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -86,16 +101,7 @@ bool AkimovIWordsStringCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int local_word_count = 0;
-  bool in_word = false;
-  for (char ch : local_buffer_) {
-    if (!std::isspace(static_cast<unsigned char>(ch)) && !in_word) {
-      in_word = true;
-      ++local_word_count;
-    } else if (std::isspace(static_cast<unsigned char>(ch)) && in_word) {
-      in_word = false;
-    }
-  }
+  int local_word_count = CountWordsInBuffer(local_buffer_);
 
   char recv_prev_last = ' ';
   char send_last = local_buffer_.empty() ? ' ' : local_buffer_.back();
@@ -108,17 +114,12 @@ bool AkimovIWordsStringCountMPI::RunImpl() {
 
   if (!local_buffer_.empty()) {
     char first_char = local_buffer_.front();
-    if (!std::isspace(static_cast<unsigned char>(recv_prev_last)) &&
-        !std::isspace(static_cast<unsigned char>(first_char))) {
-      --local_word_count;
-      if (local_word_count < 0) {
-        local_word_count = 0;
-      }
+    if (!IsSpaceChar(recv_prev_last) && !IsSpaceChar(first_char)) {
+      local_word_count = std::max(local_word_count - 1, 0);
     }
   }
 
   MPI_Reduce(&local_word_count, &word_count_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
   MPI_Bcast(&word_count_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   GetOutput() = word_count_;

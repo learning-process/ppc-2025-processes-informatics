@@ -1,10 +1,8 @@
 #include "akimov_i_words_string_count/seq/include/ops_seq.hpp"
 
-#include <algorithm>
-#include <numeric>
+#include <cctype>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace akimov_i_words_string_count {
 
@@ -32,7 +30,7 @@ bool AkimovIWordsStringCountSEQ::RunImpl() {
   }
 
   for (char c : input_buffer_) {
-    if (c == ' ') {
+    if (std::isspace(static_cast<unsigned char>(c)) != 0) {
       ++space_count_;
     }
   }
@@ -40,10 +38,10 @@ bool AkimovIWordsStringCountSEQ::RunImpl() {
   bool in_word = false;
   word_count_ = 0;
   for (char c : input_buffer_) {
-    if (c != ' ' && !in_word) {
+    if (std::isspace(static_cast<unsigned char>(c)) == 0 && !in_word) {
       in_word = true;
       ++word_count_;
-    } else if (c == ' ' && in_word) {
+    } else if (std::isspace(static_cast<unsigned char>(c)) != 0 && in_word) {
       in_word = false;
     }
   }

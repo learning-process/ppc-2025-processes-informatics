@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string>
-#include <tuple>
-#include <vector>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
 #include "akimov_i_words_string_count/mpi/include/ops_mpi.hpp"
