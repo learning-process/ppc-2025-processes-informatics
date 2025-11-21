@@ -13,7 +13,7 @@ namespace ovsyannikov_n_num_mistm_in_two_str {
 class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int benchmark_size = 10000000;
+    const int benchmark_size = 100000000;
 
     std::string sample_a(benchmark_size, 'a');
     std::string sample_b(benchmark_size, 'a');
