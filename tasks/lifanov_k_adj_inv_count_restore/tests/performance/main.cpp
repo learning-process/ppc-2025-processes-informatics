@@ -36,8 +36,8 @@ class LifanovKRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
  private:
-  InType input_data_;
-  OutType expected_;
+  InType input_data_{};
+  OutType expected_{0};
 };
 
 TEST_P(LifanovKRunPerfTests, RunPerfModes) {

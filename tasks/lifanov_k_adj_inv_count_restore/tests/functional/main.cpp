@@ -41,8 +41,8 @@ class LifanovKRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   }
 
  private:
-  InType data_;
-  OutType expected_;
+  InType data_{};
+  OutType expected_{0};
 };
 
 namespace {
