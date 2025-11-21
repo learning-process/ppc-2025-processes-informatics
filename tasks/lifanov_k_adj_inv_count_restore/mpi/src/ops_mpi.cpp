@@ -28,9 +28,6 @@ bool LifanovKAdjacentInversionCountMPI::PreProcessingImpl() {
 bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   const auto &data = GetInput();
   const std::size_t n = data.size();
-  if (n < 2) {
-    return true;
-  }
 
   int rank = 0;
   int size = 1;
