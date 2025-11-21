@@ -27,32 +27,39 @@ bool VotincevDMatrixMultSEQ::ValidationImpl() {
 }
 
 bool VotincevDMatrixMultSEQ::PreProcessingImpl() {
-  auto &in = GetInput();
-  m_ = std::get<0>(in);
-  n_ = std::get<1>(in);
-  k_ = std::get<2>(in);
-  A_ = std::get<3>(in);
-  B_ = std::get<4>(in);
-
-  result_.assign(m_ * n_, 0.0);
   return true;
 }
 
 bool VotincevDMatrixMultSEQ::RunImpl() {
-  for (int i = 0; i < m_; ++i) {
-    for (int j = 0; j < n_; ++j) {
+  int param_m = 0, param_n = 0, param_k = 0;
+  std::vector<double> matrix_A;
+  std::vector<double> matrix_B;
+  std::vector<double> matrix_res;
+
+  auto &in = GetInput();
+  param_m = std::get<0>(in);
+  param_n = std::get<1>(in);
+  param_k = std::get<2>(in);
+  matrix_A = std::get<3>(in);
+  matrix_B = std::get<4>(in);
+
+  matrix_res.assign(param_m*param_n,0.0);
+  
+  for (int i = 0; i < param_m; ++i) {
+    for (int j = 0; j < param_n; ++j) {
       double sum = 0.0;
-      for (int t = 0; t < k_; ++t) {
-        sum += A_[i * k_ + t] * B_[t * n_ + j];
+      for (int t = 0; t < param_k; ++t) {
+        sum += matrix_A[i * param_k + t] * matrix_B[t * param_n + j];
       }
-      result_[i * n_ + j] = sum;
+      matrix_res[i * param_n + j] = sum;
     }
   }
+  
+  GetOutput() = matrix_res;
   return true;
 }
 
 bool VotincevDMatrixMultSEQ::PostProcessingImpl() {
-  GetOutput() = result_;
   return true;
 }
 

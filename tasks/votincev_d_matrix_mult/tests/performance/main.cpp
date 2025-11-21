@@ -22,8 +22,7 @@ class VotincevDMatrixMultRunPerfTestsProcesses
   OutType expected_res_;
 
   void SetUp() override {
-    std::string file_path =
-        ppc::util::GetAbsoluteTaskPath(PPC_ID_votincev_d_matrix_mult, "testPerf.txt");
+    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_votincev_d_matrix_mult, "testPerf.txt");
 
     std::ifstream file(file_path);
     if (!file.is_open()) {
@@ -41,7 +40,7 @@ class VotincevDMatrixMultRunPerfTestsProcesses
 
     input_data_ = std::make_tuple(m, n, k, A, B);
 
-    // Вычисляем эталон (SEQ) для проверки корректности MPI
+    // вычисляю предполагаемый результат
     expected_res_.assign(m * n, 0.0);
     for (int i = 0; i < m; ++i) {
       for (int j = 0; j < n; ++j) {

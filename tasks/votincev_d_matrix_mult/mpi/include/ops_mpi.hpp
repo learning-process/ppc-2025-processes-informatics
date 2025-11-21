@@ -16,15 +16,8 @@ class VotincevDMatrixMultMPI : public BaseTask {
   explicit VotincevDMatrixMultMPI(const InType &in);
 
  private:
-  int m_;
-  int n_;
-  int k_;
-  std::vector<double> A_;
-  std::vector<double> B_;
-  std::vector<double> result_;
-  void MultiplyBlock(int start_row, int end_row, std::vector<double> &out);
-  void SyncResults();
 
+  static void MatrixPartMult(int k, int n,std::vector<double>& local_matrix,const std::vector<double>& matrix_B );
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

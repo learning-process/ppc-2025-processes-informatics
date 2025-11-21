@@ -15,12 +15,6 @@ class VotincevDMatrixMultSEQ : public BaseTask {
   explicit VotincevDMatrixMultSEQ(const InType &in);
 
  private:
-  int m_;
-  int n_;
-  int k_;
-  std::vector<double> A_;
-  std::vector<double> B_;
-  std::vector<double> result_;
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

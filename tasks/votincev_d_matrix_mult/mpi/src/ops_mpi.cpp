@@ -30,14 +30,7 @@ bool VotincevDMatrixMultMPI::ValidationImpl() {
 
 // препроцессинг
 bool VotincevDMatrixMultMPI::PreProcessingImpl() {
-  auto &in = GetInput();
-  m_ = std::get<0>(in);
-  n_ = std::get<1>(in);
-  k_ = std::get<2>(in);
-  A_ = std::get<3>(in);
-  B_ = std::get<4>(in);
 
-  result_.assign(m_ * n_, 0.0);
   return true;
 }
 
@@ -51,126 +44,182 @@ bool VotincevDMatrixMultMPI::RunImpl() {
   int proc_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
-  // если всего 1 процесс -  последовательное умножение
+  // параметры получают все процессы
+  int m = 0, n = 0, k = 0;
+  const auto& in = GetInput();
+  m = std::get<0>(in);
+  n = std::get<1>(in);
+  k = std::get<2>(in);
+
+  // если процессов больше чем строк в матрице A - 
+  // то активных процессов будет меньше (m)
+  //  (потому что разедление по строкам)
+  process_n = std::min(process_n, m);
+  
+  if(proc_rank >= process_n) {
+    return true;
+  }
+  
+  std::vector<double> matrix_A;
+  std::vector<double> matrix_B;
+
+  matrix_B = std::get<4>(in);
+  // матрицу А получит полностью только 0й процесс
+  if (proc_rank == 0) {
+    matrix_A = std::get<3>(in);
+  }
+
+  // если всего 1 процесс - последовательное умножение
   if (process_n == 1) {
-    MultiplyBlock(0, m_, result_);
+    // MultiplyBlock(0, m_, result_);
     return true;
   }
 
   // какие строки каждый процесс будет перемножать
   // [start0, end0, start1, end1, ...]
   std::vector<int> ranges;
-  if (proc_rank == 0) {
-    ranges.resize(process_n * 2); // *2 так как каждый процесс получит start и end свой
 
-    // минимум на обработку
-    int base = m_ / process_n;
-    // остаток - распределим между первыми
-    int remain = m_ % process_n;
+  if (proc_rank == 0) {
+    ranges.resize(process_n * 2);
+
+    int base = m / process_n;
+    int remain = m % process_n;
 
     int start = 0;
     for (int i = 0; i < process_n; i++) {
-      // Количество строк для процесса i
       int part = base;
-      if (i < remain) { // первые remain процессво получат по +1
-        part++;
-      }
+      if (i < remain) part++;
 
-      
-      ranges[i * 2] = start; // строка start для процесса i
-      ranges[i * 2 + 1] = start + part; // строка end для процесса i
-      // процессы обрабатывают строки с start по end-1 !!! 
-
+      ranges[i * 2] = start;
+      ranges[i * 2 + 1] = start + part;  // end (не включительно)
 
       start += part;
     }
   }
 
-  // диапазон для процесса
+  // my_range получит [start, end]
   int my_range[2]{0, 0};
-  MPI_Scatter(
-      ranges.data(),  // что отправляем ( std::vector<int> ranges)
-      2,              // сколько каждый получит (по 2 типа int)
-      MPI_INT,        // тип отправляемых данных
-      my_range,       // куда класть 
-      2,              // сколько класть
-      MPI_INT,        // тип что кладем
-      0,              // тег
-      MPI_COMM_WORLD); // коммуникатор
 
+  // local_matrix — локальный блок матрицы A
+  std::vector<double> local_matrix;
 
-  // каждый процесс берет свой start и end
-  int start = my_range[0];
-  int end = my_range[1];
-  int local_rows = end - start;  // сколько будет обрабатывать строк
-
-  // результирующая матрица процесса (часть выходной матрицы)
-  std::vector<double> local_R(local_rows * n_, 0.0);
-
-  // произведение строк start ... end-1 матрцы А и матрицы B, пишу в local_R
-  MultiplyBlock(start, end, local_R);
-
-
-
-  // ???????????????????
-  //
-  эточё
-  // Подготавливаем данные для сборки результата у процесса 0
-  std::vector<int> recvcounts, displs;
   if (proc_rank == 0) {
-    recvcounts.resize(process_n);  // сколько элементов приходит от каждого процесса
-    displs.resize(process_n);      // смещения в итоговом буфере
+    
+    
 
-    int offset = 0;
-    for (int i = 0; i < process_n; i++) {
-      int rs = ranges[i * 2 + 1] - ranges[i * 2];  // число строк от процесса i
-      recvcounts[i] = rs * n_;                     // строк * столбцов = элементов
-      displs[i] = offset;                          // где в result_ начинается его блок
-      offset += recvcounts[i];
+    // заполняю данные для себя — свои строки матрицы А
+    int my_start = ranges[0];
+    int my_end   = ranges[1];
+    int my_rows  = my_end - my_start;
+
+    local_matrix.resize(my_rows * k);
+    for (int i = 0; i < my_rows * k; i++) {
+      local_matrix[i] = matrix_A[i];
     }
+
+
+    // рассылаю остальным
+    for (int i = 1; i < process_n; i++) {
+      int start_i = ranges[2 * i];
+      int end_i   = ranges[2 * i + 1];
+
+      MPI_Send(&start_i, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+      MPI_Send(&end_i,   1, MPI_INT, i, 0, MPI_COMM_WORLD);
+
+      int elem_count = (end_i - start_i) * k;
+
+      MPI_Send(matrix_A.data() + start_i * k,
+               elem_count,
+               MPI_DOUBLE,
+               i,
+               0,
+               MPI_COMM_WORLD);
+    }
+
+  } else {
+    // получаю диапазон
+    MPI_Recv(&my_range[0], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&my_range[1], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    int start_i = my_range[0];
+    int end_i   = my_range[1];
+    int elem_count = (end_i - start_i) * k;
+
+    local_matrix.resize(elem_count);
+
+    MPI_Recv(local_matrix.data(),
+             elem_count,
+             MPI_DOUBLE,
+             0,
+             0,
+             MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
   }
 
-  // Сбор результата в итоговую матрицу result_ на процессе 0
-  MPI_Gatherv(
-      local_R.data(),    // отправляемые данные
-      local_rows * n_,   // их количество
-      MPI_DOUBLE,        // тип отправляемых
-      result_.data(),    // куда собираем (только у 0-го)
-      recvcounts.data(), // сколько от каждого процесса
-      displs.data(),     // смещения
-      MPI_DOUBLE,        // тип принимаемых
-      0,                 // тег
-      MPI_COMM_WORLD);   // коммуникатор
+  
+  // теперь каждый владеет своим куском (local_matrix)
+  // вызываем обычное перемножение
+  MatrixPartMult(k, n, local_matrix, matrix_B); // ????
 
-  // 0й процесс посылает остальным процессам результирующую матрицу
-  SyncResults();
+  // сбор результатов назад к 0му
+    if (proc_rank == 0) {
+        std::vector<double> final_result(m * n);
+        int my_rows = ranges[1] - ranges[0];
+        std::copy(local_matrix.begin(), local_matrix.end(), final_result.begin());
+
+        int offset = my_rows * n;
+        for (int i = 1; i < process_n; ++i) {
+            int start_i = ranges[2 * i];
+            int end_i   = ranges[2 * i + 1];
+            int rows    = end_i - start_i;
+            int count   = rows * n;
+
+            MPI_Recv(final_result.data() + offset,
+                     count,
+                     MPI_DOUBLE,
+                     i,
+                     0,
+                     MPI_COMM_WORLD,
+                     MPI_STATUS_IGNORE);
+
+            offset += count;
+        }
+        GetOutput() = final_result;
+        
+    } else {
+        int rows = my_range[1] - my_range[0];
+        MPI_Send(local_matrix.data(), rows * n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+    }
+
 
   return true;
 }
 
 
-// Синхронизация результата между процессами
-void VotincevDMatrixMultMPI::SyncResults() {
-  MPI_Barrier(MPI_COMM_WORLD);
-  MPI_Bcast(result_.data(), m_ * n_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-}
 
-// умножение части матрицы A на матрицу B
-void VotincevDMatrixMultMPI::MultiplyBlock(int start_row, int end_row, std::vector<double> &out) {
-  for (int i = start_row; i < end_row; ++i) {
-    for (int j = 0; j < n_; ++j) {
-      double sum = 0.0;
-      for (int t = 0; t < k_; ++t) {
-        sum += A_[i * k_ + t] * B_[t * n_ + j];
-      }
-      out[(i - start_row) * n_ + j] = sum;
+void VotincevDMatrixMultMPI::MatrixPartMult(
+    int k, int n,
+    std::vector<double>& local_matrix,
+    const std::vector<double>& matrix_B)
+{
+    size_t str_count = local_matrix.size() / k;
+
+    std::vector<double> result;
+    result.resize(str_count*n);
+
+    for (size_t i = 0; i < str_count; i++) {
+        for (int j = 0; j < n; j++) {
+            double sum = 0.0;
+            for (int t = 0; t < k; t++) {
+                sum += local_matrix[i * k + t] * matrix_B[t * n + j];
+            }
+            result[i * n + j] = sum;
+        }
     }
-  }
+    local_matrix = result;
 }
 
 bool VotincevDMatrixMultMPI::PostProcessingImpl() {
-  GetOutput() = result_;
   return true;
 }
 

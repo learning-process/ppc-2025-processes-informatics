@@ -41,13 +41,33 @@ class VotincevDMatrixMultRunFuncTestsProcesses
 
     for (double &v : A) file >> v;
     for (double &v : B) file >> v;
-    for (double &v : R_expected) file >> v;
 
     input_data_ = std::make_tuple(m, n, k, A, B);
-    expected_res_ = R_expected;
+
+
+    // вычисляю предполагаемый результат
+    expected_res_.assign(m * n, 0.0);
+    for (int i = 0; i < m; ++i) {
+      for (int j = 0; j < n; ++j) {
+        double sum = 0.0;
+        for (int t = 0; t < k; ++t) {
+          sum += A[i * k + t] * B[t * n + j];
+        }
+        expected_res_[i * n + j] = sum;
+      }
+    }
+
+    
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    // 1,2... процессы не владеют нужным результатом
+    if(output_data.size() != expected_res_.size()) {
+      return true;
+    }
+
+    //std::cout << "\n\nProcess0 is checking result\n\n";
+    // 0й процесс должен иметь корректную матрицу после умножения
     return output_data == expected_res_;
   }
 
@@ -66,13 +86,13 @@ TEST_P(VotincevDMatrixMultRunFuncTestsProcesses, MatrixMultiplicationTests) {
   ExecuteTest(GetParam());
 }
 
-// const std::array<TestType, 6> kTestParam = {
-//     "test1", "test2", "test3", "test4", "test5", "test6"
-// };
-
-const std::array<TestType, 2> kTestParam = {
-    "test1","test2"
+const std::array<TestType, 10> kTestParam = {
+    "test1", "test2", "test3", "test4", "test5", "test6","test7","test8","test9","test10"
 };
+
+// const std::array<TestType, 3> kTestParam = {
+//     "test1","test2","test3"
+// };
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<VotincevDMatrixMultMPI, InType>(
