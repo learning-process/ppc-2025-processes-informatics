@@ -16,20 +16,15 @@ GutyanskyAMatrixColumnSumSEQ::GutyanskyAMatrixColumnSumSEQ(const InType &in) {
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::ValidationImpl() {
-  return GetInput().rows > 0 && GetInput().cols > 0 && GetInput().data.size() == GetInput().rows * GetInput().cols;
+  return GetInput().IsValid();
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::PreProcessingImpl() {
-  GetOutput().resize(GetInput().cols);
-
-  return GetOutput().size() == GetInput().cols;
+  return true;
 }
 
 bool GutyanskyAMatrixColumnSumSEQ::RunImpl() {
-  if (GetInput().rows == 0 || GetInput().cols == 0) {
-    return false;
-  }
-
+  GetOutput().resize(GetInput().cols);
   std::fill(GetOutput().begin(), GetOutput().end(), 0);
 
   for (size_t i = 0; i < GetInput().rows; i++) {

@@ -27,20 +27,20 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
 
  protected:
   void SetUp() override {
-    if (IsMPINonRootProcess()) {
-      InitializeEmptyData();
+    if (ShouldLoadDataAndTest()) {
+      LoadTestDataFromFile();
       return;
     }
 
-    LoadTestDataFromFile();
+    InitializeEmptyData();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (IsMPINonRootProcess()) {
-      return true;
+    if (ShouldLoadDataAndTest()) {
+      return output_data_ == output_data;
     }
 
-    return output_data_ == output_data;
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -51,8 +51,15 @@ class GutyanskyAMatrixColumnSumFuncTests : public ppc::util::BaseRunFuncTests<In
   InType input_data_ = {};
   OutType output_data_;
 
-  [[nodiscard]] static bool IsMPINonRootProcess() {
-    return ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0;
+  [[nodiscard]] static bool ShouldLoadDataAndTest() {
+    const std::string &test_name =
+      std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
+
+    if (test_name.find("_mpi") == std::string::npos) {
+      return true;
+    }
+
+    return !ppc::util::IsUnderMpirun() || ppc::util::GetMPIRank() == 0;
   }
 
   void InitializeEmptyData() {

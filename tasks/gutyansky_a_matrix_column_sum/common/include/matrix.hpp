@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <tuple>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -12,8 +13,12 @@ struct Matrix {
   size_t cols;
   std::vector<int32_t> data;
 
+  bool IsValid() const {
+    return rows > 0 && cols > 0 && data.size() == rows * cols;
+  }
+
   friend bool operator==(const Matrix &v_left, const Matrix &v_right) {
-    return v_left.rows == v_right.rows && v_left.cols == v_right.cols && v_left.data == v_right.data;
+    return std::tie(v_left.rows, v_left.cols, v_left.data) == std::tie(v_right.rows, v_right.cols, v_right.data);
   }
 };
 

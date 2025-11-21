@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 #include "gutyansky_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
@@ -14,20 +15,20 @@ namespace gutyansky_a_matrix_column_sum {
 class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    if (IsMPINonRootProcess()) {
-      InitializeEmptyData();
+    if (ShouldLoadDataAndTest()) {
+      LoadTestData();
       return;
     }
 
-    LoadTestData();
+    InitializeEmptyData();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (IsMPINonRootProcess()) {
-      return true;
+    if (ShouldLoadDataAndTest()) {
+      return output_data_ == output_data;
     }
 
-    return output_data_ == output_data;
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -39,8 +40,15 @@ class GutyanskyAMatrixColumnSumPerfTest : public ppc::util::BaseRunPerfTests<InT
   InType input_data_ = {};
   OutType output_data_;
 
-  [[nodiscard]] static bool IsMPINonRootProcess() {
-    return ppc::util::IsUnderMpirun() && ppc::util::GetMPIRank() != 0;
+  [[nodiscard]] static bool ShouldLoadDataAndTest() {
+    const std::string &test_name =
+      std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
+
+    if (test_name.find("_mpi") == std::string::npos) {
+      return true;
+    }
+
+    return !ppc::util::IsUnderMpirun() || ppc::util::GetMPIRank() == 0;
   }
 
   void InitializeEmptyData() {
