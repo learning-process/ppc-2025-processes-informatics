@@ -4,25 +4,29 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <vector>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
 
 namespace akimov_i_words_string_count {
 
-static inline bool IsSpaceChar(char ch) {
-  return std::isspace(static_cast<unsigned char>(ch)) != 0;
+inline bool IsSpaceChar(char ch) {
+  return ch == ' ' || ch == '\n' || ch == '\t';
 }
 
-static int CountWordsInBuffer(const InType &buf) {
+int CountWordsInBuffer(const InType &buf) {
   int count = 0;
   bool in_word = false;
-  for (char ch : buf) {
-    if (!IsSpaceChar(ch) && !in_word) {
-      in_word = true;
-      ++count;
-    } else if (IsSpaceChar(ch) && in_word) {
+
+  for (char c : buf) {
+    if (IsSpaceChar(c)) {
       in_word = false;
+    } else {
+      if (!in_word) {
+        count++;
+        in_word = true;
+      }
     }
   }
   return count;
