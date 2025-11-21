@@ -15,8 +15,16 @@ RomanovAIntegrationRectMethodMPI::RomanovAIntegrationRectMethodMPI(const InType 
 }
 
 bool RomanovAIntegrationRectMethodMPI::ValidationImpl() {
-  return (IsEqual(GetOutput(), 0.0) && (std::get<3>(GetInput()) > 0) &&
-          (std::get<1>(GetInput()) < std::get<2>(GetInput())));
+  if (!IsEqual(GetOutput(), 0.0)) {
+    return false;
+  }
+  if (std::get<3>(GetInput()) <= 0) {
+    return false;
+  }
+  if (std::get<1>(GetInput()) >= std::get<2>(GetInput())) {
+    return false;
+  }
+  return true;
 }
 
 bool RomanovAIntegrationRectMethodMPI::PreProcessingImpl() {
@@ -24,13 +32,27 @@ bool RomanovAIntegrationRectMethodMPI::PreProcessingImpl() {
 }
 
 bool RomanovAIntegrationRectMethodMPI::RunImpl() {
-  const auto &[f, a, b, n] = GetInput();
+  const auto f = std::get<0>(GetInput());
 
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   int num_processes = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+
+  double a = 0.0;
+  double b = 0.0;
+  int n = 0;
+
+  if (rank == 0) {
+    a = std::get<1>(GetInput());
+    b = std::get<2>(GetInput());
+    n = std::get<3>(GetInput());
+  }
+
+  MPI_Bcast(&a, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   int block_size = (n + num_processes - 1) / num_processes;
 

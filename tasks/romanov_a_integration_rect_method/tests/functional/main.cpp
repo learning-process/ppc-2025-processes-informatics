@@ -58,7 +58,8 @@ TEST_P(RomanovAIntegrationRectMethodFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple([](double x) { return x; }, -1.0, 1.0, 1, 0),
     std::make_tuple([](double x) { return x; }, 0.0, 1.0, 2, 0.5),
     std::make_tuple([](double x) { return x * x; }, 0.0, 1.0, 1000000 + 1, 1.0 / 3.0),
     std::make_tuple([](double x) { return (std::sin(x) * x) - std::sqrt(x); }, 0.0, std::numbers::pi, 1000000 + 2,
