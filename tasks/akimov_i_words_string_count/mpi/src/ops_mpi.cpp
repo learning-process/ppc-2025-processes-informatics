@@ -6,6 +6,7 @@
 #include <cstring>
 #include <numeric>
 #include <vector>
+#include <cctype>
 
 #include "akimov_i_words_string_count/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -51,73 +52,76 @@ bool AkimovIWordsStringCountMPI::PreProcessingImpl() {
     base = static_cast<int>(total / static_cast<std::size_t>(size));
     remainder = static_cast<int>(total % static_cast<std::size_t>(size));
   }
+
   MPI_Bcast(&base, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&remainder, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   int my_count = base + ((rank < remainder) ? 1 : 0);
   local_buffer_.resize(my_count);
 
-  if (rank == 0) {
-    std::size_t offset = 0;
-    for (int proc = 0; proc < size; ++proc) {
-      int count = base + ((proc < remainder) ? 1 : 0);
-      if (count == 0) {
-      } else if (proc == 0) {
-        std::memcpy(local_buffer_.data(), input_buffer_.data() + offset, static_cast<std::size_t>(count));
-      } else {
-        MPI_Send(input_buffer_.data() + offset, count, MPI_CHAR, proc, 0, MPI_COMM_WORLD);
-      }
-      offset += static_cast<std::size_t>(count);
-    }
-  } else {
-    if (my_count > 0) {
-      MPI_Recv(local_buffer_.data(), my_count, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    } else {
-    }
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
+  for (int i = 0; i < size; ++i) {
+    counts[i] = base + ((i < remainder) ? 1 : 0);
   }
+  displs[0] = 0;
+  for (int i = 1; i < size; ++i) {
+    displs[i] = displs[i - 1] + counts[i - 1];
+  }
+
+  const char *sendbuf = nullptr;
+  if (rank == 0 && !input_buffer_.empty()) {
+    sendbuf = input_buffer_.data();
+  }
+
+  MPI_Scatterv(sendbuf, counts.data(), displs.data(), MPI_CHAR, local_buffer_.data(), my_count, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   return true;
 }
 
 bool AkimovIWordsStringCountMPI::RunImpl() {
-  local_space_count_ = 0;
-  for (char c : local_buffer_) {
-    if (c == ' ') {
-      ++local_space_count_;
-    }
-  }
-
-  MPI_Reduce(&local_space_count_, &global_space_count_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
   int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    if (GetInput().empty()) {
-      word_count_ = 0;
-    } else {
-      const InType &buf = GetInput();
-      bool in_word = false;
-      word_count_ = 0;
-      for (char c : buf) {
-        if (c != ' ' && !in_word) {
-          in_word = true;
-          ++word_count_;
-        } else if (c == ' ' && in_word) {
-          in_word = false;
-        }
-      }
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  int local_word_count = 0;
+  bool in_word = false;
+  for (char ch : local_buffer_) {
+    if (!std::isspace(static_cast<unsigned char>(ch)) && !in_word) {
+      in_word = true;
+      ++local_word_count;
+    } else if (std::isspace(static_cast<unsigned char>(ch)) && in_word) {
+      in_word = false;
     }
   }
+
+  char recv_prev_last = ' ';
+  char send_last = local_buffer_.empty() ? ' ' : local_buffer_.back();
+
+  int dest = (rank + 1 < size) ? rank + 1 : MPI_PROC_NULL;
+  int src = (rank - 1 >= 0) ? rank - 1 : MPI_PROC_NULL;
+
+  MPI_Sendrecv(&send_last, 1, MPI_CHAR, dest, 0, &recv_prev_last, 1, MPI_CHAR, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  if (!local_buffer_.empty()) {
+    char first_char = local_buffer_.front();
+    if (!std::isspace(static_cast<unsigned char>(recv_prev_last)) && !std::isspace(static_cast<unsigned char>(first_char))) {
+      --local_word_count;
+      if (local_word_count < 0) local_word_count = 0;
+    }
+  }
+
+  MPI_Reduce(&local_word_count, &word_count_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(&word_count_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput() = word_count_;
 
   return true;
 }
 
 bool AkimovIWordsStringCountMPI::PostProcessingImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    GetOutput() = word_count_;
-  }
   return true;
 }
 

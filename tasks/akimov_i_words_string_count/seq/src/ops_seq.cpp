@@ -27,7 +27,8 @@ bool AkimovIWordsStringCountSEQ::PreProcessingImpl() {
 
 bool AkimovIWordsStringCountSEQ::RunImpl() {
   if (input_buffer_.empty()) {
-    return false;
+    word_count_ = 0;
+    return true;
   }
 
   for (char c : input_buffer_) {
