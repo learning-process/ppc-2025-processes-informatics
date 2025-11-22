@@ -16,7 +16,7 @@ GonozovLElemVecSumMPI::GonozovLElemVecSumMPI(const InType &in) {
 }
 
 bool GonozovLElemVecSumMPI::ValidationImpl() {
-  return GetInput().size() > 0;
+  return !GetInput().empty();
 }
 
 bool GonozovLElemVecSumMPI::PreProcessingImpl() {
