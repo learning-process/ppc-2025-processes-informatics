@@ -14,5 +14,5 @@
 			}
 		}
 	},
-	"postCreateCommand": "python3 -m pip install -r requirements.txt"
+	"postCreateCommand": "python3 -m pip install -r requirements.txt --break-system-packages --ignore-installed"
 }

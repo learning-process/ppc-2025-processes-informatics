@@ -27,6 +27,46 @@ TEST(KuterginTrapezoidFunc, MpiVersionWorks) {
   ASSERT_DOUBLE_EQ(kutergin_v_trapezoid_mpi::Func(2.0), 4.0);
 }
 
+TEST(KuterginTrapezoidValidation, SeqFailsOnInvalidBounds) {
+  InType invalid_input{1.0, 0.0, 100};
+  TrapezoidIntegrationSequential task(invalid_input);
+  EXPECT_FALSE(task.Validation());
+
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+}
+
+TEST(KuterginTrapezoidValidation, SeqFailsOnZeroSteps) {
+  InType invalid_input{0.0, 1.0, 0};
+  TrapezoidIntegrationSequential task(invalid_input);
+  EXPECT_FALSE(task.Validation());
+
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+}
+
+TEST(KuterginTrapezoidValidation, SeqFailsOnNegativeSteps) {
+  InType invalid_input{0.0, 1.0, -100};
+  TrapezoidIntegrationSequential task(invalid_input);
+  EXPECT_FALSE(task.Validation());
+
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+}
+
+TEST(KuterginTrapezoidValidation, MPIFailsOnNegativeSteps) {
+  InType invalid_input{0.0, 1.0, -100};
+  kutergin_v_trapezoid_mpi::TrapezoidIntegrationMPI task(invalid_input);
+  EXPECT_FALSE(task.Validation());
+
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+}
+
 class KuterginVRunFuncTestsSEQ
     : public ppc::util::BaseRunFuncTests<InType, OutType,
                                          TestType>  // наследник ppc::util::BaseRunFuncTests<InType, OutType, TestType>
@@ -74,50 +114,27 @@ class KuterginVRunFuncTestsSEQ
 namespace  // анонимное пространство имен
 {
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_P(KuterginVRunFuncTestsSEQ, TrapezoidTest)  // параметризованный тест
 {
-  // Получение параметров теста
-  auto test_param = GetParam();
-  auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param);
-  const auto &test_case_params =
-      std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(test_param);
-  const auto &input_data = std::get<0>(test_case_params);
-
-  // Создание задачи
-  auto task = task_getter(input_data);
-
-  // Ожидание провала валидации
-  bool expected_validation_fail = (input_data.b <= input_data.a || input_data.n <= 0);
-
-  // Запуск конвейера в соответствии с ожиданиями
-  if (expected_validation_fail)  // ожидание провала
-  {
-    ASSERT_FALSE(task->Validation());
-    // Вызов остальных этапов "вхолостую"
-    task->PreProcessing();
-    task->Run();
-    task->PostProcessing();
-  } else {
-    ASSERT_TRUE(task->Validation());
-    ASSERT_TRUE(task->PreProcessing());
-    ASSERT_TRUE(task->Run());
-    ASSERT_TRUE(task->PostProcessing());
-    ASSERT_TRUE(CheckTestOutputData(task->GetOutput()));
-  }
+  ExecuteTest(GetParam());
 }
 
 // массив с наборами тестовых данных
-const std::array<TestType, 6> kTestCases = {
+const std::array<TestType, 9> kTestCases = {
     // Успешные тесты
     std::make_tuple(InputData{.a = 0.0, .b = 3.0, .n = 10000}, 9.0, "f_x_squared_0_to_3_n_10000"),
     std::make_tuple(InputData{.a = -1.0, .b = 1.0, .n = 20000}, 0.666666, "f_x_squared_neg1_to_1_n_20000"),
-    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = 1001}, 1.0 / 3.0, "remainder_check"),
+    std::make_tuple(InputData{.a = 5.0, .b = 10.0, .n = 30000}, 291.666666, "f_x_squared_5_to_10_n_30000"),
 
-    // Тесты на провал валидации
-    std::make_tuple(InputData{.a = 1.0, .b = 0.0, .n = 30000}, 0.0, "invalid_bounds"),
-    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = 0}, 0.0, "invalid_n_zero"),
-    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = -100}, 0.0, "invalid_n_negative")};
+    // Тесты на крайние случаи
+    std::make_tuple(InputData{.a = 0.0, .b = 0.0, .n = 1000}, 0.0, "edge_zero_length_interval"),
+    std::make_tuple(InputData{.a = 99.999, .b = 100.0, .n = 1000}, 9.9999, "edge_very_small_interval"),
+    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = 1}, 0.5, "edge_single_trapezoid"),
+
+    // Тесты с "неудобным" n для проверки распределения остатка
+    std::make_tuple(InputData{.a = 0.0, .b = 1.0, .n = 1001}, 0.333333, "remainder_check_n_is_odd"),
+    std::make_tuple(InputData{.a = 0.0, .b = 2.0, .n = 50}, 2.6672, "remainder_check_small_n"),
+    std::make_tuple(InputData{.a = 0.0, .b = 3.0, .n = 99}, 9.000459, "another_remainder_check")};
 
 // используем фреймворк для подготовки задач к запуску
 const auto kTestTasksList =

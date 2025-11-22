@@ -20,7 +20,7 @@ TrapezoidIntegrationMPI::TrapezoidIntegrationMPI(const kutergin_v_trapezoid_seq:
 }
 
 bool TrapezoidIntegrationMPI::ValidationImpl() {
-  return (GetInput().a < GetInput().b) && (GetInput().n > 0);
+  return (GetInput().a <= GetInput().b) && (GetInput().n > 0);
 }
 
 bool TrapezoidIntegrationMPI::PreProcessingImpl() {

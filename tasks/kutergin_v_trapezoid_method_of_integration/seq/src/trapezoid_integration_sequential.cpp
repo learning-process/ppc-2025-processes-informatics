@@ -16,8 +16,8 @@ TrapezoidIntegrationSequential::TrapezoidIntegrationSequential(const InType &in)
 }
 
 bool TrapezoidIntegrationSequential::ValidationImpl() {
-  return (GetInput().b > GetInput().a) &&
-         (GetInput().n > 0);  // проверка b > a (границ интегрирования) и n > 0 (число разбиений)
+  return (GetInput().b >= GetInput().a) &&
+         (GetInput().n > 0);  // проверка b >= a (границ интегрирования) и n > 0 (число разбиений)
 }
 
 bool TrapezoidIntegrationSequential::PreProcessingImpl() {
