@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>ы
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
