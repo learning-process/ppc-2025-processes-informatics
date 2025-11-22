@@ -14,13 +14,13 @@ namespace egashin_k_lexicographical_check {
 
 class EgashinKLexCheckFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  protected:
-  void static SetUp() override {
+  void SetUp() override {
     TestType param = GetParamInfo();
     input_ = std::get<0>(param);
     expected_ = std::get<1>(param);
   }
 
-  bool static CheckTestOutputData(OutType &output) override {
+  bool CheckTestOutputData(OutType &output) override {
     if (ppc::util::IsUnderMpirun()) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -46,7 +46,7 @@ class EgashinKLexCheckFuncTest : public ppc::util::BaseRunFuncTests<InType, OutT
   OutType expected_;
 };
 
-static TEST_P(EgashinKLexCheckFuncTest, LexicographicalOrder) {
+TEST_P(EgashinKLexCheckFuncTest, LexicographicalOrder) {
   ExecuteTest(GetParam());
 }
 
