@@ -74,8 +74,8 @@ const std::array<TestType, 6> kTestParam = {
     std::make_tuple(3, 1.0, 4.0, 50000, [](double x) { return std::exp(x); }, [](double x) { return std::exp(x); }),
     std::make_tuple(4, -100.0, 400.0, 70000, [](double x) { return x * std::exp(x); },
                     [](double x) { return std::exp(x) * (x - 1); }),
-    std::make_tuple(5, -2.0, 3.0, 80000, [](double x) { return x * x * x - 4 * x + 1; },
-                    [](double x) { return x * x * x * x / 4.0 - 2 * x * x + x; }),
+    std::make_tuple(5, -2.0, 3.0, 80000, [](double x) { return (x * x * x) - (4 * x) + 1; },
+                    [](double x) { return (x * x * x * x / 4.0) - (2 * x * x + x); }),
     std::make_tuple(6, -10.0, 100.0, 100000, [](double x) {
   return (std::exp(x) * (std::sin(x) + std::cos(x))) + (3 * x * x * std::cos(x)) - (x * x * x * std::sin(x));
 }, [](double x) { return (std::exp(x) * std::sin(x)) + (x * x * x * std::cos(x)); })};
