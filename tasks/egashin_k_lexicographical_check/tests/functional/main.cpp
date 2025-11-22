@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <vector>
-#include <string>
 #include <array>
+#include <string>
+#include <vector>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 #include "egashin_k_lexicographical_check/mpi/include/ops_mpi.hpp"
@@ -14,20 +14,20 @@ namespace egashin_k_lexicographical_check {
 
 class EgashinKLexCheckFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  protected:
-  void SetUp() override {
+  void static SetUp() override {
     TestType param = GetParamInfo();
     input_ = std::get<0>(param);
     expected_ = std::get<1>(param);
   }
 
-  bool CheckTestOutputData(OutType& output) override {
+  bool static CheckTestOutputData(OutType &output) override {
     if (ppc::util::IsUnderMpirun()) {
-       int rank = 0;
-       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-       
-       if (rank != 0) {
-           return true;
-       }
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+      if (rank != 0) {
+        return true;
+      }
     }
 
     return output == expected_;
@@ -46,7 +46,7 @@ class EgashinKLexCheckFuncTest : public ppc::util::BaseRunFuncTests<InType, OutT
   OutType expected_;
 };
 
-TEST_P(EgashinKLexCheckFuncTest, LexicographicalOrder) {
+static TEST_P(EgashinKLexCheckFuncTest, LexicographicalOrder) {
   ExecuteTest(GetParam());
 }
 
@@ -60,18 +60,12 @@ const std::array<TestType, 10> kTests = {
     std::make_tuple(std::make_pair("short", "shorter"), true),
     std::make_tuple(std::make_pair("shorter", "short"), false),
     std::make_tuple(std::make_pair("123", "1234"), true),
-    std::make_tuple(std::make_pair(std::string(100, 'a'), std::string(100, 'b')), true)
-};
+    std::make_tuple(std::make_pair(std::string(100, 'a'), std::string(100, 'b')), true)};
 
-const auto kTaskParams = std::tuple_cat(
-    ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTests, PPC_SETTINGS_egashin_k_lexicographical_check),
-    ppc::util::AddFuncTask<TestTaskMPI, InType>(kTests, PPC_SETTINGS_egashin_k_lexicographical_check)
-);
+const auto kTaskParams =
+    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTests, PPC_SETTINGS_egashin_k_lexicographical_check),
+                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTests, PPC_SETTINGS_egashin_k_lexicographical_check));
 
-INSTANTIATE_TEST_SUITE_P(
-    EgashinKLexCheckFunc, 
-    EgashinKLexCheckFuncTest, 
-    ppc::util::ExpandToValues(kTaskParams)
-);
+INSTANTIATE_TEST_SUITE_P(EgashinKLexCheckFunc, EgashinKLexCheckFuncTest, ppc::util::ExpandToValues(kTaskParams));
 
 }  // namespace egashin_k_lexicographical_check

@@ -10,8 +10,8 @@ class TestTaskMPI : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  
-  explicit TestTaskMPI(const InType& in);
+
+  explicit TestTaskMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

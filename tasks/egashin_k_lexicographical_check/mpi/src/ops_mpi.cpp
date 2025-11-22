@@ -1,12 +1,12 @@
 #include "egashin_k_lexicographical_check/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <vector>
-#include <algorithm>
 
 namespace egashin_k_lexicographical_check {
 
-TestTaskMPI::TestTaskMPI(const InType& in) {
+TestTaskMPI::TestTaskMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = false;
@@ -37,19 +37,19 @@ bool TestTaskMPI::RunImpl() {
   }
 
   if (MPI_Bcast(&min_len, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-      return false;
+    return false;
   }
 
   if (min_len == 0) {
     if (rank == 0) {
       GetOutput() = (s1_len < s2_len);
     }
-    return true; 
+    return true;
   }
 
   int delta = min_len / size;
   int remainder = min_len % size;
-  
+
   std::vector<int> counts(size);
   std::vector<int> displs(size);
 
@@ -66,47 +66,45 @@ bool TestTaskMPI::RunImpl() {
   std::vector<char> local_s1(local_count);
   std::vector<char> local_s2(local_count);
 
-  const char* send_s1 = nullptr;
-  const char* send_s2 = nullptr;
+  const char *send_s1 = nullptr;
+  const char *send_s2 = nullptr;
 
   if (rank == 0) {
     send_s1 = GetInput().first.data();
     send_s2 = GetInput().second.data();
   }
 
-  MPI_Scatterv(send_s1, counts.data(), displs.data(), MPI_CHAR, 
-               local_s1.data(), local_count, MPI_CHAR, 
-               0, MPI_COMM_WORLD);
-               
-  MPI_Scatterv(send_s2, counts.data(), displs.data(), MPI_CHAR, 
-               local_s2.data(), local_count, MPI_CHAR, 
-               0, MPI_COMM_WORLD);
+  MPI_Scatterv(send_s1, counts.data(), displs.data(), MPI_CHAR, local_s1.data(), local_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
+
+  MPI_Scatterv(send_s2, counts.data(), displs.data(), MPI_CHAR, local_s2.data(), local_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   int local_res = 0;
   if (local_count > 0) {
-      for (int i = 0; i < local_count; ++i) {
-        unsigned char c1 = static_cast<unsigned char>(local_s1[i]);
-        unsigned char c2 = static_cast<unsigned char>(local_s2[i]);
-        if (c1 < c2) {
-          local_res = -1;
-          break;
-        }
-        if (c1 > c2) {
-          local_res = 1;
-          break;
-        }
+    for (int i = 0; i < local_count; ++i) {
+      unsigned char c1 = static_cast<unsigned char>(local_s1[i]);
+      unsigned char c2 = static_cast<unsigned char>(local_s2[i]);
+      if (c1 < c2) {
+        local_res = -1;
+        break;
       }
+      if (c1 > c2) {
+        local_res = 1;
+        break;
+      }
+    }
   }
 
   std::vector<int> global_results(size);
   MPI_Gather(&local_res, 1, MPI_INT, global_results.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    int final_decision = 0; 
+    int final_decision = 0;
     for (int i = 0; i < size; ++i) {
       if (global_results[i] != 0) {
         final_decision = global_results[i];
-        break; 
+        break;
       }
     }
 

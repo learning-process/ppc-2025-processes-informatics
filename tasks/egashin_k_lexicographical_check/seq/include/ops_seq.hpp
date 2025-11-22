@@ -10,7 +10,7 @@ class TestTaskSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit TestTaskSEQ(const InType& in);
+  explicit TestTaskSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

@@ -2,7 +2,7 @@
 
 namespace egashin_k_lexicographical_check {
 
-TestTaskSEQ::TestTaskSEQ(const InType& in) {
+TestTaskSEQ::TestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = false;
@@ -17,12 +17,12 @@ bool TestTaskSEQ::PreProcessingImpl() {
 }
 
 bool TestTaskSEQ::RunImpl() {
-  const auto& s1 = GetInput().first;
-  const auto& s2 = GetInput().second;
+  const auto &s1 = GetInput().first;
+  const auto &s2 = GetInput().second;
 
   const size_t len1 = s1.size();
   const size_t len2 = s2.size();
-  
+
   size_t min_len = (len1 < len2) ? len1 : len2;
 
   for (size_t i = 0; i < min_len; ++i) {
