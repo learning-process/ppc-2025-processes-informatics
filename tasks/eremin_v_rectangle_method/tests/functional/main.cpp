@@ -33,9 +33,11 @@ class EreminVRunFuncTestsRectangleMethod : public ppc::util::BaseRunFuncTests<In
     double lower_bound = std::get<1>(params);
     double upper_bound = std::get<2>(params);
     int steps = std::get<3>(params);
-    input_data_ = std::make_tuple(lower_bound, upper_bound, steps, InFunction);
+    auto in_function = std::get<4>(params);
+    auto function = std::get<5>(params);
+    input_data_ = std::make_tuple(lower_bound, upper_bound, steps, in_function);
 
-    expected_result_ = Function(upper_bound) - Function(lower_bound);
+    expected_result_ = function(upper_bound) - function(lower_bound);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -65,9 +67,18 @@ TEST_P(EreminVRunFuncTestsRectangleMethod, RectangleMethod) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(1, 0.0, 1.0, 1000), std::make_tuple(2, 0.0, 2.0, 10000),
-                                            std::make_tuple(3, -10.0, 100.0, 100000),
-                                            std::make_tuple(4, 1.0, 4.0, 50000), std::make_tuple(5, -2.0, 3.0, 80000)};
+const std::array<TestType, 6> kTestParam = {
+    std::make_tuple(1, 0.0, 1.0, 1000, [](double x) { return x * x; }, [](double x) { return x * x * x / 3; }),
+    std::make_tuple(2, 0.0, 2.0, 10000, [](double x) { return std::sin(x); }, [](double x) { return -std::cos(x); }),
+
+    std::make_tuple(3, 1.0, 4.0, 50000, [](double x) { return std::exp(x); }, [](double x) { return std::exp(x); }),
+    std::make_tuple(4, -100.0, 400.0, 70000, [](double x) { return x * std::exp(x); },
+                    [](double x) { return std::exp(x) * (x - 1); }),
+    std::make_tuple(5, -2.0, 3.0, 80000, [](double x) { return x * x * x - 4 * x + 1; },
+                    [](double x) { return x * x * x * x / 4.0 - 2 * x * x + x; }),
+    std::make_tuple(6, -10.0, 100.0, 100000, [](double x) {
+  return (std::exp(x) * (std::sin(x) + std::cos(x))) + (3 * x * x * std::cos(x)) - (x * x * x * std::sin(x));
+}, [](double x) { return (std::exp(x) * std::sin(x)) + (x * x * x * std::cos(x)); })};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<EreminVRectangleMethodMPI, InType>(kTestParam, PPC_SETTINGS_eremin_v_rectangle_method),
