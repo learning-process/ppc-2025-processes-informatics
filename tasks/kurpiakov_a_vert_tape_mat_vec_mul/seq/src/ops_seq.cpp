@@ -19,7 +19,7 @@ bool KurpiakovAVretTapeMulSEQ::ValidationImpl() {
   // int size_of_mat = std::get<1>(GetInput()).size();
   int size_of_input = std::get<0>(GetInput());
   // bool res = std::cmp_equal(size_of_vec / size_of_input, size_of_mat / (size_of_input * size_of_input));
-  return  (size_of_input >= 0);
+  return (size_of_input >= 0);
 }
 
 bool KurpiakovAVretTapeMulSEQ::PreProcessingImpl() {
