@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <cstddef>
 #include <array>
 #include <string>
 #include <tuple>
