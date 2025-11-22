@@ -29,27 +29,35 @@ LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType &in) {
 }
 
 bool LuzanEMatrixRowsSumMPI::ValidationImpl() {
-  size_t height = std::get<1>(GetInput());
-  size_t width = std::get<2>(GetInput());
-
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  size_t mat_size = (rank == 0 ? height * width : 0);
-  return std::get<0>(GetInput()).size() == mat_size && height != 0 && width != 0;
+  if (rank != 0) {
+    return true;
+  } 
+
+  int height = std::get<1>(GetInput());
+  int width = std::get<2>(GetInput());
+  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && height != 0 && width != 0;
 }
 
 bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
-  size_t height = std::get<1>(GetInput());
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank != 0) {
+    return true;
+  } 
+
+  int height = std::get<1>(GetInput());
   GetOutput().resize(height);
-  for (size_t row = 0; row < height; row++) {
+  for (int row = 0; row < height; row++) {
     GetOutput()[row] = 0;
   }
   return true;
 }
 
 bool LuzanEMatrixRowsSumMPI::RunImpl() {
-  const size_t height = std::get<1>(GetInput());
-  const size_t width = std::get<2>(GetInput());
+  int height = 0; 
+  int width = 0; 
   std::tuple_element_t<0, InType> mat;
   
 	int rank = 0;
@@ -57,10 +65,20 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+
+  int dim[2];
   if (rank == 0) {
     mat = std::get<0>(GetInput());
+    height = std::get<1>(GetInput());
+    width = std::get<2>(GetInput());
+    dim[0] = height;
+    dim[1] = width;
   }
-
+  MPI_Bcast(dim, 2, MPI_INT, 0, MPI_COMM_WORLD);
+  height = dim[0];
+  width = dim[1];
+  
+  
   int rest = height % size;
   std::vector<int> shift(size);
   std::vector<int> per_proc(size, height / size);
@@ -91,7 +109,7 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   int abs_shift = static_cast<int>(shift[rank] / width);
   int rows_to_calc = static_cast<int>(per_proc[rank] / width);
   for (int row = 0; row < rows_to_calc; row++)
-    for (size_t col = 0; col < width; col++)
+    for (int col = 0; col < width; col++)
       sum[row + abs_shift] += recv[row * width + col];
  
   std::vector<int> fin_sum(height);

@@ -12,13 +12,13 @@
 namespace luzan_e_matrix_rows_sum {
 
 class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t height_ = 14000;
-  const size_t width_ = 14000;
+  const int height_ = 14000;
+  const int width_ = 14000;
   InType input_data_;
 
   void SetUp() override {
     std::tuple_element_t<0, InType> mat(height_ * width_);
-    for (size_t elem = 0; elem < height_ * width_; elem++) {
+    for (int elem = 0; elem < height_ * width_; elem++) {
       mat[elem] = static_cast<int>(elem) % 42000;
     }
 
@@ -29,8 +29,8 @@ class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, 
     std::vector<int> sum(height_);
     std::tuple_element_t<0, InType> mat = std::get<0>(input_data_);
 
-    for (size_t row = 0; row < height_; row++) {
-      for (size_t col = 0; col < width_; col++) {
+    for (int row = 0; row < height_; row++) {
+      for (int col = 0; col < width_; col++) {
         sum[row] += mat[(width_ * row) + col];
       }
     }

@@ -23,12 +23,12 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    size_t height = std::get<0>(params);
-    size_t width = std::get<1>(params);
+    TestType params = std::get<static_cast<int>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int height = std::get<0>(params);
+    int width = std::get<1>(params);
     std::tuple_element_t<0, InType> mat(height * width);
 
-    for (size_t elem = 0; elem < height * width; elem++) {
+    for (int elem = 0; elem < height * width; elem++) {
       mat[elem] = (static_cast<int>(elem) * 2) - 42;
     }
 
@@ -36,13 +36,13 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    size_t height = std::get<1>(input_data_);
-    size_t width = std::get<2>(input_data_);
+    int height = std::get<1>(input_data_);
+    int width = std::get<2>(input_data_);
     std::vector<int> sum(height, 0);
     std::tuple_element_t<0, InType> mat = std::get<0>(input_data_);
 
-    for (size_t row = 0; row < height; row++) {
-      for (size_t col = 0; col < width; col++) {
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
         sum[row] += mat[(width * row) + col];
       }
     }
