@@ -195,15 +195,11 @@ The time reported in the third column corresponds to the `task_run` execution ti
 
 The speedup is computed as:
 
-\[
-S(p) = \frac{T_{\text{seq}}}{T_p}
-\]
+S(p) = T_seq / T_p
 
 The efficiency is computed as:
 
-\[
-E(p) = \frac{S(p)}{p} \times 100\%
-\]
+E(p) = (S(p) / p) * 100%
 
 ### 7.3 Environment variables
 
