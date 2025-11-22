@@ -1,85 +1,90 @@
-# Сортировка пузырьком (алгоритм чет-нечетной перестановки)
+# Сортировка пузырьком (алгоритм чет-нечетной перестановки) / Bubble Sort (Odd–Even Transposition Algorithm)
 
 - Student: Сизов Дмитрий Игоревич, group 3823Б1ФИ2
 - Technology: SEQ + MPI
 - Variant: 21
 
 ## 1. Introduction
-Цель работы — реализовать последовательную и параллельную (MPI) версии пузырьковой сортировки на основе алгоритма **Odd–Even Transposition Sort** и сравнить их корректность и производительность.  
-Задача относится к классу алгоритмов сравнения, предполагающих попарные обмены соседних элементов.
+The objective of this work is to implement both sequential and parallel (MPI-based) versions of bubble sort using the Odd–Even Transposition Sort algorithm and to compare their correctness and performance.
+The task belongs to the class of comparison-based sorting algorithms that rely on pairwise exchanges of adjacent elements.
 
-Основной ожидаемый результат — корректная реализация сортировки, успешное прохождение функциональных и производительных тестов PPC и демонстрация ускорения MPI-версии на больших входных данных.
+The expected outcome is a fully correct implementation of the sorting procedure, successful execution of all functional and performance tests in the PPC framework, and a demonstrated speedup of the MPI version on large input data.
 
 ## 2. Problem Statement
-Дано: массив целых чисел `InType = std::vector<int>`.
+Given: an array of integers (`InType = std::vector<int>`).
 
-Требуется:
-- Отсортировать массив по неубыванию.
-- Предоставить две реализации: последовательную и MPI.
-- Оба варианта должны корректно работать во всех тестах.
+Required:
+- Sort the array in non-decreasing order.
+- Provide two implementations: a sequential version and an MPI-based version.
+- Both implementations must operate correctly on all provided tests.
 
-Формат ввода/вывода:
-- Вход: `std::vector<int>`
-- Выход: отсортированный `std::vector<int>`
+Input/output format:
+- Input: `std::vector<int>`
+- Output: a sorted `std::vector<int>`
 
-Ограничения: пустой вход недопустим.
+Constraint: empty input is not allowed.
 
 ## 3. Baseline Algorithm (Sequential)
-Последовательная версия использует классический odd–even sort:
-Алгоритм odd–even sort работает серией фаз, в каждой из которых он сравнивает соседние элементы, но пары выбираются по-разному для чётных и нечётных фаз.
+The sequential version uses the classical odd–even sort algorithm.  
+Odd–even sort operates as a sequence of phases, where each phase compares adjacent elements, but the pairs differ between even and odd phases.
 
-На чётной фазе просматриваются пары элементов, начинающиеся с чётных индексов: (0,1), (2,3), (4,5) и так далее.
-Для каждой пары, если левый элемент больше правого, они меняются местами.
+During an **even phase**, the algorithm processes element pairs starting at even indices: (0,1), (2,3), (4,5), and so on.  
+For each pair, if the left element is greater than the right one, the two elements are swapped.
 
-На нечётной фазе сравниваются пары, начинающиеся с нечётных индексов: (1,2), (3,4), (5,6) и т.д.
-Здесь применяется то же правило обмена.
+During an **odd phase**, the algorithm processes pairs starting at odd indices: (1,2), (3,4), (5,6), etc.  
+The same swapping rule applies.
 
-Эти фазы чередуются, и из-за регулярного сдвига сравниваемых пар вправо любые элементы, стоящие не на своём месте, постепенно перемещаются в нужную сторону. Алгоритм повторяет фазы до тех пор, пока в какой-то фазе не окажется, что обменов больше не требуется, что означает достижение полной упорядоченности.
+These phases alternate, and due to the regular shift of comparison windows, any elements placed in the wrong order gradually move toward their correct positions.  
+The algorithm continues alternating phases until a pass occurs with no swaps, which indicates that the array is fully sorted.
 
-Сложность: O(n²).
+Time complexity: **O(n²)**.
+
 
 ## 4. Parallelization Scheme (MPI)
 
 ### 4.1 Data Distribution
-На этапе распределения данных вызывается ComputeScatterInfo, которая рассчитывает:
-- counts[i] — сколько элементов получит процесс i;
-- displs[i] — смещение блока в общем массиве.
+During data distribution, the function `ComputeScatterInfo` is invoked. It calculates:
+- `counts[i]` — the number of elements assigned to process *i*,
+- `displs[i]` — the displacement of each block within the global array.
 
-Это обеспечивает почти равномерное распределение даже при n % p != 0.
-MPI_Scatterv использует эти массивы, чтобы выдать каждому процессу его подмассив в локальный буфер.
+This ensures an almost even distribution of data, even when `n % p != 0`.  
+`MPI_Scatterv` then uses these arrays to send the corresponding subarray to each process.
 
 ### 4.2 Local Work
-Каждый процесс локально сортирует свой подмассив с помощью std::ranges::sort(local).
-На этом шаге каждый процесс имеет корректно отсортированный фрагмент, но глобальный порядок ещё не гарантирован, так как разные процессы могут содержать «перемешанные» диапазоны значений.
+Each process locally sorts its assigned subarray using `std::ranges::sort(local)`.  
+At this stage, every process holds a correctly sorted fragment, but global ordering is not yet guaranteed, because different processes may still contain overlapping value ranges.
 
 ### 4.3 Neighbor Exchanges
-Основная часть алгоритма — обмены между соседними процессами. В коде выполняется size фаз — по одной фазе на процесс.
+The main part of the algorithm consists of exchanges between neighboring processes.  
+The code performs `size` phases — one phase per process.
 
-На каждой фазе:
-1. Определяется четность фазы: even_phase = (phase % 2 == 0).
-2. Для каждого процесса вычисляется партнёр:
-   - если чётная фаза и rank чётный, то партнёр rank+1,
-   - если чётная фаза и rank нечётный, то партнёр rank-1,
-   - если нечётная фаза и rank нечётный, то партнёр rank+1,
-   - если нечётная фаза и rank чётный, то партнёр rank-1.
-3. Если партнёр выходит за границы (partner < 0 или partner >= size), обмен пропускается.
-4. Иначе процессы выполняют обмен данными через MPI_Sendrecv. Каждый процесс получает отсортированный блок соседа в recvbuf.
-5. Затем оба процесса сливают local и recvbuf в единый отсортированный массив merged.
-6. Далее каждый процесс выбирает свою половину результата:
-   - если rank < partner, то он сохраняет первые local_n элементов,
-   - если rank > partner, то он сохраняет последние local_n элементов.
+In each phase:
+1. The phase parity is determined: `even_phase = (phase % 2 == 0)`.
+2. Each process computes its exchange partner:
+   - if the phase is even and the rank is even → partner = rank + 1,
+   - if the phase is even and the rank is odd  → partner = rank - 1,
+   - if the phase is odd  and the rank is odd  → partner = rank + 1,
+   - if the phase is odd  and the rank is even → partner = rank - 1.
+3. If the partner index is invalid (`partner < 0` or `partner >= size`), the exchange is skipped.
+4. Otherwise, processes exchange their sorted blocks using `MPI_Sendrecv`.  
+   Each process receives the partner’s sorted block into `recvbuf`.
+5. Both processes merge `local` and `recvbuf` into a single sorted array `merged`.
+6. Each process then keeps the appropriate half of the merged result:
+   - if `rank < partner` → keep the first `local_n` elements,
+   - if `rank > partner` → keep the last `local_n` elements.
 
-Такой обмен гарантирует, что элементы постепенно перемещаются в нужную глобальную область — аналогично тому, как odd–even sort выталкивает большие числа вправо, а маленькие — влево.
+This exchange procedure ensures that elements gradually move toward their correct global positions — similar to how odd–even sort pushes larger values to the right and smaller values to the left.
 
 ### 4.4 Gathering & Broadcast
-После всех фаз root-процесс выполняет:
-1. Сбор данных в единый массив через MPI_Gatherv.
-2. Финальную сортировку std::ranges::sort на root для гарантии корректного глобального порядка.
-3. Рассылку итогового массива всем процессам через MPI_Bcast.
+After all phases are completed, the root process performs:
+1. Gathering of all local blocks into a global array using `MPI_Gatherv`,
+2. A final `std::ranges::sort` on the root to guarantee full global ordering,
+3. Broadcasting the final sorted array to all processes using `MPI_Bcast`.
+
 
 ## 5. Implementation Details
 
-### 5.1 Структура проекта
+### 5.1 Project Structure
 ```
 tasks/sizov_d_bubble_sort
 ├── common
@@ -113,97 +118,113 @@ tasks/sizov_d_bubble_sort
 ```
 
 ### 5.2 Data
-Функциональные тесты используют набор входных файлов, расположенный в каталоге:
-  tasks/sizov_d_bubble_sort/data/testN.txt
-Каждый файл содержит две строки: неотсортированный массив и эталонный отсортированный результат.
+The functional tests use a set of input files located in:
+  `tasks/sizov_d_bubble_sort/data/testN.txt`
+
+Each file contains two lines:  
+1. an unsorted array,  
+2. the reference sorted result.
+
 
 ### 5.3 Additional helper functions
 
-В реализации используются несколько вспомогательных функций, размещённых в анонимном namespace внутри mpi/src/ops_mpi.cpp, а также служебная функция TrimString в модуле функциональных тестов.
+Several auxiliary helper functions are used in the implementation.  
+Most of them are placed inside an anonymous namespace in `mpi/src/ops_mpi.cpp`,  
+and the `TrimString` utility function is located in the functional test module.
 
 - `ComputeScatterInfo(total, size, rem, counts, displs)`  
-  Вычисляет размеры блоков (`counts`) и их смещения (`displs`) для `MPI_Scatterv`.  
-  Функция корректно обрабатывает случаи, когда `total % size != 0`, распределяя "лишние" элементы между первыми процессами. Это гарантирует максимально равномерное разбиение входного массива.
+  Computes the block sizes (`counts`) and their displacements (`displs`) for `MPI_Scatterv`.  
+  The function correctly handles cases where `total % size != 0` by distributing the “extra” elements among the first processes, ensuring the most balanced data partitioning possible.
 
 - `ComputePartner(even_phase, even_rank, rank)`  
-  Определяет соседа для обмена на текущей фазе odd–even сортировки.  
-  Логика полностью соответствует алгоритму: на чётных фазах чётные процессы обмениваются с правым соседом, на нечётных — нечётные. Функция упрощает вычисление и делает код более читаемым.
+  Determines the exchange partner for the current phase of the odd–even sorting algorithm.  
+  The logic fully matches the algorithm: in even phases, even‐rank processes exchange with the right neighbor, and in odd phases, odd‐rank processes do so.  
+  This function simplifies partner selection and improves code readability.
 
 - `OddEvenExchange(local, counts, rank, size, phase)`  
-  Реализует одну фазу параллельной odd–even сортировки.  
-  Выполняет отправку и приём блоков через `MPI_Sendrecv`, слияние двух отсортированных массивов и выбор корректной половины результата. Также содержит проверку граничных условий (например, отсуствие соседа справа или слева).
+  Implements a single phase of the parallel odd–even sort.  
+  It performs a send/receive exchange via `MPI_Sendrecv`, merges two sorted blocks, and selects the appropriate half of the merged result.  
+  The function also handles boundary cases (e.g., when a neighbor does not exist).
 
 - `GatherResult(local, counts, displs, rank, total, output)`  
-  Выполняет сбор результатов на root-процессе через `MPI_Gatherv`.  
-  После получения всех блоков root выполняет финальную сортировку, обеспечивая устойчивость результата даже при возможных неточностях на стыках блоков.
+  Collects the final results on the root process using `MPI_Gatherv`.  
+  After gathering, the root performs a final sort to ensure robustness of the global ordering, especially for boundary regions between distributed blocks.
 
-- `TrimString(std::string& s)` (из функциональных тестов)  
-  Удаляет пробельные символы (`\r`, `\n`, `\t`) по краям строки перед разбором тестовых данных.  
-  Это предотвращает ошибки чтения чисел при наличии переносов строк в тестовых файлах.
+- `TrimString(std::string& s)` (from the functional tests)  
+  Removes whitespace characters (`\r`, `\n`, `\t`) from both ends of a line before parsing test data.  
+  This prevents errors when reading integers from input files that contain trailing newline characters.
+
 
 ## 6. Experimental Setup
 
-|  Компонент |               Значение                 |
+|  Component |                Value                   |
 |------------|----------------------------------------|
 |     CPU    | 12th Gen Intel(R) Core(TM) i5-12450H   |
 |     RAM    |                 16 GB                  |
 |     ОС     | OS: Ubuntu 24.04 (DevContainer / WSL2) |
-| Компилятор | GCC 13.3.0 (g++), C++20, CMake, Release|
+|  Compiler  | GCC 13.3.0 (g++), C++20, CMake, Release|
 |     MPI    |        mpirun (Open MPI) 4.1.6         |
 
 ## 7. Results and Discussion
 
 ### 7.1 Correctness
-Корректность подтверждена:
-- многочисленными функциональными тестами,
-- сравнением с `std::ranges::sort`,
-- совпадением результатов MPI и SEQ.
+Correctness has been verified through:
+- multiple functional tests,
+- comparison against `std::ranges::sort`,
+- matching results between the MPI and SEQ implementations.
 
 ### 7.2 Performance
 
-| Режим | Количество процессов | Время, с     | Ускорение    | Эффективность   |
-|-------|----------------------|--------------|--------------|-----------------|
-| SEQ   | 1                    | 0.8406618595 | 1.000000000  | N/A             |
-| MPI   | 2                    | 0.0016978002 | 495.1476973  | 24757.3848648%  |
-| MPI   | 4                    | 0.0020235174 | 415.4458269  | 10386.1456726%  |
-| MPI   | 8                    | 0.0026713558 | 314.6948301  | 3933.68537570%  |
-| MPI   | 16                   | 0.0025910712 | 324.4456808  | 2027.78550500%  |
-| MPI   | 32                   | 0.0017847040 | 471.0371353  | 1471.99104780%  |
+| Mode | Number of Processes  | Time (s)      | Speedup        | Efficiency         |
+|------|----------------------|---------------|----------------|--------------------|
+| SEQ  | 1                    | 0.8406618595  | 1.000000000    | N/A                |
+| MPI  | 2                    | 0.0016978002  | 495.1476973    | 24757.3848648%     |
+| MPI  | 4                    | 0.0020235174  | 415.4458269    | 10386.1456726%     |
+| MPI  | 8                    | 0.0026713558  | 314.6948301    | 3933.68537570%     |
+| MPI  | 16                   | 0.0025910712  | 324.4456808    | 2027.78550500%     |
+| MPI  | 32                   | 0.0017847040  | 471.0371353    | 1471.99104780%     |
 
-Для запуска на CI производительные тесты используют автоматически сгенерированные данные, для SEQ и MPI размеры массивов разные:
-- для SEQ: массив длиной 150 000, заполненный числами в убывающем порядке;
-- для MPI: массив длиной 1 000 000, также заполненный убывающей последовательностью.
-Для замеров результатов производительности и сравнения последовательной и параллельной версии использовался единый размер входных данных, а именно 150 000 элементов. Тесты производительности проводились локально на моём компьютере с указанными выше характеристиками. Результаты производительности усреднены по трём прогонам. Время, указанное в третьем столбце -- это время task_run.
+For CI execution, the performance tests use automatically generated input data, with different array sizes for the SEQ and MPI modes:
+- for SEQ: an array of 150,000 elements filled in descending order;
+- for MPI: an array of 1,000,000 elements, also filled in descending order.
 
-Ускорение вычисляется по формуле:
+For local performance measurements and for comparing the sequential and parallel versions, a unified input size of 150,000 elements was used.  
+The performance tests were executed locally on my machine with the hardware configuration listed above.  
+All performance results are averaged over three runs.  
+The time reported in the third column corresponds to the `task_run` execution time.
+
+The speedup is computed as:
 
 \[
 S(p) = \frac{T_{\text{seq}}}{T_p}
 \]
 
-Эффективность по:
+The efficiency is computed as:
 
 \[
 E(p) = \frac{S(p)}{p} \times 100\%
 \]
 
-Генерация данных выполняется непосредственно в файле:
-  tasks/sizov_d_bubble_sort/tests/performance/main.cpp
-
 ### 7.3 Environment variables
 
-Для запуска производительных тестов использовались стандартные переменные окружения PPC:
+The following standard PPC environment variables were used to run the performance tests:
 
-- **PPC_NUM_PROC** — задаёт количество MPI-процессов для измерений (в экспериментах: 1, 2, 4, 8, 16, 32).
-- **PPC_PERF_MAX_TIME** — максимальное время выполнения одного теста (20 секунд).
-- **PPC_IGNORE_TEST_TIME_LIMIT** — разрешает выполнение тестов без учёта ограничений по времени (использовалось при ручном запуске).
-- **TMPDIR** — каталог для временных файлов, требуемый инфраструктурой PPC.
+- **PPC_NUM_PROC** — specifies the number of MPI processes for the measurements  
+  (in the experiments: 1, 2, 4, 8, 16, 32).
+
+- **PPC_PERF_MAX_TIME** — the maximum allowed execution time for a single test (20 seconds).
+
+- **PPC_IGNORE_TEST_TIME_LIMIT** — allows performance tests to run without time-limit restrictions  
+  (used during manual execution).
+
+- **TMPDIR** — the directory for temporary files required by the PPC infrastructure.
+
 
 ## 8. Conclusions
-- Реализованы SEQ и MPI версии odd–even bubble sort.
-- Обе версии успешно проходят тесты.
-- MPI обеспечивает большое ускорение.
-- Ограничение — квадратичная сложность и необходимость обменов на каждой фазе.
+- Both SEQ and MPI versions of the odd–even bubble sort have been implemented.
+- Both implementations successfully pass all tests.
+- The MPI version demonstrates significant speedup.
+- The main limitations are the quadratic time complexity and the need for inter-process exchanges at each phase.
 
 ## 9. References
 - Гергель В.П. Высокопроизводительные вычисления для многопроцессорных многоядерных систем. Серия «Суперкомпьютерное образование».
