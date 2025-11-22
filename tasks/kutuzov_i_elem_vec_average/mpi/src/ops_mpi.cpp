@@ -48,7 +48,7 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   batch_size = total_elements_num / num_processes;
 
   if (batch_size > 0) {
-    double* local_buffer = new double[batch_size];
+    double *local_buffer = new double[batch_size];
     MPI_Scatter(GetInput().data(), batch_size, MPI_DOUBLE, local_buffer, batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     double sum = 0.0;
