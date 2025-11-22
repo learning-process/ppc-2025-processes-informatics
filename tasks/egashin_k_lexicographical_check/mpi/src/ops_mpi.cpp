@@ -85,8 +85,8 @@ bool TestTaskMPI::RunImpl() {
   int local_res = 0;
   if (local_count > 0) {
     for (int i = 0; i < local_count; ++i) {
-      unsigned char c1 = static_cast<unsigned char>(local_s1[i]);
-      unsigned char c2 = static_cast<unsigned char>(local_s2[i]);
+      auto c1 = static_cast<unsigned char>(local_s1[i]);
+      auto c2 = static_cast<unsigned char>(local_s2[i]);
       if (c1 < c2) {
         local_res = -1;
         break;

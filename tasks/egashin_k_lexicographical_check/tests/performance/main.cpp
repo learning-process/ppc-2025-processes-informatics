@@ -2,12 +2,13 @@
 #include <mpi.h>
 
 #include <string>
-#include <vector>
+#include <stddef.h>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 #include "egashin_k_lexicographical_check/mpi/include/ops_mpi.hpp"
 #include "egashin_k_lexicographical_check/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace egashin_k_lexicographical_check {
 
@@ -38,7 +39,7 @@ class EgashinKLexCheckPerfTest : public ppc::util::BaseRunPerfTests<InType, OutT
   }
 
  private:
-  InType input_ = {};
+  InType input_;
   OutType expected_ = false;
 };
 

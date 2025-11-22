@@ -2,13 +2,16 @@
 #include <mpi.h>
 
 #include <array>
+#include <tuple>
+#include <utility>
 #include <string>
-#include <vector>
+#include <stddef.h>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 #include "egashin_k_lexicographical_check/mpi/include/ops_mpi.hpp"
 #include "egashin_k_lexicographical_check/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace egashin_k_lexicographical_check {
 
@@ -38,12 +41,12 @@ class EgashinKLexCheckFuncTest : public ppc::util::BaseRunFuncTests<InType, OutT
   }
 
  private:
-  TestType GetParamInfo() {
+  static TestType GetParamInfo() {
     return std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
   }
 
   InType input_;
-  OutType expected_;
+  OutType expected_ = false;
 };
 
 TEST_P(EgashinKLexCheckFuncTest, LexicographicalOrder) {
