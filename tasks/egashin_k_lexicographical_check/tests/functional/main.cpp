@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
+#include <stddef.h>
 
 #include <array>
+#include <string>
 #include <tuple>
 #include <utility>
-#include <string>
-#include <stddef.h>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 #include "egashin_k_lexicographical_check/mpi/include/ops_mpi.hpp"
