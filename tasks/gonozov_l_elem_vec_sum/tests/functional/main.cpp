@@ -25,11 +25,12 @@ class GonozovLRunElemVecSumFuncTests : public ppc::util::BaseRunFuncTests<InType
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::vector<int>(static_cast<int>(std::get<0>(params)), 1);
-    desired_result_ = static_cast<OutType>(std::get<0>(params));
+    //desired_result_ = static_cast<OutType>(std::get<0>(params));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == desired_result_;
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    return output_data == static_cast<OutType>(std::get<0>(params));
   }
 
   InType GetTestInputData() final {
@@ -38,7 +39,7 @@ class GonozovLRunElemVecSumFuncTests : public ppc::util::BaseRunFuncTests<InType
 
  private:
   InType input_data_;
-  OutType desired_result_;
+  //OutType desired_result_;
 };
 
 namespace {
