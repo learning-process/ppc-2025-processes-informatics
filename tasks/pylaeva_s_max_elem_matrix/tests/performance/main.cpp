@@ -13,7 +13,7 @@ namespace pylaeva_s_max_elem_matrix {
 
 class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{0, {}};
-  const size_t kMatrixSize_ = 7000;
+  const size_t kMatrixSize_ = 10000;
   const size_t kTotalElements_ = kMatrixSize_ * kMatrixSize_;
   OutType expected_data_ = static_cast<OutType>(static_cast<int>(kTotalElements_) - 1);
 
