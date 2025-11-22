@@ -5,12 +5,9 @@
 #include <algorithm>  // для std::max
 #include <cstddef>    // для size_t
 #include <limits>     // для std::numeric_limits
-
-// #include <numeric>
 #include <vector>
 
 #include "pylaeva_s_max_elem_matrix/common/include/common.hpp"
-// #include "util/include/util.hpp"
 
 namespace pylaeva_s_max_elem_matrix {
 
