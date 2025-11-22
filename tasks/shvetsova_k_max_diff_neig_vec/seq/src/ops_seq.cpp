@@ -36,6 +36,7 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
       MaxDif = std::abs(data.at(i) - data.at(i + 1));
     }
   }
+
   GetOutput().first = FirstElem;
   GetOutput().second = SecondElem;
   return true;

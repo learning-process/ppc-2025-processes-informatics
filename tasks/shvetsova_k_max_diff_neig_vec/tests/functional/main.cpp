@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <map>
 #include <numeric>
 #include <stdexcept>
@@ -51,6 +52,7 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double eps = 0.05;
+
     return (std::abs(output_data.first - expect_res.first) <= eps && output_data.second == expect_res.second);
   }
 
@@ -69,7 +71,7 @@ TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, DataFromTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 2> kTestParam = {"test1", "test2"};
+const std::array<TestType, 5> kTestParam = {"test1", "test2", "test3", "test4", "test5"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ShvetsovaKMaxDiffNeigVecMPI, InType>(kTestParam, PPC_SETTINGS_shvetsova_k_max_diff_neig_vec),

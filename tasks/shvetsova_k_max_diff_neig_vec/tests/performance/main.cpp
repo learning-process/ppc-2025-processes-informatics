@@ -13,7 +13,7 @@ class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPe
   OutType expect_res;
 
   void SetUp() override {
-    for (int i = 0; i < 1000000; i++) {
+    for (int i = 0; i < 10000000; i++) {
       if (i != 1) {
         input_data_.push_back(i);
       }
