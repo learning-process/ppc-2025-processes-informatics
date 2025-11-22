@@ -13,7 +13,7 @@ namespace shvetsova_k_max_diff_neig_vec {
 ShvetsovaKMaxDiffNeigVecMPI::ShvetsovaKMaxDiffNeigVecMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = std::pair<double, std::pair<int, int>>{{0}, {0, 0}};
+  GetOutput() = std::pair<double, double>{0.0, 0.0};
 }
 
 bool ShvetsovaKMaxDiffNeigVecMPI::ValidationImpl() {
@@ -31,98 +31,117 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &CountOfProc);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  MPI_Bcast(&SizeOfVector, 1, MPI_INT, 0, MPI_COMM_WORLD);  // всем процессам отсылается размер вектора
+  MPI_Bcast(&SizeOfVector, 1, MPI_INT, 0, MPI_COMM_WORLD);  // сказали всем процессам, какой размер у вектора
 
   if (SizeOfVector < 2) {
+    GetOutput() = {0.0, 0.0};
     return true;
   }
 
-  std::vector<int> countElems(CountOfProc, 0);
-  std::vector<int> ind(CountOfProc, 0);
+  std::vector<int> countElems(CountOfProc, 0);  // количсетво элементов на каждый из процессов
+  std::vector<int> ind(CountOfProc, 0);         // индекс, начиная с которого элементы принадлежат процессам
 
-  // разделение работы между процессами
   if (rank == 0) {
     int base = SizeOfVector / CountOfProc;
     int rem = SizeOfVector % CountOfProc;
     int sum = 0;
+
     for (int i = 0; i < CountOfProc; i++) {
-      countElems[i] += base;
-      if (i < rem) {
-        countElems[i] += 1;
-      }
+      countElems[i] = base + (i < rem ? 1 : 0);
       ind[i] = sum;
       sum += countElems[i];
     }
   }
 
   MPI_Bcast(countElems.data(), CountOfProc, MPI_INT, 0,
-            MPI_COMM_WORLD);  // процессам говорим, сколько элементов им принадлежит
+            MPI_COMM_WORLD);  // разослали процессам информацию о кол-ве элементов
   MPI_Bcast(ind.data(), CountOfProc, MPI_INT, 0,
-            MPI_COMM_WORLD);  // процессам говорим, с какого инджекса считать свое количсетво элементов
+            MPI_COMM_WORLD);  // разослали порцессам индексы, с которых начинаются их элементы
 
-  int PeaceSize = countElems[rank];      // инициализируем размер кусочка вектора
-  std::vector<double> peace(PeaceSize);  // создаем векторр - кусочек от исходного
+  int partSize = countElems[rank];     // определяяем кол-во элементов для текущего процесса
+  std::vector<double> part(partSize);  // создаем вектор с размером = кол-во элементов для процесса
 
-  MPI_Scatterv(GetInput().data(), countElems.data(), ind.data(), MPI_DOUBLE, peace.data(), PeaceSize, MPI_DOUBLE, 0,
+  MPI_Scatterv(data.data(), countElems.data(), ind.data(), MPI_DOUBLE, part.data(), partSize, MPI_DOUBLE, 0,
                MPI_COMM_WORLD);  // распилили вектор
 
-  // работа процесса
-  double LocalMx = 0;
-  int LocInd = 0;
-  for (int i = 0; i < PeaceSize - 1; i++) {
-    double tmp = std::abs(peace[i] - peace[i + 1]);
-    if (LocalMx <= tmp) {
-      LocalMx = tmp;
-      LocInd = ind[rank] + i;  // вычисляется глобальный индекс элемента - начало кусочка + текущий индекс элемента = i
-    }
-  }
-  // Обработка граничных эелеметов
-  double PrevLast = 0;
-  MPI_Request requestR;
-  if (rank > 0) {
-    MPI_Irecv(&PrevLast, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, &requestR);
-  }
+  // ищем локальные результаты
+  double localDiff = -1.0;
+  double localA = 0.0, localB = 0.0;
 
-  // пересылаем последний элемент предыдущего процесса следующему
-  double last = 0;
-  MPI_Request requestS;
-  if (rank < CountOfProc - 1) {
-    last = peace.back();
-    MPI_Isend(&last, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD, &requestS);
-  }
-
-  if (rank > 0) {
-    MPI_Wait(&requestR, MPI_STATUS_IGNORE);
-    double BoundDiff = std::abs(PrevLast - peace[0]);
-    int GlobalBoundInd = ind[rank] - 1;
-
-    if (LocalMx <= BoundDiff) {
-      LocalMx = BoundDiff;
-      LocInd = GlobalBoundInd;
+  for (int i = 0; i < partSize - 1; i++) {
+    double diff = std::abs(part[i] - part[i + 1]);
+    if (diff > localDiff) {
+      localDiff = diff;
+      localA = part[i];
+      localB = part[i + 1];
     }
   }
 
-  if (rank < CountOfProc - 1) {
-    MPI_Wait(&requestS, MPI_STATUS_IGNORE);
+  if (localDiff < 0) {
+    localDiff = 0.0;
   }
 
-  std::pair<double, int> ValInd{LocalMx, LocInd};
-  double GlobMx = 0;
-  MPI_Reduce(&LocalMx, &GlobMx, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  // обрабатиываем то, что на границах кусочков в процессах
+  if (CountOfProc > 1) {
+    if (rank < CountOfProc - 1 && partSize > 0) {
+      double lastCurr = part[partSize - 1];
+      MPI_Send(&lastCurr, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
+    }
 
-  int candidateIndex = (LocalMx == GlobMx) ? LocInd : -1;
-  int globalIndex = -1;
-  MPI_Reduce(&candidateIndex, &globalIndex, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    if (rank > 0) {
+      double lastPrev = 0;
+      MPI_Recv(&lastPrev, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  // MPI_Reduce(&ValInd.first, &ValInd.second, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0,
-  //            MPI_COMM_WORLD);  // MPIMAXLOC выбирает максимум из всех результатов процессов
+      if (partSize > 0) {
+        double diff = std::abs(lastPrev - part[0]);
+        if (diff > localDiff) {
+          localDiff = diff;
+          localA = lastPrev;
+          localB = part[0];
+        }
+      }
+    }
+  }
 
-  // Запись результата 0 процессом
+  // собираем локальные рузультаты
+  std::vector<double> allDiffs(CountOfProc);
+  MPI_Gather(&localDiff, 1, MPI_DOUBLE, allDiffs.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  // на 0 процессе вычисляем глобальный результат
+  double globalDiff = 0.0;
+  int winner_rank = 0;
+
   if (rank == 0) {
-    GetOutput().first = GlobMx;
-    GetOutput().second.first = globalIndex;
-    GetOutput().second.second = globalIndex + 1;
+    globalDiff = *std::max_element(allDiffs.begin(), allDiffs.end());
+
+    for (int i = 0; i < CountOfProc; i++) {
+      if (std::abs(allDiffs[i] - globalDiff) < 1e-12) {
+        winner_rank = i;
+        break;
+      }
+    }
   }
+
+  MPI_Bcast(&winner_rank, 1, MPI_INT, 0, MPI_COMM_WORLD);  // рассылаем номер процесса победителя
+
+  std::vector<double> allPairs(CountOfProc * 2);
+  double localPair[2] = {localA, localB};
+
+  MPI_Gather(localPair, 2, MPI_DOUBLE, allPairs.data(), 2, MPI_DOUBLE, 0,
+             MPI_COMM_WORLD);  // получаем все локальные пары результаты (где максимальная разница на прооцессе)
+
+  double resultPair[2] = {0.0, 0.0};
+
+  if (rank == 0) {
+    // вычисляем глобальную пару с максимальной разницей
+    resultPair[0] = allPairs[winner_rank * 2];
+    resultPair[1] = allPairs[winner_rank * 2 + 1];
+  }
+
+  // рассылаем результат всем процессам
+  MPI_Bcast(resultPair, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  GetOutput() = {resultPair[0], resultPair[1]};
 
   return true;
 }

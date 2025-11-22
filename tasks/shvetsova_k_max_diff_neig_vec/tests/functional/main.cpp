@@ -39,8 +39,7 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
       return;
     }
     file >> expect_res.first;
-    file >> expect_res.second.first;
-    file >> expect_res.second.second;
+    file >> expect_res.second;
     double num;
     std::vector<double> vec;
     while (file >> num) {
@@ -51,7 +50,8 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.first != -10;
+    const double eps = 0.05;
+    return (std::abs(output_data.first - expect_res.first) <= eps && output_data.second == expect_res.second);
   }
 
   InType GetTestInputData() final {
@@ -69,7 +69,7 @@ TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, DataFromTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {"test1"};
+const std::array<TestType, 2> kTestParam = {"test1", "test2"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ShvetsovaKMaxDiffNeigVecMPI, InType>(kTestParam, PPC_SETTINGS_shvetsova_k_max_diff_neig_vec),
