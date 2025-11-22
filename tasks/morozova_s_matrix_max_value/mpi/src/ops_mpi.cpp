@@ -31,16 +31,15 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  const int rows = static_cast<int>(matrix.size());
-  const int cols = static_cast<int>(matrix[0].size());
-  const int rows_per_process = rows / size;
-  const int remainder = rows % size;
-  const int start_row = (rank * rows_per_process) + std::min(rank, remainder);
-  const int end_row = start_row + rows_per_process + ((rank < remainder) ? 1 : 0);
   int local_max = std::numeric_limits<int>::min();
-  for (int i = start_row; i < end_row; i++) {
-    for (int j = 0; j < cols; j++) {
-      local_max = std::max(local_max, matrix[i][j]);
+  if (rank == 0) {
+    const int rows = matrix.size();
+    const int cols = matrix[0].size();
+
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        local_max = std::max(local_max, matrix[i][j]);
+      }
     }
   }
   int global_max = std::numeric_limits<int>::min();

@@ -25,18 +25,12 @@ bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {
 
 bool MorozovaSMatrixMaxValueSEQ::RunImpl() {
   auto &matrix = GetInput();
-  if (matrix.empty()) {
-    return false;
-  }
-
   int max_value = std::numeric_limits<int>::min();
-
   for (const auto &row : matrix) {
     for (int value : row) {
       max_value = std::max(max_value, value);
     }
   }
-
   GetOutput() = max_value;
   return true;
 }
