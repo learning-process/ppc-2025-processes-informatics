@@ -2,6 +2,8 @@
 
 #include <string>
 #include <tuple>
+#include <vector>
+#include <cstdint>ы
 
 #include "task/include/task.hpp"
 

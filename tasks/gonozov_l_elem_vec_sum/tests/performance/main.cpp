@@ -5,6 +5,8 @@
 #include "gonozov_l_elem_vec_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
+#include <vector>
+
 namespace gonozov_l_elem_vec_sum {
 
 class GonozovLElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {

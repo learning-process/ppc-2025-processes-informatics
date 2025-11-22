@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "gonozov_l_elem_vec_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace gonozov_l_elem_vec_sum {
 
