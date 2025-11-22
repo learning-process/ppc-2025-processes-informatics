@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "gonozov_l_elem_vec_sum/common/include/common.hpp"
 #include "gonozov_l_elem_vec_sum/mpi/include/ops_mpi.hpp"
 #include "gonozov_l_elem_vec_sum/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-
-#include <vector>
 
 namespace gonozov_l_elem_vec_sum {
 
