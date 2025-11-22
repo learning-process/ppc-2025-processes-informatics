@@ -19,19 +19,23 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) return !GetInput().empty() && !GetInput()[0].empty() && (GetOutput() == 0);
+  if (rank == 0) {
+    return !GetInput().empty() && !GetInput()[0].empty() && (GetOutput() == 0);
+  }
   return true;
 }
 
 bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) GetOutput() = GetInput()[0][0];
+  if (rank == 0) {
+    GetOutput() = GetInput()[0][0];
+  }
   return true;
 }
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
-const auto &matrix = GetInput();
+  const auto &matrix = GetInput();
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
