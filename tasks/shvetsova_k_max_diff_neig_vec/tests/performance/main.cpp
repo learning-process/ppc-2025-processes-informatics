@@ -9,25 +9,31 @@ namespace shvetsova_k_max_diff_neig_vec {
 
 class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const std::vector<double> kCount_ = {0.0};
-  InType input_data_{};
+  InType input_data_;
+  OutType expect_res;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    for (int i = 0; i < 1000000; i++) {
+      if (i != 1) {
+        input_data_.push_back(i);
+      }
+      if (i == 1) {
+        input_data_.push_back(10000);
+      }
+    }
+    expect_res.first = input_data_[0];
+    expect_res.second = input_data_[1];
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.first != -101;
-    ;
+    const double eps = 0.05;
+    return (std::abs(output_data.first - expect_res.first) <= eps && output_data.second == expect_res.second);
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
 };
-
-TEST_P(ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShvetsovaKMaxDiffNeigVecMPI, ShvetsovaKMaxDiffNeigVecSEQ>(
@@ -36,6 +42,10 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses::CustomPerfTestName;
+
+TEST_P(ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses, kGtestValues, kPerfTestName);
 
