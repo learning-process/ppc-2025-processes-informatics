@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <cstddef>
 #include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>

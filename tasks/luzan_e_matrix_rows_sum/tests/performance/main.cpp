@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstdef>
 #include <tuple>
 #include <vector>
-#include <cstdef>
 
 #include "luzan_e_matrix_rows_sum/common/include/common.hpp"
 #include "luzan_e_matrix_rows_sum/mpi/include/ops_mpi.hpp"
