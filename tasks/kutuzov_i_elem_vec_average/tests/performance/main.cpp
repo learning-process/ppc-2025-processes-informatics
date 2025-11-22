@@ -12,7 +12,7 @@
 namespace kutuzov_i_elem_vec_average {
 
 class KutuzovIElemVecAveragePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 10000000;
+  const int kCount_ = 50000000;
   InType input_data_{};
   double answer = 0.0;
 
