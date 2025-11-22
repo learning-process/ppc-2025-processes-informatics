@@ -1,9 +1,10 @@
 #include "egashin_k_lexicographical_check/mpi/include/ops_mpi.hpp"
-#include "egashin_k_lexicographical_check/common/include/common.hpp"
 
 #include <mpi.h>
 
 #include <vector>
+
+#include "egashin_k_lexicographical_check/common/include/common.hpp"
 
 namespace egashin_k_lexicographical_check {
 

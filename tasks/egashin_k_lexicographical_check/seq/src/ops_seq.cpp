@@ -1,4 +1,5 @@
 #include "egashin_k_lexicographical_check/seq/include/ops_seq.hpp"
+
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 
 namespace egashin_k_lexicographical_check {
