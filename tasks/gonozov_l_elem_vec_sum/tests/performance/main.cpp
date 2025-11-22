@@ -8,7 +8,7 @@
 namespace gonozov_l_elem_vec_sum {
 
 class GonozovLElemVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  int kCount_ = 10000000;
+  int kCount_ = 100000000;
   InType input_data_;
   OutType desired_result_ = 0LL;
 
