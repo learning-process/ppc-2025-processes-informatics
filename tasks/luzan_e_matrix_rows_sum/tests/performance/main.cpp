@@ -12,8 +12,8 @@
 namespace luzan_e_matrix_rows_sum {
 
 class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t height_ = 10000;
-  const size_t width_ = 10000;
+  const size_t height_ = 14000;
+  const size_t width_ = 14000;
   InType input_data_;
 
   void SetUp() override {
