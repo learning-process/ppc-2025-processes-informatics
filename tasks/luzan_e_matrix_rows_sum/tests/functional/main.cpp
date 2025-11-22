@@ -2,7 +2,6 @@
 #include <stb/stb_image.h>
 
 #include <array>
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -26,10 +25,10 @@ class LuzanEMatrixRowsSumFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     TestType params = std::get<static_cast<int>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int height = std::get<0>(params);
     int width = std::get<1>(params);
-    std::tuple_element_t<0, InType> mat(height * width);
+    std::tuple_element_t<0, InType> mat(static_cast<size_t>(height) * static_cast<size_t>(width));
 
     for (int elem = 0; elem < height * width; elem++) {
-      mat[elem] = (static_cast<int>(elem) * 2) - 42;
+      mat[elem] = (elem * 2) - 42;
     }
 
     input_data_ = std::make_tuple(mat, height, width);

@@ -36,7 +36,7 @@ bool LuzanEMatrixRowsSumMPI::ValidationImpl() {
 
   int height = std::get<1>(GetInput());
   int width = std::get<2>(GetInput());
-  return std::get<0>(GetInput()).size() == static_cast<size_t>(height * width) && height != 0 && width != 0;
+  return static_cast<int>(std::get<0>(GetInput()).size()) == (height * width) && height != 0 && width != 0;
 }
 
 bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
@@ -64,7 +64,7 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int dim[2];
+  std::vector<int> dim(2, 0);
   if (rank == 0) {
     mat = std::get<0>(GetInput());
     height = std::get<1>(GetInput());
@@ -72,7 +72,7 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
     dim[0] = height;
     dim[1] = width;
   }
-  MPI_Bcast(dim, 2, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dim.data(), 2, MPI_INT, 0, MPI_COMM_WORLD);
   height = dim[0];
   width = dim[1];
 
@@ -86,14 +86,14 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
     rest--;
   }
   for (int i = 1; i < size; i++) {
-    if (rest) {
+    if (rest != 0) {
       per_proc[i]++;
       rest--;
     }
     shift[i] = per_proc[i - 1] + shift[i - 1];
   }
 
-  std::vector<int> recv(per_proc[rank] * width);
+  std::vector<int> recv(static_cast<size_t>(per_proc[rank] * width));
 
   for (int i = 0; i < size; i++) {
     per_proc[i] *= width;
@@ -108,13 +108,13 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   int rows_to_calc = static_cast<int>(per_proc[rank] / width);
   for (int row = 0; row < rows_to_calc; row++) {
     for (int col = 0; col < width; col++) {
-      sum[row + abs_shift] += recv[row * width + col];
+      sum[row + abs_shift] += recv[(row * width) + col];
     }
   }
 
   std::vector<int> fin_sum(height);
-  MPI_Reduce(sum.data(), fin_sum.data(), sum.size(), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-  MPI_Bcast(fin_sum.data(), static_cast<int>(height), MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Reduce(sum.data(), fin_sum.data(), static_cast<int>(sum.size()), MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Bcast(fin_sum.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = fin_sum;
   return true;
 }

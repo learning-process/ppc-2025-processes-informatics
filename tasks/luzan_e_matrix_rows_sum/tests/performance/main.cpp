@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <tuple>
 #include <vector>
 
@@ -17,9 +16,9 @@ class LuzanEMatrixRowsSumpERFTests : public ppc::util::BaseRunPerfTests<InType, 
   InType input_data_;
 
   void SetUp() override {
-    std::tuple_element_t<0, InType> mat(height_ * width_);
+    std::tuple_element_t<0, InType> mat(static_cast<size_t>(height_) * static_cast<size_t>(width_));
     for (int elem = 0; elem < height_ * width_; elem++) {
-      mat[elem] = static_cast<int>(elem) % 42000;
+      mat[elem] = elem % 42000;
     }
 
     input_data_ = std::make_tuple(mat, height_, width_);
