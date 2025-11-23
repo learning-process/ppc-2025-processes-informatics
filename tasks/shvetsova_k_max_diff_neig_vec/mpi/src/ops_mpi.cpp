@@ -76,7 +76,6 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
     }
   }
 
-
   // обрабатиываем то, что на границах кусочков в процессах
   if (CountOfProc > 1) {
     if (rank < CountOfProc - 1 && partSize > 0) {
