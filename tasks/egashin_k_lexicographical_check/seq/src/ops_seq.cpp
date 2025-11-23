@@ -1,5 +1,6 @@
 #include "egashin_k_lexicographical_check/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"

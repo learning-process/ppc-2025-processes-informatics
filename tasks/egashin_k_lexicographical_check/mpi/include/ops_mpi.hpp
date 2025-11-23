@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 #include "task/include/task.hpp"
 
