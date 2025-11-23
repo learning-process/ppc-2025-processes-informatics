@@ -41,44 +41,60 @@ static size_t CountSentencesInChunk(const std::vector<char> &local_chunk, int ch
   return sentence_count;
 }
 
-/*bool GusevDSentenceCountMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
+bool GusevDSentenceCountMPI::RunImpl() {
   int rank = 0;
+  int comm_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+
+  std::string &text_data = GetInput();
+
+  if (text_data.empty()) {
+    GetOutput() = 0;
+    return true;
+  }
+  
+  int chunk_size = 0; 
+  if (rank == 0) {
+    size_t length = text_data.size();
+    
+    if (length % comm_size != 0) {
+        size_t pad = comm_size - (length % comm_size);
+        text_data.resize(length + pad, ' '); 
+        length = text_data.size();
+    }
+    
+    text_data.push_back(' '); 
+    
+    chunk_size = static_cast<int>(length / comm_size); 
+  }
+
+  MPI_Bcast(&chunk_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<char> local_buffer(chunk_size + 1); 
+  std::vector<int> counts(comm_size, chunk_size + 1);
+  std::vector<int> offsets(comm_size);
 
   if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
-
-    if (counter != 0) {
-      GetOutput() /= counter;
+    for (int i = 0; i < comm_size; ++i) {
+      offsets[i] = i * chunk_size; 
     }
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
-}*/
+  MPI_Scatterv(text_data.data(), counts.data(), offsets.data(), MPI_CHAR, 
+               local_buffer.data(), chunk_size + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  size_t local_res = CountSentencesInChunk(local_buffer, chunk_size);
+
+  size_t total_res = 0;
+  MPI_Reduce(&local_res, &total_res, 1, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    GetOutput() = total_res;
+  }
+
+  return true;
+}
 
 bool GusevDSentenceCountMPI::PostProcessingImpl() {
   return true;
