@@ -16,7 +16,7 @@ ShvetsovaKMaxDiffNeigVecSEQ::ShvetsovaKMaxDiffNeigVecSEQ(const InType &in) {
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::ValidationImpl() {
   data = GetInput();
-  return true
+  return true;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::PreProcessingImpl() {
