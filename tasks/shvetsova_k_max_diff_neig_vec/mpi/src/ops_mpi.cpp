@@ -37,14 +37,8 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   MPI_Bcast(&SizeOfVector, 1, MPI_INT, 0, MPI_COMM_WORLD);  // сказали всем процессам, какой размер у вектора
-
-  if (SizeOfVector < 2) {
-    GetOutput() = {0.0, 0.0};
-    return true;
-  }
-
-  std::vector<int> countElems(CountOfProc, 0);  // количсетво элементов на каждый из процессов
-  std::vector<int> ind(CountOfProc, 0);         // индекс, начиная с которого элементы принадлежат процессам
+  std::vector<int> countElems(CountOfProc, 0);              // количсетво элементов на каждый из процессов
+  std::vector<int> ind(CountOfProc, 0);                     // индекс, начиная с которого элементы принадлежат процессам
 
   if (rank == 0) {
     int base = SizeOfVector / CountOfProc;
@@ -82,9 +76,6 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
     }
   }
 
-  if (localDiff < 0) {
-    localDiff = 0.0;
-  }
 
   // обрабатиываем то, что на границах кусочков в процессах
   if (CountOfProc > 1) {

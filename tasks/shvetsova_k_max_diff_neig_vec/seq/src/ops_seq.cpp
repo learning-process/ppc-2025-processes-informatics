@@ -43,7 +43,7 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
 
   GetOutput().first = FirstElem;
   GetOutput().second = SecondElem;
-  return GetOutput().first == FirstElem && GetOutput().second == SecondElem;
+  return true;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::PostProcessingImpl() {
