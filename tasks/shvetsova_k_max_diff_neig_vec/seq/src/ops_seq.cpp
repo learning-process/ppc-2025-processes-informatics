@@ -15,11 +15,11 @@ ShvetsovaKMaxDiffNeigVecSEQ::ShvetsovaKMaxDiffNeigVecSEQ(const InType &in) {
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::ValidationImpl() {
-  return true;
+  data = GetInput();
+  return data.size() >= 0;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::PreProcessingImpl() {
-  data = GetInput();
   return true;
 }
 
@@ -28,7 +28,11 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
   double FirstElem = 0;
   double SecondElem = 0;
   int sz = data.size();
-
+  if (sz < 2) {
+    GetOutput().first = 0.0;
+    GetOutput().second = 0.0;
+    return true;
+  }
   for (int i = 0; i < sz - 1; i++) {
     if (MaxDif <= std::abs(data.at(i) - data.at(i + 1))) {
       FirstElem = data.at(i);
@@ -39,7 +43,7 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
 
   GetOutput().first = FirstElem;
   GetOutput().second = SecondElem;
-  return true;
+  return GetOutput().first == FirstElem && GetOutput().second == SecondElem;
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::PostProcessingImpl() {

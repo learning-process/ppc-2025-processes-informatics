@@ -28,6 +28,11 @@ bool ShvetsovaKMaxDiffNeigVecMPI::PreProcessingImpl() {
 bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   int CountOfProc, rank;
   int SizeOfVector = data.size();
+  if (SizeOfVector < 2) {
+    GetOutput().first = 0.0;
+    GetOutput().second = 0.0;
+    return true;
+  }
   MPI_Comm_size(MPI_COMM_WORLD, &CountOfProc);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
