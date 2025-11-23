@@ -29,7 +29,7 @@ bool GusevDSentenceCountSEQ::PreProcessingImpl() {
 
 bool GusevDSentenceCountSEQ::RunImpl() {
   const std::string &data = GetInput();
-  
+
   if (data.empty()) {
     GetOutput() = 0;
     return true;

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cstddef>
 #include <fstream>
@@ -6,8 +7,6 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include <mpi.h>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -33,11 +32,11 @@ class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, 
 
     std::ifstream file(abs_path);
     if (file.is_open()) {
-        std::ostringstream buffer;
-        buffer << file.rdbuf();
-        input_data_ = buffer.str();
+      std::ostringstream buffer;
+      buffer << file.rdbuf();
+      input_data_ = buffer.str();
     } else {
-        input_data_ = "Fallback text. Sentence one. Sentence two!";
+      input_data_ = "Fallback text. Sentence one. Sentence two!";
     }
 
     size_t count = 0;
@@ -57,11 +56,11 @@ class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, 
     int initialized = 0;
     MPI_Initialized(&initialized);
     if (initialized) {
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
     if (rank == 0) {
-        return output_data == expected_output_;
+      return output_data == expected_output_;
     }
     return true;
   }
@@ -78,8 +77,8 @@ TEST_P(GusevDSentenceCountPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GusevDSentenceCountMPI, GusevDSentenceCountSEQ>(PPC_SETTINGS_gusev_d_sentence_count);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GusevDSentenceCountMPI, GusevDSentenceCountSEQ>(
+    PPC_SETTINGS_gusev_d_sentence_count);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
