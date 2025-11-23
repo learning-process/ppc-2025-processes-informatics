@@ -22,7 +22,7 @@ PotashnikMCharFreqMPI::PotashnikMCharFreqMPI(const InType &in) {
 }
 
 bool PotashnikMCharFreqMPI::ValidationImpl() {
-int rank = 0;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank != 0) {
     return true;
@@ -63,8 +63,7 @@ bool PotashnikMCharFreqMPI::RunImpl() {
     for (int i = 0; i < world_size; i++) {
       if (remainder > i) {
         local_sizes[i] = block_size + 1;
-      }
-      else {
+      } else {
         local_sizes[i] = block_size;
       }
     }
@@ -79,12 +78,13 @@ bool PotashnikMCharFreqMPI::RunImpl() {
 
   std::string cur_str(cur_count, '\0');
   if (rank == 0) {
-    std::vector<char> temp_str(str.begin(), str.end()); // Dont work without const
-    MPI_Scatterv(temp_str.data(), local_sizes.data(), local_start_positions.data(), MPI_CHAR, &cur_str[0], cur_count, MPI_CHAR, 0, MPI_COMM_WORLD); 
-}
-else {
-    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_CHAR, &cur_str[0], cur_count, MPI_CHAR, 0, MPI_COMM_WORLD); // Just recieving data
-}
+    std::vector<char> temp_str(str.begin(), str.end());  // Dont work without const
+    MPI_Scatterv(temp_str.data(), local_sizes.data(), local_start_positions.data(), MPI_CHAR, &cur_str[0], cur_count,
+                 MPI_CHAR, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_CHAR, &cur_str[0], cur_count, MPI_CHAR, 0,
+                 MPI_COMM_WORLD);  // Just recieving data
+  }
 
   int cur_res = 0;
   for (char c : cur_str) {
