@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
-#include <stddef.h>
 
+#include <cstddef>
 #include <string>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"

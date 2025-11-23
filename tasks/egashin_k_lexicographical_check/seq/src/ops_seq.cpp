@@ -1,6 +1,6 @@
 #include "egashin_k_lexicographical_check/seq/include/ops_seq.hpp"
 
-#include <stddef.h>
+#include <cstddef>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
 
@@ -27,7 +27,7 @@ bool TestTaskSEQ::RunImpl() {
   const size_t len1 = s1.size();
   const size_t len2 = s2.size();
 
-  size_t min_len = (len1 < len2) ? len1 : len2;
+  size_t min_len = std::min(s1.size(), s2.size());
 
   for (size_t i = 0; i < min_len; ++i) {
     if (s1[i] < s2[i]) {

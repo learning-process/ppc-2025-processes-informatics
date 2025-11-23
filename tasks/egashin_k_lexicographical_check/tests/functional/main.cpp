@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
-#include <stddef.h>
 
 #include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <utility>
