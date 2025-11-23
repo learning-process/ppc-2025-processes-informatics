@@ -6,6 +6,9 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
+
+#include <mpi.h>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -19,18 +22,22 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
  public:
   GusevDSentenceCountFuncTests() = default;
 
-  static std::string PrintTestParam(const TestType &test_param) {
-    std::string text = std::get<0>(test_param);
+  static std::string PrintTestParam(const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &param_info) {
+    auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(param_info.param);
+    
+    std::string text = std::get<0>(params);
     
     std::transform(text.begin(), text.end(), text.begin(),
         [](unsigned char c) {
-            if (std::isalnum(c) || c == '_') {
-                return static_cast<char>(c);
-            }
+            if (std::isalnum(c) || c == '_') return (char)c;
             return '_';
         });
 
-    return text + "_Expected_" + std::to_string(std::get<1>(test_param));
+    if (text.empty()) {
+        text = "Empty";
+    }
+  
+    return text + "_Exp" + std::to_string(std::get<1>(params)) + "_" + std::to_string(param_info.index);
   }
 
  protected:
@@ -41,7 +48,17 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_output_;
+    int rank = 0;
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank == 0) {
+        return output_data == expected_output_;
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -88,7 +105,7 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintFuncTestName<GusevDSentenceCountFuncTests>;
+const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintTestParam;
 
 INSTANTIATE_TEST_SUITE_P(SentenceCountBoundaryTests, GusevDSentenceCountFuncTests, kGtestValues, kPerfTestName);
 
