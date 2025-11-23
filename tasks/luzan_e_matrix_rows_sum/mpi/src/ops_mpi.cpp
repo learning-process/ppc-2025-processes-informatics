@@ -81,16 +81,14 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   std::vector<int> per_proc(size, height / size);
 
   shift[0] = 0;
-  if (rest != 0) {
-    per_proc[0]++;
-    rest--;
-  }
-  for (int i = 1; i < size; i++) {
+  int accumulator = 0;
+  for (int i = 0; i < size; i++) {
     if (rest != 0) {
       per_proc[i]++;
       rest--;
     }
-    shift[i] = per_proc[i - 1] + shift[i - 1];
+    shift[i] = accumulator;
+    accumulator = per_proc[i] + shift[i];
   }
 
   std::vector<int> recv(static_cast<size_t>(per_proc[rank] * width));
