@@ -1,12 +1,17 @@
 #include "gusev_d_sentence_count/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <cctype>
+#include <cstddef>
+#include <string>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace gusev_d_sentence_count {
+
+bool IsSentenceTerminator(char c) {
+  return (c == '.' || c == '!' || c == '?');
+}
 
 GusevDSentenceCountSEQ::GusevDSentenceCountSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -15,15 +20,14 @@ GusevDSentenceCountSEQ::GusevDSentenceCountSEQ(const InType &in) {
 }
 
 bool GusevDSentenceCountSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool GusevDSentenceCountSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
-bool GusevDSentenceCountSEQ::RunImpl() {
+/*bool GusevDSentenceCountSEQ::RunImpl() {
   if (GetInput() == 0) {
     return false;
   }
@@ -50,11 +54,10 @@ bool GusevDSentenceCountSEQ::RunImpl() {
     GetOutput() /= counter;
   }
   return GetOutput() > 0;
-}
+}*/
 
 bool GusevDSentenceCountSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace gusev_d_sentence_count
