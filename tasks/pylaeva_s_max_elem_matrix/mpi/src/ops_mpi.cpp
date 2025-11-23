@@ -49,17 +49,12 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   int local_size = matrix_size / size;
   int remainder = matrix_size % size;
 
-  if (rank == 0) {
-    int offset = 0;
-    for (int i = 0; i < size; i++) {
-      sendcounts[i] = local_size + (i < remainder ? 1 : 0);
-      displs[i] = offset;
-      offset += sendcounts[i];
-    }
+  int offset = 0;
+  for (int i = 0; i < size; i++) {
+    sendcounts[i] = local_size + (i < remainder ? 1 : 0);
+    displs[i] = offset;
+    offset += sendcounts[i];
   }
-
-  MPI_Bcast(sendcounts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
 
   int local_elements = sendcounts[rank];
   std::vector<int> local_data(local_elements);
