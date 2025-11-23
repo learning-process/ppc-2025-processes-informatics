@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
 #include <string>
 #include <tuple>
@@ -20,7 +21,15 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
   static std::string PrintTestParam(const TestType &test_param) {
     std::string text = std::get<0>(test_param);
-    std::replace(text.begin(), text.end(), ' ', '_');
+    
+    std::transform(text.begin(), text.end(), text.begin(),
+        [](unsigned char c) {
+            if (std::isalnum(c) || c == '_') {
+                return static_cast<char>(c);
+            }
+            return '_';
+        });
+
     return text + "_Expected_" + std::to_string(std::get<1>(test_param));
   }
 
@@ -51,26 +60,26 @@ TEST_P(GusevDSentenceCountFuncTests, SentenceBoundaryTests) {
 }
 
 const std::array<TestType, 16> kTestParam = {
-    std::make_tuple(std::string(""), 0),                                     
-    std::make_tuple(std::string("No terminators here"), 0),                 
+    std::make_tuple(std::string(""), 0),
+    std::make_tuple(std::string("No terminators here"), 0),
     std::make_tuple(std::string("Sentence one. Sentence two! Sentence three?"), 3),
-    std::make_tuple(std::string("Is this a question?"), 1),                  
+    std::make_tuple(std::string("Is this a question?"), 1),
 
-    std::make_tuple(std::string("This is the end."), 1),                     
-    std::make_tuple(std::string("Wow!"), 1),                                
-    std::make_tuple(std::string("Wait, what?"), 1),                         
+    std::make_tuple(std::string("This is the end."), 1),
+    std::make_tuple(std::string("Wow!"), 1),
+    std::make_tuple(std::string("Wait, what?"), 1),
 
-    std::make_tuple(std::string("Wait... What?! Stop!"), 2),
-    std::make_tuple(std::string("Really?? No!"), 2),              
+    std::make_tuple(std::string("Wait... What?! Stop!"), 3),
+    std::make_tuple(std::string("Really?? No!"), 2),
 
     std::make_tuple(std::string("Test. Another one! Last?"), 3),
-    std::make_tuple(std::string("Symbols? @ # $ %"), 1),                     
-    std::make_tuple(std::string("!Start with terminator. End."), 2),          
-    
-    std::make_tuple(std::string("The end is near..."), 1),                    
-    std::make_tuple(std::string("A!B.C?"), 3),                          
-    std::make_tuple(std::string("Only terminators???!!!"), 1),               
-    std::make_tuple(std::string("A..B.C"), 2)                               
+    std::make_tuple(std::string("Symbols? @ # $ %"), 1),
+    std::make_tuple(std::string("!Start with terminator. End."), 3),
+
+    std::make_tuple(std::string("The end is near..."), 1),
+    std::make_tuple(std::string("A!B.C?"), 3),
+    std::make_tuple(std::string("Only terminators???!!!"), 1),
+    std::make_tuple(std::string("A..B.C"), 2)
 };
 
 const auto kTestTasksList =

@@ -14,9 +14,13 @@
 
 namespace gusev_d_sentence_count {
 
+namespace {
+
 static bool IsTerminator(char c) {
   return c == '.' || c == '!' || c == '?';
 }
+
+}  // namespace
 
 class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
