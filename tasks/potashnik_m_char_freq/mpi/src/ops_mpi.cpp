@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <string>
+#include <vector>
 
 #include "potashnik_m_char_freq/common/include/common.hpp"
 
@@ -10,11 +11,22 @@ namespace potashnik_m_char_freq {
 
 PotashnikMCharFreqMPI::PotashnikMCharFreqMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    GetInput() = in;
+  }
+
   GetOutput() = 0;
 }
 
 bool PotashnikMCharFreqMPI::ValidationImpl() {
+int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank != 0) {
+    return true;
+  }
   return !std::get<0>(GetInput()).empty();
 }
 
@@ -23,29 +35,54 @@ bool PotashnikMCharFreqMPI::PreProcessingImpl() {
 }
 
 bool PotashnikMCharFreqMPI::RunImpl() {
-  auto &input = GetInput();
-  std::string str = std::get<0>(input);
-  char chr = std::get<1>(input);
-
   int world_size = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int string_size = static_cast<int>(str.size());
-  int block_size = string_size / world_size;
+  std::string str;
+  char chr;
+  int string_size = 0;
 
-  int start_pos = block_size * rank;
-  int end_pos = 0;
-  if (rank == world_size - 1) {
-    end_pos = string_size;
-  } else {
-    end_pos = start_pos + block_size;
+  if (rank == 0) {
+    str = std::get<0>(GetInput());
+    chr = std::get<1>(GetInput());
+    string_size = static_cast<int>(str.size());
   }
-  int cur_res = 0;
 
-  for (int i = start_pos; i < end_pos; i++) {
-    if (str[i] == chr) {
+  MPI_Bcast(&string_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&chr, 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  int block_size = string_size / world_size;
+  int remainder = string_size % world_size;
+
+  std::vector<int> local_sizes(world_size, 0);
+  std::vector<int> local_start_positions(world_size, 0);
+
+  if (rank == 0) {
+    for (int i = 0; i < world_size; i++) {
+      if (remainder > i) {
+        local_sizes[i] = block_size + 1;
+      }
+      else {
+        local_sizes[i] = block_size;
+      }
+
+      for (int i = 1; i < world_size; i++) {
+        local_start_positions[i] = local_start_positions[i - 1] + local_sizes[i - 1];
+      }
+    }
+  }
+
+  int cur_count = 0;
+  MPI_Scatter(local_sizes.data(), 1, MPI_INT, &cur_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::string cur_str(cur_count, '\0');
+  MPI_Scatterv(str.data(), local_sizes.data(), local_start_positions.data(), MPI_CHAR, cur_str.data(), cur_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  int cur_res = 0;
+  for (char c : cur_str) {
+    if (c == chr) {
       cur_res++;
     }
   }
