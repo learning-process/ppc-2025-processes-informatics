@@ -10,6 +10,10 @@
 
 namespace gusev_d_sentence_count {
 
+static bool IsTerminator(char c) {
+  return c == '.' || c == '!' || c == '?';
+}
+
 GusevDSentenceCountMPI::GusevDSentenceCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -17,15 +21,27 @@ GusevDSentenceCountMPI::GusevDSentenceCountMPI(const InType &in) {
 }
 
 bool GusevDSentenceCountMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool GusevDSentenceCountMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
-bool GusevDSentenceCountMPI::RunImpl() {
+static size_t CountSentencesInChunk(const std::vector<char> &local_chunk, int chunk_size) {
+  size_t sentence_count = 0;
+  
+  for (int i = 0; i < chunk_size; ++i) {
+    if (IsTerminator(local_chunk[i])) {
+      if (!IsTerminator(local_chunk[i + 1])) {
+        sentence_count++;
+      }
+    }
+  }
+  return sentence_count;
+}
+
+/*bool GusevDSentenceCountMPI::RunImpl() {
   auto input = GetInput();
   if (input == 0) {
     return false;
@@ -62,11 +78,10 @@ bool GusevDSentenceCountMPI::RunImpl() {
 
   MPI_Barrier(MPI_COMM_WORLD);
   return GetOutput() > 0;
-}
+}*/
 
 bool GusevDSentenceCountMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace gusev_d_sentence_count
