@@ -22,6 +22,10 @@ bool TestTaskMPI::PreProcessingImpl() {
   return true;
 }
 
+bool TestTaskMPI::PostProcessingImpl() {
+  return true;
+}
+
 void TestTaskMPI::CalculateDistribution(int size, int min_len, std::vector<int> &counts, std::vector<int> &displs) {
   int delta = min_len / size;
   int remainder = min_len % size;
