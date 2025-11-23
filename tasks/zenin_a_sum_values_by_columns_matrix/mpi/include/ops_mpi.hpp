@@ -1,5 +1,4 @@
 #pragma once
-
 #include <cstddef>
 #include <vector>
 
@@ -21,8 +20,8 @@ class ZeninASumValuesByColumnsMatrixMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void PrepareGathervParameters(int world_size, size_t base_cols_per_process, size_t remain,
-                                       std::vector<int> &recv_counts, std::vector<int> &displacements);
+  static void FillSendBuffer(const std::vector<double> &mat, std::vector<double> &sendbuf, size_t rows, size_t cols,
+                             size_t base, size_t rest, int world_size);
 };
 
 }  // namespace zenin_a_sum_values_by_columns_matrix

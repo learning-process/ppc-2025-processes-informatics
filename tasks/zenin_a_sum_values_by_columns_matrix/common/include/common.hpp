@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <string>
 #include <tuple>
 #include <vector>
 
@@ -9,9 +8,9 @@
 
 namespace zenin_a_sum_values_by_columns_matrix {
 
-using InType = std::tuple<size_t, size_t, std::vector<double>>;  // rows -> columns -> size
+using InType = std::tuple<size_t, size_t, std::vector<double>>;  // rows -> columns -> matrix
 using OutType = std::vector<double>;
-using TestType = std::string;
+using TestType = std::tuple<size_t, size_t>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace zenin_a_sum_values_by_columns_matrix

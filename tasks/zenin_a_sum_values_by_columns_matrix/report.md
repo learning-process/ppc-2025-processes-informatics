@@ -45,11 +45,11 @@ $$
 
 ## 3. Описание алгоритма SEQ (Sequential)
 
-Последовательный алгоритм выполняет простой вложенный цикл:
+Последовательный алгоритм выполняет простой двойной цикл по строкам и столбцам:
 
-for each row:
-for each column:
-result[column] += A[row][column]
+for row in rows:
+    for col in columns:
+        sum[col] += matrix[row * columns + col]
 
 Временная сложность:
 
@@ -62,7 +62,7 @@ $$
 - Входная матрица: `R*C*sizeof(double)`
 - Выходные данные: `C*sizeof(double)`
 
-Для performance тестов размер матрицы был: **4000 x 4000 (16,000,000 элементов)**
+Для performance тестов размер матрицы был: **6000 x 6000 (36,000,000 элементов)**
 
 ---
 
@@ -70,33 +70,17 @@ $$
 
 ## Стратегия
 
-Данные матрицы **передаются** всем MPI процессам.
-Каждый процесс обрабатывает **непересекающееся подмножество столбцов**:
+Матрица распределяется по столбцам, чтобы каждый процесс обрабатывал свой набор столбцов.
+Используется схема: 
+- `base = C / world_size`
+- `rest = C % world_size`
+- `my_cols = base + (rank < rest ? 1 : 0)`
 
-- `columns_per_proc = columns / world_size`
-- Последний процесс получает остаток. 
-
-Каждый процесс вычисляет частичные суммы для своих локальных столбцов: 
-
-$$
-S^{(rank)}_j = \sum_{i=1}^{R} A_{i,j}
-$$
-
-Затем происходит сбор результатов с помощью **MPI_Gatherv** в процессе с рангом 0, получая полный выходной вектор:
-
-$$
-S = \bigcup_{rank=0}^{P-1} S^{(rank)}
-$$
-
-В конце результат **передаётся** всем процессам.
-
-## Схема взаимодействия
-
-1. `MPI_Bcast` — передача данных о матрице процессам
-2. `MPI_Bcast` — передача всей матрицы всем процессам
-3. Локальные вычисления
-4. `MPI_Gatherv` — сбор частичных результатов на процессе с рангом 0
-5. `MPI_Bcast` — передача итогового результата
+- На процессе 0 формируется отправной буфер с переставленными по процессам столбцами.    
+- Используется `MPI_Scatterv` для передачи блоков.    
+- Локальные вычисления: каждый процесс суммирует свои столбцы.    
+- Сбор результатов обратно на процесс 0 - через `MPI_Gatherv`.    
+- Финальная рассылка готового результата всем процессам через `MPI_Bcast`.  
 
 ---
 
@@ -117,10 +101,14 @@ tests/performance/main.cpp — performance tests
 
 ## Соображения памяти
 
-- Вся матрица передаётся на все процессы -> потребление памяти: 128 МБ на процесс.
-- Дополнительные временные буферы минимальны: каждый процесс хранит только  
-локальный фрагмент выходного вектора (частичные суммы столбцов), что является очень небольшим объёмом по сравнению с размером матрицы.
+- SEQ:    
+- Использует входную матрицу и выходной массив.  
+- Память: `R * C * sizeof(double) + C * sizeof(double)`  
 
+- MPI:
+- Нулевой процесс дополнительно выделяет буфер sendbuf размером `R*C`.  
+- Каждый процесс выделяет `local_block` размером `R * my_cols`.  
+- Память не дублируется на всех процессах одновременно, матрица не рассылается полностью, только требуемые столбцы.  
 
 ---
 
@@ -143,9 +131,9 @@ PPC_NUM_THREADS = 1
 PPC_NUM_PROCS = 4 (для запуска с использованием MPI)
 
 ## Данные
-- Функциональные тесты используют 9 входных файлов: `matrix1.txt`, `matrix2.txt`, `matrix3.txt`, `matrix4.txt`, `matrix5.txt`, `matrix6.txt`,   
-`matrix7.txt`, `matrix8.txt`, `matrix9.txt`.   
-- Тест на производительность использует файл `mat_perf.txt` размером **4000×4000** 
+- Используются 15 функциональных тестов со следующими размерами матриц: (3, 3), (2, 5), (10, 70), (1, 1), (1, 100), (100, 1), 
+ (1000, 1000), (10, 2), (5, 3), (4, 5), (4, 3), (10000, 3), (3, 10000), (500, 1), (1, 500).  
+- Тест на производительность использует матрицу размером **6000 строк × 6000 столбцов** 
 
 ---
 
@@ -154,10 +142,9 @@ PPC_NUM_PROCS = 4 (для запуска с использованием MPI)
 ### 7.1 Корректность
 Корректность была протестирована с помощью функциональных тестов:
 
-- 9 входных матриц
+- 15 входных матриц
 - Обе реализации SEQ и MPI были проверены
 - Все тесты были пройдены как в однопроцессорном, так и в многопроцессорном режимах
-- Выходные данные сравниваются с ожидаемыми суммами с погрешностью `1e-12`
 
 ### 7.2 Производительность
 
@@ -165,46 +152,37 @@ PPC_NUM_PROCS = 4 (для запуска с использованием MPI)
 
 | Mode (normal run) | Time (s) | Speedup vs SEQ | Efficiency (4 proc) |
 |-------------------|----------|----------------|---------------------|
-| **SEQ pipeline**  | 0.011576 |      1.00      |          —          |
-| **SEQ task_run**  | 0.011932 |      0.97      |          —          |
-| **MPI pipeline**  | 0.142752 |      0.08      |         1.9%        |
-| **MPI task_run**  | 0.146573 |      0.08      |         2.0%        |
+| **SEQ pipeline**  | 0.026123 |      1.0       |          —          |
+| **SEQ task_run**  | 0.030003 |      1.0       |          —          |
+| **MPI pipeline**  | 0.511198 |     0.051      |         1.28%        |
+| **MPI task_run**  | 0.505920 |     0.059      |         1.48%        |
 
 ---
 
 | Mode (mpiexec -n 4) | Time (s) | Speedup vs SEQ | Efficiency (4 proc) |
 |---------------------|----------|----------------|---------------------|
-| **SEQ pipeline**    | 0.019669 |       1.00     |          —          |
-| **SEQ task_run**    | 0.013334 |       1.47     |          —          |
-| **MPI pipeline**    | 0.132601 |       0.15     |         3.7%        |
-| **MPI task_run**    | 0.202401 |       0.10     |         2.4%        |
+| **SEQ pipeline**    | 0.047043 |       1.00     |          —          |
+| **SEQ task_run**    | 0.055815 |       1.00     |          —          |
+| **MPI pipeline**    | 0.465189 |      0.101     |        2.53%        |
+| **MPI task_run**    | 0.487792 |      0.114     |        2.86%        |
 
 ---
 
 ## Анализ результатов
 
-1. **Релизация MPI выполняется медленнее, чем SEQ**, поскольку:
-   - В реализации выполняется `MPI_Bcast` всей матрицы, поэтому каждый процесс хранит полный буфер матрицы.  
-   Передача и распределение такого объёма данных создает значителньные накладные расходы.
-   - Сбор результатов `MPI_Gatherv` сам по себе небольшой, но суммарные коммуникации (broadcast + gather) и синхронизация всё равно дают ощутимые накладные расходы.
-   - Разложение по столбцам приводит к низкому отношению вычислений к коммуникации: на каждый процесс приходится сравнительно мало арифметики, тогда как коммуникационные затраты велики.
-2. **Локальность памяти и порядок доступа**.
-- В SEQ-реализации внешний цикл по строкам, внутренний — по столбцам: код читает элементы подряд в памяти `matrix[row*columns + col]`, т.е. использует    строчную (row-major) локальность, что эффективно использует кеш.
-- В MPI-реализации после распределения столбцов каждый процесс для фиксированного `global_col` итерирует по `row`, обращаясь к элементам с шагом `columns`.  Такой доступ хуже использует кеш и дополнительно снижает производительность.
-- Накладные расходы на коммуникации и синхронизацию могут перекрывать выгоду от параллелизма.
+- Результаты показывают, что MPI-реализация уступает последовательной по производительности. 
+- Операции суммирования - простые. MPI накладные расходы (Scatterv, Gatherv, Bcast) оказываются дороже самих вычислений. 
+- Затраты на вычисления малы относительно времени коммуникаций.  
+- MPI медленнее SEQ, поскольку еще дополнительно происходит: распределение данных, сбор результатов, подготовка буфера, синхронизация процессов.  
+
 ---
 
 ## 8. Выводы
-
-- Реализация параллельного алгоритма с использованием MPI для задачи "Сумма значений по столбцам матрицы" показала **низкую эффективность**.
-- Последовательная реализация является высокоэффективной и превосходит MPI по производительности из-за отсутствия затрат на коммуникацию.
-- Версия MPI демонстрирует **очень низкое ускорение (0,08–0,15)** и низкую эффективность из-за:
-  - большого количества операций передачи,
-  - низкого соотношения вычислений к передаче данных,
-  - высоких накладных расходов. 
-
-
-
+- Реализованы две версии решения задачи: последовательная SEQ и параллельная MPI.  
+- Все функциональные тесты успешно пройдены, корректность подтверждена.  
+- Для матрицы 6000×6000 последовательная версия демонстрирует производительность выше, чем MPI.  
+- MPI-версия показывает минимальную эффективность (1–3%), что объясняется: большими накладными расходами на коммуникации, 
+  высокой стоимостью подготовки данных, низкой вычислительной сложностью задачи.  
 ---
 
 ## 9. Источники
@@ -217,16 +195,6 @@ PPC_NUM_PROCS = 4 (для запуска с использованием MPI)
 
 ## 10. Приложение. Код MPI реализации
 ```cpp
-
-#pragma once
-
-#include <cstddef>
-#include <vector>
-
-#include "task/include/task.hpp"
-#include "zenin_a_sum_values_by_columns_matrix/common/include/common.hpp"
-
-namespace zenin_a_sum_values_by_columns_matrix {
 
 class ZeninASumValuesByColumnsMatrixMPI : public BaseTask {
  public:
@@ -241,144 +209,91 @@ class ZeninASumValuesByColumnsMatrixMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void PrepareGathervParameters(int world_size, size_t base_cols_per_process, size_t remain,
-                                       std::vector<int> &recv_counts, std::vector<int> &displacements);
+  static void FillSendBuffer(const std::vector<double> &mat, std::vector<double> &sendbuf, size_t rows, size_t cols,
+                             size_t base, size_t rest, int world_size);
 };
 
-}  // namespace zenin_a_sum_values_by_columns_matrix
-
-#include "zenin_a_sum_values_by_columns_matrix/mpi/include/ops_mpi.hpp"
-
-#include <mpi.h>
-
-#include <cmath>
-#include <cstddef>
-#include <tuple>
-#include <vector>
-
-#include "zenin_a_sum_values_by_columns_matrix/common/include/common.hpp"
-
-namespace zenin_a_sum_values_by_columns_matrix {
-
-ZeninASumValuesByColumnsMatrixMPI::ZeninASumValuesByColumnsMatrixMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = OutType{};
-}
-
-bool ZeninASumValuesByColumnsMatrixMPI::ValidationImpl() {
-  auto &input = GetInput();
-  return ((std::get<0>(input)) * std::get<1>(input) == std::get<2>(input).size() && (GetOutput().empty()));
-}
-
-bool ZeninASumValuesByColumnsMatrixMPI::PreProcessingImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank != 0) {
-    return true;
-  }
-  GetOutput().clear();
-  return true;
-}
-
-void ZeninASumValuesByColumnsMatrixMPI::PrepareGathervParameters(int world_size, size_t base_cols_per_process,
-                                                                 size_t remain, std::vector<int> &recv_counts,
-                                                                 std::vector<int> &displacements) {
-  for (int i = 0; i < world_size; ++i) {
-    recv_counts[i] = static_cast<int>(base_cols_per_process);
-    if (i == world_size - 1) {
-      recv_counts[i] += static_cast<int>(remain);
-    }
-    if (i > 0) {
-      displacements[i] = displacements[i - 1] + recv_counts[i - 1];
+void ZeninASumValuesByColumnsMatrixMPI::FillSendBuffer(const std::vector<double> &mat, std::vector<double> &sendbuf,
+                                                       size_t rows, size_t cols, size_t base, size_t rest,
+                                                       int world_size) {
+  size_t pos = 0;
+  for (int proc = 0; proc < world_size; proc++) {
+    auto proc_size = static_cast<size_t>(proc);
+    size_t pc_begin = (proc_size * base) + (std::cmp_less(proc_size, rest) ? proc_size : rest);
+    size_t pc_end = pc_begin + (base + (std::cmp_less(proc_size, rest) ? 1 : 0));
+    for (size_t col = pc_begin; col < pc_end; col++) {
+      for (size_t row = 0; row < rows; row++) {
+        sendbuf[pos++] = mat[(row * cols) + col];
+      }
     }
   }
 }
 
 bool ZeninASumValuesByColumnsMatrixMPI::RunImpl() {
-  auto &input = GetInput();
-  int world_size = 0;
+  auto rows = static_cast<size_t>(std::get<0>(GetInput()));
+  auto cols = static_cast<size_t>(std::get<1>(GetInput()));
+  const std::vector<double> &mat = std::get<2>(GetInput());
+
+  std::vector<double> &global_sum = GetOutput();
+
   int rank = 0;
+  int world_size = 0;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  size_t columns = 0;
-  std::vector<double> matrix_data;
-  size_t total_rows = 0;
+  const size_t base = cols / static_cast<size_t>(world_size);
+  const size_t rest = cols % static_cast<size_t>(world_size);
 
+  const size_t my_cols = base + (std::cmp_less(static_cast<size_t>(rank), rest) ? 1 : 0);
+
+  std::vector<int> sendcounts(static_cast<size_t>(world_size));
+  std::vector<int> displs(static_cast<size_t>(world_size));
   if (rank == 0) {
-    columns = std::get<1>(input);
-    matrix_data = std::get<2>(input);
-    total_rows = std::get<0>(input);
-    if (matrix_data.size() % columns != 0) {
-      return false;
+    int offset = 0;
+    for (int proc = 0; proc < world_size; proc++) {
+      size_t pc = base + (std::cmp_less(static_cast<size_t>(proc), rest) ? 1 : 0);
+      sendcounts[proc] = static_cast<int>(pc * rows);
+      displs[proc] = offset;
+      offset += sendcounts[proc];
     }
   }
 
-  MPI_Bcast(&columns, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&total_rows, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-
-  if (columns == 0) {
-    return false;
+  std::vector<double> sendbuf;
+  if (rank == 0) {
+    sendbuf.resize(rows * cols);
+    FillSendBuffer(mat, sendbuf, rows, cols, base, rest, world_size);
   }
+  std::vector<double> local_block(rows * my_cols);
+  MPI_Scatterv(sendbuf.data(), sendcounts.data(), displs.data(), MPI_DOUBLE, local_block.data(),
+               static_cast<int>(local_block.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  size_t base_cols_per_process = columns / world_size;
-  size_t remain = columns % world_size;
-
-  size_t start_column = 0;
-  size_t cols_this_process = 0;
-
-  if (rank == world_size - 1) {
-    start_column = rank * base_cols_per_process;
-    cols_this_process = base_cols_per_process + remain;
-  } else {
-    start_column = rank * base_cols_per_process;
-    cols_this_process = base_cols_per_process;
-  }
-
-  if (rank != 0) {
-    matrix_data.resize(total_rows * columns);
-  }
-
-  MPI_Bcast(matrix_data.data(), static_cast<int>(matrix_data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  std::vector<double> local_sums(cols_this_process, 0.0);
-
-  for (size_t local_column = 0; local_column < cols_this_process; ++local_column) {
-    size_t global_col = start_column + local_column;
-    for (size_t row = 0; row < total_rows; ++row) {
-      local_sums[local_column] += matrix_data[(row * columns) + global_col];
+  std::vector<double> local_sum(my_cols, 0.0);
+  for (size_t col_id = 0; col_id < my_cols; col_id++) {
+    for (size_t row_id = 0; row_id < rows; row_id++) {
+      local_sum[col_id] += local_block[(col_id * rows) + row_id];
     }
   }
+  std::vector<int> recvcounts(static_cast<size_t>(world_size));
+  std::vector<int> recvdispls(static_cast<size_t>(world_size));
 
-  std::vector<double> global_sums;
-  if (rank == 0) {
-    global_sums.resize(columns, 0.0);
+  if (rows == 0) {
+    throw std::runtime_error("Matrix has zero rows");
   }
-
-  std::vector<int> recv_counts(world_size, 0);
-  std::vector<int> displacements(world_size, 0);
 
   if (rank == 0) {
-    PrepareGathervParameters(world_size, base_cols_per_process, remain, recv_counts, displacements);
+    size_t offset = 0;
+    for (int proc = 0; proc < world_size; proc++) {
+      recvcounts[proc] = sendcounts[proc] / static_cast<int>(rows);
+      recvdispls[proc] = static_cast<int>(offset);
+      offset += static_cast<size_t>(recvcounts[proc]);
+    }
+    global_sum.assign(cols, 0.0);
   }
 
-  MPI_Gatherv(local_sums.data(), static_cast<int>(local_sums.size()), MPI_DOUBLE, global_sums.data(),
-              recv_counts.data(), displacements.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    global_sums.resize(columns);
-  }
-
-  MPI_Bcast(global_sums.data(), static_cast<int>(columns), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  GetOutput() = global_sums;
-
+  MPI_Gatherv(local_sum.data(), static_cast<int>(my_cols), MPI_DOUBLE, global_sum.data(), recvcounts.data(),
+              recvdispls.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  global_sum.resize(cols);
+  MPI_Bcast(global_sum.data(), static_cast<int>(cols), MPI_DOUBLE, 0, MPI_COMM_WORLD);
   return true;
 }
-
-bool ZeninASumValuesByColumnsMatrixMPI::PostProcessingImpl() {
-  return true;
-}
-
-}  // namespace zenin_a_sum_values_by_columns_matrix
