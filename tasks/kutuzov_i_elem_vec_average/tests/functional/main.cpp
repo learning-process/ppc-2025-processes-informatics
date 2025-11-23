@@ -1,16 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
@@ -32,18 +27,18 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::vector<double>(param, 0.0);
 
-    answer = 0.0;
+    answer_ = 0.0;
     int num = static_cast<int>(param);
     for (int i = 0; i < num; i++) {
-      double value = static_cast<double>(i * i) - static_cast<double>(param) / 2.0;
+      double value = static_cast<double>(i * i) - (static_cast<double>(param) / 2.0);
       input_data_[i] = value;
-      answer += value;
+      answer_ += value;
     }
-    answer /= static_cast<double>(param);
+    answer_ /= static_cast<double>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    bool result = abs(output_data - answer) < 0.0001;
+    bool result = abs(output_data - answer_) < 0.0001;
 
     return result;
   }
@@ -54,7 +49,7 @@ class KutuzovIElemVecAverageFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
  private:
   InType input_data_;
-  double answer = 0.0;
+  double answer_ = 0.0;
 };
 
 namespace {

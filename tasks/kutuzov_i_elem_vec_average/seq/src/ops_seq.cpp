@@ -1,10 +1,8 @@
 #include "kutuzov_i_elem_vec_average/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <vector>
 
 #include "kutuzov_i_elem_vec_average/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kutuzov_i_elem_vec_average {
 
@@ -15,7 +13,7 @@ KutuzovIElemVecAverageSEQ::KutuzovIElemVecAverageSEQ(const InType &in) {
 }
 
 bool KutuzovIElemVecAverageSEQ::ValidationImpl() {
-  return GetInput().size() > 0;
+  return !GetInput().empty();
 }
 
 bool KutuzovIElemVecAverageSEQ::PreProcessingImpl() {
@@ -24,11 +22,11 @@ bool KutuzovIElemVecAverageSEQ::PreProcessingImpl() {
 
 bool KutuzovIElemVecAverageSEQ::RunImpl() {
   GetOutput() = 0.0;
-  for (size_t i = 0; i < GetInput().size(); i++) {
-    GetOutput() += GetInput()[i];
+  for (double x : GetInput()) {
+    GetOutput() += x;
   }
 
-  GetOutput() /= GetInput().size();
+  GetOutput() /= static_cast<double>(GetInput().size());
 
   return true;
 }
