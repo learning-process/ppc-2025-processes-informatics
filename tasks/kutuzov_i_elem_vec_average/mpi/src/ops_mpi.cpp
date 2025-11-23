@@ -50,7 +50,7 @@ bool KutuzovIElemVecAverageMPI::RunImpl() {
   // If batch size isn't negative: Scatter the data among processes,
   // sum it and reduce back to the process-0
   if (batch_size > 0) {
-    auto local_buffer = new double[batch_size];
+    auto *local_buffer = new double[batch_size];
     MPI_Scatter(GetInput().data(), batch_size, MPI_DOUBLE, local_buffer, batch_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     double sum = 0.0;
