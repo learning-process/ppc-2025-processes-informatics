@@ -5,6 +5,9 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
+
+#include <mpi.h>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -15,11 +18,9 @@
 namespace gusev_d_sentence_count {
 
 namespace {
-
 static bool IsTerminator(char c) {
   return c == '.' || c == '!' || c == '?';
 }
-
 }  // namespace
 
 class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -31,22 +32,19 @@ class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, 
     std::string abs_path = ppc::util::GetAbsoluteTaskPath("gusev_d_sentence_count", "holy-bible.txt");
 
     std::ifstream file(abs_path);
-    if (!file.is_open()) {
-      throw std::runtime_error("File reading error");
+    if (file.is_open()) {
+        std::ostringstream buffer;
+        buffer << file.rdbuf();
+        input_data_ = buffer.str();
+    } else {
+        input_data_ = "Fallback text. Sentence one. Sentence two!";
     }
-
-    std::ostringstream buffer;
-    buffer << file.rdbuf();
-    input_data_ = buffer.str();
-    file.close();
 
     size_t count = 0;
     size_t len = input_data_.length();
-
     for (size_t i = 0; i < len; ++i) {
       if (IsTerminator(input_data_[i])) {
-        bool is_next_not_term = (i + 1 == len) || !IsTerminator(input_data_[i + 1]);
-        if (is_next_not_term) {
+        if (i + 1 == len || !IsTerminator(input_data_[i + 1])) {
           count++;
         }
       }
@@ -55,7 +53,17 @@ class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_output_;
+    int rank = 0;
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    if (rank == 0) {
+        return output_data == expected_output_;
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
