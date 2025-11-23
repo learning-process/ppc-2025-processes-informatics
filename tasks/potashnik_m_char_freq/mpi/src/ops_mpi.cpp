@@ -41,7 +41,7 @@ bool PotashnikMCharFreqMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::string str;
-  char chr;
+  char chr = 0;
   int string_size = 0;
 
   if (rank == 0) {
@@ -79,10 +79,11 @@ bool PotashnikMCharFreqMPI::RunImpl() {
   std::string cur_str(cur_count, '\0');
   if (rank == 0) {
     std::vector<char> temp_str(str.begin(), str.end());  // Dont work without const
-    MPI_Scatterv(temp_str.data(), local_sizes.data(), local_start_positions.data(), MPI_CHAR, &cur_str[0], cur_count,
+    MPI_Scatterv(temp_str.data(), local_sizes.data(), local_start_positions.data(), MPI_CHAR, cur_str.data(), cur_count,
                  MPI_CHAR, 0, MPI_COMM_WORLD);
+    ;
   } else {
-    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_CHAR, &cur_str[0], cur_count, MPI_CHAR, 0,
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_CHAR, cur_str.data(), cur_count, MPI_CHAR, 0,
                  MPI_COMM_WORLD);  // Just recieving data
   }
 
