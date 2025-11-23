@@ -80,7 +80,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
 
   OutType temp_(delta + (rank == n - 1 ? extra : 0));
 
-  for (int i = 0; i < temp_.size(); i++) {
+  for (size_t i = 0; i < temp_.size(); i++) {
     temp_[i] = local_data_[i * m_];
     for (size_t j = 1; j < m_; j++) {
       temp_[i] = std::min(temp_[i], local_data_[i * m_ + j]);
