@@ -8,7 +8,6 @@
 #include <random>
 #include <string>
 #include <tuple>
-// #include <stdexcept>
 
 #include "papulina_y_count_of_letters/common/include/common.hpp"
 #include "papulina_y_count_of_letters/mpi/include/ops_mpi.hpp"
