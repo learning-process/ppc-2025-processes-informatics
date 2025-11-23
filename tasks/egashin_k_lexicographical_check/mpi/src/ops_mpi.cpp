@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <vector>
 
 #include "egashin_k_lexicographical_check/common/include/common.hpp"
@@ -47,6 +48,15 @@ int TestTaskMPI::CompareLocal(const std::vector<char> &s1, const std::vector<cha
     }
   }
   return 0;
+}
+
+bool TestTaskMPI::GetFinalDecision(const std::vector<int> &global_results, int s1_len, int s2_len) {
+  for (int res : global_results) {
+    if (res != 0) {
+      return res == -1;
+    }
+  }
+  return s1_len < s2_len;
 }
 
 bool TestTaskMPI::RunImpl() {
@@ -105,18 +115,7 @@ bool TestTaskMPI::RunImpl() {
   MPI_Gather(&local_res, 1, MPI_INT, global_results.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    int final_decision = 0;
-    for (int i = 0; i < size; ++i) {
-      if (global_results[i] != 0) {
-        final_decision = global_results[i];
-        break;
-      }
-    }
-    if (final_decision != 0) {
-      GetOutput() = (final_decision == -1);
-    } else {
-      GetOutput() = (s1_len < s2_len);
-    }
+    GetOutput() = GetFinalDecision(global_results, s1_len, s2_len);
   }
   return true;
 }

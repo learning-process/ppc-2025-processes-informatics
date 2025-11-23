@@ -19,8 +19,9 @@ class TestTaskMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void CalculateDistribution(int size, int min_len, std::vector<int> &counts, std::vector<int> &displs);
-  int CompareLocal(const std::vector<char> &s1, const std::vector<char> &s2, int count);
+  static void CalculateDistribution(int size, int min_len, std::vector<int> &counts, std::vector<int> &displs);
+  static int CompareLocal(const std::vector<char> &s1, const std::vector<char> &s2, int count);
+  static bool GetFinalDecision(const std::vector<int> &global_results, int s1_len, int s2_len);
 };
 
 }  // namespace egashin_k_lexicographical_check
