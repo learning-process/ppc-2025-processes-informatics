@@ -9,7 +9,7 @@
 
 namespace gusev_d_sentence_count {
 
-bool IsSentenceTerminator(char c) {
+static bool IsSentenceTerminator(char c) {
   return (c == '.' || c == '!' || c == '?');
 }
 
