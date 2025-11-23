@@ -9,7 +9,7 @@
 
 namespace gusev_d_sentence_count {
 
-static bool IsSentenceTerminator(char c) {
+static bool IsTerminator(char c) {
   return (c == '.' || c == '!' || c == '?');
 }
 
@@ -27,34 +27,29 @@ bool GusevDSentenceCountSEQ::PreProcessingImpl() {
   return true;
 }
 
-/*bool GusevDSentenceCountSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+bool GusevDSentenceCountSEQ::RunImpl() {
+  const std::string &data = GetInput();
+  
+  if (data.empty()) {
+    GetOutput() = 0;
+    return true;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  size_t sentences = 0;
+  size_t len = data.length();
+
+  for (size_t i = 0; i < len; ++i) {
+    if (IsTerminator(data[i])) {
+      bool is_next_not_term = (i + 1 == len) || !IsTerminator(data[i + 1]);
+      if (is_next_not_term) {
+        sentences++;
       }
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
-}*/
+  GetOutput() = sentences;
+  return true;
+}
 
 bool GusevDSentenceCountSEQ::PostProcessingImpl() {
   return true;
