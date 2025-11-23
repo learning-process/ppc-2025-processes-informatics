@@ -14,7 +14,7 @@ LukinIElemVecSumSEQ::LukinIElemVecSumSEQ(const InType &in) {
 }
 
 bool LukinIElemVecSumSEQ::ValidationImpl() {
-  return true;
+  return (static_cast<int>(GetInput().size()) != 0);
 }
 
 bool LukinIElemVecSumSEQ::PreProcessingImpl() {
@@ -23,11 +23,6 @@ bool LukinIElemVecSumSEQ::PreProcessingImpl() {
 }
 
 bool LukinIElemVecSumSEQ::RunImpl() {
-  if (vec_size_ == 0) {
-    GetOutput() = 0LL;
-    return true;
-  }
-
   OutType sum = std::accumulate(GetInput().begin(), GetInput().end(), 0LL);
 
   GetOutput() = sum;

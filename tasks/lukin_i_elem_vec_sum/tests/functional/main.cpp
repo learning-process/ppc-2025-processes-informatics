@@ -51,11 +51,11 @@ TEST_P(LukinIRunFuncTestsProcesses, ElemVecSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {
-    std::make_tuple(0, "empty"),          std::make_tuple(1, "single_element"), std::make_tuple(2, "two_elements"),
-    std::make_tuple(3, "three_elements"), std::make_tuple(4, "four_elements"),  std::make_tuple(5, "five_elements"),
-    std::make_tuple(6, "six_elements"),   std::make_tuple(7, "seven_elements"), std::make_tuple(8, "eight_elements"),
-    std::make_tuple(9, "nine_elements"),  std::make_tuple(10, "medium_size"),   std::make_tuple(11, "prime_size"),
+const std::array<TestType, 11> kTestParam = {
+    std::make_tuple(1, "single_element"), std::make_tuple(2, "two_elements"),   std::make_tuple(3, "three_elements"),
+    std::make_tuple(4, "four_elements"),  std::make_tuple(5, "five_elements"),  std::make_tuple(6, "six_elements"),
+    std::make_tuple(7, "seven_elements"), std::make_tuple(8, "eight_elements"), std::make_tuple(9, "nine_elements"),
+    std::make_tuple(10, "medium_size"),   std::make_tuple(11, "prime_size"),
 };
 
 const auto kTestTasksList =
