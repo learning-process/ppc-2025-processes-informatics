@@ -45,7 +45,7 @@ bool LukinIElemVecSumMPI::RunImpl() {
   const int part = vec_size_ / proc_count;
   const int reminder = vec_size_ % proc_count;
 
-  int start = part * rank + ((rank < reminder) ? rank : reminder);
+  int start = (part * rank) + ((rank < reminder) ? rank : reminder);
   int end = start + part + ((rank < reminder) ? 1 : 0);
 
   OutType local_sum = std::accumulate(GetInput().begin() + start, GetInput().begin() + end, 0LL);
