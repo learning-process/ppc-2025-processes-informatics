@@ -32,11 +32,11 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &n);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::vector<int> recv_counts;
-  std::vector<int> send_counts;
+  std::vector<int> recv_counts(n);
+  std::vector<int> send_counts(n);
 
-  std::vector<int> displs_scatt;
-  std::vector<int> displs_gath;
+  std::vector<int> displs_scatt(n);
+  std::vector<int> displs_gath(n);
 
   OutType flat_data_;
 
@@ -74,8 +74,8 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
 
   OutType local_data_((delta + (rank == n - 1 ? extra : 0)) * m_);
 
-  MPI_Scatterv(flat_data_.data(), send_counts.data(), displs_scatt.data(), MPI_INT, local_data_.data(),
-               local_data_.size(), MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? flat_data_.data() : nullptr, send_counts.data(), displs_scatt.data(), MPI_INT,
+               local_data_.data(), local_data_.size(), MPI_INT, 0, MPI_COMM_WORLD);
 
   OutType temp_(delta + (rank == n - 1 ? extra : 0));
 
