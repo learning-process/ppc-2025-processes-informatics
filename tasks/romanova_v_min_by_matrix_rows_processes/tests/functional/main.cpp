@@ -52,6 +52,7 @@ class RomanovaVMinByMatrixRowsFuncTestsProcesses : public ppc::util::BaseRunFunc
     }
     for (size_t i = 0; i < exp_answer_.size(); i++) {
       if (exp_answer_[i] != output_data[i]) {
+        std::cout << i << " exp is " << exp_answer_[i] << " get " << output_data[i] << "\n";
         return false;
       }
     }

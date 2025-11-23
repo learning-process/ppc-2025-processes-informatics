@@ -22,7 +22,6 @@ class RomanovaVMinByMatrixRowsMPI : public BaseTask {
 
   size_t n_{0};
   size_t m_{0};
-  InType in_data_;
   OutType res_;
 };
 
