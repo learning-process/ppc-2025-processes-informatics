@@ -45,10 +45,11 @@ const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, VectorScalarProductM
 
 const auto kGTestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
-INSTANTIATE_TEST_SUITE_P(
-    DotProductPerf, VectorScalarProductPerfTests, kGTestValues,
-    VectorScalarProductPerfTests::
-        CustomPerfTestName);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+[[maybe_unused]] const auto kDotProductPerfInstantiation = [] {
+  INSTANTIATE_TEST_SUITE_P(DotProductPerf, VectorScalarProductPerfTests, kGTestValues,
+                           VectorScalarProductPerfTests::CustomPerfTestName);
+  return 0;
+}();
 
 TEST_P(VectorScalarProductPerfTests, Runs) {
   ExecuteTest(GetParam());
