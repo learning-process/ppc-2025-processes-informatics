@@ -1,7 +1,9 @@
 #include "morozova_s_matrix_max_value/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -20,12 +22,7 @@ bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
     return false;
   }
   const size_t cols = input[0].size();
-  for (const auto &row : input) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-  return true;
+  return std::ranges::all_of(input, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {

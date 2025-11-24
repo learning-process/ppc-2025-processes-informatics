@@ -39,6 +39,12 @@ class MorozovaSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
                        {180, 280, 380, 480, 580},
                        {160, 260, 360, 460, 1000}};
         break;
+      case 4:
+        input_data_ = {};
+        break;
+      case 5:
+        input_data_ = {{1, 2, 3}, {4, 5}};
+        break;
       default:
         input_data_ = {{1, 2}, {3, 4}};
         break;
@@ -47,7 +53,13 @@ class MorozovaSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (input_data_.empty()) {
-      return false;
+      return output_data == std::numeric_limits<int>::min();
+    }
+
+    for (const auto &row : input_data_) {
+      if (row.size() != input_data_[0].size()) {
+        return true;
+      }
     }
 
     int expected_max = std::numeric_limits<int>::min();
@@ -74,8 +86,9 @@ TEST_P(MorozovaSRunFuncTestsProcesses, MatrixMaxValue) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "small"), std::make_tuple(2, "medium"),
-                                            std::make_tuple(3, "large")};
+const std::array<TestType, 5> kTestParam = {std::make_tuple(1, "small"), std::make_tuple(2, "medium"),
+                                            std::make_tuple(3, "large"), std::make_tuple(4, "empty"),
+                                            std::make_tuple(5, "invalid")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MorozovaSMatrixMaxValueMPI, InType>(kTestParam, PPC_SETTINGS_morozova_s_matrix_max_value),
