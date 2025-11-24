@@ -11,50 +11,41 @@ namespace nikolaev_d_most_dif_vec_neighbors {
 NikolaevDMostDifVecNeighborsSEQ::NikolaevDMostDifVecNeighborsSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = OutType{};
 }
 
 bool NikolaevDMostDifVecNeighborsSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput().size() >= 2;
 }
 
 bool NikolaevDMostDifVecNeighborsSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool NikolaevDMostDifVecNeighborsSEQ::RunImpl() {
-  if (GetInput() == 0) {
+  if (GetInput().size() < 2) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  auto &vec = GetInput();
+  std::pair<int, int> result_elements;
+  int max_diff = -1;
+
+  for (size_t i = 0; i < GetInput().size() - 1; i++) {
+    int j = i + 1;
+    int diff = std::abs(vec[j] - vec[i]);
+    if (diff > max_diff) {
+      max_diff = diff;
+      result_elements = {vec[i], vec[j]};
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = result_elements;
+  return true;
 }
 
 bool NikolaevDMostDifVecNeighborsSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace nikolaev_d_most_dif_vec_neighbors
