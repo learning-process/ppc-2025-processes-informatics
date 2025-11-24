@@ -40,10 +40,6 @@ bool SannikovIColumnSumSEQ::PreProcessingImpl() {
 
 bool SannikovIColumnSumSEQ::RunImpl() {
   const auto &input_matrix = GetInput();
-  if (input_matrix.empty()) {
-    return false;
-  }
-
   for (const auto &row : input_matrix) {
     std::size_t column = 0;
     for (const auto &value : row) {

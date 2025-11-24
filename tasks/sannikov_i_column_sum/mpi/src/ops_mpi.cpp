@@ -76,13 +76,10 @@ bool SannikovIColumnSumMPI::RunImpl() {
   MPI_Bcast(&columns, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
   const std::uint64_t base = rows * columns;
-  if (columns > static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
+  if (columns > static_cast<std::uint64_t>(std::numeric_limits<int>::max()) ||
+      (base > static_cast<std::uint64_t>(std::numeric_limits<int>::max()))) {
     return false;
   }
-  if (base > static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
-    return false;
-  }
-
   const int columns_int = static_cast<int>(columns);
   const int base_int = static_cast<int>(base);
   GetOutput().assign(static_cast<std::size_t>(columns_int), 0);
