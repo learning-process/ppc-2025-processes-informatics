@@ -38,7 +38,7 @@ bool PylaevaSMaxElemMatrixSEQ::RunImpl() {
     return false;
   }
 
-  int max_element = matrix_data[0];
+  int max_element = std::numeric_limits<int>::min();
 
   for (size_t i = 1; i < matrix_size; ++i) {
     max_element = std::max(matrix_data[i], max_element);
