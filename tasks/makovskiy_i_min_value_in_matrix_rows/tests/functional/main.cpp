@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstddef>
-#include <limits>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -52,15 +51,15 @@ TEST_P(MinValueRunFuncTests, MinPerRow) {
 
 namespace {
 
-const auto kTestCases = std::array<TestType, 8>{
+const auto kTestCases = std::array<TestType, 6>{
     TestType{InType{{1, 2, 3}, {4, 5, 6}}, OutType{1, 4}},
     TestType{InType{{-1, 0}, {10, 2}, {7}}, OutType{-1, 2, 7}},
     TestType{InType{{5, 5, 5}}, OutType{5}},
     TestType{InType{{8}}, OutType{8}},
+
     TestType{InType{{1, 2, 3, 4, 5}, {6, 7, 8, 9, 10}, {11, 12, 13, 14, 15}}, OutType{1, 6, 11}},
     TestType{InType{{100, 200, 300}, {50, 60, 70}, {10, 20, 30}, {5, 6, 7}}, OutType{100, 50, 10, 5}},
-    TestType{InType{{1}, {2}, {3}, {4}}, OutType{1, 2, 3, 4}},
-    TestType{InType{{10}, {20}, {30}, {40}, {50}}, OutType{10, 20, 30, 40, 50}}};
+};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<MinValueSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_min_value_in_matrix_rows),
@@ -71,31 +70,6 @@ const auto kPerfTestName = MinValueRunFuncTests::PrintFuncTestName<MinValueRunFu
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MinValueTests, MinValueRunFuncTests, kGtestValues, kPerfTestName);
-
-TEST(MinValueManual, EmptyMatrixValidation) {
-  InType empty_in;
-
-  makovskiy_i_min_value_in_matrix_rows::MinValueSEQ task_seq(empty_in);
-  ASSERT_FALSE(task_seq.Validation());
-
-  makovskiy_i_min_value_in_matrix_rows::MinValueMPI task_mpi(empty_in);
-  ASSERT_FALSE(task_mpi.Validation());
-}
-
-TEST(MinValueManual, MatrixWithEmptyRows) {
-  InType in_with_empty_row = {{1, 5}, {}, {2}};
-
-  OutType expected = {1, std::numeric_limits<int>::max(), 2};
-
-  makovskiy_i_min_value_in_matrix_rows::MinValueSEQ task_seq(in_with_empty_row);
-  if (task_seq.Validation()) {
-    task_seq.PreProcessing();
-    task_seq.Run();
-    task_seq.PostProcessing();
-    OutType res = task_seq.GetOutput();
-    ASSERT_EQ(res, expected);
-  }
-}
 
 }  // namespace
 

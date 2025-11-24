@@ -143,4 +143,3 @@
 2.  Parallel Programming 2025-2026 Video-Records - [https://disk.yandex.ru/d/NvHFyhOJCQU65w](https://disk.yandex.ru/d/NvHFyhOJCQU65w)
 3.  Open MPI: Documentation — [https://www.open-mpi.org/doc/](https://www.open-mpi.org/doc/)
 4.  C++ reference (cppreference.com) — [https://en.cppreference.com/w/cpp/algorithm/ranges/min_element](https://en.cppreference.com/w/cpp/algorithm/ranges/min_element)
-

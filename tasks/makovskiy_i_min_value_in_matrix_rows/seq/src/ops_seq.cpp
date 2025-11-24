@@ -19,8 +19,7 @@ bool MinValueSEQ::ValidationImpl() {
   if (mat.empty()) {
     return false;
   }
-  // return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
-  return true;
+  return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
 }
 
 bool MinValueSEQ::PreProcessingImpl() {
@@ -37,8 +36,6 @@ bool MinValueSEQ::RunImpl() {
     const auto &row = mat[i];
     if (!row.empty()) {
       out[i] = *std::ranges::min_element(row);
-    } else {
-      out[i] = std::numeric_limits<int>::max();
     }
   }
   return true;
