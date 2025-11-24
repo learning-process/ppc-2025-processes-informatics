@@ -32,7 +32,7 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
       lengths[1] = long_str2.length();
     }
 
-    MPI_Bcast(lengths.data(), 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);  // NOLINT
+    MPI_Bcast(lengths.data(), static_cast<int>(lengths.size()), MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
     if (rank != 0) {
       long_str1.resize(lengths[0]);
