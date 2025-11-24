@@ -20,6 +20,16 @@ ChaschinVMaxForEachRow::ChaschinVMaxForEachRow(const InType &in) {
 }
 
 bool ChaschinVMaxForEachRow::ValidationImpl() {
+  const auto &in = GetInput();
+  
+  if (in.empty()) {
+    return in.empty();
+  }
+
+  if (in[0].size()) {
+    return in[0].size();
+  }
+
   return true;
 }
 
@@ -140,7 +150,6 @@ bool ChaschinVMaxForEachRow::RunImpl() {
   int nrows = (rank == 0) ? static_cast<int>(mat.size()) : 0;
   MPI_Bcast(&nrows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Inline вычисление RowRange
   int base = nrows / size;
   int rem = nrows % size;
   int start = (rank * base) + std::min(rank, rem);
@@ -169,7 +178,7 @@ bool ChaschinVMaxForEachRow::RunImpl() {
 
 bool ChaschinVMaxForEachRow::PostProcessingImpl() {
   int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);  // s
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   return true;
 }
 }  // namespace chaschin_v_max_for_each_row
