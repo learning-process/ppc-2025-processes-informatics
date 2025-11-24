@@ -13,7 +13,7 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_;
 
   void SetUp() override {
-    const int size = 3000;
+    const int size = 5000;
     input_data_ = InType(size, std::vector<int>(size));
     int value = 1;
     for (int i = 0; i < size; ++i) {
@@ -24,7 +24,7 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == (3000 * 3000);
+    return output_data == (5000 * 5000);
   }
 
   InType GetTestInputData() final {

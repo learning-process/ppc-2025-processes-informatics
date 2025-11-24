@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
@@ -25,7 +26,7 @@ bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
     if (matrix.empty() || matrix[0].empty()) {
       is_valid = 0;
     } else {
-      size_t cols = matrix[0].size();
+      const size_t cols = matrix[0].size();
       for (const auto &row : matrix) {
         if (row.size() != cols) {
           is_valid = 0;
@@ -59,12 +60,12 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
-  std::vector<int> flat_matrix(rows * cols);
+  std::vector<int> flat_matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols));
   if (rank == 0) {
     const auto &input = GetInput();
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
-        flat_matrix[i * cols + j] = input[i][j];
+        flat_matrix[(i * cols) + j] = input[i][j];
       }
     }
   }
@@ -72,21 +73,20 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int local_max = std::numeric_limits<int>::min();
   int rows_per_proc = rows / size;
   int remainder = rows % size;
-  int start_row, end_row;
+  int start_row = 0;
+  int end_row = 0;
   if (rank < remainder) {
     start_row = rank * (rows_per_proc + 1);
     end_row = start_row + (rows_per_proc + 1);
   } else {
-    start_row = remainder * (rows_per_proc + 1) + (rank - remainder) * rows_per_proc;
+    start_row = (remainder * (rows_per_proc + 1)) + ((rank - remainder) * rows_per_proc);
     end_row = start_row + rows_per_proc;
   }
   end_row = std::min(end_row, rows);
   for (int i = start_row; i < end_row; ++i) {
     for (int j = 0; j < cols; ++j) {
-      int value = flat_matrix[i * cols + j];
-      if (value > local_max) {
-        local_max = value;
-      }
+      const int value = flat_matrix[(i * cols) + j];
+      local_max = std::max(local_max, value);
     }
   }
   int global_max = std::numeric_limits<int>::min();

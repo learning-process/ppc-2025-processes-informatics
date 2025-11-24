@@ -1,6 +1,6 @@
 #include "morozova_s_matrix_max_value/seq/include/ops_seq.hpp"
 
-#include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
@@ -19,7 +19,7 @@ bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
   if (input.empty() || input[0].empty()) {
     return false;
   }
-  size_t cols = input[0].size();
+  const size_t cols = input[0].size();
   for (const auto &row : input) {
     if (row.size() != cols) {
       return false;
@@ -34,13 +34,11 @@ bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {
 }
 
 bool MorozovaSMatrixMaxValueSEQ::RunImpl() {
-  auto &matrix = GetInput();
+  const auto &matrix = GetInput();
   int max_value = std::numeric_limits<int>::min();
   for (const auto &row : matrix) {
     for (int value : row) {
-      if (value > max_value) {
-        max_value = value;
-      }
+      max_value = std::max(max_value, value);
     }
   }
   GetOutput() = max_value;
