@@ -12,7 +12,7 @@ class KuterginAClosestPairSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit KuterginAClosestPairSEQ(InType in);
+  explicit KuterginAClosestPairSEQ(const InType &in);
 
  private:
   std::vector<int> data_;

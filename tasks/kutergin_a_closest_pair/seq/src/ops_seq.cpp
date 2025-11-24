@@ -1,19 +1,21 @@
 #include "kutergin_a_closest_pair/seq/include/ops_seq.hpp"
 
-#include <cmath>
-#include <cstddef>
-#include <limits>
-#include <utility>
+#include <cstdlib>
+#include <ranges>
 #include <vector>
 
 #include "kutergin_a_closest_pair/common/include/common.hpp"
 
 namespace kutergin_a_closest_pair {
 
-KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(InType in) : data_(std::move(in)) {}
+KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = -1;
+}
 
 bool KuterginAClosestPairSEQ::ValidationImpl() {
-  return true;
+  return GetInput().size() >= 2;
 }
 
 bool KuterginAClosestPairSEQ::PreProcessingImpl() {
