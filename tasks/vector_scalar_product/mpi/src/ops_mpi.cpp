@@ -45,12 +45,8 @@ bool VectorScalarProductMpi::ValidationImpl() {
 }
 
 bool VectorScalarProductMpi::PreProcessingImpl() {
-  if (MPI_Comm_rank(MPI_COMM_WORLD, &rank_) != MPI_SUCCESS) {
-    return false;
-  }
-  if (MPI_Comm_size(MPI_COMM_WORLD, &world_size_) != MPI_SUCCESS) {
-    return false;
-  }
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size_);
 
   const auto &lhs = GetInput().lhs;
   const auto &rhs = GetInput().rhs;
@@ -58,9 +54,7 @@ bool VectorScalarProductMpi::PreProcessingImpl() {
   if (rank_ == 0) {
     global_size = static_cast<int>(lhs.size());
   }
-  if (MPI_Bcast(&global_size, 1, MPI_INT, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-    return false;
-  }
+  MPI_Bcast(&global_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   // Prepare scattering meta information
   auto counts = BuildCounts(global_size, world_size_);
@@ -73,14 +67,10 @@ bool VectorScalarProductMpi::PreProcessingImpl() {
   const double *lhs_ptr = rank_ == 0 ? lhs.data() : nullptr;
   const double *rhs_ptr = rank_ == 0 ? rhs.data() : nullptr;
 
-  if (MPI_Scatterv(lhs_ptr, counts.data(), displs.data(), MPI_DOUBLE, local_lhs_.data(), local_count, MPI_DOUBLE, 0,
-                   MPI_COMM_WORLD) != MPI_SUCCESS) {
-    return false;
-  }
-  if (MPI_Scatterv(rhs_ptr, counts.data(), displs.data(), MPI_DOUBLE, local_rhs_.data(), local_count, MPI_DOUBLE, 0,
-                   MPI_COMM_WORLD) != MPI_SUCCESS) {
-    return false;
-  }
+  MPI_Scatterv(lhs_ptr, counts.data(), displs.data(), MPI_DOUBLE, local_lhs_.data(), local_count, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
+  MPI_Scatterv(rhs_ptr, counts.data(), displs.data(), MPI_DOUBLE, local_rhs_.data(), local_count, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
 
   local_sum_ = 0.0;
   result_ = 0.0;
@@ -94,9 +84,7 @@ bool VectorScalarProductMpi::RunImpl() {
 }
 
 bool VectorScalarProductMpi::PostProcessingImpl() {
-  if (MPI_Bcast(&result_, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-    return false;
-  }
+  MPI_Bcast(&result_, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   GetOutput() = result_;
   return true;
 }
