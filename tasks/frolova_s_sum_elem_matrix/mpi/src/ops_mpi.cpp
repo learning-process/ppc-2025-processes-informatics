@@ -50,6 +50,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const int rows = static_cast<int>(matrix.size());
+  const int cols = static_cast<int>(matrix[0].size());
 
   const int base_rows = rows / size;
   const int remainder = rows % size;
@@ -60,18 +61,18 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
 
   int64_t local_sum = 0;
 
-  for (int i = start_row; i < end_row; ++i) {
-    local_sum += std::accumulate(matrix[i].begin(), matrix[i].end(), static_cast<int64_t>(0));
+  for (int i = start_row; i < end_row; i++) {
+    for (int j = 0; j < cols; j++) {
+      local_sum += matrix[i][j];
+    }
   }
 
   int64_t global_sum = 0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (rank == 0) {
-    GetOutput() = global_sum;
-  }
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_INT64_T, MPI_SUM, MPI_COMM_WORLD);
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  GetOutput() = global_sum;
+
   return true;
 }
 
