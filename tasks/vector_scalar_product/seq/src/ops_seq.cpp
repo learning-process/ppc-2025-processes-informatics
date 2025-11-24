@@ -2,6 +2,8 @@
 
 #include <numeric>
 
+#include "vector_scalar_product/common/include/common.hpp"
+
 namespace vector_scalar_product {
 
 VectorScalarProductSeq::VectorScalarProductSeq(const InType &in) {

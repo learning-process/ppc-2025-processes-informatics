@@ -3,11 +3,9 @@
 #include <cmath>
 #include <cstddef>
 #include <numeric>
-#include <string>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 #include "vector_scalar_product/common/include/common.hpp"
 #include "vector_scalar_product/mpi/include/ops_mpi.hpp"
 #include "vector_scalar_product/seq/include/ops_seq.hpp"
@@ -48,12 +46,12 @@ const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, VectorScalarProductM
 const auto kGTestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
 INSTANTIATE_TEST_SUITE_P(DotProductPerf, VectorScalarProductPerfTests, kGTestValues,
-                         VectorScalarProductPerfTests::CustomPerfTestName);
+                         VectorScalarProductPerfTests::CustomPerfTestName);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 TEST_P(VectorScalarProductPerfTests, Runs) {
   ExecuteTest(GetParam());
 }
 
-}
+}  // namespace
 
 }  // namespace vector_scalar_product

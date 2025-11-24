@@ -4,6 +4,9 @@
 
 #include <cstddef>
 #include <numeric>
+#include <vector>
+
+#include "vector_scalar_product/common/include/common.hpp"
 
 namespace vector_scalar_product {
 namespace {
@@ -27,7 +30,7 @@ std::vector<int> BuildDisplacements(const std::vector<int> &counts) {
   }
   return displs;
 }
-} 
+}  // namespace
 
 VectorScalarProductMpi::VectorScalarProductMpi(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -87,10 +90,7 @@ bool VectorScalarProductMpi::PreProcessingImpl() {
 bool VectorScalarProductMpi::RunImpl() {
   local_sum_ = std::inner_product(local_lhs_.begin(), local_lhs_.end(), local_rhs_.begin(), 0.0);
 
-  if (MPI_Reduce(&local_sum_, &result_, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-    return false;
-  }
-  return true;
+  return MPI_Reduce(&local_sum_, &result_, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD) == MPI_SUCCESS;
 }
 
 bool VectorScalarProductMpi::PostProcessingImpl() {
@@ -101,4 +101,4 @@ bool VectorScalarProductMpi::PostProcessingImpl() {
   return true;
 }
 
-}
+}  // namespace vector_scalar_product
