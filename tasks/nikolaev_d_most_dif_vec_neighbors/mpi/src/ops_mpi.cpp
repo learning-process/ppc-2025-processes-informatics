@@ -13,60 +13,80 @@ namespace nikolaev_d_most_dif_vec_neighbors {
 NikolaevDMostDifVecNeighborsMPI::NikolaevDMostDifVecNeighborsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = OutType{};
 }
 
 bool NikolaevDMostDifVecNeighborsMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return GetInput().size() >= 2;
 }
 
 bool NikolaevDMostDifVecNeighborsMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
+  const auto &input = GetInput();
+  auto &output = GetOutput();
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (input.size() < 2) {
     return false;
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  int n = input.size();
+  int elements_per_process = n / size;
+  int remainder = n % size;
+
+  int start = rank * elements_per_process + std::min(rank, remainder);
+  int end = start + elements_per_process - 1;
+  if (rank < remainder) {
+    end++;
+  }
+
+  if (rank == size - 1) {
+    end = n - 2;
+  } else {
+    end = std::min(end, n - 2);
+  }
+
+  int local_max_diff = -1;
+  std::pair<int, int> local_result = {0, 0};
+
+  if (start <= end) {
+    for (int i = start; i <= end; i++) {
+      int diff = std::abs(input[i + 1] - input[i]);
+      if (diff > local_max_diff) {
+        local_max_diff = diff;
+        local_result = {input[i], input[i + 1]};
       }
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  struct {
+    int diff;
+    int rank;
+  } local_max, global_max;
 
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  local_max.diff = local_max_diff;
+  local_max.rank = rank;
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
+  MPI_Allreduce(&local_max, &global_max, 1, MPI_2INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
+  std::pair<int, int> global_result;
+  if (rank == global_max.rank) {
+    global_result = local_result;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  MPI_Bcast(&global_result, 2, MPI_INT, global_max.rank, MPI_COMM_WORLD);
+
+  output = global_result;
+  return true;
 }
 
 bool NikolaevDMostDifVecNeighborsMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace nikolaev_d_most_dif_vec_neighbors
