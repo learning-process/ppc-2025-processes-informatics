@@ -67,8 +67,10 @@ const auto kTaskList = std::tuple_cat(
 
 const auto kGTestValues = ppc::util::ExpandToValues(kTaskList);
 
-INSTANTIATE_TEST_SUITE_P(DotProduct, VectorScalarProductFuncTests, kGTestValues,
-                         VectorScalarProductFuncTests::PrintFuncTestName<VectorScalarProductFuncTests>);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+INSTANTIATE_TEST_SUITE_P(
+    DotProduct, VectorScalarProductFuncTests, kGTestValues,
+    VectorScalarProductFuncTests::PrintFuncTestName<
+        VectorScalarProductFuncTests>);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 TEST_P(VectorScalarProductFuncTests, Runs) {
   ExecuteTest(GetParam());
