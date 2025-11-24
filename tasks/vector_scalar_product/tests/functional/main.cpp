@@ -2,10 +2,14 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <numbers>
+#include <string>
 #include <tuple>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 #include "vector_scalar_product/common/include/common.hpp"
 #include "vector_scalar_product/mpi/include/ops_mpi.hpp"
 #include "vector_scalar_product/seq/include/ops_seq.hpp"
@@ -51,7 +55,7 @@ class VectorScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-constexpr double kPi = 3.14159265358979323846;
+constexpr double kPi = std::numbers::pi;
 
 const std::array<TestType, 3> kTestParams = {TestType{{1.0, 2.0, 3.0}, {4.0, -5.0, 6.0}, 12.0},
                                              TestType{{0.5, 1.5, -2.0, 4.0}, {2.0, 1.0, -1.0, 0.0}, 4.5},

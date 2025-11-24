@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "task/include/task.hpp"
 #include "vector_scalar_product/common/include/common.hpp"
 
 namespace vector_scalar_product {

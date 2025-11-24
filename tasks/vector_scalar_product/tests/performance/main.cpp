@@ -3,9 +3,11 @@
 #include <cmath>
 #include <cstddef>
 #include <numeric>
+#include <string>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 #include "vector_scalar_product/common/include/common.hpp"
 #include "vector_scalar_product/mpi/include/ops_mpi.hpp"
 #include "vector_scalar_product/seq/include/ops_seq.hpp"
@@ -15,7 +17,7 @@ namespace vector_scalar_product {
 class VectorScalarProductPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    constexpr std::size_t kSize = 200000;
+    constexpr std::size_t kSize = 20000000;
     input_.lhs.resize(kSize);
     input_.rhs.resize(kSize);
     for (std::size_t i = 0; i < kSize; ++i) {
@@ -52,6 +54,6 @@ TEST_P(VectorScalarProductPerfTests, Runs) {
   ExecuteTest(GetParam());
 }
 
-}  // namespace
+}
 
 }  // namespace vector_scalar_product
