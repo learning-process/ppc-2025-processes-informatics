@@ -31,7 +31,7 @@ class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InT
     int cols = std::get<1>(params);
 
     matrix_.resize(rows);
-    for (auto& row : matrix_) {
+    for (auto &row : matrix_) {
       row.resize(cols, 1);
     }
     expected_sum_ = static_cast<OutType>(rows) * cols;
