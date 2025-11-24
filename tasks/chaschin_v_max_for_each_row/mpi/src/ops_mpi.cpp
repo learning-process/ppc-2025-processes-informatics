@@ -21,7 +21,7 @@ ChaschinVMaxForEachRow::ChaschinVMaxForEachRow(const InType &in) {
 
 bool ChaschinVMaxForEachRow::ValidationImpl() {
   const auto &in = GetInput();
-  
+
   if (in.empty()) {
     return in.empty();
   }
