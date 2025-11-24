@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -17,16 +16,20 @@ MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
-  const auto &input = GetInput();
-  if (input.empty() || input[0].empty()) {
+  const auto &matrix = GetInput();
+  if (matrix.empty() || matrix[0].empty()) {
     return false;
   }
-  const size_t cols = input[0].size();
-  return std::ranges::all_of(input, [cols](const auto &row) { return row.size() == cols; });
+  const size_t cols = matrix[0].size();
+  for (const auto &row : matrix) {
+    if (row.size() != cols) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {
-  GetOutput() = GetInput()[0][0];
   return true;
 }
 
