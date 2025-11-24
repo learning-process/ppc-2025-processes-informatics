@@ -41,7 +41,7 @@ bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
   int elements_per_process = n / size;
   int remainder = n % size;
 
-  int start = rank * elements_per_process + std::min(rank, remainder);
+  int start = (rank * elements_per_process) + std::min(rank, remainder);
   int end = start + elements_per_process - 1;
   if (rank < remainder) {
     end++;
