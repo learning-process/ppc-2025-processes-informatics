@@ -2,8 +2,10 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <random>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -25,23 +27,10 @@ bool DorofeevIMonteCarloIntegrationMPI::ValidationImpl() {
 
   if (rank == 0) {
     const auto &in = GetInput();
-
-    if (!in.func) {
-      valid = false;
-    }
-    if (in.a.empty() || in.a.size() != in.b.size()) {
-      valid = false;
-    }
-
-    for (size_t i = 0; i < in.a.size(); ++i) {
-      if (in.b[i] <= in.a[i]) {
-        valid = false;
-      }
-    }
-
-    if (in.samples <= 0) {
-      valid = false;
-    }
+    valid =
+        in.func && !in.a.empty() && in.a.size() == in.b.size() &&
+        std::ranges::all_of(std::views::iota(size_t{0}, in.a.size()), [&](size_t i) { return in.b[i] > in.a[i]; }) &&
+        in.samples > 0;
   }
 
   MPI_Bcast(&valid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);

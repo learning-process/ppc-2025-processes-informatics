@@ -1,7 +1,9 @@
 #include "dorofeev_i_monte_carlo_integration/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <random>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -17,21 +19,9 @@ DorofeevIMonteCarloIntegrationSEQ::DorofeevIMonteCarloIntegrationSEQ(const InTyp
 
 bool DorofeevIMonteCarloIntegrationSEQ::ValidationImpl() {
   const auto &in = GetInput();
-
-  if (!in.func) {
-    return false;
-  }
-  if (in.a.empty() || in.a.size() != in.b.size()) {
-    return false;
-  }
-
-  for (size_t i = 0; i < in.a.size(); ++i) {
-    if (in.b[i] <= in.a[i]) {
-      return false;
-    }
-  }
-
-  return in.samples > 0;
+  return in.func && !in.a.empty() && in.a.size() == in.b.size() &&
+         std::ranges::all_of(std::views::iota(size_t{0}, in.a.size()), [&](size_t i) { return in.b[i] > in.a[i]; }) &&
+         in.samples > 0;
 }
 
 bool DorofeevIMonteCarloIntegrationSEQ::PreProcessingImpl() {
@@ -49,7 +39,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   std::vector<std::uniform_real_distribution<double>> dist;
   dist.reserve(dims);
 
-  for (std::size_t i = 0; std::cmp_less(i, dims); i++) {  // LCOV_EXCL_LINE
+  for (std::size_t i = 0; std::cmp_less(i, dims); i++) {
     dist.emplace_back(in.a[i], in.b[i]);
   }
 
@@ -64,7 +54,7 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   }
 
   double volume = 1.0;
-  for (std::size_t i = 0; std::cmp_less(i, dims); i++) {  // LCOV_EXCL_LINE
+  for (std::size_t i = 0; std::cmp_less(i, dims); i++) {
     volume *= (in.b[i] - in.a[i]);
   }
 
