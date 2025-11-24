@@ -25,7 +25,7 @@ bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
     if (matrix.empty() || matrix[0].empty()) {
       is_valid = 0;
     } else {
-      int cols = matrix[0].size();
+      size_t cols = matrix[0].size();
       for (const auto &row : matrix) {
         if (row.size() != cols) {
           is_valid = 0;

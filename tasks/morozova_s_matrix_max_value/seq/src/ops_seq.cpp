@@ -19,7 +19,7 @@ bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
   if (input.empty() || input[0].empty()) {
     return false;
   }
-  int cols = input[0].size();
+  size_t cols = input[0].size();
   for (const auto &row : input) {
     if (row.size() != cols) {
       return false;
