@@ -54,12 +54,12 @@ $$
 
 1. **Инициализация MPI** — каждый процесс получает свой ранг `rank` и общее число процессов `processes_count`.  
 2. **Разделение данных:**  
-   - Столбцы равномерно распределяются между процессами.  
-   - Если количество столбцов не делится нацело, лишние элементы распределяются по первым процессам.  
+   - Строки равномерно распределяются между процессами.  
+   - Если количество строк не делится нацело, лишние элементы распределяются по первым процессам.  
 3. **Вычисление частичных результатов:**  
-   Каждый процесс вычисляет максимальное значение своей части столбцов.  
+   Каждый процесс вычисляет максимальное значение своей части строк по столбцам.  
 4. **Сбор результатов:**  
-   Процесс с `rank` равным 0 собирает данные с остальных процессов, используя `MPI_Recv`, вычисляет итоговый результат, а затем отправляетв его другим процессам, используя `MPI_Send`. Процессы чей `rank` отличен от 0 отправляют локальный результат на процессор с `rank` равным 0, используя `MPI_Send`, затем они собирают результат с этого процесса, используя `MPI_Recv`. 
+   Используется `MPI_Allreduce`, который берёт локальные результаты(вектора с максимумом по столбцам) и формирует из них глобальный максимум(итоговый результат).
 5. **Вывод результата и завершение работы MPI.**
 
 ---
@@ -72,14 +72,17 @@ $$
 Основные этапы:
 - Инициализация и валидация входных данных;  
 - Определение диапазона элементов, обрабатываемых каждым процессом;  
+- Передача строк с которыми работает каждый процесс при помощи `MPI_Send` и `MPI_Recv`
 - Локальное вычисление максимумов;  
-- Объединение частичных результатов между всеми процессами при помощи `MPI_Recv` и `MPI_Send`;  
+- Объединение частичных результатов между всеми процессами при помощи `MPI_Allreduce`;  
 - Возврат итогового значения.
 
 ### Ключевые функции:
 - `MPI_Comm_rank`, `MPI_Comm_size` — определяют номер процесса и общее количество процессов;  
 - `MPI_Send` — отправляет сообщение(данные) другому процессу;
-- `MPI_Recv` — принимает сообщение(данные) от другого процесса.
+- `MPI_Recv` — принимает сообщение(данные) от другого процесса;
+- `MPI_Allreduce` — коллективная операция, которая выполняет редукцию (суммирование, максимум и т.д.) над данными всех процессов и рассылает результат всем процессам;
+- `MPI_Bcast` - рассылает данные от одного процесса всем остальным процессам.
 
 ### Валидация данных
 Не допускаются матрицы с разными длинами строк.
@@ -89,7 +92,7 @@ $$
 ## Результаты экспериментов
 
 ### Условия экспериментов
-- Размеры матриц: \(\(10^5\)*\(10^5\)\) и \(\(10^4\)*\(10^4\)\) элементов.  
+- Размеры матриц: \(\(10^5\)*\(10^5\)\), \(\(10^4\)*\(10^4\)\), \(\(2*\(10^4\)\)*\(2*\(10^4\)\)\) элементов.  
 - Среда выполнения: Windows, MPI (4 процесса).  
 - Измерение времени проводилось встроенными средствами тестового фреймворка GoogleTest.  
 
@@ -100,12 +103,22 @@ $$
 
 | Режим выполнения| Кол-во процессов | Время (сек) | Ускорение | Эффективность |
 |-----------------|------------------|-------------|-----------|---------------|
-| SEQ pipeline    | 1                | 0.00587     | 1.0       | N/A           |
-| SEQ task_run    | 1                | 0.00597     | 1.0       | N/A           |
-| MPI pipeline    | 4                | 0.00168     | 3.49      | 87.25%        |
-| MPI task_run    | 4                | 0.00159     | 3.75      | 93.75%        |
-| MPI pipeline    | 5                | 0.00134     | 4.38      | 87.6%         |
-| MPI task_run    | 5                | 0.00129     | 4.63      | 92.6%         |
+| SEQ pipeline    | 1                | 0.00569     | 1.0       | N/A           |
+| SEQ task_run    | 1                | 0.00593     | 1.0       | N/A           |
+| MPI pipeline    | 4                | 0.00441     | 1.29      | 32.25%        |
+| MPI task_run    | 4                | 0.00374     | 1.59      | 39.75%        |
+
+---
+
+### Результаты при размере матрицы \(\(2*\(10^4\)\)*\(2*\(10^4\)\)\)
+
+
+| Режим выполнения| Кол-во процессов | Время (сек) | Ускорение | Эффективность |
+|-----------------|------------------|-------------|-----------|---------------|
+| SEQ pipeline    | 1                | 0.0283      | 1.0       | N/A           |
+| SEQ task_run    | 1                | 0.0272      | 1.0       | N/A           |
+| MPI pipeline    | 4                | 0.0203      | 1.39      | 34.75%        |
+| MPI task_run    | 4                | 0.0199      | 1.37      | 34.25%        |
 
 ---
 
@@ -114,14 +127,12 @@ $$
 
 | Режим выполнения| Кол-во процессов | Время (сек) | Ускорение | Эффективность |
 |-----------------|------------------|-------------|-----------|---------------|
-| SEQ pipeline    | 1                | 0.890       | 1.0       | N/A           |
-| SEQ task_run    | 1                | 0.915       | 1.0       | N/A           |
-| MPI pipeline    | 2                | 0.416       | 2.14      | 107%          |
-| MPI task_run    | 2                | 0.419       | 2.18      | 109%          |
-| MPI pipeline    | 4                | 0.238       | 3.73      | 93.25%        |
-| MPI task_run    | 4                | 0.233       | 3.93      | 98.25%        |
-| MPI pipeline    | 6                | 0.183       | 4.86      | 81%           |
-| MPI task_run    | 6                | 0.191       | 4.79      | 79.83%        |
+| SEQ pipeline    | 1                | 0.902       | 1.0       | N/A           |
+| SEQ task_run    | 1                | 0.900       | 1.0       | N/A           |
+| MPI pipeline    | 4                | 0.437       | 2.06      | 51.5%         |
+| MPI task_run    | 4                | 0.439       | 2.05      | 51.25%        |
+| MPI pipeline    | 6                | 0.376       | 2.39      | 39.83%        |
+| MPI task_run    | 6                | 0.380       | 2.36      | 39.33%        |
 
 ---
 
@@ -135,7 +146,7 @@ $$
 2. Параллельная реализация успешно масштабируется и даёт ускорение при увеличении размера данных.  
 3. При малых объёмах данных накладные расходы MPI превышают выигрыш от распараллеливания.  
 4. Алгоритм корректен и демонстрирует ожидаемое поведение при всех размерах входных данных.  
-5. Эффективность увеличивается, при увелечение входных данных, но снижается при увелечение количества процессов, что связано с увелечение наклодных расходов.
+5. Эффективность увеличивается, при увелечение входных данных, но снижается при увелечение количества процессов, что связано с увелечение накладных расходов.
 
 ---
 
@@ -177,6 +188,9 @@ KosolapovVMaxValuesInColMatrixSEQ::KosolapovVMaxValuesInColMatrixSEQ(const InTyp
 
 bool KosolapovVMaxValuesInColMatrixSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
+  if (matrix.empty()){
+    return false;
+  }
   for (size_t i = 0; i < matrix.size() - 1; i++) {
     if (matrix[i].size() != matrix[i + 1].size()) {
       return false;
@@ -212,6 +226,7 @@ bool KosolapovVMaxValuesInColMatrixSEQ::PostProcessingImpl() {
 }
 
 }  // namespace kosolapov_v_max_values_in_col_matrix
+
 ```
 ---
 ### MPI-версия
@@ -222,6 +237,7 @@ bool KosolapovVMaxValuesInColMatrixSEQ::PostProcessingImpl() {
 
 #include <algorithm>
 #include <cstddef>
+#include <numeric>
 #include <vector>
 
 #include "kosolapov_v_max_values_in_col_matrix/common/include/common.hpp"
@@ -235,63 +251,83 @@ KosolapovVMaxValuesInColMatrixMPI::KosolapovVMaxValuesInColMatrixMPI(const InTyp
 }
 
 bool KosolapovVMaxValuesInColMatrixMPI::ValidationImpl() {
-  const auto &matrix = GetInput();
-  for (size_t i = 0; i < matrix.size() - 1; i++) {
-    if (matrix[i].size() != matrix[i + 1].size()) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0) {
+    const auto &matrix = GetInput();
+    if (matrix.empty()) {
       return false;
     }
-  }
+    for (size_t i = 0; i < matrix.size() - 1; i++) {
+      if ((matrix[i].size() != matrix[i + 1].size()) || (matrix[i].empty())) {
+        return false;
+      }
+    }
+  }  
   return (GetOutput().empty());
 }
 
 bool KosolapovVMaxValuesInColMatrixMPI::PreProcessingImpl() {
   GetOutput().clear();
-  GetOutput().resize(GetInput()[0].size());
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    const auto &matrix = GetInput();
+    if (!matrix.empty() && !matrix[0].empty()) {
+      GetOutput().resize(matrix[0].size());
+    }
+  }  
   return true;
 }
 
 bool KosolapovVMaxValuesInColMatrixMPI::RunImpl() {
-  const auto &matrix = GetInput();
-  if (matrix.empty()) {
-    return false;
-  }
   int processes_count = 0;
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &processes_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  const int columns = static_cast<int>(matrix[0].size());
 
-  const int columns_per_proc = columns / processes_count;
-  const int remainder = columns % processes_count;
-
-  const int start = (rank * columns_per_proc) + std::min(rank, remainder);
-
-  auto local_maxs = CalculateLocalMax(matrix, rank, processes_count, columns);
-  std::vector<int> global_maxs;
+  std::vector<std::vector<int>> local_matrix;
+  int rows, columns;
   if (rank == 0) {
-    global_maxs.resize(columns);
-    for (size_t i = 0; i < local_maxs.size(); i++) {
-      global_maxs[start + i] = local_maxs[i];
+    const auto &matrix = GetInput();
+    rows = static_cast<int>(matrix.size());
+    columns = static_cast<int>(matrix[0].size());
+  }
+  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&columns, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  const int rows_per_proc = rows / processes_count;
+  const int remainder = rows % processes_count;
+  const int start = (rank * rows_per_proc) + std::min(rank, remainder);
+  const int end = start + rows_per_proc + (rank < remainder ? 1 : 0);
+  const int local_rows = end - start;
+
+  if (rank == 0) {
+    const auto &matrix = GetInput();
+    local_matrix.resize(local_rows, std::vector<int>(columns));
+    for (int i = 0; i < local_rows; i++) {
+      local_matrix[i] = matrix[start + i];
     }
 
     for (int proc = 1; proc < processes_count; proc++) {
-      const int proc_start = (proc * columns_per_proc) + std::min(proc, remainder);
-      const int proc_end = proc_start + columns_per_proc + (proc < remainder ? 1 : 0);
-      const int proc_columns_count = proc_end - proc_start;
-      std::vector<int> proc_maxs(proc_columns_count);
-      MPI_Recv(proc_maxs.data(), proc_columns_count, MPI_INT, proc, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      for (int i = 0; i < proc_columns_count; i++) {
-        global_maxs[proc_start + i] = proc_maxs[i];
+      const int proc_start = (proc * rows_per_proc) + std::min(proc, remainder);
+      const int proc_end = proc_start + rows_per_proc + (proc < remainder ? 1 : 0);
+      const int proc_rows_count = proc_end - proc_start;
+      for (int i = 0; i < proc_rows_count; i++) {
+        MPI_Send(matrix[proc_start + i].data(), columns, MPI_INT, proc, i, MPI_COMM_WORLD);
       }
     }
-    for (int proc = 1; proc < processes_count; proc++) {
-      MPI_Send(global_maxs.data(), columns, MPI_INT, proc, 1, MPI_COMM_WORLD);
-    }
   } else {
-    MPI_Send(local_maxs.data(), static_cast<int>(local_maxs.size()), MPI_INT, 0, 0, MPI_COMM_WORLD);
-    global_maxs.resize(columns);
-    MPI_Recv(global_maxs.data(), columns, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    local_matrix.resize(local_rows, std::vector<int>(columns));
+    for (int i = 0; i < local_rows; i++) {
+      MPI_Recv(local_matrix[i].data(), columns, MPI_INT, 0, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
   }
+  auto local_maxs = CalculateLocalMax(local_matrix, columns);
+  std::vector<int> global_maxs(columns);
+  MPI_Allreduce(local_maxs.data(), global_maxs.data(), columns, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   GetOutput() = global_maxs;
   return true;
 }
@@ -300,22 +336,17 @@ bool KosolapovVMaxValuesInColMatrixMPI::PostProcessingImpl() {
   return true;
 }
 
-std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix,
-                                                                      int rank, int processes_count, int columns) {
-  const int columns_per_proc = columns / processes_count;
-  const int remainder = columns % processes_count;
-
-  const int start = (rank * columns_per_proc) + std::min(rank, remainder);
-  const int end = start + columns_per_proc + (rank < remainder ? 1 : 0);
-  std::vector<int> local_maxs(end - start);
-  for (int i = start; i < end; i++) {
-    int temp_max = matrix[0][i];
-    for (const auto &row : matrix) {
-      temp_max = std::max(row[i], temp_max);
+std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix, const int columns) {
+  std::vector<int> local_maxs(columns, std::numeric_limits<int>::min());
+  for (const auto &row : matrix) {
+    for (int i = 0; i < columns; i++) {
+      if (row[i] > local_maxs[i]) {
+        local_maxs[i] = row[i];
+      }
     }
-    local_maxs[i - start] = temp_max;
   }
   return local_maxs;
 }
 }  // namespace kosolapov_v_max_values_in_col_matrix
+
 ```

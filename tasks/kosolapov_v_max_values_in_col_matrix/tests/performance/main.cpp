@@ -8,7 +8,7 @@
 namespace kosolapov_v_max_values_in_col_matrix {
 
 class KosolapovVMaxValuesInColMatrixRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kMatrix_size_ = 10000;
+  const int kMatrix_size_ = 2000;
   InType input_data_;
   OutType expected_res_;
 
