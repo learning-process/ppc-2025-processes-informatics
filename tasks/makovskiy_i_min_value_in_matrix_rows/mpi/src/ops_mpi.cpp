@@ -102,16 +102,16 @@ MinValueMPI::MinValueMPI(const InType &in) {
 }
 
 bool MinValueMPI::ValidationImpl() {
-  const auto &mat = this->GetInput();
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  int is_valid = 0;
   if (rank == 0) {
-    if (mat.empty()) {
-      return false;
-    }
-    return std::ranges::all_of(mat, [](const auto &row) { return !row.empty(); });
+    const auto &mat = this->GetInput();
+    is_valid = !mat.empty() ? 1 : 0;
   }
-  return true;
+  MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  return is_valid == 1;
 }
 
 bool MinValueMPI::PreProcessingImpl() {
