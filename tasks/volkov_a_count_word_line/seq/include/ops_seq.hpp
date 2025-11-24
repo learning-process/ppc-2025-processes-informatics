@@ -4,11 +4,11 @@
 
 namespace volkov_a_count_word_line {
 
-class MyTaskSEQ : public BaseTask {
+class VolkovACountWordLineSEQ : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { 
-        return ppc::task::TypeOfTask::kSEQ; 
-    }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
   explicit VolkovACountWordLineSEQ(const InType& in);
 
  private:
@@ -16,6 +16,6 @@ class MyTaskSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
- };
+};
 
-}
+}  // namespace volkov_a_count_word_line
