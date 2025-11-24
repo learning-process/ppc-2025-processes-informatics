@@ -3,10 +3,11 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <numeric>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 #ifdef __GNUC__
 #  pragma GCC diagnostic push
@@ -32,14 +33,7 @@ bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
   if (cols == 0) {
     return false;
   }
-
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-
-  return true;
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
@@ -61,17 +55,17 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   const int remainder = rows % size;
 
   const int my_rows = base_rows + (rank < remainder ? 1 : 0);
-  const int start_row = rank * base_rows + std::min(rank, remainder);
+  const int start_row = (rank * base_rows) + std::min(rank, remainder);
   const int end_row = start_row + my_rows;
 
-  long long local_sum = 0;
+  int64_t local_sum = 0;
 
   for (int i = start_row; i < end_row; ++i) {
-    local_sum += std::accumulate(matrix[i].begin(), matrix[i].end(), 0LL);
+    local_sum += std::accumulate(matrix[i].begin(), matrix[i].end(), static_cast<int64_t>(0));
   }
 
-  long long global_sum = 0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  int64_t global_sum = 0;
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     GetOutput() = global_sum;

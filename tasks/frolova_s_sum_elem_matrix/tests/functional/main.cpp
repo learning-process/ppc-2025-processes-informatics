@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <numeric>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -16,7 +16,6 @@ namespace frolova_s_sum_elem_matrix {
 
 class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  // rows_cols_label -> имя теста
   static std::string PrintTestParam(const TestType &test_param) {
     int rows = std::get<0>(test_param);
     int cols = std::get<1>(test_param);
@@ -44,7 +43,7 @@ class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
  private:
-  InType matrix_{};
+  InType matrix_;
   OutType expected_sum_{0};
 };
 
@@ -54,7 +53,6 @@ TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
   ExecuteTest(GetParam());
 }
 
-// rows, cols, label
 const std::array<TestType, 3> kTestParam = {
     std::make_tuple(3, 3, "small"),
     std::make_tuple(10, 10, "medium"),

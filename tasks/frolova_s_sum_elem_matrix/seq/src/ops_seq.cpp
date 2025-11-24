@@ -1,9 +1,11 @@
 #include "frolova_s_sum_elem_matrix/seq/include/ops_seq.hpp"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <numeric>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 #ifdef __GNUC__
 #  pragma GCC diagnostic push
@@ -14,13 +16,7 @@ namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixSEQ::FrolovaSSumElemMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-
-  // Используем resize и копирование вместо прямого присваивания
-  GetInput().resize(in.size());
-  for (size_t i = 0; i < in.size(); ++i) {
-    GetInput()[i] = in[i];
-  }
-
+  GetInput() = in;
   GetOutput() = 0;
 }
 
@@ -31,19 +27,12 @@ bool FrolovaSSumElemMatrixSEQ::ValidationImpl() {
     return false;
   }
 
-  // все строки должны быть не пустыми и одинаковой длины
   const std::size_t cols = matrix.front().size();
   if (cols == 0) {
     return false;
   }
 
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-
-  return true;
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool FrolovaSSumElemMatrixSEQ::PreProcessingImpl() {
@@ -53,10 +42,10 @@ bool FrolovaSSumElemMatrixSEQ::PreProcessingImpl() {
 
 bool FrolovaSSumElemMatrixSEQ::RunImpl() {
   const auto &matrix = GetInput();
-  long long sum = 0;
+  int64_t sum = 0;
 
   for (const auto &row : matrix) {
-    sum += std::accumulate(row.begin(), row.end(), 0LL);
+    sum += std::accumulate(row.begin(), row.end(), static_cast<int64_t>(0));
   }
 
   GetOutput() = sum;
@@ -64,7 +53,6 @@ bool FrolovaSSumElemMatrixSEQ::RunImpl() {
 }
 
 bool FrolovaSSumElemMatrixSEQ::PostProcessingImpl() {
-  // Ничего дополнительно делать не нужно
   return true;
 }
 

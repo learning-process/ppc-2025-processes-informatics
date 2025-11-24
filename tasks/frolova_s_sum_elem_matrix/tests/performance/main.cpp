@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <numeric>
 #include <vector>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
@@ -13,17 +12,17 @@ namespace frolova_s_sum_elem_matrix {
 class FrolovaSSumElemMatrixRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   // Размер квадратной матрицы для perf-тестов
-  const int kN_ = 1000;
+  const int kN = 1000;
 
  private:
-  InType matrix_{};
+  InType matrix_;
 
   void SetUp() override {
-    matrix_.assign(kN_, std::vector<int>(kN_, 1));
+    matrix_.assign(kN, std::vector<int>(kN, 1));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const OutType expected = static_cast<OutType>(kN_) * kN_;
+    const OutType expected = static_cast<OutType>(kN) * kN;
     return output_data == expected;
   }
 
