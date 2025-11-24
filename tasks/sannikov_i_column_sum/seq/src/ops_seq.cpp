@@ -17,7 +17,18 @@ SannikovIColumnSumSEQ::SannikovIColumnSumSEQ(const InType &in) {
 
 bool SannikovIColumnSumSEQ::ValidationImpl() {
   const auto &input_matrix = GetInput();
-  return (!input_matrix.empty()) && (!input_matrix.front().empty());
+  if (input_matrix.empty() || input_matrix.front().empty()) {
+    return false;
+  }
+
+  const std::size_t columns = input_matrix.front().size();
+  for (const auto &row : input_matrix) {
+    if (row.size() != columns) {
+      return false;
+    }
+  }
+
+  return GetOutput().empty();
 }
 
 bool SannikovIColumnSumSEQ::PreProcessingImpl() {
