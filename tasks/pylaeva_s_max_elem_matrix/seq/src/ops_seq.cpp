@@ -16,8 +16,8 @@ PylaevaSMaxElemMatrixSEQ::PylaevaSMaxElemMatrixSEQ(const InType &in) {
 }
 
 bool PylaevaSMaxElemMatrixSEQ::ValidationImpl() {
-  size_t rows = static_cast<size_t>(std::get<0>(GetInput()));
-  size_t columns = static_cast<size_t>(std::get<1>(GetInput()));
+  const auto rows = static_cast<size_t>(std::get<0>(GetInput()));
+  const auto columns = static_cast<size_t>(std::get<1>(GetInput()));
   size_t matrix_size = rows * columns;
 
   return (matrix_size == std::get<2>(GetInput()).size()) && (rows > 0) && (columns > 0);

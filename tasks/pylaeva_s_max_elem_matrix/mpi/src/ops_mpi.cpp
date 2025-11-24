@@ -18,8 +18,8 @@ PylaevaSMaxElemMatrixMPI::PylaevaSMaxElemMatrixMPI(const InType &in) {
 }
 
 bool PylaevaSMaxElemMatrixMPI::ValidationImpl() {
-  size_t rows = static_cast<size_t>(std::get<0>(GetInput()));
-  size_t columns = static_cast<size_t>(std::get<1>(GetInput()));
+  const auto rows = static_cast<size_t>(std::get<0>(GetInput()));
+  const auto columns = static_cast<size_t>(std::get<1>(GetInput()));
   size_t matrix_size = rows * columns;
 
   return (matrix_size == std::get<2>(GetInput()).size()) && (rows > 0) && (columns > 0);
@@ -39,8 +39,8 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   std::vector<int> matrix_data;
 
   if (rank == 0) {
-    size_t matrix_rows = static_cast<size_t>(std::get<0>(GetInput()));
-    size_t matrix_columns = static_cast<size_t>(std::get<1>(GetInput()));
+    const auto matrix_rows = static_cast<size_t>(std::get<0>(GetInput()));
+    const auto matrix_columns = static_cast<size_t>(std::get<1>(GetInput()));
     matrix_size = matrix_rows * matrix_columns;
     matrix_data = std::get<2>(GetInput());
   }
@@ -50,8 +50,8 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   std::vector<int> sendcounts(size, 0);
   std::vector<int> displs(size, 0);
 
-  int local_size = matrix_size / size;
-  int remainder = matrix_size % size;
+  int local_size = static_cast<int>(matrix_size / size);
+  int remainder = static_cast<int>(matrix_size % size);
 
   int offset = 0;
   for (int i = 0; i < size; i++) {
