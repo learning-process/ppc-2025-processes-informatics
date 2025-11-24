@@ -45,7 +45,7 @@ bool ChyokotovMinValByColumnsMPI::PreProcessingImpl() {
 
       std::vector<std::vector<int>> tmp(cols, std::vector<int>(rows));
       for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < cols; j++) {
+        for (int j = 0; j < cols; j++) {
           tmp[j][i] = input_matrix[i][j];
         }
       }
