@@ -47,26 +47,37 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
 
   size_t chunk_size = row_count / static_cast<size_t>(p_count);
   size_t remainder_size = row_count % static_cast<size_t>(p_count);
-  size_t elements_count = col_count * chunk_size;
+
+  size_t rows_count = chunk_size + (std::cmp_less(rank, remainder_size) ? 1 : 0);
+  size_t elements_count = col_count * rows_count;
 
   std::vector<int32_t> input_data_chunk(elements_count);
   std::vector<int32_t> partial_res(col_count, static_cast<int32_t>(0));
 
-  MPI_Scatter(GetInput().data.data(), static_cast<int>(elements_count), MPI_INTEGER4, input_data_chunk.data(),
-              static_cast<int>(elements_count), MPI_INTEGER4, 0, MPI_COMM_WORLD);
+  if (rank == 0) {
+    std::vector<int> send_counts(p_count);
+    std::vector<int> locs(p_count);
 
-  for (size_t i = 0; i < chunk_size; i++) {
-    for (size_t j = 0; j < col_count; j++) {
-      partial_res[j] += input_data_chunk[(i * col_count) + j];
+    for (int i = 0; i < p_count; i++) {
+      size_t rows_for_proc = chunk_size + (std::cmp_less(i, remainder_size) ? 1 : 0);
+      send_counts[i] = static_cast<int>(rows_for_proc * col_count);
     }
+
+    for (int i = 1; i < p_count; i++) {
+      locs[i] = locs[i - 1] + send_counts[i - 1];
+    }
+
+    MPI_Scatterv(GetInput().data.data(), send_counts.data(), locs.data(), MPI_INTEGER4, input_data_chunk.data(),
+              elements_count, MPI_INTEGER4, 0, MPI_COMM_WORLD);
+  }
+  else {
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INTEGER4, input_data_chunk.data(),
+              elements_count, MPI_INTEGER4, 0, MPI_COMM_WORLD);
   }
 
-  if (rank == 0 && remainder_size > 0) {
-    size_t remainder_offset = chunk_size * static_cast<size_t>(p_count);
-    for (size_t i = remainder_offset; i < row_count; i++) {
-      for (size_t j = 0; j < col_count; j++) {
-        partial_res[j] += GetInput().data[(i * col_count) + j];
-      }
+  for (size_t i = 0; i < rows_count; i++) {
+    for (size_t j = 0; j < col_count; j++) {
+      partial_res[j] += input_data_chunk[(i * col_count) + j];
     }
   }
 
