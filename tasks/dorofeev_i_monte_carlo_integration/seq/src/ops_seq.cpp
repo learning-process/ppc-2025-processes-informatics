@@ -34,8 +34,8 @@ bool DorofeevIMonteCarloIntegrationSEQ::RunImpl() {
   const std::size_t dims = in.a.size();
   const int n = in.samples;
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  int seed = 777;
+  std::mt19937 gen(seed);
   std::vector<std::uniform_real_distribution<double>> dist;
   dist.reserve(dims);
 

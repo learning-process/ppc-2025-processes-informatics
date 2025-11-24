@@ -55,8 +55,8 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
     in = GetInput();
   }
 
-  // broadcast dims
-  int dims = static_cast<int>(rank == 0 ? in.a.size() : 0);  // Because MPI doesn't support size_t
+  // BROADCAST DIMS
+  int dims = static_cast<int>(rank == 0 ? in.a.size() : 0);
   MPI_Bcast(&dims, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   // resize on other ranks
@@ -65,14 +65,14 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
     in.b.resize(dims);
   }
 
-  // broadcast vectors a and b
+  // BROADCAST BOUNDS
   MPI_Bcast(in.a.data(), dims, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(in.b.data(), dims, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  // broadcast samples
+  // BROADCAST SAMPLES
   MPI_Bcast(&in.samples, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // broadcast func id (always 1 for now)
+  // BROADCAST FUNC ID
   int func_id = (rank == 0 ? 1 : 0);
   MPI_Bcast(&func_id, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -101,10 +101,12 @@ bool DorofeevIMonteCarloIntegrationMPI::RunImpl() {
   std::mt19937 gen(rank + 777);
   double local_sum = 0.0;
 
+  std::vector<double> x;
+  x.assign(static_cast<size_t>(dims), 0.0);
+
   for (int i = 0; i < n_local; ++i) {
-    std::vector<double> x(dims);
     for (int dim = 0; std::cmp_less(dim, dims); dim++) {
-      x[dim] = dist[dim](gen);
+      x[static_cast<size_t>(dim)] = dist[dim](gen);
     }
     local_sum += in.func(x);
   }
