@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
 
