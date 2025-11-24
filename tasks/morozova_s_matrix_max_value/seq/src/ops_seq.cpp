@@ -16,17 +16,12 @@ MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
-  const auto &matrix = GetInput();
-  if (matrix.empty() || matrix[0].empty()) {
+  const auto &input = GetInput();
+  if (input.empty() || input[0].empty()) {
     return false;
   }
-  const size_t cols = matrix[0].size();
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-  return true;
+  const size_t cols = input[0].size();
+  return std::all_of(input.begin(), input.end(), [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {
