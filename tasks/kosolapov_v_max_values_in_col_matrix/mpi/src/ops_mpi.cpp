@@ -31,7 +31,7 @@ bool KosolapovVMaxValuesInColMatrixMPI::ValidationImpl() {
         return false;
       }
     }
-  }  
+  }
   return (GetOutput().empty());
 }
 
@@ -45,7 +45,7 @@ bool KosolapovVMaxValuesInColMatrixMPI::PreProcessingImpl() {
     if (!matrix.empty() && !matrix[0].empty()) {
       GetOutput().resize(matrix[0].size());
     }
-  }  
+  }
   return true;
 }
 
@@ -103,7 +103,8 @@ bool KosolapovVMaxValuesInColMatrixMPI::PostProcessingImpl() {
   return true;
 }
 
-std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix, const int columns) {
+std::vector<int> KosolapovVMaxValuesInColMatrixMPI::CalculateLocalMax(const std::vector<std::vector<int>> &matrix,
+                                                                      const int columns) {
   std::vector<int> local_maxs(columns, std::numeric_limits<int>::min());
   for (const auto &row : matrix) {
     for (int i = 0; i < columns; i++) {
