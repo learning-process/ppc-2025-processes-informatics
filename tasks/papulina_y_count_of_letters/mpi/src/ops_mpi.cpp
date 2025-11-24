@@ -75,7 +75,9 @@ bool PapulinaYCountOfLettersMPI::RunImpl() {
     MPI_Bcast(&len, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
     MPI_Bcast(&remainder, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
     MPI_Recv(&true_len, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    part_of_string.resize(true_len);
+    if (true_len > 0) {
+      part_of_string.resize(true_len);
+    }
     MPI_Recv(part_of_string.data(), static_cast<int>(true_len), MPI_CHAR, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
   int local_result = CountOfLetters(part_of_string.data(), static_cast<int>(part_of_string.size()));

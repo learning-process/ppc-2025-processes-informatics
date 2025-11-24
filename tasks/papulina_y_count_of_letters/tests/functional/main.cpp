@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <iostream>
 #include <random>
 #include <string>
 #include <tuple>
@@ -34,8 +33,6 @@ class PapulinaYRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
       std::string data = GenerateData(100);  // будет генерироваться строка, в которой буквенных символов ровно 100
       input_data_ = data;
       expectedResult_ = 100;
-      std::cout << "Generated string: " << input_data_ << "\n";
-      std::cout << "Expected result: " << expectedResult_ << "\n";
     }
   }
 
