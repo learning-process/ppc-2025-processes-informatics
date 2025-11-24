@@ -7,13 +7,6 @@
 
 #include "dorofeev_i_monte_carlo_integration/common/include/common.hpp"
 
-// NOTE:
-// Validation branches are excluded from coverage because they require crafting
-// intentionally invalid input structures that cannot appear in the framework's
-// normal execution flow. These checks serve only as defensive guards and are
-// not part of the algorithmic logic. LCOV_EXCL prevents artificial
-// coverage drops caused by unreachable input states.
-
 namespace dorofeev_i_monte_carlo_integration_processes {
 
 DorofeevIMonteCarloIntegrationSEQ::DorofeevIMonteCarloIntegrationSEQ(const InType &in) {
@@ -25,21 +18,20 @@ DorofeevIMonteCarloIntegrationSEQ::DorofeevIMonteCarloIntegrationSEQ(const InTyp
 bool DorofeevIMonteCarloIntegrationSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
-  if (in.a.size() != in.b.size()) {  // LCOV_EXCL_LINE
+  if (!in.func) {
+    return false;
+  }
+  if (in.a.empty() || in.a.size() != in.b.size()) {
     return false;
   }
 
-  if (in.samples <= 0) {  // LCOV_EXCL_LINE
-    return false;
-  }
-
-  for (size_t i = 0; i < in.a.size(); i++) {
-    if (in.b[i] <= in.a[i]) {  // LCOV_EXCL_LINE
-      return false;            // LCOV_EXCL_LINE
+  for (size_t i = 0; i < in.a.size(); ++i) {
+    if (in.b[i] <= in.a[i]) {
+      return false;
     }
   }
 
-  return true;
+  return in.samples > 0;
 }
 
 bool DorofeevIMonteCarloIntegrationSEQ::PreProcessingImpl() {

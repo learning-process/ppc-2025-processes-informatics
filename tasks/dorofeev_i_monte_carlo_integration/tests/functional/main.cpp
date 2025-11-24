@@ -13,17 +13,15 @@
 
 namespace dorofeev_i_monte_carlo_integration_processes {
 
+// INTEGRATION TESTS
 class MonteCarloFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(
       const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
     const auto &full = info.param;
-
     const TestType &t = std::get<2>(full);
     std::string size_name = std::get<1>(t);
-
     std::string task_name = std::get<1>(full);
-
     return task_name + "_" + size_name;
   }
 
@@ -34,26 +32,23 @@ class MonteCarloFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
 
     int samples = std::get<0>(t);
 
-    input_data_.a = {0.0};
-    input_data_.b = {1.0};
-    input_data_.samples = samples;
-    input_data_.func = [](const std::vector<double> &x) { return x[0] * x[0]; };
+    input_.a = {0.0};
+    input_.b = {1.0};
+    input_.samples = samples;
+    input_.func = [](const std::vector<double> &x) { return x[0] * x[0]; };
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    double expected = 1.0 / 3.0;
-    return std::abs(output_data - expected) < 0.05;
+  bool CheckTestOutputData(OutType &out) final {
+    return std::abs(out - (1.0 / 3.0)) < 0.05;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_;
   }
 
  private:
-  InType input_data_;
+  InType input_;
 };
-
-namespace {
 
 TEST_P(MonteCarloFuncTests, IntegrationTest) {
   ExecuteTest(GetParam());
@@ -72,5 +67,192 @@ const auto kTaskList = std::tuple_cat(
 INSTANTIATE_TEST_SUITE_P(IntegrationTests, MonteCarloFuncTests, ppc::util::ExpandToValues(kTaskList),
                          MonteCarloFuncTests::PrintTestParam);
 
-}  // namespace
+// VALIDATION TESTS (SEQ)
+/* class MonteCarloSeqValidationTests : public ::testing::Test {};
+
+TEST_F(MonteCarloSeqValidationTests, InvalidNoFunction) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // sync all ranks before doing anything
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    InType in;
+    in.a = {0.0};
+    in.b = {1.0};
+    in.samples = 100;
+    in.func = nullptr;
+
+    DorofeevIMonteCarloIntegrationSEQ op(in);
+    EXPECT_FALSE(op.Validation());
+  }
+
+  // ensure all ranks leave the test at the same time
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TEST_F(MonteCarloSeqValidationTests, InvalidBoundsEmpty) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // sync all ranks before doing anything
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    InType in;
+    in.a = {};
+    in.b = {};
+    in.samples = 100;
+    in.func = [](const std::vector<double> &) { return 0.0; };
+
+    DorofeevIMonteCarloIntegrationSEQ op(in);
+    EXPECT_FALSE(op.Validation());
+  }
+
+  // ensure all ranks leave the test at the same time
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TEST_F(MonteCarloSeqValidationTests, InvalidDifferentSizes) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // sync all ranks before doing anything
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    InType in;
+    in.a = {0.0};
+    in.b = {0.0, 1.0};
+    in.samples = 100;
+    in.func = [](const std::vector<double> &) { return 0.0; };
+
+    DorofeevIMonteCarloIntegrationSEQ op(in);
+    EXPECT_FALSE(op.Validation());
+  }
+
+  // ensure all ranks leave the test at the same time
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TEST_F(MonteCarloSeqValidationTests, InvalidWrongBounds) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // sync all ranks before doing anything
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    InType in;
+    in.a = {1.0};
+    in.b = {0.0};
+    in.samples = 100;
+    in.func = [](const std::vector<double> &) { return 0.0; };
+
+    DorofeevIMonteCarloIntegrationSEQ op(in);
+    EXPECT_FALSE(op.Validation());
+  }
+
+  // ensure all ranks leave the test at the same time
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TEST_F(MonteCarloSeqValidationTests, InvalidSamplesNonPositive) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // sync all ranks before doing anything
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    InType in;
+    in.a = {0.0};
+    in.b = {1.0};
+    in.samples = 0;
+    in.func = [](const std::vector<double> &) { return 0.0; };
+
+    DorofeevIMonteCarloIntegrationSEQ op(in);
+    EXPECT_FALSE(op.Validation());
+  }
+
+  // ensure all ranks leave the test at the same time
+  MPI_Barrier(MPI_COMM_WORLD);
+}
+
+TEST_F(MonteCarloSeqValidationTests, Valid) {
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  if (rank == 0) {
+    InType in;
+    in.a = {0.0};
+    in.b = {1.0};
+    in.samples = 10;
+    in.func = [](const std::vector<double> &x) { return x[0]; };
+
+    DorofeevIMonteCarloIntegrationSEQ op(in);
+    EXPECT_TRUE(op.Validation());
+  }
+
+  MPI_Barrier(MPI_COMM_WORLD);
+} */
+
+/* // VALIDATION TESTS (MPI)
+class MonteCarloMpiValidationTests : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  }
+  int rank{};
+};
+
+static bool ValidateMPI(const InType &root_input) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  InType in;
+  if (rank == 0) {
+    in = root_input;
+  }
+
+  DorofeevIMonteCarloIntegrationMPI op(in);
+  return op.Validation();  // result broadcast inside
+}
+
+TEST_F(MonteCarloMpiValidationTests, InvalidNoFunc) {
+  InType in;
+  if (rank == 0) {
+    in.a = {0.0};
+    in.b = {1.0};
+    in.samples = 100;
+    in.func = nullptr;
+  }
+  EXPECT_FALSE(ValidateMPI(in));
+}
+
+TEST_F(MonteCarloMpiValidationTests, InvalidSamplesNonPositive) {
+  InType in;
+  if (rank == 0) {
+    in.a = {0.0};
+    in.b = {1.0};
+    in.samples = 0;
+    in.func = [](const std::vector<double> &) { return 0.0; };
+  }
+  EXPECT_FALSE(ValidateMPI(in));
+}
+
+TEST_F(MonteCarloMpiValidationTests, Valid) {
+  InType in;
+  if (rank == 0) {
+    in.a = {0.0};
+    in.b = {1.0};
+    in.samples = 10;
+    in.func = [](const std::vector<double> &) { return 0.0; };
+  }
+  EXPECT_TRUE(ValidateMPI(in));
+} */
+
 }  // namespace dorofeev_i_monte_carlo_integration_processes
