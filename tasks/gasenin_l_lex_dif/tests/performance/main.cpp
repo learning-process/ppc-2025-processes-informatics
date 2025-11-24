@@ -21,7 +21,7 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
 
     std::string long_str1;
     std::string long_str2;
-    std::vector<uint64_t> lengths(2, 0);
+    std::vector<unsigned long long> lengths(2, 0);
 
     if (rank == 0) {
       long_str1 = std::string(100000000, 'a');
