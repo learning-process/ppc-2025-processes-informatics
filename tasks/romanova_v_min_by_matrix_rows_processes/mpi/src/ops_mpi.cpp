@@ -10,10 +10,9 @@
 
 namespace romanova_v_min_by_matrix_rows_processes {
 
-RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
+RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) : res_() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  res_ = OutType();
 }
 
 bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
