@@ -19,7 +19,8 @@ class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests
   void SetUp() override {
     input_data_.resize(kCount_);
 
-    std::mt19937 rng(42);
+    std::random_device dev;
+    std::mt19937 rng(dev());
     std::uniform_int_distribution<int> dist(-10'000, 10'000);
 
     for (size_t i = 0; i < kCount_; ++i) {

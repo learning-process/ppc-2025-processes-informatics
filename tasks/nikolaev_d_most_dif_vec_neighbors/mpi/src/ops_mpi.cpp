@@ -66,12 +66,12 @@ bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
     }
   }
 
-  struct local_max_struct {
+  struct LocalMaxStruct {
     int diff = 0;
     int rank = 0;
   };
-  local_max_struct local_max;
-  local_max_struct global_max;
+  LocalMaxStruct local_max;
+  LocalMaxStruct global_max;
 
   local_max.diff = local_max_diff;
   local_max.rank = rank;
