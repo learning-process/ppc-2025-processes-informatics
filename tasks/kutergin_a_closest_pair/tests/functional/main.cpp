@@ -11,6 +11,7 @@
 #include "kutergin_a_closest_pair/mpi/include/ops_mpi.hpp"
 #include "kutergin_a_closest_pair/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kutergin_a_closest_pair {
 
