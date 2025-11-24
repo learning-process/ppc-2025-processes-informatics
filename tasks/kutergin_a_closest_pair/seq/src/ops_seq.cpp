@@ -1,3 +1,5 @@
+#include "kutergin_a_closest_pair/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
