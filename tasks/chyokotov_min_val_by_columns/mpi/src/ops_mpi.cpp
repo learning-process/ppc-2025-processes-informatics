@@ -60,7 +60,7 @@ bool ChyokotovMinValByColumnsMPI::PreProcessingImpl() {
 
   return true;
 }
-
+namespace {
 void DistributeColumns(int rank, int size, int rows, int cols, int recv_size, int loc_start,
                        std::vector<std::vector<int>> &local_cols, const std::vector<std::vector<int>> &matrix) {
   if (rank == 0) {
@@ -103,6 +103,8 @@ void PrepareGathervParams(int cols, int size, std::vector<int> &counts, std::vec
     displs[i] = (i * base) + std::min(i, rem);
   }
 }
+
+}  // namespace
 
 bool ChyokotovMinValByColumnsMPI::RunImpl() {
   int rank{};
