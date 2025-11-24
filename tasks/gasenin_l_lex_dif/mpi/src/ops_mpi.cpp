@@ -64,14 +64,14 @@ bool GaseninLLexDifMPI::RunImpl() {
   auto &str1 = input_data.first;
   auto &str2 = input_data.second;
 
-  std::vector<uint64_t> lengths(2, 0);
+  std::vector<unsigned long> lengths(2, 0);
 
   if (rank == 0) {
     lengths[0] = str1.length();
     lengths[1] = str2.length();
   }
 
-  MPI_Bcast(lengths.data(), 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(lengths.data(), 2, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     str1.resize(lengths[0]);
