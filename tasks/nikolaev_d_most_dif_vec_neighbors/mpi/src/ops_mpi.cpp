@@ -2,11 +2,12 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <cmath>
+#include <utility>
 #include <vector>
 
 #include "nikolaev_d_most_dif_vec_neighbors/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
@@ -27,7 +28,8 @@ bool NikolaevDMostDifVecNeighborsMPI::PreProcessingImpl() {
 bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
   const auto &input = GetInput();
   auto &output = GetOutput();
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -35,7 +37,7 @@ bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
     return false;
   }
 
-  int n = input.size();
+  int n = static_cast<int>(input.size());
   int elements_per_process = n / size;
   int remainder = n % size;
 
@@ -64,10 +66,12 @@ bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
     }
   }
 
-  struct {
-    int diff;
-    int rank;
-  } local_max, global_max;
+  struct local_max_struct {
+    int diff = 0;
+    int rank = 0;
+  };
+  local_max_struct local_max;
+  local_max_struct global_max;
 
   local_max.diff = local_max_diff;
   local_max.rank = rank;

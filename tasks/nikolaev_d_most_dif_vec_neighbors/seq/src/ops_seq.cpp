@@ -1,10 +1,10 @@
 #include "nikolaev_d_most_dif_vec_neighbors/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cmath>
+#include <utility>
 #include <vector>
 
 #include "nikolaev_d_most_dif_vec_neighbors/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace nikolaev_d_most_dif_vec_neighbors {
 
@@ -27,16 +27,15 @@ bool NikolaevDMostDifVecNeighborsSEQ::RunImpl() {
     return false;
   }
 
-  auto &vec = GetInput();
+  const auto &vec = GetInput();
   std::pair<int, int> result_elements;
   int max_diff = -1;
 
-  for (size_t i = 0; i < GetInput().size() - 1; i++) {
-    int j = i + 1;
-    int diff = std::abs(vec[j] - vec[i]);
+  for (std::vector<int>::size_type i = 0; i < GetInput().size() - 1; i++) {
+    int diff = std::abs(vec[i+1] - vec[i]);
     if (diff > max_diff) {
       max_diff = diff;
-      result_elements = {vec[i], vec[j]};
+      result_elements = {vec[i], vec[i+1]};
     }
   }
 

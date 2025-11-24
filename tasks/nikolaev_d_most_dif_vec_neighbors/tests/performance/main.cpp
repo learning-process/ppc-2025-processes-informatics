@@ -1,13 +1,15 @@
 #include <gtest/gtest.h>
 
-  #include <random>
+#include <cstddef>
+#include <random>
+#include <utility>
 
 #include "nikolaev_d_most_dif_vec_neighbors/common/include/common.hpp"
 #include "nikolaev_d_most_dif_vec_neighbors/mpi/include/ops_mpi.hpp"
 #include "nikolaev_d_most_dif_vec_neighbors/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace nikolaev_d_most_dif_vec_neighbors {
+    namespace nikolaev_d_most_dif_vec_neighbors {
 
 class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const size_t kCount_ = 10'000'000;
@@ -17,8 +19,7 @@ class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests
   void SetUp() override {
     input_data_.resize(kCount_);
 
-    //std::random_device dev;
-    std::mt19937 rng(42); //dev() 42
+    std::mt19937 rng(42);
     std::uniform_int_distribution<int> dist(-10'000, 10'000);
 
     for (size_t i = 0; i < kCount_; ++i) {
@@ -31,11 +32,6 @@ class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests
     input_data_[max_dif_pos] = -15'000;
     input_data_[max_dif_pos + 1] = 15'000;
     expected_output_ = std::make_pair(-15'000, 15'000);
-
-    // for (int i=0; i < 10; i++) {
-    //   std::cout << "input_data_[" << i << "] = " << input_data_[i] << "\n";
-    // }
-    // std::cout << "max_dif_pos=" << max_dif_pos << "\n";
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

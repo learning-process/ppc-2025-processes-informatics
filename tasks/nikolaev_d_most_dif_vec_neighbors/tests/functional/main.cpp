@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
+//#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+//#include <cstdint>
+//#include <numeric>
+//#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
