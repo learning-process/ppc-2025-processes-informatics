@@ -67,8 +67,8 @@ bool ChyokotovMinValByColumnsMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  size_t rows{};
-  size_t cols{};
+  int rows{};
+  int cols{};
 
   if (rank == 0) {
     const auto &matrix = GetInput();
@@ -76,13 +76,13 @@ bool ChyokotovMinValByColumnsMPI::RunImpl() {
       rows = 0;
       cols = 0;
     } else {
-      rows = matrix[0].size();
-      cols = matrix.size();
+      rows = static_cast<int>(matrix[0].size());
+      cols = static_cast<int>(matrix.size());
     }
   }
 
-  MPI_Bcast(&rows, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&cols, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rows == 0 || cols == 0) {
     return true;
