@@ -35,7 +35,7 @@ bool ChyokotovMinValByColumnsMPI::PreProcessingImpl() {
   int rank{};
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int cols{};
+  int cols = 0;
 
   if (rank == 0) {
     const auto &input_matrix = GetInput();
@@ -59,6 +59,49 @@ bool ChyokotovMinValByColumnsMPI::PreProcessingImpl() {
   GetOutput().resize(cols, INT_MAX);
 
   return true;
+}
+
+void DistributeColumns(int rank, int size, int rows, int cols, int recv_size, int loc_start,
+                       std::vector<std::vector<int>> &local_cols, const std::vector<std::vector<int>> &matrix) {
+  if (rank == 0) {
+    for (int i = 0; i < recv_size; i++) {
+      local_cols[i] = matrix[loc_start + i];
+    }
+
+    for (int dest = 1; dest < size; dest++) {
+      int dest_base = cols / size;
+      int dest_rem = cols % size;
+      int dest_size = dest_base + (dest < dest_rem ? 1 : 0);
+      int dest_start = (dest * dest_base) + std::min(dest, dest_rem);
+
+      for (int i = 0; i < dest_size; i++) {
+        MPI_Send(matrix[dest_start + i].data(), rows, MPI_INT, dest, 0, MPI_COMM_WORLD);
+      }
+    }
+  } else {
+    for (int i = 0; i < recv_size; i++) {
+      MPI_Recv(local_cols[i].data(), rows, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+  }
+}
+
+std::vector<int> CalculateLocalMins(const std::vector<std::vector<int>> &local_cols, int recv_size) {
+  std::vector<int> local_mins(recv_size, INT_MAX);
+  for (int i = 0; i < recv_size; i++) {
+    for (size_t j = 0; j < local_cols[i].size(); j++) {
+      local_mins[i] = std::min(local_mins[i], local_cols[i][j]);
+    }
+  }
+  return local_mins;
+}
+
+void PrepareGathervParams(int cols, int size, std::vector<int> &counts, std::vector<int> &displs) {
+  int base = cols / size;
+  int rem = cols % size;
+  for (int i = 0; i < size; i++) {
+    counts[i] = base + (i < rem ? 1 : 0);
+    displs[i] = (i * base) + std::min(i, rem);
+  }
 }
 
 bool ChyokotovMinValByColumnsMPI::RunImpl() {
@@ -88,46 +131,21 @@ bool ChyokotovMinValByColumnsMPI::RunImpl() {
     return true;
   }
 
-  int base = static_cast<int>(cols) / size;
-  int rem = static_cast<int>(cols) % size;
+  int base = cols / size;
+  int rem = cols % size;
   int recv_size = base + (rank < rem ? 1 : 0);
   int loc_start = (rank * base) + std::min(rank, rem);
 
   std::vector<std::vector<int>> local_cols(recv_size, std::vector<int>(rows));
 
-  if (rank == 0) {
-    const auto &matrix = GetInput();
-    for (int i = 0; i < recv_size; i++) {
-      local_cols[i] = matrix[loc_start + i];
-    }
+  const auto &matrix = GetInput();
+  DistributeColumns(rank, size, rows, cols, recv_size, loc_start, local_cols, matrix);
 
-    for (int dest = 1; dest < size; dest++) {
-      int dest_size = base + (dest < rem ? 1 : 0);
-      int dest_start = (dest * base) + std::min(dest, rem);
-
-      for (int i = 0; i < dest_size; i++) {
-        MPI_Send(matrix[dest_start + i].data(), rows, MPI_INT, dest, 0, MPI_COMM_WORLD);
-      }
-    }
-  } else {
-    for (int i = 0; i < recv_size; i++) {
-      MPI_Recv(local_cols[i].data(), rows, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-  }
-
-  std::vector<int> local_mins(recv_size, INT_MAX);
-  for (int i = 0; i < recv_size; i++) {
-    for (size_t j = 0; j < local_cols[i].size(); j++) {
-      local_mins[i] = std::min(local_mins[i], local_cols[i][j]);
-    }
-  }
+  std::vector<int> local_mins = CalculateLocalMins(local_cols, recv_size);
 
   std::vector<int> counts(size);
   std::vector<int> displs(size);
-  for (int i = 0; i < size; i++) {
-    counts[i] = base + (i < rem ? 1 : 0);
-    displs[i] = (i * base) + std::min(i, rem);
-  }
+  PrepareGathervParams(cols, size, counts, displs);
 
   MPI_Allgatherv(local_mins.data(), recv_size, MPI_INT, GetOutput().data(), counts.data(), displs.data(), MPI_INT,
                  MPI_COMM_WORLD);
