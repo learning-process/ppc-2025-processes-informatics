@@ -67,8 +67,8 @@ bool GaseninLLexDifMPI::RunImpl() {
   std::vector<int> lengths(2, 0);
 
   if (rank == 0) {
-    lengths[0] = str1.length();
-    lengths[1] = str2.length();
+    lengths[0] = static_cast<int>(str1.length());
+    lengths[1] = static_cast<int>(str2.length());
   }
 
   MPI_Bcast(lengths.data(), 2, MPI_INT, 0, MPI_COMM_WORLD);
