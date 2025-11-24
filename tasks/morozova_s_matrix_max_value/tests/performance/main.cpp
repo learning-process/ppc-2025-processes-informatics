@@ -21,11 +21,10 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
         input_data_[i][j] = value++;
       }
     }
-    input_data_[size / 2][size / 2] = 1000000;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == 1000000;
+    return output_data == (1500 * 1500);
   }
 
   InType GetTestInputData() final {

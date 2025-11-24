@@ -19,34 +19,73 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int is_valid = 1;
   if (rank == 0) {
-    return !GetInput().empty() && !GetInput()[0].empty() && (GetOutput() == 0);
+    const auto &matrix = GetInput();
+    if (matrix.empty() || matrix[0].empty()) {
+      is_valid = 0;
+    } else {
+      int cols = matrix[0].size();
+      for (const auto &row : matrix) {
+        if (row.size() != cols) {
+          is_valid = 0;
+          break;
+        }
+      }
+    }
   }
-  return true;
+  MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  return is_valid != 0;
 }
 
 bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0) {
-    GetOutput() = GetInput()[0][0];
-  }
   return true;
 }
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
-  const auto &matrix = GetInput();
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  int local_max = std::numeric_limits<int>::min();
+  int rows = 0;
+  int cols = 0;
   if (rank == 0) {
-    const int rows = matrix.size();
-    const int cols = matrix[0].size();
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        local_max = std::max(local_max, matrix[i][j]);
+    rows = static_cast<int>(GetInput().size());
+    cols = static_cast<int>(GetInput()[0].size());
+  }
+  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (rows == 0 || cols == 0) {
+    GetOutput() = std::numeric_limits<int>::min();
+    return true;
+  }
+  std::vector<int> flat_matrix(rows * cols);
+  if (rank == 0) {
+    const auto &input = GetInput();
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        flat_matrix[i * cols + j] = input[i][j];
+      }
+    }
+  }
+  MPI_Bcast(flat_matrix.data(), rows * cols, MPI_INT, 0, MPI_COMM_WORLD);
+  int local_max = std::numeric_limits<int>::min();
+  int rows_per_proc = rows / size;
+  int remainder = rows % size;
+  int start_row, end_row;
+  if (rank < remainder) {
+    start_row = rank * (rows_per_proc + 1);
+    end_row = start_row + (rows_per_proc + 1);
+  } else {
+    start_row = remainder * (rows_per_proc + 1) + (rank - remainder) * rows_per_proc;
+    end_row = start_row + rows_per_proc;
+  }
+  end_row = std::min(end_row, rows);
+  for (int i = start_row; i < end_row; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      int value = flat_matrix[i * cols + j];
+      if (value > local_max) {
+        local_max = value;
       }
     }
   }
@@ -57,7 +96,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
 }
 
 bool MorozovaSMatrixMaxValueMPI::PostProcessingImpl() {
-  return GetOutput() != std::numeric_limits<int>::min();
+  return true;
 }
 
 }  // namespace morozova_s_matrix_max_value
