@@ -25,7 +25,7 @@
 
 ```cpp
    int max_element = std::numeric_limits<int>::min();
-   for (size_t i = 1; i < matrix_size; ++i) {
+   for (size_t i = 0; i < matrix_size; ++i) {
       max_element = std::max(matrix_data[i], max_element);
    }
 ``` 
@@ -138,8 +138,8 @@ mpiexec -np 4 ./build/bin/ppc_perf_tests --gtest_filter="*MaxElemMatrix*"
 | Mode        | Count | Time, s | Speedup |
 |-------------|-------|---------|---------|
 | seq         | 1     | 0.078   | 1.00    |
-| omp         | 2     | 0.360   | 0.22    |
-| omp         | 4     | 0.337   | 0.24    |
+| omp         | 2     | 0.258   | 0.30    |
+| omp         | 4     | 0.216   | 0.36    |
 
 **Анализ результатов:** 
 - Полученные результаты показывают замедление MPI-версии относительно последовательной реализации.    
