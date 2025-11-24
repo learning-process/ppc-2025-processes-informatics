@@ -44,6 +44,10 @@ bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
 }
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
+  if (!ValidationImpl()) {
+    GetOutput() = std::numeric_limits<int>::min();
+    return true;
+  }
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -60,6 +64,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
+
   std::vector<int> flat_matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols));
   if (rank == 0) {
     const auto &input = GetInput();
