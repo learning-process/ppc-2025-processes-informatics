@@ -23,21 +23,21 @@ bool KuterginAClosestPairSEQ::PreProcessingImpl() {
 }
 
 bool KuterginAClosestPairSEQ::RunImpl() {
-  if (data_.size() < 2) {
-    GetOutput() = -1;
-    return true;
-  }
+  const auto &v = GetInput();
 
-  int min_diff = std::numeric_limits<int>::max();
-  int min_idx = -1;
+  auto iota_range = std::views::iota(size_t{0}, v.size() - 1);
 
-  for (size_t i = 0; i < data_.size() - 1; ++i) {
-    int diff = std::abs(data_[i + 1] - data_[i]);
-    if (diff < min_diff) {
-      min_diff = diff;
-      min_idx = static_cast<int>(i);
+  auto comparator = [&](size_t i, size_t j) {
+    int diff_i = std::abs(v[i] - v[i + 1]);
+    int diff_j = std::abs(v[j] - v[j + 1]);
+    if (diff_i == diff_j) {
+      return i < j;
     }
-  }
+    return diff_i < diff_j;
+  };
+
+  auto min_it = std::ranges::min_element(iota_range, comparator);
+  int min_idx = static_cast<int>(*min_it);
 
   GetOutput() = min_idx;
   return true;
