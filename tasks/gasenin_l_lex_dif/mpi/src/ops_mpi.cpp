@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "gasenin_l_lex_dif/common/include/common.hpp"
 
@@ -39,8 +40,14 @@ GaseninLLexDifMPI::GaseninLLexDifMPI(const InType &in) {
 }
 
 bool GaseninLLexDifMPI::ValidationImpl() {
-  const auto &[str1, str2] = GetInput();
-  return str1.length() <= 10000000 && str2.length() <= 10000000;
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0) {
+    const auto &[str1, str2] = GetInput();
+    return str1.length() <= 100000000 && str2.length() <= 100000000;
+  }
+  return true;
 }
 
 bool GaseninLLexDifMPI::PreProcessingImpl() {
@@ -48,11 +55,35 @@ bool GaseninLLexDifMPI::PreProcessingImpl() {
 }
 
 bool GaseninLLexDifMPI::RunImpl() {
-  const auto &[str1, str2] = GetInput();
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  auto &input_data = GetInput();
+  auto &str1 = input_data.first;
+  auto &str2 = input_data.second;
+
+  uint64_t lengths[2];
+
+  if (rank == 0) {
+    lengths[0] = str1.length();
+    lengths[1] = str2.length();
+  }
+
+  MPI_Bcast(lengths, 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    str1.resize(lengths[0]);
+    str2.resize(lengths[1]);
+  }
+
+  if (lengths[0] > 0) {
+    MPI_Bcast(str1.data(), static_cast<int>(lengths[0]), MPI_CHAR, 0, MPI_COMM_WORLD);
+  }
+  if (lengths[1] > 0) {
+    MPI_Bcast(str2.data(), static_cast<int>(lengths[1]), MPI_CHAR, 0, MPI_COMM_WORLD);
+  }
 
   size_t total_len = std::max(str1.length(), str2.length());
 
@@ -65,6 +96,11 @@ bool GaseninLLexDifMPI::RunImpl() {
   size_t start = rank * chunk_size;
   size_t end = std::min(start + chunk_size, total_len);
 
+  if (start >= total_len) {
+    start = total_len;
+    end = total_len;
+  }
+
   LocalDiff local_diff = FindLocalDifference(str1, str2, start, end);
   size_t local_diff_pos = (local_diff.diff_pos == std::string::npos) ? total_len : local_diff.diff_pos;
   int local_result = local_diff.result;
@@ -75,6 +111,7 @@ bool GaseninLLexDifMPI::RunImpl() {
   MPI_Allreduce(&local_pos_64, &global_min_pos_64, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD);
 
   auto global_min_pos = static_cast<size_t>(global_min_pos_64);
+
   int result_for_sum = (local_diff_pos == global_min_pos) ? local_result : 0;
 
   int final_result = 0;

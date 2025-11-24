@@ -14,10 +14,6 @@ class GaseninLLexDifSEQ : public BaseTask {
   }
   explicit GaseninLLexDifSEQ(const InType &in);
 
-  static InType ReadInteractive();
-  static InType ReadFromFile(const std::string &filename);
-  static void PrintResult(const InType &input, OutType result);
-
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

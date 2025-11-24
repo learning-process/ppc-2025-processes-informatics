@@ -15,7 +15,7 @@ GaseninLLexDifSEQ::GaseninLLexDifSEQ(const InType &in) {
 
 bool GaseninLLexDifSEQ::ValidationImpl() {
   const auto &[str1, str2] = GetInput();
-  return str1.length() <= 10000 && str2.length() <= 10000;
+  return str1.length() <= 100000000 && str2.length() <= 100000000;
 }
 
 bool GaseninLLexDifSEQ::PreProcessingImpl() {
