@@ -15,7 +15,7 @@ class KuterginAClosestPairSEQ : public BaseTask {
   explicit KuterginAClosestPairSEQ(InType in);
 
  private:
-  std::vector<int> data_{};
+  std::vector<int> data_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
