@@ -29,7 +29,8 @@ TEST_P(DolovVMonteCarloIntegrationPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, DolovVMonteCarloIntegrationMPI, DolovVMonteCarloIntegrationSEQ>(PPC_SETTINGS_dolov_v_monte_carlo_integration);
+    ppc::util::MakeAllPerfTasks<InType, DolovVMonteCarloIntegrationMPI, DolovVMonteCarloIntegrationSEQ>(
+        PPC_SETTINGS_dolov_v_monte_carlo_integration);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -71,13 +71,15 @@ TEST_P(DolovVMonteCarloIntegrationFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration),
-                   ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration),
+                                           ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = DolovVMonteCarloIntegrationFuncTests::PrintFuncTestName<DolovVMonteCarloIntegrationFuncTests>;
+const auto kPerfTestName =
+    DolovVMonteCarloIntegrationFuncTests::PrintFuncTestName<DolovVMonteCarloIntegrationFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DolovVMonteCarloIntegrationFuncTests, kGtestValues, kPerfTestName);
 
