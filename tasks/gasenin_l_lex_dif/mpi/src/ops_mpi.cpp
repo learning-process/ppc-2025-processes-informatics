@@ -64,14 +64,14 @@ bool GaseninLLexDifMPI::RunImpl() {
   auto &str1 = input_data.first;
   auto &str2 = input_data.second;
 
-  std::vector<unsigned long> lengths(2, 0);
+  std::vector<int> lengths(2, 0);
 
   if (rank == 0) {
     lengths[0] = str1.length();
     lengths[1] = str2.length();
   }
 
-  MPI_Bcast(lengths.data(), 2, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(lengths.data(), 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     str1.resize(lengths[0]);
@@ -104,6 +104,11 @@ bool GaseninLLexDifMPI::RunImpl() {
   LocalDiff local_diff = FindLocalDifference(str1, str2, start, end);
   size_t local_diff_pos = (local_diff.diff_pos == std::string::npos) ? total_len : local_diff.diff_pos;
   int local_result = local_diff.result;
+
+  int local_pos_int = static_cast<int>(local_diff_pos);
+  int global_min_pos_int = 0;
+
+  MPI_Allreduce(&local_pos_int, &global_min_pos_int, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 
   auto local_pos_64 = static_cast<uint64_t>(local_diff_pos);
   uint64_t global_min_pos_64 = 0;
