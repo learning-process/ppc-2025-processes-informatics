@@ -16,8 +16,8 @@ class ChyokotovMinValPerfTest : public ppc::util::BaseRunPerfTests<InType, OutTy
   InType input_data_;
 
   void SetUp() override {
-    const int cols = 4000;
-    const int rows = 4000;
+    const int cols = 6000;
+    const int rows = 6000;
 
     input_data_.resize(rows);
     for (int i = 0; i < rows; i++) {
