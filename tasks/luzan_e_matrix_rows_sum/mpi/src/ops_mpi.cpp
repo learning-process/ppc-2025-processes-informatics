@@ -36,7 +36,8 @@ bool LuzanEMatrixRowsSumMPI::ValidationImpl() {
 
   int height = std::get<1>(GetInput());
   int width = std::get<2>(GetInput());
-  return static_cast<int>(std::get<0>(GetInput()).size()) == (height * width) && height != 0 && width != 0;
+  return std::get<0>(GetInput()).size() == static_cast<size_t>(height) * static_cast<size_t>(width) && height > 0 &&
+         width > 0;
 }
 
 bool LuzanEMatrixRowsSumMPI::PreProcessingImpl() {
