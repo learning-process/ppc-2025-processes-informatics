@@ -15,7 +15,7 @@ KuterginAClosestPairSEQ::KuterginAClosestPairSEQ(const InType &in) {
 }
 
 bool KuterginAClosestPairSEQ::ValidationImpl() {
-  return GetInput().size() >= 2;
+  return true;
 }
 
 bool KuterginAClosestPairSEQ::PreProcessingImpl() {
@@ -25,18 +25,20 @@ bool KuterginAClosestPairSEQ::PreProcessingImpl() {
 bool KuterginAClosestPairSEQ::RunImpl() {
   const auto &v = GetInput();
 
-  auto iota_range = std::views::iota(size_t{0}, v.size() - 1);
+  if (v.size() < 2) {
+    GetOutput() = -1;
+    return true;
+  }
+
+  auto idx_range = std::views::iota(size_t{0}, v.size() - 1);
 
   auto comparator = [&](size_t i, size_t j) {
     int diff_i = std::abs(v[i] - v[i + 1]);
     int diff_j = std::abs(v[j] - v[j + 1]);
-    if (diff_i == diff_j) {
-      return i < j;
-    }
-    return diff_i < diff_j;
+    return (diff_i < diff_j) || (diff_i == diff_j && i < j);
   };
 
-  auto min_it = std::ranges::min_element(iota_range, comparator);
+  auto min_it = std::ranges::min_element(idx_range, comparator);
   int min_idx = static_cast<int>(*min_it);
 
   GetOutput() = min_idx;
