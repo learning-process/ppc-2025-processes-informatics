@@ -55,9 +55,9 @@
 3. **Локальная обработка**:  
  Каждый процесс независимо находит максимальный элемент в своем блоке. В результате каждый процесс формирует локальное значение максимума `local_max`  
 ```cpp
-  int local_max = std::numeric_limits<int>::min();
-  for (int i = start; i < end; i++) {
-    local_max = std::max(local_max, matrix_data[i]);
+   int local_max = std::numeric_limits<int>::min();
+   for (int i = 0; i < local_elements; i++) {
+      local_max = std::max(local_max, local_data[i]);
   }
 ```
 
@@ -115,7 +115,7 @@ pylaeva_s_max_elem_matrix/
     1. **Func_tests** данные сгенерированы в текстовых файлах. 
     - Название: `matrix_NxM.txt`
     - Формат хранения: `N` (число строк) `M` (число столбцов) `expected_max` (ожидаемое максимальное значение) далее `elem` элементы матрицы в количестве N*M
-    2. **Perf_tests**  `matrix_data` = {10_000}, `matrix_data[i]` = i, `max` = 99_999_999
+    2. **Perf_tests**  `kMatrixRows_` = 10_000, `kMatrixColumns_` = 10_000, `matrix_data[i]` = i, `max` = 99_999_999
 
 
 ### Управление процессами
@@ -138,8 +138,8 @@ mpiexec -np 4 ./build/bin/ppc_perf_tests --gtest_filter="*MaxElemMatrix*"
 | Mode        | Count | Time, s | Speedup |
 |-------------|-------|---------|---------|
 | seq         | 1     | 0.078   | 1.00    |
-| omp         | 2     | 0.258   | 0.30    |
-| omp         | 4     | 0.216   | 0.36    |
+| mpi         | 2     | 0.258   | 0.30    |
+| mpi         | 4     | 0.216   | 0.36    |
 
 **Анализ результатов:** 
 - Полученные результаты показывают замедление MPI-версии относительно последовательной реализации.    
