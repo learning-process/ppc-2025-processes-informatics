@@ -12,22 +12,27 @@ namespace pylaeva_s_max_elem_matrix {
 PylaevaSMaxElemMatrixSEQ::PylaevaSMaxElemMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = std::numeric_limits<int>::min();
 }
 
 bool PylaevaSMaxElemMatrixSEQ::ValidationImpl() {
-  return (static_cast<size_t>(std::get<0>(GetInput())) == std::get<1>(GetInput()).size()) &&
-         (static_cast<size_t>(std::get<0>(GetInput())) > 0) && (GetOutput() == 0);
+  size_t rows = static_cast<size_t>(std::get<0>(GetInput()));
+  size_t columns = static_cast<size_t>(std::get<1>(GetInput()));
+  size_t matrix_size = rows * columns;
+
+  return (matrix_size == std::get<2>(GetInput()).size()) && (rows > 0) && (columns > 0);
 }
 
 bool PylaevaSMaxElemMatrixSEQ::PreProcessingImpl() {
-  GetOutput() = std::numeric_limits<int>::min();
   return true;
 }
 
 bool PylaevaSMaxElemMatrixSEQ::RunImpl() {
-  const auto &matrix_size = static_cast<size_t>(std::get<0>(GetInput()));
-  const auto &matrix_data = std::get<1>(GetInput());
+  const auto &matrix_rows = static_cast<size_t>(std::get<0>(GetInput()));
+  const auto &matrix_columns = static_cast<size_t>(std::get<1>(GetInput()));
+  const auto &matrix_data = std::get<2>(GetInput());
+
+  size_t matrix_size = matrix_rows * matrix_columns;
 
   if (matrix_data.empty() || matrix_size == 0 || matrix_data.size() != matrix_size) {
     return false;

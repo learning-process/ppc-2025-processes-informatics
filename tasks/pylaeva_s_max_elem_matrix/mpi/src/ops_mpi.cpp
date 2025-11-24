@@ -14,16 +14,18 @@ namespace pylaeva_s_max_elem_matrix {
 PylaevaSMaxElemMatrixMPI::PylaevaSMaxElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = std::numeric_limits<int>::min();
 }
 
 bool PylaevaSMaxElemMatrixMPI::ValidationImpl() {
-  return (static_cast<size_t>(std::get<0>(GetInput())) == std::get<1>(GetInput()).size()) &&
-         (static_cast<size_t>(std::get<0>(GetInput())) > 0) && (GetOutput() == 0);
+  size_t rows = static_cast<size_t>(std::get<0>(GetInput()));
+  size_t columns = static_cast<size_t>(std::get<1>(GetInput()));
+  size_t matrix_size = rows * columns;
+
+  return (matrix_size == std::get<2>(GetInput()).size()) && (rows > 0) && (columns > 0);
 }
 
 bool PylaevaSMaxElemMatrixMPI::PreProcessingImpl() {
-  GetOutput() = std::numeric_limits<int>::min();
   return true;
 }
 
@@ -33,12 +35,14 @@ bool PylaevaSMaxElemMatrixMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int matrix_size = 0;
+  size_t matrix_size = 0;
   std::vector<int> matrix_data;
 
   if (rank == 0) {
-    matrix_size = static_cast<int>(std::get<0>(GetInput()));
-    matrix_data = std::get<1>(GetInput());
+    size_t matrix_rows = static_cast<size_t>(std::get<0>(GetInput()));
+    size_t matrix_columns = static_cast<size_t>(std::get<1>(GetInput()));
+    matrix_size = matrix_rows * matrix_columns;
+    matrix_data = std::get<2>(GetInput());
   }
 
   MPI_Bcast(&matrix_size, 1, MPI_INT, 0, MPI_COMM_WORLD);

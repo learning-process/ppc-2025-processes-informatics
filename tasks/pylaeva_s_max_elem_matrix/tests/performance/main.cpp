@@ -12,9 +12,10 @@
 namespace pylaeva_s_max_elem_matrix {
 
 class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{0, {}};
-  const size_t kMatrixSize_ = 10000;
-  const size_t kTotalElements_ = kMatrixSize_ * kMatrixSize_;
+  InType input_data_{0, 0, {}};
+  const size_t kMatrixRows_ = 10000;
+  const size_t kMatrixColumns_ = 10000;
+  const size_t kTotalElements_ = kMatrixRows_ * kMatrixColumns_;
   OutType expected_data_ = static_cast<OutType>(static_cast<int>(kTotalElements_) - 1);
 
   void SetUp() override {
@@ -25,7 +26,7 @@ class PylaevaSMaxElemMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
       matrix_data.push_back(static_cast<int>(i));
     }
 
-    input_data_ = std::make_tuple(kTotalElements_, matrix_data);
+    input_data_ = std::make_tuple(kMatrixRows_, kMatrixColumns_, matrix_data);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
