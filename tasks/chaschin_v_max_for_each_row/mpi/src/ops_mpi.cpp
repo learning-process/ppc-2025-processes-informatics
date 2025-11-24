@@ -26,8 +26,8 @@ bool ChaschinVMaxForEachRow::ValidationImpl() {
     return in.empty();
   }
 
-  if (in[0].size()) {
-    return in[0].size();
+  if (in[0].empty()) {
+    return in[0].empty();
   }
 
   return true;
