@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+// #include <cmath>
+
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
 #include "shvetsova_k_max_diff_neig_vec/mpi/include/ops_mpi.hpp"
 #include "shvetsova_k_max_diff_neig_vec/seq/include/ops_seq.hpp"
@@ -10,7 +12,7 @@ namespace shvetsova_k_max_diff_neig_vec {
 class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const std::vector<double> kCount_ = {0.0};
   InType input_data_;
-  OutType expect_res;
+  OutType expect_res_;
 
   void SetUp() override {
     for (int i = 0; i < 10000000; i++) {
@@ -21,13 +23,13 @@ class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPe
         input_data_.push_back(10000);
       }
     }
-    expect_res.first = input_data_[0];
-    expect_res.second = input_data_[1];
+    expect_res_.first = input_data_[0];
+    expect_res_.second = input_data_[1];
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double eps = 0.05;
-    return (std::abs(output_data.first - expect_res.first) <= eps && output_data.second == expect_res.second);
+    return (std::abs(output_data.first - expect_res_.first) <= eps && output_data.second == expect_res_.second);
   }
 
   InType GetTestInputData() final {

@@ -1,7 +1,6 @@
 #include "shvetsova_k_max_diff_neig_vec/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+// #include <cmath>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
 #include "util/include/util.hpp"
@@ -15,7 +14,7 @@ ShvetsovaKMaxDiffNeigVecSEQ::ShvetsovaKMaxDiffNeigVecSEQ(const InType &in) {
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::ValidationImpl() {
-  data = GetInput();
+  data_ = GetInput();
   return true;
 }
 
@@ -24,25 +23,25 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::PreProcessingImpl() {
 }
 
 bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
-  double MaxDif = 0;
-  double FirstElem = 0;
-  double SecondElem = 0;
-  int sz = data.size();
+  double max_dif = 0;
+  double first_elem = 0;
+  double second_elem = 0;
+  int sz = data_.size();
   if (sz < 2) {
     GetOutput().first = 0.0;
     GetOutput().second = 0.0;
     return true;
   }
   for (int i = 0; i < sz - 1; i++) {
-    if (MaxDif <= std::abs(data.at(i) - data.at(i + 1))) {
-      FirstElem = data.at(i);
-      SecondElem = data.at(i + 1);
-      MaxDif = std::abs(data.at(i) - data.at(i + 1));
+    if (max_dif <= std::abs(data_.at(i) - data_.at(i + 1))) {
+      first_elem = data_.at(i);
+      second_elem = data_.at(i + 1);
+      max_dif = std::abs(data_.at(i) - data_.at(i + 1));
     }
   }
 
-  GetOutput().first = FirstElem;
-  GetOutput().second = SecondElem;
+  GetOutput().first = first_elem;
+  GetOutput().second = second_elem;
   return true;
 }
 

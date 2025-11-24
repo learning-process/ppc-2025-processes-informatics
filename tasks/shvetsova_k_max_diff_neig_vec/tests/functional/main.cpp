@@ -1,19 +1,8 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdint>
 #include <fstream>
-#include <iomanip>
-#include <map>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
 #include "shvetsova_k_max_diff_neig_vec/mpi/include/ops_mpi.hpp"
@@ -36,11 +25,11 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
 
     std::ifstream file(abs_path);
     if (!file.is_open()) {
-      std::cerr << "ERROR: Cannot open file: " << abs_path << std::endl;
+      std::cerr << "ERROR: Cannot open file: " << abs_path << '\n';
       return;
     }
-    file >> expect_res.first;
-    file >> expect_res.second;
+    file >> expect_res_.first;
+    file >> expect_res_.second;
     double num;
     std::vector<double> vec;
     while (file >> num) {
@@ -53,7 +42,7 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
   bool CheckTestOutputData(OutType &output_data) final {
     const double eps = 0.05;
 
-    return (std::abs(output_data.first - expect_res.first) <= eps && output_data.second == expect_res.second);
+    return (std::abs(output_data.first - expect_res_.first) <= eps && output_data.second == expect_res_.second);
   }
 
   InType GetTestInputData() final {
@@ -62,7 +51,7 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
 
  private:
   InType input_data_;
-  OutType expect_res;
+  OutType expect_res_;
 };
 
 namespace {

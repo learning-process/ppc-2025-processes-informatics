@@ -13,7 +13,7 @@ class ShvetsovaKMaxDiffNeigVecSEQ : public BaseTask {
   explicit ShvetsovaKMaxDiffNeigVecSEQ(const InType &in);
 
  private:
-  std::vector<double> data;
+  std::vector<double> data_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
