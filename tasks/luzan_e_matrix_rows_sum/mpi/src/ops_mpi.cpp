@@ -18,12 +18,10 @@ LuzanEMatrixRowsSumMPI::LuzanEMatrixRowsSumMPI(const InType &in) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::vector<int> tmp(0);
-  InType in_reduced = std::make_tuple(tmp, std::get<1>(in), std::get<2>(in));
   if (rank == 0) {
     GetInput() = in;
   } else {
-    GetInput() = in_reduced;
+    GetInput() = {};
   }
 }
 
@@ -79,13 +77,12 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
 
   // calcilating shifts & rows_per_proc (only about rows rigth now)
   int rest = height % size;
-  std::vector<int> shift(size); 
+  std::vector<int> shift(size, 0); 
   std::vector<int> per_proc(size, height / size); // rows per proc  
 
-  shift[0] = 0;
   int accumulator = 0;
   for (int i = 0; i < size; i++) {
-    if (rest != 0) {
+    if (rest > 0) {
       per_proc[i]++;
       rest--;
     }
@@ -104,6 +101,7 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
                MPI_COMM_WORLD);
   mat.clear(); // no need anymore
   
+  // calculating
   std::vector<int> rows_sum(static_cast<size_t>(per_proc[rank] / width)); // sums 
   int rows_to_calc = static_cast<int>(per_proc[rank] / width);
   for (int row = 0; row < rows_to_calc; row++) {
