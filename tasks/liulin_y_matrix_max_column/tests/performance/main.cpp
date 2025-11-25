@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <random>
-#include <tuple>
-
-#include "liulin_y_matrix_max_column/common/include/common.hpp"
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
 #include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+
+#include <cstddef>
+#include <random>
+#include <string>
 
 namespace liulin_y_matrix_max_column {
 
@@ -21,19 +21,23 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
   static TestConfig GetTestConfig(const std::string &test_name) {
     if (test_name.find("small") != std::string::npos) {
       return {100, 100, "small"};
-    } else if (test_name.find("medium") != std::string::npos) {
-      return {1000, 1000, "medium"};
-    } else if (test_name.find("large") != std::string::npos) {
-      return {10000, 10000, "large"};
-    } else if (test_name.find("xlarge") != std::string::npos) {
-      return {20000, 20000, "xlarge"};
-    } else if (test_name.find("tall") != std::string::npos) {
-      return {100, 5000, "tall"};
-    } else if (test_name.find("wide") != std::string::npos) {
-      return {5000, 100, "wide"};
-    } else {
-      return {100, 100, "small"};
     }
+    if (test_name.find("medium") != std::string::npos) {
+      return {1000, 1000, "medium"};
+    }
+    if (test_name.find("large") != std::string::npos) {
+      return {10000, 10000, "large"};
+    }
+    if (test_name.find("xlarge") != std::string::npos) {
+      return {20000, 20000, "xlarge"};
+    }
+    if (test_name.find("tall") != std::string::npos) {
+      return {100, 5000, "tall"};
+    }
+    if (test_name.find("wide") != std::string::npos) {
+      return {5000, 100, "wide"};
+    }
+    return {100, 100, "small"};
   }
 
   void SetUp() override {
@@ -87,9 +91,10 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
   }
 
  private:
-  int rows_, cols_;
-  InType input_data_;
-  OutType expected_output_;
+  int rows_ = 0;
+  int cols_ = 0;
+  InType input_data_{};
+  OutType expected_output_{};
 };
 
 TEST_P(LiulinYMatrixMaxColumnPerfTests, RunPerfModes) {
