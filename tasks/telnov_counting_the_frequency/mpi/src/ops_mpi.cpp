@@ -9,7 +9,6 @@
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
 
-
 namespace telnov_counting_the_frequency {
 
 TelnovCountingTheFrequencyMPI::TelnovCountingTheFrequencyMPI(const InType &in) {
