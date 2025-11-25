@@ -75,8 +75,9 @@ bool KosolapovVMaxValuesInColMatrixMPI::RunImpl() {
   if (rank == 0) {
     DistributeDataFromRoot(local_matrix, start, local_rows, columns, processes_count, rows_per_proc, remainder);
   } else {
-    local_matrix.resize(local_rows, std::vector<int>(columns));
+    local_matrix.resize(local_rows);
     for (int i = 0; i < local_rows; i++) {
+      local_matrix[i].resize(columns);
       MPI_Recv(local_matrix[i].data(), columns, MPI_INT, 0, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   }
@@ -95,7 +96,7 @@ void KosolapovVMaxValuesInColMatrixMPI::DistributeDataFromRoot(std::vector<std::
                                                                int local_rows, int columns, int processes_count,
                                                                int rows_per_proc, int remainder) {
   const auto &matrix = GetInput();
-  local_matrix.resize(local_rows, std::vector<int>(columns));
+  local_matrix.resize(local_rows);
 
   for (int i = 0; i < local_rows; i++) {
     local_matrix[i] = matrix[start + i];
