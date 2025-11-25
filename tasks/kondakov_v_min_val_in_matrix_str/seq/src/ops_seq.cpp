@@ -12,7 +12,8 @@ namespace kondakov_v_min_val_in_matrix_str {
 KondakovVMinValMatrixSEQ::KondakovVMinValMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = OutType(in.size());
+  GetOutput().clear();
+  GetOutput().resize(in.size());
 }
 
 bool KondakovVMinValMatrixSEQ::ValidationImpl() {
