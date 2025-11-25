@@ -19,7 +19,6 @@ class PerformanceBenchmark : public ppc::util::BaseRunPerfTests<InType, OutType>
     const int element_count = 100'000'000;
     std::vector<int> test_data(element_count);
 
-
     for (int i = 0; i < element_count; i++) {
       if (i % 3 == 0) {
         test_data[i] = i + 1;
@@ -44,6 +43,7 @@ class PerformanceBenchmark : public ppc::util::BaseRunPerfTests<InType, OutType>
     benchmark_input_ = InType(element_count, test_data);
   }
 
+  // NOLINTNEXTLINE(readability-make-member-function-const)
   bool CheckTestOutputData(OutType &actual_output) final {
     return actual_output == expected_value_;
   }
@@ -59,15 +59,15 @@ TEST_P(PerformanceBenchmark, ExecutePerformanceTests) {
   ExecuteTest(GetParam());
 }
 
-const auto performance_tasks = ppc::util::MakeAllPerfTasks<InType, PikhotskiyRElemVecSumMPI, PikhotskiyRElemVecSumSEQ>(
+const auto kPerformanceTasks = ppc::util::MakeAllPerfTasks<InType, PikhotskiyRElemVecSumMPI, PikhotskiyRElemVecSumSEQ>(
     PPC_SETTINGS_pikhotskiy_r_elem_vec_sum);
 
-const auto test_values = ppc::util::TupleToGTestValues(performance_tasks);
+const auto kTestValues = ppc::util::TupleToGTestValues(kPerformanceTasks);
 
-const auto benchmark_naming = PerformanceBenchmark::CustomPerfTestName;
+const auto kBenchmarkNaming = PerformanceBenchmark::CustomPerfTestName;
 
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(VectorSumBenchmarks, PerformanceBenchmark, test_values, benchmark_naming);
+INSTANTIATE_TEST_SUITE_P(VectorSumBenchmarks, PerformanceBenchmark, kTestValues, kBenchmarkNaming);
 
 }  // namespace
 

@@ -28,6 +28,7 @@ class VectorSumTestSuite : public ppc::util::BaseRunFuncTests<InType, OutType, T
     expected_output_ = std::get<2>(test_case);
   }
 
+  // NOLINTNEXTLINE(readability-make-member-function-const)
   bool CheckTestOutputData(OutType &computed_result) final {
     return computed_result == expected_output_;
   }
@@ -47,7 +48,7 @@ TEST_P(VectorSumTestSuite, CheckVectorSumComputation) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 14> test_scenarios = {
+const std::array<TestType, 14> kTestScenarios = {
     // Базовые тесты
     std::make_tuple(std::make_tuple(0, std::vector<int>{}), "empty_vector", 0LL),
     std::make_tuple(std::make_tuple(1, std::vector<int>{5}), "single_element", 5LL),
@@ -74,18 +75,18 @@ const std::array<TestType, 14> test_scenarios = {
     // Специфические случаи
     std::make_tuple(std::make_tuple(4, std::vector<int>{1, 2, 4, 8}), "powers_of_two", 15LL)};
 
-const auto test_combinations =
+const auto kTestCombinations =
     std::tuple_cat(ppc::util::AddFuncTask<pikhotskiy_r_elem_vec_sum::PikhotskiyRElemVecSumMPI, InType>(
-                       test_scenarios, PPC_SETTINGS_pikhotskiy_r_elem_vec_sum),
+                       kTestScenarios, PPC_SETTINGS_pikhotskiy_r_elem_vec_sum),
                    ppc::util::AddFuncTask<pikhotskiy_r_elem_vec_sum::PikhotskiyRElemVecSumSEQ, InType>(
-                       test_scenarios, PPC_SETTINGS_pikhotskiy_r_elem_vec_sum));
+                       kTestScenarios, PPC_SETTINGS_pikhotskiy_r_elem_vec_sum));
 
-const auto gtest_instances = ppc::util::ExpandToValues(test_combinations);
+const auto kGtestInstances = ppc::util::ExpandToValues(kTestCombinations);
 
-const auto test_name_generator = VectorSumTestSuite::PrintFuncTestName<VectorSumTestSuite>;
+const auto kTestNameGenerator = VectorSumTestSuite::PrintFuncTestName<VectorSumTestSuite>;
 
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(VectorSumTests, VectorSumTestSuite, gtest_instances, test_name_generator);
+INSTANTIATE_TEST_SUITE_P(VectorSumTests, VectorSumTestSuite, kGtestInstances, kTestNameGenerator);
 
 }  // namespace
 

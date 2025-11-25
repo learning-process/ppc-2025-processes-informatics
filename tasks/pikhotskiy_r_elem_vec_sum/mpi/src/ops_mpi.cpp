@@ -29,7 +29,8 @@ bool PikhotskiyRElemVecSumMPI::PreProcessingImpl() {
 }
 
 bool PikhotskiyRElemVecSumMPI::RunImpl() {
-  int my_rank, world_size;
+  int my_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
@@ -45,12 +46,13 @@ bool PikhotskiyRElemVecSumMPI::RunImpl() {
     return true;
   }
 
+  // Calculate distribution of work
   std::vector<int> counts_per_process(world_size);
   std::vector<int> offsets(world_size);
-
+  
   int base_count = total_elements / world_size;
   int extra_elements = total_elements % world_size;
-
+  
   for (int proc = 0; proc < world_size; ++proc) {
     counts_per_process[proc] = base_count + (proc < extra_elements ? 1 : 0);
     offsets[proc] = (proc == 0) ? 0 : offsets[proc - 1] + counts_per_process[proc - 1];
@@ -64,21 +66,25 @@ bool PikhotskiyRElemVecSumMPI::RunImpl() {
     send_buffer = const_cast<int *>(std::get<1>(GetInput()).data());
   }
 
-  MPI_Scatterv(send_buffer, counts_per_process.data(), offsets.data(), MPI_INT, my_data.data(), my_count, MPI_INT, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(send_buffer, counts_per_process.data(), offsets.data(), MPI_INT, 
+               my_data.data(), my_count, MPI_INT, 0, MPI_COMM_WORLD);
 
+  // Compute local sum
   OutType my_sum = 0LL;
   for (int i = 0; i < my_count; ++i) {
     my_sum += static_cast<OutType>(my_data[i]);
   }
 
+  // Combine all partial sums
   OutType global_result = 0LL;
   MPI_Reduce(&my_sum, &global_result, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
+  // Share result with all processes
   MPI_Bcast(&global_result, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
   GetOutput() = global_result;
 
+  // Synchronize before finishing
   MPI_Barrier(MPI_COMM_WORLD);
 
   return true;
