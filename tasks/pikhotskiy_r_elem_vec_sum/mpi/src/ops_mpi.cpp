@@ -49,10 +49,10 @@ bool PikhotskiyRElemVecSumMPI::RunImpl() {
   // Calculate distribution of work
   std::vector<int> counts_per_process(world_size);
   std::vector<int> offsets(world_size);
-  
+
   int base_count = total_elements / world_size;
   int extra_elements = total_elements % world_size;
-  
+
   for (int proc = 0; proc < world_size; ++proc) {
     counts_per_process[proc] = base_count + (proc < extra_elements ? 1 : 0);
     offsets[proc] = (proc == 0) ? 0 : offsets[proc - 1] + counts_per_process[proc - 1];
@@ -66,8 +66,8 @@ bool PikhotskiyRElemVecSumMPI::RunImpl() {
     send_buffer = const_cast<int *>(std::get<1>(GetInput()).data());
   }
 
-  MPI_Scatterv(send_buffer, counts_per_process.data(), offsets.data(), MPI_INT, 
-               my_data.data(), my_count, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(send_buffer, counts_per_process.data(), offsets.data(), MPI_INT, my_data.data(), my_count, MPI_INT, 0,
+               MPI_COMM_WORLD);
 
   // Compute local sum
   OutType my_sum = 0LL;
