@@ -1,16 +1,14 @@
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"  
 
-#include <mpi.h>
+#include "util/include/util.hpp"
 
 #include <algorithm>
 #include <limits>
+#include <mpi.h>
 #include <vector>
-
-#include "liulin_y_matrix_max_column/common/include/common.hpp"
 
 namespace liulin_y_matrix_max_column {
 
-// Реализация статического метода класса
 int LiulinYMatrixMaxColumnMPI::TournamentMax(const std::vector<int> &column) {
     if (column.empty()) {
         return std::numeric_limits<int>::min();
@@ -22,11 +20,7 @@ int LiulinYMatrixMaxColumnMPI::TournamentMax(const std::vector<int> &column) {
     while (size > 1) {
         int new_size = 0;
         for (int i = 0; i < size; i += 2) {
-            if (i + 1 < size) {
-                temp[new_size] = std::max(temp[i], temp[i + 1]);
-            } else {
-                temp[new_size] = temp[i];
-            }
+            temp[new_size] = (i + 1 < size) ? std::max(temp[i], temp[i + 1]) : temp[i];
             ++new_size;
         }
         size = new_size;
@@ -34,44 +28,84 @@ int LiulinYMatrixMaxColumnMPI::TournamentMax(const std::vector<int> &column) {
     return temp[0];
 }
 
-// Конструктор
 LiulinYMatrixMaxColumnMPI::LiulinYMatrixMaxColumnMPI(const InType &in) {
     SetTypeOfTask(GetStaticTypeOfTask());
     GetInput() = in;
     GetOutput().clear();
 }
 
-// Валидация
-bool LiulinYMatrixMaxColumnMPI::ValidationImpl() {
+bool LiulinYMatrixMaxColumnMPI::ValidationImpl() { 
     const auto &in = GetInput();
-    if (in.empty()) {
+
+    if (in.empty() || in[0].empty()) {
         return false;
     }
 
-    size_t cols = in[0].size();
+    const size_t cols = in[0].size();
+
     for (const auto &row : in) {
         if (row.size() != cols) {
             return false;
         }
     }
+
     return true;
 }
 
-// Предобработка
-bool LiulinYMatrixMaxColumnMPI::PreProcessingImpl() {
+bool LiulinYMatrixMaxColumnMPI::PreProcessingImpl() { 
     return true;
 }
 
-// Основной метод Run
-bool LiulinYMatrixMaxColumnMPI::RunImpl() {
+namespace {
+void PrepareCounts(int rows, int cols, int world_size, std::vector<int> &sendcounts, std::vector<int> &displs) {
+    sendcounts.assign(world_size, 0);
+    displs.assign(world_size, 0);
+
+    int base_cols = cols / world_size;
+    int remainder = cols % world_size;
+
+    for (int proc = 0; proc < world_size; ++proc) {
+        int local_cols = base_cols + (proc < remainder ? 1 : 0);
+        sendcounts[proc] = local_cols * rows;
+        if (proc > 0) {
+            displs[proc] = displs[proc - 1] + sendcounts[proc - 1];
+        }
+    }
+}
+
+void FillFlatMatrix(const InType &in, int rows, int cols, std::vector<int> &flat_matrix) {
+    flat_matrix.resize(rows * cols);
+    for (int col = 0; col < cols; ++col) {
+        for (int row = 0; row < rows; ++row) {
+            flat_matrix[col * rows + row] = in[row][col];
+        }
+    }
+}
+
+std::vector<int> ComputeLocalMaxes(const std::vector<int> &local_data, int rows, int local_cols) {
+    std::vector<int> local_maxes(local_cols, std::numeric_limits<int>::min());
+    for (int col_idx = 0; col_idx < local_cols; ++col_idx) {
+        std::vector<int> column(rows);
+        for (int row = 0; row < rows; ++row) {
+            column[row] = local_data[col_idx * rows + row];
+        }
+        local_maxes[col_idx] = LiulinYMatrixMaxColumnMPI::TournamentMax(column);
+    }
+    return local_maxes;
+}
+}  // namespace
+
+bool LiulinYMatrixMaxColumnMPI::RunImpl() { 
     const auto &in = GetInput();
     auto &out = GetOutput();
 
-    int world_size = 0, world_rank = 0;
+    int world_size = 0;
+    int world_rank = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-    int rows = 0, cols = 0;
+    int rows = 0;
+    int cols = 0;
     if (world_rank == 0 && !in.empty() && !in[0].empty()) {
         rows = static_cast<int>(in.size());
         cols = static_cast<int>(in[0].size());
@@ -85,33 +119,17 @@ bool LiulinYMatrixMaxColumnMPI::RunImpl() {
         return true;
     }
 
-    out.resize(cols, std::numeric_limits<int>::min());
+    out.assign(cols, std::numeric_limits<int>::min());
 
-    std::vector<int> sendcounts(world_size, 0);
-    std::vector<int> displs(world_size, 0);
-
-    int base_cols = cols / world_size;
-    int remainder = cols % world_size;
-    
-    for (int it = 0; it < world_size; ++it) {
-        int local_cols = 0;
-        local_cols = base_cols + (it < remainder ? 1 : 0);
-        sendcounts[it] = local_cols * rows;
-        if (it > 0) {
-            displs[it] = displs[it - 1] + sendcounts[it - 1];
-        }
-    }
+    std::vector<int> sendcounts;
+    std::vector<int> displs;
+    PrepareCounts(rows, cols, world_size, sendcounts, displs);
 
     std::vector<int> flat_matrix;
     if (world_rank == 0) {
-        flat_matrix.resize(rows * cols);
-        for (int jt = 0; jt < cols; ++jt) {
-            for (int it = 0; it < rows; ++it) {
-                flat_matrix[jt * rows + it] = in[it][jt];
-            }
-        }
+        FillFlatMatrix(in, rows, cols, flat_matrix);
     }
-
+    
     int local_cols = sendcounts[world_rank] / rows;
     int local_elements = local_cols * rows;
     std::vector<int> local_data(local_elements);
@@ -126,22 +144,14 @@ bool LiulinYMatrixMaxColumnMPI::RunImpl() {
                  0,
                  MPI_COMM_WORLD);
 
-    std::vector<int> local_maxes(local_cols, std::numeric_limits<int>::min());
-    for (int jt = 0; jt < local_cols; ++jt) {
-        std::vector<int> column(rows);
-        for (int it = 0; it < rows; ++it) {
-            column[it] = local_data[jt * rows + it];
-        }
-        local_maxes[jt] = TournamentMax(column);
-    }
+    std::vector<int> local_maxes = ComputeLocalMaxes(local_data, rows, local_cols);
 
     std::vector<int> recvcounts(world_size);
     std::vector<int> displs_gather(world_size, 0);
-
-    for (int it = 0; it < world_size; ++it) {
-        recvcounts[it] = sendcounts[it] / rows;
-        if (it > 0) {
-            displs_gather[it] = displs_gather[it - 1] + recvcounts[it - 1];
+    for (int proc = 0; proc < world_size; ++proc) {
+        recvcounts[proc] = sendcounts[proc] / rows;
+        if (proc > 0) {
+            displs_gather[proc] = displs_gather[proc - 1] + recvcounts[proc - 1];
         }
     }
 
@@ -160,8 +170,7 @@ bool LiulinYMatrixMaxColumnMPI::RunImpl() {
     return true;
 }
 
-// Постобработка
-bool LiulinYMatrixMaxColumnMPI::PostProcessingImpl() {
+bool LiulinYMatrixMaxColumnMPI::PostProcessingImpl() { 
     return true;
 }
 

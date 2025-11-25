@@ -1,11 +1,11 @@
 #include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
 
+#include "util/include/util.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <vector>
 
-#include "liulin_y_matrix_max_column/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace liulin_y_matrix_max_column {
 
@@ -15,15 +15,16 @@ LiulinYMatrixMaxColumnSEQ::LiulinYMatrixMaxColumnSEQ(const InType &in) {
   GetOutput().clear();
 }
 
-bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
-  const auto &in = GetInput();
+bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {  
+  const auto& in = GetInput();
 
   if (in.empty() || in[0].empty()) {
     return false;
   }
 
-  size_t cols = in[0].size();
-  for (const auto &row : in) {
+  const size_t cols = in[0].size();
+
+  for (const auto& row : in) {
     if (row.size() != cols) {
       return false;
     }
@@ -32,23 +33,23 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
   return GetOutput().empty();
 }
 
-bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() {
+bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() { 
   const size_t cols = GetInput()[0].size();
   GetOutput().assign(cols, std::numeric_limits<int>::min());
   return true;
 }
 
-bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
+bool LiulinYMatrixMaxColumnSEQ::RunImpl() { 
   const auto &matrix = GetInput();
   auto &out = GetOutput();
 
-  const int rows = matrix.size();
-  const int cols = matrix[0].size();
+  const int rows = static_cast<int>(matrix.size());
+  const int cols = static_cast<int>(matrix[0].size());
 
-  for (int col = 0; col < cols; col++) {
+  for (int col_idx = 0; col_idx < cols; ++col_idx) {
     std::vector<int> column(rows);
-    for (int rt = 0; rt < rows; rt++) {
-      column[rt] = matrix[rt][col];
+    for (int row = 0; row < rows; ++row) {
+      column[row] = matrix[row][col_idx];
     }
 
     int size = rows;
@@ -57,24 +58,19 @@ bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
     while (size > 1) {
       int new_size = 0;
       for (int i = 0; i < size; i += 2) {
-        if (i + 1 < size) {
-          temp[new_size] = std::max(temp[i], temp[i + 1]);
-        } else {
-          temp[new_size] = temp[i];
-        }
-
-        new_size++;
+        temp[new_size] = (i + 1 < size) ? std::max(temp[i], temp[i + 1]) : temp[i];
+        ++new_size;
       }
       size = new_size;
     }
 
-    out[col] = temp[0];
+    out[col_idx] = temp[0];
   }
 
   return true;
 }
 
-bool LiulinYMatrixMaxColumnSEQ::PostProcessingImpl() {
+bool LiulinYMatrixMaxColumnSEQ::PostProcessingImpl() { 
   return true;
 }
 

@@ -2,6 +2,7 @@
 
 #include "liulin_y_matrix_max_column/common/include/common.hpp"
 #include "task/include/task.hpp"
+
 #include <vector>
 
 namespace liulin_y_matrix_max_column {
@@ -12,9 +13,8 @@ class LiulinYMatrixMaxColumnMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit LiulinYMatrixMaxColumnMPI(const InType &in);
-
+  static int TournamentMax(const std::vector<int> &column);
  private:
-  static int TournamentMax(const std::vector<int> &column);  
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
