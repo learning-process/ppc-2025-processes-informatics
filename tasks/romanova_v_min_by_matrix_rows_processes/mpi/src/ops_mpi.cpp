@@ -16,11 +16,17 @@ RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
-  return !GetInput().empty() && !GetInput()[0].empty();
+  bool status;
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    status = !GetInput().empty() && !GetInput()[0].empty();
+  }
+  MPI_Bcast(&status, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+  return status;
 }
 
 bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
-  res_ = OutType();
   return true;
 }
 
@@ -53,9 +59,6 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
 
     send_counts = std::vector<int>(n, delta * m_);
     send_counts[n - 1] += extra * m_;
-
-    displs_gath = std::vector<int>(n);
-    displs_scatt = std::vector<int>(n);
 
     for (int i = 1; i < n; i++) {
       displs_gath[i] = displs_gath[i - 1] + delta;
