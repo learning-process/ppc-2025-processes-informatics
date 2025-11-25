@@ -18,13 +18,19 @@ MaxElementMatrMPI::MaxElementMatrMPI(const InType &in) : BaseTask() {
 }
 
 bool MaxElementMatrMPI::ValidationImpl() {
-  const auto &in = GetInput();
-  if (in.size() < 2) {
-    return false;
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0) {
+    const auto &in = GetInput();
+    if (in.size() < 2) {
+      return false;
+    }
+    rows_ = in[0];
+    cols_ = in[1];
+    return rows_ >= 0 && cols_ >= 0 && static_cast<size_t>(rows_) * cols_ == in.size() - 2;
   }
-  rows_ = in[0];
-  cols_ = in[1];
-  return rows_ >= 0 && cols_ >= 0 && static_cast<size_t>(rows_) * cols_ == in.size() - 2;
+  return true;
 }
 
 bool MaxElementMatrMPI::PreProcessingImpl() {
@@ -70,6 +76,9 @@ bool MaxElementMatrMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  MPI_Bcast(&rows_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cols_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (static_cast<size_t>(rows_) * cols_ == 0) {
     global_max_ = std::numeric_limits<int>::min();
