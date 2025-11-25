@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <vector>
 
