@@ -18,14 +18,14 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
   if (in.empty() || in[0].empty()) {
-    return false;
+    return true;
   }
 
   const size_t cols = in[0].size();
 
   for (const auto &row : in) {
     if (row.size() != cols) {
-      return false;
+      return true;
     }
   }
 
