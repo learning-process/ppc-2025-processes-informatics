@@ -32,10 +32,10 @@ bool NikolaevDMostDifVecNeighborsSEQ::RunImpl() {
   int max_diff = -1;
 
   for (std::vector<int>::size_type i = 0; i < GetInput().size() - 1; i++) {
-    int diff = std::abs(vec[i+1] - vec[i]);
+    int diff = std::abs(vec[i + 1] - vec[i]);
     if (diff > max_diff) {
       max_diff = diff;
-      result_elements = {vec[i], vec[i+1]};
+      result_elements = {vec[i], vec[i + 1]};
     }
   }
 

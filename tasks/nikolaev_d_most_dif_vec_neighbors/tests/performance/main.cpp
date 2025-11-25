@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-//#include <cstddef>
-//#include <random>
+// #include <cstddef>
+// #include <random>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -17,7 +17,7 @@
 namespace nikolaev_d_most_dif_vec_neighbors {
 
 class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  //const size_t kCount_ = 10'000'000;
+  // const size_t kCount_ = 10'000'000;
   InType input_data_;
   OutType expected_output_;
 
@@ -72,7 +72,8 @@ TEST_P(NikolaevDMostDifVecNeighborsPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NikolaevDMostDifVecNeighborsMPI, NikolaevDMostDifVecNeighborsSEQ>(PPC_SETTINGS_nikolaev_d_most_dif_vec_neighbors);
+    ppc::util::MakeAllPerfTasks<InType, NikolaevDMostDifVecNeighborsMPI, NikolaevDMostDifVecNeighborsSEQ>(
+        PPC_SETTINGS_nikolaev_d_most_dif_vec_neighbors);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
