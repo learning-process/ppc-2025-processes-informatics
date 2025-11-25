@@ -4,8 +4,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "gutyansky_a_matrix_column_sum/common/include/common.hpp"
 
@@ -71,8 +71,8 @@ bool GutyanskyAMatrixColumnSumMPI::RunImpl() {
     MPI_Scatterv(GetInput().data.data(), send_counts.data(), locs.data(), MPI_INTEGER4, input_data_chunk.data(),
                  static_cast<int>(elements_count), MPI_INTEGER4, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INTEGER4, input_data_chunk.data(),
-                 static_cast<int>(elements_count), MPI_INTEGER4, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INTEGER4, input_data_chunk.data(), static_cast<int>(elements_count),
+                 MPI_INTEGER4, 0, MPI_COMM_WORLD);
   }
 
   for (size_t i = 0; i < rows_count; i++) {
