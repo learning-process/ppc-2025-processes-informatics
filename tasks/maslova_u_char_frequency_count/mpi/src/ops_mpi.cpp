@@ -52,9 +52,9 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
     input_str_size = input_string.size();  // получили данные
   }
 
-  unsigned long long size_for_mpi = 0;
+  uint64_t size_for_mpi = 0;
   if (rank == 0) {
-    size_for_mpi = static_cast<unsigned long long>(input_str_size);  // явное приведение перед передачей
+    size_for_mpi = static_cast<uint64_t>(input_str_size);  // явное приведение перед передачей
   }
 
   MPI_Bcast(&size_for_mpi, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // отправляем размер строки
@@ -91,8 +91,8 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   );
 
   size_t local_count = std::count(local_str.begin(), local_str.end(), input_char);
-  unsigned long long local_count_for_mpi = static_cast<unsigned long long>(local_count);
-  unsigned long long global_count = 0;
+  auto local_count_for_mpi = static_cast<uint64_t>(local_count);
+  uint64_t global_count = 0;
   MPI_Allreduce(&local_count_for_mpi, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM,
                 MPI_COMM_WORLD);  // собрали данные со всех процессов
 
