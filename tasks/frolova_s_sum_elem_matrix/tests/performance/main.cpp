@@ -18,7 +18,7 @@ class FrolovaSSumElemMatrixRunPerfTests : public ppc::util::BaseRunPerfTests<InT
   InType matrix_;
 
   void SetUp() override {
-    matrix_.assign(kN, std::vector<int>(kN, 1));
+    matrix_ = std::vector<std::vector<int>>(kN, std::vector<int>(kN, 1));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
