@@ -47,9 +47,9 @@ class LiulinYMatrixMaxColumnFuncTestsFromFile : public ppc::util::BaseRunFuncTes
     }
 
     exp_output_ = OutType(cols, std::numeric_limits<int>::min());
-    for (int c = 0; c < cols; c++) {
-      for (int r = 0; r < rows; r++) {
-        exp_output_[c] = std::max(exp_output_[c], input_data_[r][c]);
+    for (int ct = 0; ct < cols; ct++) {
+      for (int rt = 0; rt < rows; rt++) {
+        exp_output_[ct] = std::max(exp_output_[ct], input_data_[rt][ct]);
       }
     }
 

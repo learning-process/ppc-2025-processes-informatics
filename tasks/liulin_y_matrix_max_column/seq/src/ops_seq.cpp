@@ -47,8 +47,8 @@ bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
 
   for (int col = 0; col < cols; col++) {
     std::vector<int> column(rows);
-    for (int r = 0; r < rows; r++) {
-      column[r] = matrix[r][col];
+    for (int rt = 0; rt < rows; rt++) {
+      column[rt] = matrix[rt][col];
     }
 
     int size = rows;
