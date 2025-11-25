@@ -9,7 +9,6 @@
 #include "kondakov_v_min_val_in_matrix_str/common/include/common.hpp"
 #include "kondakov_v_min_val_in_matrix_str/mpi/include/ops_mpi.hpp"
 #include "kondakov_v_min_val_in_matrix_str/seq/include/ops_seq.hpp"
-#include "mpi.h"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -37,18 +36,16 @@ class KondakovVMinValMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType
     } else if (test_name == "one_element") {
       input_data_ = {{42}};
       expected_output_ = {42};
+    } else if (test_name == "empty") {
+      input_data_ = {};
+      expected_output_ = {};
     } else {
       throw std::runtime_error("Unknown test case: " + test_name);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int world_rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    if (world_rank == 0) {
-      return output_data == expected_output_;
-    }
-    return true;
+    return output_data == expected_output_;
   }
 
   InType GetTestInputData() final {
@@ -66,7 +63,7 @@ TEST_P(KondakovVMinValMatrixFuncTests, FindMinInRows) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {"small", "single_row", "negative", "one_element"};
+const std::array<TestType, 5> kTestParam = {"small", "single_row", "negative", "one_element", "empty"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KondakovVMinValMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_kondakov_v_min_val_in_matrix_str),

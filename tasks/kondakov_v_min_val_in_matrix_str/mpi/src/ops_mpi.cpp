@@ -22,7 +22,7 @@ bool KondakovVMinValMatrixMPI::ValidationImpl() {
   const auto &matrix = GetInput();
 
   if (matrix.empty()) {
-    return false;
+    return true;
   }
 
   size_t cols = matrix[0].size();

@@ -1,16 +1,12 @@
 #include <gtest/gtest.h>
 
-#include <cstdint>
-#include <fstream>
-#include <sstream>
-#include <string>
+#include <cstddef>
 #include <vector>
 
 #include "kondakov_v_min_val_in_matrix_str/common/include/common.hpp"
 #include "kondakov_v_min_val_in_matrix_str/mpi/include/ops_mpi.hpp"
 #include "kondakov_v_min_val_in_matrix_str/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kondakov_v_min_val_in_matrix_str {
 
@@ -18,14 +14,14 @@ class KondakovVMinValMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType
   InType input_data_;
 
   void SetUp() override {
-    const size_t N = 1000;
-    input_data_.resize(N, std::vector<int>(N));
+    const size_t n = 10000;
+    input_data_.resize(n, std::vector<int>(n));
 
-    for (size_t i = 0; i < N; ++i) {
-      for (size_t j = 0; j < N - 1; ++j) {
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n - 1; ++j) {
         input_data_[i][j] = static_cast<int>(j + 1);
       }
-      input_data_[i][N - 1] = -static_cast<int>(i + 1);
+      input_data_[i][n - 1] = -static_cast<int>(i + 1);
     }
   }
 

@@ -26,7 +26,7 @@ bool KondakovVMinValMatrixSEQ::ValidationImpl() {
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (const auto &row : matrix) {
     if (row.empty()) {
-      return false;
+      return true;
     }
     if (row.size() != cols) {
       return false;
