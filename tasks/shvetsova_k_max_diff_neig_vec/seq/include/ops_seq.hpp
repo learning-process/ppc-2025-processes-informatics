@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
 #include "task/include/task.hpp"
 

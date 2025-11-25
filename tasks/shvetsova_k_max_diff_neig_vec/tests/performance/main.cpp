@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
-// #include <cmath>
+#include <cmath>
+#include <vector>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
 #include "shvetsova_k_max_diff_neig_vec/mpi/include/ops_mpi.hpp"

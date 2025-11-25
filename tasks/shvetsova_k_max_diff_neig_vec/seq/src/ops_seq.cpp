@@ -1,9 +1,9 @@
 #include "shvetsova_k_max_diff_neig_vec/seq/include/ops_seq.hpp"
 
-// #include <cmath>
+#include <cmath>
+#include <utility>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace shvetsova_k_max_diff_neig_vec {
 
@@ -26,7 +26,7 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
   double max_dif = 0;
   double first_elem = 0;
   double second_elem = 0;
-  int sz = data_.size();
+  int sz = static_cast<int>(data_.size());
   if (sz < 2) {
     GetOutput().first = 0.0;
     GetOutput().second = 0.0;

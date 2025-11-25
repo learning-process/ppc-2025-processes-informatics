@@ -3,10 +3,12 @@
 #include <mpi.h>
 
 #include <algorithm>
-// #include <cmath>
+#include <array>
+#include <cmath>
+#include <utility>
+#include <vector>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace shvetsova_k_max_diff_neig_vec {
 
@@ -26,9 +28,9 @@ bool ShvetsovaKMaxDiffNeigVecMPI::PreProcessingImpl() {
 }
 
 bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
-  int count_of_proc;
-  int rank;
-  int size_of_vector = data_.size();
+  int count_of_proc = 0;
+  int rank = 0;
+  int size_of_vector = static_cast<int>(data_.size());
   if (size_of_vector < 2) {
     GetOutput().first = 0.0;
     GetOutput().second = 0.0;
@@ -66,7 +68,8 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
 
   // ищем локальные результаты
   double local_diff = -1.0;
-  double local_a = 0.0, local_b = 0.0;
+  double local_a = 0.0;
+  double local_b = 0.0;
 
   for (int i = 0; i < part_size - 1; i++) {
     double diff = std::abs(part[i] - part[i + 1]);
@@ -108,8 +111,7 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   int winner_rank = 0;
 
   if (rank == 0) {
-    global_diff = *std::max_element(all_diffs.begin(), all_diffs.end());
-
+    global_diff = *std::ranges::max_element(all_diffs);
     for (int i = 0; i < count_of_proc; i++) {
       if (std::abs(all_diffs[i] - global_diff) < 1e-12) {
         winner_rank = i;
@@ -120,22 +122,22 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
 
   MPI_Bcast(&winner_rank, 1, MPI_INT, 0, MPI_COMM_WORLD);  // рассылаем номер процесса победителя
 
-  std::vector<double> all_pairs(count_of_proc * 2);
-  double local_pair[2] = {local_a, local_b};
+  std::vector<double> all_pairs(static_cast<size_t>(count_of_proc) * 2);
+  std::array<double, 2> local_pair = {local_a, local_b};
 
-  MPI_Gather(local_pair, 2, MPI_DOUBLE, all_pairs.data(), 2, MPI_DOUBLE, 0,
+  MPI_Gather(local_pair.data(), 2, MPI_DOUBLE, all_pairs.data(), 2, MPI_DOUBLE, 0,
              MPI_COMM_WORLD);  // получаем все локальные пары результаты (где максимальная разница на прооцессе)
 
-  double result_pair[2] = {0.0, 0.0};
+  std::array<double, 2> result_pair = {0.0, 0.0};
 
   if (rank == 0) {
     // вычисляем глобальную пару с максимальной разницей
-    result_pair[0] = all_pairs[winner_rank * 2];
-    result_pair[1] = all_pairs[winner_rank * 2 + 1];
+    result_pair[0] = all_pairs[static_cast<size_t>(winner_rank) * 2];
+    result_pair[1] = all_pairs[(static_cast<size_t>(winner_rank) * 2) + 1];
   }
 
   // рассылаем результат всем процессам
-  MPI_Bcast(result_pair, 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(result_pair.data(), 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   GetOutput() = {result_pair[0], result_pair[1]};
 

@@ -1,8 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cmath>
+#include <cstddef>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
 #include "shvetsova_k_max_diff_neig_vec/mpi/include/ops_mpi.hpp"
@@ -30,7 +35,7 @@ class ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses : public ppc::util::BaseRunF
     }
     file >> expect_res_.first;
     file >> expect_res_.second;
-    double num;
+    double num = 0.0;
     std::vector<double> vec;
     while (file >> num) {
       vec.push_back(num);
