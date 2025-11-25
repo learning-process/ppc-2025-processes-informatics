@@ -52,7 +52,10 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
   }
 
   void GenerateTestData() {
-    input_data_.assign(rows_, std::vector<int>(cols_));
+    input_data_.resize(rows_);
+    for (auto &row : input_data_) {
+      row.resize(cols_);
+    }
 
     std::mt19937 gen(42);
     std::uniform_int_distribution<int> dist(-1000, 1000);
@@ -63,7 +66,8 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
       }
     }
 
-    expected_output_.assign(cols_, std::numeric_limits<int>::min());
+    expected_output_.resize(cols_);
+    std::fill(expected_output_.begin(), expected_output_.end(), std::numeric_limits<int>::min());
     for (int col = 0; col < cols_; col++) {
       for (int row = 0; row < rows_; row++) {
         if (input_data_[row][col] > expected_output_[col]) {
