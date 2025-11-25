@@ -15,10 +15,7 @@ MaslovaUCharFrequencyCountSEQ::MaslovaUCharFrequencyCountSEQ(const InType &in) {
 }
 
 bool MaslovaUCharFrequencyCountSEQ::ValidationImpl() {
-  if (GetInput().first.size() > static_cast<size_t>(INT_MAX)) {
-    return false;
-  }
-  return true;
+  return GetInput().first.size() <= static_cast<size_t>(INT_MAX);
 }
 
 bool MaslovaUCharFrequencyCountSEQ::PreProcessingImpl() {
