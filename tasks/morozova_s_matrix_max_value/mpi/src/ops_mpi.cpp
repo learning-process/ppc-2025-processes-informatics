@@ -18,25 +18,7 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int is_valid = 1;
-  if (rank == 0) {
-    const auto &matrix = GetInput();
-    if (matrix.empty() || matrix[0].empty()) {
-      is_valid = 0;
-    } else {
-      const size_t cols = matrix[0].size();
-      for (const auto &row : matrix) {
-        if (row.size() != cols) {
-          is_valid = 0;
-          break;
-        }
-      }
-    }
-  }
-  MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  return is_valid != 0;
+  return true;
 }
 
 bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
@@ -44,37 +26,43 @@ bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
 }
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
-  if (!ValidationImpl()) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  const auto &matrix = GetInput();
+  if (matrix.empty() || matrix[0].empty()) {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
-  int rank = 0;
+  const size_t cols = matrix[0].size();
+  for (const auto &row : matrix) {
+    if (row.size() != cols) {
+      GetOutput() = std::numeric_limits<int>::min();
+      return true;
+    }
+  }
   int size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   int rows = 0;
-  int cols = 0;
+  int cols_int = 0;
   if (rank == 0) {
-    rows = static_cast<int>(GetInput().size());
-    cols = static_cast<int>(GetInput()[0].size());
+    rows = static_cast<int>(matrix.size());
+    cols_int = static_cast<int>(cols);
   }
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (rows == 0 || cols == 0) {
+  MPI_Bcast(&cols_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (rows == 0 || cols_int == 0) {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
-
-  std::vector<int> flat_matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols));
+  std::vector<int> flat_matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols_int));
   if (rank == 0) {
-    const auto &input = GetInput();
     for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        flat_matrix[(i * cols) + j] = input[i][j];
+      for (int j = 0; j < cols_int; ++j) {
+        flat_matrix[(i * cols_int) + j] = matrix[i][j];
       }
     }
   }
-  MPI_Bcast(flat_matrix.data(), rows * cols, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(flat_matrix.data(), rows * cols_int, MPI_INT, 0, MPI_COMM_WORLD);
   int local_max = std::numeric_limits<int>::min();
   int rows_per_proc = rows / size;
   int remainder = rows % size;
@@ -89,8 +77,8 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   }
   end_row = std::min(end_row, rows);
   for (int i = start_row; i < end_row; ++i) {
-    for (int j = 0; j < cols; ++j) {
-      const int value = flat_matrix[(i * cols) + j];
+    for (int j = 0; j < cols_int; ++j) {
+      const int value = flat_matrix[(i * cols_int) + j];
       local_max = std::max(local_max, value);
     }
   }

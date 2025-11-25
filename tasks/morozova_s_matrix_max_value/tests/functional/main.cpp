@@ -55,7 +55,7 @@ class MorozovaSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_number = std::get<0>(params);
     if (test_number == 4 || test_number == 5) {
-      return true;
+      return output_data == std::numeric_limits<int>::min();
     }
     int expected_max = std::numeric_limits<int>::min();
     for (const auto &row : input_data_) {
