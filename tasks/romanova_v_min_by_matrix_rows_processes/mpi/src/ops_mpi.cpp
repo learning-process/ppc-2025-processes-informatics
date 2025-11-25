@@ -49,9 +49,8 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   OutType flat_data_;
 
   if (rank == 0) {
-    InType in_data_ = GetInput();
-    n_ = in_data_.size();
-    m_ = in_data_[0].size();
+    n_ = GetInput().size();
+    m_ = ((!GetInput().empty()) ? GetInput()[0].size() : 0);
 
     delta = static_cast<int>(n_ / n);
     extra = static_cast<int>(n_ % n);
@@ -67,7 +66,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
       displs_scatt[i] = displs_scatt[i - 1] + delta * m_;
     }
 
-    for (const auto &vec : in_data_) {
+    for (const auto &vec : GetInput()) {
       flat_data_.insert(flat_data_.end(), vec.begin(), vec.end());
     }
   }
