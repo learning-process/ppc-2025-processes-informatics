@@ -60,7 +60,7 @@ const std::array<TestType, 7> kTestParam = {
     std::make_tuple(std::make_tuple(7, 7), std::vector<int>{7}),
     std::make_tuple(std::make_tuple(0, 100), std::vector<int>{0, 100, 100, 25}),
     std::make_tuple(std::make_tuple(-10, -5), std::vector<int>{-10, -5, -1, 3, 0, 0}),
-    std::make_tuple(std::make_tuple(1, 2), std::vector<int>{1, 2}),
+    std::make_tuple(std::make_tuple(2, 3), std::vector<int>{2, 2, 3}),
     std::make_tuple(std::make_tuple(10, 1), std::vector<int>{10, 1, 5, 3})};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LeonovaAMostDiffNeighVecElemsMPI, InType>(

@@ -1,5 +1,6 @@
 #include "leonova_a_most_diff_neigh_vec_elems/seq/include/ops_seq.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <tuple>
 #include <vector>
@@ -29,16 +30,18 @@ bool LeonovaAMostDiffNeighVecElemsSEQ::RunImpl() {
     return true;
   }
 
-  int max_diff = -1;
+  int64_t max_diff = -1;
   for (std::vector<int>::size_type index = 0; index < GetInput().size() - 1; index++) {
     std::tuple<int, int> curr_elems(GetInput()[index], GetInput()[index + 1]);
-    int curr_diff = abs(std::get<0>(curr_elems) - std::get<1>(curr_elems));
+
+    int64_t curr_diff = std::llabs(static_cast<int64_t>(std::get<0>(curr_elems)) -
+                                   static_cast<int64_t>(std::get<1>(curr_elems)));  // safe abs
+
     if (curr_diff > max_diff) {
       max_diff = curr_diff;
       GetOutput() = curr_elems;
     }
   }
-
   return true;
 }
 
