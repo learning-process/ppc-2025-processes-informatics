@@ -77,8 +77,8 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
 
   // calcilating shifts & rows_per_proc (only about rows rigth now)
   int rest = height % size;
-  std::vector<int> shift(size, 0); 
-  std::vector<int> per_proc(size, height / size); // rows per proc  
+  std::vector<int> shift(size, 0);
+  std::vector<int> per_proc(size, height / size);  // rows per proc
 
   int accumulator = 0;
   for (int i = 0; i < size; i++) {
@@ -94,15 +94,15 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   std::vector<int> recv(static_cast<size_t>(per_proc[rank] * width));
 
   for (int i = 0; i < size; i++) {
-    per_proc[i] *= width; // now it's about elements
+    per_proc[i] *= width;  // now it's about elements
     shift[i] *= width;
   }
   MPI_Scatterv(mat.data(), per_proc.data(), shift.data(), MPI_INT, recv.data(), per_proc[rank], MPI_INT, 0,
                MPI_COMM_WORLD);
-  mat.clear(); // no need anymore
-  
+  mat.clear();  // no need anymore
+
   // calculating
-  std::vector<int> rows_sum(static_cast<size_t>(per_proc[rank] / width)); // sums 
+  std::vector<int> rows_sum(static_cast<size_t>(per_proc[rank] / width));  // sums
   int rows_to_calc = static_cast<int>(per_proc[rank] / width);
   for (int row = 0; row < rows_to_calc; row++) {
     for (int col = 0; col < width; col++) {
@@ -111,13 +111,13 @@ bool LuzanEMatrixRowsSumMPI::RunImpl() {
   }
 
   for (int i = 0; i < size; i++) {
-	  per_proc[i] /= width; // back to rows
-	  shift[i] /= width;
+    per_proc[i] /= width;  // back to rows
+    shift[i] /= width;
   }
 
   std::vector<int> fin_sum(height);
-  MPI_Gatherv(rows_sum.data(), rows_to_calc, MPI_INT, fin_sum.data(), per_proc.data(), shift.data(), MPI_INT,
-              0, MPI_COMM_WORLD);
+  MPI_Gatherv(rows_sum.data(), rows_to_calc, MPI_INT, fin_sum.data(), per_proc.data(), shift.data(), MPI_INT, 0,
+              MPI_COMM_WORLD);
   MPI_Bcast(fin_sum.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = fin_sum;
   return true;
