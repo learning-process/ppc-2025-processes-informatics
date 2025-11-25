@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,7 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
 
     std::string long_str1;
     std::string long_str2;
-    std::vector<int> lengths(2, 0);
+    std::vector<uint64_t> lengths(2, 0);
 
     if (rank == 0) {
       long_str1 = std::string(100000000, 'a');
@@ -31,7 +32,7 @@ class GaseninLRunPerfTestsLexDif : public ppc::util::BaseRunPerfTests<InType, Ou
       lengths[1] = long_str2.length();
     }
 
-    MPI_Bcast(lengths.data(), 2, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(lengths.data(), 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
     if (rank != 0) {
       long_str1.resize(lengths[0]);
