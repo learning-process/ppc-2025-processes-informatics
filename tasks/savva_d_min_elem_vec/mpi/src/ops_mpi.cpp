@@ -25,26 +25,44 @@ bool SavvaDMinElemVecMPI::PreProcessingImpl() {
 }
 
 bool SavvaDMinElemVecMPI::RunImpl() {
-  auto &input_vec = GetInput();
-  if (input_vec.empty()) {
-    return false;
-  }
-
-  int rank = 0;
-  int size = 0;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int local_n, global_n;
+  int *local_data;
+  int *global_data = nullptr;
+  int *counts = new int[size];
+  int *displacements = new int[size];
 
-  const int n = static_cast<int>(input_vec.size());
-  int elements_per_proc = n / size;
-  int remainder = n % size;
+  // если вектор - пустой, то false
+  if (rank == 0) {
+    global_data = GetInput().data();
+    global_n = GetInput().size();
+    int elements_per_proc = global_n / size;
+    int remainder = global_n % size;
+    int offset = 0;
 
-  int local_start = (rank * elements_per_proc) + std::min(rank, remainder);
-  int local_end = local_start + elements_per_proc + (rank < remainder ? 1 : 0);
+    for (int i = 0; i < size; ++i) {
+      counts[i] = elements_per_proc + (i < remainder ? 1 : 0);
+      displacements[i] = offset;
+      offset += counts[i];
+    }
+  }
+
+  MPI_Bcast(&global_n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (global_n == 0) {
+    return false;
+  }
+  MPI_Bcast(counts, size, MPI_INT, 0, MPI_COMM_WORLD);
+  local_data = new int[counts[rank]];
+  local_n = counts[rank];
+  MPI_Scatterv(global_data, counts, displacements, MPI_INT, local_data, local_n, MPI_INT, 0, MPI_COMM_WORLD);
 
   int local_min = std::numeric_limits<int>::max();
-  for (int i = local_start; i < local_end && i < n; ++i) {
-    local_min = std::min(input_vec[i], local_min);
+  for (int i = 0; i < local_n; ++i) {
+    if (local_data[i] < local_min) {
+      local_min = local_data[i];
+    }
   }
 
   int global_min = 0;
