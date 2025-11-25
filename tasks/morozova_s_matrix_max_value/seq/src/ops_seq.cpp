@@ -16,6 +16,16 @@ MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
+  const auto &matrix = GetInput();
+  if (matrix.empty()) {
+    return true;
+  }
+  const size_t first_row_size = matrix[0].size();
+  for (const auto &row : matrix) {
+    if (row.size() != first_row_size) {
+      return false;
+    }
+  }
   return true;
 }
 
