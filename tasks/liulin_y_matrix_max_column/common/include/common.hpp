@@ -1,10 +1,10 @@
 #pragma once
 
-#include "task/include/task.hpp"
-
 #include <string>
 #include <tuple>
 #include <vector>
+
+#include "task/include/task.hpp"
 
 namespace liulin_y_matrix_max_column {
 

@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 
-#include "liulin_y_matrix_max_column/common/include/common.hpp"
-#include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
-#include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
-
 #include <array>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+
+#include "liulin_y_matrix_max_column/common/include/common.hpp"
+#include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
+#include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace liulin_y_matrix_max_column {
 

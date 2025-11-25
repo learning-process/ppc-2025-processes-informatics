@@ -1,9 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "liulin_y_matrix_max_column/common/include/common.hpp"
 #include "task/include/task.hpp"
-
-#include <vector>
 
 namespace liulin_y_matrix_max_column {
 
@@ -14,6 +14,7 @@ class LiulinYMatrixMaxColumnMPI : public BaseTask {
   }
   explicit LiulinYMatrixMaxColumnMPI(const InType &in);
   static int TournamentMax(const std::vector<int> &column);
+
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

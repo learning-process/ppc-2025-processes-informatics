@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
-#include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
-#include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
-
 #include <cstddef>
 #include <random>
 #include <string>
+
+#include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
+#include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace liulin_y_matrix_max_column {
 

@@ -1,11 +1,10 @@
 #include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
 
-#include "util/include/util.hpp"
-
 #include <algorithm>
 #include <limits>
 #include <vector>
 
+#include "util/include/util.hpp"
 
 namespace liulin_y_matrix_max_column {
 
@@ -15,8 +14,8 @@ LiulinYMatrixMaxColumnSEQ::LiulinYMatrixMaxColumnSEQ(const InType &in) {
   GetOutput().clear();
 }
 
-bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {  
-  const auto& in = GetInput();
+bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
+  const auto &in = GetInput();
 
   if (in.empty() || in[0].empty()) {
     return false;
@@ -24,7 +23,7 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
 
   const size_t cols = in[0].size();
 
-  for (const auto& row : in) {
+  for (const auto &row : in) {
     if (row.size() != cols) {
       return false;
     }
@@ -33,13 +32,13 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
   return GetOutput().empty();
 }
 
-bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() { 
+bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() {
   const size_t cols = GetInput()[0].size();
   GetOutput().assign(cols, std::numeric_limits<int>::min());
   return true;
 }
 
-bool LiulinYMatrixMaxColumnSEQ::RunImpl() { 
+bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
   const auto &matrix = GetInput();
   auto &out = GetOutput();
 
@@ -70,7 +69,7 @@ bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
   return true;
 }
 
-bool LiulinYMatrixMaxColumnSEQ::PostProcessingImpl() { 
+bool LiulinYMatrixMaxColumnSEQ::PostProcessingImpl() {
   return true;
 }
 
