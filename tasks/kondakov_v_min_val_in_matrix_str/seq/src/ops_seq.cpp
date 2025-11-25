@@ -19,14 +19,14 @@ bool KondakovVMinValMatrixSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
 
   if (matrix.empty()) {
-    return false;
+    return true;
   }
 
   size_t cols = matrix[0].size();
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (const auto &row : matrix) {
     if (row.empty()) {
-      return true;
+      return false;
     }
     if (row.size() != cols) {
       return false;
