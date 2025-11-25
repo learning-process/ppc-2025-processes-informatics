@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <climits>
 #include <cstddef>
 #include <string>
 #include <utility>
@@ -19,7 +20,16 @@ MaslovaUCharFrequencyCountMPI::MaslovaUCharFrequencyCountMPI(const InType &in) {
 }
 
 bool MaslovaUCharFrequencyCountMPI::ValidationImpl() {
-  return true;
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int flag = 0;  // 0 - всё ок, 1 - ошибка
+  if (rank == 0) {
+    if (GetInput().first.size() > static_cast<size_t>(INT_MAX)) {
+      flag = 1;
+    }
+  }
+  MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  return (flag == 0);
 }
 
 bool MaslovaUCharFrequencyCountMPI::PreProcessingImpl() {
@@ -40,14 +50,21 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
     input_string = GetInput().first;
     input_char = GetInput().second;
     input_str_size = input_string.size();  // получили данные
-
-    if (input_string.empty()) {
-      GetOutput() = 0;  // если строка пустая, выводим сразу 0
-    }
   }
 
-  MPI_Bcast(&input_str_size, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // отправляем размер строки
+  unsigned long long size_for_mpi = 0;
+  if (rank == 0) {
+    size_for_mpi = static_cast<unsigned long long>(input_str_size);  // явное приведение перед передачей
+  }
+
+  MPI_Bcast(&size_for_mpi, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // отправляем размер строки
+
+  if (rank != 0) {
+    input_str_size = static_cast<size_t>(size_for_mpi);  // возращаем обратно для удобного использования в дальнейшем
+  }
+
   if (input_str_size == 0) {
+    GetOutput() = 0;  // ставим для всех процессов
     return true;
   }
 
@@ -74,12 +91,12 @@ bool MaslovaUCharFrequencyCountMPI::RunImpl() {
   );
 
   size_t local_count = std::count(local_str.begin(), local_str.end(), input_char);
-
-  size_t global_count = 0;
-  MPI_Allreduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM,
+  unsigned long long local_count_for_mpi = static_cast<unsigned long long>(local_count);
+  unsigned long long global_count = 0;
+  MPI_Allreduce(&local_count_for_mpi, &global_count, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM,
                 MPI_COMM_WORLD);  // собрали данные со всех процессов
 
-  GetOutput() = global_count;  // вывели результат
+  GetOutput() = static_cast<size_t>(global_count);  // вывели результат, при этом приведя его к нужному нам типу
 
   return true;
 }

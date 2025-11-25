@@ -1,5 +1,6 @@
 #include "maslova_u_char_frequency_count/seq/include/ops_seq.hpp"
 
+#include <climits>
 #include <cstddef>
 #include <string>
 
@@ -14,6 +15,9 @@ MaslovaUCharFrequencyCountSEQ::MaslovaUCharFrequencyCountSEQ(const InType &in) {
 }
 
 bool MaslovaUCharFrequencyCountSEQ::ValidationImpl() {
+  if (GetInput().first.size() > static_cast<size_t>(INT_MAX)) {
+    return false;
+  }
   return true;
 }
 
