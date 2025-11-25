@@ -4,7 +4,6 @@
 #include "task/include/task.hpp"
 
 namespace pikhotskiy_r_elem_vec_sum {
-
 class PikhotskiyRElemVecSumMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {

@@ -2,11 +2,11 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <cmath>
+#include <utility>
 #include <vector>
 
 #include "pikhotskiy_r_elem_vec_sum/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace pikhotskiy_r_elem_vec_sum {
 
@@ -17,56 +17,75 @@ PikhotskiyRElemVecSumMPI::PikhotskiyRElemVecSumMPI(const InType &in) {
 }
 
 bool PikhotskiyRElemVecSumMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto &input_data = GetInput();
+  bool output_check = (GetOutput() == 0);
+  bool size_check = std::cmp_equal(std::get<1>(input_data).size(), std::get<0>(input_data));
+  return output_check && size_check;
 }
 
 bool PikhotskiyRElemVecSumMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  GetOutput() = 0;
+  return true;
 }
 
 bool PikhotskiyRElemVecSumMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
+  int my_rank, world_size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+  int total_elements = 0;
+  if (my_rank == 0) {
+    total_elements = std::get<0>(GetInput());
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
+  MPI_Bcast(&total_elements, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (total_elements == 0) {
+    GetOutput() = 0LL;
+    return true;
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+  std::vector<int> counts_per_process(world_size);
+  std::vector<int> offsets(world_size);
 
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int base_count = total_elements / world_size;
+  int extra_elements = total_elements % world_size;
 
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
-    }
-
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
+  for (int proc = 0; proc < world_size; ++proc) {
+    counts_per_process[proc] = base_count + (proc < extra_elements ? 1 : 0);
+    offsets[proc] = (proc == 0) ? 0 : offsets[proc - 1] + counts_per_process[proc - 1];
   }
+
+  int my_count = counts_per_process[my_rank];
+  std::vector<int> my_data(my_count);
+
+  int *send_buffer = nullptr;
+  if (my_rank == 0) {
+    send_buffer = const_cast<int *>(std::get<1>(GetInput()).data());
+  }
+
+  MPI_Scatterv(send_buffer, counts_per_process.data(), offsets.data(), MPI_INT, my_data.data(), my_count, MPI_INT, 0,
+               MPI_COMM_WORLD);
+
+  OutType my_sum = 0LL;
+  for (int i = 0; i < my_count; ++i) {
+    my_sum += static_cast<OutType>(my_data[i]);
+  }
+
+  OutType global_result = 0LL;
+  MPI_Reduce(&my_sum, &global_result, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(&global_result, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+
+  GetOutput() = global_result;
 
   MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+
+  return true;
 }
 
 bool PikhotskiyRElemVecSumMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace pikhotskiy_r_elem_vec_sum

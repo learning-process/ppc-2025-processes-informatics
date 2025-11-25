@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <cstdlib>
+#include <vector>
+
 #include "pikhotskiy_r_elem_vec_sum/common/include/common.hpp"
 #include "pikhotskiy_r_elem_vec_sum/mpi/include/ops_mpi.hpp"
 #include "pikhotskiy_r_elem_vec_sum/seq/include/ops_seq.hpp"
@@ -7,34 +11,64 @@
 
 namespace pikhotskiy_r_elem_vec_sum {
 
-class PikhotskiyRElelmVecSumPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+class PerformanceBenchmark : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  InType benchmark_input_{0, {}};
+  OutType expected_value_{0};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    const int element_count = 100'000'000;
+    std::vector<int> test_data(element_count);
+
+
+    for (int i = 0; i < element_count; i++) {
+      if (i % 3 == 0) {
+        test_data[i] = i + 1;
+      } else if (i % 3 == 1) {
+        test_data[i] = 42;
+      } else {
+        test_data[i] = element_count - i;
+      }
+    }
+
+    expected_value_ = 0LL;
+    for (int i = 0; i < element_count; i++) {
+      if (i % 3 == 0) {
+        expected_value_ += static_cast<OutType>(i + 1);
+      } else if (i % 3 == 1) {
+        expected_value_ += 42LL;
+      } else {
+        expected_value_ += static_cast<OutType>(element_count - i);
+      }
+    }
+
+    benchmark_input_ = InType(element_count, test_data);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+  bool CheckTestOutputData(OutType &actual_output) final {
+    return actual_output == expected_value_;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return benchmark_input_;
   }
 };
 
-TEST_P(PikhotskiyRElelmVecSumPerfTests, RunPerfModes) {
+namespace {
+
+TEST_P(PerformanceBenchmark, ExecutePerformanceTests) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PikhotskiyRElemVecSumMPI, PikhotskiyRElemVecSumSEQ>(PPC_SETTINGS_pikhotskiy_r_elem_vec_sum);
+const auto performance_tasks = ppc::util::MakeAllPerfTasks<InType, PikhotskiyRElemVecSumMPI, PikhotskiyRElemVecSumSEQ>(
+    PPC_SETTINGS_pikhotskiy_r_elem_vec_sum);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto test_values = ppc::util::TupleToGTestValues(performance_tasks);
 
-const auto kPerfTestName = PikhotskiyRElelmVecSumPerfTests::CustomPerfTestName;
+const auto benchmark_naming = PerformanceBenchmark::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, PikhotskiyRElelmVecSumPerfTests, kGtestValues, kPerfTestName);
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(VectorSumBenchmarks, PerformanceBenchmark, test_values, benchmark_naming);
+
+}  // namespace
 
 }  // namespace pikhotskiy_r_elem_vec_sum
