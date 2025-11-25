@@ -14,7 +14,8 @@ namespace kondakov_v_min_val_in_matrix_str {
 
 KondakovVMinValMatrixMPI::KondakovVMinValMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  InType tmp = in;
+  GetInput().swap(tmp);
   GetOutput().clear();
   GetOutput().resize(in.size());
 }
