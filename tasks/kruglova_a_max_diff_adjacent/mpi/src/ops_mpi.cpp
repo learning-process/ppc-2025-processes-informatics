@@ -69,7 +69,7 @@ bool KruglovaAMaxDiffAdjacentMPI::RunImpl() {
 
     displs[proc] = (proc * base) + std::min(proc, rem);
 
-    if (displs[proc] + count < n && proc != size - 1) {
+    if (displs[proc] + count < n) {
       sendcounts[proc] = count + 1;
     } else {
       sendcounts[proc] = count;
