@@ -52,8 +52,7 @@ class AshihminDElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, O
   //   input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
   // }
   void SetUp() override {
-    // Просто число, не вектор
-    input_data_ = 10;  // можно менять под разные тесты
+    input_data_ = 10;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

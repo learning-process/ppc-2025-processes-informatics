@@ -15,8 +15,7 @@ class AshihminDElemVecSumPerfTest : public ppc::util::BaseRunPerfTests<InType, O
   //   input_data_ = kCount_;
   // }
   void SetUp() override {
-    // Большое число для performance тестов
-    input_data_ = 1000000;  // миллион элементов
+    input_data_ = 1000000;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

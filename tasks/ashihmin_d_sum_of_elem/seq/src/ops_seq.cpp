@@ -14,12 +14,10 @@ AshihminDElemVecsSumSEQ::AshihminDElemVecsSumSEQ(const InType &in) {
 }
 
 bool AshihminDElemVecsSumSEQ::ValidationImpl() {
-  // Требование: вход положительный, output ещё не установлен
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
 bool AshihminDElemVecsSumSEQ::PreProcessingImpl() {
-  // Ничего не нужно специально готовить — будем генерировать данные в RunImpl
   return true;
 }
 
@@ -29,7 +27,6 @@ bool AshihminDElemVecsSumSEQ::RunImpl() {
     return false;
   }
 
-  // "Виртуальный" вектор длины n, заполненный единицами -> сумма = n
   int sum = 0;
   for (int i = 0; i < n; ++i) {
     sum += 1;
@@ -40,7 +37,6 @@ bool AshihminDElemVecsSumSEQ::RunImpl() {
 }
 
 bool AshihminDElemVecsSumSEQ::PostProcessingImpl() {
-  // Проверка / финализация: output должен равняться input
   return GetOutput() == GetInput();
 }
 

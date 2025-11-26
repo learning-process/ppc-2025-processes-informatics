@@ -91,7 +91,6 @@ bool AshihminDElemVecsSumMPI::RunImpl() {
   int global_sum = 0;
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  // Рассылаем всем процессам
   MPI_Bcast(&global_sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   GetOutput() = global_sum;
@@ -100,7 +99,7 @@ bool AshihminDElemVecsSumMPI::RunImpl() {
 }
 
 bool AshihminDElemVecsSumMPI::PostProcessingImpl() {
-  return true;  // output уже равен input
+  return true;
 }
 
 }  // namespace ashihmin_d_sum_of_elem
