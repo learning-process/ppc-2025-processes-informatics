@@ -12,7 +12,7 @@ namespace romanova_v_min_by_matrix_rows_processes {
 
 RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput().assign(in.begin(), in.end());
+  GetInput() = in;
   GetOutput() = OutType(in.size());
 }
 
@@ -28,6 +28,7 @@ bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::PreProcessingImpl() {
+  in_data_ = GetInput();
   return true;
 }
 
@@ -49,8 +50,8 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   OutType flat_data_;
 
   if (rank == 0) {
-    n_ = GetInput().size();
-    m_ = ((!GetInput().empty()) ? GetInput()[0].size() : 0);
+    n_ = in_data_.size();
+    m_ = ((!in_data_.empty()) ? in_data_[0].size() : 0);
 
     delta = static_cast<int>(n_ / n);
     extra = static_cast<int>(n_ % n);
@@ -66,7 +67,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
       displs_scatt[i] = displs_scatt[i - 1] + delta * m_;
     }
 
-    for (const auto &vec : GetInput()) {
+    for (const auto &vec : in_data_) {
       flat_data_.insert(flat_data_.end(), vec.begin(), vec.end());
     }
   }
