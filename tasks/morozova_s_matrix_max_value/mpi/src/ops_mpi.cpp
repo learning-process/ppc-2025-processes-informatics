@@ -46,7 +46,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int cols_int = static_cast<int>(cols);
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (rows <= 0 || cols_int <= 0) {
+  if (rows == 0 || cols_int == 0) {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
