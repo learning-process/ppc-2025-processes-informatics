@@ -48,7 +48,7 @@ bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
   MPI_Bcast(&len1, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&len2, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  const int min_len = static_cast<int>(std::min(str1.length(), str2.length()));
+  const int min_len = static_cast<int>(std::min(len1, len2));
 
   if (proc_count > min_len) {
     if (rank == 0) {
