@@ -17,8 +17,8 @@ RomanovaVMinByMatrixRowsMPI::RomanovaVMinByMatrixRowsMPI(const InType &in) {
 }
 
 bool RomanovaVMinByMatrixRowsMPI::ValidationImpl() {
-  bool status;
-  int rank;
+  bool status = false;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     status = !GetInput().empty() && !GetInput()[0].empty();
@@ -47,7 +47,7 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   std::vector<int> displs_scatt(n);
   std::vector<int> displs_gath(n);
 
-  OutType flat_data_;
+  OutType flat_data;
 
   if (rank == 0) {
     n_ = in_data_.size();
@@ -59,16 +59,16 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
     recv_counts = std::vector<int>(n, delta);
     recv_counts[n - 1] += extra;
 
-    send_counts = std::vector<int>(n, delta * m_);
-    send_counts[n - 1] += extra * m_;
+    send_counts = std::vector<int>(n, static_cast<int>(delta * m_));
+    send_counts[n - 1] += static_cast<int>(extra * m_);
 
     for (int i = 1; i < n; i++) {
       displs_gath[i] = displs_gath[i - 1] + delta;
-      displs_scatt[i] = displs_scatt[i - 1] + delta * m_;
+      displs_scatt[i] = displs_scatt[i - 1] + static_cast<int>(delta * m_);
     }
 
     for (const auto &vec : in_data_) {
-      flat_data_.insert(flat_data_.end(), vec.begin(), vec.end());
+      flat_data.insert(flat_data.end(), vec.begin(), vec.end());
     }
   }
 
@@ -78,24 +78,24 @@ bool RomanovaVMinByMatrixRowsMPI::RunImpl() {
   MPI_Bcast(&delta, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&extra, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  OutType local_data_((delta + (rank == n - 1 ? extra : 0)) * m_);
+  OutType local_data((delta + (rank == n - 1 ? extra : 0)) * m_);
 
-  MPI_Scatterv(rank == 0 ? flat_data_.data() : nullptr, send_counts.data(), displs_scatt.data(), MPI_INT,
-               local_data_.data(), local_data_.size(), MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? flat_data.data() : nullptr, send_counts.data(), displs_scatt.data(), MPI_INT,
+               local_data.data(), static_cast<int>(local_data.size()), MPI_INT, 0, MPI_COMM_WORLD);
 
-  OutType temp_(delta + (rank == n - 1 ? extra : 0));
+  OutType temp(delta + (rank == n - 1 ? extra : 0));
 
-  for (size_t i = 0; i < temp_.size(); i++) {
-    temp_[i] = local_data_[i * m_];
+  for (size_t i = 0; i < temp.size(); i++) {
+    temp[i] = local_data[i * m_];
     for (size_t j = 1; j < m_; j++) {
-      temp_[i] = std::min(temp_[i], local_data_[i * m_ + j]);
+      temp[i] = std::min(temp[i], local_data[(i * m_) + j]);
     }
   }
 
   res_ = OutType(n_);
 
-  MPI_Gatherv(temp_.data(), static_cast<int>(temp_.size()), MPI_INT, res_.data(), recv_counts.data(),
-              displs_gath.data(), MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(temp.data(), static_cast<int>(temp.size()), MPI_INT, res_.data(), recv_counts.data(), displs_gath.data(),
+              MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(res_.data(), static_cast<int>(n_), MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;
