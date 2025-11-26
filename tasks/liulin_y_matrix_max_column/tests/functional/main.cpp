@@ -1,10 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "liulin_y_matrix_max_column/common/include/common.hpp"
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
@@ -64,8 +68,8 @@ class LiulinYMatrixMaxColumnFuncTestsFromFile : public ppc::util::BaseRunFuncTes
   }
 
  private:
-  InType input_data_ = {};
-  OutType exp_output_ = {};
+  InType input_data_;
+  OutType exp_output_;
 };
 
 namespace {

@@ -1,10 +1,11 @@
 #include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
-#include "util/include/util.hpp"
+#include "liulin_y_matrix_max_column/common/include/common.hpp"
 
 namespace liulin_y_matrix_max_column {
 
@@ -27,7 +28,7 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
     return true;
   }
 
-  const size_t cols = in[0].size();
+  const std::size_t cols = in[0].size();
 
   for (const auto &row : in) {
     if (row.size() != cols) {
@@ -39,7 +40,7 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
 }
 
 bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() {
-  const size_t cols = GetInput()[0].size();
+  const std::size_t cols = GetInput()[0].size();
   GetOutput().assign(cols, std::numeric_limits<int>::min());
   return true;
 }

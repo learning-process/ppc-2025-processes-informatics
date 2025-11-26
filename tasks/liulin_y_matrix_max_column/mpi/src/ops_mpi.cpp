@@ -1,12 +1,12 @@
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
 #include <algorithm>
+#include <cstddef>
 #include <limits>
+#include <mpi.h>
 #include <vector>
 
-#include "util/include/util.hpp"
+#include "liulin_y_matrix_max_column/common/include/common.hpp"
 
 namespace liulin_y_matrix_max_column {
 
@@ -48,7 +48,7 @@ bool LiulinYMatrixMaxColumnMPI::ValidationImpl() {
     return true;
   }
 
-  const size_t cols = in[0].size();
+  const std::size_t cols = in[0].size();
 
   for (const auto &row : in) {
     if (row.size() != cols) {
@@ -81,10 +81,10 @@ void PrepareCounts(int rows, int cols, int world_size, std::vector<int> &sendcou
 }
 
 void FillFlatMatrix(const InType &in, int rows, int cols, std::vector<int> &flat_matrix) {
-  flat_matrix.resize(rows * cols);
+  flat_matrix.resize(static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols));
   for (int col = 0; col < cols; ++col) {
     for (int row = 0; row < rows; ++row) {
-      flat_matrix[col * rows + row] = in[row][col];
+      flat_matrix[(col * rows) + row] = in[row][col];
     }
   }
 }
@@ -94,7 +94,7 @@ std::vector<int> ComputeLocalMaxes(const std::vector<int> &local_data, int rows,
   for (int col_idx = 0; col_idx < local_cols; ++col_idx) {
     std::vector<int> column(rows);
     for (int row = 0; row < rows; ++row) {
-      column[row] = local_data[col_idx * rows + row];
+      column[row] = local_data[(col_idx * rows) + row];
     }
     local_maxes[col_idx] = LiulinYMatrixMaxColumnMPI::TournamentMax(column);
   }

@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <random>
 #include <string>
+#include <vector>
 
+#include "liulin_y_matrix_max_column/common/include/common.hpp"
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
 #include "liulin_y_matrix_max_column/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -20,24 +24,24 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
   static TestConfig GetTestConfig(const std::string &test_name) {
     if (test_name.find("small") != std::string::npos) {
-      return {100, 100, "small"};
+      return {.rows = 100, .cols = 100, .name = "small"};
     }
     if (test_name.find("medium") != std::string::npos) {
-      return {1000, 1000, "medium"};
+      return {.rows = 1000, .cols = 1000, .name = "medium"};
     }
     if (test_name.find("large") != std::string::npos) {
-      return {10000, 10000, "large"};
+      return {.rows = 10000, .cols = 10000, .name = "large"};
     }
     if (test_name.find("xlarge") != std::string::npos) {
-      return {20000, 20000, "xlarge"};
+      return {.rows = 20000, .cols = 20000, .name = "xlarge"};
     }
     if (test_name.find("tall") != std::string::npos) {
-      return {100, 5000, "tall"};
+      return {.rows = 100, .cols = 5000, .name = "tall"};
     }
     if (test_name.find("wide") != std::string::npos) {
-      return {5000, 100, "wide"};
+      return {.rows = 5000, .cols = 100, .name = "wide"};
     }
-    return {100, 100, "small"};
+    return {.rows = 100, .cols = 100, .name = "small"};
   }
 
   void SetUp() override {
@@ -57,7 +61,8 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
       row.resize(cols_);
     }
 
-    std::mt19937 gen(42);
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-1000, 1000);
 
     for (int i = 0; i < rows_; i++) {
@@ -66,13 +71,10 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
       }
     }
 
-    expected_output_.resize(cols_);
-    std::fill(expected_output_.begin(), expected_output_.end(), std::numeric_limits<int>::min());
+    expected_output_.assign(cols_, std::numeric_limits<int>::min());
     for (int col = 0; col < cols_; col++) {
       for (int row = 0; row < rows_; row++) {
-        if (input_data_[row][col] > expected_output_[col]) {
-          expected_output_[col] = input_data_[row][col];
-        }
+        expected_output_[col] = std::max(expected_output_[col], input_data_[row][col]);
       }
     }
   }
@@ -82,7 +84,7 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
       return false;
     }
 
-    for (size_t i = 0; i < output_data.size(); ++i) {
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
       if (output_data[i] != expected_output_[i]) {
         return false;
       }
@@ -97,8 +99,8 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
  private:
   int rows_ = 0;
   int cols_ = 0;
-  InType input_data_{};
-  OutType expected_output_{};
+  InType input_data_;
+  OutType expected_output_;
 };
 
 TEST_P(LiulinYMatrixMaxColumnPerfTests, RunPerfModes) {
