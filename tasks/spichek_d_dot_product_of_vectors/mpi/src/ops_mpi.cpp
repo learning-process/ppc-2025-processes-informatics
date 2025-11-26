@@ -3,8 +3,8 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>  // для int64_t
+#include <cstdint>
+#include <vector>
 
 #include "spichek_d_dot_product_of_vectors/common/include/common.hpp"
 
@@ -27,7 +27,8 @@ bool SpichekDDotProductOfVectorsMPI::PreProcessingImpl() {
 }
 
 bool SpichekDDotProductOfVectorsMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -43,27 +44,34 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
     return true;
   }
 
-  std::vector<int> counts(size), displs(size);
-  int base = n / size, rem = n % size;
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
+
+  int base = n / size;
+  int rem = n % size;
+
   for (int i = 0; i < size; ++i) {
     counts[i] = base + (i < rem ? 1 : 0);
-    displs[i] = i * base + std::min(i, rem);
+    // [Исправлено] Добавлены скобки для явного приоритета операций
+    displs[i] = (i * base) + std::min(i, rem);
   }
 
   int local_count = counts[rank];
-  std::vector<int> lv1(local_count), lv2(local_count);
+
+  std::vector<int> lv1(local_count);
+  std::vector<int> lv2(local_count);
 
   MPI_Scatterv(rank == 0 ? v1.data() : nullptr, counts.data(), displs.data(), MPI_INT, lv1.data(), local_count, MPI_INT,
                0, MPI_COMM_WORLD);
   MPI_Scatterv(rank == 0 ? v2.data() : nullptr, counts.data(), displs.data(), MPI_INT, lv2.data(), local_count, MPI_INT,
                0, MPI_COMM_WORLD);
 
-  long long local_dot = 0;
+  int64_t local_dot = 0;
   for (int i = 0; i < local_count; ++i) {
-    local_dot += static_cast<long long>(lv1[i]) * lv2[i];
+    local_dot += static_cast<int64_t>(lv1[i]) * lv2[i];
   }
 
-  long long global_dot = 0;
+  int64_t global_dot = 0;
   MPI_Allreduce(&local_dot, &global_dot, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_dot);
