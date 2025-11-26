@@ -12,7 +12,13 @@ namespace smyshlaev_a_str_order_check {
 
 SmyshlaevAStrOrderCheckMPI::SmyshlaevAStrOrderCheckMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    GetInput() = in;
+  }
+
   GetOutput() = 0;
 }
 
@@ -25,49 +31,107 @@ bool SmyshlaevAStrOrderCheckMPI::PreProcessingImpl() {
 }
 
 bool SmyshlaevAStrOrderCheckMPI::RunImpl() {
-  const auto &input_data = GetInput();
-  const std::string &str1 = input_data.first;
-  const std::string &str2 = input_data.second;
-
+  int proc_count = 0;
   int rank = 0;
-  int size = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  int len1 = 0;
+  int len2 = 0;
+
+  if (rank == 0) {
+    const auto &input_data = GetInput();
+    len1 = static_cast<int>(input_data.first.length());
+    len2 = static_cast<int>(input_data.second.length());
+  }
+
+  MPI_Bcast(&len1, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&len2, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   const int min_len = static_cast<int>(std::min(str1.length(), str2.length()));
-  const int chunk_size = min_len / size;
-  const int remainder = min_len % size;
 
-  const int start_idx = (rank * chunk_size) + std::min(rank, remainder);
-  const int end_idx = start_idx + chunk_size + (rank < remainder ? 1 : 0);
+  if (proc_count > min_len) {
+    if (rank == 0) {
+      const auto &str1 = GetInput().first;
+      const auto &str2 = GetInput().second;
+      int res = 0;
+      for (int i = 0; i < min_len; ++i) {
+        if (str1[i] < str2[i]) {
+          res = -1;
+          break;
+        }
+        if (str1[i] > str2[i]) {
+          res = 1;
+          break;
+        }
+      }
+      if (res == 0) {
+        if (len1 < len2) {
+          res = -1;
+        } else if (len1 > len2) {
+          res = 1;
+        }
+      }
+      GetOutput() = res;
+    } else {
+      GetOutput() = 0;
+    }
+
+    int output = GetOutput();
+    MPI_Bcast(&output, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    GetOutput() = output;
+    return true;
+  }
+
+  std::vector<int> sendcounts(proc_count);
+  std::vector<int> offsets(proc_count);
+
+  const int part = min_len / proc_count;
+  const int remainder = min_len % proc_count;
+
+  int offset = 0;
+  for (int i = 0; i < proc_count; i++) {
+    sendcounts[i] = part + (i < remainder ? 1 : 0);
+    offsets[i] = offset;
+    offset += sendcounts[i];
+  }
+
+  int local_size = sendcounts[rank];
+  std::vector<char> local_str1(local_size);
+  std::vector<char> local_str2(local_size);
+  MPI_Scatterv(rank == 0 ? GetInput().first.data() : nullptr, sendcounts.data(), offsets.data(), MPI_CHAR,
+               local_str1.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+  MPI_Scatterv(rank == 0 ? GetInput().second.data() : nullptr, sendcounts.data(), offsets.data(), MPI_CHAR,
+               local_str2.data(), local_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int local_result = 0;
-  for (int i = start_idx; i < end_idx; ++i) {
-    if (str1[i] < str2[i]) {
+  for (int i = 0; i < local_size; ++i) {
+    if (local_str1[i] < local_str2[i]) {
       local_result = -1;
       break;
     }
-    if (str1[i] > str2[i]) {
+    if (local_str1[i] > local_str2[i]) {
       local_result = 1;
       break;
     }
   }
 
-  std::vector<int> all_results(size);
+  std::vector<int> all_results(proc_count);
   MPI_Allgather(&local_result, 1, MPI_INT, all_results.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
   int global_result = 0;
-  for (int result : all_results) {
-    if (result != 0) {
-      global_result = result;
+  for (int res : all_results) {
+    if (res != 0) {
+      global_result = res;
       break;
     }
   }
 
   if (global_result == 0) {
-    if (str1.length() < str2.length()) {
+    if (len1 < len2) {
       global_result = -1;
-    } else if (str1.length() > str2.length()) {
+    } else if (len1 > len2) {
       global_result = 1;
     }
   }
