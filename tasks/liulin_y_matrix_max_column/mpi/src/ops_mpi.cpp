@@ -1,9 +1,10 @@
 #include "liulin_y_matrix_max_column/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <mpi.h>
 #include <vector>
 
 #include "liulin_y_matrix_max_column/common/include/common.hpp"
