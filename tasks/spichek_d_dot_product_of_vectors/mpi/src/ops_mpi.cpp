@@ -39,7 +39,7 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   }
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (n == 0 || (rank == 0 && static_cast<int>(v2.size()) != n)) {
+  if (n == 0 || (rank == 0 && static_cast<size_t>(n) != v2.size())) {
     GetOutput() = 0;
     return true;
   }
@@ -72,7 +72,7 @@ bool SpichekDDotProductOfVectorsMPI::RunImpl() {
   }
 
   int64_t global_dot = 0;
-  MPI_Allreduce(&local_dot, &global_dot, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_dot, &global_dot, 1, MPI_INT64_T, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_dot);
   return true;
