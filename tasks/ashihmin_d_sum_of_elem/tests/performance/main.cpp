@@ -11,9 +11,6 @@ class AshihminDElemVecSumPerfTest : public ppc::util::BaseRunPerfTests<InType, O
   const int kCount_ = 10000000;
   InType input_data_{};
 
-  // void SetUp() override {
-  //   input_data_ = kCount_;
-  // }
   void SetUp() override {
     input_data_ = kCount_;
   }

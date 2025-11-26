@@ -2,11 +2,7 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
-
 #include "ashihmin_d_sum_of_elem/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace ashihmin_d_sum_of_elem {
 
@@ -75,7 +71,7 @@ bool AshihminDElemVecsSumMPI::RunImpl() {
     return false;
   }
 
-  int size = 0, rank = 0;
+  int size = 0 int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
