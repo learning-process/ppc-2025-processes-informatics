@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -22,7 +21,25 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
     std::string name;
   };
 
+  static TestConfig GetLiulinSpecificConfig(const std::string &test_name) {
+    constexpr int kLargeDim = 2048;
+    if (test_name.find("liulin_y_matrix_max_column_mpi") != std::string::npos) {
+      return {.rows = kLargeDim, .cols = kLargeDim, .name = "mpi_large"};
+    }
+    if (test_name.find("liulin_y_matrix_max_column_seq") != std::string::npos) {
+      return {.rows = kLargeDim, .cols = kLargeDim, .name = "seq_large"};
+    }
+    return {.rows = 100, .cols = 100, .name = "small"};
+  }
+
+  static bool HasLiulinSpecificConfig(const std::string &test_name) {
+    return test_name.find("liulin_y_matrix_max_column") != std::string::npos;
+  }
+
   static TestConfig GetTestConfig(const std::string &test_name) {
+    if (HasLiulinSpecificConfig(test_name)) {
+      return GetLiulinSpecificConfig(test_name);
+    }
     if (test_name.find("small") != std::string::npos) {
       return {.rows = 100, .cols = 100, .name = "small"};
     }
@@ -55,19 +72,21 @@ class LiulinYMatrixMaxColumnPerfTests : public ppc::util::BaseRunPerfTests<InTyp
     GenerateTestData();
   }
 
+  static int GenerateCellValue(int row, int col) {
+    constexpr int kMod = 2001;
+    const int raw_value = (row * 131 + col * 17 + kMod) % kMod;
+    return raw_value - 1000;
+  }
+
   void GenerateTestData() {
     input_data_.resize(rows_);
     for (auto &row : input_data_) {
-      row.resize(cols_);
+      row.assign(cols_, 0);
     }
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(-1000, 1000);
 
     for (int i = 0; i < rows_; i++) {
       for (int j = 0; j < cols_; j++) {
-        input_data_[i][j] = dist(gen);
+        input_data_[i][j] = GenerateCellValue(i, j);
       }
     }
 
