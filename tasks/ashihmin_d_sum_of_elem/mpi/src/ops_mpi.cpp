@@ -33,11 +33,12 @@ bool AshihminDElemVecsSumMPI::RunImpl() {
   std::vector<int> displs(size);
 
   size_t n = vec.size();
-  for (int i = 0; i < size; i++) {
-    counts[i] = static_cast<int>(n / size + ((i < n % size) ? 1 : 0));
-    displs[i] = (i == 0 ? 0 : displs[i - 1] + counts[i - 1]);
+  for (size_t i = 0; i < size; ++i) {
+    counts[i] = n / static_cast<int>(size);
+    if (i < static_cast<size_t>(n % size)) {
+      counts[i]++;
+    }
   }
-
   std::vector<int> local(counts[rank]);
   MPI_Scatterv(vec.data(), counts.data(), displs.data(), MPI_INT, local.data(), counts[rank], MPI_INT, 0,
                MPI_COMM_WORLD);
