@@ -33,12 +33,16 @@ bool AshihminDElemVecsSumMPI::RunImpl() {
   std::vector<int> displs(size);
 
   size_t n = vec.size();
+  int base = static_cast<int>(n / size);
+  int rem = static_cast<int>(n % size);
+
   for (int i = 0; i < size; ++i) {
-    counts[i] = n / static_cast<int>(size);
-    if (i < static_cast<size_t>(n % size)) {
+    counts[i] = base;
+    if (i < rem) {
       counts[i]++;
     }
   }
+
   displs[0] = 0;
   for (int i = 1; i < size; ++i) {
     displs[i] = displs[i - 1] + counts[i - 1];
