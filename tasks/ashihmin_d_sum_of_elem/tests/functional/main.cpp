@@ -16,7 +16,7 @@ class AshihminDElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    int len = std::get<0>(GetParam());
+    int len = std::get<0>(std::get<2>(GetParam()));
     input_data_.assign(len, 1);
   }
 
