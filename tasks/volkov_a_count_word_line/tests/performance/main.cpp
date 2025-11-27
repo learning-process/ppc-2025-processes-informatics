@@ -4,9 +4,9 @@
 #include <cctype>
 #include <cstddef>
 #include <fstream>
+#include <ios>
 #include <stdexcept>
 #include <string>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -30,7 +30,7 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType,
     auto file_size = file.tellg();
     input_data_.resize(static_cast<size_t>(file_size));
     file.seekg(0);
-    file.read(&input_data_[0], file_size);
+    file.read(input_data_.data(), file_size);
     file.close();
 
     auto is_valid_char = [](char c) {

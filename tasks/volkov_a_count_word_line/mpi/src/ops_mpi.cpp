@@ -2,10 +2,48 @@
 
 #include <mpi.h>
 
-#include <algorithm>
+#include <cstddef>
 #include <vector>
 
+#include "volkov_a_count_word_line/common/include/common.hpp"
+
 namespace volkov_a_count_word_line {
+
+static int count_words_in_chunk(const std::vector<char> &data, char prev_char) {
+  auto is_token_char = [](char c) -> bool {
+    const bool is_alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    const bool is_digit = (c >= '0' && c <= '9');
+    const bool is_special = (c == '-' || c == '_');
+    return is_alpha || is_digit || is_special;
+  };
+
+  if (data.empty()) {
+    return 0;
+  }
+
+  int word_count = 0;
+  size_t i = 0;
+  const size_t size = data.size();
+
+  if (is_token_char(data[0]) && is_token_char(prev_char)) {
+    while (i < size && is_token_char(data[i])) {
+      i++;
+    }
+  }
+
+  while (i < size) {
+    while (i < size && !is_token_char(data[i])) {
+      i++;
+    }
+    if (i < size) {
+      word_count++;
+      while (i < size && is_token_char(data[i])) {
+        i++;
+      }
+    }
+  }
+  return word_count;
+}
 
 VolkovACountWordLineMPI::VolkovACountWordLineMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -27,13 +65,6 @@ bool VolkovACountWordLineMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  auto is_token_char = [](char c) -> bool {
-    const bool is_alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-    const bool is_digit = (c >= '0' && c <= '9');
-    const bool is_special = (c == '-' || c == '_');
-    return is_alpha || is_digit || is_special;
-  };
-
   int total_len = 0;
   if (rank == 0) {
     total_len = static_cast<int>(GetInput().size());
@@ -47,17 +78,14 @@ bool VolkovACountWordLineMPI::RunImpl() {
     return true;
   }
 
-  int base_chunk = total_len / world_size;
-  int remainder = total_len % world_size;
+  const int base_chunk = total_len / world_size;
+  const int remainder = total_len % world_size;
+  const int my_count = base_chunk + (rank < remainder ? 1 : 0);
 
-  int my_count = base_chunk + (rank < remainder ? 1 : 0);
-
-  std::vector<int> send_counts;
-  std::vector<int> displs;
+  std::vector<int> send_counts(world_size);
+  std::vector<int> displs(world_size);
 
   if (rank == 0) {
-    send_counts.resize(world_size);
-    displs.resize(world_size);
     int offset = 0;
     for (int i = 0; i < world_size; ++i) {
       send_counts[i] = base_chunk + (i < remainder ? 1 : 0);
@@ -69,43 +97,20 @@ bool VolkovACountWordLineMPI::RunImpl() {
   std::vector<char> local_data(my_count);
   const char *send_buf = (rank == 0) ? GetInput().data() : nullptr;
 
-  MPI_Scatterv(send_buf, (rank == 0 ? send_counts.data() : nullptr), (rank == 0 ? displs.data() : nullptr), MPI_CHAR,
-               local_data.data(), my_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(send_buf, send_counts.data(), displs.data(), MPI_CHAR, local_data.data(), my_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   char prev_char = ' ';
-  char my_last = (my_count > 0) ? local_data.back() : ' ';
+  char my_last_char = (my_count > 0) ? local_data.back() : ' ';
+  const int left_neighbor = (rank == 0) ? MPI_PROC_NULL : rank - 1;
+  const int right_neighbor = (rank == world_size - 1) ? MPI_PROC_NULL : rank + 1;
 
-  int left_neighbor = (rank == 0) ? MPI_PROC_NULL : rank - 1;
-  int right_neighbor = (rank == world_size - 1) ? MPI_PROC_NULL : rank + 1;
-
-  MPI_Sendrecv(&my_last, 1, MPI_CHAR, right_neighbor, 0, &prev_char, 1, MPI_CHAR, left_neighbor, 0, MPI_COMM_WORLD,
+  MPI_Sendrecv(&my_last_char, 1, MPI_CHAR, right_neighbor, 0, &prev_char, 1, MPI_CHAR, left_neighbor, 0, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
 
-  int local_words = 0;
-  int idx = 0;
-
-  if (my_count > 0 && is_token_char(local_data[0])) {
-    if (is_token_char(prev_char)) {
-      while (idx < my_count && is_token_char(local_data[idx])) {
-        idx++;
-      }
-    }
-  }
-
-  while (idx < my_count) {
-    while (idx < my_count && !is_token_char(local_data[idx])) {
-      idx++;
-    }
-
-    if (idx < my_count) {
-      local_words++;
-      while (idx < my_count && is_token_char(local_data[idx])) {
-        idx++;
-      }
-    }
-  }
-
+  int local_words = count_words_in_chunk(local_data, prev_char);
   int total_words = 0;
+
   MPI_Reduce(&local_words, &total_words, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {

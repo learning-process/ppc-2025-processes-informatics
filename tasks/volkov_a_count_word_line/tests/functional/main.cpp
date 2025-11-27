@@ -3,10 +3,10 @@
 
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -62,7 +62,7 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
     if (rank == 0) {
       if (result != ref_count_) {
-        std::cerr << "[FAIL Rank 0] Expected: " << ref_count_ << ", Got: " << result << std::endl;
+        std::cerr << "[FAIL Rank 0] Expected: " << ref_count_ << ", Got: " << result << '\n';
         return false;
       }
       return true;

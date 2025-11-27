@@ -1,8 +1,34 @@
 #include "volkov_a_count_word_line/seq/include/ops_seq.hpp"
 
-#include <string>
+#include <cstddef>
+
+#include "volkov_a_count_word_line/common/include/common.hpp"
 
 namespace volkov_a_count_word_line {
+
+static size_t count_words(const char *data, size_t n) {
+  auto is_token_char = [](char c) -> bool {
+    const bool is_alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    const bool is_digit = (c >= '0' && c <= '9');
+    const bool is_special = (c == '-' || c == '_');
+    return is_alpha || is_digit || is_special;
+  };
+
+  size_t count = 0;
+  size_t i = 0;
+  while (i < n) {
+    while (i < n && !is_token_char(data[i])) {
+      i++;
+    }
+    if (i < n) {
+      count++;
+      while (i < n && is_token_char(data[i])) {
+        i++;
+      }
+    }
+  }
+  return count;
+}
 
 VolkovACountWordLineSEQ::VolkovACountWordLineSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -19,33 +45,9 @@ bool VolkovACountWordLineSEQ::PreProcessingImpl() {
 }
 
 bool VolkovACountWordLineSEQ::RunImpl() {
-  const std::string &data = GetInput();
-
-  auto is_token_char = [](char c) -> bool {
-    const bool is_alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-    const bool is_digit = (c >= '0' && c <= '9');
-    const bool is_special = (c == '-' || c == '_');
-    return is_alpha || is_digit || is_special;
-  };
-
-  int counter = 0;
-  size_t i = 0;
-  const size_t n = data.size();
-
-  while (i < n) {
-    while (i < n && !is_token_char(data[i])) {
-      i++;
-    }
-
-    if (i < n) {
-      counter++;
-      while (i < n && is_token_char(data[i])) {
-        i++;
-      }
-    }
-  }
-
-  GetOutput() = counter;
+  const char *data = reinterpret_cast<const char *>(GetInput().data());
+  const size_t size = GetInput().size();
+  GetOutput() = count_words(data, size);
   return true;
 }
 

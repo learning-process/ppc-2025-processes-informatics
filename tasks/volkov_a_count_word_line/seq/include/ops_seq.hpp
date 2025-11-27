@@ -1,5 +1,6 @@
 #pragma once
 
+#include "task/include/task.hpp"
 #include "volkov_a_count_word_line/common/include/common.hpp"
 
 namespace volkov_a_count_word_line {
