@@ -15,46 +15,41 @@ NikitinAVecSignRotationSEQ::NikitinAVecSignRotationSEQ(const InType &in) {
 }
 
 bool NikitinAVecSignRotationSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool NikitinAVecSignRotationSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool NikitinAVecSignRotationSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  int swaps = 0;
+  std::vector<double> data = GetInput();
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  // Проходим по вектору, ищем различия в знаках
+  for (size_t i = 1; i < data.size(); i++) {
+    if (IsSignChange(data[i - 1], data[i])) {
+      swaps++;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = swaps;
+  return true;
 }
 
 bool NikitinAVecSignRotationSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
+}
+
+bool NikitinAVecSignRotationSEQ::IsSignChange(double first_value, double second_value) const {
+  // Определяем знак каждого числа 
+  const bool first_negative = first_value < 0.0;
+  const bool second_non_negative = second_value >= 0.0;
+  const bool first_non_negative = first_value >= 0.0;
+  const bool second_negative = second_value < 0.0;
+  
+  // Сравниваем знаки. true - знаки разные, false - знаки одинаковые
+  return (first_negative && second_non_negative) || (first_non_negative && second_negative);
 }
 
 }  // namespace nikitin_a_vec_sign_rotation

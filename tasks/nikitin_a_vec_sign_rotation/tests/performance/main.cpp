@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
 #include "nikitin_a_vec_sign_rotation/mpi/include/ops_mpi.hpp"
 #include "nikitin_a_vec_sign_rotation/seq/include/ops_seq.hpp"
@@ -8,15 +10,36 @@
 namespace nikitin_a_vec_sign_rotation {
 
 class NikitinAVecSignRotationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
+  // Большой размер для тестирования производительности
+  const int kVectorSize_ = 1000000;  // 1 миллион элементов
+  OutType expected_result_ = 999999; // Для знакопеременного вектора
 
   void SetUp() override {
-    input_data_ = kCount_;
+    // Генерируем большой знакопеременный вектор для тестирования производительности
+    std::vector<double> vector_data;
+    vector_data.reserve(kVectorSize_);
+    
+    int sign_multiplier = 1;
+    for (int i = 0; i < kVectorSize_; i++) {
+      // Создаем знакопеременную последовательность: 0, -1, 2, -3, 4, -5, ...
+      vector_data.push_back(i * sign_multiplier);
+      sign_multiplier *= -1;
+    }
+
+    input_data_ = vector_data;
+    // Для знакопеременного вектора количество чередований = размер - 1
+    expected_result_ = kVectorSize_ - 1;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    // Для MPI процессов с rank != 0 ожидаем значение -1
+    if (output_data == -1) {
+      return true;
+    }
+
+    // Для процесса с rank 0 проверяем корректный результат
+    return output_data == expected_result_;
   }
 
   InType GetTestInputData() final {

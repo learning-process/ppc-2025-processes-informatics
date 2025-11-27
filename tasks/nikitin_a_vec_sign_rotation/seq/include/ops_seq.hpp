@@ -17,6 +17,8 @@ class NikitinAVecSignRotationSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  bool IsSignChange(double first_value, double second_value) const;
 };
 
 }  // namespace nikitin_a_vec_sign_rotation
