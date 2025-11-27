@@ -11,13 +11,18 @@ namespace kiselev_i_max_value_in_strings {
 KiselevITestTaskSEQ::KiselevITestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput();
+  GetOutput().clear();
 }
 
 bool KiselevITestTaskSEQ::ValidationImpl() {
   const auto &matrix =GetInput();
-  if(matrix.empty()){
+  if (matrix.empty()){
     return false;
+  }
+  for (const auto& row : matrix) {
+    if (row.empty()){
+      return false;
+    }
   }
   return true;
 }
