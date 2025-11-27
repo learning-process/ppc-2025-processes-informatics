@@ -78,11 +78,11 @@ TEST_P(LiulinYMatrixMaxColumnFuncTestsFromFile, MaxByColumnsFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 11> kTestParam = {
+const std::array<TestType, 12> kTestParam = {
     std::make_tuple(0, "tinyMatrix"),      std::make_tuple(1, "simpleMatrix"), std::make_tuple(2, "randomMatrix"),
     std::make_tuple(3, "bigMatrix"),       std::make_tuple(4, "emptyMatrix"),  std::make_tuple(5, "singleElement"),
     std::make_tuple(6, "singleRow"),       std::make_tuple(7, "singleColumn"), std::make_tuple(8, "zeroColumns"),
-    std::make_tuple(9, "negativeNumbers"), std::make_tuple(10, "allSame")};
+    std::make_tuple(9, "negativeNumbers"), std::make_tuple(10, "allSame"),     std::make_tuple(11, "invalidMatrix")};
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<LiulinYMatrixMaxColumnMPI, InType>(kTestParam, PPC_SETTINGS_liulin_y_matrix_max_column),
     ppc::util::AddFuncTask<LiulinYMatrixMaxColumnSEQ, InType>(kTestParam, PPC_SETTINGS_liulin_y_matrix_max_column));
@@ -93,6 +93,12 @@ const auto kFuncTestName =
     LiulinYMatrixMaxColumnFuncTestsFromFile::PrintFuncTestName<LiulinYMatrixMaxColumnFuncTestsFromFile>;
 
 INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYMatrixMaxColumnFuncTestsFromFile, kGtestValues, kFuncTestName);
+
+TEST(TournamentTestMPI, EmptyColumn) {
+  std::vector<int> col;
+  int res = LiulinYMatrixMaxColumnMPI::TournamentMax(col);
+  ASSERT_EQ(res, std::numeric_limits<int>::min());
+}
 
 }  // namespace
 }  // namespace liulin_y_matrix_max_column
