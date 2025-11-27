@@ -82,7 +82,7 @@ bool NikitinAVecSignRotationMPI::IsSignChange(double first_value, double second_
   return (first_negative && second_non_negative) || (first_non_negative && second_negative);
 }
 
-int NikitinAVecSignRotationMPI::MainProcess(int process_count, const std::vector<double>& vector_data) {
+int NikitinAVecSignRotationMPI::MainProcess(int process_count, const std::vector<double> &vector_data) {
   int total_swaps = 0;
   const int data_size = static_cast<int>(vector_data.size());
 

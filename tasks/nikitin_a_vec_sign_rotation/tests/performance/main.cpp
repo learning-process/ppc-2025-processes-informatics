@@ -12,14 +12,14 @@ namespace nikitin_a_vec_sign_rotation {
 class NikitinAVecSignRotationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
   // Большой размер для тестирования производительности
-  const int kVectorSize_ = 1000000;  // 1 миллион элементов
-  OutType expected_result_ = 999999; // Для знакопеременного вектора
+  const int kVectorSize_ = 1000000;   // 1 миллион элементов
+  OutType expected_result_ = 999999;  // Для знакопеременного вектора
 
   void SetUp() override {
     // Генерируем большой знакопеременный вектор для тестирования производительности
     std::vector<double> vector_data;
     vector_data.reserve(kVectorSize_);
-    
+
     int sign_multiplier = 1;
     for (int i = 0; i < kVectorSize_; i++) {
       // Создаем знакопеременную последовательность: 0, -1, 2, -3, 4, -5, ...
@@ -51,8 +51,8 @@ TEST_P(NikitinAVecSignRotationPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NikitinAVecSignRotationMPI, NikitinAVecSignRotationSEQ>(PPC_SETTINGS_nikitin_a_vec_sign_rotation);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, NikitinAVecSignRotationMPI, NikitinAVecSignRotationSEQ>(
+    PPC_SETTINGS_nikitin_a_vec_sign_rotation);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

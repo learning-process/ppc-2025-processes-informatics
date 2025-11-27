@@ -42,12 +42,12 @@ bool NikitinAVecSignRotationSEQ::PostProcessingImpl() {
 }
 
 bool NikitinAVecSignRotationSEQ::IsSignChange(double first_value, double second_value) const {
-  // Определяем знак каждого числа 
+  // Определяем знак каждого числа
   const bool first_negative = first_value < 0.0;
   const bool second_non_negative = second_value >= 0.0;
   const bool first_non_negative = first_value >= 0.0;
   const bool second_negative = second_value < 0.0;
-  
+
   // Сравниваем знаки. true - знаки разные, false - знаки одинаковые
   return (first_negative && second_non_negative) || (first_non_negative && second_negative);
 }
