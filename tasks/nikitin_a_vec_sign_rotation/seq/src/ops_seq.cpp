@@ -1,10 +1,10 @@
 #include "nikitin_a_vec_sign_rotation/seq/include/ops_seq.hpp"
 
-#include <numeric>
-#include <vector>
+#include <cstddef> 
+#include <vector>   
 
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
-#include "util/include/util.hpp"
+#include "util/include/util.hpp" 
 
 namespace nikitin_a_vec_sign_rotation {
 
@@ -41,7 +41,7 @@ bool NikitinAVecSignRotationSEQ::PostProcessingImpl() {
   return true;
 }
 
-bool NikitinAVecSignRotationSEQ::IsSignChange(double first_value, double second_value) const {
+bool NikitinAVecSignRotationSEQ::IsSignChange(double first_value, double second_value) {
   // Определяем знак каждого числа
   const bool first_negative = first_value < 0.0;
   const bool second_non_negative = second_value >= 0.0;

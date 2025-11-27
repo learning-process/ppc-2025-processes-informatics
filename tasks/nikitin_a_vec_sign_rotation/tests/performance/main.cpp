@@ -10,7 +10,7 @@
 namespace nikitin_a_vec_sign_rotation {
 
 class NikitinAVecSignRotationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_; 
   // Большой размер для тестирования производительности
   const int kVectorSize_ = 1000000;   // 1 миллион элементов
   OutType expected_result_ = 999999;  // Для знакопеременного вектора
