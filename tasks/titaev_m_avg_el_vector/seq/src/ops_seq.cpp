@@ -12,7 +12,6 @@ TitaevMAvgElVectorSEQ::TitaevMAvgElVectorSEQ(const InType &in) {
 }
 
 bool TitaevMAvgElVectorSEQ::ValidationImpl() {
-
   return !GetInput().empty();
 }
 
@@ -21,8 +20,8 @@ bool TitaevMAvgElVectorSEQ::PreProcessingImpl() {
 }
 
 bool TitaevMAvgElVectorSEQ::RunImpl() {
-  const auto& input_vec = GetInput();
-  
+  const auto &input_vec = GetInput();
+
   if (input_vec.empty()) {
     GetOutput() = 0.0;
     return true;
