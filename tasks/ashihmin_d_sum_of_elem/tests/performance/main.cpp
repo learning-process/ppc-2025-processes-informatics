@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
+#include <utility>
 
 #include "ashihmin_d_sum_of_elem/common/include/common.hpp"
 #include "ashihmin_d_sum_of_elem/mpi/include/ops_mpi.hpp"
