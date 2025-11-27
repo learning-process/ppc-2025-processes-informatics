@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <compare>
+#include <cstddef>
+#include <vector>
 
 #include "ashihmin_d_sum_of_elem/common/include/common.hpp"
 #include "ashihmin_d_sum_of_elem/mpi/include/ops_mpi.hpp"
@@ -13,15 +15,15 @@ class AshihminDElemVecSumPerfTest : public ppc::util::BaseRunPerfTests<InType, O
  public:
   static constexpr std::size_t kCountDefault = 50000000;
 
-  AshihminDElemVecSumPerfTest() : input_data_() {}
+  AshihminDElemVecSumPerfTest() = default;
 
  protected:
   void SetUp() override {
-    input_data_.assign(static_cast<size_t>(kCountDefault), 1);
+    input_data_.assign(kCountDefault, 1);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == static_cast<OutType>(input_data_.size());
+    return std::cmp_equal(output_data, static_cast<OutType>(input_data_.size()));
   }
 
   InType GetTestInputData() final {

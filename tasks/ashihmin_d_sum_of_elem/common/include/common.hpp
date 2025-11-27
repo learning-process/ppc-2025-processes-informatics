@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 
@@ -8,7 +9,7 @@
 namespace ashihmin_d_sum_of_elem {
 
 using InType = std::vector<int>;
-using OutType = long long;
+using OutType = int64_t;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

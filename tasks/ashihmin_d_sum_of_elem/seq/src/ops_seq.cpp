@@ -1,5 +1,7 @@
 #include "ashihmin_d_sum_of_elem/seq/include/ops_seq.hpp"
 
+#include <cstddef>
+
 namespace ashihmin_d_sum_of_elem {
 
 AshihminDElemVecsSumSEQ::AshihminDElemVecsSumSEQ(const InType &in) {
@@ -18,7 +20,7 @@ bool AshihminDElemVecsSumSEQ::PreProcessingImpl() {
 
 bool AshihminDElemVecsSumSEQ::RunImpl() {
   const auto &vec = GetInput();
-  long long sum = 0;
+  OutType sum = 0;
 
   for (int v : vec) {
     sum += v;

@@ -1,5 +1,11 @@
-// // main(functional.cpp)
+// main(functional.cpp)
 #include <gtest/gtest.h>
+
+#include <array>
+#include <compare>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "ashihmin_d_sum_of_elem/common/include/common.hpp"
 #include "ashihmin_d_sum_of_elem/mpi/include/ops_mpi.hpp"
@@ -21,7 +27,7 @@ class AshihminDElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == static_cast<long long>(input_data_.size());
+    return std::cmp_equal(output_data, static_cast<OutType>(input_data_.size()));
   }
 
   InType GetTestInputData() final {
