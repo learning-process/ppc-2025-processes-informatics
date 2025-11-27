@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace nikitin_a_vec_sign_rotation {
 

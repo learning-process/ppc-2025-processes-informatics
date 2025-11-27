@@ -1,23 +1,18 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <limits>
-#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
 #include "nikitin_a_vec_sign_rotation/mpi/include/ops_mpi.hpp"
 #include "nikitin_a_vec_sign_rotation/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace nikitin_a_vec_sign_rotation {
 
