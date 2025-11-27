@@ -10,7 +10,7 @@
 namespace rychkova_d_sum_matrix_columns {
 
 class RychkovaRunPerfTestMatrixColumns : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t kMatrixSize_ = 5000;
+  const size_t kMatrixSize_ = 4000;
 
   InType input_matrix_;
 
@@ -25,7 +25,22 @@ class RychkovaRunPerfTestMatrixColumns : public ppc::util::BaseRunPerfTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data.size() == kMatrixSize_;
+    if (output_data.size() != kMatrixSize_) {
+      return false;
+    }
+
+    for (size_t j = 0; j < kMatrixSize_; ++j) {
+      int expected_sum = 0;
+      for (size_t i = 0; i < kMatrixSize_; ++i) {
+        expected_sum += static_cast<int>(i + j);
+      }
+
+      if (output_data[j] != expected_sum) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   InType GetTestInputData() final {

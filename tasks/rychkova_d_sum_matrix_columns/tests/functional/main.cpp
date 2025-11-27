@@ -77,6 +77,32 @@ const auto kPerfTestName = RychkovaRunFuncTestsMatrixColumns::PrintFuncTestName<
 
 INSTANTIATE_TEST_SUITE_P(MatrixColumnsTests, RychkovaRunFuncTestsMatrixColumns, kGtestValues, kPerfTestName);
 
+class RychkovaInvalidMatrixTest : public ::testing::TestWithParam<InType> {
+ protected:
+  static void TestInvalidMatrix() {
+    const InType &input_matrix = GetParam();
+
+    RychkovaDSumMatrixColumnsMPI mpi_task(input_matrix);
+    RychkovaDSumMatrixColumnsSEQ seq_task(input_matrix);
+
+    EXPECT_FALSE(mpi_task.Validation());
+    EXPECT_FALSE(seq_task.Validation());
+
+    EXPECT_TRUE(mpi_task.GetOutput().empty());
+    EXPECT_TRUE(seq_task.GetOutput().empty());
+  }
+};
+
+TEST_P(RychkovaInvalidMatrixTest, ShouldFailValidationForInvalidMatrices) {
+  RychkovaInvalidMatrixTest::TestInvalidMatrix();
+}
+
+const std::array<InType, 3> kInvalidMatrices = {std::vector<std::vector<int>>{{1, 2}, {3, 4, 5}, {6}},
+                                                std::vector<std::vector<int>>{{1}, {2, 3}},
+                                                std::vector<std::vector<int>>{{1, 2, 3}, {4, 5}}};
+
+INSTANTIATE_TEST_SUITE_P(InvalidMatrixTests, RychkovaInvalidMatrixTest, ::testing::ValuesIn(kInvalidMatrices));
+
 }  // namespace
 
 }  // namespace rychkova_d_sum_matrix_columns
