@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <cstddef>
 #include <string>
+#include <vector>
 
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/char_freq_mpi.hpp"
@@ -15,11 +15,17 @@ namespace shekhirev_v_char_freq_seq {
 class ShekhirevVCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const size_t size = 200000000;
-    input_data_.str.resize(size, 'a');
-    input_data_.str[size / 2] = 'b';
-    input_data_.str[size - 1] = 'b';
-    input_data_.target = 'b';
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) {
+      const size_t size = 1000000000;
+      input_data_.str.resize(size, 'a');
+      input_data_.str[size / 2] = 'b';
+      input_data_.str[size - 1] = 'b';
+      input_data_.target = 'b';
+    } else {
+      input_data_.target = 'b';
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -38,7 +44,7 @@ class ShekhirevVCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 
  private:
-  InType input_data_;
+  InType input_data_{};
 };
 
 namespace {
