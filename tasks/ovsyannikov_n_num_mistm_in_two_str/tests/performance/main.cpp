@@ -14,7 +14,7 @@ class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
  protected:
   void SetUp() override {
     // Размер 10 миллионов символов
-    const int benchmark_size = 10000000;
+    const int benchmark_size = 100'000'000;
 
     std::string sample_a(benchmark_size, 'a');
     std::string sample_b(benchmark_size, 'a');
@@ -40,7 +40,7 @@ class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
 
  private:
   InType input_data_;
-  OutType expected_output_;
+  OutType expected_output_ = 0;
 };
 ;
 
