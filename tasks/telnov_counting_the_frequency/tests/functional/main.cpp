@@ -1,15 +1,9 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "telnov_counting_the_frequency/common/include/common.hpp"
 #include "telnov_counting_the_frequency/mpi/include/ops_mpi.hpp"
