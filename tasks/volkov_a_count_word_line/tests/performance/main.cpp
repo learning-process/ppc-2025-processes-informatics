@@ -83,8 +83,8 @@ TEST_P(VolkovACountWordLinePerfTests, RunPerformance) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VolkovACountWordLineMPI, VolkovACountWordLineSEQ>(PPC_SETTINGS_volkov_a_count_word_line);
+const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, VolkovACountWordLineMPI, VolkovACountWordLineSEQ>(
+    PPC_SETTINGS_volkov_a_count_word_line);
 
 const auto kTestParams = ppc::util::TupleToGTestValues(kPerfTasks);
 

@@ -4,7 +4,7 @@
 
 namespace volkov_a_count_word_line {
 
-VolkovACountWordLineSEQ::VolkovACountWordLineSEQ(const InType& in) {
+VolkovACountWordLineSEQ::VolkovACountWordLineSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
@@ -19,7 +19,7 @@ bool VolkovACountWordLineSEQ::PreProcessingImpl() {
 }
 
 bool VolkovACountWordLineSEQ::RunImpl() {
-  const std::string& data = GetInput();
+  const std::string &data = GetInput();
 
   auto is_token_char = [](char c) -> bool {
     const bool is_alpha = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
