@@ -22,13 +22,13 @@ class TitaevMAvgElVectorPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
  public:
   static std::string PrintTestParam(
       const testing::TestParamInfo<typename TitaevMAvgElVectorPerfTest::ParamType> &info) {
-    const PerfTestParam &test_param = std::get<2>(info.param);
+    const PerfTestParam &test_param = std::get<0>(info.param);
     return "Size_" + std::to_string(std::get<0>(test_param));
   }
 
  protected:
-  void SetUp() {
-    const PerfTestParam &params = std::get<2>(this->GetParam());
+  void SetUp() override {
+    const PerfTestParam &params = std::get<0>(this->GetParam());
     int size = std::get<0>(params);
 
     input_data_.resize(size);
@@ -40,8 +40,13 @@ class TitaevMAvgElVectorPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
       input_data_[i] = dist(gen);
     }
   }
-  InType GetTestInputData() {
+
+  InType GetTestInputData() override {
     return input_data_;
+  }
+
+  bool CheckTestOutputData(OutType &) override {
+    return true;
   }
 
  private:
@@ -57,9 +62,9 @@ TEST_P(TitaevMAvgElVectorPerfTest, ParallelVectorAverage) {
 const std::array<PerfTestParam, 4> kTestParam_perf = {std::make_tuple(10000), std::make_tuple(100000),
                                                       std::make_tuple(1000000), std::make_tuple(10000000)};
 
-const auto kTestTasksList_perf = std::tuple_cat(
-    ppc::util::AddPerfTask<TitaevMAvgElVectorMPI, PerfTestParam>(kTestParam_perf, PPC_SETTINGS_titaev_m_avg_el_vector),
-    ppc::util::AddPerfTask<TitaevMAvgElVectorSEQ, PerfTestParam>(kTestParam_perf, PPC_SETTINGS_titaev_m_avg_el_vector));
+const auto kTestTasksList_perf =
+    std::tuple_cat(ppc::util::AddPerfTask<TitaevMAvgElVectorMPI>(kTestParam_perf, PPC_SETTINGS_titaev_m_avg_el_vector),
+                   ppc::util::AddPerfTask<TitaevMAvgElVectorSEQ>(kTestParam_perf, PPC_SETTINGS_titaev_m_avg_el_vector));
 
 const auto kGtestValues_perf = ppc::util::ExpandToValues<PerfTestParam>(kTestTasksList_perf);
 

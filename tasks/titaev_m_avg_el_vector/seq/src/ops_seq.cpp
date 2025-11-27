@@ -29,7 +29,6 @@ bool TitaevMAvgElVectorSEQ::RunImpl() {
   }
 
   int64_t sum = std::accumulate(input_vec.begin(), input_vec.end(), static_cast<int64_t>(0));
-
   GetOutput() = static_cast<double>(sum) / input_vec.size();
 
   return true;
@@ -37,4 +36,6 @@ bool TitaevMAvgElVectorSEQ::RunImpl() {
 
 bool TitaevMAvgElVectorSEQ::PostProcessingImpl() {
   return true;
+}
+
 }  // namespace titaev_m_avg_el_vector

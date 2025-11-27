@@ -69,8 +69,10 @@ bool TitaevMAvgElVectorMPI::RunImpl() {
     MPI_Scatterv(nullptr, send_counts.data(), displs.data(), MPI_INT, local_vec.data(), send_counts[rank], MPI_INT, 0,
                  MPI_COMM_WORLD);
   }
+
   int64_t local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0LL);
   int64_t global_sum = 0;
+
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
@@ -82,4 +84,6 @@ bool TitaevMAvgElVectorMPI::RunImpl() {
 
 bool TitaevMAvgElVectorMPI::PostProcessingImpl() {
   return true;
+}
+
 }  // namespace titaev_m_avg_el_vector

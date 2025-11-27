@@ -71,6 +71,7 @@ TEST_P(TitaevMAvgElVectorFuncTest, RandomVectorAverage) {
 
 const std::array<TestType, 4> kTestParam = {std::make_tuple(10, "Tiny"), std::make_tuple(100, "Small"),
                                             std::make_tuple(1000, "Medium"), std::make_tuple(5000, "Large")};
+
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<TitaevMAvgElVectorMPI, InType>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector),
     ppc::util::AddFuncTask<TitaevMAvgElVectorSEQ, InType>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector));
