@@ -24,14 +24,14 @@ LiulinYMatrixMaxColumnSEQ::LiulinYMatrixMaxColumnSEQ(const InType &in) {
 bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
-  if (in.empty() || in[0].empty()) {
+  if (in.empty() || in[0].empty()) {  // codecov partical
     return true;
   }
 
   const std::size_t cols = in[0].size();
 
   for (const auto &row : in) {
-    if (row.size() != cols) {
+    if (row.size() != cols) {  // codecov partical
       return true;
     }
   }
