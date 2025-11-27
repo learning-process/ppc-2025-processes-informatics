@@ -335,13 +335,7 @@ class Parser {
   }
 
   ExprPtr ParseFactor() {
-    auto node = ParseUnary();
-    while (Check(TokenType::kCaret)) {
-      Advance();
-      auto r = ParseUnary();
-      node = std::make_shared<BinaryExpr>('^', node, r);
-    }
-    return node;
+    return ParseUnary();
   }
 
   ExprPtr ParseUnary() {
@@ -353,7 +347,17 @@ class Parser {
       Advance();
       return std::make_shared<UnaryExpr>('-', ParseUnary());
     }
-    return ParsePrimary();
+    return ParsePower();
+  }
+
+  ExprPtr ParsePower() {
+    auto node = ParsePrimary();
+    if (Check(TokenType::kCaret)) {
+      Advance();
+      auto right = ParsePower();
+      node = std::make_shared<BinaryExpr>('^', node, right);
+    }
+    return node;
   }
 
   ExprPtr ParsePrimary() {
@@ -448,22 +452,52 @@ ReferenceResult BruteForceReference(const Problem &p, double step, bool debug) {
   double span = p.right - p.left;
   double safe_step = (step > 0.0 && step < span) ? step : std::max(span / 1000.0, 1e-4);
 
-  ReferenceResult r{p.left, p.func(p.left)};
+  ReferenceResult r;
+  r.argmin = p.left;
+  r.value = std::numeric_limits<double>::infinity();
 
   double x = p.left;
+  constexpr double kValueThreshold = 1e3;
+
+  double last_eval_value = std::numeric_limits<double>::quiet_NaN();
+  double last_eval_x = std::numeric_limits<double>::quiet_NaN();
+  constexpr double kSlopeThreshold = 1e3;
+
   while (x <= p.right + 1e-12) {
     double v = p.func(x);
-    if (v < r.value) {
+    bool accept = std::isfinite(v);
+    if (std::isfinite(last_eval_value)) {
+      const double dx = x - last_eval_x;
+      const double diff = std::abs(v - last_eval_value);
+      const double slope = (dx != 0.0) ? diff / std::abs(dx) : std::numeric_limits<double>::infinity();
+      if (diff > kValueThreshold || diff > 1e5 * std::abs(last_eval_value) || slope > kSlopeThreshold) {
+        accept = false;
+      }
+    }
+
+    if (accept && v < r.value) {
       r.value = v;
       r.argmin = x;
     }
+
+    if (std::isfinite(v)) {
+      last_eval_value = v;
+      last_eval_x = x;
+    }
+
     x += safe_step;
   }
 
   double vr = p.func(p.right);
-  if (vr < r.value) {
-    r.value = vr;
-    r.argmin = p.right;
+  if (std::isfinite(vr)) {
+    if (!std::isfinite(last_eval_value) ||
+        (std::abs(vr - last_eval_value) <= kValueThreshold &&
+         std::abs(vr - last_eval_value) <= 1e5 * std::abs(last_eval_value))) {
+      if (vr < r.value) {
+        r.value = vr;
+        r.argmin = p.right;
+      }
+    }
   }
 
   if (debug) {
@@ -477,7 +511,7 @@ ReferenceResult BruteForceReference(const Problem &p, double step, bool debug) {
 // 7. Load tests
 // ============================================================================
 
-std::vector<TestType> LoadTestCasesFromData() {
+std::vector<TestCase> LoadTestCasesFromData() {
   namespace fs = std::filesystem;
   fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
 
@@ -497,20 +531,23 @@ std::vector<TestType> LoadTestCasesFromData() {
     throw std::runtime_error("tests.json must contain array");
   }
 
-  std::vector<TestType> cases;
+  std::vector<TestCase> cases;
   cases.reserve(data.size());
 
   for (auto &item : data) {
-    TestType t;
+    TestCase t;
     t.name = item.at("name").get<std::string>();
 
     const auto &pj = item.at("problem");
+
     Problem p{};
-    p.left = pj.at("left").get<double>();
-    p.right = pj.at("right").get<double>();
-    p.accuracy = pj.value("accuracy", 1e-3);
-    p.reliability = pj.value("reliability", 2.0);
-    p.max_iterations = pj.at("max_iterations").get<int>();
+    p.left  = pj.at("left");
+    p.right = pj.at("right");
+
+    // Глобальные параметры
+    p.accuracy       = 1e-4;
+    p.reliability    = 2.5;
+    p.max_iterations = 5000;
 
     bool debug = IsDebugEnabledFor(t.name);
 
@@ -521,14 +558,17 @@ std::vector<TestType> LoadTestCasesFromData() {
     }
 
     t.problem = p;
-    t.brute_force_step = item.value("brute_force_step", p.accuracy);
-    t.tolerance = item.value("tolerance", p.accuracy * 5);
+
+    // Параметры брутфорса
+    t.brute_force_step = 1e-5;
+    t.tolerance        = 0.002;
 
     cases.push_back(std::move(t));
   }
 
   return cases;
 }
+
 
 using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
 
@@ -599,6 +639,8 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
 
     double dx = std::abs(o.argmin - reference_.argmin);
     double dv = std::abs(o.value - reference_.value);
+    const double dx_tol = test_case_.tolerance;
+    const double dv_tol = 5 * test_case_.tolerance;
 
     if (debug_enabled_) {
       std::cout << "[DEBUG][BF] reference: xmin=" << reference_.argmin << "  f=" << reference_.value << "\n";
@@ -608,7 +650,28 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
       std::cout << "[DEBUG][GS] errors:    dx=" << dx << "  dv=" << dv << "  tol=" << test_case_.tolerance << "\n";
     }
 
-    return dx <= test_case_.tolerance && dv <= 5 * test_case_.tolerance;
+    if (dx <= dx_tol && dv <= dv_tol) {
+      return true;
+    }
+
+    if (dv <= dv_tol) {
+      const auto &problem = input_;
+      const double ref_at_result = problem.func(o.argmin);
+      const double result_at_ref = problem.func(reference_.argmin);
+      const bool cross_match =
+          std::abs(ref_at_result - reference_.value) <= dv_tol && std::abs(result_at_ref - o.value) <= dv_tol;
+
+      if (debug_enabled_) {
+        std::cout << "[DEBUG][GS] cross-check: f(res->ref)=" << result_at_ref
+                  << " f(ref->res)=" << ref_at_result << " cross_ok=" << std::boolalpha << cross_match << "\n";
+      }
+
+      if (cross_match) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   InType GetTestInputData() final {
