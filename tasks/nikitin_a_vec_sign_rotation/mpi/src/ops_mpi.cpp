@@ -1,9 +1,9 @@
 #include "nikitin_a_vec_sign_rotation/mpi/include/ops_mpi.hpp"
 
-#include <algorithm>  
-#include <vector>     
-
 #include <mpi.h>
+
+#include <algorithm>
+#include <vector>
 
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
 #include "util/include/util.hpp"

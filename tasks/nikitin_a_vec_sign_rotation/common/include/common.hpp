@@ -2,7 +2,7 @@
 
 #include <string>
 #include <tuple>
-#include <vector> 
+#include <vector>
 
 #include "task/include/task.hpp"
 

@@ -1,10 +1,10 @@
 #include "nikitin_a_vec_sign_rotation/seq/include/ops_seq.hpp"
 
-#include <cstddef> 
-#include <vector>   
+#include <cstddef>
+#include <vector>
 
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
-#include "util/include/util.hpp" 
+#include "util/include/util.hpp"
 
 namespace nikitin_a_vec_sign_rotation {
 

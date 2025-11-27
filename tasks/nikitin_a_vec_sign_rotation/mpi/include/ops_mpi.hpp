@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "nikitin_a_vec_sign_rotation/common/include/common.hpp"
 #include "task/include/task.hpp"
 
