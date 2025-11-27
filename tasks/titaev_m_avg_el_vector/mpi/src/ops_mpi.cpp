@@ -17,7 +17,7 @@ TitaevMAvgElVectorMPI::TitaevMAvgElVectorMPI(const InType &in) {
 bool TitaevMAvgElVectorMPI::ValidationImpl() {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+  
   if (rank == 0) {
       return !GetInput().empty();
   }
@@ -48,7 +48,7 @@ bool TitaevMAvgElVectorMPI::RunImpl() {
 
   std::vector<int> send_counts(world_size);
   std::vector<int> displs(world_size);
-
+  
   int remainder = total_size % world_size;
   int base_count = total_size / world_size;
   int offset = 0;
@@ -69,7 +69,6 @@ bool TitaevMAvgElVectorMPI::RunImpl() {
                  local_vec.data(), send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
   }
   int64_t local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0LL);
-
   int64_t global_sum = 0;
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 

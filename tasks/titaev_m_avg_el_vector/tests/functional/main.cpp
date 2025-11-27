@@ -26,7 +26,7 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
 
  protected:
   void SetUp() override {
-    TestType params = std::get<2>(GetParam());
+    TestType params = std::get<2>(GetParam()); 
     int size = std::get<0>(params);
 
     input_data_.resize(size);
@@ -48,7 +48,6 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-
     return std::abs(reference_output_ - output_data) < 1e-5;
   }
 
@@ -77,8 +76,9 @@ const std::array<TestType, 4> kTestParam = {
 const auto kTestTasksList =
     ppc::util::MakeAllFuncTasks<InType, OutType, TestType, TitaevMAvgElVectorMPI, TitaevMAvgElVectorSEQ>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector);
 
+
 INSTANTIATE_TEST_SUITE_P(AvgVectorFuncTests, TitaevMAvgElVectorFuncTest, kTestTasksList, ppc::util::PrintTestParam);
 
 }  // namespace
 
-}  // namespace
+}  // namespace titaev_m_avg_el_vector
