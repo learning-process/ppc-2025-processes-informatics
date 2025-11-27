@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstdint>
 #include <numeric>
 #include <random>
 #include <string>
@@ -24,7 +26,8 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
 
  protected:
   void SetUp() override {
-    int size = std::get<0>(GetParam());
+    TestType params = std::get<2>(GetParam());
+    int size = std::get<0>(params);
 
     input_data_.resize(size);
     std::random_device rd;
@@ -37,7 +40,7 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
     }
 
     if (size > 0) {
-      long long sum = std::accumulate(input_data_.begin(), input_data_.end(), 0LL);
+      int64_t sum = std::accumulate(input_data_.begin(), input_data_.end(), 0LL);
       reference_output_ = static_cast<double>(sum) / size;
     } else {
       reference_output_ = 0.0;
@@ -45,6 +48,7 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+
     return std::abs(reference_output_ - output_data) < 1e-5;
   }
 
@@ -62,19 +66,19 @@ namespace {
 TEST_P(TitaevMAvgElVectorFuncTest, RandomVectorAverage) {
   ExecuteTest(GetParam());
 }
-const std::array<TestType, 4> kTestParam = {std::make_tuple(10, "Tiny"), std::make_tuple(100, "Small"),
-                                            std::make_tuple(1000, "Medium"), std::make_tuple(5000, "Large")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<TitaevMAvgElVectorMPI, InType>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector),
-    ppc::util::AddFuncTask<TitaevMAvgElVectorSEQ, InType>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector));
+const std::array<TestType, 4> kTestParam = {
+    std::make_tuple(10, "Tiny"),
+    std::make_tuple(100, "Small"),
+    std::make_tuple(1000, "Medium"),
+    std::make_tuple(5000, "Large")
+};
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kTestTasksList =
+    ppc::util::MakeAllFuncTasks<InType, OutType, TestType, TitaevMAvgElVectorMPI, TitaevMAvgElVectorSEQ>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector);
 
-const auto kTestName = TitaevMAvgElVectorFuncTest::PrintTestParam;
-
-INSTANTIATE_TEST_SUITE_P(AvgVectorFuncTests, TitaevMAvgElVectorFuncTest, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(AvgVectorFuncTests, TitaevMAvgElVectorFuncTest, kTestTasksList, ppc::util::PrintTestParam);
 
 }  // namespace
 
-}  // namespace titaev_m_avg_el_vector
+}  // namespace

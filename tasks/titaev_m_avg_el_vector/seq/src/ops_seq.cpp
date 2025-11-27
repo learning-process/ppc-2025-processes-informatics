@@ -2,6 +2,7 @@
 
 #include <numeric>
 #include <vector>
+#include <cstdint>
 
 namespace titaev_m_avg_el_vector {
 
@@ -12,6 +13,7 @@ TitaevMAvgElVectorSEQ::TitaevMAvgElVectorSEQ(const InType &in) {
 }
 
 bool TitaevMAvgElVectorSEQ::ValidationImpl() {
+
   return !GetInput().empty();
 }
 
@@ -20,14 +22,13 @@ bool TitaevMAvgElVectorSEQ::PreProcessingImpl() {
 }
 
 bool TitaevMAvgElVectorSEQ::RunImpl() {
-  const auto &input_vec = GetInput();
-
+  const auto& input_vec = GetInput();
+  
   if (input_vec.empty()) {
     GetOutput() = 0.0;
     return true;
   }
-
-  long long sum = std::accumulate(input_vec.begin(), input_vec.end(), 0LL);
+  int64_t sum = std::accumulate(input_vec.begin(), input_vec.end(), 0LL);
 
   GetOutput() = static_cast<double>(sum) / input_vec.size();
 
