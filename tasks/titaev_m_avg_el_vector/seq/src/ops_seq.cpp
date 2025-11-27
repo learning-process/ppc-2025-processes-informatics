@@ -1,8 +1,8 @@
 #include "titaev_m_avg_el_vector/seq/include/ops_seq.hpp"
 
+#include <cstdint>
 #include <numeric>
 #include <vector>
-#include <cstdint>
 
 namespace titaev_m_avg_el_vector {
 
@@ -21,8 +21,8 @@ bool TitaevMAvgElVectorSEQ::PreProcessingImpl() {
 }
 
 bool TitaevMAvgElVectorSEQ::RunImpl() {
-  const auto& input_vec = GetInput();
-  
+  const auto &input_vec = GetInput();
+
   if (input_vec.empty()) {
     GetOutput() = 0.0;
     return true;
