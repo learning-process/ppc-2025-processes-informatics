@@ -39,6 +39,7 @@ bool AshihminDElemVecsSumMPI::RunImpl() {
       counts[i]++;
     }
   }
+
   std::vector<int> local(counts[rank]);
   MPI_Scatterv(vec.data(), counts.data(), displs.data(), MPI_INT, local.data(), counts[rank], MPI_INT, 0,
                MPI_COMM_WORLD);
