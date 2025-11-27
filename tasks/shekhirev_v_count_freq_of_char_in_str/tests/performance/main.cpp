@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <cstddef>
 #include <string>
 
 #include "../../common/include/common.hpp"
