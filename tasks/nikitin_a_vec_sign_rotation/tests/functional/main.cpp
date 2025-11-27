@@ -59,7 +59,7 @@ class NikitinAVecSignRotationFuncTests : public ppc::util::BaseRunFuncTests<InTy
         
       case 5: // С нулями (0 считается положительным)
         input_data_ = {1.0, 0.0, -1.0, 0.0, 1.0};
-        expected_output_ = 3;
+        expected_output_ = 2;
         break;
         
       case 6: // Один элемент - 0 чередований
@@ -102,7 +102,7 @@ class NikitinAVecSignRotationFuncTests : public ppc::util::BaseRunFuncTests<InTy
                       std::numeric_limits<double>::max(),
                       -std::numeric_limits<double>::min(),
                       -std::numeric_limits<double>::max()};
-        expected_output_ = 3;
+        expected_output_ = 1;
         break;
         
       case 14: // Много чередований в середине
