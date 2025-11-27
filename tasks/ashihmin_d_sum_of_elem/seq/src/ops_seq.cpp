@@ -1,7 +1,5 @@
 #include "ashihmin_d_sum_of_elem/seq/include/ops_seq.hpp"
 
-#include "ashihmin_d_sum_of_elem/common/include/common.hpp"
-
 namespace ashihmin_d_sum_of_elem {
 
 AshihminDElemVecsSumSEQ::AshihminDElemVecsSumSEQ(const InType &in) {
@@ -11,7 +9,7 @@ AshihminDElemVecsSumSEQ::AshihminDElemVecsSumSEQ(const InType &in) {
 }
 
 bool AshihminDElemVecsSumSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return !GetInput().empty();
 }
 
 bool AshihminDElemVecsSumSEQ::PreProcessingImpl() {
@@ -19,14 +17,11 @@ bool AshihminDElemVecsSumSEQ::PreProcessingImpl() {
 }
 
 bool AshihminDElemVecsSumSEQ::RunImpl() {
-  const int n = GetInput();
-  if (n <= 0) {
-    return false;
-  }
+  const auto &vec = GetInput();
+  long long sum = 0;
 
-  int sum = 0;
-  for (int i = 0; i < n; ++i) {
-    sum += 1;
+  for (int v : vec) {
+    sum += v;
   }
 
   GetOutput() = sum;
@@ -34,7 +29,7 @@ bool AshihminDElemVecsSumSEQ::RunImpl() {
 }
 
 bool AshihminDElemVecsSumSEQ::PostProcessingImpl() {
-  return GetOutput() == GetInput();
+  return true;
 }
 
 }  // namespace ashihmin_d_sum_of_elem

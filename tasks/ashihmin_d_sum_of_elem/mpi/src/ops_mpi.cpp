@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-#include "ashihmin_d_sum_of_elem/common/include/common.hpp"
-
 namespace ashihmin_d_sum_of_elem {
 
 AshihminDElemVecsSumMPI::AshihminDElemVecsSumMPI(const InType &in) {
@@ -13,42 +11,43 @@ AshihminDElemVecsSumMPI::AshihminDElemVecsSumMPI(const InType &in) {
 }
 
 bool AshihminDElemVecsSumMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return !GetInput().empty();
 }
 
 bool AshihminDElemVecsSumMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool AshihminDElemVecsSumMPI::RunImpl() {
-  int n = GetInput();
-  if (n <= 0) {
-    return false;
-  }
+  const auto &vec = GetInput();
 
-  int size = 0;
-  int rank = 0;
+  int size = 0, rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int chunk = n / size;
-  int start = rank * chunk;
-  int end = (rank == size - 1 ? n : start + chunk);
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
 
-  int local_sum = 0;
-  for (int i = start; i < end; i++) {
-    local_sum += 1;
+  int n = vec.size();
+  for (int i = 0; i < size; i++) {
+    counts[i] = n / size + (i < n % size ? 1 : 0);
+    displs[i] = (i == 0 ? 0 : displs[i - 1] + counts[i - 1]);
   }
 
-  int global_sum = 0;
+  std::vector<int> local(counts[rank]);
 
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(vec.data(), counts.data(), displs.data(), MPI_INT, local.data(), counts[rank], MPI_INT, 0,
+               MPI_COMM_WORLD);
 
-  MPI_Bcast(&global_sum, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  long long local_sum = 0;
+  for (int x : local) {
+    local_sum += x;
+  }
+
+  long long global_sum = 0;
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = global_sum;
-
   return true;
 }
 

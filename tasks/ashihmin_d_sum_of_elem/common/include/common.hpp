@@ -7,8 +7,8 @@
 
 namespace ashihmin_d_sum_of_elem {
 
-using InType = int;
-using OutType = int;
+using InType = std::vector<int>;
+using OutType = long long;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

@@ -1,10 +1,5 @@
-// main(functional.cpp)
+// // main(functional.cpp)
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
-
-#include <array>
-#include <string>
-#include <tuple>
 
 #include "ashihmin_d_sum_of_elem/common/include/common.hpp"
 #include "ashihmin_d_sum_of_elem/mpi/include/ops_mpi.hpp"
@@ -15,17 +10,18 @@ namespace ashihmin_d_sum_of_elem {
 
 class AshihminDElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  static std::string PrintTestParam(const TestType &param) {
+    return std::to_string(std::get<0>(param)) + "_" + std::get<1>(param);
   }
 
  protected:
   void SetUp() override {
-    input_data_ = 10;
+    int n = std::get<0>(GetParam());
+    input_data_.assign(n, 1);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == static_cast<long long>(input_data_.size());
   }
 
   InType GetTestInputData() final {
@@ -33,20 +29,20 @@ class AshihminDElemVecSumFuncTest : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
 };
 
 namespace {
 
-TEST_P(AshihminDElemVecSumFuncTest, MatmulFromPic) {
+TEST_P(AshihminDElemVecSumFuncTest, RunTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kParams = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<AshihminDElemVecsSumMPI, InType>(kTestParam, PPC_SETTINGS_ashihmin_d_sum_of_elem),
-    ppc::util::AddFuncTask<AshihminDElemVecsSumSEQ, InType>(kTestParam, PPC_SETTINGS_ashihmin_d_sum_of_elem));
+    ppc::util::AddFuncTask<AshihminDElemVecsSumMPI, InType>(kParams, PPC_SETTINGS_ashihmin_d_sum_of_elem),
+    ppc::util::AddFuncTask<AshihminDElemVecsSumSEQ, InType>(kParams, PPC_SETTINGS_ashihmin_d_sum_of_elem));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -55,5 +51,4 @@ const auto kPerfTestName = AshihminDElemVecSumFuncTest::PrintFuncTestName<Ashihm
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, AshihminDElemVecSumFuncTest, kGtestValues, kPerfTestName);
 
 }  // namespace
-
 }  // namespace ashihmin_d_sum_of_elem
