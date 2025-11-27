@@ -18,14 +18,10 @@
 
 namespace titaev_m_avg_el_vector {
 
-using FuncTestParam = TestType;
-
 class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, FuncTestParam> {
  public:
-  static std::string PrintTestParam(
-      const testing::TestParamInfo<typename TitaevMAvgElVectorFuncTest::ParamType> &info) {
-    const FuncTestParam &test_param = std::get<2>(info.param);
-    return std::get<1>(test_param) + "_Size_" + std::to_string(std::get<0>(test_param));
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(testparam)) + "" + std::get<1>(test_param);
   }
 
  protected:
