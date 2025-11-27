@@ -8,7 +8,7 @@
 namespace ashihmin_d_sum_of_elem {
 
 class AshihminDElemVecSumPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 10000000;
+  const int kCount_ = 200000000;
   InType input_data_{};
 
   void SetUp() override {
