@@ -13,7 +13,7 @@ Given a matrix A of dimensions M×N, compute the sum of elements in each column,
 Input format: A tuple (M, N, matrix_data) where:
 - M: number of rows (`uint32_t`)
 - N: number of columns (`uint32_t`)
-- matrix_data: flattened matrix elements in row-major order (`vector<double>`)
+- matrix_data: flat matrix elements in row-major order (`vector<double>`)
 
 Output format: A vector of N elements (`vector<double>`) containing the column sums.
 
