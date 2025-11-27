@@ -1,8 +1,11 @@
-#include "../include/char_freq_mpi.hpp"
+#include "../include/ops_mpi.hpp"
 
 #include <mpi.h>
 
 #include <algorithm>
+#include <climits>
+#include <cstddef>
+#include <vector>
 
 #include "../../common/include/common.hpp"
 
@@ -18,8 +21,8 @@ bool CharFreqMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (GetInput().str.size() > static_cast<size_t>(INT_MAX)) {
-    return false;
+  if (rank == 0) {
+    return GetInput().str.size() <= static_cast<size_t>(INT_MAX);
   }
   return true;
 }
@@ -29,7 +32,8 @@ bool CharFreqMPI::PreProcessingImpl() {
 }
 
 bool CharFreqMPI::RunImpl() {
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 

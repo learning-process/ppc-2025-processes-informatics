@@ -2,11 +2,10 @@
 #include <mpi.h>
 
 #include <string>
-#include <vector>
 
 #include "../../common/include/common.hpp"
-#include "../../mpi/include/char_freq_mpi.hpp"
-#include "../../seq/include/char_freq_seq.hpp"
+#include "../../mpi/include/ops_mpi.hpp"
+#include "../../seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -44,7 +43,7 @@ class ShekhirevVCharFreqPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {

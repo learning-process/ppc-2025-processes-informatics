@@ -1,4 +1,4 @@
-#include "../include/char_freq_seq.hpp"
+#include "../include/ops_seq.hpp"
 
 #include "../../common/include/common.hpp"
 

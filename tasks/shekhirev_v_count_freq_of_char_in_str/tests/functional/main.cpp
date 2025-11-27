@@ -8,8 +8,8 @@
 #include <tuple>
 
 #include "../../common/include/common.hpp"
-#include "../../mpi/include/char_freq_mpi.hpp"
-#include "../../seq/include/char_freq_seq.hpp"
+#include "../../mpi/include/ops_mpi.hpp"
+#include "../../seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
