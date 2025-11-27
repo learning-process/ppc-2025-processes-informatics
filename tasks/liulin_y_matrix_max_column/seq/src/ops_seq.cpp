@@ -24,14 +24,14 @@ LiulinYMatrixMaxColumnSEQ::LiulinYMatrixMaxColumnSEQ(const InType &in) {
 bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
-  if (in.empty() || in[0].empty()) {  // codecov partical
+  if (in.empty() || in[0].empty()) {
     return true;
   }
 
   const std::size_t cols = in[0].size();
 
   for (const auto &row : in) {
-    if (row.size() != cols) {  // codecov partical
+    if (row.size() != cols) {
       return true;
     }
   }
@@ -40,7 +40,14 @@ bool LiulinYMatrixMaxColumnSEQ::ValidationImpl() {
 }
 
 bool LiulinYMatrixMaxColumnSEQ::PreProcessingImpl() {
-  const std::size_t cols = GetInput()[0].size();
+  const auto &in = GetInput();
+
+  if (in.empty() || in[0].empty()) {
+    GetOutput().clear();
+    return true;
+  }
+
+  const std::size_t cols = in[0].size();
   GetOutput().assign(cols, std::numeric_limits<int>::min());
   return true;
 }
@@ -49,6 +56,9 @@ bool LiulinYMatrixMaxColumnSEQ::RunImpl() {
   const auto &matrix = GetInput();
   auto &out = GetOutput();
 
+  if (matrix.empty() || matrix[0].empty()) {
+    return true;
+  }
   const int rows = static_cast<int>(matrix.size());
   const int cols = static_cast<int>(matrix[0].size());
 
