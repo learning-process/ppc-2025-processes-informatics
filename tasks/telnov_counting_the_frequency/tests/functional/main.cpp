@@ -27,32 +27,15 @@ class TelnovCountingTheFrequencyFuncTestsProcesses : public ppc::util::BaseRunFu
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_telnov_counting_the_frequency, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-
-      if (width != height) {
-        throw std::runtime_error("width != height");
-      }
-    }
-
+    // Берём параметр теста
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
 
+    // Готовим глобальную строку
     telnov_counting_the_frequency::GlobalData::g_data_string.clear();
     telnov_counting_the_frequency::GlobalData::g_data_string.resize(2'000'000, 'a');
 
+    // Пишем X в начале строки
     for (int i = 0; i < input_data_; i++) {
       telnov_counting_the_frequency::GlobalData::g_data_string[i] = 'X';
     }
