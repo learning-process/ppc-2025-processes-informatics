@@ -18,15 +18,17 @@ namespace titaev_m_avg_el_vector {
 
 using PerfTestParam = std::tuple<int>;
 
-class TitaevMAvgElVectorPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType, PerfTestParam> {
+class TitaevMAvgElVectorPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static std::string PrintTestParam(const PerfTestParam &test_param) {
+  static std::string PrintTestParam(
+      const testing::TestParamInfo<typename TitaevMAvgElVectorPerfTest::ParamType> &info) {
+    const PerfTestParam &test_param = std::get<2>(info.param);
     return "Size_" + std::to_string(std::get<0>(test_param));
   }
 
  protected:
-  void SetUp() override {
-    const PerfTestParam &params = std::get<2>(GetParam());
+  void SetUp() {
+    const PerfTestParam &params = std::get<2>(this->GetParam());
     int size = std::get<0>(params);
 
     input_data_.resize(size);
@@ -38,7 +40,7 @@ class TitaevMAvgElVectorPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
       input_data_[i] = dist(gen);
     }
   }
-  InType GetTestInputData() final {
+  InType GetTestInputData() {
     return input_data_;
   }
 
@@ -49,7 +51,7 @@ class TitaevMAvgElVectorPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
 namespace {
 
 TEST_P(TitaevMAvgElVectorPerfTest, ParallelVectorAverage) {
-  ExecuteTest(GetParam());
+  ExecuteTest(this->GetParam());
 }
 
 const std::array<PerfTestParam, 4> kTestParam_perf = {std::make_tuple(10000), std::make_tuple(100000),
@@ -59,7 +61,7 @@ const auto kTestTasksList_perf = std::tuple_cat(
     ppc::util::AddPerfTask<TitaevMAvgElVectorMPI, PerfTestParam>(kTestParam_perf, PPC_SETTINGS_titaev_m_avg_el_vector),
     ppc::util::AddPerfTask<TitaevMAvgElVectorSEQ, PerfTestParam>(kTestParam_perf, PPC_SETTINGS_titaev_m_avg_el_vector));
 
-const auto kGtestValues_perf = ppc::util::ExpandToValues(kTestTasksList_perf);
+const auto kGtestValues_perf = ppc::util::ExpandToValues<PerfTestParam>(kTestTasksList_perf);
 
 const auto kPerfTestName = TitaevMAvgElVectorPerfTest::PrintTestParam;
 

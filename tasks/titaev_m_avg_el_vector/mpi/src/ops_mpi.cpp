@@ -82,6 +82,4 @@ bool TitaevMAvgElVectorMPI::RunImpl() {
 
 bool TitaevMAvgElVectorMPI::PostProcessingImpl() {
   return true;
-}
-
 }  // namespace titaev_m_avg_el_vector

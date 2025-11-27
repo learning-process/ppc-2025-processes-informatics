@@ -37,6 +37,4 @@ bool TitaevMAvgElVectorSEQ::RunImpl() {
 
 bool TitaevMAvgElVectorSEQ::PostProcessingImpl() {
   return true;
-}
-
 }  // namespace titaev_m_avg_el_vector

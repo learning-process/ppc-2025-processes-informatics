@@ -18,15 +18,19 @@
 
 namespace titaev_m_avg_el_vector {
 
-class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+using FuncTestParam = TestType;
+
+class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, FuncTestParam> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return "Size_" + std::to_string(std::get<0>(test_param));
+  static std::string PrintTestParam(
+      const testing::TestParamInfo<typename TitaevMAvgElVectorFuncTest::ParamType> &info) {
+    const FuncTestParam &test_param = std::get<2>(info.param);
+    return std::get<1>(test_param) + "_Size_" + std::to_string(std::get<0>(test_param));
   }
 
  protected:
   void SetUp() override {
-    const TestType &params = std::get<2>(GetParam());
+    const FuncTestParam &params = std::get<2>(this->GetParam());
     int size = std::get<0>(params);
 
     input_data_.resize(size);
@@ -62,15 +66,14 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
 namespace {
 
 TEST_P(TitaevMAvgElVectorFuncTest, RandomVectorAverage) {
-  ExecuteTest(GetParam());
+  ExecuteTest(this->GetParam());
 }
 
 const std::array<TestType, 4> kTestParam = {std::make_tuple(10, "Tiny"), std::make_tuple(100, "Small"),
                                             std::make_tuple(1000, "Medium"), std::make_tuple(5000, "Large")};
-
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<TitaevMAvgElVectorMPI>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector),
-                   ppc::util::AddFuncTask<TitaevMAvgElVectorSEQ>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TitaevMAvgElVectorMPI, InType>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector),
+    ppc::util::AddFuncTask<TitaevMAvgElVectorSEQ, InType>(kTestParam, PPC_SETTINGS_titaev_m_avg_el_vector));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
