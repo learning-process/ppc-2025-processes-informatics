@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <compare>
 #include <cstddef>
-#include <vector>
 
 #include "ashihmin_d_sum_of_elem/common/include/common.hpp"
 #include "ashihmin_d_sum_of_elem/mpi/include/ops_mpi.hpp"

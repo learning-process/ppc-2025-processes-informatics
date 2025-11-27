@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "ashihmin_d_sum_of_elem/common/include/common.hpp"
+
 namespace ashihmin_d_sum_of_elem {
 
 AshihminDElemVecsSumMPI::AshihminDElemVecsSumMPI(const InType &in) {

@@ -1,6 +1,6 @@
 #include "ashihmin_d_sum_of_elem/seq/include/ops_seq.hpp"
 
-#include <cstddef>
+#include "ashihmin_d_sum_of_elem/common/include/common.hpp"
 
 namespace ashihmin_d_sum_of_elem {
 
