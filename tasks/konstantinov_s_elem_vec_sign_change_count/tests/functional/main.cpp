@@ -23,7 +23,7 @@ namespace konstantinov_s_elem_vec_sign_change_count {
 class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::to_string(std::get<1>(std::get<0>(test_param))) + "_" + std::get<1>(test_param);
   }
 
  protected:
