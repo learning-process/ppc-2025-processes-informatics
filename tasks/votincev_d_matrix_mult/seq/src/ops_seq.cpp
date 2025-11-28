@@ -1,8 +1,8 @@
 #include "votincev_d_matrix_mult/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "votincev_d_matrix_mult/common/include/common.hpp"
 
@@ -21,9 +21,7 @@ bool VotincevDMatrixMultSEQ::ValidationImpl() {
   const auto &A = std::get<3>(in);
   const auto &B = std::get<4>(in);
 
-  return (m > 0 && n > 0 && k > 0 &&
-          A.size() == static_cast<size_t>(m * k) &&
-          B.size() == static_cast<size_t>(k * n));
+  return (m > 0 && n > 0 && k > 0 && A.size() == static_cast<size_t>(m * k) && B.size() == static_cast<size_t>(k * n));
 }
 
 bool VotincevDMatrixMultSEQ::PreProcessingImpl() {
@@ -43,8 +41,8 @@ bool VotincevDMatrixMultSEQ::RunImpl() {
   matrix_A = std::get<3>(in);
   matrix_B = std::get<4>(in);
 
-  matrix_res.assign(param_m*param_n,0.0);
-  
+  matrix_res.assign(param_m * param_n, 0.0);
+
   for (int i = 0; i < param_m; ++i) {
     for (int j = 0; j < param_n; ++j) {
       double sum = 0.0;
@@ -54,7 +52,7 @@ bool VotincevDMatrixMultSEQ::RunImpl() {
       matrix_res[i * param_n + j] = sum;
     }
   }
-  
+
   GetOutput() = matrix_res;
   return true;
 }

@@ -12,10 +12,11 @@
 
 namespace votincev_d_matrix_mult {
 
-class VotincevDMatrixMultRunPerfTestsProcesses
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
  protected:
   InType input_data_;
@@ -30,13 +31,25 @@ class VotincevDMatrixMultRunPerfTestsProcesses
     }
 
     int m, n, k;
-    file >> m >> n >> k;
-
+    // file >> m >> n >> k;
+    m = 600;
+    n = m;
+    k = m;
     std::vector<double> A(m * k);
     std::vector<double> B(k * n);
 
-    for (double &v : A) file >> v;
-    for (double &v : B) file >> v;
+    int sgn_swapper = 1;
+    for (int i = 0; i < m * k; i++) {
+      A[i] = (i % 5) * sgn_swapper;
+    }
+
+    sgn_swapper = 1;
+    for (int i = 0; i < k * n; i++) {
+      B[i] = (i % 5) * sgn_swapper;
+    }
+
+    // for (double &v : A) file >> v;
+    // for (double &v : B) file >> v;
 
     input_data_ = std::make_tuple(m, n, k, A, B);
 
@@ -55,19 +68,20 @@ class VotincevDMatrixMultRunPerfTestsProcesses
 
   bool CheckTestOutputData(OutType &output_data) final {
     // 1,2... процессы не владеют нужным результатом
-    if(output_data.size() != expected_res_.size()) {
+    if (output_data.size() != expected_res_.size()) {
       return true;
     }
 
-    //std::cout << "\n\nProcess0 is checking result\n\n";
+    // static int count0_proc = 0;
+    // count0_proc++;
+    // std::cout << count0_proc;
     // 0й процесс должен иметь корректную матрицу после умножения
     return output_data == expected_res_;
   }
 };
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, VotincevDMatrixMultMPI, VotincevDMatrixMultSEQ>(
-        PPC_SETTINGS_votincev_d_matrix_mult);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, VotincevDMatrixMultMPI, VotincevDMatrixMultSEQ>(
+    PPC_SETTINGS_votincev_d_matrix_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = VotincevDMatrixMultRunPerfTestsProcesses::CustomPerfTestName;
@@ -76,7 +90,6 @@ TEST_P(VotincevDMatrixMultRunPerfTestsProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(RunPerf, VotincevDMatrixMultRunPerfTestsProcesses,
-                         kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerf, VotincevDMatrixMultRunPerfTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace votincev_d_matrix_mult

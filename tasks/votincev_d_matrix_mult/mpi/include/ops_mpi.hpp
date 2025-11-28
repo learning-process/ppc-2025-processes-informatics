@@ -16,12 +16,16 @@ class VotincevDMatrixMultMPI : public BaseTask {
   explicit VotincevDMatrixMultMPI(const InType &in);
 
  private:
-
-  static void MatrixPartMult(int k, int n,std::vector<double>& local_matrix,const std::vector<double>& matrix_B );
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  // ==============================
+  // мои дополнительные функции ===
+
+  static void MatrixPartMult(int k, int n, std::vector<double> &local_matrix, const std::vector<double> &matrix_B);
+  static std::vector<double> SeqMatrixMult(int, int, int, std::vector<double> &, std::vector<double> &);
 };
 
 }  // namespace votincev_d_matrix_mult
