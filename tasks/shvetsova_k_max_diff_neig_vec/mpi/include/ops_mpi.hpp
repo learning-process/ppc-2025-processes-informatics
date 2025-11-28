@@ -32,6 +32,7 @@ class ShvetsovaKMaxDiffNeigVecMPI : public BaseTask {
   static int WinnerRank(const std::vector<double> &all_diffs, int count_of_proc, int rank);
   static void CollectGlobalPair(int rank, int winner_rank, double local_a, double local_b,
                                 std::array<double, 2> &result_pair, int count_of_proc);
+  static void UpdateLocalDiff(double a, double b, double &local_diff, double &local_a, double &local_b);
 };
 
 }  // namespace shvetsova_k_max_diff_neig_vec
