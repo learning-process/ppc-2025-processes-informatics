@@ -105,8 +105,7 @@ void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, co
 
     if (part_size > 0) {
       UpdateLocalDiff(last_prev, part[0], local_diff, local_a, local_b);
-    } 
-    
+    }
   }
 }
 
