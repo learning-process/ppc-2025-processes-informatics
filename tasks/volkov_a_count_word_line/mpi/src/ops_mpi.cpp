@@ -22,27 +22,24 @@ int CountWordsInChunk(const std::vector<char> &data, char prev_char) {
     return 0;
   }
 
+  enum State { IN_WORD, IN_SEPARATOR };
   int word_count = 0;
-  size_t i = 0;
-  const size_t size = data.size();
 
-  if (IsTokenChar(data[0]) && IsTokenChar(prev_char)) {
-    while (i < size && IsTokenChar(data[i])) {
-      i++;
-    }
-  }
+  State current_state = IsTokenChar(prev_char) ? IN_WORD : IN_SEPARATOR;
 
-  while (i < size) {
-    while (i < size && !IsTokenChar(data[i])) {
-      i++;
-    }
-    if (i < size) {
-      word_count++;
-      while (i < size && IsTokenChar(data[i])) {
-        i++;
+  for (const char c : data) {
+    if (current_state == IN_SEPARATOR) {
+      if (IsTokenChar(c)) {
+        word_count++;
+        current_state = IN_WORD;
+      }
+    } else {
+      if (!IsTokenChar(c)) {
+        current_state = IN_SEPARATOR;
       }
     }
   }
+
   return word_count;
 }
 

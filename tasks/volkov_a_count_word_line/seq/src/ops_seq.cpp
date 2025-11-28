@@ -15,19 +15,25 @@ bool IsTokenChar(char c) {
 }
 
 int CountWords(const char *data, size_t n) {
+  enum State { IN_WORD, IN_SEPARATOR };
   int word_count = 0;
-  size_t i = 0;
-  while (i < n) {
-    while (i < n && !IsTokenChar(data[i])) {
-      i++;
-    }
-    if (i < n) {
-      word_count++;
-      while (i < n && IsTokenChar(data[i])) {
-        i++;
+
+  State current_state = IN_SEPARATOR;
+
+  for (size_t i = 0; i < n; ++i) {
+    const char c = data[i];
+    if (current_state == IN_SEPARATOR) {
+      if (IsTokenChar(c)) {
+        word_count++;
+        current_state = IN_WORD;
+      }
+    } else {
+      if (!IsTokenChar(c)) {
+        current_state = IN_SEPARATOR;
       }
     }
   }
+
   return word_count;
 }
 
