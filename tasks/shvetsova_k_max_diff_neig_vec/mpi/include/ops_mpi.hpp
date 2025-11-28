@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include "shvetsova_k_max_diff_neig_vec/common/include/common.hpp"
@@ -22,15 +23,15 @@ class ShvetsovaKMaxDiffNeigVecMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   // Доп функции
-  void CreateDistribution(int count_of_proc, int size_of_vector, std::vector<int> &count_elems, std::vector<int> &ind,
-                          int rank);
-  void ComputeLocalDiff(const std::vector<double> &part, int part_size, double &local_diff, double &local_a,
-                        double &local_b);
-  void ComputeBorders(int count_of_proc, int rank, const std::vector<double> &part, int part_size, double &local_diff,
-                      double &local_a, double &local_b);
-  int WinnerRank(const std::vector<double> &all_diffs, int count_of_proc, int rank);
-  void CollectGlobalPair(int rank, int winner_rank, double local_a, double local_b, std::array<double, 2> &result_pair,
-                         int count_of_proc);
+  static void CreateDistribution(int count_of_proc, int size_of_vector, std::vector<int> &count_elems,
+                                 std::vector<int> &ind, int rank);
+  static void ComputeLocalDiff(const std::vector<double> &part, int part_size, double &local_diff, double &local_a,
+                               double &local_b);
+  static void ComputeBorders(int count_of_proc, int rank, const std::vector<double> &part, int part_size,
+                             double &local_diff, double &local_a, double &local_b);
+  static int WinnerRank(const std::vector<double> &all_diffs, int count_of_proc, int rank);
+  static void CollectGlobalPair(int rank, int winner_rank, double local_a, double local_b,
+                                std::array<double, 2> &result_pair, int count_of_proc);
 };
 
 }  // namespace shvetsova_k_max_diff_neig_vec
