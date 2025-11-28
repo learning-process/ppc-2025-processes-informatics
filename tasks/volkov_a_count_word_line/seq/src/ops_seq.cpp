@@ -14,7 +14,7 @@ bool IsTokenChar(char c) {
   return is_alpha || is_digit || is_special;
 }
 
-int CountWords(const char* data, size_t n) {
+int CountWords(const char *data, size_t n) {
   int word_count = 0;
   size_t i = 0;
   while (i < n) {
@@ -33,23 +33,29 @@ int CountWords(const char* data, size_t n) {
 
 }  // namespace
 
-VolkovACountWordLineSEQ::VolkovACountWordLineSEQ(const InType& in) {
+VolkovACountWordLineSEQ::VolkovACountWordLineSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool VolkovACountWordLineSEQ::ValidationImpl() { return true; }
+bool VolkovACountWordLineSEQ::ValidationImpl() {
+  return true;
+}
 
-bool VolkovACountWordLineSEQ::PreProcessingImpl() { return true; }
+bool VolkovACountWordLineSEQ::PreProcessingImpl() {
+  return true;
+}
 
 bool VolkovACountWordLineSEQ::RunImpl() {
-  const char* data = reinterpret_cast<const char*>(GetInput().data());
+  const char *data = reinterpret_cast<const char *>(GetInput().data());
   const size_t size = GetInput().size();
   GetOutput() = CountWords(data, size);
   return true;
 }
 
-bool VolkovACountWordLineSEQ::PostProcessingImpl() { return true; }
+bool VolkovACountWordLineSEQ::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace volkov_a_count_word_line
