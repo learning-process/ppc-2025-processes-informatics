@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <cstddef>
-#include <utility>
 
 #include "titaev_m_avg_el_vector/common/include/common.hpp"
 #include "titaev_m_avg_el_vector/mpi/include/ops_mpi.hpp"

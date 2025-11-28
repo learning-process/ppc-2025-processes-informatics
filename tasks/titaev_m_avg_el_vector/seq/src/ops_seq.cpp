@@ -26,7 +26,7 @@ bool TitaevMElemVecsAvgSEQ::RunImpl() {
     sum += v;
   }
 
-  GetOutput() = sum / vec.size();
+  GetOutput() = sum / static_cast<double>(vec.size());
   return true;
 }
 

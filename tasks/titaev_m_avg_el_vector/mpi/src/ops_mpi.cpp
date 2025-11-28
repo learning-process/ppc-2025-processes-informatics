@@ -66,7 +66,7 @@ bool TitaevMElemVecsAvgMPI::RunImpl() {
   // NOLINTNEXTLINE(mpi-type-mismatch)
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-  GetOutput() = global_sum / n;
+  GetOutput() = global_sum / static_cast<double>(n);
   return true;
 }
 

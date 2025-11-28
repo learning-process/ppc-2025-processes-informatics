@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <string>
 #include <tuple>
-#include <utility>
 
 #include "titaev_m_avg_el_vector/common/include/common.hpp"
 #include "titaev_m_avg_el_vector/mpi/include/ops_mpi.hpp"
