@@ -1,40 +1,36 @@
 #include "titaev_m_avg_el_vector/seq/include/ops_seq.hpp"
 
-#include <cstdint>
-#include <numeric>
-#include <vector>
+#include "titaev_m_avg_el_vector/common/include/common.hpp"
 
 namespace titaev_m_avg_el_vector {
 
-TitaevMAvgElVectorSEQ::TitaevMAvgElVectorSEQ(const InType &in) {
+TitaevMElemVecsAvgSEQ::TitaevMElemVecsAvgSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
-bool TitaevMAvgElVectorSEQ::ValidationImpl() {
+bool TitaevMElemVecsAvgSEQ::ValidationImpl() {
   return !GetInput().empty();
 }
 
-bool TitaevMAvgElVectorSEQ::PreProcessingImpl() {
+bool TitaevMElemVecsAvgSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool TitaevMAvgElVectorSEQ::RunImpl() {
-  const auto &input_vec = GetInput();
+bool TitaevMElemVecsAvgSEQ::RunImpl() {
+  const auto &vec = GetInput();
+  double sum = 0.0;
 
-  if (input_vec.empty()) {
-    GetOutput() = 0.0;
-    return true;
+  for (int v : vec) {
+    sum += v;
   }
 
-  int64_t sum = std::accumulate(input_vec.begin(), input_vec.end(), static_cast<int64_t>(0));
-  GetOutput() = static_cast<double>(sum) / input_vec.size();
-
+  GetOutput() = sum / vec.size();
   return true;
 }
 
-bool TitaevMAvgElVectorSEQ::PostProcessingImpl() {
+bool TitaevMElemVecsAvgSEQ::PostProcessingImpl() {
   return true;
 }
 

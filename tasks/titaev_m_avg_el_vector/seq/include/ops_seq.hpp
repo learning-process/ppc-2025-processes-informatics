@@ -5,12 +5,12 @@
 
 namespace titaev_m_avg_el_vector {
 
-class TitaevMAvgElVectorSEQ : public BaseTask {
+class TitaevMElemVecsAvgSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit TitaevMAvgElVectorSEQ(const InType &in);
+  explicit TitaevMElemVecsAvgSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

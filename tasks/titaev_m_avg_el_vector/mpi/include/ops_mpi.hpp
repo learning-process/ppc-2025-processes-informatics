@@ -5,12 +5,12 @@
 
 namespace titaev_m_avg_el_vector {
 
-class TitaevMAvgElVectorMPI : public BaseTask {
+class TitaevMElemVecsAvgMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit TitaevMAvgElVectorMPI(const InType &in);
+  explicit TitaevMElemVecsAvgMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

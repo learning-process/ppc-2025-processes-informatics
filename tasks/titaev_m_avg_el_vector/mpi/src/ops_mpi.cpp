@@ -2,87 +2,71 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-#include <cstdint>
-#include <numeric>
+#include <cstddef>
 #include <vector>
+
+#include "titaev_m_avg_el_vector/common/include/common.hpp"
 
 namespace titaev_m_avg_el_vector {
 
-TitaevMAvgElVectorMPI::TitaevMAvgElVectorMPI(const InType &in) {
+TitaevMElemVecsAvgMPI::TitaevMElemVecsAvgMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
-bool TitaevMAvgElVectorMPI::ValidationImpl() {
-  int rank;
+bool TitaevMElemVecsAvgMPI::ValidationImpl() {
+  return !GetInput().empty();
+}
+
+bool TitaevMElemVecsAvgMPI::PreProcessingImpl() {
+  return true;
+}
+
+bool TitaevMElemVecsAvgMPI::RunImpl() {
+  const auto &vec = GetInput();
+
+  int size = 0;
+  int rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (rank == 0) {
-    return !GetInput().empty();
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
+
+  size_t n = vec.size();
+  int base = static_cast<int>(n / size);
+  int rem = static_cast<int>(n % size);
+
+  for (int i = 0; i < size; ++i) {
+    counts[i] = base;
+    if (i < rem) {
+      counts[i]++;
+    }
   }
+
+  displs[0] = 0;
+  for (int i = 1; i < size; ++i) {
+    displs[i] = displs[i - 1] + counts[i - 1];
+  }
+
+  std::vector<int> local(counts[rank]);
+  MPI_Scatterv(vec.data(), counts.data(), displs.data(), MPI_INT, local.data(), counts[rank], MPI_INT, 0,
+               MPI_COMM_WORLD);
+
+  double local_sum = 0.0;
+  for (int x : local) {
+    local_sum += x;
+  }
+
+  double global_sum = 0.0;
+  MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  GetOutput() = global_sum / n;
   return true;
 }
 
-bool TitaevMAvgElVectorMPI::PreProcessingImpl() {
-  return true;
-}
-
-bool TitaevMAvgElVectorMPI::RunImpl() {
-  int rank;
-  int world_size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-  unsigned int total_size = 0;
-  if (rank == 0) {
-    total_size = static_cast<unsigned int>(GetInput().size());
-  }
-
-  MPI_Bcast(&total_size, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-
-  if (total_size == 0) {
-    GetOutput() = 0.0;
-    return true;
-  }
-
-  std::vector<int> send_counts(world_size);
-  std::vector<int> displs(world_size);
-
-  int remainder = total_size % world_size;
-  int base_count = total_size / world_size;
-  int offset = 0;
-
-  for (int i = 0; i < world_size; ++i) {
-    send_counts[i] = base_count + (i < remainder ? 1 : 0);
-    displs[i] = offset;
-    offset += send_counts[i];
-  }
-
-  std::vector<int> local_vec(send_counts[rank]);
-
-  if (rank == 0) {
-    MPI_Scatterv(GetInput().data(), send_counts.data(), displs.data(), MPI_INT, local_vec.data(), send_counts[rank],
-                 MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Scatterv(nullptr, send_counts.data(), displs.data(), MPI_INT, local_vec.data(), send_counts[rank], MPI_INT, 0,
-                 MPI_COMM_WORLD);
-  }
-
-  int64_t local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0LL);
-  int64_t global_sum = 0;
-
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    GetOutput() = static_cast<double>(global_sum) / total_size;
-  }
-
-  return true;
-}
-
-bool TitaevMAvgElVectorMPI::PostProcessingImpl() {
+bool TitaevMElemVecsAvgMPI::PostProcessingImpl() {
   return true;
 }
 
