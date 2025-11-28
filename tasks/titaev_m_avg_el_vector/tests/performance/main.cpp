@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <memory>
 #include <numeric>
 #include <random>
 #include <string>
@@ -17,7 +18,6 @@
 namespace titaev_m_avg_el_vector {
 
 using SizeParam = std::tuple<int>;
-
 using DescriptorType = ppc::util::PerfTestParam<InType, OutType>;
 using TestParamType = std::tuple<DescriptorType, int>;
 
@@ -83,9 +83,7 @@ class TitaevMAvgElVectorPerfTest : public ::testing::TestWithParam<TestParamType
         return static_cast<double>(ns) * 1e-9;
       };
     } else {
-      std::stringstream err_msg;
-      err_msg << '\n' << "The task type is not supported for performance testing.\n";
-      throw std::runtime_error(err_msg.str().c_str());
+      throw std::runtime_error("Unsupported task type for performance testing");
     }
 
     if (mode == ppc::performance::PerfResults::TypeOfRunning::kPipeline) {
@@ -93,9 +91,7 @@ class TitaevMAvgElVectorPerfTest : public ::testing::TestWithParam<TestParamType
     } else if (mode == ppc::performance::PerfResults::TypeOfRunning::kTaskRun) {
       perf.TaskRun(perf_attr);
     } else {
-      std::stringstream err_msg;
-      err_msg << '\n' << "The type of performance check for the task was not selected.\n";
-      throw std::runtime_error(err_msg.str().c_str());
+      throw std::runtime_error("Type of performance check not selected");
     }
 
     if (ppc::util::GetMPIRank() == 0) {

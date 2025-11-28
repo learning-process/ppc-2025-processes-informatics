@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <functional>
+#include <memory>
 #include <numeric>
 #include <random>
 #include <string>
@@ -18,16 +20,18 @@
 
 namespace titaev_m_avg_el_vector {
 
-class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, FuncTestParam> {
+using FuncTestParam = ppc::util::FuncTestParam;
+
+class TitaevMAvgElVectorFuncTest : public ::testing::TestWithParam<FuncTestParam> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(testparam)) + "" + std::get<1>(test_param);
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
 
  protected:
-  void SetUp() override {
-    const FuncTestParam &params = std::get<2>(this->GetParam());
-    int size = std::get<0>(params);
+  void SetUp() {
+    const FuncTestParam &params = this->GetParam();
+    const int size = std::get<0>(std::get<2>(params));
 
     input_data_.resize(size);
     std::random_device rd;
@@ -46,11 +50,11 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) {
     return std::abs(reference_output_ - output_data) < 1e-5;
   }
 
-  InType GetTestInputData() final {
+  InType GetTestInputData() {
     return input_data_;
   }
 
@@ -62,7 +66,8 @@ class TitaevMAvgElVectorFuncTest : public ppc::util::BaseRunFuncTests<InType, Ou
 namespace {
 
 TEST_P(TitaevMAvgElVectorFuncTest, RandomVectorAverage) {
-  ExecuteTest(this->GetParam());
+  const FuncTestParam &params = GetParam();
+  ppc::util::ExecuteTest(params);
 }
 
 const std::array<TestType, 4> kTestParam = {std::make_tuple(10, "Tiny"), std::make_tuple(100, "Small"),
@@ -74,9 +79,10 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = TitaevMAvgElVectorFuncTest::PrintTestParam;
-
-INSTANTIATE_TEST_SUITE_P(AvgVectorFuncTests, TitaevMAvgElVectorFuncTest, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(AvgVectorFuncTests, TitaevMAvgElVectorFuncTest, kGtestValues,
+                         [](const testing::TestParamInfo<FuncTestParam> &info) {
+                           return PrintTestParam(std::get<2>(info.param));
+                         });
 
 }  // namespace
 
