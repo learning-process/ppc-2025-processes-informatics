@@ -10,7 +10,10 @@ class TitaevMElemVecsAvgMPI : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
+
   explicit TitaevMElemVecsAvgMPI(const InType &in);
+
+  ~TitaevMElemVecsAvgMPI() override = default;
 
  private:
   bool ValidationImpl() override;

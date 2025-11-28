@@ -10,7 +10,10 @@ class TitaevMElemVecsAvgSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+
   explicit TitaevMElemVecsAvgSEQ(const InType &in);
+
+  ~TitaevMElemVecsAvgSEQ() override = default;
 
  private:
   bool ValidationImpl() override;
