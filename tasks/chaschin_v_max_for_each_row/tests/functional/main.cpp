@@ -72,12 +72,17 @@ TEST_P(ChaschinVRunFuncTestsProcesses, MaxInRowsFromMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7"),
-                                            std::make_tuple(1, "1"), std::make_tuple(0, "0")};
+const std::array<TestType, 20> kTestParam = {
+    std::make_tuple(3, "3"),  std::make_tuple(5, "5"),  std::make_tuple(7, "7"),  std::make_tuple(1, "1"),
+    std::make_tuple(0, "0"),  std::make_tuple(3, "9"),  std::make_tuple(5, "11"), std::make_tuple(7, "13"),
+    std::make_tuple(1, "15"), std::make_tuple(0, "17"), std::make_tuple(3, "19"), std::make_tuple(5, "21"),
+    std::make_tuple(7, "23"), std::make_tuple(1, "25"), std::make_tuple(0, "27"), std::make_tuple(3, "29"),
+    std::make_tuple(5, "31"), std::make_tuple(7, "33"), std::make_tuple(1, "35"), std::make_tuple(0, "37")};
+ы
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ChaschinVMaxForEachRow, InType>(kTestParam, PPC_SETTINGS_example_processes),
-    ppc::util::AddFuncTask<ChaschinVMaxForEachRowSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+    const auto kTestTasksList = std::tuple_cat(
+        ppc::util::AddFuncTask<ChaschinVMaxForEachRow, InType>(kTestParam, PPC_SETTINGS_example_processes),
+        ppc::util::AddFuncTask<ChaschinVMaxForEachRowSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
