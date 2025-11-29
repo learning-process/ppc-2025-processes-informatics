@@ -68,31 +68,7 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
     }
   }
 
-  // Обмен граничными элементами с соседними процессами
-  if (count_of_proc > 1) {
-    double send_val = (part_size > 0) ? part[part_size - 1] : 0.0;
-    double recv_val = 0.0;
-
-    // Отправляем последний элемент следующему процессу (если он есть)
-    if (rank < count_of_proc - 1) {
-      MPI_Send(&send_val, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
-    }
-
-    // Получаем последний элемент от предыдущего процесса (если он есть)
-    if (rank > 0) {
-      MPI_Recv(&recv_val, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-      // Проверяем разницу на границе
-      if (part_size > 0) {
-        double diff = std::abs(recv_val - part[0]);
-        if (diff > local_diff) {
-          local_diff = diff;
-          local_a = recv_val;
-          local_b = part[0];
-        }
-      }
-    }
-  }
+  ProcessBoundaries(count_of_proc, rank, part, part_size, local_diff, local_a, local_b);
 
   // Находим глобальный максимум
   std::vector<double> all_diffs(count_of_proc);
@@ -158,6 +134,34 @@ void ShvetsovaKMaxDiffNeigVecMPI::CollectGlobalPair(int winner_rank, double loca
 
   result_pair[0] = all_pairs[static_cast<size_t>(winner_rank) * 2];
   result_pair[1] = all_pairs[(static_cast<size_t>(winner_rank) * 2) + 1];
+}
+void ShvetsovaKMaxDiffNeigVecMPI::ProcessBoundaries(int count_of_proc, int rank, const std::vector<double> &part,
+                                                    int part_size, double &local_diff, double &local_a,
+                                                    double &local_b) {
+  if (count_of_proc > 1) {
+    double send_val = (part_size > 0) ? part[part_size - 1] : 0.0;
+    double recv_val = 0.0;
+
+    // Отправляем последний элемент следующему процессу
+    if (rank < count_of_proc - 1) {
+      MPI_Send(&send_val, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
+    }
+
+    // Получаем последний элемент от предыдущего процесса
+    if (rank > 0) {
+      MPI_Recv(&recv_val, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+      // Проверяем разницу на границе
+      if (part_size > 0) {
+        double diff = std::abs(recv_val - part[0]);
+        if (diff > local_diff) {
+          local_diff = diff;
+          local_a = recv_val;
+          local_b = part[0];
+        }
+      }
+    }
+  }
 }
 
 bool ShvetsovaKMaxDiffNeigVecMPI::PostProcessingImpl() {
