@@ -3,6 +3,9 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <limits>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -22,7 +25,7 @@ bool KiselevITestTaskMPI::ValidationImpl() {
   if (matrix.empty()) {
     return false;
   }
-  return std::all_of(matrix.begin(), matrix.end(), [](const auto &row) { return !row.empty(); });
+  std::ranges::all_of(rows, [](const auto &rw) { return !rw.empty(); });
 }
 
 bool KiselevITestTaskMPI::PreProcessingImpl() {
@@ -52,10 +55,10 @@ void KiselevITestTaskMPI::DistributeRowLengths(const std::vector<std::vector<int
     }
 
     int offset = 0;
-    for (int p = 0; p < world_size; ++p) {
-      len_counts[p] = base + (p < rem ? 1 : 0);
-      len_displs[p] = offset;
-      offset += len_counts[p];
+    for (int pr = 0; pr < world_size; ++pr) {
+      len_counts[pr] = base + (pr < rem ? 1 : 0);
+      len_displs[pr] = offset;
+      offset += len_counts[pr];
     }
   }
 
@@ -71,13 +74,13 @@ void KiselevITestTaskMPI::DistributeValues(const std::vector<std::vector<int>> &
 
   if (world_rank == 0) {
     int offset = 0;
-    for (int p = 0; p < world_size; ++p) {
+    for (int pr = 0; pr < world_size; ++pr) {
       int count = 0;
-      for (int i = 0; i < len_counts[p]; ++i) {
-        count += static_cast<int>(matrix[len_displs[p] + i].size());
+      for (int i = 0; i < len_counts[pr]; ++i) {
+        count += static_cast<int>(matrix[len_displs[pr] + i].size());
       }
-      val_counts[p] = count;
-      val_displs[p] = offset;
+      val_counts[pr] = count;
+      val_displs[pr] = offset;
       offset += count;
     }
   }
@@ -114,17 +117,17 @@ void KiselevITestTaskMPI::ComputeLocalMax(const std::vector<int> &local_values,
   }
 
   int pos = 0;
-  for (size_t r = 0; r < n_rows; ++r) {
-    int len = local_row_lengths[r];
+  for (size_t rw = 0; rw < n_rows; ++rw) {
+    int len = local_row_lengths[rw];
     if (len == 0) {
-      local_result[r] = std::numeric_limits<int>::min();
+      local_result[rw] = std::numeric_limits<int>::min();
       continue;
     }
     int tmp_max = local_values[pos];
     for (int j = 1; j < len; ++j) {
       tmp_max = std::max(tmp_max, local_values[pos + j]);
     }
-    local_result[r] = tmp_max;
+    local_result[rw] = tmp_max;
     pos += len;
   }
 }
@@ -133,7 +136,8 @@ bool KiselevITestTaskMPI::RunImpl() {
   const auto &matrix = GetInput();
   auto &result_vector = GetOutput();
 
-  int world_rank = 0, world_size = 0;
+  int world_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
