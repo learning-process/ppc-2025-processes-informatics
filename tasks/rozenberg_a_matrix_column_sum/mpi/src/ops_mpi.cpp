@@ -38,8 +38,8 @@ bool RozenbergAMatrixColumnSumMPI::PreProcessingImpl() {
     size_t rows = GetInput().size();
     size_t columns = GetInput()[0].size();
     flat_.resize(rows * columns);
-    for (size_t i = 0; i < static_cast<int>(rows); i++) {
-      for (size_t j = 0; j < static_cast<int>(columns); j++) {
+    for (size_t i = 0; i < rows; i++) {
+      for (size_t j = 0; j < columns; j++) {
         flat_[j + (i * columns)] = GetInput()[i][j];
       }
     }
