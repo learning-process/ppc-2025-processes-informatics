@@ -65,7 +65,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
     cols = std::get<2>(GetInput());
 
     for (int i = 0; i < proc_num; ++i) {
-      int local_count_of_rows = i == (proc_num - 1) ? (rows / proc_num + rows % proc_num) : (rows / proc_num);
+      int local_count_of_rows = i == (proc_num - 1) ? ((rows / proc_num) + (rows % proc_num)) : (rows / proc_num);
       recvcounts_scatterv[i] = local_count_of_rows * cols;
       recvcounts_gatherv[i] = local_count_of_rows;
       int start = i * (rows / proc_num);
@@ -75,7 +75,7 @@ bool LevonychevIMinValRowsMatrixMPI::RunImpl() {
   }
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  int local_count_of_rows = (proc_rank == (proc_num - 1)) ? (rows / proc_num + rows % proc_num) : (rows / proc_num);
+  int local_count_of_rows = (proc_rank == (proc_num - 1)) ? ((rows / proc_num) + (rows % proc_num)) : (rows / proc_num);
   int recvcount = local_count_of_rows * cols;
   OutType local_matrix(recvcount);
   MPI_Scatterv(std::get<0>(GetInput()).data(), recvcounts_scatterv.data(), displs_scatterv.data(), MPI_INT,
