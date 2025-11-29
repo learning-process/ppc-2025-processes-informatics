@@ -25,15 +25,9 @@ class ShvetsovaKMaxDiffNeigVecMPI : public BaseTask {
   // Доп функции
   static void CreateDistribution(int count_of_proc, int size_of_vector, std::vector<int> &count_elems,
                                  std::vector<int> &ind, int rank);
-  static void ComputeLocalDiff(const std::vector<double> &part, int part_size, double &local_diff, double &local_a,
-                               double &local_b);
-  static void ComputeBorders(int count_of_proc, int rank, const std::vector<double> &part, int part_size,
-                             double &local_diff, double &local_a, double &local_b);
   static int WinnerRank(const std::vector<double> &all_diffs, int count_of_proc, int rank);
   static void CollectGlobalPair(int winner_rank, double local_a, double local_b, std::array<double, 2> &result_pair,
                                 int count_of_proc);
-  static void ComputeBordersSingleProcess(const std::vector<double> &part, int part_size, double &local_diff,
-                                          double &local_a, double &local_b);
 };
 
 }  // namespace shvetsova_k_max_diff_neig_vec
