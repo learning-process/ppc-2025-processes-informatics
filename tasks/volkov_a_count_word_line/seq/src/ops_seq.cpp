@@ -1,5 +1,8 @@
 #include "volkov_a_count_word_line/seq/include/ops_seq.hpp"
 
+#include <cstddef>
+#include <cstdint>
+
 #include "volkov_a_count_word_line/common/include/common.hpp"
 
 namespace volkov_a_count_word_line {
@@ -13,7 +16,7 @@ bool IsTokenChar(char c) {
 }
 
 int CountWords(const char *data, size_t n) {
-  enum class State { kInWord, kInSeparator };
+  enum class State : std::uint8_t { kInWord, kInSeparator };
   int word_count = 0;
 
   State current_state = State::kInSeparator;
