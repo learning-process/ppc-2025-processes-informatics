@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cstddef>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
 #include "rozenberg_a_matrix_column_sum/mpi/include/ops_mpi.hpp"
@@ -57,7 +58,7 @@ class RozenbergAMatrixColumnSumPerfTests : public ppc::util::BaseRunPerfTests<In
   InType input_data_;
   OutType output_data_;
 
-  bool CheckTestAndRank() {
+  static bool CheckTestAndRank() {
     const std::string &test_name =
         std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
     return (test_name.find("mpi") == std::string::npos || !ppc::util::IsUnderMpirun() || ppc::util::GetMPIRank() == 0);

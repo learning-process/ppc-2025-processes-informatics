@@ -70,7 +70,7 @@ class RozenbergAMatrixColumnFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   InType input_data_;
   OutType output_data_;
 
-  bool CheckTestAndRank() {
+  static bool CheckTestAndRank() {
     const std::string &test_name =
         std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(GetParam());
     return (test_name.find("mpi") == std::string::npos || !ppc::util::IsUnderMpirun() || ppc::util::GetMPIRank() == 0);

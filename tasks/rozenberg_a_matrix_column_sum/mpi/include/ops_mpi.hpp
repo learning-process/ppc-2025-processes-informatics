@@ -17,6 +17,7 @@ class RozenbergAMatrixColumnSumMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  std::vector<int> flat;
 };
 
 }  // namespace rozenberg_a_matrix_column_sum

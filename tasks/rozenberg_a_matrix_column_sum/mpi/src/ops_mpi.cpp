@@ -32,6 +32,19 @@ bool RozenbergAMatrixColumnSumMPI::ValidationImpl() {
 }
 
 bool RozenbergAMatrixColumnSumMPI::PreProcessingImpl() {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    int rows = static_cast<int>(GetInput().size());
+    int columns = static_cast<int>(GetInput()[0].size());
+    flat.resize(static_cast<size_t>(rows * columns));
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < columns; j++) {
+        flat[j + (i * columns)] = GetInput()[i][j];
+      }
+    }
+    GetOutput().resize(GetInput()[0].size());
+  }
   return true;
 }
 
@@ -41,8 +54,8 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int rows;
-  int columns;
+  int rows = 0;
+  int columns = 0;
   if (rank == 0) {
     rows = static_cast<int>(GetInput().size());
     columns = static_cast<int>(GetInput()[0].size());
@@ -58,16 +71,8 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
 
   std::vector<int> sendcounts;
   std::vector<int> displs;
-  std::vector<int> flat;
 
   if (rank == 0) {
-    flat.resize(rows * columns);
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        flat[j + i * columns] = GetInput()[i][j];
-      }
-    }
-
     sendcounts.resize(size);
     displs.resize(size);
 
@@ -80,21 +85,20 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
     }
   }
 
-  std::vector<int> local_buf(rows_count * columns);
+  std::vector<int> local_buf(static_cast<size_t>(rows_count * columns));
 
-  MPI_Scatterv(rank == 0 ? flat.data() : nullptr, rank == 0 ? sendcounts.data() : nullptr,
-               rank == 0 ? displs.data() : nullptr, MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0,
-               MPI_COMM_WORLD);
+  if (rank == 0) {
+    MPI_Scatterv(flat.data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0, MPI_COMM_WORLD);
+  }
+  else {
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0, MPI_COMM_WORLD);
+  }
 
   OutType local_res(columns, 0);
   for (int i = 0; i < rows_count; i++) {
     for (int j = 0; j < columns; j++) {
-      local_res[j] += local_buf[j + i * columns];
+      local_res[j] += local_buf[j + (i * columns)];
     }
-  }
-
-  if (rank == 0) {
-    GetOutput().resize(GetInput()[0].size());
   }
 
   MPI_Reduce(local_res.data(), rank == 0 ? GetOutput().data() : nullptr, columns, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
