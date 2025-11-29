@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <cstddef>
 #include <vector>
 
 #include "volkov_a_count_word_line/common/include/common.hpp"
@@ -22,20 +21,20 @@ int CountWordsInChunk(const std::vector<char> &data, char prev_char) {
     return 0;
   }
 
-  enum State { IN_WORD, IN_SEPARATOR };
+  enum class State { kInWord, kInSeparator };
   int word_count = 0;
 
-  State current_state = IsTokenChar(prev_char) ? IN_WORD : IN_SEPARATOR;
+  State current_state = IsTokenChar(prev_char) ? State::kInWord : State::kInSeparator;
 
   for (const char c : data) {
-    if (current_state == IN_SEPARATOR) {
+    if (current_state == State::kInSeparator) {
       if (IsTokenChar(c)) {
         word_count++;
-        current_state = IN_WORD;
+        current_state = State::kInWord;
       }
     } else {
       if (!IsTokenChar(c)) {
-        current_state = IN_SEPARATOR;
+        current_state = State::kInSeparator;
       }
     }
   }

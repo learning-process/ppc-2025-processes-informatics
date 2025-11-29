@@ -28,11 +28,16 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType,
     }
 
     auto file_size = file.tellg();
-    input_data_.resize(static_cast<size_t>(file_size));
+    std::string single_file_content(static_cast<size_t>(file_size), '\0');
     file.seekg(0);
-    file.read(input_data_.data(), file_size);
+    file.read(single_file_content.data(), file_size);
     file.close();
 
+    const int repetition_count = 10;
+    input_data_.reserve(single_file_content.size() * repetition_count);
+    for (int i = 0; i < repetition_count; ++i) {
+      input_data_ += single_file_content;
+    }
     auto is_valid_char = [](char c) {
       return (std::isalnum(static_cast<unsigned char>(c)) != 0) || c == '-' || c == '_';
     };

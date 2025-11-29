@@ -1,7 +1,5 @@
 #include "volkov_a_count_word_line/seq/include/ops_seq.hpp"
 
-#include <cstddef>
-
 #include "volkov_a_count_word_line/common/include/common.hpp"
 
 namespace volkov_a_count_word_line {
@@ -15,25 +13,24 @@ bool IsTokenChar(char c) {
 }
 
 int CountWords(const char *data, size_t n) {
-  enum State { IN_WORD, IN_SEPARATOR };
+  enum class State { kInWord, kInSeparator };
   int word_count = 0;
 
-  State current_state = IN_SEPARATOR;
+  State current_state = State::kInSeparator;
 
   for (size_t i = 0; i < n; ++i) {
     const char c = data[i];
-    if (current_state == IN_SEPARATOR) {
+    if (current_state == State::kInSeparator) {
       if (IsTokenChar(c)) {
         word_count++;
-        current_state = IN_WORD;
+        current_state = State::kInWord;
       }
     } else {
       if (!IsTokenChar(c)) {
-        current_state = IN_SEPARATOR;
+        current_state = State::kInSeparator;
       }
     }
   }
-
   return word_count;
 }
 
