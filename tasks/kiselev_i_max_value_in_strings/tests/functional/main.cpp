@@ -16,18 +16,16 @@ namespace kiselev_i_max_value_in_strings {
 
 class KiselevIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType&) {
+  static std::string PrintTestParam(const TestType &) {
     static int test_counter = 0;
     return "test_" + std::to_string(test_counter++);
-}
-
+  }
 
  protected:
-
   void SetUp() override {
     TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    input_data_      = std::get<0>(params);
+    input_data_ = std::get<0>(params);
     expected_output_ = std::get<1>(params);
   }
 
@@ -52,110 +50,68 @@ TEST_P(KiselevIRunFuncTestsProcesses, MaxInRowsFromMatrix) {
 
 // Тестовые случаи: (input_matrix, expected_max_values)
 const std::array<TestType, 11> kTestParam = {
-  // Тест 1: Простая матрица 3x3
-  std::make_tuple(
-    std::vector<std::vector<int>>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}},
-    std::vector<int>{3, 6, 9}
-  ),
-  
-  // Тест 2: С отрицательными числами
-  std::make_tuple(
-    std::vector<std::vector<int>>{{-10, -50, -30}, {10, 20, 35}, {0, 0, 0}},
-    std::vector<int>{-10, 35, 0}
-  ),
-  
-  // Тест 3: Один элемент
-  std::make_tuple(
-    std::vector<std::vector<int>>{{228}},
-    std::vector<int>{228}
-  ),
-  
-  // Тест 4: Рваная матрица
-  std::make_tuple(
-    std::vector<std::vector<int>>{{1}, {2 ,3, 4, 5, 6}, {7, 8}},
-    std::vector<int>{1, 6, 8}
-  ),
+    // Тест 1: Простая матрица 3x3
+    std::make_tuple(std::vector<std::vector<int>>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}, std::vector<int>{3, 6, 9}),
 
-  //new 
+    // Тест 2: С отрицательными числами
+    std::make_tuple(std::vector<std::vector<int>>{{-10, -50, -30}, {10, 20, 35}, {0, 0, 0}},
+                    std::vector<int>{-10, 35, 0}),
 
-  // Тест 5: Матрица с нулями и одинаковыми элементами
-  std::make_tuple(
-    std::vector<std::vector<int>>{{0, 0, 0}, {5, 5, 5}, {1, 1, 1}},
-    std::vector<int>{0, 5, 1}
-  ),
+    // Тест 3: Один элемент
+    std::make_tuple(std::vector<std::vector<int>>{{228}}, std::vector<int>{228}),
 
-  // Тест 6: Большие числа
-  std::make_tuple(
-    std::vector<std::vector<int>>{
-      {1000000000, -5, 3},
-      {7, 800000000, 9},
-      {-1, -2, -3}
-    },
-    std::vector<int>{1000000000, 800000000, -1}
-  ),
+    // Тест 4: Рваная матрица
+    std::make_tuple(std::vector<std::vector<int>>{{1}, {2, 3, 4, 5, 6}, {7, 8}}, std::vector<int>{1, 6, 8}),
 
-  // Тест 7: Рваная матрица с разными длинами
-  std::make_tuple(
-    std::vector<std::vector<int>>{
-      {9},
-      {4, 3},
-      {10, 20, 30, 40},
-      {-5, -10, -1}
-    },
-    std::vector<int>{9, 4, 40, -1}
-  ),
+    // new
 
-  // Тест 8: Макс в середине строки
-  std::make_tuple(
-    std::vector<std::vector<int>>{
-      {1, 9, 2},
-      {3, 7, 6},
-      {0, 100, 50},
-    },
-    std::vector<int>{9, 7, 100}
-  ),
+    // Тест 5: Матрица с нулями и одинаковыми элементами
+    std::make_tuple(std::vector<std::vector<int>>{{0, 0, 0}, {5, 5, 5}, {1, 1, 1}}, std::vector<int>{0, 5, 1}),
 
-  // Тест 9: Отрицательные и нули
-  std::make_tuple(
-    std::vector<std::vector<int>>{
-      {-1, -100, -50},
-      {0, -1, -2},
-      {-10, 0, -5}
-    },
-    std::vector<int>{-1, 0, 0}
-  ),
+    // Тест 6: Большие числа
+    std::make_tuple(std::vector<std::vector<int>>{{1000000000, -5, 3}, {7, 800000000, 9}, {-1, -2, -3}},
+                    std::vector<int>{1000000000, 800000000, -1}),
 
-  // Тест 10: Большая строка
-  std::make_tuple(
-    std::vector<std::vector<int>>{
-      {1,2,3,4,5,6,7,8,9,10,100,11,12},
-    },
-    std::vector<int>{100}
-  ),
+    // Тест 7: Рваная матрица с разными длинами
+    std::make_tuple(std::vector<std::vector<int>>{{9}, {4, 3}, {10, 20, 30, 40}, {-5, -10, -1}},
+                    std::vector<int>{9, 4, 40, -1}),
 
-  // Тест 11: Матрица 10x10 (вручную задана)
-  std::make_tuple(
-    std::vector<std::vector<int>>{
-      {1,2,3,4,5,6,7,8,9,10},
-      {10,9,8,7,6,5,4,3,2,1},
-      {5,5,5,5,5,5,5,5,5,5},
-      {-1,-2,-3,-4,-5,-6,-7,-8,-9,-10},
-      {0,0,0,0,0,0,0,0,0,0},
-      {100,50,20,10,5,1,0,-1,-2,-3},
-      {7,14,21,28,35,42,49,56,63,70},
-      {9,18,27,36,45,54,63,72,81,90},
-      {1000,200,300,400,500,600,700,800,900,999},
-      {-1000, -2000, -3000, -4000, -5000, -6000, -7000, -8000, -9000, -1}
-    },
-    std::vector<int>{
-      10, 10, 5, -1, 0, 100, 70, 90, 1000, -1
-    }
-  )
-};
-  
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KiselevITestTaskMPI, InType>(kTestParam, PPC_SETTINGS_kiselev_i_max_value_in_strings),
-                   ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kiselev_i_max_value_in_strings));
+    // Тест 8: Макс в середине строки
+    std::make_tuple(
+        std::vector<std::vector<int>>{
+            {1, 9, 2},
+            {3, 7, 6},
+            {0, 100, 50},
+        },
+        std::vector<int>{9, 7, 100}),
+
+    // Тест 9: Отрицательные и нули
+    std::make_tuple(std::vector<std::vector<int>>{{-1, -100, -50}, {0, -1, -2}, {-10, 0, -5}},
+                    std::vector<int>{-1, 0, 0}),
+
+    // Тест 10: Большая строка
+    std::make_tuple(
+        std::vector<std::vector<int>>{
+            {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 11, 12},
+        },
+        std::vector<int>{100}),
+
+    // Тест 11: Матрица 10x10 (вручную задана)
+    std::make_tuple(std::vector<std::vector<int>>{{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+                                                  {10, 9, 8, 7, 6, 5, 4, 3, 2, 1},
+                                                  {5, 5, 5, 5, 5, 5, 5, 5, 5, 5},
+                                                  {-1, -2, -3, -4, -5, -6, -7, -8, -9, -10},
+                                                  {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                                                  {100, 50, 20, 10, 5, 1, 0, -1, -2, -3},
+                                                  {7, 14, 21, 28, 35, 42, 49, 56, 63, 70},
+                                                  {9, 18, 27, 36, 45, 54, 63, 72, 81, 90},
+                                                  {1000, 200, 300, 400, 500, 600, 700, 800, 900, 999},
+                                                  {-1000, -2000, -3000, -4000, -5000, -6000, -7000, -8000, -9000, -1}},
+                    std::vector<int>{10, 10, 5, -1, 0, 100, 70, 90, 1000, -1})};
+
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KiselevITestTaskMPI, InType>(kTestParam, PPC_SETTINGS_kiselev_i_max_value_in_strings),
+    ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_kiselev_i_max_value_in_strings));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
@@ -166,4 +122,3 @@ INSTANTIATE_TEST_SUITE_P(MatrixRowMaxTests, KiselevIRunFuncTestsProcesses, kGtes
 }  // namespace
 
 }  // namespace kiselev_i_max_value_in_strings
-

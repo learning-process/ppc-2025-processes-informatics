@@ -10,17 +10,17 @@
 namespace kiselev_i_max_value_in_strings {
 
 class KiselevIMaxValueInStringsRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int k_count = 10000; // количество строк
-  const int k_max_cols = 10000; // макс длина строки
+  const int k_count = 10000;     // количество строк
+  const int k_max_cols = 10000;  // макс длина строки
  protected:
   void SetUp() override {
     // big matrix
     input_data_.resize(k_count);
     for (int i = 0; i < k_count; ++i) {
-      int len_row = 1+ (int)(i%k_max_cols);
+      int len_row = 1 + (int)(i % k_max_cols);
       input_data_[i].resize(len_row);
       for (int j = 0; j < len_row; ++j) {
-        input_data_[i][j] = (i+2 + j+7) % 100; 
+        input_data_[i][j] = (i + 2 + j + 7) % 100;
       }
     }
   }
@@ -42,8 +42,8 @@ TEST_P(KiselevIMaxValueInStringsRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KiselevITestTaskMPI, KiselevITestTaskSEQ>(PPC_SETTINGS_kiselev_i_max_value_in_strings);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KiselevITestTaskMPI, KiselevITestTaskSEQ>(
+    PPC_SETTINGS_kiselev_i_max_value_in_strings);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -51,4 +51,4 @@ const auto kPerfTestName = KiselevIMaxValueInStringsRunPerfTestProcesses::Custom
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, KiselevIMaxValueInStringsRunPerfTestProcesses, kGtestValues, kPerfTestName);
 
-} 
+}  // namespace kiselev_i_max_value_in_strings
