@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+#include <utility>
 #include <vector>
 
 #include "sizov_d_global_search/common/include/common.hpp"
@@ -12,9 +14,11 @@ class SizovDGlobalSearchSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+
   explicit SizovDGlobalSearchSEQ(const InType &in);
 
  private:
+  // Основная логика PPC
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
@@ -22,28 +26,41 @@ class SizovDGlobalSearchSEQ : public BaseTask {
 
   using Seed = std::pair<double, double>;
 
-  bool CollectInitialSeeds(const InType &problem, std::vector<Seed> &seeds) const;
-  void ExpandSeedsAroundBest(const InType &problem, double uniq_eps, std::vector<Seed> &seeds) const;
-  void InitializeStateFromSeeds(const std::vector<Seed> &seeds);
+  // -------------------- Вспомогательные операции --------------------
+  bool collect_initial_seeds(const InType &problem, std::vector<Seed> &seeds) const;
+  void expand_seeds_around_best(const InType &problem, double uniq_eps, std::vector<Seed> &seeds) const;
+  void initialize_state_from_seeds(const std::vector<Seed> &seeds);
 
-  std::optional<double> EvaluatePoint(const InType &problem, double point, bool enforce_limit) const;
-  bool SeekFiniteSample(const InType &problem, double start, double direction, double &point, double &value) const;
+  std::optional<double> evaluate_point(const InType &problem, double point, bool enforce_limit) const;
 
-  double DynamicLimit(double sample) const;
-  double ClampValue(double value, bool *clipped) const;
-  double EstimateM(double reliability) const;
-  std::pair<double, bool> EvaluateIntervalCandidate(const InType &problem, double candidate, double left_point,
-                                                    double right_point, double left_value, double right_value) const;
-  double FilterCandidateValue(double candidate_value, double left_value, double right_value, bool *clipped) const;
-  bool TryInsertPoint(double point, double value, double insert_eps);
+  struct SampleResult {
+    double point{};
+    double value{};
+  };
+  std::optional<SampleResult> seek_finite_sample(const InType &problem, double start, double direction) const;
 
+  double dynamic_limit(double sample) const;
+  double clamp_value(double value, bool *clipped) const;
+
+  double estimate_m(double reliability) const;
+
+  std::pair<double, bool> eval_interval_candidate(const InType &problem, double candidate, double left_point,
+                                                  double right_point, double left_value, double right_value) const;
+
+  double filter_candidate_value(double candidate, double left_value, double right_value, bool *clipped) const;
+
+  bool try_insert_point(double point, double value, double insert_eps);
+
+  // -------------------- Состояние алгоритма --------------------
   std::vector<double> points_;
   std::vector<double> values_;
-  std::vector<char> clipped_;
+  std::vector<bool> clipped_;
+
   double best_point_ = 0.0;
   double best_value_ = 0.0;
   int iterations_ = 0;
   bool converged_ = false;
+
   double value_ceiling_ = 1e6;
   double negative_ceiling_ = 1e6;
 };
