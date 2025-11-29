@@ -10,12 +10,12 @@ namespace kiselev_i_max_value_in_strings {
 class KiselevIMaxValueInStringsRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   static constexpr int kCount = 10000;      // количество строк
-  static constexpr int k_max_cols = 10000;  // макс длина строки
+  static constexpr int kMaxCols = 10000;  // макс длина строки
 
   void SetUp() override {
     input_data_.resize(kCount);
     for (int i = 0; i < kCount; ++i) {
-      int len_row = 1 + (i % k_max_cols);
+      int len_row = 1 + (i % kMaxCols);
       input_data_[i].resize(len_row);
       for (int j = 0; j < len_row; ++j) {
         input_data_[i][j] = (i + 2 + j + 7) % 100;
