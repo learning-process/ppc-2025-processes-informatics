@@ -16,7 +16,7 @@ namespace kiselev_i_max_value_in_strings {
 
 class KiselevIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &) {
+  static std::string PrintTestParam(const TestType & /*param*/) {
     static int test_counter = 0;
     return "test_" + std::to_string(test_counter++);
   }

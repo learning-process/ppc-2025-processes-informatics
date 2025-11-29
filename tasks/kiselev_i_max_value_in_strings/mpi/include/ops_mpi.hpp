@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "kiselev_i_max_value_in_strings/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -19,6 +17,16 @@ class KiselevITestTaskMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  int CalculateLocalRowCount(int total_rows, int world_rank, int world_size);
+  void DistributeRowLengths(const std::vector<std::vector<int>> &matrix, int total_rows, int world_rank, int world_size,
+                            std::vector<int> &local_row_lengths, std::vector<int> &len_counts,
+                            std::vector<int> &len_displs);
+  void DistributeValues(const std::vector<std::vector<int>> &matrix, int world_rank, int world_size,
+                        const std::vector<int> &len_counts, const std::vector<int> &len_displs,
+                        std::vector<int> &local_values);
+  void ComputeLocalMax(const std::vector<int> &local_values, const std::vector<int> &local_row_lengths,
+                       std::vector<int> &local_result);
 };
 
 }  // namespace kiselev_i_max_value_in_strings

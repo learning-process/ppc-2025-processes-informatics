@@ -1,10 +1,9 @@
 #include "kiselev_i_max_value_in_strings/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <utility>
 #include <vector>
 
 #include "kiselev_i_max_value_in_strings/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kiselev_i_max_value_in_strings {
 
@@ -20,6 +19,7 @@ bool KiselevITestTaskSEQ::ValidationImpl() {
   if (matrix.empty()) {
     return false;
   }
+
   for (const auto &row : matrix) {
     if (row.empty()) {
       return false;
@@ -37,14 +37,15 @@ bool KiselevITestTaskSEQ::PreProcessingImpl() {
 bool KiselevITestTaskSEQ::RunImpl() {
   const auto &matrix = GetInput();
   auto &out_vector = GetOutput();
-  for (int num_str = 0; num_str < (int)(matrix.size()); num_str++) {
-    int tmp_max_elem_in_str = matrix[num_str][0];
-    for (int num_column = 0; num_column < (int)(matrix[num_str].size()); num_column++) {
-      if (matrix[num_str][num_column] > tmp_max_elem_in_str) {
-        tmp_max_elem_in_str = matrix[num_str][num_column];
+
+  for (std::size_t row_idx = 0; row_idx < matrix.size(); ++row_idx) {
+    int tmp_max = matrix[row_idx][0];
+    for (std::size_t col_idx = 0; col_idx < matrix[row_idx].size(); ++col_idx) {
+      if (matrix[row_idx][col_idx] > tmp_max) {
+        tmp_max = matrix[row_idx][col_idx];
       }
     }
-    out_vector[num_str] = tmp_max_elem_in_str;
+    out_vector[row_idx] = tmp_max;
   }
   return true;
 }

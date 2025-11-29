@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <vector>
-
 #include "kiselev_i_max_value_in_strings/common/include/common.hpp"
 #include "kiselev_i_max_value_in_strings/mpi/include/ops_mpi.hpp"
 #include "kiselev_i_max_value_in_strings/seq/include/ops_seq.hpp"
@@ -10,14 +8,14 @@
 namespace kiselev_i_max_value_in_strings {
 
 class KiselevIMaxValueInStringsRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int k_count = 10000;     // количество строк
-  const int k_max_cols = 10000;  // макс длина строки
  protected:
+  static constexpr int k_count = 10000;     // количество строк
+  static constexpr int k_max_cols = 10000;  // макс длина строки
+
   void SetUp() override {
-    // big matrix
     input_data_.resize(k_count);
     for (int i = 0; i < k_count; ++i) {
-      int len_row = 1 + (int)(i % k_max_cols);
+      int len_row = 1 + (i % k_max_cols);
       input_data_[i].resize(len_row);
       for (int j = 0; j < len_row; ++j) {
         input_data_[i][j] = (i + 2 + j + 7) % 100;
@@ -25,12 +23,11 @@ class KiselevIMaxValueInStringsRunPerfTestProcesses : public ppc::util::BaseRunP
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    // Для performance тестов проверяем, что результат не пустой и правильного размера
+  bool CheckTestOutputData(OutType &output_data) override {
     return !output_data.empty() && output_data.size() == input_data_.size();
   }
 
-  InType GetTestInputData() final {
+  InType GetTestInputData() override {
     return input_data_;
   }
 
