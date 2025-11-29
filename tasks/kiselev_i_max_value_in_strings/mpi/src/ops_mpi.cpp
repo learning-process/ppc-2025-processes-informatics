@@ -13,7 +13,7 @@ namespace kiselev_i_max_value_in_strings {
 KiselevITestTaskMPI::KiselevITestTaskMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput().clear();
+  //GetOutput().clear();
 }
 
 bool KiselevITestTaskMPI::ValidationImpl() {
