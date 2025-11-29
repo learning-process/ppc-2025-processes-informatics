@@ -65,7 +65,8 @@ TEST_P(ShvetsovaKMaxDiffNeigVecRunFuncTestsProcesses, DataFromTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 8> kTestParam = {"test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8"};
+const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4", "test5",
+                                             "test6", "test7", "test8", "test9", "test10"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ShvetsovaKMaxDiffNeigVecMPI, InType>(kTestParam, PPC_SETTINGS_shvetsova_k_max_diff_neig_vec),

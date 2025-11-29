@@ -31,26 +31,34 @@ bool ShvetsovaKMaxDiffNeigVecMPI::PreProcessingImpl() {
 bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   int count_of_proc = 0;
   int rank = 0;
-  int size_of_vector = static_cast<int>(data_.size());
-  if (size_of_vector < 2) {
-    GetOutput().first = 0.0;
-    GetOutput().second = 0.0;
-    return true;
-  }
+  // int size_of_vector = static_cast<int>(data_.size());
+
   MPI_Comm_size(MPI_COMM_WORLD, &count_of_proc);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+  int size_of_vector = 0;
+  if (rank == 0) {
+    size_of_vector = static_cast<int>(data_.size());
+  }
+
   MPI_Bcast(&size_of_vector, 1, MPI_INT, 0, MPI_COMM_WORLD);  // сказали всем процессам, какой размер у вектора
-  std::vector<int> count_elems(count_of_proc, 0);             // количсетво элементов на каждый из процессов
-  std::vector<int> ind(count_of_proc, 0);  // индекс, начиная с которого элементы принадлежат процессам
+  if (size_of_vector < 2) {
+    if (rank == 0) {
+      GetOutput().first = 0.0;
+      GetOutput().second = 0.0;
+    }
+    return true;
+  }
+  std::vector<int> count_elems(count_of_proc, 0);  // количсетво элементов на каждый из процессов
+  std::vector<int> ind(count_of_proc, 0);          // индекс, начиная с которого элементы принадлежат процессам
 
   CreateDistribution(count_of_proc, size_of_vector, count_elems, ind, rank);
 
   int part_size = count_elems[rank];
   std::vector<double> part(part_size);
 
-  MPI_Scatterv(data_.data(), count_elems.data(), ind.data(), MPI_DOUBLE, part.data(), part_size, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? data_.data() : nullptr, count_elems.data(), ind.data(), MPI_DOUBLE,
+               part_size > 0 ? part.data() : nullptr, part_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double local_diff = -1.0;
   double local_a = 0.0;
@@ -60,7 +68,7 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   ComputeBorders(count_of_proc, rank, part, part_size, local_diff, local_a, local_b);
 
   std::vector<double> all_diffs(count_of_proc);
-  MPI_Gather(&local_diff, 1, MPI_DOUBLE, all_diffs.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gather(&local_diff, 1, MPI_DOUBLE, rank == 0 ? all_diffs.data() : nullptr, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   int winner_rank = WinnerRank(all_diffs, count_of_proc, rank);
 
@@ -99,27 +107,35 @@ void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, co
     return;
   }
 
-  if (rank < count_of_proc - 1 && part_size > 0) {
-    double last_curr = part[part_size - 1];
-    MPI_Send(&last_curr, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
+  // -------- 1. Готовим данные для отправки --------
+  double send_val = 0.0;
+  int send_count = 0;
+
+  if (part_size > 0) {
+    send_val = part[part_size - 1];  // последний элемент
+    send_count = 1;
   }
 
-  if (rank == 0) {
-    return;
-  }
+  // -------- 2. Определяем соседей --------
+  int dest = (rank < count_of_proc - 1) ? rank + 1 : MPI_PROC_NULL;
+  int src = (rank > 0) ? rank - 1 : MPI_PROC_NULL;
 
-  double last_prev = 0.0;
-  MPI_Recv(&last_prev, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  // -------- 3. Обмениваемся безопасно --------
+  double recv_val = 0.0;
 
-  if (part_size == 0) {
-    return;
-  }
+  MPI_Sendrecv(&send_val, send_count, MPI_DOUBLE, dest, 0,  // отправка
+               &recv_val, 1, MPI_DOUBLE, src, 0,            // приём
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  double diff = std::abs(last_prev - part[0]);
-  if (diff > local_diff) {
-    local_diff = diff;
-    local_a = last_prev;
-    local_b = part[0];
+  // -------- 4. Если слева реально пришли данные — считаем разницу --------
+  if (src != MPI_PROC_NULL && part_size > 0) {
+    double diff = std::abs(recv_val - part[0]);
+
+    if (diff > local_diff) {
+      local_diff = diff;
+      local_a = recv_val;
+      local_b = part[0];
+    }
   }
 }
 
