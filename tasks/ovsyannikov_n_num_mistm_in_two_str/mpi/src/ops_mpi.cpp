@@ -47,51 +47,38 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
     return true;
   }
 
-  std::vector<int> elems_per_proc(proc_num);
-  std::vector<int> shifts(proc_num);
+  std::vector<int> counts(proc_num);
+  std::vector<int> displs(proc_num);
 
   int tail = total_len % proc_num;
   int accum = 0;
   for (int i = 0; i < proc_num; i++) {
-    elems_per_proc[i] = (total_len / proc_num) + (i < tail ? 1 : 0);
-    shifts[i] = accum;
-    accum += elems_per_proc[i];
+    counts[i] = (total_len / proc_num) + (i < tail ? 1 : 0);
+    displs[i] = accum;
+    accum += counts[i];
   }
 
-  std::vector<char> main_buff;
-  std::vector<int> byte_counts(proc_num);
-  std::vector<int> byte_shifts(proc_num);
+  int my_count = counts[proc_rank];
+  std::vector<char> local_str_1(my_count);
+  std::vector<char> local_str_2(my_count);
+
+  const char *send_buf_1 = nullptr;
+  const char *send_buf_2 = nullptr;
 
   if (proc_rank == 0) {
-    main_buff.resize(static_cast<size_t>(total_len) * 2);
-    const auto &seq_one = GetInput().first;
-    const auto &seq_two = GetInput().second;
-    int iter_pos = 0;
-
-    for (int i = 0; i < proc_num; ++i) {
-      int part_len = elems_per_proc[i];
-      int read_from = shifts[i];
-
-      std::copy(seq_one.begin() + read_from, seq_one.begin() + read_from + part_len, main_buff.begin() + iter_pos);
-
-      std::copy(seq_two.begin() + read_from, seq_two.begin() + read_from + part_len,
-                main_buff.begin() + iter_pos + part_len);
-
-      byte_counts[i] = 2 * part_len;
-      byte_shifts[i] = iter_pos;
-      iter_pos += (2 * part_len);
-    }
+    send_buf_1 = GetInput().first.data();
+    send_buf_2 = GetInput().second.data();
   }
 
-  int my_chunk = elems_per_proc[proc_rank];
-  std::vector<char> local_store(static_cast<size_t>(my_chunk) * 2);
+  MPI_Scatterv(send_buf_1, counts.data(), displs.data(), MPI_CHAR, local_str_1.data(), my_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
-  MPI_Scatterv(main_buff.data(), byte_counts.data(), byte_shifts.data(), MPI_CHAR, local_store.data(), 2 * my_chunk,
-               MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(send_buf_2, counts.data(), displs.data(), MPI_CHAR, local_str_2.data(), my_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
 
   int priv_err_cnt = 0;
-  for (int i = 0; i < my_chunk; ++i) {
-    if (local_store[i] != local_store[my_chunk + i]) {
+  for (int i = 0; i < my_count; ++i) {
+    if (local_str_1[i] != local_str_2[i]) {
       priv_err_cnt++;
     }
   }
@@ -99,6 +86,7 @@ bool OvsyannikovNNumMistmInTwoStrMPI::RunImpl() {
   int total_err_cnt = 0;
   MPI_Allreduce(&priv_err_cnt, &total_err_cnt, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   GetOutput() = total_err_cnt;
+
   return true;
 }
 
