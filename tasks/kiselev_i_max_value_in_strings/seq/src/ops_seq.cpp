@@ -36,7 +36,7 @@ bool KiselevITestTaskSEQ::PreProcessingImpl() {
 bool KiselevITestTaskSEQ::RunImpl() {
   const auto &matrix = GetInput();
   auto &out_vector = GetOutput();
-  for (int num_str = 0; num_str < matrix.size(); num_str++) {
+  for (int num_str = 0; num_str < (int)(matrix.size()); num_str++) {
     int tmp_max_elem_in_str = matrix[num_str][0];
     for (int num_column = 0; num_column < (int)(matrix[num_str].size()); num_column++) {
       if (matrix[num_str][num_column] > tmp_max_elem_in_str) {
