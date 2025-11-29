@@ -14,8 +14,7 @@ GonozovLElemVecSumSEQ::GonozovLElemVecSumSEQ(const InType &in) {
 }
 
 bool GonozovLElemVecSumSEQ::ValidationImpl() {
-  return true;
-  // return static_cast<int>(GetInput().size()) > 0 &&   GetOutput() == 0.0;;
+  return static_cast<int>(GetInput().size()) > 0 && GetOutput() == 0.0;;
 }
 
 bool GonozovLElemVecSumSEQ::PreProcessingImpl() {
