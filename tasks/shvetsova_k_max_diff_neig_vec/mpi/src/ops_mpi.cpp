@@ -95,18 +95,7 @@ void ShvetsovaKMaxDiffNeigVecMPI::CreateDistribution(int count_of_proc, int size
 void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, const std::vector<double> &part,
                                                  int part_size, double &local_diff, double &local_a, double &local_b) {
   if (count_of_proc == 1) {
-    if (part_size < 2) {
-      return;
-    }
-
-    for (int i = 0; i + 1 < part_size; ++i) {
-      double diff = std::abs(part[i] - part[i + 1]);
-      if (diff > local_diff) {
-        local_diff = diff;
-        local_a = part[i];
-        local_b = part[i + 1];
-      }
-    }
+    ComputeBordersSingleProcess(part, part_size, local_diff, local_a, local_b);
     return;
   }
 
@@ -115,17 +104,37 @@ void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, co
     MPI_Send(&last_curr, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
   }
 
-  if (rank > 0) {
-    double last_prev = 0;
-    MPI_Recv(&last_prev, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if (rank == 0) {
+    return;
+  }
 
-    if (part_size > 0) {
-      double diff = std::abs(last_prev - part[0]);
-      if (diff > local_diff) {
-        local_diff = diff;
-        local_a = last_prev;
-        local_b = part[0];
-      }
+  double last_prev = 0.0;
+  MPI_Recv(&last_prev, 1, MPI_DOUBLE, rank - 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  if (part_size == 0) {
+    return;
+  }
+
+  double diff = std::abs(last_prev - part[0]);
+  if (diff > local_diff) {
+    local_diff = diff;
+    local_a = last_prev;
+    local_b = part[0];
+  }
+}
+
+void ShvetsovaKMaxDiffNeigVecMPI::ComputeBordersSingleProcess(const std::vector<double> &part, int part_size,
+                                                              double &local_diff, double &local_a, double &local_b) {
+  if (part_size < 2) {
+    return;
+  }
+
+  for (int i = 0; i + 1 < part_size; ++i) {
+    double diff = std::abs(part[i] - part[i + 1]);
+    if (diff > local_diff) {
+      local_diff = diff;
+      local_a = part[i];
+      local_b = part[i + 1];
     }
   }
 }
