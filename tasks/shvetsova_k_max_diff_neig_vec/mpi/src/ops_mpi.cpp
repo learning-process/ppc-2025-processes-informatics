@@ -154,8 +154,8 @@ void ShvetsovaKMaxDiffNeigVecMPI::CollectGlobalPair(int winner_rank, double loca
 
   MPI_Bcast(&winner_rank, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  result_pair[0] = all_pairs[winner_rank * 2];
-  result_pair[1] = all_pairs[winner_rank * 2 + 1];
+  result_pair[0] = all_pairs[static_cast<size_t>(winner_rank) * 2];
+  result_pair[1] = all_pairs[(static_cast<size_t>(winner_rank) * 2) + 1];
 }
 
 bool ShvetsovaKMaxDiffNeigVecMPI::PostProcessingImpl() {
