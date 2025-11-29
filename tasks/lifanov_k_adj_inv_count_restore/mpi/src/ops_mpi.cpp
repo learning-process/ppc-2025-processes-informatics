@@ -34,23 +34,42 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  if (n < 2) {
+    GetOutput() = 0;
+    return true;
+  }
+
   const std::size_t total_pairs = n - 1;
   const std::size_t base = total_pairs / static_cast<std::size_t>(size);
   const std::size_t rem = total_pairs % static_cast<std::size_t>(size);
 
-  const std::size_t start_pair = (static_cast<std::size_t>(rank) * base) + std::min<std::size_t>(rank, rem);
-  const std::size_t count = base + (std::cmp_less(rank, static_cast<int>(rem)) ? 1 : 0);
-  const std::size_t end_pair = start_pair + count;
+  std::vector<int> sendcounts(size, 0);
+  std::vector<int> displs(size, 0);
 
-  int local = 0;
-  for (std::size_t i = start_pair; i < end_pair; ++i) {
-    if (data[i] > data[i + 1]) {
-      local++;
+  for (int r = 0; r < size; ++r) {
+    std::size_t local_pairs = base + (r < static_cast<int>(rem) ? 1 : 0);
+    sendcounts[r] = static_cast<int>(local_pairs + 1);
+  }
+
+  for (int r = 1; r < size; ++r) {
+    displs[r] = displs[r - 1] + sendcounts[r - 1] - 1;
+  }
+
+  int local_size = sendcounts[rank];
+  std::vector<int> local(local_size);
+
+  MPI_Scatterv(data.data(), sendcounts.data(), displs.data(), MPI_INT, local.data(), local_size, MPI_INT, 0,
+               MPI_COMM_WORLD);
+
+  int local_inv = 0;
+  for (int i = 0; i + 1 < local_size; ++i) {
+    if (local[i] > local[i + 1]) {
+      local_inv++;
     }
   }
 
   int global = 0;
-  MPI_Reduce(&local, &global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_inv, &global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   MPI_Bcast(&global, 1, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = global;
