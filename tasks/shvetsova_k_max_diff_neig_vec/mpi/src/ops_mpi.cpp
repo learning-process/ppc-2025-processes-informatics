@@ -64,8 +64,13 @@ bool ShvetsovaKMaxDiffNeigVecMPI::RunImpl() {
   double local_a = 0.0;
   double local_b = 0.0;
 
-  ComputeLocalDiff(part, part_size, local_diff, local_a, local_b);
-  ComputeBorders(count_of_proc, rank, part, part_size, local_diff, local_a, local_b);
+  if (count_of_proc == 1) {
+    local_diff = -1.0;
+    ComputeBordersSingleProcess(part, part_size, local_diff, local_a, local_b);
+  } else {
+    ComputeLocalDiff(part, part_size, local_diff, local_a, local_b);
+    ComputeBorders(count_of_proc, rank, part, part_size, local_diff, local_a, local_b);
+  }
 
   std::vector<double> all_diffs(count_of_proc);
   MPI_Gather(&local_diff, 1, MPI_DOUBLE, rank == 0 ? all_diffs.data() : nullptr, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -107,7 +112,6 @@ void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, co
     return;
   }
 
-  // -------- 1. Готовим данные для отправки --------
   double send_val = 0.0;
   int send_count = 0;
 
@@ -116,18 +120,15 @@ void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, co
     send_count = 1;
   }
 
-  // -------- 2. Определяем соседей --------
   int dest = (rank < count_of_proc - 1) ? rank + 1 : MPI_PROC_NULL;
   int src = (rank > 0) ? rank - 1 : MPI_PROC_NULL;
 
-  // -------- 3. Обмениваемся безопасно --------
   double recv_val = 0.0;
 
   MPI_Sendrecv(&send_val, send_count, MPI_DOUBLE, dest, 0,  // отправка
                &recv_val, 1, MPI_DOUBLE, src, 0,            // приём
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  // -------- 4. Если слева реально пришли данные — считаем разницу --------
   if (src != MPI_PROC_NULL && part_size > 0) {
     double diff = std::abs(recv_val - part[0]);
 
