@@ -94,6 +94,22 @@ void ShvetsovaKMaxDiffNeigVecMPI::CreateDistribution(int count_of_proc, int size
 
 void ShvetsovaKMaxDiffNeigVecMPI::ComputeBorders(int count_of_proc, int rank, const std::vector<double> &part,
                                                  int part_size, double &local_diff, double &local_a, double &local_b) {
+  if (count_of_proc == 1) {
+    if (part_size < 2) {
+      return;
+    }
+
+    for (int i = 0; i + 1 < part_size; ++i) {
+      double diff = std::abs(part[i] - part[i + 1]);
+      if (diff > local_diff) {
+        local_diff = diff;
+        local_a = part[i];
+        local_b = part[i + 1];
+      }
+    }
+    return;
+  }
+
   if (rank < count_of_proc - 1 && part_size > 0) {
     double last_curr = part[part_size - 1];
     MPI_Send(&last_curr, 1, MPI_DOUBLE, rank + 1, 0, MPI_COMM_WORLD);
