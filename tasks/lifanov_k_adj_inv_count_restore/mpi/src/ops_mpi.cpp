@@ -47,7 +47,7 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   std::vector<int> displs(world_size, 0);
 
   for (std::size_t proc_idx = 0; proc_idx < world_size; ++proc_idx) {
-    const auto extra = (proc_idx < rem ? 1u : 0u);
+    const auto extra = (proc_idx < rem ? std::size_t{1} : std::size_t{0});
     const auto local_pairs = base + extra;
     sendcounts[proc_idx] = static_cast<int>(local_pairs + 1);
   }
