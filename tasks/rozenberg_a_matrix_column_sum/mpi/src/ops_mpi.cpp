@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <vector>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
@@ -35,12 +34,12 @@ bool RozenbergAMatrixColumnSumMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
-    int rows = static_cast<int>(GetInput().size());
-    int columns = static_cast<int>(GetInput()[0].size());
-    flat.resize(static_cast<size_t>(rows * columns));
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < columns; j++) {
-        flat[j + (i * columns)] = GetInput()[i][j];
+    size_t rows = GetInput().size();
+    size_t columns = GetInput()[0].size();
+    flat_.resize(rows * columns);
+    for (int i = 0; i < static_cast<int>(rows); i++) {
+      for (int j = 0; j < static_cast<int>(columns); j++) {
+        flat_[j + (i * columns)] = GetInput()[i][j];
       }
     }
     GetOutput().resize(GetInput()[0].size());
@@ -77,10 +76,10 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
     displs.resize(size);
 
     int offset = 0;
-    for (int p = 0; p < size; p++) {
-      int r = chunk + (p < remainder ? 1 : 0);
-      sendcounts[p] = r * columns;
-      displs[p] = offset;
+    for (int i = 0; i < size; i++) {
+      int r = chunk + (i < remainder ? 1 : 0);
+      sendcounts[i] = r * columns;
+      displs[i] = offset;
       offset += r * columns;
     }
   }
@@ -88,7 +87,7 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
   std::vector<int> local_buf(static_cast<size_t>(rows_count * columns));
 
   if (rank == 0) {
-    MPI_Scatterv(flat.data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), rows_count * columns,
+    MPI_Scatterv(flat_.data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), rows_count * columns,
                  MPI_INT, 0, MPI_COMM_WORLD);
   } else {
     MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0,
