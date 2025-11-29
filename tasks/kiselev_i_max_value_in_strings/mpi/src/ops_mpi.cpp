@@ -278,6 +278,10 @@ void KiselevITestTaskMPI::ComputeLocalMax(const std::vector<int> &local_values,
                                           const std::vector<int> &local_row_lengths, std::vector<int> &local_result) {
   local_result.resize(local_row_lengths.size());
 
+  if (row.empty()) {
+    return;
+  }
+  out.resize(row.size());
   for (int row = 0, pos = 0; row < static_cast<int>(local_row_lengths.size()); ++row) {
     int len = local_row_lengths[row];
     int tmp_max = local_values[pos];
@@ -293,8 +297,8 @@ bool KiselevITestTaskMPI::RunImpl() {
   const auto &matrix = GetInput();
   auto &result_vector = GetOutput();
 
-  int world_rank{};
-  int world_size{};
+  int world_rank{0};
+  int world_size{0};
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
