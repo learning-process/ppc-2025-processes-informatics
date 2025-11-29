@@ -32,23 +32,23 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size_signed);
 
-  const std::size_t world_size = static_cast<std::size_t>(world_size_signed);
+  const auto world_size = static_cast<std::size_t>(world_size_signed);
 
   if (n < 2) {
     GetOutput() = 0;
     return true;
   }
 
-  const std::size_t total_pairs = n - 1;
-  const std::size_t base = total_pairs / world_size;
-  const std::size_t rem = total_pairs % world_size;
+  const auto total_pairs = n - 1;
+  const auto base = total_pairs / world_size;
+  const auto rem = total_pairs % world_size;
 
   std::vector<int> sendcounts(world_size, 0);
   std::vector<int> displs(world_size, 0);
 
   for (std::size_t proc_idx = 0; proc_idx < world_size; ++proc_idx) {
-    const std::size_t extra = (proc_idx < rem ? 1 : 0);
-    const std::size_t local_pairs = base + extra;
+    const auto extra = (proc_idx < rem ? 1u : 0u);
+    const auto local_pairs = base + extra;
     sendcounts[proc_idx] = static_cast<int>(local_pairs + 1);
   }
 
@@ -71,8 +71,8 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
 
   int global = 0;
   MPI_Reduce(&local_inv, &global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-
   MPI_Bcast(&global, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   GetOutput() = global;
 
   return true;
