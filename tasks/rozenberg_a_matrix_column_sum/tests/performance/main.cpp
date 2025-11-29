@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <cstddef>
 
 #include "rozenberg_a_matrix_column_sum/common/include/common.hpp"
 #include "rozenberg_a_matrix_column_sum/mpi/include/ops_mpi.hpp"

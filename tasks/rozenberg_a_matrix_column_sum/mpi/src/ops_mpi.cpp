@@ -88,10 +88,11 @@ bool RozenbergAMatrixColumnSumMPI::RunImpl() {
   std::vector<int> local_buf(static_cast<size_t>(rows_count * columns));
 
   if (rank == 0) {
-    MPI_Scatterv(flat.data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0, MPI_COMM_WORLD);
-  }
-  else {
-    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(flat.data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), rows_count * columns,
+                 MPI_INT, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_INT, local_buf.data(), rows_count * columns, MPI_INT, 0,
+                 MPI_COMM_WORLD);
   }
 
   OutType local_res(columns, 0);
