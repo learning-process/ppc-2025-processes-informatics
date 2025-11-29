@@ -28,9 +28,11 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   const std::size_t n = data.size();
 
   int rank = 0;
-  int world_size = 1;
+  int world_size_signed = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size_signed);
+
+  const std::size_t world_size = static_cast<std::size_t>(world_size_signed);
 
   if (n < 2) {
     GetOutput() = 0;
@@ -38,25 +40,23 @@ bool LifanovKAdjacentInversionCountMPI::RunImpl() {
   }
 
   const std::size_t total_pairs = n - 1;
-  const std::size_t base = total_pairs / static_cast<std::size_t>(world_size);
-  const std::size_t rem = total_pairs % static_cast<std::size_t>(world_size);
+  const std::size_t base = total_pairs / world_size;
+  const std::size_t rem = total_pairs % world_size;
 
   std::vector<int> sendcounts(world_size, 0);
   std::vector<int> displs(world_size, 0);
 
-  // Формирование sendcounts
-  for (int proc_idx = 0; proc_idx < world_size; ++proc_idx) {
-    const bool extra_pair = static_cast<std::size_t>(proc_idx) < rem;
-    const std::size_t local_pairs = base + (extra_pair ? 1 : 0);
+  for (std::size_t proc_idx = 0; proc_idx < world_size; ++proc_idx) {
+    const std::size_t extra = (proc_idx < rem ? 1 : 0);
+    const std::size_t local_pairs = base + extra;
     sendcounts[proc_idx] = static_cast<int>(local_pairs + 1);
   }
 
-  // Формирование displs с перекрытием на один элемент
-  for (int proc_idx = 1; proc_idx < world_size; ++proc_idx) {
+  for (std::size_t proc_idx = 1; proc_idx < world_size; ++proc_idx) {
     displs[proc_idx] = displs[proc_idx - 1] + sendcounts[proc_idx - 1] - 1;
   }
 
-  int local_size = sendcounts[rank];
+  int local_size = sendcounts[static_cast<std::size_t>(rank)];
   std::vector<int> local(local_size);
 
   MPI_Scatterv(data.data(), sendcounts.data(), displs.data(), MPI_INT, local.data(), local_size, MPI_INT, 0,
