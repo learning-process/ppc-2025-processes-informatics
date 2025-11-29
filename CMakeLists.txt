@@ -1,11 +1,5 @@
 cmake_minimum_required( VERSION 3.25 )
 
-#Tmp fix for UBUNTU
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-Wno-error=null-dereference)
-    add_compile_options(-Wno-unknown-warning-option)
-endif()
-
 if(DEFINED CMAKE_OSX_SYSROOT AND NOT EXISTS "${CMAKE_OSX_SYSROOT}")
   unset(CMAKE_OSX_SYSROOT CACHE)
 endif()
