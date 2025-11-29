@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "kiselev_i_max_value_in_strings/common/include/common.hpp"
 #include "task/include/task.hpp"
 
