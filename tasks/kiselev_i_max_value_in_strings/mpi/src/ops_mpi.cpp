@@ -25,7 +25,7 @@ bool KiselevITestTaskMPI::ValidationImpl() {
   if (matrix.empty()) {
     return false;
   }
-  std::ranges::all_of(rows, [](const auto &rw) { return !rw.empty(); });
+  return std::ranges::all_of(matrix, [](const auto &rw) { return !rw.empty(); });
 }
 
 bool KiselevITestTaskMPI::PreProcessingImpl() {
