@@ -52,7 +52,6 @@ bool TitaevMElemVecsAvgMPI::RunImpl() {
 
   std::vector<int> local(counts[rank]);
 
-  // NOLINTNEXTLINE(mpi-type-mismatch)
   MPI_Scatterv(vec.data(), counts.data(), displs.data(), MPI_INT, local.data(), counts[rank], MPI_INT, 0,
                MPI_COMM_WORLD);
 
@@ -63,7 +62,6 @@ bool TitaevMElemVecsAvgMPI::RunImpl() {
 
   double global_sum = 0.0;
 
-  // NOLINTNEXTLINE(mpi-type-mismatch)
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = global_sum / static_cast<double>(n);
