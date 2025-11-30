@@ -72,7 +72,8 @@ class MonteCarloExtraFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
     const auto &full = info.param;
     const TestType &t = std::get<2>(full);
-    return "extra_" + std::get<1>(t);
+    std::string task_name = std::get<1>(full);
+    return task_name + "_extra_" + std::get<1>(t);
   }
 
  protected:
