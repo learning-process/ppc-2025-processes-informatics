@@ -1,17 +1,17 @@
 #include "gusev_d_sentence_count/seq/include/ops_seq.hpp"
 
-#include <cctype>
-#include <cstddef>
-#include <string>
-
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace gusev_d_sentence_count {
 
-static bool IsTerminator(char c) {
+namespace {
+
+bool IsTerminator(char c) {
   return (c == '.' || c == '!' || c == '?');
 }
+
+}  // namespace
 
 GusevDSentenceCountSEQ::GusevDSentenceCountSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());

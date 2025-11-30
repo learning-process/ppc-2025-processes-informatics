@@ -2,17 +2,34 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
+#include <cstddef>
+#include <vector> 
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace gusev_d_sentence_count {
 
-static bool IsTerminator(char c) {
+namespace {
+
+bool IsTerminator(char c) {
   return c == '.' || c == '!' || c == '?';
 }
+
+size_t CountSentencesInChunk(const std::vector<char> &local_chunk, int chunk_size) {
+  size_t sentence_count = 0;
+
+  for (int i = 0; i < chunk_size; ++i) {
+    if (IsTerminator(local_chunk[i])) {
+      if (!IsTerminator(local_chunk[i + 1])) {
+        sentence_count++;
+      }
+    }
+  }
+  return sentence_count;
+}
+
+}  // namespace
 
 GusevDSentenceCountMPI::GusevDSentenceCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -26,19 +43,6 @@ bool GusevDSentenceCountMPI::ValidationImpl() {
 
 bool GusevDSentenceCountMPI::PreProcessingImpl() {
   return true;
-}
-
-static size_t CountSentencesInChunk(const std::vector<char> &local_chunk, int chunk_size) {
-  size_t sentence_count = 0;
-
-  for (int i = 0; i < chunk_size; ++i) {
-    if (IsTerminator(local_chunk[i])) {
-      if (!IsTerminator(local_chunk[i + 1])) {
-        sentence_count++;
-      }
-    }
-  }
-  return sentence_count;
 }
 
 bool GusevDSentenceCountMPI::RunImpl() {
