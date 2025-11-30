@@ -24,16 +24,6 @@ bool TrapezoidIntegrationMPI::ValidationImpl() {
 }
 
 bool TrapezoidIntegrationMPI::PreProcessingImpl() {
-  int process_rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);  // получение ранга процесса
-
-  kutergin_v_trapezoid_seq::InType tmp_input = GetInput();  // создание хранилища для данных со всех процессов
-
-  MPI_Bcast(&tmp_input, sizeof(tmp_input), MPI_BYTE, 0,
-            MPI_COMM_WORLD);  // получение остальными процессами исходных данных от процесса с рангом 0
-
-  GetInput() = tmp_input;
-
   return true;
 }
 
@@ -43,9 +33,19 @@ bool TrapezoidIntegrationMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &process_count);
 
-  double a = GetInput().a;
-  double b = GetInput().b;
-  int n = GetInput().n;
+  kutergin_v_trapezoid_seq::InType broadcast_data;
+  if (process_rank == 0) {
+    broadcast_data = GetInput();
+  }
+
+  // Каждое поле рассылается отдельно
+  MPI_Bcast(&broadcast_data.a, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&broadcast_data.b, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&broadcast_data.n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  double a = broadcast_data.a;
+  double b = broadcast_data.b;
+  int n = broadcast_data.n;
   double h = (b - a) / n;
 
   const int base_n = n / process_count;     // целое часть от деления числа разбиений на число процессов
