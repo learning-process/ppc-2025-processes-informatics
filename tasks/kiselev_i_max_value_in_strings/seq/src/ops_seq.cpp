@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -22,7 +23,7 @@ bool KiselevITestTaskSEQ::ValidationImpl() {
     return false;
   }
 
-  return std::all_of(matrix.begin(), matrix.end(), [](const auto &rw) { return !rw.empty(); });
+  return std::ranges::all_of(matrix, [](const auto &rw) { return !rw.empty(); });
 }
 
 bool KiselevITestTaskSEQ::PreProcessingImpl() {
@@ -35,12 +36,13 @@ bool KiselevITestTaskSEQ::RunImpl() {
   const auto &matrix = GetInput();
   auto &out_vector = GetOutput();
 
-  for (std::size_t row_idx = 0; row_idx < matrix.size(); ++row_idx) {
-    int tmp_max = matrix[row_idx][0];
-    for (std::size_t col_idx = 0; col_idx < matrix[row_idx].size(); ++col_idx) {
-      tmp_max = std::max(matrix[row_idx][col_idx], tmp_max);
+  std::size_t row_idx = 0;
+  for (const auto &row : matrix) {
+    int tmp_max = row[0];
+    for (int val : row) {
+      tmp_max = std::max(val, tmp_max);
     }
-    out_vector[row_idx] = tmp_max;
+    out_vector[row_idx++] = tmp_max;
   }
   return true;
 }
