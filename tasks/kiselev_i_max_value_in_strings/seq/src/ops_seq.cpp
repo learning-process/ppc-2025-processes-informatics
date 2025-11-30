@@ -1,7 +1,7 @@
 #include "kiselev_i_max_value_in_strings/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -22,7 +22,7 @@ bool KiselevITestTaskSEQ::ValidationImpl() {
     return false;
   }
 
-  return std::ranges::all_of(matrix, [](const auto &rw) { return !rw.empty(); });
+  return std::all_of(matrix.begin(), matrix.end(), [](const auto &rw) { return !rw.empty(); });
 }
 
 bool KiselevITestTaskSEQ::PreProcessingImpl() {
