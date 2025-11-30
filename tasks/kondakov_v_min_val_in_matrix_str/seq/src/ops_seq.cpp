@@ -19,24 +19,13 @@ KondakovVMinValMatrixSEQ::KondakovVMinValMatrixSEQ(const InType &in) {
 
 bool KondakovVMinValMatrixSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
-
   if (matrix.empty()) {
     return true;
   }
 
   size_t cols = matrix[0].size();
-  // NOLINTNEXTLINE(readability-use-anyofallof)
-  for (const auto &row : matrix) {
-    if (row.empty()) {
-      return false;
-    }
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-  return true;
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return !row.empty() && row.size() == cols; });
 }
-
 bool KondakovVMinValMatrixSEQ::PreProcessingImpl() {
   return true;
 }

@@ -52,7 +52,6 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = KondakovVMinValMatrixPerfTests::CustomPerfTestName;
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MinValMatrixPerf, KondakovVMinValMatrixPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace kondakov_v_min_val_in_matrix_str

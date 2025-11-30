@@ -20,12 +20,11 @@ class KondakovVMinValMatrixMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  static void BroadcastMatrixMetadata(const InType &in_data, size_t &total_rows, size_t &cols);
-  void HandleEmptyMatrix(int rank);
-  static void ComputeRowRanges(int n, int rank, size_t total_rows, int &st_row, int &en_row);
-  static void FindLocalMinima(const InType &in_data, int st_row, int en_row, size_t cols, std::vector<int> &temp);
-  static void PrepareGathervParams(int n, size_t total_rows, int extra, std::vector<int> &recv_counts,
-                                   std::vector<int> &displs);
+  std::pair<size_t, size_t> BroadcastMatrixDimensions();
+  std::vector<int> ScatterMatrixData(size_t total_rows, size_t cols, int n, int rank);
+  static std::vector<int> ComputeLocalMinima(const std::vector<int> &local_flat, size_t cols, int local_row_count);
+  static void PrepareSendInfo(int rank, size_t total_rows, size_t cols, int n, std::vector<int> &send_counts,
+                              std::vector<int> &send_displs);
+  static std::vector<int> GatherMinima(const std::vector<int> &local_minima, size_t total_rows, int n, int rank);
 };
 }  // namespace kondakov_v_min_val_in_matrix_str
