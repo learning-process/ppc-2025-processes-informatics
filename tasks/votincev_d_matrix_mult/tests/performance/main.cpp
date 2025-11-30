@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <fstream>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -41,14 +42,16 @@ class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
     std::vector<double> matrix_a(param_m * param_k);
     std::vector<double> matrix_b(param_k * param_n);
 
-    size_t sgn_swapper = 1;
+    double sgn_swapper = 1;
     for (size_t i = 0; i < param_m * param_k; i++) {
       matrix_a[i] = (i % 5) * sgn_swapper;
+      sgn_swapper *= -1;
     }
 
-    sgn_swapper = 1;
+    sgn_swapper = -1;
     for (size_t i = 0; i < param_k * param_n; i++) {
       matrix_b[i] = (i % 5) * sgn_swapper;
+      sgn_swapper *= -1;
     }
 
     // for (double &v : A) file >> v;
