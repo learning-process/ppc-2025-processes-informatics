@@ -44,13 +44,13 @@ class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
 
     double sgn_swapper = 1;
     for (size_t i = 0; i < param_m * param_k; i++) {
-      matrix_a[i] = (i % 5) * sgn_swapper;
+      matrix_a[i] = static_cast<double>(i % 5) * sgn_swapper;
       sgn_swapper *= -1;
     }
 
     sgn_swapper = -1;
     for (size_t i = 0; i < param_k * param_n; i++) {
-      matrix_b[i] = (i % 5) * sgn_swapper;
+      matrix_b[i] = static_cast<double>(i % 5) * sgn_swapper;
       sgn_swapper *= -1;
     }
 

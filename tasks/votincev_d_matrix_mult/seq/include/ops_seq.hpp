@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "task/include/task.hpp"
 #include "votincev_d_matrix_mult/common/include/common.hpp"
 

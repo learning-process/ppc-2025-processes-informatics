@@ -44,7 +44,8 @@ bool VotincevDMatrixMultSEQ::RunImpl() {
   matrix_a = std::get<3>(in);
   matrix_b = std::get<4>(in);
 
-  matrix_res.assign(static_cast<size_t>(param_m * param_n), 0.0);
+  auto res_sz = static_cast<size_t>(param_m) * static_cast<size_t>(param_n);
+  matrix_res.assign(res_sz, 0.0);
 
   for (int i = 0; i < param_m; ++i) {
     for (int j = 0; j < param_n; ++j) {
