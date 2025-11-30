@@ -20,7 +20,6 @@ class KiselevITestTaskMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static int CalculateLocalRowCount(int total_rows, int world_rank, int world_size);
   static void DistributeRowLengths(const std::vector<std::vector<int>> &matrix, int total_rows, int world_rank,
                                    int world_size, std::vector<int> &local_row_lengths, std::vector<int> &len_counts,
                                    std::vector<int> &len_displs);

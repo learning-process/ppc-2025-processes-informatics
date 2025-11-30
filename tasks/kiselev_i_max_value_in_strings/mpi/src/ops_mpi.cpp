@@ -33,13 +33,6 @@ bool KiselevITestTaskMPI::PreProcessingImpl() {
   return true;
 }
 
-// --- Вспомогательные функции ---
-int KiselevITestTaskMPI::CalculateLocalRowCount(int total_rows, int world_rank, int world_size) {
-  int base = total_rows / world_size;
-  int rem = total_rows % world_size;
-  return base + (world_rank < rem ? 1 : 0);
-}
-
 void KiselevITestTaskMPI::DistributeRowLengths(const std::vector<std::vector<int>> &matrix, int total_rows,
                                                int world_rank, int world_size, std::vector<int> &local_row_lengths,
                                                std::vector<int> &len_counts, std::vector<int> &len_displs) {
@@ -118,10 +111,6 @@ void KiselevITestTaskMPI::ComputeLocalMax(const std::vector<int> &local_values,
   int pos = 0;
   for (size_t rw = 0; rw < n_rows; ++rw) {
     int len = local_row_lengths[rw];
-    if (len == 0) {
-      local_result[rw] = std::numeric_limits<int>::min();
-      continue;
-    }
     int tmp_max = local_values[pos];
     for (int j = 1; j < len; ++j) {
       tmp_max = std::max(tmp_max, local_values[pos + j]);
@@ -143,7 +132,9 @@ bool KiselevITestTaskMPI::RunImpl() {
   int total_rows = static_cast<int>(matrix.size());
   MPI_Bcast(&total_rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int local_row_count = CalculateLocalRowCount(total_rows, world_rank, world_size);
+  int base = total_rows / world_size;
+  int rem = total_rows % world_size;
+  int local_row_count = base + (world_rank < rem ? 1 : 0);
 
   std::vector<int> local_row_lengths(local_row_count);
   std::vector<int> len_counts(world_size);
