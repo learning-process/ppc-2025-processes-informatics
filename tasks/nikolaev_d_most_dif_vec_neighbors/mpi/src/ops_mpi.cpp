@@ -27,7 +27,6 @@ bool NikolaevDMostDifVecNeighborsMPI::PreProcessingImpl() {
 
 bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
   const auto &input = GetInput();
-  auto &output = GetOutput();
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -38,55 +37,94 @@ bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
   }
 
   int n = static_cast<int>(input.size());
-  int elements_per_process = n / size;
-  int remainder = n % size;
+  int actual_processes = std::min(size, n);
+  int elements_per_process = n / actual_processes;
+  int remainder = n % actual_processes;
 
-  int start = (rank * elements_per_process) + std::min(rank, remainder);
-  int end = start + elements_per_process - 1;
-  if (rank < remainder) {
-    end++;
+  std::vector<int> send_counts(size, 0);
+  std::vector<int> displacements(size, 0);
+  int current_displacement = 0;
+
+  for (int i = 0; i < actual_processes; i++) {
+    send_counts[i] = elements_per_process + (i < remainder ? 1 : 0);
+    displacements[i] = current_displacement;
+    current_displacement += send_counts[i];
   }
 
-  if (rank == size - 1) {
-    end = n - 2;
-  } else {
-    end = std::min(end, n - 2);
-  }
+  int local_size = send_counts[rank];
+  std::vector<int> local_data(local_size);
 
+  MPI_Scatterv(input.data(), send_counts.data(), displacements.data(), MPI_INT, local_data.data(), local_size, MPI_INT,
+               0, MPI_COMM_WORLD);
+
+  FindLocalDiff(rank, size, actual_processes, local_data, local_size);
+
+  return true;
+}
+
+void NikolaevDMostDifVecNeighborsMPI::FindLocalDiff(int rank, int size, int actual_processes,
+                                                    std::vector<int> &local_data, int local_size) {
   int local_max_diff = -1;
   std::pair<int, int> local_result = {0, 0};
 
-  if (start <= end) {
-    for (int i = start; i <= end; i++) {
-      int diff = std::abs(input[i + 1] - input[i]);
+  if (local_size >= 2) {
+    for (int i = 0; i < local_size - 1; i++) {
+      int diff = std::abs(local_data[i + 1] - local_data[i]);
       if (diff > local_max_diff) {
         local_max_diff = diff;
-        local_result = {input[i], input[i + 1]};
+        local_result = {local_data[i], local_data[i + 1]};
       }
     }
   }
 
-  struct LocalMaxStruct {
-    int diff = 0;
-    int rank = 0;
-  };
-  LocalMaxStruct local_max;
-  LocalMaxStruct global_max;
+  int first_element = local_data.empty() ? 0 : local_data[0];
+  int last_element = local_data.empty() ? 0 : local_data[local_size - 1];
 
-  local_max.diff = local_max_diff;
-  local_max.rank = rank;
+  LocalMaxInfo local_info;
+  local_info.diff = local_max_diff;
+  local_info.pair_first = local_result.first;
+  local_info.pair_second = local_result.second;
+  local_info.first_elem = first_element;
+  local_info.last_elem = last_element;
 
-  MPI_Allreduce(&local_max, &global_max, 1, MPI_2INT, MPI_MAXLOC, MPI_COMM_WORLD);
-
-  std::pair<int, int> global_result;
-  if (rank == global_max.rank) {
-    global_result = local_result;
+  std::vector<LocalMaxInfo> all_info;
+  if (rank == 0) {
+    all_info.resize(size);
   }
 
-  MPI_Bcast(&global_result, 2, MPI_INT, global_max.rank, MPI_COMM_WORLD);
+  MPI_Gather(&local_info, sizeof(LocalMaxInfo), MPI_BYTE, all_info.data(), sizeof(LocalMaxInfo), MPI_BYTE, 0,
+             MPI_COMM_WORLD);
 
-  output = global_result;
-  return true;
+  ProcessLocalData(rank, actual_processes, all_info);
+}
+
+void NikolaevDMostDifVecNeighborsMPI::ProcessLocalData(int rank, int actual_processes,
+                                                       std::vector<LocalMaxInfo> &all_info) {
+  std::pair<int, int> global_result;
+  if (rank == 0) {
+    int global_max_diff = -1;
+
+    // обработка локальных максимумов из каждого сегмента
+    for (int i = 0; i < actual_processes; i++) {
+      if (all_info[i].diff > global_max_diff) {
+        global_max_diff = all_info[i].diff;
+        global_result = {all_info[i].pair_first, all_info[i].pair_second};
+      }
+    }
+
+    // обработка граничных пар между сегментами
+    for (int i = 0; i < actual_processes - 1; i++) {
+      int diff = std::abs(all_info[i + 1].first_elem - all_info[i].last_elem);
+      if (diff > global_max_diff) {
+        global_max_diff = diff;
+        global_result = {all_info[i].last_elem, all_info[i + 1].first_elem};
+      }
+    }
+  }
+
+  MPI_Bcast(&global_result, 2, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput() = global_result;
 }
 
 bool NikolaevDMostDifVecNeighborsMPI::PostProcessingImpl() {
