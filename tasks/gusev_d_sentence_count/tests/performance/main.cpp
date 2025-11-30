@@ -20,7 +20,7 @@ bool IsTerminator(char c) {
   return c == '.' || c == '!' || c == '?';
 }
 
-} // namespace
+}  // namespace
 
 class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
