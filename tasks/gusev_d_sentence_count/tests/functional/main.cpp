@@ -96,7 +96,7 @@ const std::array<TestType, 16> kTestParam = {
 
     std::make_tuple(std::string("The end is near..."), 1),
     std::make_tuple(std::string("A!B.C?"), 3),
-    std::make_tuple(std::string("Only terminators???!!!"), 1),
+    std::make_tuple(std::string(R"(Only terminators???!!!)"), 1),
     std::make_tuple(std::string("A..B.C"), 2)};
 
 const auto kTestTasksList = std::tuple_cat(
