@@ -13,7 +13,6 @@
 
 namespace dorofeev_i_monte_carlo_integration_processes {
 
-// INTEGRATION TESTS
 class MonteCarloFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(
@@ -67,192 +66,108 @@ const auto kTaskList = std::tuple_cat(
 INSTANTIATE_TEST_SUITE_P(IntegrationTests, MonteCarloFuncTests, ppc::util::ExpandToValues(kTaskList),
                          MonteCarloFuncTests::PrintTestParam);
 
-// VALIDATION TESTS (SEQ)
-/* class MonteCarloSeqValidationTests : public ::testing::Test {};
-
-TEST_F(MonteCarloSeqValidationTests, InvalidNoFunction) {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // sync all ranks before doing anything
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    InType in;
-    in.a = {0.0};
-    in.b = {1.0};
-    in.samples = 100;
-    in.func = nullptr;
-
-    DorofeevIMonteCarloIntegrationSEQ op(in);
-    EXPECT_FALSE(op.Validation());
+class MonteCarloExtraFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintName(
+      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
+    const auto &full = info.param;
+    const TestType &t = std::get<2>(full);
+    return "extra_" + std::get<1>(t);
   }
 
-  // ensure all ranks leave the test at the same time
-  MPI_Barrier(MPI_COMM_WORLD);
-}
-
-TEST_F(MonteCarloSeqValidationTests, InvalidBoundsEmpty) {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // sync all ranks before doing anything
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    InType in;
-    in.a = {};
-    in.b = {};
-    in.samples = 100;
-    in.func = [](const std::vector<double> &) { return 0.0; };
-
-    DorofeevIMonteCarloIntegrationSEQ op(in);
-    EXPECT_FALSE(op.Validation());
-  }
-
-  // ensure all ranks leave the test at the same time
-  MPI_Barrier(MPI_COMM_WORLD);
-}
-
-TEST_F(MonteCarloSeqValidationTests, InvalidDifferentSizes) {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // sync all ranks before doing anything
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    InType in;
-    in.a = {0.0};
-    in.b = {0.0, 1.0};
-    in.samples = 100;
-    in.func = [](const std::vector<double> &) { return 0.0; };
-
-    DorofeevIMonteCarloIntegrationSEQ op(in);
-    EXPECT_FALSE(op.Validation());
-  }
-
-  // ensure all ranks leave the test at the same time
-  MPI_Barrier(MPI_COMM_WORLD);
-}
-
-TEST_F(MonteCarloSeqValidationTests, InvalidWrongBounds) {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // sync all ranks before doing anything
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    InType in;
-    in.a = {1.0};
-    in.b = {0.0};
-    in.samples = 100;
-    in.func = [](const std::vector<double> &) { return 0.0; };
-
-    DorofeevIMonteCarloIntegrationSEQ op(in);
-    EXPECT_FALSE(op.Validation());
-  }
-
-  // ensure all ranks leave the test at the same time
-  MPI_Barrier(MPI_COMM_WORLD);
-}
-
-TEST_F(MonteCarloSeqValidationTests, InvalidSamplesNonPositive) {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  // sync all ranks before doing anything
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    InType in;
-    in.a = {0.0};
-    in.b = {1.0};
-    in.samples = 0;
-    in.func = [](const std::vector<double> &) { return 0.0; };
-
-    DorofeevIMonteCarloIntegrationSEQ op(in);
-    EXPECT_FALSE(op.Validation());
-  }
-
-  // ensure all ranks leave the test at the same time
-  MPI_Barrier(MPI_COMM_WORLD);
-}
-
-TEST_F(MonteCarloSeqValidationTests, Valid) {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    InType in;
-    in.a = {0.0};
-    in.b = {1.0};
-    in.samples = 10;
-    in.func = [](const std::vector<double> &x) { return x[0]; };
-
-    DorofeevIMonteCarloIntegrationSEQ op(in);
-    EXPECT_TRUE(op.Validation());
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-} */
-
-/* // VALIDATION TESTS (MPI)
-class MonteCarloMpiValidationTests : public ::testing::Test {
  protected:
   void SetUp() override {
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    auto full = GetParam();
+    TestType t = std::get<2>(full);
+    int scenario = std::get<0>(t);
+
+    switch (scenario) {
+      case 0:  // tiny interval
+        input_.a = {0.0};
+        input_.b = {1e-6};
+        input_.samples = 5000;
+        break;
+
+      case 1:  // shifted interval
+        input_.a = {2.0};
+        input_.b = {3.0};
+        input_.samples = 8000;
+        break;
+
+      case 2:  // samples = 1
+        input_.a = {0.0};
+        input_.b = {1.0};
+        input_.samples = 1;
+        break;
+
+      case 3:  // large samples
+        input_.a = {0.0};
+        input_.b = {1.0};
+        input_.samples = 100000;
+        break;
+
+      case 4:  // negative interval
+        input_.a = {-1.0};
+        input_.b = {1.0};
+        input_.samples = 20000;
+        break;
+      default:
+        // clang-tidy requires default, but we do nothing
+        break;
+    }
+
+    input_.func = [](const std::vector<double> &x) { return x[0] * x[0]; };
   }
-  int rank{};
+
+  bool CheckTestOutputData(OutType &out) final {
+    auto full = GetParam();
+    int scenario = std::get<0>(std::get<2>(full));
+
+    switch (scenario) {
+      case 0:  // tiny interval [0, 1e-6]
+        return std::abs(out - (1e-18 / 3.0)) < 1e-10;
+
+      case 1: {  // shifted interval [2, 3]
+        double exact = (std::pow(3.0, 3) - std::pow(2.0, 3)) / 3.0;
+        return std::abs(out - exact) < 0.2;
+      }
+
+      case 2:  // samples=1, любое значение допустимо, главное в пределах диапазона
+        return out >= 0.0 && out <= 1.0;
+
+      case 3:  // high accuracy expected
+        return std::abs(out - (1.0 / 3.0)) < 0.01;
+
+      case 4:  // integral x^2 on [-1,1] = 2/3
+        return std::abs(out - (2.0 / 3.0)) < 0.05;
+      default:
+        return false;  // unreachable but required by clang-tidy
+    }
+    return false;
+  }
+
+  InType GetTestInputData() final {
+    return input_;
+  }
+
+ private:
+  InType input_;
 };
 
-static bool ValidateMPI(const InType &root_input) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  InType in;
-  if (rank == 0) {
-    in = root_input;
-  }
-
-  DorofeevIMonteCarloIntegrationMPI op(in);
-  return op.Validation();  // result broadcast inside
+TEST_P(MonteCarloExtraFuncTests, CornerCaseTests) {
+  ExecuteTest(GetParam());
 }
 
-TEST_F(MonteCarloMpiValidationTests, InvalidNoFunc) {
-  InType in;
-  if (rank == 0) {
-    in.a = {0.0};
-    in.b = {1.0};
-    in.samples = 100;
-    in.func = nullptr;
-  }
-  EXPECT_FALSE(ValidateMPI(in));
-}
+const std::array<TestType, 5> kExtraParams = {
+    std::make_tuple(0, "tiny_interval"), std::make_tuple(1, "shifted_interval"),  std::make_tuple(2, "samples_1"),
+    std::make_tuple(3, "large_samples"), std::make_tuple(4, "negative_interval"),
+};
 
-TEST_F(MonteCarloMpiValidationTests, InvalidSamplesNonPositive) {
-  InType in;
-  if (rank == 0) {
-    in.a = {0.0};
-    in.b = {1.0};
-    in.samples = 0;
-    in.func = [](const std::vector<double> &) { return 0.0; };
-  }
-  EXPECT_FALSE(ValidateMPI(in));
-}
+const auto kExtraTaskList = std::tuple_cat(
+    ppc::util::AddFuncTask<DorofeevIMonteCarloIntegrationSEQ, InType>(kExtraParams, PPC_SETTINGS_example_processes),
+    ppc::util::AddFuncTask<DorofeevIMonteCarloIntegrationMPI, InType>(kExtraParams, PPC_SETTINGS_example_processes));
 
-TEST_F(MonteCarloMpiValidationTests, Valid) {
-  InType in;
-  if (rank == 0) {
-    in.a = {0.0};
-    in.b = {1.0};
-    in.samples = 10;
-    in.func = [](const std::vector<double> &) { return 0.0; };
-  }
-  EXPECT_TRUE(ValidateMPI(in));
-} */
+INSTANTIATE_TEST_SUITE_P(ExtraIntegrationTests, MonteCarloExtraFuncTests, ppc::util::ExpandToValues(kExtraTaskList),
+                         MonteCarloExtraFuncTests::PrintName);
 
 }  // namespace dorofeev_i_monte_carlo_integration_processes
