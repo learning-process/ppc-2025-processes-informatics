@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -15,12 +16,12 @@ namespace votincev_d_matrix_mult {
 class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 
  protected:
-  InType input_data_;
-  OutType expected_res_;
+  InType input_data;
+  OutType expected_res;
 
   void SetUp() override {
     std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_votincev_d_matrix_mult, "testPerf.txt");
@@ -30,53 +31,51 @@ class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
       return;
     }
 
-    int m, n, k;
+    size_t param_m = 0;
+    size_t param_n = 0;
+    size_t param_k = 0;
     // file >> m >> n >> k;
-    m = 600;
-    n = m;
-    k = m;
-    std::vector<double> A(m * k);
-    std::vector<double> B(k * n);
+    param_m = 600;
+    param_n = param_m;
+    param_k = param_m;
+    std::vector<double> matrix_a(param_m * param_k);
+    std::vector<double> matrix_b(param_k * param_n);
 
-    int sgn_swapper = 1;
-    for (int i = 0; i < m * k; i++) {
-      A[i] = (i % 5) * sgn_swapper;
+    size_t sgn_swapper = 1;
+    for (size_t i = 0; i < param_m * param_k; i++) {
+      matrix_a[i] = (i % 5) * sgn_swapper;
     }
 
     sgn_swapper = 1;
-    for (int i = 0; i < k * n; i++) {
-      B[i] = (i % 5) * sgn_swapper;
+    for (size_t i = 0; i < param_k * param_n; i++) {
+      matrix_b[i] = (i % 5) * sgn_swapper;
     }
 
     // for (double &v : A) file >> v;
     // for (double &v : B) file >> v;
 
-    input_data_ = std::make_tuple(m, n, k, A, B);
+    input_data = std::make_tuple(param_m, param_n, param_k, matrix_a, matrix_b);
 
     // вычисляю предполагаемый результат
-    expected_res_.assign(m * n, 0.0);
-    for (int i = 0; i < m; ++i) {
-      for (int j = 0; j < n; ++j) {
+    expected_res.assign(param_m * param_n, 0.0);
+    for (size_t i = 0; i < param_m; ++i) {
+      for (size_t j = 0; j < param_n; ++j) {
         double sum = 0.0;
-        for (int t = 0; t < k; ++t) {
-          sum += A[i * k + t] * B[t * n + j];
+        for (size_t k = 0; k < param_k; ++k) {
+          sum += matrix_a[(i * param_k) + k] * matrix_b[(k * param_n) + j];
         }
-        expected_res_[i * n + j] = sum;
+        expected_res[(i * param_n) + j] = sum;
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     // 1,2... процессы не владеют нужным результатом
-    if (output_data.size() != expected_res_.size()) {
+    if (output_data.size() != expected_res.size()) {
       return true;
     }
-
-    // static int count0_proc = 0;
-    // count0_proc++;
-    // std::cout << count0_proc;
     // 0й процесс должен иметь корректную матрицу после умножения
-    return output_data == expected_res_;
+    return output_data == expected_res;
   }
 };
 
