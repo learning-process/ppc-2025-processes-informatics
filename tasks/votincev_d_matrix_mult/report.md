@@ -77,6 +77,7 @@ MPI версия показывает в среднем ускорение 2.5x 
 
 ## Приложения (код параллельной реализации)
 ```
+// главный метод MPI
 bool VotincevDMatrixMultMPI::RunImpl() {
   // получаю кол-во процессов
   int process_n = 0;
@@ -87,36 +88,38 @@ bool VotincevDMatrixMultMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
   // размерности матриц получают все процессы
-  int m = 0, n = 0, k = 0;
-  const auto& in = GetInput();
+  int m = 0;
+  int n = 0;
+  int k = 0;
+  const auto &in = GetInput();
   m = std::get<0>(in);
   n = std::get<1>(in);
   k = std::get<2>(in);
 
-  // если процессов больше чем строк в матрице A - 
+  // если процессов больше чем строк в матрице A -
   // то активных процессов будет меньше (m)
   //  (потому что разедление по строкам)
   process_n = std::min(process_n, m);
-  
+
   // "лишние" процессы не работают
-  if(proc_rank >= process_n) {
+  if (proc_rank >= process_n) {
     return true;
   }
-  
-  std::vector<double> matrix_A;
-  std::vector<double> matrix_B;
+
+  std::vector<double> matrix_a;
+  std::vector<double> matrix_b;
 
   // матрицу B получают все процессы
-  matrix_B = std::get<4>(in);
+  matrix_b = std::get<4>(in);
 
   // матрицу А получит полностью только 0й процесс
   if (proc_rank == 0) {
-    matrix_A = std::get<3>(in);
+    matrix_a = std::get<3>(in);
   }
 
   // если всего 1 процесс - последовательное умножение
   if (process_n == 1) {
-    GetOutput() = SeqMatrixMult(m,n,k,matrix_A, matrix_B);
+    GetOutput() = SeqMatrixMult(m, n, k, matrix_a, matrix_b);
     return true;
   }
 
@@ -125,7 +128,8 @@ bool VotincevDMatrixMultMPI::RunImpl() {
   std::vector<int> ranges;
 
   if (proc_rank == 0) {
-    ranges.resize(process_n * 2);
+    size_t proc_n_sizet = static_cast<size_t>(process_n);
+    ranges.resize(proc_n_sizet * 2);
 
     // минимум на обработку
     int base = m / process_n;
@@ -133,118 +137,65 @@ bool VotincevDMatrixMultMPI::RunImpl() {
     int remain = m % process_n;
 
     int start = 0;
-    for (int i = 0; i < process_n; i++) {
+    for (size_t i = 0; i < proc_n_sizet; i++) {
       int part = base;
-      if (i < remain) {
+      if (remain > 0) {
         part++;
+        remain--;
       }
 
-      ranges[i * 2] = start;
-      ranges[i * 2 + 1] = start + part;  // end (не включительно)
+      // i+i ~~ size_t+size_t ....  i*2 ~~ size_t*int (clang-tidy: size_t*int - is bad)
+      ranges[i + i] = start;
+      ranges[i + i + 1] = start + part;  // end (не включительно)
 
       start += part;
     }
   }
 
   // my_range получит [start, end]
-  int my_range[2]{0, 0};
+  std::vector<int> my_range = {0, 0};
 
   // local_matrix — локальный блок матрицы A данного процесса
   std::vector<double> local_matrix;
 
-  if (proc_rank == 0) {
-    // заполняю данные для себя — свои строки матрицы А
-    int my_start = ranges[0];
-    int my_end   = ranges[1];
-    int my_rows  = my_end - my_start;
+  // отправляю всем часть матрицы A в local_matrix
+  SendData(k, proc_rank, process_n, my_range, ranges, local_matrix, matrix_a);
 
-    local_matrix.resize(my_rows * k);
-    for (int i = 0; i < my_rows * k; i++) {
-      local_matrix[i] = matrix_A[i];
-    }
-
-
-    // рассылаю остальным
-    for (int i = 1; i < process_n; i++) {
-      int start_i = ranges[2 * i];
-      int end_i   = ranges[2 * i + 1];
-
-      MPI_Send(&start_i, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-      MPI_Send(&end_i,   1, MPI_INT, i, 0, MPI_COMM_WORLD);
-
-      int elem_count = (end_i - start_i) * k;
-
-      MPI_Send(matrix_A.data() + start_i * k,
-               elem_count,
-               MPI_DOUBLE,
-               i,
-               0,
-               MPI_COMM_WORLD);
-    }
-
-  } else {
-    // получаю диапазон
-    MPI_Recv(&my_range[0], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Recv(&my_range[1], 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    int start_i = my_range[0];
-    int end_i   = my_range[1];
-    int elem_count = (end_i - start_i) * k;
-
-    local_matrix.resize(elem_count);
-
-    // получаю матрицу (часть)
-    MPI_Recv(local_matrix.data(),
-             elem_count,
-             MPI_DOUBLE,
-             0,
-             0,
-             MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
-  }
-
-  
   // теперь каждый владеет своим куском (local_matrix)
   // вызываем обычное перемножение, результат умножение кладется в local_matrix
-  MatrixPartMult(k, n, local_matrix, matrix_B); 
+  MatrixPartMult(k, n, local_matrix, matrix_b);
 
   // сбор результатов назад к 0му
-    if (proc_rank == 0) {
-        std::vector<double> final_result(m * n);
-        int my_rows = ranges[1] - ranges[0]; // сколько строк
-        // копирую        откуда          до куда                 куда
-        std::copy(local_matrix.begin(), local_matrix.end(), final_result.begin());
+  if (proc_rank == 0) {
+    std::vector<double> final_result(static_cast<size_t>(m * n));
+    int my_rows = ranges[1] - ranges[0];  // сколько строк
+    // копирую        откуда          до куда                 куда
+    std::ranges::copy(local_matrix.begin(), local_matrix.end(), final_result.begin());
 
-        // смещение; изначально равно количеству уже записанных значений
-        int offset = my_rows * n; 
-        for (int i = 1; i < process_n; ++i) {
-            int start_i = ranges[2 * i];
-            int end_i   = ranges[2 * i + 1];
-            int rows    = end_i - start_i;
+    // смещение; изначально равно количеству уже записанных значений
+    int offset = my_rows * n;
+    for (size_t i = 1; i < static_cast<size_t>(process_n); ++i) {
+      int start_i = ranges[i + i];
+      int end_i = ranges[i + i + 1];
+      int rows = end_i - start_i;
 
-            // сколько в данной пачке элементов
-            int count   = rows * n; 
+      // сколько в данной пачке элементов
+      int count = rows * n;
 
-            MPI_Recv(final_result.data() + offset,
-                     count,
-                     MPI_DOUBLE,
-                     i,
-                     0,
-                     MPI_COMM_WORLD,
-                     MPI_STATUS_IGNORE);
+      MPI_Recv(final_result.data() + static_cast<size_t>(offset), count, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
 
-            offset += count;
-        }
-        // 0й процесс собрал всё от других процессов
-
-        GetOutput() = final_result;
-        
-    } else {
-      // другие процессы посылают свои результаты основному 0му процессу
-      int rows = my_range[1] - my_range[0];
-      MPI_Send(local_matrix.data(), rows * n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+      offset += count;
     }
+    // 0й процесс собрал всё от других процессов
 
+    GetOutput() = final_result;
+
+  } else {
+    // другие процессы посылают свои результаты основному 0му процессу
+    int rows = my_range[1] - my_range[0];
+    MPI_Send(local_matrix.data(), rows * n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+  }
 
   return true;
 }
