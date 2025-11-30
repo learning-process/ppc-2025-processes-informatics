@@ -30,13 +30,13 @@ bool ShvetsovaKMaxDiffNeigVecSEQ::RunImpl() {
   if (sz < 2) {
     GetOutput().first = 0.0;
     GetOutput().second = 0.0;
-    return true;
-  }
-  for (int i = 0; i < sz - 1; i++) {
-    if (max_dif <= std::abs(data_.at(i) - data_.at(i + 1))) {
-      first_elem = data_.at(i);
-      second_elem = data_.at(i + 1);
-      max_dif = std::abs(data_.at(i) - data_.at(i + 1));
+  } else {
+    for (int i = 0; i < sz - 1; i++) {
+      if (max_dif <= std::abs(data_.at(i) - data_.at(i + 1))) {
+        first_elem = data_.at(i);
+        second_elem = data_.at(i + 1);
+        max_dif = std::abs(data_.at(i) - data_.at(i + 1));
+      }
     }
   }
 

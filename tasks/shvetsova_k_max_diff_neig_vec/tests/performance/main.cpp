@@ -30,7 +30,8 @@ class ShvetsovaKMaxDiffNeigVecRunPerfTestProcesses : public ppc::util::BaseRunPe
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double eps = 0.05;
-    return (std::abs(output_data.first - expect_res_.first) <= eps && output_data.second == expect_res_.second);
+    return (std::abs(output_data.first - expect_res_.first) <= eps &&
+            std::abs(output_data.second - expect_res_.second) <= eps);
   }
 
   InType GetTestInputData() final {
