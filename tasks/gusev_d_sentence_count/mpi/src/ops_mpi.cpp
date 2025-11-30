@@ -3,7 +3,7 @@
 #include <mpi.h>
 
 #include <cstddef>
-#include <vector> 
+#include <vector>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "util/include/util.hpp"
