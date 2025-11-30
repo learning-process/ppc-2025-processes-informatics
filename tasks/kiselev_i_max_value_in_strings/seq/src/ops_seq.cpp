@@ -1,9 +1,9 @@
 #include "kiselev_i_max_value_in_strings/seq/include/ops_seq.hpp"
 
 #include <cstddef>
+#include <ranges>
 #include <utility>
 #include <vector>
-#include <ranges>
 
 #include "kiselev_i_max_value_in_strings/common/include/common.hpp"
 
