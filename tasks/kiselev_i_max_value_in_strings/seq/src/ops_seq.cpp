@@ -1,7 +1,9 @@
 #include "kiselev_i_max_value_in_strings/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <utility>
 #include <vector>
+#include <ranges>
 
 #include "kiselev_i_max_value_in_strings/common/include/common.hpp"
 
@@ -20,12 +22,7 @@ bool KiselevITestTaskSEQ::ValidationImpl() {
     return false;
   }
 
-  for (const auto &row : matrix) {
-    if (row.empty()) {
-      return false;
-    }
-  }
-  return true;
+  return std::ranges::all_of(matrix, [](const auto &rw) { return !rw.empty(); });
 }
 
 bool KiselevITestTaskSEQ::PreProcessingImpl() {
@@ -41,9 +38,7 @@ bool KiselevITestTaskSEQ::RunImpl() {
   for (std::size_t row_idx = 0; row_idx < matrix.size(); ++row_idx) {
     int tmp_max = matrix[row_idx][0];
     for (std::size_t col_idx = 0; col_idx < matrix[row_idx].size(); ++col_idx) {
-      if (matrix[row_idx][col_idx] > tmp_max) {
-        tmp_max = matrix[row_idx][col_idx];
-      }
+      tmp_max = std::max(matrix[row_idx][col_idx], tmp_max);
     }
     out_vector[row_idx] = tmp_max;
   }
