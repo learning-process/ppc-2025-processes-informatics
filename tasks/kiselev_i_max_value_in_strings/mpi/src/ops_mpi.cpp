@@ -103,10 +103,10 @@ void KiselevITestTaskMPI::DistributeValues(const std::vector<std::vector<int>> &
 void KiselevITestTaskMPI::ComputeLocalMax(const std::vector<int> &local_values,
                                           const std::vector<int> &local_row_lengths, std::vector<int> &local_result) {
   size_t n_rows = local_row_lengths.size();
-  local_result.resize(n_rows);
   if (n_rows == 0) {
     return;
   }
+  local_result.resize(n_rows);
 
   int pos = 0;
   for (size_t rw = 0; rw < n_rows; ++rw) {
