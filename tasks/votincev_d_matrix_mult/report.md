@@ -128,7 +128,7 @@ bool VotincevDMatrixMultMPI::RunImpl() {
   std::vector<int> ranges;
 
   if (proc_rank == 0) {
-    size_t proc_n_sizet = static_cast<size_t>(process_n);
+    auto proc_n_sizet = static_cast<size_t>(process_n);
     ranges.resize(proc_n_sizet * 2);
 
     // минимум на обработку
@@ -174,7 +174,8 @@ bool VotincevDMatrixMultMPI::RunImpl() {
 
     // смещение; изначально равно количеству уже записанных значений
     int offset = my_rows * n;
-    for (size_t i = 1; i < static_cast<size_t>(process_n); ++i) {
+    auto proc_n_sizet = static_cast<size_t>(process_n);
+    for (size_t i = 1; i < proc_n_sizet; ++i) {
       int start_i = ranges[i + i];
       int end_i = ranges[i + i + 1];
       int rows = end_i - start_i;
@@ -182,8 +183,8 @@ bool VotincevDMatrixMultMPI::RunImpl() {
       // сколько в данной пачке элементов
       int count = rows * n;
 
-      MPI_Recv(final_result.data() + static_cast<size_t>(offset), count, MPI_DOUBLE, i, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+      MPI_Recv(final_result.data() + static_cast<size_t>(offset), count, MPI_DOUBLE, static_cast<int>(i), 0,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
       offset += count;
     }
