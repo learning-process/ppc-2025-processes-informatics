@@ -1,7 +1,9 @@
 #include "gusev_d_sentence_count/seq/include/ops_seq.hpp"
 
+#include <cstddef>
+#include <string>
+
 #include "gusev_d_sentence_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace gusev_d_sentence_count {
 

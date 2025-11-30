@@ -4,9 +4,7 @@
 #include <cstddef>
 #include <fstream>
 #include <sstream>
-#include <stdexcept>
 #include <string>
-#include <vector>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -17,10 +15,12 @@
 namespace gusev_d_sentence_count {
 
 namespace {
-static bool IsTerminator(char c) {
+
+bool IsTerminator(char c) {
   return c == '.' || c == '!' || c == '?';
 }
-}  // namespace
+
+} // namespace
 
 class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
@@ -55,7 +55,7 @@ class GusevDSentenceCountPerfTests : public ppc::util::BaseRunPerfTests<InType, 
     int rank = 0;
     int initialized = 0;
     MPI_Initialized(&initialized);
-    if (initialized) {
+    if (initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 

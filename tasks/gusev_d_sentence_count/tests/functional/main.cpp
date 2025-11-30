@@ -5,9 +5,9 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
+#include <ranges>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -27,9 +27,9 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
     std::string text = std::get<0>(params);
 
-    std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) {
+    std::ranges::transform(text, text.begin(), [](unsigned char c) {
       if (std::isalnum(c) || c == '_') {
-        return (char)c;
+        return static_cast<char>(c);
       }
       return '_';
     });
@@ -52,7 +52,7 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     int rank = 0;
     int initialized = 0;
     MPI_Initialized(&initialized);
-    if (initialized) {
+    if (initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 

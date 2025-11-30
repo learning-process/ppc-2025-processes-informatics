@@ -3,10 +3,10 @@
 #include <mpi.h>
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace gusev_d_sentence_count {
 
