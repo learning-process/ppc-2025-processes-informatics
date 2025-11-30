@@ -72,8 +72,7 @@ bool EgorovaLFindMaxValColMatrixMPI::RunMPIAlgorithm() {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> flat_matrix = CreateAndBroadcastMatrix(rank, rows, cols);
-
+  // Распределение столбцов по процессам
   const int cols_per_proc = cols / size;
   const int remainder = cols % size;
   int start_col = 0;
@@ -87,7 +86,9 @@ bool EgorovaLFindMaxValColMatrixMPI::RunMPIAlgorithm() {
     local_cols_count = cols_per_proc;
   }
 
-  std::vector<int> local_max = CalculateLocalMaxima(flat_matrix, rows, cols, start_col, local_cols_count);
+  // Получение локальной части матрицы
+  std::vector<int> local_matrix_part = GetLocalMatrixPart(rank, size, rows, cols, start_col, local_cols_count);
+  std::vector<int> local_max = CalculateLocalMaxima(local_matrix_part, rows, local_cols_count);
   std::vector<int> all_max = GatherResults(local_max, size, cols);
 
   GetOutput() = all_max;
@@ -95,31 +96,79 @@ bool EgorovaLFindMaxValColMatrixMPI::RunMPIAlgorithm() {
   return true;
 }
 
-std::vector<int> EgorovaLFindMaxValColMatrixMPI::CreateAndBroadcastMatrix(int rank, int rows, int cols) {
-  std::vector<int> flat_matrix(static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols));
+std::vector<int> EgorovaLFindMaxValColMatrixMPI::GetLocalMatrixPart(int rank, int size, int rows, int cols,
+                                                                    int start_col, int local_cols_count) {
+  std::vector<int> local_part(static_cast<std::size_t>(rows) * static_cast<std::size_t>(local_cols_count));
 
   if (rank == 0) {
     const auto &matrix = GetInput();
+
+    // Процесс 0 заполняет свою локальную часть
     for (int ii = 0; ii < rows; ++ii) {
-      for (int jj = 0; jj < cols; ++jj) {
-        flat_matrix[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(jj)] =
-            matrix[ii][jj];
+      for (int local_idx = 0; local_idx < local_cols_count; ++local_idx) {
+        const int global_col = start_col + local_idx;
+        local_part[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(local_cols_count)) + local_idx] =
+            matrix[ii][global_col];
       }
+    }
+
+    // Отправка частей матрицы другим процессам
+    SendMatrixPartsToOtherRanks(size, rows, cols);
+  } else {
+    // Получение данных от процесса 0
+    MPI_Recv(local_part.data(), static_cast<int>(local_part.size()), MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
+
+  return local_part;
+}
+
+void EgorovaLFindMaxValColMatrixMPI::SendMatrixPartsToOtherRanks(int size, int rows, int cols) {
+  for (int dest_rank = 1; dest_rank < size; ++dest_rank) {
+    std::vector<int> dest_part = PrepareMatrixPartForRank(dest_rank, size, rows, cols);
+
+    // Отправка данных процессу-получателю
+    MPI_Send(dest_part.data(), static_cast<int>(dest_part.size()), MPI_INT, dest_rank, 0, MPI_COMM_WORLD);
+  }
+}
+
+std::vector<int> EgorovaLFindMaxValColMatrixMPI::PrepareMatrixPartForRank(int dest_rank, int size, int rows, int cols) {
+  // Вычисление диапазона столбцов для процесса-получателя
+  const int cols_per_proc = cols / size;
+  const int remainder = cols % size;
+
+  int dest_start_col = 0;
+  int dest_cols_count = 0;
+
+  if (dest_rank < remainder) {
+    dest_start_col = dest_rank * (cols_per_proc + 1);
+    dest_cols_count = cols_per_proc + 1;
+  } else {
+    dest_start_col = (remainder * (cols_per_proc + 1)) + ((dest_rank - remainder) * cols_per_proc);
+    dest_cols_count = cols_per_proc;
+  }
+
+  // Подготовка данных для отправки
+  const auto &matrix = GetInput();
+  std::vector<int> dest_part(static_cast<std::size_t>(rows) * static_cast<std::size_t>(dest_cols_count));
+
+  for (int ii = 0; ii < rows; ++ii) {
+    for (int jj = 0; jj < dest_cols_count; ++jj) {
+      const int global_col = dest_start_col + jj;
+      dest_part[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(dest_cols_count)) + jj] =
+          matrix[ii][global_col];
     }
   }
 
-  MPI_Bcast(flat_matrix.data(), rows * cols, MPI_INT, 0, MPI_COMM_WORLD);
-  return flat_matrix;
+  return dest_part;
 }
 
-std::vector<int> EgorovaLFindMaxValColMatrixMPI::CalculateLocalMaxima(const std::vector<int> &flat_matrix, int rows,
-                                                                      int cols, int start_col, int local_cols_count) {
+std::vector<int> EgorovaLFindMaxValColMatrixMPI::CalculateLocalMaxima(const std::vector<int> &local_matrix_part,
+                                                                      int rows, int local_cols_count) {
   std::vector<int> local_max(local_cols_count, std::numeric_limits<int>::min());
 
   for (int local_idx = 0; local_idx < local_cols_count; ++local_idx) {
-    const int global_col = start_col + local_idx;
     for (int row = 0; row < rows; ++row) {
-      const int value = flat_matrix[(row * cols) + global_col];
+      const int value = local_matrix_part[(row * local_cols_count) + local_idx];
       local_max[local_idx] = std::max(value, local_max[local_idx]);
     }
   }
