@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-#include <cstddef>
 #include <vector>
 
 #include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
