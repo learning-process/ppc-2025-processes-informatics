@@ -5,7 +5,6 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
-#include <ranges>
 #include <string>
 #include <tuple>
 
@@ -27,7 +26,7 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
     std::string text = std::get<0>(params);
 
-    std::ranges::transform(text, text.begin(), [](unsigned char c) {
+    std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) {
       if (std::isalnum(c) || c == '_') {
         return static_cast<char>(c);
       }
