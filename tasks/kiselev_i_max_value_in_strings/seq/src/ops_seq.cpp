@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
+#include <ranges>  // NOLINT(misc-include-cleaner)
 #include <utility>
 #include <vector>
 
