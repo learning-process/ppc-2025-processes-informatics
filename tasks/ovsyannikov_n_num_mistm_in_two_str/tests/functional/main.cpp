@@ -21,7 +21,7 @@ class OvsyannikovNRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<TestType>(GetParam());
     input_data_ = std::get<0>(params);
     expected_ = std::get<1>(params);
   }
