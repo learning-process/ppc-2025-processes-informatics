@@ -1,13 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <fstream>
-#include <string>
 #include <tuple>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 #include "votincev_d_matrix_mult/common/include/common.hpp"
 #include "votincev_d_matrix_mult/mpi/include/ops_mpi.hpp"
 #include "votincev_d_matrix_mult/seq/include/ops_seq.hpp"
