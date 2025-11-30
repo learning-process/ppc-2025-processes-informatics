@@ -25,17 +25,10 @@ class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
   OutType expected_res;
 
   void SetUp() override {
-    std::string file_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_votincev_d_matrix_mult, "testPerf.txt");
-
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-      return;
-    }
-
     size_t param_m = 0;
     size_t param_n = 0;
     size_t param_k = 0;
-    // file >> m >> n >> k;
+
     param_m = 600;
     param_n = param_m;
     param_k = param_m;
@@ -53,9 +46,6 @@ class VotincevDMatrixMultRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
       matrix_b[i] = static_cast<double>(i % 5) * sgn_swapper;
       sgn_swapper *= -1;
     }
-
-    // for (double &v : A) file >> v;
-    // for (double &v : B) file >> v;
 
     input_data = std::make_tuple(param_m, param_n, param_k, matrix_a, matrix_b);
 
