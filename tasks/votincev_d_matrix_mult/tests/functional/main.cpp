@@ -87,7 +87,6 @@ TEST_P(VotincevDMatrixMultRunFuncTestsProcesses, MatrixMultiplicationTests) {
 const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4", "test5",
                                              "test6", "test7", "test8", "test9", "test10"};
 
-
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<VotincevDMatrixMultMPI, InType>(kTestParam, PPC_SETTINGS_votincev_d_matrix_mult),
     ppc::util::AddFuncTask<VotincevDMatrixMultSEQ, InType>(kTestParam, PPC_SETTINGS_votincev_d_matrix_mult));
