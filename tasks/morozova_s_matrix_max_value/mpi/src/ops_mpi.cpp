@@ -35,10 +35,15 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   bool valid = true;
   if (rank == 0) {
     rows = static_cast<int>(mat.size());
-    cols = (rows > 0) ? static_cast<int>(mat[0].size()) : 0;
-    valid = (rows > 0) && (cols > 0);
-    for (int i = 1; valid && i < rows; ++i) {
-      valid = (static_cast<int>(mat[i].size()) == cols);
+    valid = (rows > 0);
+    if (valid) {
+      cols = static_cast<int>(mat[0].size());
+      valid = (cols > 0);
+    }
+    for (int i = 1; i < rows && valid; ++i) {
+      if (mat[i].size() != static_cast<size_t>(cols)) {
+        valid = (mat[i].size() == static_cast<size_t>(cols));
+      }
     }
   }
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
