@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "nikolaev_d_most_dif_vec_neighbors/common/include/common.hpp"
@@ -16,7 +17,7 @@ class NikolaevDMostDifVecNeighborsMPI : public BaseTask {
 
  private:
   struct LocalMaxInfo {
-    int diff = -1;
+    int64_t diff = -1;
     int pair_first = 0;
     int pair_second = 0;
     int first_elem = 0;

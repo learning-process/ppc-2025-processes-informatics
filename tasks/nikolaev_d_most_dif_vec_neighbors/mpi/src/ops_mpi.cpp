@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstdlib>
 #include <utility>
 #include <vector>
 
@@ -64,12 +66,12 @@ bool NikolaevDMostDifVecNeighborsMPI::RunImpl() {
 
 void NikolaevDMostDifVecNeighborsMPI::FindLocalDiff(int rank, int size, int actual_processes,
                                                     std::vector<int> &local_data, int local_size) {
-  int local_max_diff = -1;
+  int64_t local_max_diff = -1;
   std::pair<int, int> local_result = {0, 0};
 
   if (local_size >= 2) {
     for (int i = 0; i < local_size - 1; i++) {
-      int diff = std::abs(local_data[i + 1] - local_data[i]);
+      int64_t diff = std::llabs(static_cast<int64_t>(local_data[i + 1]) - static_cast<int64_t>(local_data[i]));
       if (diff > local_max_diff) {
         local_max_diff = diff;
         local_result = {local_data[i], local_data[i + 1]};
@@ -102,7 +104,7 @@ void NikolaevDMostDifVecNeighborsMPI::ProcessLocalData(int rank, int actual_proc
                                                        std::vector<LocalMaxInfo> &all_info) {
   std::pair<int, int> global_result;
   if (rank == 0) {
-    int global_max_diff = -1;
+    int64_t global_max_diff = -1;
 
     // обработка локальных максимумов из каждого сегмента
     for (int i = 0; i < actual_processes; i++) {
@@ -114,7 +116,8 @@ void NikolaevDMostDifVecNeighborsMPI::ProcessLocalData(int rank, int actual_proc
 
     // обработка граничных пар между сегментами
     for (int i = 0; i < actual_processes - 1; i++) {
-      int diff = std::abs(all_info[i + 1].first_elem - all_info[i].last_elem);
+      int64_t diff =
+          std::llabs(static_cast<int64_t>(all_info[i + 1].first_elem) - static_cast<int64_t>(all_info[i].last_elem));
       if (diff > global_max_diff) {
         global_max_diff = diff;
         global_result = {all_info[i].last_elem, all_info[i + 1].first_elem};

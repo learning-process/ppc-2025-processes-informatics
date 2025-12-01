@@ -3,8 +3,9 @@
 
 // #include <algorithm>
 #include <array>
+#include <climits>
 #include <cstddef>
-// #include <cstdint>
+#include <cstdint>
 // #include <numeric>
 // #include <stdexcept>
 #include <string>
@@ -27,8 +28,8 @@ class NikolaevDMostDifVecNeighborsFuncTests : public ppc::util::BaseRunFuncTests
     int first = expected_ans.first;
     int second = expected_ans.second;
 
-    std::string str1 = (first >= 0) ? std::to_string(first) : "neg" + std::to_string(-first);
-    std::string str2 = (second >= 0) ? std::to_string(second) : "neg" + std::to_string(-second);
+    std::string str1 = (first >= 0) ? std::to_string(first) : "neg" + std::to_string(-static_cast<int64_t>(first));
+    std::string str2 = (second >= 0) ? std::to_string(second) : "neg" + std::to_string(-static_cast<int64_t>(second));
     // return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
     return "expected_ans_" + str1 + "_" + str2;
   }
@@ -61,13 +62,15 @@ TEST_P(NikolaevDMostDifVecNeighborsFuncTests, FuncTestsRun) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {
+const std::array<TestType, 7> kTestParam = {
     std::make_tuple(std::make_pair(1, 3), std::vector<int>{1, 3}),
     std::make_tuple(std::make_pair(3, 15), std::vector<int>{1, 3, 15}),
     std::make_tuple(std::make_pair(1, 32), std::vector<int>{2, 1, 1, 32, 12, 16, 5, -2, -1, -3}),
     std::make_tuple(std::make_pair(-1, 5), std::vector<int>{1, 3, 0, -1, 5, 2}),
     std::make_tuple(std::make_pair(1, 50), std::vector<int>{1, 1, 1, 1, 1, 50, 30, 1, 1}),
-    std::make_tuple(std::make_pair(-1, -6), std::vector<int>{1, 2, -1, -6, -2, 2})};
+    std::make_tuple(std::make_pair(-1, -6), std::vector<int>{1, 2, -1, -6, -2, 2}),
+    std::make_tuple(std::make_pair(INT_MIN, INT_MAX),
+                    std::vector<int>{-1'000'000'000, 1'000'000'000, INT_MIN, INT_MAX})};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<NikolaevDMostDifVecNeighborsMPI, InType>(
                                                kTestParam, PPC_SETTINGS_nikolaev_d_most_dif_vec_neighbors),
