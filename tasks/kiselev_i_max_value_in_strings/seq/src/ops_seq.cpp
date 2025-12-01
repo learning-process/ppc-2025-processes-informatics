@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <ranges>  // NOLINT(misc-include-cleaner)
 #include <utility>
 #include <vector>
@@ -20,10 +21,9 @@ KiselevITestTaskSEQ::KiselevITestTaskSEQ(const InType &in) {
 bool KiselevITestTaskSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
   if (matrix.empty()) {
-    return false;
+    return true;
   }
-
-  return std::ranges::all_of(matrix, [](const auto &rw) { return !rw.empty(); });
+  return true;
 }
 
 bool KiselevITestTaskSEQ::PreProcessingImpl() {
@@ -38,11 +38,16 @@ bool KiselevITestTaskSEQ::RunImpl() {
 
   std::size_t row_idx = 0;
   for (const auto &row : matrix) {
-    int tmp_max = row[0];
-    for (int val : row) {
-      tmp_max = std::max(val, tmp_max);
+    if (row.empty()) {
+      // пустая строка → минимальное значение int
+      out_vector[row_idx++] = std::numeric_limits<int>::min();
+    } else {
+      int tmp_max = row[0];
+      for (int val : row) {
+        tmp_max = std::max(val, tmp_max);
+      }
+      out_vector[row_idx++] = tmp_max;
     }
-    out_vector[row_idx++] = tmp_max;
   }
   return true;
 }

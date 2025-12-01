@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -21,9 +22,9 @@ KiselevITestTaskMPI::KiselevITestTaskMPI(const InType &in) {
 bool KiselevITestTaskMPI::ValidationImpl() {
   const auto &matrix = GetInput();
   if (matrix.empty()) {
-    return false;
+    return true;
   }
-  return std::ranges::all_of(matrix, [](const auto &rw) { return !rw.empty(); });
+  return true;
 }
 
 bool KiselevITestTaskMPI::PreProcessingImpl() {
@@ -105,16 +106,22 @@ void KiselevITestTaskMPI::ComputeLocalMax(const std::vector<int> &local_values,
   if (n_rows == 0) {
     return;
   }
-  local_result.resize(n_rows);
 
+  local_result.resize(n_rows);
   int pos = 0;
+
   for (size_t rw = 0; rw < n_rows; ++rw) {
     int len = local_row_lengths[rw];
-    int tmp_max = local_values[pos];
-    for (int j = 1; j < len; ++j) {
-      tmp_max = std::max(tmp_max, local_values[pos + j]);
+    if (len == 0) {
+      // пустая строка → используем минимальное значение int
+      local_result[rw] = std::numeric_limits<int>::min();
+    } else {
+      int tmp_max = local_values[pos];
+      for (int j = 1; j < len; ++j) {
+        tmp_max = std::max(tmp_max, local_values[pos + j]);
+      }
+      local_result[rw] = tmp_max;
     }
-    local_result[rw] = tmp_max;
     pos += len;
   }
 }
@@ -123,8 +130,7 @@ bool KiselevITestTaskMPI::RunImpl() {
   const auto &matrix = GetInput();
   auto &result_vector = GetOutput();
 
-  int world_rank = 0;
-  int world_size = 0;
+  int world_rank = 0, world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
@@ -153,7 +159,10 @@ bool KiselevITestTaskMPI::RunImpl() {
   MPI_Gatherv(local_result.data(), local_row_count, MPI_INT, result_vector.data(), len_counts.data(), len_displs.data(),
               MPI_INT, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(result_vector.data(), total_rows, MPI_INT, 0, MPI_COMM_WORLD);
+  if (total_rows > 0) {
+    MPI_Bcast(result_vector.data(), total_rows, MPI_INT, 0, MPI_COMM_WORLD);
+  }
+
   return true;
 }
 
