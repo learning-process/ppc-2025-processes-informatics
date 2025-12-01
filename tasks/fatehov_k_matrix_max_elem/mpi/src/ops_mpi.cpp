@@ -6,7 +6,6 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
-#include <utility>
 #include <vector>
 
 #include "fatehov_k_matrix_max_elem/common/include/common.hpp"
@@ -39,7 +38,8 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  size_t rows = 0, columns = 0;
+  size_t rows = 0;
+  size_t columns = 0;
   if (world_rank == 0) {
     auto &data = GetInput();
     rows = std::get<0>(data);
@@ -57,7 +57,7 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
   std::vector<int> displacements(world_size);
 
   for (int i = 0; i < world_size; ++i) {
-    send_counts[i] = elems_per_proc + (i < static_cast<int>(remainder) ? 1 : 0);
+    send_counts[i] = static_cast<int>(elems_per_proc) + (std::cmp_less(i, remainder) ? 1 : 0);
     displacements[i] = (i == 0) ? 0 : (displacements[i - 1] + send_counts[i - 1]);
   }
 
@@ -73,8 +73,8 @@ bool FatehovKMatrixMaxElemMPI::RunImpl() {
                MPI_DOUBLE, local_data.data(), send_counts[world_rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double local_max = -std::numeric_limits<double>::max();
-  for (size_t i = 0; i < local_data.size(); i++) {
-    local_max = std::max(local_data[i], local_max);
+  for (const auto &value : local_data) {
+    local_max = std::max(value, local_max);
   }
 
   double global_max = NAN;

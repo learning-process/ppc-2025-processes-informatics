@@ -102,8 +102,8 @@ std::vector<int> send_counts(world_size);
 std::vector<int> displacements(world_size);
 
 for (int i = 0; i < world_size; ++i) {
-  send_counts[i] = elems_per_proc + (i < static_cast<int>(remainder) ? 1 : 0);
-  displacements[i] = (i == 0) ? 0 : (displacements[i - 1] + send_counts[i - 1]);
+    send_counts[i] = static_cast<int>(elems_per_proc) + (std::cmp_less(i, remainder) ? 1 : 0);
+    displacements[i] = (i == 0) ? 0 : (displacements[i - 1] + send_counts[i - 1]);
 }
 ```
 
@@ -132,8 +132,8 @@ MPI_Scatterv((world_rank == 0) ? (*full_matrix_ptr).data() : nullptr,  send_coun
 5. **Локальные вычисления**
 ```cpp
 double local_max = -std::numeric_limits<double>::max();
-for (size_t i = 0; i < local_data.size(); i++) {
-  local_max = std::max(local_data[i], local_max);
+for (const auto &value : local_data) {
+    local_max = std::max(value, local_max);
 }
 ```
 
@@ -166,7 +166,7 @@ GetOutput() = global_max;
 ```cpp
 for (size_t i = 0; i < total; ++i) {
       state = (a * state + c) % m;
-      double value = (static_cast<double>(state) / m) * 2000.0 - 1000.0;
+      double value = ((static_cast<double>(state) / m) * 2000.0) - 1000.0;
       matrix.push_back(value);
 
       max_val = std::max(value, max_val);
