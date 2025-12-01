@@ -11,9 +11,6 @@ namespace sizov_d_bubble_sort {
 
 namespace {
 
-// ---------------------------------------------------------------------------
-// Равномерное распределение данных
-// ---------------------------------------------------------------------------
 void ComputeScatterInfo(int total, int size, std::vector<int> &counts, std::vector<int> &displs) {
   const int base = total / size;
   const int rem = total % size;
@@ -26,9 +23,6 @@ void ComputeScatterInfo(int total, int size, std::vector<int> &counts, std::vect
   }
 }
 
-// ---------------------------------------------------------------------------
-// Локальный проход
-// ---------------------------------------------------------------------------
 void LocalOddEvenPass(std::vector<int> &local, int global_start, int parity) {
   const int n = static_cast<int>(local.size());
   for (int i = 0; i + 1 < n; ++i) {
@@ -41,9 +35,6 @@ void LocalOddEvenPass(std::vector<int> &local, int global_start, int parity) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Обмен граничным элементом
-// ---------------------------------------------------------------------------
 void ExchangeBoundary(std::vector<int> &local, const std::vector<int> &counts, int rank, int partner) {
   const int local_n = static_cast<int>(local.size());
   const int partner_n = counts[partner];
@@ -66,9 +57,6 @@ void ExchangeBoundary(std::vector<int> &local, const std::vector<int> &counts, i
   }
 }
 
-// ---------------------------------------------------------------------------
-// Глобальная фаза
-// ---------------------------------------------------------------------------
 void OddEvenPhase(std::vector<int> &local, const std::vector<int> &counts, const std::vector<int> &displs, int rank,
                   int size, int phase) {
   if (local.empty()) {
@@ -91,10 +79,6 @@ void OddEvenPhase(std::vector<int> &local, const std::vector<int> &counts, const
 }
 
 }  // namespace
-
-// ============================================================================
-// Класс задачи
-// ============================================================================
 
 SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -146,7 +130,6 @@ bool SizovDBubbleSortMPI::RunImpl() {
   MPI_Scatterv((rank == 0 ? data_.data() : nullptr), counts.data(), displs.data(), MPI_INT, local.data(), local_n,
                MPI_INT, 0, MPI_COMM_WORLD);
 
-  // n глобальных фаз
   for (int phase = 0; phase < n; ++phase) {
     OddEvenPhase(local, counts, displs, rank, size, phase);
   }
