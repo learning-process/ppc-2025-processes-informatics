@@ -8,8 +8,8 @@
 namespace konstantinov_s_elem_vec_sign_change_count {
 // СТАБИЛЬНЫЙ генератор тестовых данных
 // Нужно подать массив с известным колвом смен знаков и одинаковыми знаками первого и последнего элемента
-inline int generateTestData(const EType *examplearr, size_t arrsz, int sign_change_count, InType &v) {
-  size_t m = v.size();
+inline int generateTestData(const EType *examplearr, int arrsz, int sign_change_count, InType &v) {
+  int m = v.size();
   // std::cout<<"Generating "<<m<<"\n";
   if (arrsz == 0 || m == 0) {
     return 0;
@@ -26,14 +26,14 @@ inline int generateTestData(const EType *examplearr, size_t arrsz, int sign_chan
     return res;
   }
 
-  size_t fullBlocks = m / arrsz;
-  size_t tail = m % arrsz;
+  int fullBlocks = m / arrsz;
+  int tail = m % arrsz;
 
   EType *dst = v.data();
 
   // Копируем первую копию массива
   memcpy(dst, examplearr, arrsz * sizeof(EType));
-  size_t filled = 1;  // число заполненных блоков
+  int filled = 1;  // число заполненных блоков
 
   // Удвоительное копирование блоками
   // пока удвоение не превысит количество нужных полных блоков
@@ -51,7 +51,7 @@ inline int generateTestData(const EType *examplearr, size_t arrsz, int sign_chan
   // Хвост = последний элемент чтобы не считать смены знаков там
   if (tail > 0) {
     EType last = examplearr[arrsz - 1];
-    for (size_t i = 0; i < tail; ++i) {
+    for (int i = 0; i < tail; ++i) {
       dst[fullBlocks * arrsz + i] = last;
     }
   }
