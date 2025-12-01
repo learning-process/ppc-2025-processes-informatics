@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <limits>
 #include <vector>
@@ -25,7 +24,8 @@ bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
   return true;
 }
 
-static bool CheckMatrix(const InType &mat, int &rows, int &cols) {
+namespace {
+bool CheckMatrix(const InType &mat, int &rows, int &cols) {
   rows = static_cast<int>(mat.size());
   if (rows <= 0) {
     return false;
@@ -41,6 +41,7 @@ static bool CheckMatrix(const InType &mat, int &rows, int &cols) {
   }
   return true;
 }
+}  // namespace
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int rank = 0;
