@@ -13,10 +13,11 @@ namespace konstantinov_s_elem_vec_sign_change_count {
 KonstantinovSElemVecSignChangeMPI::KonstantinovSElemVecSignChangeMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = -1;
 }
 
 bool KonstantinovSElemVecSignChangeMPI::ValidationImpl() {
+  //std::cout << "\t\tValidation mpi\n";
   return !GetInput().empty();
 }
 
@@ -29,79 +30,94 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &pcount);
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int step = 0; // chunk size = step+1
-  int* sendbuf = nullptr;
+  int step = 0;  // chunk size = step+1
+  int *sendbuf = nullptr;
   int rem = 0;
-  int elemcount = 0; //не пересылается, известен только корню
-  if(rank == 0)
-  {
-    auto input = GetInput(); // получаем только на нулевом процессе - корне
+  int elemcount = 0;  // не пересылается, известен только корню
+  if (rank == 0) {
+    auto input = GetInput();  // получаем только на нулевом процессе - корне
     if (input.empty()) {
+      std::cout<<"GOT EMPTY INPUT!!!!!!!!!!!!!\n";
       return false;
     }
     elemcount = input.size();
-    sendbuf = input.data();
+    //sendbuf = input.data(); //input инвалидируется позже????
+    sendbuf = new int[elemcount];
+    std::memcpy(sendbuf, input.data(), input.size()*sizeof(int));
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
-    step = (elemcount+1)/pcount; 
-    rem = elemcount - step*(pcount-1);
+    step = (elemcount + 1) / pcount;
+    rem = elemcount - step * (pcount - 1);
+
+    // std::cout<<"ROOT got "<<elemcount<<" step, rem = "<<step<<" "<<rem<<"\n";
+    // for(int i=0;i<elemcount;i++)
+    //   std::cout<<sendbuf[i]<<" ";
+    // std::cout<<"\n\n";
   }
 
-  MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD); //корень отправляет, остальные получают
-  int chunksz = step+1;
-  int* sendcounts = nullptr;
-  int* displs = nullptr;
-  int* recbuf = nullptr;
+  MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);  // корень отправляет, остальные получают
+  int chunksz = step + 1;
+  int *sendcounts = nullptr;
+  int *displs = nullptr;
+  int *recbuf = nullptr;
 
-  if(rank == 0)
-  {
+  if (rank == 0) {
     sendcounts = new int[pcount];
     displs = new int[pcount];
-    sendcounts[0] = 0; //на корень не шлём
+    sendcounts[0] = 0;  // на корень не шлём
     displs[0] = 0;
     // обозначаем перекрывающиеся области (последний элемент = первый в следующем куске)
-    for(int i=1;i<pcount;i++)
-    {
+    for (int i = 1; i < pcount; i++) {
       sendcounts[i] = chunksz;
-      displs[i] = (i-1)*step;
+      displs[i] = (i - 1) * step;
     }
+  } else {
+    recbuf = new int[chunksz];  // только некорни выыделяют буфер
   }
-  else
-  {
-    recbuf = new int[chunksz]; //только некорни выыделяют буфер
-  }
+  // std::cout<<"Rank "<<rank<<" sendbuf pre and post scatterv\n";
+  // for(int i=0;i<elemcount;i++)
+  //     std::cout<<sendbuf[i]<<" ";
+  //   std::cout<<"\n\n";
+
+
   // существуют только буферы нужные получателям/отправителю, ненужные = nullptr (например sendbuf у некорней)
-  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_INT, recbuf,
-                rank == 0 ? 0 : chunksz, MPI_INT, 0, MPI_COMM_WORLD);
-  
+  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_INT, recbuf, rank == 0 ? 0 : chunksz, MPI_INT, 0, MPI_COMM_WORLD);
+
+  // for(int i=0;i<elemcount;i++)
+  //     std::cout<<sendbuf[i]<<" ";
+  //   std::cout<<"\n\n";
+
   int local_res = 0;
 
-  if(rank != 0)
-  {
-    for(int i=0; i<step; i++)
-      local_res+= (recbuf[i]>0)!=(recbuf[i+1]>0);
-  }
-  else
-  {
-    if (rem>1)
-    {
-      for(int i=elemcount-rem; i<elemcount-1; i++)
-        local_res+= (sendbuf[i]>0)!=(sendbuf[i+1]>0);
+  if (rank != 0) {
+    delete[] sendcounts;
+    delete[] displs;
+    for (int i = 0; i < step; i++) {
+      local_res += (recbuf[i] > 0) != (recbuf[i + 1] > 0);
+    }
+    //std::cout<<rank<<"# counted = "<<local_res<<"\n";
+  } else {
+    if (rem > 1) {
+      for (int i = elemcount - rem; i < elemcount - 1; i++) {
+        //std::cout<<sendbuf[i];
+        local_res += (sendbuf[i] > 0) != (sendbuf[i + 1] > 0);
+      }
+      // std::cout<<" root counted = "<<local_res<<"\n";
+      // for(int i=0;i<elemcount;i++)
+      // std::cout<<sendbuf[i]<<" ";
+      // std::cout<<"\n\n";
     }
   }
 
-  int global_res = 0;
+  if (rank == 0) {
+    delete[] sendbuf;
+  } else {
+    delete[] recbuf;
+  }
+
+    int global_res = 0;
   MPI_Allreduce(&local_res, &global_res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  if(rank == 0)
-    {
-      delete[] sendcounts;
-      delete[] displs;
-    }
-    else
-    {
-      delete[] recbuf;
-    }
-
+  //std::cout<<"MPI result: "<<global_res<<" from rank "<<rank<<"\n";
   GetOutput() = global_res;
   return true;
 }

@@ -15,6 +15,7 @@
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
 #include "konstantinov_s_elem_vec_sign_change_count/mpi/include/ops_mpi.hpp"
 #include "konstantinov_s_elem_vec_sign_change_count/seq/include/ops_seq.hpp"
+#include "konstantinov_s_elem_vec_sign_change_count/tests/testgen.h"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -23,37 +24,29 @@ namespace konstantinov_s_elem_vec_sign_change_count {
 class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<1>(std::get<0>(test_param))) + "_" + std::get<1>(test_param);
+    return std::to_string(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path =
-          ppc::util::GetAbsoluteTaskPath(PPC_ID_konstantinov_s_elem_vec_sign_change_count, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+
+    std::vector<int> vec(params);
+    vec.resize(params);
+    const int arr[] = {1, -1, 23, -11, -12, -567, 13, 42, -12, 2, -43, 33, 44, -7, 1};
+    const int arrsz = 15;
+    const int chngcnt = 10;
+
+    result_right = generateTestData(arr, arrsz, chngcnt, vec);
+    input_data_ = vec;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    // std::cout<<"CHECK: ";
+    // for(int i=0;i<input_data_.size();i++)
+    //   std::cout<<input_data_[i]<<" ";
+    // std::cout<<"CHECK DATA: "<<output_data<<" ?= "<<result_right<<"\n";
+    return (output_data == result_right);
   }
 
   InType GetTestInputData() final {
@@ -61,7 +54,8 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType result_right;
 };
 
 namespace {
@@ -70,7 +64,7 @@ TEST_P(KonstantinovSElemVecSignChangeTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 5> kTestParam = {1, 7, 15, 30, 33};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KonstantinovSElemVecSignChangeMPI, InType>(
                                                kTestParam, PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count),

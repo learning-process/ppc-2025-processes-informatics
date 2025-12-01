@@ -3,20 +3,29 @@
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
 #include "konstantinov_s_elem_vec_sign_change_count/mpi/include/ops_mpi.hpp"
 #include "konstantinov_s_elem_vec_sign_change_count/seq/include/ops_seq.hpp"
+#include "konstantinov_s_elem_vec_sign_change_count/tests/testgen.h"
 #include "util/include/perf_test_util.hpp"
 
 namespace konstantinov_s_elem_vec_sign_change_count {
 
 class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+  const int kCount_ = 400000000;
+  InType input_data_;
+  OutType result_right;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_.resize(kCount_);
+    
+    const int arr[] = {1, -1, 23838, -121, -1223, -567, 12334, 42, -12, 2, -43, 33, 44, -7, 1};
+    const int arrsz = 15;
+    const int chngcnt = 10;
+
+    result_right = generateTestData(arr, arrsz, chngcnt, input_data_);
+    //std::cout<<input_data_.capacity()<<" "<<kCount_<<"\n";
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return result_right == output_data;
   }
 
   InType GetTestInputData() final {

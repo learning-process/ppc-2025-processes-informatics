@@ -1,5 +1,6 @@
 #include "konstantinov_s_elem_vec_sign_change_count/seq/include/ops_seq.hpp"
 
+#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -15,6 +16,7 @@ KonstantinovSElemVecSignChangeSEQ::KonstantinovSElemVecSignChangeSEQ(const InTyp
 }
 
 bool KonstantinovSElemVecSignChangeSEQ::ValidationImpl() {
+  //std::cout << "\t\tValidation seq\n";
   return !GetInput().empty();
 }
 
@@ -28,11 +30,11 @@ bool KonstantinovSElemVecSignChangeSEQ::RunImpl() {
   }
 
   const auto invec = GetInput();
-  
-  for (int i=0; i<invec.size()-1;i++)
-  {
-    GetOutput() += (invec[i]>0) != (invec[i+1]>0); // + 1 если занки разные
+  int res = 0;
+  for (int i = 0; i < invec.size() - 1; i++) {
+    res += (invec[i] > 0) != (invec[i + 1] > 0);  // + 1 если занки разные
   }
+  GetOutput()=res;
   return true;
 }
 
