@@ -31,9 +31,9 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    std::vector<int> vec(params);
+    InType vec(params);
     vec.resize(params);
-    const int arr[] = {1, -1, 23, -11, -12, -567, 13, 42, -12, 2, -43, 33, 44, -7, 1};
+    const EType arr[] = {1, -1, 23, -11, -12, -167, 13, 42, -12, 2, -43, 33, 44, -7, 1};
     const int arrsz = 15;
     const int chngcnt = 10;
 

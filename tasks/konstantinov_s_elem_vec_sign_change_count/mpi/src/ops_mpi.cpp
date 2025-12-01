@@ -13,11 +13,11 @@ namespace konstantinov_s_elem_vec_sign_change_count {
 KonstantinovSElemVecSignChangeMPI::KonstantinovSElemVecSignChangeMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = -1;
+  GetOutput() = 0;
 }
 
 bool KonstantinovSElemVecSignChangeMPI::ValidationImpl() {
-  //std::cout << "\t\tValidation mpi\n";
+  // std::cout << "\t\tValidation mpi\n";
   return !GetInput().empty();
 }
 
@@ -31,19 +31,19 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int step = 0;  // chunk size = step+1
-  int *sendbuf = nullptr;
+  EType *sendbuf = nullptr;
   int rem = 0;
   int elemcount = 0;  // не пересылается, известен только корню
   if (rank == 0) {
     auto input = GetInput();  // получаем только на нулевом процессе - корне
     if (input.empty()) {
-      std::cout<<"GOT EMPTY INPUT!!!!!!!!!!!!!\n";
+      std::cout << "GOT EMPTY INPUT!!!!!!!!!!!!!\n";
       return false;
     }
     elemcount = input.size();
-    //sendbuf = input.data(); //input инвалидируется позже????
-    sendbuf = new int[elemcount];
-    std::memcpy(sendbuf, input.data(), input.size()*sizeof(int));
+    // sendbuf = input.data(); //input инвалидируется позже????
+    sendbuf = new EType[elemcount];
+    std::memcpy(sendbuf, input.data(), input.size() * sizeof(EType));
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
     step = (elemcount + 1) / pcount;
     rem = elemcount - step * (pcount - 1);
@@ -58,7 +58,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   int chunksz = step + 1;
   int *sendcounts = nullptr;
   int *displs = nullptr;
-  int *recbuf = nullptr;
+  EType *recbuf = nullptr;
 
   if (rank == 0) {
     sendcounts = new int[pcount];
@@ -71,16 +71,15 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
       displs[i] = (i - 1) * step;
     }
   } else {
-    recbuf = new int[chunksz];  // только некорни выыделяют буфер
+    recbuf = new EType[chunksz];  // только некорни выыделяют буфер
   }
   // std::cout<<"Rank "<<rank<<" sendbuf pre and post scatterv\n";
   // for(int i=0;i<elemcount;i++)
   //     std::cout<<sendbuf[i]<<" ";
   //   std::cout<<"\n\n";
 
-
   // существуют только буферы нужные получателям/отправителю, ненужные = nullptr (например sendbuf у некорней)
-  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_INT, recbuf, rank == 0 ? 0 : chunksz, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_SHORT, recbuf, rank == 0 ? 0 : chunksz, MPI_SHORT, 0, MPI_COMM_WORLD);
 
   // for(int i=0;i<elemcount;i++)
   //     std::cout<<sendbuf[i]<<" ";
@@ -94,11 +93,11 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     for (int i = 0; i < step; i++) {
       local_res += (recbuf[i] > 0) != (recbuf[i + 1] > 0);
     }
-    //std::cout<<rank<<"# counted = "<<local_res<<"\n";
+    // std::cout<<rank<<"# counted = "<<local_res<<"\n";
   } else {
     if (rem > 1) {
       for (int i = elemcount - rem; i < elemcount - 1; i++) {
-        //std::cout<<sendbuf[i];
+        // std::cout<<sendbuf[i];
         local_res += (sendbuf[i] > 0) != (sendbuf[i + 1] > 0);
       }
       // std::cout<<" root counted = "<<local_res<<"\n";
@@ -114,10 +113,10 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     delete[] recbuf;
   }
 
-    int global_res = 0;
+  int global_res = 0;
   MPI_Allreduce(&local_res, &global_res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  //std::cout<<"MPI result: "<<global_res<<" from rank "<<rank<<"\n";
+  // std::cout<<"MPI result: "<<global_res<<" from rank "<<rank<<"\n";
   GetOutput() = global_res;
   return true;
 }

@@ -16,7 +16,7 @@ KonstantinovSElemVecSignChangeSEQ::KonstantinovSElemVecSignChangeSEQ(const InTyp
 }
 
 bool KonstantinovSElemVecSignChangeSEQ::ValidationImpl() {
-  //std::cout << "\t\tValidation seq\n";
+  // std::cout << "\t\tValidation seq\n";
   return !GetInput().empty();
 }
 
@@ -34,7 +34,7 @@ bool KonstantinovSElemVecSignChangeSEQ::RunImpl() {
   for (int i = 0; i < invec.size() - 1; i++) {
     res += (invec[i] > 0) != (invec[i + 1] > 0);  // + 1 если занки разные
   }
-  GetOutput()=res;
+  GetOutput() = res;
   return true;
 }
 
