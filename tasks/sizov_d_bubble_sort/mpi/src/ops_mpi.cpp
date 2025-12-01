@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <ranges>
 #include <vector>
 
 #include "sizov_d_bubble_sort/common/include/common.hpp"
@@ -11,18 +10,21 @@
 namespace sizov_d_bubble_sort {
 
 namespace {
-void ComputeScatterInfo(int total, int size, int rem, std::vector<int> &counts, std::vector<int> &displs) {
+
+void ComputeScatterInfo(int total, int size, std::vector<int> &counts, std::vector<int> &displs) {
+  const int base = total / size;
+  const int rem = total % size;
+
   int offset = 0;
-  for (int i = 0; i < size; ++i) {
-    const int chunk = (total / size) + (i < rem ? 1 : 0);
-    counts[i] = chunk;
+  for (int i = 0; i < size; i++) {
+    counts[i] = base + (i < rem ? 1 : 0);
     displs[i] = offset;
-    offset += chunk;
+    offset += counts[i];
   }
 }
 
 int ComputePartner(bool even_phase, bool even_rank, int rank) {
-  return (even_phase == even_rank) ? (rank + 1) : (rank - 1);
+  return (even_phase == even_rank) ? rank + 1 : rank - 1;
 }
 
 void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, int rank, int size, int phase) {
@@ -30,7 +32,6 @@ void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, in
   const bool even_rank = (rank % 2 == 0);
 
   const int partner = ComputePartner(even_phase, even_rank, rank);
-
   if (partner < 0 || partner >= size) {
     return;
   }
@@ -38,34 +39,25 @@ void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, in
   const int local_n = static_cast<int>(local.size());
   const int partner_n = counts[partner];
 
+  if (local_n == 0 || partner_n == 0) {
+    return;
+  }
+
   std::vector<int> recvbuf(partner_n);
 
-  MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 2, recvbuf.data(), partner_n, MPI_INT, partner, 2,
+  MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 0, recvbuf.data(), partner_n, MPI_INT, partner, 0,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   std::vector<int> merged(local_n + partner_n);
   std::ranges::merge(local, recvbuf, merged.begin());
 
   if (rank < partner) {
-    std::ranges::copy(merged | std::views::take(local_n), local.begin());
+    std::copy(merged.begin(), merged.begin() + local_n, local.begin());
   } else {
-    std::ranges::copy(merged | std::views::drop(partner_n), local.begin());
+    std::copy(merged.end() - local_n, merged.end(), local.begin());
   }
 }
 
-void GatherResult(const std::vector<int> &local, const std::vector<int> &counts, const std::vector<int> &displs,
-                  int rank, int total, std::vector<int> &output) {
-  if (rank == 0) {
-    output.resize(total);
-  }
-
-  MPI_Gatherv(local.data(), static_cast<int>(local.size()), MPI_INT, (rank == 0 ? output.data() : nullptr),
-              (rank == 0 ? counts.data() : nullptr), (rank == 0 ? displs.data() : nullptr), MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    std::ranges::sort(output);
-  }
-}
 }  // namespace
 
 SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
@@ -75,8 +67,15 @@ SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
 }
 
 bool SizovDBubbleSortMPI::ValidationImpl() {
-  const auto &input = GetInput();
-  return !input.empty();
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank == 0) {
+    const auto &input = GetInput();
+    return !input.empty();
+  }
+
+  return true;
 }
 
 bool SizovDBubbleSortMPI::PreProcessingImpl() {
@@ -85,55 +84,71 @@ bool SizovDBubbleSortMPI::PreProcessingImpl() {
 }
 
 bool SizovDBubbleSortMPI::RunImpl() {
-  int rank = 0;
-  int size = 1;
+  int rank = 0, size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int total = static_cast<int>(data_.size());
-  const int rem = total % size;
+  const int total = (rank == 0 ? static_cast<int>(data_.size()) : 0);
 
-  std::vector<int> counts(size);
-  std::vector<int> displs(size);
+  int n = total;
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  ComputeScatterInfo(total, size, rem, counts, displs);
+  if (n <= 1) {
+    if (rank != 0) {
+      data_.assign(n, 0);
+    }
+    if (n > 0) {
+      MPI_Bcast(data_.data(), n, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+    GetOutput() = data_;
+    return true;
+  }
+
+  std::vector<int> counts(size), displs(size);
+  ComputeScatterInfo(n, size, counts, displs);
 
   const int local_n = counts[rank];
   std::vector<int> local(local_n);
 
-  MPI_Scatterv(data_.data(), counts.data(), displs.data(), MPI_INT, local.data(), local_n, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv((rank == 0 ? data_.data() : nullptr), counts.data(), displs.data(), MPI_INT, local.data(), local_n,
+               MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::ranges::sort(local);
+  if (local_n > 1) {
+    std::ranges::sort(local);
+  }
 
-  for (int phase = 0; phase < size; ++phase) {
+  for (int phase = 0; phase < n; ++phase) {
     OddEvenExchange(local, counts, rank, size, phase);
   }
 
-  std::vector<int> global;
-  GatherResult(local, counts, displs, rank, total, global);
+  std::vector<int> result;
+  if (rank == 0) {
+    result.resize(n);
+  }
+
+  MPI_Gatherv(local.data(), local_n, MPI_INT, (rank == 0 ? result.data() : nullptr), counts.data(), displs.data(),
+              MPI_INT, 0, MPI_COMM_WORLD);
+
+  int out_n = 0;
+  if (rank == 0) {
+    out_n = n;
+  }
+  MPI_Bcast(&out_n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    GetOutput() = global;
+    GetOutput() = result;
+  } else {
+    GetOutput().assign(out_n, 0);
+  }
+
+  if (out_n > 0) {
+    MPI_Bcast(GetOutput().data(), out_n, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
   return true;
 }
 
 bool SizovDBubbleSortMPI::PostProcessingImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  int n = (rank == 0) ? static_cast<int>(GetOutput().size()) : 0;
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    GetOutput().assign(n, 0);
-  }
-
-  if (n > 0) {
-    MPI_Bcast(GetOutput().data(), n, MPI_INT, 0, MPI_COMM_WORLD);
-  }
-
   return true;
 }
 
