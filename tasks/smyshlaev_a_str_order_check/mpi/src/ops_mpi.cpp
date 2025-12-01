@@ -10,7 +10,9 @@
 
 namespace smyshlaev_a_str_order_check {
 
-static int CompareBuffers(const char *s1, const char *s2, int len) {
+namespace {
+
+int CompareBuffers(const char *s1, const char *s2, int len) {
   for (int i = 0; i < len; ++i) {
     if (s1[i] < s2[i]) {
       return -1;
@@ -22,7 +24,7 @@ static int CompareBuffers(const char *s1, const char *s2, int len) {
   return 0;
 }
 
-static int ResolveResult(int diff_res, int len1, int len2) {
+int ResolveResult(int diff_res, int len1, int len2) {
   if (diff_res != 0) {
     return diff_res;
   }
@@ -35,7 +37,7 @@ static int ResolveResult(int diff_res, int len1, int len2) {
   return 0;
 }
 
-static void CalculateDistribution(int total_len, int proc_count, std::vector<int> &counts, std::vector<int> &offsets) {
+void CalculateDistribution(int total_len, int proc_count, std::vector<int> &counts, std::vector<int> &offsets) {
   const int chunk = total_len / proc_count;
   const int remainder = total_len % proc_count;
   int offset = 0;
@@ -45,6 +47,8 @@ static void CalculateDistribution(int total_len, int proc_count, std::vector<int
     offset += counts[i];
   }
 }
+
+}  // namespace
 
 SmyshlaevAStrOrderCheckMPI::SmyshlaevAStrOrderCheckMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
