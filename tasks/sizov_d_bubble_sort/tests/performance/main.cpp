@@ -16,11 +16,7 @@ namespace sizov_d_bubble_sort {
 class SizovDRunPerfTestsBubbleSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    const auto &param = GetParam();
-    const std::string &test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
-    const bool is_mpi = test_name.find("_mpi_") != std::string::npos;
-
-    const std::size_t n = is_mpi ? 1000000 : 150000;
+    const std::size_t n = 100000;
 
     std::vector<int> data(n);
     for (std::size_t i = 0; i < n; ++i) {

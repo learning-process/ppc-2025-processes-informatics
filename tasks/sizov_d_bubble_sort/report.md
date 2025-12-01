@@ -5,26 +5,28 @@
 - Variant: 21
 
 ## 1. Introduction
-The objective of this work is to implement both sequential and parallel (MPI-based) versions of bubble sort using the Odd–Even Transposition Sort algorithm and to compare their correctness and performance.
-The task belongs to the class of comparison-based sorting algorithms that rely on pairwise exchanges of adjacent elements.
 
-The expected outcome is a fully correct implementation of the sorting procedure, successful execution of all functional and performance tests in the PPC framework, and a demonstrated speedup of the MPI version on large input data.
+The objective of this work is to implement both sequential and parallel (MPI-based) versions of bubble sort using the Odd–Even Transposition Sort algorithm and to compare their correctness and performance. The task belongs to the class of comparison-based sorting algorithms that rely on pairwise exchanges of adjacent elements. The expected outcome is a fully correct implementation of the sorting procedure, successful execution of all functional and performance tests in the PPC framework, and a demonstrated speedup of the MPI version on large input data.
 
 ## 2. Problem Statement
+
 Given: an array of integers (`InType = std::vector<int>`).
 
 Required:
+
 - Sort the array in non-decreasing order.
 - Provide two implementations: a sequential version and an MPI-based version.
 - Both implementations must operate correctly on all provided tests.
 
 Input/output format:
+
 - Input: `std::vector<int>`
 - Output: a sorted `std::vector<int>`
 
 Constraint: empty input is not allowed.
 
 ## 3. Baseline Algorithm (Sequential)
+
 The sequential version uses the classical odd–even sort algorithm.  
 Odd–even sort operates as a sequence of phases, where each phase compares adjacent elements, but the pairs differ between even and odd phases.
 
@@ -39,53 +41,74 @@ The algorithm continues alternating phases until a pass occurs with no swaps, wh
 
 Time complexity: **O(n²)**.
 
-
 ## 4. Parallelization Scheme (MPI)
 
 ### 4.1 Data Distribution
+
 During data distribution, the function `ComputeScatterInfo` is invoked. It calculates:
+
 - `counts[i]` — the number of elements assigned to process *i*,
-- `displs[i]` — the displacement of each block within the global array.
+- `displs[i]` — the displacement (offset) of each block within the global array.
 
 This ensures an almost even distribution of data, even when `n % p != 0`.  
-`MPI_Scatterv` then uses these arrays to send the corresponding subarray to each process.
+`MPI_Scatterv` then uses these arrays to distribute the corresponding subarray to each process.
 
 ### 4.2 Local Work
-Each process locally sorts its assigned subarray using `std::ranges::sort(local)`.  
-At this stage, every process holds a correctly sorted fragment, but global ordering is not yet guaranteed, because different processes may still contain overlapping value ranges.
 
-### 4.3 Neighbor Exchanges
-The main part of the algorithm consists of exchanges between neighboring processes.  
-The code performs `size` phases — one phase per process.
+Each process receives its portion of the global array and performs a local sort of that subarray using  
+`std::ranges::sort(local)`.
 
-In each phase:
-1. The phase parity is determined: `even_phase = (phase % 2 == 0)`.
-2. Each process computes its exchange partner:
-   - if the phase is even and the rank is even → partner = rank + 1,
-   - if the phase is even and the rank is odd  → partner = rank - 1,
-   - if the phase is odd  and the rank is odd  → partner = rank + 1,
-   - if the phase is odd  and the rank is even → partner = rank - 1.
-3. If the partner index is invalid (`partner < 0` or `partner >= size`), the exchange is skipped.
-4. Otherwise, processes exchange their sorted blocks using `MPI_Sendrecv`.  
-   Each process receives the partner’s sorted block into `recvbuf`.
-5. Both processes merge `local` and `recvbuf` into a single sorted array `merged`.
-6. Each process then keeps the appropriate half of the merged result:
-   - if `rank < partner` → keep the first `local_n` elements,
-   - if `rank > partner` → keep the last `local_n` elements.
+At this stage, every process holds a **locally sorted fragment**, but this does not imply global ordering.  
+Different processes may hold value ranges that overlap with each other.
 
-This exchange procedure ensures that elements gradually move toward their correct global positions — similar to how odd–even sort pushes larger values to the right and smaller values to the left.
+Local sorting is required to ensure that block-wise comparisons during the odd–even transposition phases
+produce correct global movement of elements.
 
-### 4.4 Gathering & Broadcast
-After all phases are completed, the root process performs:
-1. Gathering of all local blocks into a global array using `MPI_Gatherv`,
-2. A final `std::ranges::sort` on the root to guarantee full global ordering,
-3. Broadcasting the final sorted array to all processes using `MPI_Bcast`.
+### 4.3 Neighbor Exchanges (Odd–Even Transposition Phases)
 
+The main part of the MPI algorithm consists of repeated odd–even transposition phases.  
+This approach parallels the idea of the sequential bubble sort, but operations are performed on whole blocks of data rather than on individual neighboring elements.
+
+A total of `n` global phases is executed, where `n` is the number of elements in the input array.  
+This corresponds to the worst-case number of iterations needed for bubble sort to reach a fully ordered state.
+
+In each phase the following steps are performed:
+
+1. The algorithm determines whether the current phase number is even or odd.
+
+2. Based on phase parity and process rank, each process computes the rank of its neighbor with which it may need to exchange data.  
+   Depending on the situation, the partner may be either the preceding or the following process in rank order.
+
+3. If the computed partner rank falls outside the valid range of processes, the exchange for this phase is skipped.
+
+4. Otherwise, the process performs a two-way exchange of its sorted block using `MPI_Sendrecv`, receiving the partner’s block into a temporary buffer.
+
+5. The local block and the received block are merged into a single sorted sequence.
+
+6. Each process keeps only the part of the merged sequence that corresponds to its position in the global order:  
+   processes with a smaller rank keep the lower portion; processes with a larger rank keep the upper portion.
+
+As these phases progress, smaller values gradually drift toward processes with lower ranks, and larger values toward processes with higher ranks.  
+This reproduces the logic of odd–even transposition sorting at the level of distributed data blocks.
+
+### 4.4 Gathering and Finalization
+
+After all odd–even transposition phases have been completed, each process holds a block that is locally sorted and positioned correctly relative to blocks on neighboring ranks.
+
+The final steps are performed by the root process:
+
+1. All local blocks are collected into a single global array using `MPI_Gatherv`, which reconstructs the original data layout based on the previously computed `counts` and `displs` arrays.
+
+2. The assembled array on the root is taken as the final result.  
+   Since the odd–even transposition algorithm guarantees that the global ordering is correct after the required number of phases, no additional processing is necessary.
+
+At this point, the fully sorted array is available on the root process and can be returned as the final output of the parallel algorithm.
 
 ## 5. Implementation Details
 
 ### 5.1 Project Structure
-```
+
+```cpp
 tasks/sizov_d_bubble_sort
 ├── common
 │   └── include
@@ -95,7 +118,7 @@ tasks/sizov_d_bubble_sort
 │   ├── test2.txt
 │   ├── test3.txt
 │   ├── ...
-│   └── testN.txt
+│   └── test40.txt
 ├── mpi
 │   ├── include
 │   │   └── ops_mpi.hpp
@@ -118,13 +141,14 @@ tasks/sizov_d_bubble_sort
 ```
 
 ### 5.2 Data
+
 The functional tests use a set of input files located in:
   `tasks/sizov_d_bubble_sort/data/testN.txt`
 
 Each file contains two lines:  
+
 1. an unsorted array,  
 2. the reference sorted result.
-
 
 ### 5.3 Additional helper functions
 
@@ -132,28 +156,27 @@ Several auxiliary helper functions are used in the implementation.
 Most of them are placed inside an anonymous namespace in `mpi/src/ops_mpi.cpp`,  
 and the `TrimString` utility function is located in the functional test module.
 
-- `ComputeScatterInfo(total, size, rem, counts, displs)`  
+- `ComputeScatterInfo(total, size, counts, displs)`  
   Computes the block sizes (`counts`) and their displacements (`displs`) for `MPI_Scatterv`.  
-  The function correctly handles cases where `total % size != 0` by distributing the “extra” elements among the first processes, ensuring the most balanced data partitioning possible.
+  The function correctly handles cases where `total % size != 0` by distributing the extra elements among the first processes, ensuring that the data is partitioned as evenly as possible.
 
 - `ComputePartner(even_phase, even_rank, rank)`  
-  Determines the exchange partner for the current phase of the odd–even sorting algorithm.  
-  The logic fully matches the algorithm: in even phases, even‐rank processes exchange with the right neighbor, and in odd phases, odd‐rank processes do so.  
-  This function simplifies partner selection and improves code readability.
+  Determines the exchange partner for the current phase of the odd–even transposition algorithm.  
+  This helper encapsulates the neighbor-selection rules and makes the implementation clearer.
 
 - `OddEvenExchange(local, counts, rank, size, phase)`  
-  Implements a single phase of the parallel odd–even sort.  
-  It performs a send/receive exchange via `MPI_Sendrecv`, merges two sorted blocks, and selects the appropriate half of the merged result.  
-  The function also handles boundary cases (e.g., when a neighbor does not exist).
+  Performs a single phase of the parallel odd–even sort.  
+  During the phase, each process may exchange its local block with a neighboring process using `MPI_Sendrecv`, after which the two blocks are merged.  
+  Each process then retains only the part of the merged sequence that corresponds to its rank.  
+  Boundary conditions (such as absence of a neighbor) are handled inside the function.
 
 - `GatherResult(local, counts, displs, rank, total, output)`  
-  Collects the final results on the root process using `MPI_Gatherv`.  
-  After gathering, the root performs a final sort to ensure robustness of the global ordering, especially for boundary regions between distributed blocks.
+  Collects the final blocks from all processes into a single global array on the root process using `MPI_Gatherv`.  
+  Since the odd–even transposition algorithm ensures globally correct ordering after all phases, the gathered array is already sorted.
 
 - `TrimString(std::string& s)` (from the functional tests)  
   Removes whitespace characters (`\r`, `\n`, `\t`) from both ends of a line before parsing test data.  
-  This prevents errors when reading integers from input files that contain trailing newline characters.
-
+  This prevents errors when reading integers from files that contain leading or trailing whitespace.
 
 ## 6. Experimental Setup
 
@@ -168,7 +191,9 @@ and the `TrimString` utility function is located in the functional test module.
 ## 7. Results and Discussion
 
 ### 7.1 Correctness
+
 Correctness has been verified through:
+
 - multiple functional tests,
 - comparison against `std::ranges::sort`,
 - matching results between the MPI and SEQ implementations.
@@ -184,22 +209,18 @@ Correctness has been verified through:
 | MPI  | 16                   | 0.0025910712  | 324.4456808    | 2027.78550500%     |
 | MPI  | 32                   | 0.0017847040  | 471.0371353    | 1471.99104780%     |
 
-For CI execution, the performance tests use automatically generated input data, with different array sizes for the SEQ and MPI modes:
-- for SEQ: an array of 150,000 elements filled in descending order;
-- for MPI: an array of 1,000,000 elements, also filled in descending order.
-
-For local performance measurements and for comparing the sequential and parallel versions, a unified input size of 150,000 elements was used.  
+For local performance measurements and for comparing the sequential and parallel versions, a unified input size of 200,000 elements was used.  
 The performance tests were executed locally on my machine with the hardware configuration listed above.  
 All performance results are averaged over three runs.  
 The time reported in the third column corresponds to the `task_run` execution time.
 
 The speedup is computed as:
 
-S(p) = T_seq / T_p
+$$S(p) = \frac{T_{seq}}{T_{p}}$$
 
 The efficiency is computed as:
 
-E(p) = (S(p) / p) * 100%
+$$E(p) = \frac{S(p)}{p} \cdot 100\%$$
 
 ### 7.3 Environment variables
 
@@ -215,19 +236,21 @@ The following standard PPC environment variables were used to run the performanc
 
 - **TMPDIR** — the directory for temporary files required by the PPC infrastructure.
 
-
 ## 8. Conclusions
+
 - Both SEQ and MPI versions of the odd–even bubble sort have been implemented.
 - Both implementations successfully pass all tests.
 - The MPI version demonstrates significant speedup.
 - The main limitations are the quadratic time complexity and the need for inter-process exchanges at each phase.
 
 ## 9. References
+
 - Гергель В.П. Высокопроизводительные вычисления для многопроцессорных многоядерных систем. Серия «Суперкомпьютерное образование».
 - Гергель В.П. Теория и практика параллельных вычислений. – М.: Интуит Бином. Лаборатория знаний, 2007.
 - Wilkinson B., Allen M. Parallel programming: techniques and applications using networked workstations and parallel computers. – Prentice Hall, 1999.
 
 ## Appendix
+
 ```cpp
 bool SizovDBubbleSortMPI::RunImpl() {
   int rank = 0;
