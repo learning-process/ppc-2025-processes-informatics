@@ -102,6 +102,14 @@ class NikitinAVecSignRotationFuncTests : public ppc::util::BaseRunFuncTests<InTy
         input_data_ = {1.0, 2.0, -1.0, -2.0, 3.0, 4.0, -3.0, -4.0};
         expected_output_ = 3;
         break;
+      case 15:  
+        input_data_ = GenerateAlternatingVector(1000);
+        expected_output_ = 999;
+        break;
+      case 16:  
+        input_data_ = {1.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, -1.0};
+        expected_output_ = 3;  // 1→0, 0→-1, -1→0, 0→1, 1→0, 0→-1
+        break;
 
       default:
         throw std::runtime_error("Unknown test case ID: " + std::to_string(test_case_id_));
