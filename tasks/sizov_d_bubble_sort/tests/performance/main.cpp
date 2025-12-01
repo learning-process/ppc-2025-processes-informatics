@@ -2,14 +2,12 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <string>
 #include <vector>
 
 #include "sizov_d_bubble_sort/common/include/common.hpp"
 #include "sizov_d_bubble_sort/mpi/include/ops_mpi.hpp"
 #include "sizov_d_bubble_sort/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace sizov_d_bubble_sort {
 
