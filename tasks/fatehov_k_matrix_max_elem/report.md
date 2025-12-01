@@ -73,7 +73,8 @@ int world_size = 0;
 MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-size_t rows = 0, columns = 0;
+size_t rows = 0;
+size_t columns = 0;
 if (world_rank == 0) {
   auto &data = GetInput();
   rows = std::get<0>(data);
