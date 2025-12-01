@@ -45,25 +45,21 @@ Time complexity: **O(n²)**.
 
 ### 4.1 Data Distribution
 
-At the beginning of the parallel algorithm, the root process (rank 0) broadcasts the total number of elements `n` using `MPI_Bcast`.  
-This ensures that all processes know the global problem size before data partitioning begins.
+At the start of the parallel algorithm, the root process (rank 0) broadcasts  
+the total number of elements `n` using `MPI_Bcast`, ensuring all processes  
+know the global problem size.
 
-To divide the input array among processes, the helper function `ComputeScatterInfo` is used.  
-Given the total number of elements `n` and the number of processes `p`, it computes two arrays:
+To divide the array among processes, the helper function `ComputeScatterInfo`  
+computes two arrays:
 
-- `counts[i]` — the number of elements to be sent to process *i*;
-- `displs[i]` — the starting index of process *i* within the global input array.
+- `counts[i]` — number of elements assigned to process *i*  
+- `displs[i]` — starting offset of process *i* in the global array
 
-The distribution is nearly uniform: each process receives either  
-`⌊n / p⌋` or `⌊n / p⌋ + 1` elements.  
-The first `n % p` processes receive one additional element to account for uneven division.
+The distribution is nearly uniform: each process receives  
+`⌊n / p⌋` or `⌊n / p⌋ + 1` elements, with the first `n % p` processes receiving one extra.
 
-These arrays (`counts` and `displs`) are passed to `MPI_Scatterv`, which performs the actual data distribution.  
-Rank 0 uses `MPI_Scatterv` to send to each process the contiguous block of the input array that corresponds to its assigned region.  
-As a result, each process obtains a local subarray of size `counts[rank]`, stored in the local buffer.
-
-Immediately after receiving its block, each process performs a local sort with `std::ranges::sort(static local)`.  
-This ensures that each local fragment is internally ordered before entering the odd–even global exchange phases.
+These arrays are passed to `MPI_Scatterv`, which sends each process its  
+contiguous block of the input array.
 
 ### 4.2 Local Work
 
@@ -230,13 +226,13 @@ while the `TrimString` utility function is located in the functional test module
 
 ## 6. Experimental Setup
 
-|  Component |                Value                   |
-|------------|----------------------------------------|
-|     CPU    | 12th Gen Intel(R) Core(TM) i5-12450H   |
-|     RAM    |                 16 GB                  |
-|     ОС     | OS: Ubuntu 24.04 (DevContainer / WSL2) |
-|  Compiler  | GCC 13.3.0 (g++), C++20, CMake, Release|
-|     MPI    |        mpirun (Open MPI) 4.1.6         |
+| Component  | Value                                   |
+|------------|-----------------------------------------|
+| CPU        | 12th Gen Intel(R) Core(TM) i5-12450H    |
+| RAM        | 16 GB                                   |
+| ОС         | OS: Ubuntu 24.04 (DevContainer / WSL2)  |
+| Compiler   | GCC 13.3.0 (g++), C++20, CMake, Release |
+| MPI        | mpirun (Open MPI) 4.1.6                 |
 
 ## 7. Results and Discussion
 
@@ -294,13 +290,15 @@ Both the sequential (SEQ) and MPI versions of the odd–even bubble sort were fu
 ```cpp
 bool SizovDBubbleSortMPI::RunImpl() {
   int rank = 0;
-  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  int size = 1;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int total = (rank == 0 ? static_cast<int>(data_.size()) : 0);
-
-  int n = total;
+  int n = 0;
+  if (rank == 0) {
+    n = static_cast<int>(data_.size());
+  }
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (n <= 1) {
@@ -321,8 +319,10 @@ bool SizovDBubbleSortMPI::RunImpl() {
   const int local_n = counts[rank];
   std::vector<int> local(local_n);
 
-  MPI_Scatterv((rank == 0 ? data_.data() : nullptr), counts.data(), displs.data(), MPI_INT, local.data(), local_n,
-               MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv((rank == 0 ? data_.data() : nullptr),
+               counts.data(), displs.data(), MPI_INT,
+               local.data(), local_n, MPI_INT,
+               0, MPI_COMM_WORLD);
 
   if (local_n > 1) {
     std::ranges::sort(local);
@@ -337,8 +337,10 @@ bool SizovDBubbleSortMPI::RunImpl() {
     result.resize(n);
   }
 
-  MPI_Gatherv(local.data(), local_n, MPI_INT, (rank == 0 ? result.data() : nullptr), counts.data(), displs.data(),
-              MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local.data(), local_n, MPI_INT,
+              (rank == 0 ? result.data() : nullptr),
+              counts.data(), displs.data(), MPI_INT,
+              0, MPI_COMM_WORLD);
 
   int out_n = 0;
   if (rank == 0) {

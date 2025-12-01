@@ -11,6 +11,9 @@ namespace sizov_d_bubble_sort {
 
 namespace {
 
+// ---------------------------------------------------------------------------
+// Равномерное распределение данных
+// ---------------------------------------------------------------------------
 void ComputeScatterInfo(int total, int size, std::vector<int> &counts, std::vector<int> &displs) {
   const int base = total / size;
   const int rem = total % size;
@@ -23,19 +26,25 @@ void ComputeScatterInfo(int total, int size, std::vector<int> &counts, std::vect
   }
 }
 
-int ComputePartner(bool even_phase, bool even_rank, int rank) {
-  return (even_phase == even_rank) ? rank + 1 : rank - 1;
+// ---------------------------------------------------------------------------
+// Локальный проход
+// ---------------------------------------------------------------------------
+void LocalOddEvenPass(std::vector<int> &local, int global_start, int parity) {
+  const int n = static_cast<int>(local.size());
+  for (int i = 0; i + 1 < n; ++i) {
+    const int gidx = global_start + i;
+    if ((gidx % 2) == parity) {
+      if (local[i] > local[i + 1]) {
+        std::swap(local[i], local[i + 1]);
+      }
+    }
+  }
 }
 
-void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, int rank, int size, int phase) {
-  const bool even_phase = (phase % 2 == 0);
-  const bool even_rank = (rank % 2 == 0);
-
-  const int partner = ComputePartner(even_phase, even_rank, rank);
-  if (partner < 0 || partner >= size) {
-    return;
-  }
-
+// ---------------------------------------------------------------------------
+// Обмен граничным элементом
+// ---------------------------------------------------------------------------
+void ExchangeBoundary(std::vector<int> &local, const std::vector<int> &counts, int rank, int partner) {
   const int local_n = static_cast<int>(local.size());
   const int partner_n = counts[partner];
 
@@ -43,22 +52,49 @@ void OddEvenExchange(std::vector<int> &local, const std::vector<int> &counts, in
     return;
   }
 
-  std::vector<int> recvbuf(partner_n);
+  const bool left_side = (rank < partner);
+  int send_value = left_side ? local[local_n - 1] : local[0];
+  int recv_value = 0;
 
-  MPI_Sendrecv(local.data(), local_n, MPI_INT, partner, 0, recvbuf.data(), partner_n, MPI_INT, partner, 0,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(&send_value, 1, MPI_INT, partner, 0, &recv_value, 1, MPI_INT, partner, 0, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
 
-  std::vector<int> merged(local_n + partner_n);
-  std::ranges::merge(local, recvbuf, merged.begin());
-
-  if (rank < partner) {
-    std::copy(merged.begin(), merged.begin() + local_n, local.begin());
+  if (left_side) {
+    local[local_n - 1] = std::min(local[local_n - 1], recv_value);
   } else {
-    std::copy(merged.end() - local_n, merged.end(), local.begin());
+    local[0] = std::max(local[0], recv_value);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Глобальная фаза
+// ---------------------------------------------------------------------------
+void OddEvenPhase(std::vector<int> &local, const std::vector<int> &counts, const std::vector<int> &displs, int rank,
+                  int size, int phase) {
+  if (local.empty()) {
+    return;
+  }
+
+  const int parity = phase % 2;
+  const int global_start = displs[rank];
+
+  LocalOddEvenPass(local, global_start, parity);
+
+  const bool even_phase = (phase % 2 == 0);
+  const bool even_rank = (rank % 2 == 0);
+
+  int partner = (even_phase == even_rank) ? rank + 1 : rank - 1;
+
+  if (partner >= 0 && partner < size) {
+    ExchangeBoundary(local, counts, rank, partner);
   }
 }
 
 }  // namespace
+
+// ============================================================================
+// Класс задачи
+// ============================================================================
 
 SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -69,12 +105,9 @@ SizovDBubbleSortMPI::SizovDBubbleSortMPI(const InType &in) {
 bool SizovDBubbleSortMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   if (rank == 0) {
-    const auto &input = GetInput();
-    return !input.empty();
+    return !GetInput().empty();
   }
-
   return true;
 }
 
@@ -85,15 +118,11 @@ bool SizovDBubbleSortMPI::PreProcessingImpl() {
 
 bool SizovDBubbleSortMPI::RunImpl() {
   int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int n = 0;
-  if (rank == 0) {
-    n = static_cast<int>(data_.size());
-  }
+  int n = (rank == 0 ? static_cast<int>(data_.size()) : 0);
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (n <= 1) {
@@ -117,36 +146,22 @@ bool SizovDBubbleSortMPI::RunImpl() {
   MPI_Scatterv((rank == 0 ? data_.data() : nullptr), counts.data(), displs.data(), MPI_INT, local.data(), local_n,
                MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (local_n > 1) {
-    std::ranges::sort(local);
-  }
-
+  // n глобальных фаз
   for (int phase = 0; phase < n; ++phase) {
-    OddEvenExchange(local, counts, rank, size, phase);
+    OddEvenPhase(local, counts, displs, rank, size, phase);
   }
 
-  std::vector<int> result;
-  if (rank == 0) {
-    result.resize(n);
-  }
-
-  MPI_Gatherv(local.data(), local_n, MPI_INT, (rank == 0 ? result.data() : nullptr), counts.data(), displs.data(),
-              MPI_INT, 0, MPI_COMM_WORLD);
-
-  int out_n = 0;
-  if (rank == 0) {
-    out_n = n;
-  }
-  MPI_Bcast(&out_n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  std::vector<int> result(n);
+  MPI_Gatherv(local.data(), local_n, MPI_INT, result.data(), counts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     GetOutput() = result;
   } else {
-    GetOutput().assign(out_n, 0);
+    GetOutput().assign(n, 0);
   }
 
-  if (out_n > 0) {
-    MPI_Bcast(GetOutput().data(), out_n, MPI_INT, 0, MPI_COMM_WORLD);
+  if (n > 0) {
+    MPI_Bcast(GetOutput().data(), n, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
   return true;
