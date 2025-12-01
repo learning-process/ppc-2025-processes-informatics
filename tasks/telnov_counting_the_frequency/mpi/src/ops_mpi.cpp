@@ -45,12 +45,11 @@ bool TelnovCountingTheFrequencyMPI::RunImpl() {
     GlobalData::g_data_string.resize(static_cast<size_t>(n), '\0');
   }
 
-  if (n == 0) {
-    GetOutput() = 0;
-    return true;
+  if (n > 0) {
+    // Передаём данные
+    MPI_Bcast(const_cast<char *>(GlobalData::g_data_string.data()), static_cast<int>(n), MPI_CHAR, /*root=*/0,
+              MPI_COMM_WORLD);
   }
-
-  MPI_Bcast(GlobalData::g_data_string.data(), static_cast<int>(n), MPI_CHAR, 0, MPI_COMM_WORLD);
 
   // Теперь все ранги имеют одинаковую g_data_string
   const std::string &s = GlobalData::g_data_string;
