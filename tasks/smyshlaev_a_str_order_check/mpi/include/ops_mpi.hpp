@@ -17,6 +17,8 @@ class SmyshlaevAStrOrderCheckMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  bool RunSequential(int min_len, int len1, int len2);
 };
 
 }  // namespace smyshlaev_a_str_order_check
