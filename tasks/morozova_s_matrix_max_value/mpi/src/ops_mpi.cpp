@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <limits>
 #include <vector>
 
@@ -26,23 +25,19 @@ bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
 }
 
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
-  int rank = 0;
-  int size = 1;
+  int rank = 0, size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   const auto &matrix = GetInput();
-  int rows = 0;
-  int cols = 0;
+  int rows = 0, cols = 0;
   bool valid_matrix = true;
   if (rank == 0) {
     rows = static_cast<int>(matrix.size());
-    if (rows > 0) {
-      cols = static_cast<int>(matrix[0].size());
-      for (int i = 1; i < rows; ++i) {
-        if (static_cast<int>(matrix[i].size()) != cols) {
-          valid_matrix = false;
-          break;
-        }
+    cols = rows > 0 ? static_cast<int>(matrix[0].size()) : 0;
+
+    for (int i = 1; i < rows && valid_matrix; ++i) {
+      if (matrix[i].size() != static_cast<size_t>(cols)) {
+        valid_matrix = false;
       }
     }
   }
@@ -51,38 +46,34 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int valid_int = valid_matrix ? 1 : 0;
   MPI_Bcast(&valid_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
   valid_matrix = (valid_int == 1);
-  const bool invalid_input = !valid_matrix || rows <= 0 || cols <= 0;
-  if (invalid_input) {
+  if (!valid_matrix || rows <= 0 || cols <= 0) {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
   const int total_elements = rows * cols;
   std::vector<int> all_data;
   if (rank == 0) {
-    all_data.resize(total_elements);
+    all_data.reserve(total_elements);
     for (int i = 0; i < rows; ++i) {
-      std::copy(matrix[i].begin(), matrix[i].end(), all_data.begin() + i * cols);
+      all_data.insert(all_data.end(), matrix[i].begin(), matrix[i].end());
     }
   }
-  const int base_chunk_size = total_elements / size;
+  const int base_chunk = total_elements / size;
   const int remainder = total_elements % size;
-  std::vector<int> send_counts(size);
-  std::vector<int> displs(size);
-  int current_displ = 0;
+  std::vector<int> send_counts(size), displs(size);
+  int offset = 0;
   for (int i = 0; i < size; ++i) {
-    send_counts[i] = base_chunk_size + (i < remainder ? 1 : 0);
-    displs[i] = current_displ;
-    current_displ += send_counts[i];
+    send_counts[i] = base_chunk + (i < remainder ? 1 : 0);
+    displs[i] = offset;
+    offset += send_counts[i];
   }
   const int local_size = send_counts[rank];
   std::vector<int> local_data(local_size);
-  MPI_Scatterv(all_data.data(), send_counts.data(), displs.data(), MPI_INT, local_data.data(), local_size, MPI_INT, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? all_data.data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_data.data(),
+               local_size, MPI_INT, 0, MPI_COMM_WORLD);
   int local_max = std::numeric_limits<int>::min();
-  for (int value : local_data) {
-    if (value > local_max) {
-      local_max = value;
-    }
+  for (int val : local_data) {
+    local_max = std::max(local_max, val);
   }
   int global_max = std::numeric_limits<int>::min();
   MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
