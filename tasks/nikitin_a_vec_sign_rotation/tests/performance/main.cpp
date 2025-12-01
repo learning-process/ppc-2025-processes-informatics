@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -13,7 +15,7 @@ namespace nikitin_a_vec_sign_rotation {
 class NikitinAVecSignRotationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   // Значительно увеличиваем размер для тестирования производительности
-  const int kVectorSize_ = 10000000;  // 10 миллионов элементов
+  const int kVectorSize_ = 30000000;  // 30 миллионов элементов
   OutType expected_result_ = 0;
 
   void SetUp() override {
