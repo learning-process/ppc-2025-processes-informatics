@@ -65,21 +65,26 @@ bool FatehovKMatrixMaxElemSEQ::RunImpl() {
 
 **Алгоритм работы**:  
 
-1. **Инициализация и получение данных**
+1. **Инициализация MPI и получение размеров матрицы**
 
-```cpp
-auto &data = GetInput();
-size_t rows = std::get<0>(data);
-size_t columns = std::get<1>(data);
-std::vector<double>& matrix = std::get<2>(data);
-```
-
-2. **MPI инициализация**
 ```cpp
 int world_rank = 0;
 int world_size = 0;
 MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-MPI_Comm_size(MPI_COMM_WORLD, &world_size);  
+MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+size_t rows = 0, columns = 0;
+if (world_rank == 0) {
+  auto &data = GetInput();
+  rows = std::get<0>(data);
+  columns = std::get<1>(data);
+}
+```
+
+2. **Рассылка размеров матрицы всем процессам**
+```cpp
+MPI_Bcast(&rows, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+MPI_Bcast(&columns, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 ```
 
 3. **Распределение данных**  
@@ -90,31 +95,52 @@ MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 Базовое количество на процесс: `elems_per_proc = N / world_size`  
 Остаток: `remainder = N % world_size`   
 
-*Формула распределения*:  
+*Вычисление размеров блоков*:  
 
 ```cpp
-size_t start = (world_rank * elems_per_proc) + std::min(world_rank, static_cast<int>(remainder));
-  size_t end = start + elems_per_proc + (std::cmp_less(world_rank, remainder) ? 1 : 0);
+std::vector<int> send_counts(world_size);
+std::vector<int> displacements(world_size);
+
+for (int i = 0; i < world_size; ++i) {
+  send_counts[i] = elems_per_proc + (i < static_cast<int>(remainder) ? 1 : 0);
+  displacements[i] = (i == 0) ? 0 : (displacements[i - 1] + send_counts[i - 1]);
+}
 ```
 
 *Пример (4 процесса, 10 элементов)*:
 
-Процесс 0: start=0, end=3 (3 элемента)  
-Процесс 1: start=3, end=6 (3 элемента)    
-Процесс 2: start=6, end=8 (2 элемента)  
-Процесс 3: start=8, end=10 (2 элемента)  
+Процесс 0: send_counts[0]=3, displacements[0]=0  
+Процесс 1: send_counts[1]=3, displacements[1]=3  
+Процесс 2: send_counts[2]=2, displacements[2]=6  
+Процесс 3: send_counts[3]=2, displacements[3]=8  
 
-4. **Локальные вычисления**
+4. **Распределение данных через MPI_Scatterv**
 
+```cpp
+std::vector<double> local_data(send_counts[world_rank]);
+const std::vector<double> *full_matrix_ptr = nullptr;
+
+if (world_rank == 0) {
+  auto &data = GetInput();
+  full_matrix_ptr = &std::get<2>(data);
+}
+
+MPI_Scatterv((world_rank == 0) ? (*full_matrix_ptr).data() : nullptr,  send_counts.data(), displacements.data(),
+               MPI_DOUBLE, local_data.data(), send_counts[world_rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+```
+5. **Локальные вычисления**
 ```cpp
 double local_max = -std::numeric_limits<double>::max();
-for (size_t i = start; i < end; i++) {
-    local_max = std::max(matrix[i], local_max);
-  }
+for (size_t i = 0; i < local_data.size(); i++) {
+  local_max = std::max(local_data[i], local_max);
+}
 ```
-5. **Объединение локальных максимумов и поиск общего глобального**
+
+6. **Объединение локальных максимумов**
 ```cpp
-MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+double global_max = NAN;
+MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX,MPI_COMM_WORLD);
 ```
 
 *Схема связи*:
@@ -124,7 +150,7 @@ P1: local_max₁ ──────┤─ Allreduce(MPI_MAX) ─→ global_max (
 P2: local_max₂ ──────┤  
 P3: local_max₃ ──────┘  
 ```
-6. **Запись результата**
+7. **Запись результата**
 
 ```cpp
 GetOutput() = global_max;
@@ -140,7 +166,7 @@ GetOutput() = global_max;
 ```cpp
 for (size_t i = 0; i < total; ++i) {
       state = (a * state + c) % m;
-      double value = (static_cast<double>(state) / m) * 1000.0;
+      double value = (static_cast<double>(state) / m) * 2000.0 - 1000.0;
       matrix.push_back(value);
 
       max_val = std::max(value, max_val);
@@ -159,7 +185,7 @@ for (size_t i = 0; i < total; ++i) {
 1. Начинаем с начального состояние `state = 42`
 2. Для каждого элемента матрицы:  
     - Вычисляем новое состояние по формуле ЛКГ  
-    - Преобразуем в число от 0 до 1000
+    - Преобразуем в число от -1000 до 1000
     - Сохраняем в матрице
     - Сравниваем с текущим максимумом
 
@@ -205,26 +231,61 @@ for (size_t i = 0; i < total; ++i) {
 
 ### 7.2 Производительность
 - При тестировании производительности генерируется матрица 5000×10000 элементов
+- Диапазон значений: [-1000, 1000]
+- Генерация данных: линейный конгруэнтный генератор
 - Во время генерации вычисляется и сохраняется ожидаемый максимум
 
 | **Режим** | **Количество процессов** | **Время, с** | **Ускорение** | **Эффективность** |
 |-------------|-------|---------|---------|------------|
-| seq         | 1     | 0.0509   | 1.00    | N/A        |
-| mpi         | 2     | 0.0171   | 2.98    | 149.0%      |
-| mpi         | 4     | 0.0144   | 3.53    | 88.25%      |
-| mpi         | 6     | 0.0136   | 3.74    | 62.37%      |
+| seq         | 1     | 0.0509   | 1.00    | N/A       |
+| mpi         | 2     | 0.2713   | 0.19    | 9.5%      |
+| mpi         | 4     | 0.1886   | 0.27    | 6.75%     |
+| mpi         | 6     | 0.1687   | 0.30    | 5%       |
+
+**Анализ результатов**:
+
+1. **SEQ значительно быстрее MPI**:
+   - SEQ версия: 0.0509 сек
+   - Лучшая MPI версия (6 процессов): 0.1687 сек
+   - SEQ в **3.3 раза быстрее** MPI с 6 процессами
+
+2. **Отрицательное ускорение**:
+   - Ускорение < 1.0 для всех MPI конфигураций
+   - MPI с 2 процессами: ускорение 0.19 (в 5 раз медленнее SEQ)
+
+3. **Низкая эффективность**:
+   - Максимальная эффективность: 9.5% (2 процесса)
+   - Эффективность падает с ростом числа процессов
+
+**Причины низкой производительности MPI**:
+
+1. **Высокие накладные расходы коммуникации**:
+   - `MPI_Bcast`: передача размеров матрицы
+   - `MPI_Scatterv`: распределение данных
+   - `MPI_Allreduce`: сбор результатов
+
+2. **Простота вычислений**:
+   - Поиск максимума: 1 сравнение на элемент
+   - Вычислительная сложность: O(n)
+   - Отношение вычислений к коммуникациям невыгодное
 
 
 ## 8. Заключение
+
 В ходе лабораторной работы были реализованы последовательная и параллельная версии алгоритма поиска максимального элемента в матрице.
 
-Основные выводы:
+**Основные выводы**:
 
-- Параллельная MPI-реализация показала ускорение только при использовании 2-4 процессов
+1. **SEQ версия показала лучшую производительность**:
+   - Время выполнения: 0.0509 сек
+   - Использует локальность данных и кэш процессора
+   - Отсутствуют накладные расходы на коммуникацию
 
-- При увеличении числа процессов свыше 4 наблюдается снижение эффективности из-за накладных расходов MPI
+2. **MPI версия демонстрирует отрицательное ускорение**:
+   - Лучший результат (6 процессов): 0.1687 сек (в 3.3 раза медленнее SEQ)
+   - Низкая эффективность (5-9.5%)
+   - Накладные расходы MPI превышают выигрыш от параллелизации
 
-Для простых операций (поиск максимума) накладные расходы параллелизации могут превышать выгоду от распараллеливания
 
 ## 9. Источники
 [Линейный конгруэнтный генератор](https://www.tutorialspoint.com/cplusplus-program-to-implement-the-linear-congruential-generator-for-pseudo-random-number-generation)

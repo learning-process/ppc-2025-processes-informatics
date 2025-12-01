@@ -34,30 +34,50 @@ bool FatehovKMatrixMaxElemMPI::PreProcessingImpl() {
 }
 
 bool FatehovKMatrixMaxElemMPI::RunImpl() {
-  auto &data = GetInput();
-  size_t rows = std::get<0>(data);
-  size_t columns = std::get<1>(data);
-  const std::vector<double> &matrix = std::get<2>(data);
-
   int world_rank = 0;
   int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+  size_t rows = 0, columns = 0;
+  if (world_rank == 0) {
+    auto &data = GetInput();
+    rows = std::get<0>(data);
+    columns = std::get<1>(data);
+  }
+
+  MPI_Bcast(&rows, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&columns, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
   size_t total_elems = rows * columns;
   size_t elems_per_proc = total_elems / world_size;
   size_t remainder = total_elems % world_size;
 
-  double local_max = -std::numeric_limits<double>::max();
-  size_t start = (world_rank * elems_per_proc) + std::min(world_rank, static_cast<int>(remainder));
-  size_t end = start + elems_per_proc + (std::cmp_less(world_rank, remainder) ? 1 : 0);
+  std::vector<int> send_counts(world_size);
+  std::vector<int> displacements(world_size);
 
-  for (size_t i = start; i < end; i++) {
-    local_max = std::max(matrix[i], local_max);
+  for (int i = 0; i < world_size; ++i) {
+    send_counts[i] = elems_per_proc + (i < static_cast<int>(remainder) ? 1 : 0);
+    displacements[i] = (i == 0) ? 0 : (displacements[i - 1] + send_counts[i - 1]);
+  }
+
+  std::vector<double> local_data(send_counts[world_rank]);
+  const std::vector<double> *full_matrix_ptr = nullptr;
+
+  if (world_rank == 0) {
+    auto &data = GetInput();
+    full_matrix_ptr = &std::get<2>(data);
+  }
+
+  MPI_Scatterv((world_rank == 0) ? (*full_matrix_ptr).data() : nullptr, send_counts.data(), displacements.data(),
+               MPI_DOUBLE, local_data.data(), send_counts[world_rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  double local_max = -std::numeric_limits<double>::max();
+  for (size_t i = 0; i < local_data.size(); i++) {
+    local_max = std::max(local_data[i], local_max);
   }
 
   double global_max = NAN;
-
   MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
   GetOutput() = global_max;

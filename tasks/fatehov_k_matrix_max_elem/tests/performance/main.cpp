@@ -35,7 +35,7 @@ class FatehovKRunPerfTestsMatrixMaxElem : public ppc::util::BaseRunPerfTests<InT
 
     for (size_t i = 0; i < total; ++i) {
       state = (a * state + c) % m;
-      double value = (static_cast<double>(state) / m) * 1000.0;
+      double value = (static_cast<double>(state) / m) * 2000.0 - 1000.0;
       matrix.push_back(value);
 
       max_val = std::max(value, max_val);
