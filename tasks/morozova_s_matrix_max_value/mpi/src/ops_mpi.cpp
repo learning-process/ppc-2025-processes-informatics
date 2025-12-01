@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
@@ -24,6 +25,23 @@ bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
   return true;
 }
 
+static bool CheckMatrix(const InType &mat, int &rows, int &cols) {
+  rows = static_cast<int>(mat.size());
+  if (rows <= 0) {
+    return false;
+  }
+  cols = static_cast<int>(mat[0].size());
+  if (cols <= 0) {
+    return false;
+  }
+  for (size_t i = 1; i < mat.size(); ++i) {
+    if (mat[i].size() != static_cast<size_t>(cols)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int rank = 0;
   int size = 1;
@@ -34,17 +52,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int cols = 0;
   bool valid = true;
   if (rank == 0) {
-    rows = static_cast<int>(mat.size());
-    valid = (rows > 0);
-    if (valid) {
-      cols = static_cast<int>(mat[0].size());
-      valid = (cols > 0);
-    }
-    for (int i = 1; i < rows && valid; ++i) {
-      if (mat[i].size() != static_cast<size_t>(cols)) {
-        valid = (mat[i].size() == static_cast<size_t>(cols));
-      }
-    }
+    valid = CheckMatrix(mat, rows, cols);
   }
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -65,21 +73,22 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   }
   std::vector<int> counts(size);
   std::vector<int> displs(size);
-  const int base = total / size;
-  const int rem = total % size;
-  int off = 0;
+  int base = total / size;
+  int remainder = total % size;
+  int offset = 0;
   for (int i = 0; i < size; ++i) {
-    counts[i] = base + (i < rem ? 1 : 0);
-    displs[i] = off;
-    off += counts[i];
+    int extra = (i < remainder) ? 1 : 0;
+    counts[i] = base + extra;
+    displs[i] = offset;
+    offset += counts[i];
   }
   const int local_size = counts[rank];
   std::vector<int> local(local_size);
-  MPI_Scatterv(rank == 0 ? data.data() : nullptr, counts.data(), displs.data(), MPI_INT, local.data(), local_size,
+  MPI_Scatterv((rank == 0) ? data.data() : nullptr, counts.data(), displs.data(), MPI_INT, local.data(), local_size,
                MPI_INT, 0, MPI_COMM_WORLD);
   int local_max = std::numeric_limits<int>::min();
-  for (int x : local) {
-    local_max = std::max(local_max, x);
+  for (int value : local) {
+    local_max = (value > local_max) ? value : local_max;
   }
   int global_max = std::numeric_limits<int>::min();
   MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
