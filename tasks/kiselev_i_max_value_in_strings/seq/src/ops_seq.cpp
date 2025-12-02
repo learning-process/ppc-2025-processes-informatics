@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <limits>
-#include <ranges>  // NOLINT(misc-include-cleaner)
 #include <utility>
 #include <vector>
 
