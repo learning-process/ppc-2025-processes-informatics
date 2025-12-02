@@ -92,7 +92,13 @@ class GusevDSentenceCountSmallInputPerfTests : public ppc::util::BaseRunPerfTest
   OutType expected_output_ = 0;
 
   void SetUp() override {
-    input_data_ = "A!B.C?   Tail without terminator";
+    const std::string base = "A!B.C?   Tail without terminator ";
+    input_data_.clear();
+
+    const int kRepeats = 2000;
+    for (int i = 0; i < kRepeats; ++i) {
+      input_data_ += base;
+    }
 
     size_t count = 0;
     size_t len = input_data_.length();
