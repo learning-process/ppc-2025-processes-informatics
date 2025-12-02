@@ -5,7 +5,7 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
-#include <ranges>
+#include <ranges>  // NOLINT(misc-include-cleaner) - required for std::ranges::transform
 #include <string>
 #include <tuple>
 
