@@ -18,11 +18,15 @@ class RomanovaVJacobiMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<double> x0;
+  bool isDiagonallyDominant(const std::vector<std::vector<double>>& matrix);
+  bool isConverge(const std::vector<double>& prev, const std::vector<double>& curr);
+
+  std::vector<double> x;
   std::vector<std::vector<double>> A;
   std::vector<double> b;
   double eps;
-  size_t iterations;
+  size_t maxIterations;
+  size_t size;
 };
 
 }  // namespace romanova_v_jacobi_method_processes
