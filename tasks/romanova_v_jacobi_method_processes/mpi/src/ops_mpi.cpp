@@ -13,7 +13,7 @@ namespace romanova_v_jacobi_method_processes {
 RomanovaVJacobiMethodMPI::RomanovaVJacobiMethodMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput();
 }
 
 bool RomanovaVJacobiMethodMPI::ValidationImpl() {
