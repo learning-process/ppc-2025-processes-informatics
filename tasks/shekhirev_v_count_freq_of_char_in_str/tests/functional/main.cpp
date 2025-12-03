@@ -63,7 +63,6 @@ class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_P(ShekhirevVCharFreqFuncTests, Test) {
   auto test_param = GetParam();
   auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param);
@@ -95,7 +94,6 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = ShekhirevVCharFreqFuncTests::PrintFuncTestName<ShekhirevVCharFreqFuncTests>;
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CharFreqTests, ShekhirevVCharFreqFuncTests, kGtestValues, kTestName);
 
 }  // namespace
