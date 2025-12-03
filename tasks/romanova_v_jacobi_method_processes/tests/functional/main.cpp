@@ -28,11 +28,43 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
 
  protected:
   void SetUp() override {
-    
-    //input_data_ = std::vector<double>(2);
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_jacobi_method_processes, params);
+    std::ifstream file(abs_path + ".txt");
+    if (file.is_open()) {
+      int rows = 0;
+      int columns = 0;
+      size_t iterations = 0;
+      double eps = 0.0;
+      file >> rows >> columns >> iterations >> eps;
+      exp_answer_ = OutType(rows);
+      for (int i = 0; i < rows; i++) {
+        file >> exp_answer_[i];
+      }
+
+      std::vector<double> x(rows);
+      for(int i = 0; i < rows; i++) {
+        file >> x[i];
+      }
+
+      std::vector<double> b(rows);
+      for(int i = 0; i < rows; i++) file >> b[i];
+
+      std::vector<std::vector<double>> A(rows, std::vector<double>(columns));
+      for(int i = 0; i < rows; i++){
+        for(int j = 0; j < columns; j++) file >> A[i][j];
+      }
+
+      input_data_ = std::make_tuple(x, A, b, eps, iterations);
+      eps_ = eps;
+
+      file.close();
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if(output_data.size() != exp_answer_.size()) return false;
+    for(int i = 0; i < output_data.size(); i++) if(abs(output_data[i]-exp_answer_[i]) > eps_) return false;
     return true;
   }
 
@@ -41,7 +73,9 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType exp_answer_;
+  double eps_;
 };
 
 namespace {
@@ -50,7 +84,7 @@ TEST_P(RomanovaVJacobiMethodFuncTestsProcesses, Jacobi) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {"std::make_tuple(3, "3")", "std::make_tuple(5, "5")", "std::make_tuple(7, "7")"};
+const std::array<TestType, 1> kTestParam = {"simpleTest"};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<RomanovaVJacobiMethodMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_jacobi_method_processes),
