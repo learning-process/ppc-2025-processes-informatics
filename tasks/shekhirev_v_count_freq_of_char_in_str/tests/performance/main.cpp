@@ -57,6 +57,7 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, shekhirev_v_char_freq_mpi::CharFreqMPI, CharFreqSequential>(
         PPC_SETTINGS_shekhirev_v_count_freq_of_char_in_str);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CharFreqPerf, ShekhirevVCharFreqPerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          ShekhirevVCharFreqPerfTests::CustomPerfTestName);
 

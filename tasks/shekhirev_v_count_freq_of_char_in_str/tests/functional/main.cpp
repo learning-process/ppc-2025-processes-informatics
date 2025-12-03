@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstddef>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -106,6 +105,7 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = ShekhirevVCharFreqFuncTests::PrintFuncTestName<ShekhirevVCharFreqFuncTests>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CharFreqTests, ShekhirevVCharFreqFuncTests, kGtestValues, kTestName);
 
 }  // namespace
