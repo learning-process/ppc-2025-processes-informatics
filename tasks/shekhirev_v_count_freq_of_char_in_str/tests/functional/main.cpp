@@ -64,12 +64,14 @@ class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-void RunPipelineStep1(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
+template <typename T>
+void RunPipelineStep1(const T &task) {
   ASSERT_TRUE(task->Validation());
   ASSERT_TRUE(task->PreProcessing());
 }
 
-void RunPipelineStep2(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
+template <typename T>
+void RunPipelineStep2(const T &task) {
   ASSERT_TRUE(task->Run());
   ASSERT_TRUE(task->PostProcessing());
 }
