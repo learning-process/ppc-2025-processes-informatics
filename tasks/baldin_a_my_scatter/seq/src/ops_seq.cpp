@@ -15,46 +15,62 @@ BaldinAMyScatterSEQ::BaldinAMyScatterSEQ(const InType &in) {
 }
 
 bool BaldinAMyScatterSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto& input = GetInput();
+
+  const auto& [sendbuf, sendcount, sendtype, 
+                 recvbuf, recvcount, recvtype, 
+                 root, comm] = input;
+
+  int world_size = 0;
+  MPI_Comm_size(comm, &world_size);
+
+  auto is_sup_type = [](MPI_Datatype type) -> bool {
+    return (type == MPI_INT || type == MPI_FLOAT || type == MPI_DOUBLE);
+  };
+
+  return (sendcount > 0 && 
+            sendcount == recvcount && 
+            sendtype == recvtype &&
+            is_sup_type(sendtype) && 
+            root >= 0);
 }
 
 bool BaldinAMyScatterSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  auto& input = GetInput();
+    
+  auto& [sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = input;
+  
+  int world_size = 0;
+  MPI_Comm_size(comm, &world_size);
+
+  if (root >= world_size) {
+      std::get<6>(input) = root % world_size; 
+  }
+
+  // int total_cnt = world_size * sendcount;
+  // if (sendtype == MPI_INT) {
+  //   std::vector<int> tmp(total_cnt);
+  //   for (int i = 0; i < total_cnt; i++) {
+  //     tmp[i] = i;
+  //   }
+  //   (int*)sendbuf = tmp.data();
+  //   tmp.data() = nullptr;
+  // }
+
+  return true;
 }
 
 bool BaldinAMyScatterSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  auto& input = GetInput();
+  const auto& [sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = input;
+  MPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = recvbuf;
+  return true;
 }
 
 bool BaldinAMyScatterSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace baldin_a_my_scatter
