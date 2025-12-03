@@ -18,11 +18,11 @@ class RomanovaVJacobiMethodMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<double> x0;
-  std::vector<std::vector<double>> A;
-  std::vector<double> b;
-  double eps;
-  size_t iterations;
+  std::vector<double> x_;
+  std::vector<std::vector<double>> A_;
+  std::vector<double> b_;
+  double eps_;
+  size_t maxIterations_;
 };
 
 }  // namespace romanova_v_jacobi_method_processes

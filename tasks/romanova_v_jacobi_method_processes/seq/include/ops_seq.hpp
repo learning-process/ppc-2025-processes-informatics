@@ -21,12 +21,12 @@ class RomanovaVJacobiMethodSEQ : public BaseTask {
   bool isDiagonallyDominant(const std::vector<std::vector<double>>& matrix);
   bool isConverge(const std::vector<double>& prev, const std::vector<double>& curr);
 
-  std::vector<double> x;
-  std::vector<std::vector<double>> A;
-  std::vector<double> b;
-  double eps;
-  size_t maxIterations;
-  size_t size;
+  std::vector<double> x_;
+  std::vector<std::vector<double>> A_;
+  std::vector<double> b_;
+  double eps_;
+  size_t maxIterations_;
+  size_t size_;
 };
 
 }  // namespace romanova_v_jacobi_method_processes
