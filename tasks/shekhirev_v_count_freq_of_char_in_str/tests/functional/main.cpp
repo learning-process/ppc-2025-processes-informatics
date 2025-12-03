@@ -3,13 +3,14 @@
 
 #include <array>
 #include <cstddef>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <tuple>
 
 #include "../../common/include/common.hpp"
-#include "../../mpi/include/ops_mpi.hpp"
-#include "../../seq/include/ops_seq.hpp"
+#include "../../mpi/include/char_freq_mpi.hpp"
+#include "../../seq/include/char_freq_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -63,6 +64,13 @@ class ShekhirevVCharFreqFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
+void RunPipeline(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+}
+
 TEST_P(ShekhirevVCharFreqFuncTests, Test) {
   auto test_param = GetParam();
   auto task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(test_param);
@@ -72,10 +80,8 @@ TEST_P(ShekhirevVCharFreqFuncTests, Test) {
 
   auto task = task_getter(input_data);
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  RunPipeline(task);
+
   ASSERT_TRUE(CheckTestOutputData(task->GetOutput()));
 }
 
