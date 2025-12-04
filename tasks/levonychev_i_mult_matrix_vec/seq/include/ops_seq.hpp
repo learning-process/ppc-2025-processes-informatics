@@ -1,16 +1,16 @@
 #pragma once
 
-#include "example_processes/common/include/common.hpp"
+#include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace levonychev_i_mult_matrix_vec {
 
-class NesterovATestTaskSEQ : public BaseTask {
+class LevonychevIMultMatrixVecSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit NesterovATestTaskSEQ(const InType &in);
+  explicit LevonychevIMultMatrixVecSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

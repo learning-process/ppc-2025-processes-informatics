@@ -1,16 +1,16 @@
 #pragma once
 
-#include "example_processes/common/include/common.hpp"
+#include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace levonychev_i_mult_matrix_vec {
 
-class NesterovATestTaskMPI : public BaseTask {
+class LevonychevIMultMatrixVecMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit NesterovATestTaskMPI(const InType &in);
+  explicit LevonychevIMultMatrixVecMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

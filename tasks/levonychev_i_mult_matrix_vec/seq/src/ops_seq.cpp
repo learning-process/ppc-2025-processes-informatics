@@ -1,29 +1,29 @@
-#include "example_processes/seq/include/ops_seq.hpp"
+#include "levonychev_i_mult_matrix_vec/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
+#include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace levonychev_i_mult_matrix_vec {
 
-NesterovATestTaskSEQ::NesterovATestTaskSEQ(const InType &in) {
+LevonychevIMultMatrixVecSEQ::LevonychevIMultMatrixVecSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool NesterovATestTaskSEQ::ValidationImpl() {
+bool LevonychevIMultMatrixVecSEQ::ValidationImpl() {
   return (GetInput() > 0) && (GetOutput() == 0);
 }
 
-bool NesterovATestTaskSEQ::PreProcessingImpl() {
+bool LevonychevIMultMatrixVecSEQ::PreProcessingImpl() {
   GetOutput() = 2 * GetInput();
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::RunImpl() {
+bool LevonychevIMultMatrixVecSEQ::RunImpl() {
   if (GetInput() == 0) {
     return false;
   }
@@ -52,7 +52,7 @@ bool NesterovATestTaskSEQ::RunImpl() {
   return GetOutput() > 0;
 }
 
-bool NesterovATestTaskSEQ::PostProcessingImpl() {
+bool LevonychevIMultMatrixVecSEQ::PostProcessingImpl() {
   GetOutput() -= GetInput();
   return GetOutput() > 0;
 }
