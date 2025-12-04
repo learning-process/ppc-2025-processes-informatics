@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <mpi.h>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -17,37 +18,62 @@
 
 namespace zavyalov_a_reduce {
 
-class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(test_param);
+    std::string mpi_typename, mpi_opname;
+    if (std::get<0>(test_param) == MPI_SUM) { // TODO дописать другие операции в if
+      mpi_opname = "sum";
+    }
+    else {
+      throw "unsupported operation";
+    }
+
+    if (std::get<1>(test_param) == MPI_INT) { // TODO дописать другие типы в if
+      mpi_typename = "int";
+    }
+    else {
+      throw "unsupported datatype";
+    }
+
+    return mpi_opname + "_" + mpi_typename + "_" + std::to_string(std::get<2>(test_param));
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::vector<double> left_vec(params);
-    std::vector<double> right_vec(params);
-
-    double minus = -1.0;
-    for (unsigned int i = 0; i < params; i++) {
-      left_vec[i] = (i * 0.5) + 0.1;
-      right_vec[i] = static_cast<double>(i) + 1.0;
-      right_vec[i] *= minus;
-      minus *= -1.0;
+    unsigned int elems_count = std::get<2>(params);
+    void* inp_data = nullptr;
+    if (std::get<1>(params) == MPI_INT) {
+      inp_data = new int[elems_count];
+    }
+    
+    for (unsigned int i = 0; i < elems_count; i++) {
+      ((int*)(inp_data))[i] = static_cast<int>(i) + 3U;
     }
 
-    input_data_ = std::make_tuple(left_vec, right_vec);
+    input_data_ = std::make_tuple(std::get<0>(params), std::get<1>(params), elems_count, inp_data);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    double res = 0.0;
-    for (size_t i = 0; i < std::get<0>(input_data_).size(); i++) {
-      res += std::get<0>(input_data_)[i] * std::get<1>(input_data_)[i];
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    size_t vec_size = std::get<2>(params);
+    void* res = new int[vec_size]; // TODO тут не всегда int[], в общем случае T[]
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    for (size_t i = 0; i < vec_size; i++) {
+      ((int*)(res))[i] = ((int*)(std::get<3>(input_data_)))[i] * world_size; // TODO это только для MPI_SUM, для других тоже надо ифнуть
     }
-    double diff = fabs(res - output_data);
-    double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(output_data)));
-    return diff < epsilon;
+    bool ok = true;
+    for (size_t i = 0; i < vec_size; i++) {
+      if (((int*)(res))[i] != ((int*)(output_data))[i]) {
+        ok = false;
+        break;
+      }
+    }
+    
+    return ok;
   }
 
   InType GetTestInputData() final {
@@ -60,21 +86,21 @@ class ZavyalovAScalarProductFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
 namespace {
 
-TEST_P(ZavyalovAScalarProductFuncTests, MatmulFromPic) {
+TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U};
+const std::array<TestType, 1> kTestParam = {std::make_tuple(MPI_SUM, MPI_INT, 5U)};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZavyalovAReduceMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce),
-    ppc::util::AddFuncTask<ZavyalovAScalarProductSEQ, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce));
+    ppc::util::AddFuncTask<ZavyalovAReduceSEQ, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ZavyalovAScalarProductFuncTests::PrintFuncTestName<ZavyalovAScalarProductFuncTests>;
+const auto kPerfTestName = ZavyalovAReduceFuncTests::PrintFuncTestName<ZavyalovAReduceFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZavyalovAScalarProductFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZavyalovAReduceFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -1,41 +1,35 @@
-#include "zavyalov_a_scalar_product/seq/include/ops_seq.hpp"
+#include <mpi.h>
 
 #include <cstdlib>
 #include <vector>
 
-#include "zavyalov_a_scalar_product/common/include/common.hpp"
+#include "zavyalov_a_reduce/common/include/common.hpp"
+#include "zavyalov_a_reduce/seq/include/ops_seq.hpp"
 
-namespace zavyalov_a_scalar_product {
+namespace zavyalov_a_reduce {
 
-ZavyalovAScalarProductSEQ::ZavyalovAScalarProductSEQ(const InType &in) {
+ZavyalovAReduceSEQ::ZavyalovAReduceSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0.0;
+  GetOutput() = nullptr;
 }
 
-bool ZavyalovAScalarProductSEQ::ValidationImpl() {
-  return (!std::get<0>(GetInput()).empty()) && (std::get<0>(GetInput()).size() == std::get<1>(GetInput()).size());
+bool ZavyalovAReduceSEQ::ValidationImpl() {
+  return true;
+  // return (!std::get<0>(GetInput()).empty()) && (std::get<0>(GetInput()).size() == std::get<1>(GetInput()).size());
 }
 
-bool ZavyalovAScalarProductSEQ::PreProcessingImpl() {
+bool ZavyalovAReduceSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool ZavyalovAScalarProductSEQ::RunImpl() {
-  const auto &input = GetInput();
-  const std::vector<double> &left = std::get<0>(input);
-  const std::vector<double> &right = std::get<1>(input);
+bool ZavyalovAReduceSEQ::RunImpl() {
 
-  double res = 0.0;
-  for (size_t i = 0; i < left.size(); i++) {
-    res += left[i] * right[i];
-  }
-  GetOutput() = res;
   return true;
 }
 
-bool ZavyalovAScalarProductSEQ::PostProcessingImpl() {
+bool ZavyalovAReduceSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace zavyalov_a_scalar_product
+}  // namespace zavyalov_a_reduce

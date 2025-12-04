@@ -5,12 +5,12 @@
 
 namespace zavyalov_a_reduce {
 
-class ZavyalovAScalarProductSEQ : public BaseTask {
+class ZavyalovAReduceSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit ZavyalovAScalarProductSEQ(const InType &in);
+  explicit ZavyalovAReduceSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
