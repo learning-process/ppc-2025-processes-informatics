@@ -3,7 +3,7 @@
 #include "example_processes/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace levonychev_i_mult_matrix_vec {
 
 class NesterovATestTaskSEQ : public BaseTask {
  public:
@@ -19,4 +19,4 @@ class NesterovATestTaskSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace nesterov_a_test_task_processes
+}  // namespace levonychev_i_mult_matrix_vec

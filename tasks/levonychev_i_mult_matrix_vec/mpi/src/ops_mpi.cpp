@@ -8,7 +8,7 @@
 #include "example_processes/common/include/common.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace levonychev_i_mult_matrix_vec {
 
 NesterovATestTaskMPI::NesterovATestTaskMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -69,4 +69,4 @@ bool NesterovATestTaskMPI::PostProcessingImpl() {
   return GetOutput() > 0;
 }
 
-}  // namespace nesterov_a_test_task_processes
+}  // namespace levonychev_i_mult_matrix_vec
