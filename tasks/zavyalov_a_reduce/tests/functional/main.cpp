@@ -67,7 +67,7 @@ TEST_P(ZavyalovAScalarProductFuncTests, MatmulFromPic) {
 const std::array<TestType, 10> kTestParam = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ZavyalovAScalarProductMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce),
+    ppc::util::AddFuncTask<ZavyalovAReduceMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce),
     ppc::util::AddFuncTask<ZavyalovAScalarProductSEQ, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);

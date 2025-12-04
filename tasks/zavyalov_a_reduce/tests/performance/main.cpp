@@ -48,7 +48,7 @@ TEST_P(ZavyalovAScalarProductPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAScalarProductMPI, ZavyalovAScalarProductSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAReduceMPI, ZavyalovAScalarProductSEQ>(
     PPC_SETTINGS_zavyalov_a_reduce);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);

@@ -5,12 +5,12 @@
 
 namespace zavyalov_a_reduce {
 
-class ZavyalovAScalarProductMPI : public BaseTask {
+class ZavyalovAReduceMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit ZavyalovAScalarProductMPI(const InType &in);
+  explicit ZavyalovAReduceMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

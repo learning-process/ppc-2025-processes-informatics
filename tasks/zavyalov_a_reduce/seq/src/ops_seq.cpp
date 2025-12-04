@@ -1,11 +1,11 @@
-#include "zavyalov_a_reduce/seq/include/ops_seq.hpp"
+#include "zavyalov_a_scalar_product/seq/include/ops_seq.hpp"
 
 #include <cstdlib>
 #include <vector>
 
-#include "zavyalov_a_reduce/common/include/common.hpp"
+#include "zavyalov_a_scalar_product/common/include/common.hpp"
 
-namespace zavyalov_a_reduce {
+namespace zavyalov_a_scalar_product {
 
 ZavyalovAScalarProductSEQ::ZavyalovAScalarProductSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -38,4 +38,4 @@ bool ZavyalovAScalarProductSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace zavyalov_a_reduce
+}  // namespace zavyalov_a_scalar_product

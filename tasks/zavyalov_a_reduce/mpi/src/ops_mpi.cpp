@@ -8,7 +8,7 @@
 
 namespace zavyalov_a_reduce {
 
-ZavyalovAScalarProductMPI::ZavyalovAScalarProductMPI(const InType &in) {
+ZavyalovAReduceMPI::ZavyalovAReduceMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -18,7 +18,7 @@ ZavyalovAScalarProductMPI::ZavyalovAScalarProductMPI(const InType &in) {
   GetOutput() = 0.0;
 }
 
-bool ZavyalovAScalarProductMPI::ValidationImpl() {
+bool ZavyalovAReduceMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank != 0) {
@@ -27,10 +27,10 @@ bool ZavyalovAScalarProductMPI::ValidationImpl() {
   return (!std::get<0>(GetInput()).empty()) && (std::get<0>(GetInput()).size() == std::get<1>(GetInput()).size());
 }
 
-bool ZavyalovAScalarProductMPI::PreProcessingImpl() {
+bool ZavyalovAReduceMPI::PreProcessingImpl() {
   return true;
 }
-bool ZavyalovAScalarProductMPI::RunImpl() {
+bool ZavyalovAReduceMPI::RunImpl() {
   const double *left_data = nullptr;
   const double *right_data = nullptr;
 
@@ -90,7 +90,7 @@ bool ZavyalovAScalarProductMPI::RunImpl() {
   return true;
 }
 
-bool ZavyalovAScalarProductMPI::PostProcessingImpl() {
+bool ZavyalovAReduceMPI::PostProcessingImpl() {
   return true;
 }
 
