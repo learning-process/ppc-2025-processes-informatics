@@ -1,9 +1,15 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <tuple>
+#include <utility>
+#include <vector>
+
 #include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
 #include "levonychev_i_mult_matrix_vec/mpi/include/ops_mpi.hpp"
 #include "levonychev_i_mult_matrix_vec/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+
 
 namespace levonychev_i_mult_matrix_vec {
 
@@ -12,11 +18,11 @@ class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InT
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_ = std::make_tuple(std::vector<int>(100, 1), 10, 10, std::vector<int>(10));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (output_data >= 0);
+    return (output_data.size() >= 0);
   }
 
   InType GetTestInputData() final {

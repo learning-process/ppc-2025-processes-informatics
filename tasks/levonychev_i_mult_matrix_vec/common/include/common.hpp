@@ -7,8 +7,8 @@
 
 namespace levonychev_i_mult_matrix_vec {
 
-using InType = int;
-using OutType = int;
+using InType = std::tuple<std::vector<int>, int, int, std::vector<int>>;
+using OutType = std::vector<int>;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
