@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <string>
 #include <tuple>
@@ -81,7 +82,7 @@ TestType CreateRandomTest(int m, int n, int k, const std::string &name) {
   return std::make_tuple(m, a, k, b, name);
 }
 
-const std::vector<TestType> kTestParam = {
+const std::array<TestType, 10> kTestParam = {
     std::make_tuple(1, std::vector<double>{2.0}, 1, std::vector<double>{3.0}, "SingleElement"),
 
     std::make_tuple(2, std::vector<double>{1.0, 2.0, 3.0, 4.0}, 2, std::vector<double>{1.0, 0.0, 0.0, 1.0},

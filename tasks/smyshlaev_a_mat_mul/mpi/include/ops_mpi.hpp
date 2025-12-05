@@ -14,6 +14,7 @@ class SmyshlaevAMatMulMPI : public BaseTask {
 
  private:
   std::vector<double> mat_b_transposed;
+  bool RunSequential();
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
