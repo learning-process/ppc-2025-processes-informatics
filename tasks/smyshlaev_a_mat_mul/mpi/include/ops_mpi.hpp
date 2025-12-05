@@ -13,6 +13,7 @@ class SmyshlaevAMatMulMPI : public BaseTask {
   explicit SmyshlaevAMatMulMPI(const InType &in);
 
  private:
+  std::vector<double> mat_b_transposed;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
