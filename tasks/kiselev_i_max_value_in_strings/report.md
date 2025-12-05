@@ -113,7 +113,7 @@ return result
 Использование `Gatherv` оправдано тем, что разные процессы могут обрабатывать разное количество строк.
   
 **Единообразие буферов**
-Для унификации логики передачи данных длины строк передаются отдельно, что снимает необходимость создавать выровненные массивы и удаляет потенциальную проблему с PAD-значениями.
+Для унификации логики передачи данных длины строк передаются отдельно, что снимает необходимость создавать выровненные массивы и удаляет потенциальную проблему с padding-значениями(Padding values в Gather подаются вынужденно и могут привести к неожиданным результатам, т.к. могут быть чем угодно).
 Буфер каждого процесса содержит только нужные элементы, что экономит память и упрощает код.
 
 **Память:** 
@@ -178,41 +178,6 @@ MPI-версия при малых и средних объёмах данных
   
 ## Приложения (код параллельной реализации)
 ```
-#include "kiselev_i_max_value_in_strings/mpi/include/ops_mpi.hpp"
-
-#include <mpi.h>
-
-#include <algorithm>
-#include <cstddef>
-#include <limits>
-#include <utility>
-#include <vector>
-
-#include "kiselev_i_max_value_in_strings/common/include/common.hpp"
-
-namespace kiselev_i_max_value_in_strings {
-
-KiselevITestTaskMPI::KiselevITestTaskMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  auto in_copy = in;
-  GetInput() = std::move(in_copy);
-  GetOutput().clear();
-}
-
-bool KiselevITestTaskMPI::ValidationImpl() {
-  const auto &matrix = GetInput();
-  if (matrix.empty()) {
-    return true;
-  }
-  return true;
-}
-
-bool KiselevITestTaskMPI::PreProcessingImpl() {
-  const auto &matrix = GetInput();
-  GetOutput().resize(matrix.size());
-  return true;
-}
-
 void KiselevITestTaskMPI::DistributeRowLengths(const std::vector<std::vector<int>> &matrix, int total_rows,
                                                int world_rank, int world_size, std::vector<int> &local_row_lengths,
                                                std::vector<int> &len_counts, std::vector<int> &len_displs) {
@@ -346,10 +311,4 @@ bool KiselevITestTaskMPI::RunImpl() {
 
   return true;
 }
-
-bool KiselevITestTaskMPI::PostProcessingImpl() {
-  return true;
-}
-
-}  // namespace kiselev_i_max_value_in_strings
 ```
