@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <tuple>
+#include <vector>
+
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
 #include "smyshlaev_a_mat_mul/mpi/include/ops_mpi.hpp"
 #include "smyshlaev_a_mat_mul/seq/include/ops_seq.hpp"
@@ -8,15 +12,53 @@
 namespace smyshlaev_a_mat_mul {
 
 class SmyshlaevAMatMulRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+ protected:
+  const int kM = 500;
+  const int kK = 500;
+  const int kN = 500;
+
+  InType input_data_;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::vector<double> a(kM * kK);
+    std::vector<double> b(kK * kN);
+
+    for (int i = 0; i < kM * kK; ++i) {
+      a[i] = (i % 5) + 1.0;
+    }
+    for (int i = 0; i < kK * kN; ++i) {
+      b[i] = (i % 5) + 1.0;
+    }
+
+    input_data_ = std::make_tuple(kM, a, kK, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    int m = std::get<0>(input_data_);
+    const auto &mat_a = std::get<1>(input_data_);
+    int k = std::get<2>(input_data_);
+    const auto &mat_b = std::get<3>(input_data_);
+    int n = static_cast<int>(mat_b.size()) / k;
+
+    if (output_data.size() != static_cast<size_t>(m * n)) {
+      return false;
+    }
+
+    std::vector<double> expected(m * n, 0.0);
+    for (int i = 0; i < m; ++i) {
+      for (int j = 0; j < n; ++j) {
+        for (int l = 0; l < k; ++l) {
+          expected[i * n + j] += mat_a[i * k + l] * mat_b[l * n + j];
+        }
+      }
+    }
+
+    for (size_t i = 0; i < expected.size(); ++i) {
+      if (std::abs(output_data[i] - expected[i]) > 1e-5) {
+        return false;
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
