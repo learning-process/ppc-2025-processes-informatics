@@ -43,7 +43,7 @@ for (size_t i = 0; i < n; ++i) {
 - Аппаратное обеспечение: 13th Gen Intel Core i5-13500H (12 ядер: 4P + 8E, 2.60 GHz)
 - ОЗУ: 16 ГБ (4266 MT/s)
 - Операционная система: Windows 11
-- Компилятор: MinGW-w64 (g++)
+- Компилятор: MSVC
 - Тип сборки: Release
 
 ## 7. Results and Discussion
