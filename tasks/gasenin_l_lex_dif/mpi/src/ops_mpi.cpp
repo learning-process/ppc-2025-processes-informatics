@@ -16,7 +16,6 @@ struct LocalDiff {
   int result;
 };
 
-// Вспомогательная функция 1: Поиск локальных различий
 LocalDiff FindLocalDifference(const std::vector<char> &s1_chunk, const std::vector<char> &s2_chunk,
                               size_t global_start) {
   for (size_t i = 0; i < s1_chunk.size(); ++i) {
@@ -27,7 +26,6 @@ LocalDiff FindLocalDifference(const std::vector<char> &s1_chunk, const std::vect
   return {.diff_pos = std::string::npos, .result = 0};
 }
 
-// Вспомогательная функция 2: Расчет распределения данных
 void CalculateDistribution(int min_len, int size, std::vector<int> &sendcounts, std::vector<int> &displs) {
   int remainder = min_len % size;
   int chunk_size = min_len / size;
@@ -40,7 +38,6 @@ void CalculateDistribution(int min_len, int size, std::vector<int> &sendcounts, 
   }
 }
 
-// Вспомогательная функция 3: Финальное сравнение длин
 int GetFinalResultByLength(int len1, int len2) {
   if (len1 < len2) {
     return -1;
@@ -67,7 +64,6 @@ bool GaseninLLexDifMPI::ValidationImpl() {
 
   if (rank == 0) {
     const auto &[str1, str2] = GetInput();
-    // 100M помещается в int, так что логика безопасна
     return str1.length() <= 100000000 && str2.length() <= 100000000;
   }
   return true;
@@ -87,7 +83,6 @@ bool GaseninLLexDifMPI::RunImpl() {
   const std::string &str1 = input_data.first;
   const std::string &str2 = input_data.second;
 
-  // Использование int решает проблемы google-runtime-int и mpi-type-mismatch
   std::vector<int> lengths(2, 0);
   if (rank == 0) {
     lengths[0] = static_cast<int>(str1.length());
@@ -110,7 +105,7 @@ bool GaseninLLexDifMPI::RunImpl() {
   CalculateDistribution(min_len, size, sendcounts, displs);
 
   int local_count = sendcounts[rank];
-  auto global_start = static_cast<size_t>(displs[rank]);  // auto для modernize-use-auto
+  auto global_start = static_cast<size_t>(displs[rank]);
 
   std::vector<char> local_str1(local_count);
   std::vector<char> local_str2(local_count);
