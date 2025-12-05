@@ -76,7 +76,8 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SmyshlaevAMatMulRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAMatMulRunFuncTestsProcesses>;
+const auto kPerfTestName =
+    SmyshlaevAMatMulRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAMatMulRunFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(MatMulTests, SmyshlaevAMatMulRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
