@@ -17,13 +17,11 @@ struct LocalDiff {
   int result;
 };
 
-LocalDiff FindLocalDifference(const std::string &str1, const std::string &str2, size_t start, size_t end) {
-  for (size_t i = start; i < end; ++i) {
-    char c1 = (i < str1.length()) ? str1[i] : '\0';
-    char c2 = (i < str2.length()) ? str2[i] : '\0';
-
-    if (c1 != c2) {
-      return {.diff_pos = i, .result = (c1 < c2) ? -1 : 1};
+LocalDiff FindLocalDifference(const std::vector<char> &s1_chunk, const std::vector<char> &s2_chunk,
+                              size_t global_start) {
+  for (size_t i = 0; i < s1_chunk.size(); ++i) {
+    if (s1_chunk[i] != s2_chunk[i]) {
+      return {.diff_pos = global_start + i, .result = (s1_chunk[i] < s2_chunk[i]) ? -1 : 1};
     }
   }
   return {.diff_pos = std::string::npos, .result = 0};
@@ -60,71 +58,79 @@ bool GaseninLLexDifMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  auto &input_data = GetInput();
-  auto &str1 = input_data.first;
-  auto &str2 = input_data.second;
+  const auto &input_data = GetInput();
+  const std::string &str1 = input_data.first;
+  const std::string &str2 = input_data.second;
 
-  std::vector<int> lengths(2, 0);
-
+  std::vector<uint64_t> lengths(2, 0);
   if (rank == 0) {
-    lengths[0] = static_cast<int>(str1.length());
-    lengths[1] = static_cast<int>(str2.length());
+    lengths[0] = str1.length();
+    lengths[1] = str2.length();
   }
+  MPI_Bcast(lengths.data(), 2, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(lengths.data(), 2, MPI_INT, 0, MPI_COMM_WORLD);
+  uint64_t len1 = lengths[0];
+  uint64_t len2 = lengths[1];
+  uint64_t min_len = std::min(len1, len2);
 
-  if (rank != 0) {
-    str1.resize(lengths[0]);
-    str2.resize(lengths[1]);
-  }
-
-  if (lengths[0] > 0) {
-    MPI_Bcast(str1.data(), static_cast<int>(lengths[0]), MPI_CHAR, 0, MPI_COMM_WORLD);
-  }
-  if (lengths[1] > 0) {
-    MPI_Bcast(str2.data(), static_cast<int>(lengths[1]), MPI_CHAR, 0, MPI_COMM_WORLD);
-  }
-
-  size_t total_len = std::max(str1.length(), str2.length());
-
-  if (total_len == 0) {
+  if (min_len == 0 && len1 == len2) {
     GetOutput() = 0;
     return true;
   }
 
-  size_t chunk_size = (total_len + size - 1) / size;
-  size_t start = rank * chunk_size;
-  size_t end = std::min(start + chunk_size, total_len);
+  std::vector<int> sendcounts(size);
+  std::vector<int> displs(size);
 
-  if (start >= total_len) {
-    start = total_len;
-    end = total_len;
+  int remainder = static_cast<int>(min_len % size);
+  int chunk_size = static_cast<int>(min_len / size);
+  int prefix_sum = 0;
+
+  for (int i = 0; i < size; ++i) {
+    sendcounts[i] = chunk_size + (i < remainder ? 1 : 0);
+    displs[i] = prefix_sum;
+    prefix_sum += sendcounts[i];
   }
 
-  LocalDiff local_diff = FindLocalDifference(str1, str2, start, end);
-  size_t local_diff_pos = (local_diff.diff_pos == std::string::npos) ? total_len : local_diff.diff_pos;
+  int local_count = sendcounts[rank];
+  size_t global_start = static_cast<size_t>(displs[rank]);
+
+  std::vector<char> local_str1(local_count);
+  std::vector<char> local_str2(local_count);
+
+  const char *sendbuf1 = (rank == 0) ? str1.data() : nullptr;
+  const char *sendbuf2 = (rank == 0) ? str2.data() : nullptr;
+
+  MPI_Scatterv(sendbuf1, sendcounts.data(), displs.data(), MPI_CHAR, local_str1.data(), local_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
+
+  MPI_Scatterv(sendbuf2, sendcounts.data(), displs.data(), MPI_CHAR, local_str2.data(), local_count, MPI_CHAR, 0,
+               MPI_COMM_WORLD);
+
+  LocalDiff local_diff = FindLocalDifference(local_str1, local_str2, global_start);
+
+  size_t local_diff_pos = (local_diff.diff_pos == std::string::npos) ? min_len : local_diff.diff_pos;
   int local_result = local_diff.result;
 
-  int local_pos_int = static_cast<int>(local_diff_pos);
-  int global_min_pos_int = 0;
-
-  MPI_Allreduce(&local_pos_int, &global_min_pos_int, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-
-  auto local_pos_64 = static_cast<uint64_t>(local_diff_pos);
-  uint64_t global_min_pos_64 = 0;
+  uint64_t local_pos_64 = local_diff_pos;
+  uint64_t global_min_pos_64 = min_len;
 
   MPI_Allreduce(&local_pos_64, &global_min_pos_64, 1, MPI_UINT64_T, MPI_MIN, MPI_COMM_WORLD);
 
-  auto global_min_pos = static_cast<size_t>(global_min_pos_64);
+  size_t global_min_pos = static_cast<size_t>(global_min_pos_64);
 
-  int result_for_sum = (local_diff_pos == global_min_pos) ? local_result : 0;
+  int result_for_sum = 0;
+  if (local_diff_pos == global_min_pos && local_diff_pos < min_len) {
+    result_for_sum = local_result;
+  }
 
   int final_result = 0;
   MPI_Allreduce(&result_for_sum, &final_result, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  if (global_min_pos == total_len) {
-    if (str1.length() != str2.length()) {
-      final_result = (str1.length() < str2.length()) ? -1 : 1;
+  if (global_min_pos == min_len) {
+    if (len1 < len2) {
+      final_result = -1;
+    } else if (len1 > len2) {
+      final_result = 1;
     } else {
       final_result = 0;
     }
