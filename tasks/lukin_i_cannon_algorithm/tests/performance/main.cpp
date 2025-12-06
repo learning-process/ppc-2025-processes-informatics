@@ -24,7 +24,10 @@ class LukinIRunPerfTestsProcesses2 : public ppc::util::BaseRunPerfTests<InType, 
       B[i] = ((size - 1) - i);
     }
 
-    input_data_ = std::make_tuple(A, B, matrix_size_);
+    std::vector<double> A_copy = A;
+    std::vector<double> B_copy = B;
+
+    input_data_ = std::make_tuple(std::move(A_copy), std::move(B_copy), matrix_size_);
 
     std::vector<double> C(matrix_size_ * matrix_size_);
 

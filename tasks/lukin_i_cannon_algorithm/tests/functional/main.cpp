@@ -52,7 +52,10 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
       ifstr >> B[i];
     }
 
-    input_data_ = std::make_tuple(A, B, size_);
+    std::vector<double> A_copy = A;
+    std::vector<double> B_copy = B;
+
+    input_data_ = std::make_tuple(std::move(A_copy), std::move(B_copy), size_);
 
     for (int i = 0; i < size_; i++) {
       for (int k = 0; k < size_; k++) {
