@@ -57,7 +57,7 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
 
   int rows = 0;
   int cols = 0;
-  std::vector<int> x;
+  std::vector<int64_t> x;
 
   std::vector<int> recvcounts_scatterv(proc_num);
   std::vector<int> displs_scatterv(proc_num);
@@ -80,31 +80,26 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
   x.resize(cols);
-  MPI_Bcast(x.data(), cols, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(x.data(), cols, MPI_INT64_T, 0, MPI_COMM_WORLD);
 
   int local_count_of_rows = (proc_rank == (proc_num - 1)) ? ((rows / proc_num) + (rows % proc_num)) : (rows / proc_num);
   int recvcount = local_count_of_rows * cols;
   OutType local_matrix(recvcount);
-  MPI_Scatterv(std::get<0>(GetInput()).data(), recvcounts_scatterv.data(), displs_scatterv.data(), MPI_INT,
-               local_matrix.data(), recvcount, MPI_INT, 0, MPI_COMM_WORLD);
-  std::cout << "Proc rank: " << proc_rank << " Local matrix: ";
-  for (int i : local_matrix) {
-    std::cout << i << ' ';
-  }
-  std::cout << std::endl;
+  MPI_Scatterv(std::get<0>(GetInput()).data(), recvcounts_scatterv.data(), displs_scatterv.data(), MPI_INT64_T,
+               local_matrix.data(), recvcount, MPI_INT64_T, 0, MPI_COMM_WORLD);
   OutType local_b(local_count_of_rows);
 
   for (int i = 0; i < local_count_of_rows; ++i) {
     const int start = cols * i;
-    int scalar_product = 0;
+    int64_t scalar_product = 0;
     for (int j = 0; j < cols; ++j) {
       scalar_product += local_matrix[start + j] * x[j];
     }
     local_b[i] = scalar_product;
   }
-  MPI_Gatherv(local_b.data(), local_count_of_rows, MPI_INT, global_b.data(),
-              recvcounts_gatherv.data(), displs_gatherv.data(), MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(global_b.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_b.data(), local_count_of_rows, MPI_INT64_T, global_b.data(),
+              recvcounts_gatherv.data(), displs_gatherv.data(), MPI_INT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(global_b.data(), rows, MPI_INT64_T, 0, MPI_COMM_WORLD);
   return true;
 }
 

@@ -30,7 +30,7 @@ class LevonychevIMultMatrixVecFuncTests : public ppc::util::BaseRunFuncTests<InT
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     const int mode = std::get<0>(params);
-    std::vector<int> matrix;
+    std::vector<int64_t> matrix;
     switch (mode)
     {
     case 0:
@@ -42,8 +42,8 @@ class LevonychevIMultMatrixVecFuncTests : public ppc::util::BaseRunFuncTests<InT
           25, 26, 27, 28, 29, 30,
           31, 32, 33, 34, 35, 36
       };
-      input_data_ = std::make_tuple(matrix, 6, 6, std::vector<int>{1, 1, 1, 1, 1, 1});
-      output_data_ = std::vector<int>(6);
+      input_data_ = std::make_tuple(matrix, 6, 6, std::vector<int64_t>{1, 1, 1, 1, 1, 1});
+      output_data_ = std::vector<int64_t>(6);
       for (int i = 0; i < 6; ++i) {
         output_data_[i] = std::accumulate(matrix.begin() + i * 6, matrix.begin() + (i + 1) * 6, 0);
       }
@@ -55,16 +55,16 @@ class LevonychevIMultMatrixVecFuncTests : public ppc::util::BaseRunFuncTests<InT
           5, 6,
           7, 8
       };
-      input_data_ = std::make_tuple(matrix, 4, 2, std::vector<int>{1, 1});
-      output_data_ = std::vector<int>{3, 7, 11, 15};
+      input_data_ = std::make_tuple(matrix, 4, 2, std::vector<int64_t>{1, 1});
+      output_data_ = std::vector<int64_t>{3, 7, 11, 15};
       break;
     case 2:
       matrix = {
           1, 2, 3, 4,
           5, 6, 7, 8
       };
-      input_data_ = std::make_tuple(matrix, 2, 4, std::vector<int>{1, 1, 1, 1});
-      output_data_ = std::vector<int>{10, 26};
+      input_data_ = std::make_tuple(matrix, 2, 4, std::vector<int64_t>{1, 1, 1, 1});
+      output_data_ = std::vector<int64_t>{10, 26};
       break;
     default:
       break;
