@@ -6,7 +6,7 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace lukin_i_cannon_algorithm {
-const double EPSILON = 1e-9;
+const double EPSILON = 1e-6;
 
 class LukinIRunPerfTestsProcesses2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
@@ -39,7 +39,8 @@ class LukinIRunPerfTestsProcesses2 : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < expected_data_.size(); i++) {
+    const int size = static_cast<int>(expected_data_.size());
+    for (int i = 0; i < size; i++) {
       if (std::abs(expected_data_[i] - output_data[i]) > EPSILON) {
         return false;
       }

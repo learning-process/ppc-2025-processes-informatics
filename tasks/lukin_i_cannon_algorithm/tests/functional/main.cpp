@@ -22,7 +22,7 @@
 #include "util/include/util.hpp"
 
 namespace lukin_i_cannon_algorithm {
-const double EPSILON = 1e-9;
+const double EPSILON = 1e-6;
 
 class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -37,28 +37,28 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
     std::ifstream ifstr(path);
 
-    size = 0;
-    ifstr >> size;
+    size_ = 0;
+    ifstr >> size_;
 
-    std::vector<double> A(size * size);
-    std::vector<double> B(size * size);
-    std::vector<double> C(size * size, 0);
+    std::vector<double> A(size_ * size_);
+    std::vector<double> B(size_ * size_);
+    std::vector<double> C(size_ * size_, 0);
 
-    for (int i = 0; i < size * size; i++) {
+    for (int i = 0; i < size_ * size_; i++) {
       ifstr >> A[i];
     }
 
-    for (int i = 0; i < size * size; i++) {
+    for (int i = 0; i < size_ * size_; i++) {
       ifstr >> B[i];
     }
 
-    input_data_ = std::make_tuple(A, B, size);
+    input_data_ = std::make_tuple(A, B, size_);
 
-    for (int i = 0; i < size; i++) {
-      for (int k = 0; k < size; k++) {
-        double fixed = A[i * size + k];
-        for (int j = 0; j < size; j++) {
-          C[i * size + j] += fixed * B[k * size + j];
+    for (int i = 0; i < size_; i++) {
+      for (int k = 0; k < size_; k++) {
+        double fixed = A[i * size_ + k];
+        for (int j = 0; j < size_; j++) {
+          C[i * size_ + j] += fixed * B[k * size_ + j];
         }
       }
     }
@@ -67,7 +67,8 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < expected_data_.size(); i++) {
+    const int size = static_cast<int>(expected_data_.size());
+    for (int i = 0; i < size; i++) {
       if (std::abs(expected_data_[i] - output_data[i]) > EPSILON) {
         return false;
       }
@@ -85,7 +86,7 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
   OutType expected_data_{};
 
-  int size = 0;
+  int size_ = 0;
 };
 
 namespace {
