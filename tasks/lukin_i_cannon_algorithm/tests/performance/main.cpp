@@ -6,7 +6,7 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace lukin_i_cannon_algorithm {
-const double EPSILON = 1e-6;
+const double EPSILON = 1e-9;
 
 class LukinIRunPerfTestsProcesses2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
@@ -18,9 +18,10 @@ class LukinIRunPerfTestsProcesses2 : public ppc::util::BaseRunPerfTests<InType, 
     std::vector<double> A(matrix_size_ * matrix_size_);
     std::vector<double> B(matrix_size_ * matrix_size_);
 
-    for (int i = 0; i < A.size(); i++) {
+    const int size = static_cast<int>(A.size());
+    for (int i = 0; i < size; i++) {
       A[i] = i;
-      B[i] = ((A.size() - 1) - i);
+      B[i] = ((size - 1) - i);
     }
 
     input_data_ = std::make_tuple(A, B, matrix_size_);

@@ -22,7 +22,7 @@
 #include "util/include/util.hpp"
 
 namespace lukin_i_cannon_algorithm {
-const double EPSILON = 1e-6;
+const double EPSILON = 1e-9;
 
 class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
