@@ -26,10 +26,13 @@ bool LukinICannonAlgorithmMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
+    int proc_count = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
+    int grid_size = static_cast<int>(std::floor(std::sqrt(proc_count)));
     int rsizeA = std::get<0>(GetInput()).size();
     int rsizeB = std::get<1>(GetInput()).size();
     size_ = std::get<2>(GetInput());
-    return (rsizeA > 0) && (rsizeB > 0) && (rsizeA == size_ * size_) && (rsizeA == rsizeB);
+    return (rsizeA > 0) && (rsizeB > 0) && (rsizeA == size_ * size_) && (rsizeA == rsizeB) && (rsizeA % grid_size == 0);
   }
   return true;
 }
@@ -43,18 +46,6 @@ bool LukinICannonAlgorithmMPI::RunImpl() {
   int proc_count = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &global_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
-
-  if (global_rank == 0) {
-    std::cerr << "DEBUG: rank=" << global_rank << ", proc_count=" << proc_count << std::endl;
-  }
-
-  if (proc_count < 4) {
-    std::cerr << "DEBUG: Using sequential version (proc_count=" << proc_count << " < 4)" << std::endl;
-    // ...
-  } else {
-    std::cerr << "DEBUG: Using Cannon algorithm" << std::endl;
-    // ...
-  }
 
   MPI_Bcast(&size_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -70,7 +61,7 @@ bool LukinICannonAlgorithmMPI::RunImpl() {
     GetOutput() = std::move(C);
     return true;
   }
-  std::cerr << "I'm here!!!" << std::endl;
+
   // для процессов, напрямую учавствующих в вычислениях, создается другой коммуникатор
   int grid_size = static_cast<int>(std::floor(std::sqrt(proc_count)));
   int working_proc_count = grid_size * grid_size;
