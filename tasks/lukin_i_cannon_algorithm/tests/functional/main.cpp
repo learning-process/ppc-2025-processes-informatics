@@ -24,7 +24,7 @@
 namespace lukin_i_cannon_algorithm {
 const double EPSILON = 1e-9;
 
-class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return test_param;
@@ -94,7 +94,7 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
 
 namespace {
 
-TEST_P(LukinIRunFuncTestsProcesses, Cannon) {
+TEST_P(LukinIRunFuncTestsProcesses2, Cannon) {
   ExecuteTest(GetParam());
 }
 
@@ -111,9 +111,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = LukinIRunFuncTestsProcesses::PrintFuncTestName<LukinIRunFuncTestsProcesses>;
+const auto kPerfTestName = LukinIRunFuncTestsProcesses2::PrintFuncTestName<LukinIRunFuncTestsProcesses2>;
 
-INSTANTIATE_TEST_SUITE_P(CannonAlgorithmTest, LukinIRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CannonAlgorithmTest, LukinIRunFuncTestsProcesses2, kGtestValues, kPerfTestName);
 
 }  // namespace
 
