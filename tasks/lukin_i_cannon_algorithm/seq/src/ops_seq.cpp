@@ -41,8 +41,8 @@ bool LukinICannonAlgorithmSEQ::RunImpl() {
       }
     }
   }
-  OutType output = C;
-  GetOutput() = output;
+
+  GetOutput() = std::move(C);
   return true;
 }
 

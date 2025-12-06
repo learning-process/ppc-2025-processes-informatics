@@ -66,7 +66,7 @@ class LukinIRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, O
       }
     }
 
-    expected_data_ = C;
+    expected_data_ = std::move(C);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

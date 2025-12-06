@@ -55,8 +55,7 @@ bool LukinICannonAlgorithmMPI::RunImpl() {
       mul_n_sum(A, B, C.data(), size_);
     }
     MPI_Bcast(C.data(), size_ * size_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    OutType output = C;
-    GetOutput() = output;
+    GetOutput() = std::move(C);
     return true;
   }
 
@@ -170,15 +169,13 @@ bool LukinICannonAlgorithmMPI::RunImpl() {
     }
 
     MPI_Bcast(C.data(), size_ * size_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    OutType output = C;
-    GetOutput() = output;
+    GetOutput() = std::move(C);
 
     MPI_Comm_free(&MPI_COMM_CANNON);
   } else {
     std::vector<double> C(size_ * size_);
     MPI_Bcast(C.data(), size_ * size_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    OutType output = C;
-    GetOutput() = output;
+    GetOutput() = std::move(C);
   }
 
   return true;
