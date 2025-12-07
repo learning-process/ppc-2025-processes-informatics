@@ -10,27 +10,26 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace smyshlaev_a_mat_mul {
+const int kRows = 500;
+const int kCols = 500;
+const int kCommon = 500;
 
 class SmyshlaevAMatMulRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  const int kM = 500;
-  const int kK = 500;
-  const int kN = 500;
-
   InType input_data_;
 
   void SetUp() override {
-    std::vector<double> a(kM * kK);
-    std::vector<double> b(kK * kN);
+    std::vector<double> a(kRows * kCommon);
+    std::vector<double> b(kCommon * kCols);
 
-    for (int i = 0; i < kM * kK; ++i) {
+    for (int i = 0; i < kRows * kCommon; ++i) {
       a[i] = (i % 5) + 1.0;
     }
-    for (int i = 0; i < kK * kN; ++i) {
+    for (int i = 0; i < kCommon * kCols; ++i) {
       b[i] = (i % 5) + 1.0;
     }
 
-    input_data_ = std::make_tuple(kM, a, kK, b);
+    input_data_ = std::make_tuple(kRows, a, kCommon, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -47,8 +46,8 @@ class SmyshlaevAMatMulRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests
     std::vector<double> expected(m * n, 0.0);
     for (int i = 0; i < m; ++i) {
       for (int j = 0; j < n; ++j) {
-        for (int l = 0; l < k; ++l) {
-          expected[i * n + j] += mat_a[i * k + l] * mat_b[l * n + j];
+        for (int idx = 0; idx < k; ++idx) {
+          expected[i * n + j] += mat_a[i * k + idx] * mat_b[idx * n + j];
         }
       }
     }

@@ -2,11 +2,9 @@
 
 #include <mpi.h>
 
-#include <numeric>
 #include <vector>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace smyshlaev_a_mat_mul {
 
@@ -70,11 +68,11 @@ bool SmyshlaevAMatMulMPI::PreProcessingImpl() {
     const auto &mat_b = std::get<3>(GetInput());
     const auto num_cols_b = static_cast<int>(mat_b.size()) / num_rows_b;
 
-    mat_b_transposed.resize(mat_b.size());
+    mat_b_transposed_.resize(mat_b.size());
 
     for (int i = 0; i < num_rows_b; ++i) {
       for (int j = 0; j < num_cols_b; ++j) {
-        mat_b_transposed[j * num_rows_b + i] = mat_b[i * num_cols_b + j];
+        mat_b_transposed_[(j * num_rows_b) + i] = mat_b[(i * num_cols_b) + j];
       }
     }
   }
@@ -100,9 +98,9 @@ bool SmyshlaevAMatMulMPI::RunSequential() {
       for (int j = 0; j < num_cols_b; ++j) {
         double sum = 0.0;
         for (int k = 0; k < num_cols_a; ++k) {
-          sum += mat_a[i * num_cols_a + k] * mat_b[k * num_cols_b + j];
+          sum += mat_a[(i * num_cols_a) + k] * mat_b[(k * num_cols_b) + j];
         }
-        result[i * num_cols_b + j] = sum;
+        result[(i * num_cols_b) + j] = sum;
       }
     }
   }
@@ -116,6 +114,90 @@ bool SmyshlaevAMatMulMPI::RunSequential() {
   GetOutput() = result;
 
   return true;
+}
+
+void SmyshlaevAMatMulMPI::BroadcastDimensions(int &rows_a, int &cols_a, int &cols_b) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank == 0) {
+    rows_a = std::get<0>(GetInput());
+    const auto &mat_a = std::get<1>(GetInput());
+    cols_a = static_cast<int>(mat_a.size()) / rows_a;
+    const auto &num_rows_b = std::get<2>(GetInput());
+    const auto &mat_b = std::get<3>(GetInput());
+    cols_b = static_cast<int>(mat_b.size()) / num_rows_b;
+  }
+  MPI_Bcast(&rows_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cols_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cols_b, 1, MPI_INT, 0, MPI_COMM_WORLD);
+}
+
+void SmyshlaevAMatMulMPI::RingShiftAlgorithm(int rank, int size, int my_rows_a, int num_cols_a, int num_cols_b,
+                                             const std::vector<int> &counts_b, const std::vector<int> &disps_b,
+                                             std::vector<double> &local_a, std::vector<double> &local_b,
+                                             std::vector<double> &local_c) {
+  int max_elem_count_b = 0;
+  for (int c : counts_b) {
+    max_elem_count_b = std::max(max_elem_count_b, c);
+  }
+  std::vector<double> local_b_next(max_elem_count_b);
+
+  int left_neighbor = (rank - 1 + size) % size;
+  int right_neighbor = (rank + 1) % size;
+
+  for (int step = 0; step < size; ++step) {
+    int b_owner_rank = (rank - step + size) % size;
+    int current_cols_b_count = counts_b[b_owner_rank] / num_cols_a;
+    int global_col_shift = disps_b[b_owner_rank] / num_cols_a;
+
+    for (int i = 0; i < my_rows_a; ++i) {
+      for (int j = 0; j < current_cols_b_count; ++j) {
+        double sum = 0.0;
+        for (int k = 0; k < num_cols_a; ++k) {
+          sum += local_a[(i * num_cols_a) + k] * local_b[(j * num_cols_a) + k];
+        }
+        local_c[(i * num_cols_b) + (global_col_shift + j)] = sum;
+      }
+    }
+
+    int send_count = counts_b[b_owner_rank];
+    int recv_owner_rank = (rank - (step + 1) + size) % size;
+    int recv_count = counts_b[recv_owner_rank];
+
+    MPI_Sendrecv(local_b.data(), send_count, MPI_DOUBLE, right_neighbor, 0, local_b_next.data(), recv_count, MPI_DOUBLE,
+                 left_neighbor, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    local_b.assign(local_b_next.begin(), local_b_next.begin() + recv_count);
+  }
+}
+
+void SmyshlaevAMatMulMPI::GatherAndBroadcastResults(int rank, int size, int rows_a, int cols_a, int cols_b,
+                                                    const std::vector<int> &counts_a,
+                                                    const std::vector<double> &local_c) {
+  std::vector<double> final_res;
+  std::vector<int> recvcounts_c(size);
+  std::vector<int> disps_c(size);
+
+  if (rank == 0) {
+    final_res.resize(static_cast<size_t>(rows_a) * cols_b);
+    int offset = 0;
+    for (int i = 0; i < size; ++i) {
+      int r_rows = counts_a[i] / cols_a;  // cols_a здесь это K
+      recvcounts_c[i] = r_rows * cols_b;
+      disps_c[i] = offset;
+      offset += recvcounts_c[i];
+    }
+  }
+
+  MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, final_res.data(), recvcounts_c.data(),
+              disps_c.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    final_res.resize(static_cast<size_t>(rows_a) * cols_b);
+  }
+
+  MPI_Bcast(final_res.data(), rows_a * cols_b, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  GetOutput() = final_res;
 }
 
 bool SmyshlaevAMatMulMPI::RunImpl() {
@@ -179,67 +261,14 @@ bool SmyshlaevAMatMulMPI::RunImpl() {
   MPI_Scatterv(sendbuf_a, sendcounts_a.data(), offsets_a.data(), MPI_DOUBLE, local_a.data(), sendcounts_a[rank],
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  const double *sendbuf_b = (rank == 0) ? mat_b_transposed.data() : nullptr;
+  const double *sendbuf_b = (rank == 0) ? mat_b_transposed_.data() : nullptr;
   MPI_Scatterv(sendbuf_b, sendcounts_b.data(), offsets_b.data(), MPI_DOUBLE, local_b.data(), sendcounts_b[rank],
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   std::vector<double> local_c(my_rows_a * num_cols_b, 0.0);
+  RingShiftAlgorithm(rank, size, my_rows_a, num_cols_a, num_cols_b, sendcounts_b, offsets_b, local_a, local_b, local_c);
 
-  int left_neighbor = (rank - 1 + size) % size;
-  int right_neighbor = (rank + 1) % size;
-
-  for (int step = 0; step < size; ++step) {
-    int b_owner_rank = (rank - step + size) % size;
-    int current_cols_b_count = sendcounts_b[b_owner_rank] / num_cols_a;
-    int global_col_shift = offsets_b[b_owner_rank] / num_cols_a;
-    for (int i = 0; i < my_rows_a; ++i) {
-      for (int j = 0; j < current_cols_b_count; ++j) {
-        double sum = 0.0;
-        for (int k = 0; k < num_cols_a; ++k) {
-          sum += local_a[i * num_cols_a + k] * local_b[j * num_cols_a + k];
-        }
-        local_c[i * num_cols_b + (global_col_shift + j)] = sum;
-      }
-    }
-
-    int send_count = sendcounts_b[b_owner_rank];
-    int recv_owner_rank = (rank - (step + 1) + size) % size;
-    int recv_count = sendcounts_b[recv_owner_rank];
-
-    MPI_Sendrecv(local_b.data(), send_count, MPI_DOUBLE, right_neighbor, 0, local_b_next.data(), recv_count, MPI_DOUBLE,
-                 left_neighbor, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    local_b.assign(local_b_next.begin(), local_b_next.begin() + recv_count);
-  }
-
-  std::vector<double> final_res;
-  if (rank == 0) {
-    final_res.resize(num_rows_a * num_cols_b);
-  }
-
-  std::vector<int> recvcounts_c(size);
-  std::vector<int> displs_c(size);
-
-  if (rank == 0) {
-    int offset = 0;
-    for (int i = 0; i < size; ++i) {
-      int r_rows = sendcounts_a[i] / num_cols_a;
-      recvcounts_c[i] = r_rows * num_cols_b;
-      displs_c[i] = offset;
-      offset += recvcounts_c[i];
-    }
-  }
-
-  MPI_Gatherv(local_c.data(), static_cast<int>(local_c.size()), MPI_DOUBLE, final_res.data(), recvcounts_c.data(),
-              displs_c.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    final_res.resize(num_rows_a * num_cols_b);
-  }
-
-  MPI_Bcast(final_res.data(), num_rows_a * num_cols_b, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  GetOutput() = final_res;
+  GatherAndBroadcastResults(rank, size, num_rows_a, num_cols_a, num_cols_b, sendcounts_a, local_c);
   return true;
 }
 
