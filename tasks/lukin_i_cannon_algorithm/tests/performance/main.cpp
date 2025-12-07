@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
+#include <tuple>
 #include <utility>
 #include <vector>
 
