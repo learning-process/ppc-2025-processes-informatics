@@ -12,7 +12,7 @@ namespace smyshlaev_a_mat_mul {
 
 namespace {
 
-void CalculateDistribution(int total_len, int pr oc_count, std::vector<int> &counts, std::vector<int> &offsets) {
+void CalculateDistribution(int total_len, int proc_count, std::vector<int> &counts, std::vector<int> &offsets) {
   const int chunk = total_len / proc_count;
   const int remainder = total_len % proc_count;
   int offset = 0;
