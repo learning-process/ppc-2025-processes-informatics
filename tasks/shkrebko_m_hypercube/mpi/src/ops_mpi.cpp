@@ -67,7 +67,21 @@ bool ShkrebkoMHypercubeMPI::ValidationImpl() {
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  if (world_size < 2 || (world_size & (world_size - 1)) != 0) {
+  if (world_size == 1) {
+    if (GetInput().size() < 2) {
+      return false;
+    }
+    int destination = GetInput()[1];
+    if (destination != 0) {
+      return false;
+    }
+    if (GetInput()[0] <= 0) {
+      return false;
+    }
+    return true;
+  }
+
+  if ((world_size & (world_size - 1)) != 0) {
     return false;
   }
 
@@ -91,6 +105,12 @@ bool ShkrebkoMHypercubeMPI::PreProcessingImpl() {
   if (GetInput().size() >= 2) {
     GetOutput().value = GetInput()[0];
     GetOutput().destination = GetInput()[1];
+
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    if (world_size == 1) {
+      GetOutput().destination = 0;
+    }
   } else {
     GetOutput().value = 1;
     GetOutput().destination = 0;
@@ -158,35 +178,37 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
 }
 
 bool ShkrebkoMHypercubeMPI::PostProcessingImpl() {
-  int world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+  if (world_size == 1) {
+    return GetOutput().finish && GetOutput().value > 0 && GetOutput().destination == 0 &&
+           GetOutput().path == std::vector<int>{0};
+  }
+
+  if (GetOutput().path.empty()) {
+    return false;
+  }
+  if (GetOutput().path.front() != 0) {
+    return false;
+  }
+  if (GetOutput().path.back() != GetOutput().destination) {
+    return false;
+  }
+  if (!GetOutput().finish) {
+    return false;
+  }
   if (GetOutput().value <= 0) {
     return false;
   }
 
-  if (world_rank == 0) {
-    if (GetOutput().path.empty()) {
-      return false;
-    }
-    if (GetOutput().path.front() != 0) {
-      return false;
-    }
-    if (GetOutput().path.back() != GetOutput().destination) {
-      return false;
-    }
-    if (!GetOutput().finish) {
-      return false;
-    }
+  for (size_t i = 1; i < GetOutput().path.size(); i++) {
+    int prev = GetOutput().path[i - 1];
+    int curr = GetOutput().path[i];
 
-    for (size_t i = 1; i < GetOutput().path.size(); i++) {
-      int prev = GetOutput().path[i - 1];
-      int curr = GetOutput().path[i];
-
-      int diff = prev ^ curr;
-      if ((diff & (diff - 1)) != 0) {
-        return false;
-      }
+    int diff = prev ^ curr;
+    if ((diff & (diff - 1)) != 0) {
+      return false;
     }
   }
 

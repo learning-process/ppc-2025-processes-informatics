@@ -15,6 +15,10 @@ bool ShouldSkipHypercubeTest() {
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+  if (world_size == 1) {
+    return false;
+  }
+
   bool skip_local = (world_size < 2 || (world_size & (world_size - 1)) != 0);
 
   int skip_int = skip_local ? 1 : 0;
@@ -40,8 +44,17 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
     bool value_ok = output_data.value == input_data_[0];
     bool finish_ok = output_data.finish == true;
+
+    if (world_size == 1) {
+      bool destination_ok = output_data.destination == 0;
+      bool path_ok = output_data.path == std::vector<int>{0};
+      return value_ok && finish_ok && destination_ok && path_ok;
+    }
 
     int world_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
@@ -69,7 +82,6 @@ namespace {
 
 TEST_P(ShkrebkoMHypercubeFuncTests, HypercubeRouting) {
   if (ShouldSkipHypercubeTest()) {
-    MPI_Barrier(MPI_COMM_WORLD);
     return;
   }
 
