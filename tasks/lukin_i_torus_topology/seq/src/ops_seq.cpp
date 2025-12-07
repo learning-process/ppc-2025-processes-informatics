@@ -79,8 +79,7 @@ bool LukinIThorTopologySEQ::RunImpl() {
   message.resize(message_len);
   MPI_Bcast(message.data(), message_len, MPI_INT, end, MPI_COMM_WORLD);
 
-  OutType out = std::make_tuple(dummy_route, message);
-  GetOutput() = out;
+  GetOutput() = std::make_tuple(dummy_route, message);
 
   MPI_Comm_free(&mpi_comm_torus);
 
