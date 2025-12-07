@@ -6,11 +6,21 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <vector>
 
 #include "sizov_d_global_search/common/include/common.hpp"
+
+#define DBG_ENABLED (std::getenv("DEBUG_GLOBAL_SEARCH") != nullptr)
+#define DBG(msg)                                 \
+  do {                                           \
+    if (DBG_ENABLED) {                           \
+      std::cerr << "[DBG] " << msg << std::endl; \
+    }                                            \
+  } while (0)
 
 namespace sizov_d_global_search {
 
@@ -60,6 +70,8 @@ bool SizovDGlobalSearchMPI::PreProcessingImpl() {
 
     const double f_left = p.func(left);
     const double f_right = p.func(right);
+
+    DBG("Init: left=" << left << " right=" << right << " f_left=" << f_left << " f_right=" << f_right);
 
     if (!std::isfinite(f_left) || !std::isfinite(f_right)) {
       ok = 0;
@@ -144,10 +156,12 @@ double SizovDGlobalSearchMPI::EstimateM(double r, int rank, int size) const {
   double global_max = 0.0;
   MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
+  DBG("EstimateM: local_max=" << local_max << " global_max(before)=" << global_max);
+
   constexpr double kMinimalSlope = 1e-2;
-  if (global_max < kMinimalSlope) {
-    global_max = kMinimalSlope;
-  }
+  global_max = std::max(global_max, kMinimalSlope);
+
+  DBG("EstimateM: final_M=" << (r * global_max));
 
   return r * global_max;
 }
@@ -161,11 +175,7 @@ double SizovDGlobalSearchMPI::Characteristic(std::size_t i, double m) const {
   const double dx = xi - xi_prev;
   const double df = yi - yi_prev;
 
-  const double term1 = m * dx;
-  const double term2 = (df * df) / (m * dx);
-  const double term3 = 2.0 * (yi + yi_prev);
-
-  return term1 + term2 - term3;
+  return (m * dx) + (df * df) / (m * dx) - 2.0 * (yi + yi_prev);
 }
 
 double SizovDGlobalSearchMPI::NewPoint(std::size_t i, double m) const {
@@ -228,6 +238,8 @@ SizovDGlobalSearchMPI::IntervalChar SizovDGlobalSearchMPI::ComputeLocalBestInter
     }
   }
 
+  DBG("Local best interval (rank " << rank << "): idx=" << local.index << " char=" << local.characteristic);
+
   return local;
 }
 
@@ -237,6 +249,8 @@ int SizovDGlobalSearchMPI::ReduceBestIntervalIndex(const IntervalChar &local, in
   global.index = -1;
 
   MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+
+  DBG("Global best interval: idx=" << global.index << " char=" << global.characteristic);
 
   if (global.index < 1 || global.index >= n) {
     return -1;
@@ -253,9 +267,14 @@ bool SizovDGlobalSearchMPI::CheckStopByAccuracy(const Problem &p, int best_idx_i
     const double left = x_[idx - 1U];
     const double right = x_[idx];
 
-    if ((right - left) <= p.accuracy) {
+    const double width = right - left;
+
+    DBG("CheckStop: interval_width=" << width << " accuracy=" << p.accuracy);
+
+    if (width <= p.accuracy) {
       converged_ = true;
       stop_now = true;
+      DBG("Stop triggered due to accuracy");
     }
   }
 
@@ -276,6 +295,8 @@ void SizovDGlobalSearchMPI::InsertNewPoint(const Problem &p, std::size_t best_id
   if (!std::isfinite(y_new)) {
     return;
   }
+
+  DBG("Insert: x_new=" << x_new << " y_new=" << y_new << " idx=" << best_idx);
 
   auto pos = std::ranges::lower_bound(x_, x_new);
   const auto idx = static_cast<std::size_t>(std::distance(x_.begin(), pos));
@@ -338,6 +359,7 @@ bool SizovDGlobalSearchMPI::RunImpl() {
     const int best_idx_int = ReduceBestIntervalIndex(local, static_cast<int>(n));
 
     if (best_idx_int < 1) {
+      DBG("Error: best_idx_int < 1");
       converged_ = false;
       break;
     }
@@ -350,6 +372,9 @@ bool SizovDGlobalSearchMPI::RunImpl() {
   }
 
   BroadcastResult(rank);
+
+  DBG("RESULT: argmin=" << best_x_ << " value=" << best_y_ << " iterations=" << iterations_
+                        << " converged=" << converged_);
 
   GetOutput() = Solution{
       .argmin = best_x_,

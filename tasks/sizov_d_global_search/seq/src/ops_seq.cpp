@@ -3,10 +3,20 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
+#include <iostream>
 #include <limits>
 #include <vector>
 
 #include "sizov_d_global_search/common/include/common.hpp"
+
+#define DBG_ENABLED (std::getenv("DEBUG_GLOBAL_SEARCH") != nullptr)
+#define DBG(msg)                                      \
+  do {                                                \
+    if (DBG_ENABLED) {                                \
+      std::cerr << "[DBG][SEQ] " << msg << std::endl; \
+    }                                                 \
+  } while (0)
 
 namespace sizov_d_global_search {
 
@@ -53,6 +63,8 @@ bool SizovDGlobalSearchSEQ::PreProcessingImpl() {
   const double f_left = p.func(left);
   const double f_right = p.func(right);
 
+  DBG("Init: left=" << left << " right=" << right << " f_left=" << f_left << " f_right=" << f_right);
+
   if (!std::isfinite(f_left) || !std::isfinite(f_right)) {
     return false;
   }
@@ -95,11 +107,13 @@ double SizovDGlobalSearchSEQ::EstimateM(double reliability) const {
   }
 
   constexpr double kMinimalSlope = 1e-2;
-  if (max_slope < kMinimalSlope) {
-    max_slope = kMinimalSlope;
-  }
+  const double clamped_slope = std::max(max_slope, kMinimalSlope);
+  const double m = reliability * clamped_slope;
 
-  return reliability * max_slope;
+  DBG("EstimateM: max_slope=" << max_slope << " clamped_slope=" << clamped_slope << " reliability=" << reliability
+                              << " M=" << m);
+
+  return m;
 }
 
 double SizovDGlobalSearchSEQ::Characteristic(std::size_t idx, double m) const {
@@ -161,16 +175,24 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
 
     const double x_l = x_[best_idx - 1];
     const double x_r = x_[best_idx];
+    const double width = x_r - x_l;
 
-    if ((x_r - x_l) <= p.accuracy) {
+    DBG("Iter=" << iterations_ << " M=" << m << " best_idx=" << best_idx << " interval=[" << x_l << ", " << x_r << "]"
+                << " width=" << width);
+
+    if (width <= p.accuracy) {
       converged_ = true;
+      DBG("Stop by accuracy: width=" << width << " accuracy=" << p.accuracy);
       break;
     }
 
     const double x_new = NewPoint(best_idx, m);
     const double y_new = p.func(x_new);
 
+    DBG("New point: x_new=" << x_new << " y_new=" << y_new);
+
     if (!std::isfinite(y_new)) {
+      DBG("Skip new point: non-finite y_new");
       continue;
     }
 
@@ -183,8 +205,12 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
     if (y_new < best_y_) {
       best_y_ = y_new;
       best_x_ = x_new;
+      DBG("Update best: best_x_=" << best_x_ << " best_y_=" << best_y_);
     }
   }
+
+  DBG("RESULT: argmin=" << best_x_ << " value=" << best_y_ << " iterations=" << iterations_
+                        << " converged=" << converged_);
 
   GetOutput() = Solution{
       .argmin = best_x_,

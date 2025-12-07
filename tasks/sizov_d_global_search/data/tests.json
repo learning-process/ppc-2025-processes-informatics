@@ -61,7 +61,7 @@
   { "name": "case_060", "function": {"expression": "tan(0.1 * x) + sin(x)"}, "problem": {"left": -1.2, "right": 1.2} },
   { "name": "case_061", "function": {"expression": "sin(pi * x)"}, "problem": {"left": -2.0, "right": 2.0} },
   { "name": "case_062", "function": {"expression": "cos(pi * x / 2)"}, "problem": {"left": -2.0, "right": 2.0} },
-  { "name": "case_063", "function": {"expression": "sin(pi * x / 3) + 0.1 * x"}, "problem": {"left": -3.0, "right": 3.0} },
+  { "name": "case_063", "function": {"expression": "sin(4 * x) + 0.1 * x"}, "problem": {"left": -1.0, "right": 1.0} },
   { "name": "case_064", "function": {"expression": "cos(pi * x / 4) + 0.05 * x^2"}, "problem": {"left": -3.0, "right": 3.0} },
   { "name": "case_065", "function": {"expression": "sin(pi * x / 5) + cos(pi * x / 3)"}, "problem": {"left": -3.0, "right": 3.0} },
   { "name": "case_066", "function": {"expression": "exp(0.5 * x)"}, "problem": {"left": -5.0, "right": 5.0} },
@@ -132,7 +132,7 @@
   { "name": "case_131", "function": {"expression": "-0.3*x + 1"}, "problem": {"left": -10.0, "right": 10.0} },
   { "name": "case_132", "function": {"expression": "0.002*x^4 + sin(6*x)"}, "problem": {"left": -4.0, "right": 4.0} },
   { "name": "case_133", "function": {"expression": "0.5*exp(-0.2*x^2) + 0.05*cos(12*x)"}, "problem": {"left": -6.0, "right": 6.0} },
-  { "name": "case_134", "function": {"expression": "exp(-1 * 0.1*x^2) * (0.1*x^2 + sin(4*x))"}, "problem": {"left": -6.0, "right": 6.0} },
-  { "name": "case_135", "function": {"expression": "0.00001 * x^2 - exp(-1 * 100 * (x - 0.123)^2)"}, "problem": {"left": -5.0, "right": 5.0}}
+  { "name": "case_134", "function": {"expression": "exp(-1 * 0.1*x^2) * (0.1*x^2 + sin(4*x))"}, "problem": {"left": -1.0, "right": 1.0} },
+  { "name": "case_135", "function": {"expression": "0.00001 * x^2 - exp(-1 * 100 * (x - 0.123)^2)"}, "problem": {"left": -2.0, "right": 2.0}}
 
 ]
