@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
@@ -10,7 +12,7 @@ namespace smyshlaev_a_mat_mul {
 
 namespace {
 
-void CalculateDistribution(int total_len, int proc_count, std::vector<int> &counts, std::vector<int> &offsets) {
+void CalculateDistribution(int total_len, int pr oc_count, std::vector<int> &counts, std::vector<int> &offsets) {
   const int chunk = total_len / proc_count;
   const int remainder = total_len % proc_count;
   int offset = 0;
@@ -265,7 +267,7 @@ bool SmyshlaevAMatMulMPI::RunImpl() {
   MPI_Scatterv(sendbuf_b, sendcounts_b.data(), offsets_b.data(), MPI_DOUBLE, local_b.data(), sendcounts_b[rank],
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  std::vector<double> local_c(my_rows_a * num_cols_b, 0.0);
+  std::vector<double> local_c(static_cast<size_t>(my_rows_a) * num_cols_b, 0.0);
   RingShiftAlgorithm(rank, size, my_rows_a, num_cols_a, num_cols_b, sendcounts_b, offsets_b, local_a, local_b, local_c);
 
   GatherAndBroadcastResults(rank, size, num_rows_a, num_cols_a, num_cols_b, sendcounts_a, local_c);

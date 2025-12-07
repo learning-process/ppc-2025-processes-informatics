@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
-#include <cstddef>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
 #include "smyshlaev_a_mat_mul/mpi/include/ops_mpi.hpp"

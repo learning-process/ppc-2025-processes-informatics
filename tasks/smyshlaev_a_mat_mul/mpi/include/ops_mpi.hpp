@@ -18,9 +18,10 @@ class SmyshlaevAMatMulMPI : public BaseTask {
   std::vector<double> mat_b_transposed_;
   bool RunSequential();
   void BroadcastDimensions(int &rows_a, int &cols_a, int &cols_b);
-  void RingShiftAlgorithm(int rank, int size, int my_rows_a, int num_cols_a, int num_cols_b,
-                          const std::vector<int> &counts_b, const std::vector<int> &disps_b,
-                          std::vector<double> &local_a, std::vector<double> &local_b, std::vector<double> &local_c);
+  static void RingShiftAlgorithm(int rank, int size, int my_rows_a, int num_cols_a, int num_cols_b,
+                                 const std::vector<int> &counts_b, const std::vector<int> &disps_b,
+                                 std::vector<double> &local_a, std::vector<double> &local_b,
+                                 std::vector<double> &local_c);
 
   void GatherAndBroadcastResults(int rank, int size, int rows_a, int cols_a, int cols_b,
                                  const std::vector<int> &counts_a, const std::vector<double> &local_c);
