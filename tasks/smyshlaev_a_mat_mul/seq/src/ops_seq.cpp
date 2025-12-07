@@ -1,10 +1,8 @@
 #include "smyshlaev_a_mat_mul/seq/include/ops_seq.hpp"
 
-#include <numeric>
 #include <vector>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace smyshlaev_a_mat_mul {
 
@@ -48,15 +46,15 @@ bool SmyshlaevAMatMulSEQ::RunImpl() {
   const auto &num_cols_b = static_cast<int>(mat_b.size()) / num_rows_b;
   const auto &num_cols_a = num_rows_b;
 
-  std::vector<double> result(num_rows_a * num_cols_b, 0.0);
+  std::vector<double> result(static_cast<size_t>(num_rows_a) * num_cols_b, 0.0);
 
   for (int i = 0; i < num_rows_a; ++i) {
     for (int j = 0; j < num_cols_b; ++j) {
       double sum = 0.0;
       for (int k = 0; k < num_cols_a; ++k) {
-        sum += mat_a[i * num_cols_a + k] * mat_b[k * num_cols_b + j];
+        sum += mat_a[(i * num_cols_a) + k] * mat_b[(k * num_cols_b) + j];
       }
-      result[i * num_cols_b + j] = sum;
+      result[(i * num_cols_b) + j] = sum;
     }
   }
 
