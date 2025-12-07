@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <fstream>
-#include <numeric>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -22,7 +17,7 @@
 #include "util/include/util.hpp"
 
 namespace lukin_i_cannon_algorithm {
-const double EPSILON = 1e-9;
+const double kEpsilon = 1e-9;
 
 class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -40,39 +35,39 @@ class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, 
     size_ = 0;
     ifstr >> size_;
 
-    std::vector<double> A(size_ * size_);
-    std::vector<double> B(size_ * size_);
-    std::vector<double> C(size_ * size_, 0);
+    std::vector<double> a(static_cast<size_t>(size_ * size_));
+    std::vector<double> b(static_cast<size_t>(size_ * size_));
+    std::vector<double> c(static_cast<size_t>(size_ * size_), 0);
 
     for (int i = 0; i < size_ * size_; i++) {
-      ifstr >> A[i];
+      ifstr >> a[i];
     }
 
     for (int i = 0; i < size_ * size_; i++) {
-      ifstr >> B[i];
+      ifstr >> b[i];
     }
 
-    std::vector<double> A_copy = A;
-    std::vector<double> B_copy = B;
+    std::vector<double> a_copy = a;
+    std::vector<double> b_copy = b;
 
-    input_data_ = std::make_tuple(std::move(A_copy), std::move(B_copy), size_);
+    input_data_ = std::make_tuple(std::move(a_copy), std::move(b_copy), size_);
 
     for (int i = 0; i < size_; i++) {
       for (int k = 0; k < size_; k++) {
-        double fixed = A[i * size_ + k];
+        double fixed = a[(i * size_) + k];
         for (int j = 0; j < size_; j++) {
-          C[i * size_ + j] += fixed * B[k * size_ + j];
+          c[(i * size_) + j] += fixed * b[(k * size_) + j];
         }
       }
     }
 
-    expected_data_ = std::move(C);
+    expected_data_ = std::move(c);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     const int size = static_cast<int>(expected_data_.size());
     for (int i = 0; i < size; i++) {
-      if (std::abs(expected_data_[i] - output_data[i]) > EPSILON) {
+      if (std::abs(expected_data_[i] - output_data[i]) > kEpsilon) {
         return false;
       }
     }
@@ -85,9 +80,9 @@ class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 
-  OutType expected_data_{};
+  OutType expected_data_;
 
   int size_ = 0;
 };

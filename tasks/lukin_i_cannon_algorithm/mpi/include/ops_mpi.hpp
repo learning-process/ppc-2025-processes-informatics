@@ -18,7 +18,7 @@ class LukinICannonAlgorithmMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void mul_n_sum(double *A, double *B, double *C, const int size);
+  void MulNSum(double *a, double *b, double *c, int size);
 
   int size_ = 0;
 };
