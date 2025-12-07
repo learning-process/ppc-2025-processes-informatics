@@ -3,6 +3,7 @@
 #include <cmath>
 #include <tuple>
 #include <vector>
+#include <cstddef>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
 #include "smyshlaev_a_mat_mul/mpi/include/ops_mpi.hpp"
@@ -19,8 +20,8 @@ class SmyshlaevAMatMulRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests
   InType input_data_;
 
   void SetUp() override {
-    std::vector<double> a(kRows * kCommon);
-    std::vector<double> b(kCommon * kCols);
+    std::vector<double> a(static_cast<size_t>(kRows) * kCommon);
+    std::vector<double> b(static_cast<size_t>(kCommon) * kCols);
 
     for (int i = 0; i < kRows * kCommon; ++i) {
       a[i] = (i % 5) + 1.0;
@@ -39,15 +40,15 @@ class SmyshlaevAMatMulRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests
     const auto &mat_b = std::get<3>(input_data_);
     int n = static_cast<int>(mat_b.size()) / k;
 
-    if (output_data.size() != static_cast<size_t>(m * n)) {
+    if (output_data.size() != static_cast<size_t>(m) * n) {
       return false;
     }
 
-    std::vector<double> expected(m * n, 0.0);
+    std::vector<double> expected(static_cast<size_t>(m) * n, 0.0);
     for (int i = 0; i < m; ++i) {
       for (int j = 0; j < n; ++j) {
         for (int idx = 0; idx < k; ++idx) {
-          expected[i * n + j] += mat_a[i * k + idx] * mat_b[idx * n + j];
+          expected[(i * n) + j] += mat_a[(i * k) + idx] * mat_b[(idx * n) + j];
         }
       }
     }
