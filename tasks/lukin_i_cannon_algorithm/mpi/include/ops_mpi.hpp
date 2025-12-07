@@ -29,7 +29,7 @@ class LukinICannonAlgorithmMPI : public BaseTask {
   void MatrixPack(double *a_blocks, double *b_blocks, int working_proc_count, int block_elems, int block_size,
                   int grid_size);
   void MatrixUnpack(double *c, const double *c_blocks, int working_proc_count, int block_elems, int block_size,
-                    int grid_size);
+                    int grid_size) const;
 
   int size_ = 0;
 };

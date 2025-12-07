@@ -204,7 +204,7 @@ void LukinICannonAlgorithmMPI::MatrixPack(double *a_blocks, double *b_blocks, in
 }
 
 void LukinICannonAlgorithmMPI::MatrixUnpack(double *c, const double *c_blocks, int working_proc_count, int block_elems,
-                                            int block_size, int grid_size) {
+                                            int block_size, int grid_size) const {
   for (int proc = 0; proc < working_proc_count; proc++) {
     int proc_i = proc / grid_size;
     int proc_j = proc % grid_size;
