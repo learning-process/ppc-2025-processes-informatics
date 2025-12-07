@@ -1,5 +1,6 @@
 #include "smyshlaev_a_mat_mul/seq/include/ops_seq.hpp"
 
+#include <cstddef>
 #include <vector>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"

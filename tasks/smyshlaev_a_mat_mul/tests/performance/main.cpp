@@ -16,7 +16,7 @@ const int kCols = 500;
 const int kCommon = 500;
 
 class SmyshlaevAMatMulRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
+ private:
   InType input_data_;
 
   void SetUp() override {
