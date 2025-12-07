@@ -3,20 +3,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <vector>
 
 #include "sizov_d_global_search/common/include/common.hpp"
-
-#define DBG_ENABLED (std::getenv("DEBUG_GLOBAL_SEARCH") != nullptr)
-#define DBG(msg)                                      \
-  do {                                                \
-    if (DBG_ENABLED) {                                \
-      std::cerr << "[DBG][SEQ] " << msg << std::endl; \
-    }                                                 \
-  } while (0)
 
 namespace sizov_d_global_search {
 
@@ -28,7 +19,6 @@ SizovDGlobalSearchSEQ::SizovDGlobalSearchSEQ(const InType &in) {
 
 bool SizovDGlobalSearchSEQ::ValidationImpl() {
   const auto &p = GetInput();
-
   if (!p.func) {
     return false;
   }
@@ -44,39 +34,33 @@ bool SizovDGlobalSearchSEQ::ValidationImpl() {
   if (p.max_iterations <= 0) {
     return false;
   }
-
   return true;
 }
 
 bool SizovDGlobalSearchSEQ::PreProcessingImpl() {
   const auto &p = GetInput();
 
-  const double left = p.left;
-  const double right = p.right;
-
   x_.clear();
   y_.clear();
 
-  x_.push_back(left);
-  x_.push_back(right);
+  double f_left = p.func(p.left);
+  double f_right = p.func(p.right);
 
-  const double f_left = p.func(left);
-  const double f_right = p.func(right);
-
-  DBG("Init: left=" << left << " right=" << right << " f_left=" << f_left << " f_right=" << f_right);
+  std::cout << "[SEQ] Init: left=" << p.left << " right=" << p.right << " f_left=" << f_left << " f_right=" << f_right
+            << std::endl;
 
   if (!std::isfinite(f_left) || !std::isfinite(f_right)) {
     return false;
   }
 
-  y_.push_back(f_left);
-  y_.push_back(f_right);
+  x_ = {p.left, p.right};
+  y_ = {f_left, f_right};
 
   if (f_left <= f_right) {
-    best_x_ = left;
+    best_x_ = p.left;
     best_y_ = f_left;
   } else {
-    best_x_ = right;
+    best_x_ = p.right;
     best_y_ = f_right;
   }
 
@@ -90,60 +74,44 @@ double SizovDGlobalSearchSEQ::EstimateM(double reliability) const {
   double max_slope = 0.0;
 
   for (std::size_t i = 1; i < x_.size(); ++i) {
-    const double dx = std::abs(x_[i] - x_[i - 1]);
-    if (dx > 0.0) {
-      const double y_r = y_[i];
-      const double y_l = y_[i - 1];
+    double dx = std::abs(x_[i] - x_[i - 1]);
+    if (dx <= 0.0) {
+      continue;
+    }
 
-      if (!std::isfinite(y_r) || !std::isfinite(y_l)) {
-        continue;
-      }
-
-      const double dy = std::abs(y_r - y_l) / dx;
-      if (std::isfinite(dy)) {
-        max_slope = std::max(max_slope, dy);
-      }
+    double dy = std::abs(y_[i] - y_[i - 1]) / dx;
+    if (std::isfinite(dy)) {
+      max_slope = std::max(max_slope, dy);
     }
   }
 
   constexpr double kMinimalSlope = 1e-2;
-  const double clamped_slope = std::max(max_slope, kMinimalSlope);
-  const double m = reliability * clamped_slope;
-
-  DBG("EstimateM: max_slope=" << max_slope << " clamped_slope=" << clamped_slope << " reliability=" << reliability
-                              << " M=" << m);
-
-  return m;
+  return reliability * std::max(max_slope, kMinimalSlope);
 }
 
 double SizovDGlobalSearchSEQ::Characteristic(std::size_t idx, double m) const {
-  const double x_r = x_[idx];
-  const double x_l = x_[idx - 1];
-  const double y_r = y_[idx];
-  const double y_l = y_[idx - 1];
+  const double xl = x_[idx - 1];
+  const double xr = x_[idx];
+  const double yl = y_[idx - 1];
+  const double yr = y_[idx];
 
-  const double dx = x_r - x_l;
-  const double df = y_r - y_l;
+  const double dx = xr - xl;
+  const double df = yr - yl;
 
-  const double term1 = m * dx;
-  const double term2 = (df * df) / (m * dx);
-  const double term3 = 2.0 * (y_r + y_l);
-
-  return (term1 + term2) - term3;
+  return (m * dx) + (df * df) / (m * dx) - 2.0 * (yr + yl);
 }
 
 double SizovDGlobalSearchSEQ::NewPoint(std::size_t idx, double m) const {
-  const double x_r = x_[idx];
-  const double x_l = x_[idx - 1];
-  const double y_r = y_[idx];
-  const double y_l = y_[idx - 1];
+  const double xl = x_[idx - 1];
+  const double xr = x_[idx];
+  const double yl = y_[idx - 1];
+  const double yr = y_[idx];
 
-  const double mid = 0.5 * (x_r + x_l);
-  const double shift = (y_r - y_l) / (2.0 * m);
+  const double mid = 0.5 * (xl + xr);
+  const double shift = (yr - yl) / (2.0 * m);
 
   double x_new = mid - shift;
-
-  if (x_new <= x_l || x_new >= x_r) {
+  if (x_new <= xl || x_new >= xr) {
     x_new = mid;
   }
 
@@ -157,10 +125,16 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
     return false;
   }
 
+  int insert_counter = 0;
+
   for (int iter = 0; iter < p.max_iterations; ++iter) {
     iterations_ = iter + 1;
 
-    const double m = EstimateM(p.reliability);
+    if (iterations_ % 50 == 0) {
+      std::cout << "[SEQ] Iter=" << iterations_ << " points=" << x_.size() << std::endl;
+    }
+
+    double m = EstimateM(p.reliability);
 
     double best_char = -std::numeric_limits<double>::infinity();
     std::size_t best_idx = 1;
@@ -173,51 +147,43 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
       }
     }
 
-    const double x_l = x_[best_idx - 1];
-    const double x_r = x_[best_idx];
-    const double width = x_r - x_l;
-
-    DBG("Iter=" << iterations_ << " M=" << m << " best_idx=" << best_idx << " interval=[" << x_l << ", " << x_r << "]"
-                << " width=" << width);
+    const double L = x_[best_idx - 1];
+    const double R = x_[best_idx];
+    const double width = R - L;
 
     if (width <= p.accuracy) {
       converged_ = true;
-      DBG("Stop by accuracy: width=" << width << " accuracy=" << p.accuracy);
+      std::cout << "[SEQ] Stop: width=" << width << " <= accuracy=" << p.accuracy << std::endl;
       break;
     }
 
-    const double x_new = NewPoint(best_idx, m);
-    const double y_new = p.func(x_new);
-
-    DBG("New point: x_new=" << x_new << " y_new=" << y_new);
+    double x_new = NewPoint(best_idx, m);
+    double y_new = p.func(x_new);
 
     if (!std::isfinite(y_new)) {
-      DBG("Skip new point: non-finite y_new");
       continue;
     }
 
-    const auto pos = std::ranges::lower_bound(x_, x_new);
-    const std::size_t idx = static_cast<std::size_t>(pos - x_.begin());
+    if (insert_counter++ % 50 == 0) {
+      std::cout << "[SEQ] Insert: x=" << x_new << " y=" << y_new << std::endl;
+    }
+
+    auto pos = std::ranges::lower_bound(x_, x_new);
+    std::size_t idx = pos - x_.begin();
 
     x_.insert(pos, x_new);
-    y_.insert(y_.begin() + static_cast<std::ptrdiff_t>(idx), y_new);
+    y_.insert(y_.begin() + idx, y_new);
 
     if (y_new < best_y_) {
       best_y_ = y_new;
       best_x_ = x_new;
-      DBG("Update best: best_x_=" << best_x_ << " best_y_=" << best_y_);
     }
   }
 
-  DBG("RESULT: argmin=" << best_x_ << " value=" << best_y_ << " iterations=" << iterations_
-                        << " converged=" << converged_);
+  std::cout << "[SEQ] Result: x=" << best_x_ << " y=" << best_y_ << " it=" << iterations_ << " conv=" << converged_
+            << std::endl;
 
-  GetOutput() = Solution{
-      .argmin = best_x_,
-      .value = best_y_,
-      .iterations = iterations_,
-      .converged = converged_,
-  };
+  GetOutput() = Solution{best_x_, best_y_, iterations_, converged_};
 
   return true;
 }

@@ -27,6 +27,7 @@ class SizovDGlobalSearchMPI : public BaseTask {
     int index;
   };
 
+  // ---------- Алгоритмические методы ----------
   [[nodiscard]] double EstimateM(double r, int rank, int size) const;
   [[nodiscard]] double Characteristic(std::size_t i, double m) const;
   [[nodiscard]] double NewPoint(std::size_t i, double m) const;
@@ -39,15 +40,17 @@ class SizovDGlobalSearchMPI : public BaseTask {
 
   bool CheckStopByAccuracy(const Problem &p, int best_idx_int, int rank);
   void InsertNewPoint(const Problem &p, std::size_t best_idx, double m, int rank);
+
+  // ---------- MPI-синхронизация ----------
   void BroadcastState(int rank);
   void BroadcastResult(int rank);
 
+  // ---------- Данные ----------
   std::vector<double> x_;
   std::vector<double> y_;
 
   double best_x_ = 0.0;
   double best_y_ = 0.0;
-
   int iterations_ = 0;
   bool converged_ = false;
 };
