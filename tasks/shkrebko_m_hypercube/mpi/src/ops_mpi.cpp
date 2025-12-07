@@ -16,20 +16,20 @@ int CalcNextRank(int current_rank, int destination_rank, int world_size) {
   if (current_rank == destination_rank) {
     return current_rank;
   }
-  
+
   int ndims = static_cast<int>(log2(world_size));
-  
+
   for (int dim = 0; dim < ndims; dim++) {
     int current_bit = (current_rank >> dim) & 1;
     int dest_bit = (destination_rank >> dim) & 1;
-    
+
     if (current_bit != dest_bit) {
       int next_rank = current_rank ^ (1 << dim);
       return next_rank;
     }
   }
-  
-  return current_rank; 
+
+  return current_rank;
 }
 
 void SendHypercubeData(const HypercubeData &data, int dest_rank, int tag) {
@@ -66,24 +66,24 @@ ShkrebkoMHypercubeMPI::ShkrebkoMHypercubeMPI(const InType &in) {
 bool ShkrebkoMHypercubeMPI::ValidationImpl() {
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  
+
   if (world_size < 2 || (world_size & (world_size - 1)) != 0) {
     return false;
   }
-  
+
   if (GetInput().size() < 2) {
     return false;
   }
-  
+
   int destination = GetInput()[1];
   if (destination < 0 || destination >= world_size) {
     return false;
   }
-  
+
   if (GetInput()[0] <= 0) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -102,44 +102,44 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
   int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  
+
   HypercubeData local_data;
-  
+
   if (world_rank == 0) {
     local_data.value = GetOutput().value;
     local_data.destination = GetOutput().destination;
     local_data.path.push_back(world_rank);
     local_data.finish = false;
-    
+
     if (local_data.destination != 0) {
       int next_rank = CalcNextRank(world_rank, local_data.destination, world_size);
       SendHypercubeData(local_data, next_rank, 0);
-      
+
       RecvHypercubeData(local_data, MPI_ANY_SOURCE, 1);
     } else {
       local_data.finish = true;
     }
-    
+
     HypercubeData finish_msg;
     finish_msg.finish = true;
     finish_msg.value = local_data.value;
     finish_msg.destination = local_data.destination;
     finish_msg.path = local_data.path;
-    
+
     for (int i = 1; i < world_size; i++) {
       if (std::find(local_data.path.begin(), local_data.path.end(), i) == local_data.path.end()) {
         SendHypercubeData(finish_msg, i, 0);
       }
     }
-    
+
     GetOutput() = local_data;
   } else {
     MPI_Status status;
     RecvHypercubeData(local_data, MPI_ANY_SOURCE, 0, &status);
-    
+
     if (!local_data.finish) {
       local_data.path.push_back(world_rank);
-      
+
       if (world_rank == local_data.destination) {
         local_data.finish = true;
         SendHypercubeData(local_data, 0, 1);
@@ -152,7 +152,7 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
       GetOutput() = local_data;
     }
   }
-  
+
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
@@ -160,26 +160,36 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
 bool ShkrebkoMHypercubeMPI::PostProcessingImpl() {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  
-  if (GetOutput().value <= 0) return false;
-  
+
+  if (GetOutput().value <= 0) {
+    return false;
+  }
+
   if (world_rank == 0) {
-    if (GetOutput().path.empty()) return false;
-    if (GetOutput().path.front() != 0) return false;
-    if (GetOutput().path.back() != GetOutput().destination) return false;
-    if (!GetOutput().finish) return false;
-    
+    if (GetOutput().path.empty()) {
+      return false;
+    }
+    if (GetOutput().path.front() != 0) {
+      return false;
+    }
+    if (GetOutput().path.back() != GetOutput().destination) {
+      return false;
+    }
+    if (!GetOutput().finish) {
+      return false;
+    }
+
     for (size_t i = 1; i < GetOutput().path.size(); i++) {
       int prev = GetOutput().path[i - 1];
       int curr = GetOutput().path[i];
-      
+
       int diff = prev ^ curr;
       if ((diff & (diff - 1)) != 0) {
         return false;
       }
     }
   }
-  
+
   return true;
 }
 
