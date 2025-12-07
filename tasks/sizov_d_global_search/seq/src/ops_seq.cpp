@@ -94,8 +94,9 @@ double SizovDGlobalSearchSEQ::EstimateM(double reliability) const {
     }
   }
 
-  if (max_slope == 0.0) {
-    max_slope = 1.0;
+  constexpr double kMinimalSlope = 1e-2;
+  if (max_slope < kMinimalSlope) {
+    max_slope = kMinimalSlope;
   }
 
   return reliability * max_slope;

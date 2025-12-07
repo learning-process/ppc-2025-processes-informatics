@@ -27,6 +27,7 @@
 namespace sizov_d_global_search {
 
 namespace {
+
 struct ReferenceResult {
   double argmin = 0.0;
   double value = 0.0;

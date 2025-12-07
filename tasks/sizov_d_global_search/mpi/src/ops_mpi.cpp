@@ -144,8 +144,9 @@ double SizovDGlobalSearchMPI::EstimateM(double r, int rank, int size) const {
   double global_max = 0.0;
   MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-  if (global_max == 0.0) {
-    global_max = 1.0;
+  constexpr double kMinimalSlope = 1e-2;
+  if (global_max < kMinimalSlope) {
+    global_max = kMinimalSlope;
   }
 
   return r * global_max;

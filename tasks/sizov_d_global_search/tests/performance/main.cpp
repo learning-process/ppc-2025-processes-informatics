@@ -69,9 +69,9 @@ TEST_P(SizovDGlobalSearchPerfTests, RunPerfModes) {
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SizovDGlobalSearchMPI, SizovDGlobalSearchSEQ>(
     PPC_SETTINGS_sizov_d_global_search);
 
-}  // namespace
-
 INSTANTIATE_TEST_SUITE_P(RunModeTests, SizovDGlobalSearchPerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          SizovDGlobalSearchPerfTests::CustomPerfTestName);
+
+}  // namespace
 
 }  // namespace sizov_d_global_search
