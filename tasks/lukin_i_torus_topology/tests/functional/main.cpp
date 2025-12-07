@@ -16,7 +16,7 @@
 
 namespace lukin_i_torus_topology {
 
-class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     std::string test_name = test_param;
@@ -26,6 +26,11 @@ class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, 
  protected:  // тесты написаны исходя из того, что тестирование осуществляется на 2-4 процессах
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    input_data_ = std::make_tuple(-1, -1, std::vector<int>{-1, -1, -1, -1});
+    expected_ =
+        std::make_tuple(std::vector<int>{-1, -1, -1},
+                        std::vector<int>{1, 1, 1, 1});  // заглушка для нерабочего числа процессов (в CI всего 2-4)
 
     int proc_count = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
@@ -139,7 +144,7 @@ class LukinIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-TEST_P(LukinIRunFuncTestsProcesses2, ThorTopology) {
+TEST_P(LukinIRunFuncTestsProceses3, ThorTopology) {
   ExecuteTest(GetParam());
 }
 
@@ -159,9 +164,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = LukinIRunFuncTestsProcesses2::PrintFuncTestName<LukinIRunFuncTestsProcesses2>;
+const auto kPerfTestName = LukinIRunFuncTestsProceses3::PrintFuncTestName<LukinIRunFuncTestsProceses3>;
 
-INSTANTIATE_TEST_SUITE_P(ThorTopologyTests, LukinIRunFuncTestsProcesses2, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ThorTopologyTests, LukinIRunFuncTestsProceses3, kGtestValues, kPerfTestName);
 
 }  // namespace
 

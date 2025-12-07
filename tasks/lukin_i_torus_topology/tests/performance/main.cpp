@@ -12,7 +12,7 @@
 namespace lukin_i_torus_topology {
 const int large_vector_size = 10'000'000;
 
-class LukinIRunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class LukinIRunPerfTestProceses3 : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   OutType expected_result_;
 
@@ -20,6 +20,11 @@ class LukinIRunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType, O
   std::vector<int> message;
 
   void SetUp() override {
+    input_data_ = std::make_tuple(-1, -1, std::vector<int>{-1, -1, -1, -1});
+    expected_result_ =
+        std::make_tuple(std::vector<int>{-1, -1, -1},
+                        std::vector<int>{1, 1, 1, 1});  // заглушка для нерабочего числа процессов (в CI всего 2-4)
+
     message = std::vector<int>(large_vector_size, 1);
     int proc_count = -1;
     MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
@@ -53,7 +58,7 @@ class LukinIRunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(LukinIRunPerfTestProcesses2, RunPerfModes) {
+TEST_P(LukinIRunPerfTestProceses3, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -62,8 +67,8 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LukinIThorTopolog
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = LukinIRunPerfTestProcesses2::CustomPerfTestName;
+const auto kPerfTestName = LukinIRunPerfTestProceses3::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunTests, LukinIRunPerfTestProcesses2, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunTests, LukinIRunPerfTestProceses3, kGtestValues, kPerfTestName);
 
 }  // namespace lukin_i_torus_topology

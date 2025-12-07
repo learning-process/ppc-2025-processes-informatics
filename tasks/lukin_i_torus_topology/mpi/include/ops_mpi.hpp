@@ -21,7 +21,15 @@ class LukinIThorTopologyMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  Direction get_dir(const int sx, const int sy, const int dx, const int dy, const int cols, const int rows);
+
+  Direction GetDir(int sx, int sy, int dx, int dy, int cols, int rows);
+
+  void Send(int &message_len, std::vector<int> &message, std::vector<int> &full_route, int &route_size, int dest,
+            int rank) const;
+  void Recieve(int &message_len, std::vector<int> &message, std::vector<int> &full_route, int &route_size,
+               int source) const;
+  bool HandleTrivial(int &message_len, std::vector<int> &message, int proc_count);
+  void InitTopology(int &cols, int &rows, int proc_count) const;
 
   int start = -1;
   int end = -1;

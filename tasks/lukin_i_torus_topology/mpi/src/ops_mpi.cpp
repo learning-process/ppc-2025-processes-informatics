@@ -51,44 +51,30 @@ bool LukinIThorTopologyMPI::RunImpl() {
 
   if (rank == start) {
     message = std::get<2>(GetInput());
-    message_len = message.size();
+    message_len = static_cast<int>(message.size());
   }
 
-  if (start == end) {
-    MPI_Bcast(&message_len, 1, MPI_INT, end, MPI_COMM_WORLD);
-    message.resize(message_len);
-    MPI_Bcast(message.data(), message_len, MPI_INT, end, MPI_COMM_WORLD);
-    GetOutput() = std::make_tuple(std::vector<int>{}, message);
-    return true;
-  }
-
-  if (proc_count == 1) {
-    GetOutput() = std::make_tuple(std::vector<int>{}, message);
+  if (HandleTrivial(message_len, message, proc_count)) {
     return true;
   }
 
   int cols = -1;
   int rows = -1;
-  for (rows = sqrt(proc_count); rows > 0; rows--) {
-    if (proc_count % rows == 0) {
-      cols = proc_count / rows;
-      break;
-    }
-  }
+  InitTopology(cols, rows, proc_count);
 
   int x = rank % cols;
   int y = rank / cols;
 
-  int up = ((y - 1 + rows) % rows) * cols + x;
-  int down = ((y + 1) % rows) * cols + x;
-  int left = y * cols + ((x - 1 + cols) % cols);
-  int right = y * cols + ((x + 1) % cols);
+  int up = (((y - 1 + rows) % rows) * cols) + x;
+  int down = (((y + 1) % rows) * cols) + x;
+  int left = (y * cols) + ((x - 1 + cols) % cols);
+  int right = (y * cols) + ((x + 1) % cols);
   std::unordered_map<Direction, int> dir_mapping = {
       {Direction::UP, up}, {Direction::DOWN, down}, {Direction::LEFT, left}, {Direction::RIGHT, right}};
 
   int source = start;
   int dest = -1;
-  std::vector<int> full_route{};
+  std::vector<int> full_route;
   int route_size = -1;
 
   int end_x = end % cols;
@@ -96,26 +82,14 @@ bool LukinIThorTopologyMPI::RunImpl() {
 
   while (source != end) {
     if (rank == source) {
-      Direction direction = get_dir(x, y, end_x, end_y, cols, rows);
+      Direction direction = GetDir(x, y, end_x, end_y, cols, rows);
       dest = dir_mapping[direction];
     }
     MPI_Bcast(&dest, 1, MPI_INT, source, MPI_COMM_WORLD);
     if (rank == source) {
-      MPI_Send(&message_len, 1, MPI_INT, dest, static_cast<int>(Tags::MLEN), MPI_COMM_WORLD);
-      MPI_Send(message.data(), message_len, MPI_INT, dest, static_cast<int>(Tags::MESSAGE), MPI_COMM_WORLD);
-      full_route.push_back(rank);
-      route_size = full_route.size();
-      MPI_Send(&route_size, 1, MPI_INT, dest, static_cast<int>(Tags::ROUTESIZE), MPI_COMM_WORLD);
-      MPI_Send(full_route.data(), route_size, MPI_INT, dest, static_cast<int>(Tags::ROUTE), MPI_COMM_WORLD);
+      Send(message_len, message, full_route, route_size, dest, rank);
     } else if (rank == dest) {
-      MPI_Recv(&message_len, 1, MPI_INT, source, static_cast<int>(Tags::MLEN), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      message.resize(message_len);
-      MPI_Recv(message.data(), message_len, MPI_INT, source, static_cast<int>(Tags::MESSAGE), MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      MPI_Recv(&route_size, 1, MPI_INT, source, static_cast<int>(Tags::ROUTESIZE), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      full_route.resize(route_size);
-      MPI_Recv(full_route.data(), route_size, MPI_INT, source, static_cast<int>(Tags::ROUTE), MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+      Recieve(message_len, message, full_route, route_size, source);
     }
     source = dest;
   }
@@ -137,8 +111,7 @@ bool LukinIThorTopologyMPI::RunImpl() {
   return true;
 }
 
-LukinIThorTopologyMPI::Direction LukinIThorTopologyMPI::get_dir(const int sx, const int sy, const int dx, const int dy,
-                                                                const int cols, const int rows) {
+LukinIThorTopologyMPI::Direction LukinIThorTopologyMPI::GetDir(int sx, int sy, int dx, int dy, int cols, int rows) {
   int mx = dx - sx;
   int my = dy - sy;
 
@@ -158,6 +131,54 @@ LukinIThorTopologyMPI::Direction LukinIThorTopologyMPI::get_dir(const int sx, co
 
 bool LukinIThorTopologyMPI::PostProcessingImpl() {
   return true;
+}
+
+void LukinIThorTopologyMPI::Send(int &message_len, std::vector<int> &message, std::vector<int> &full_route,
+                                 int &route_size, int dest, int rank) const {
+  MPI_Send(&message_len, 1, MPI_INT, dest, static_cast<int>(Tags::MLEN), MPI_COMM_WORLD);
+  MPI_Send(message.data(), message_len, MPI_INT, dest, static_cast<int>(Tags::MESSAGE), MPI_COMM_WORLD);
+  full_route.push_back(rank);
+  route_size = full_route.size();
+  MPI_Send(&route_size, 1, MPI_INT, dest, static_cast<int>(Tags::ROUTESIZE), MPI_COMM_WORLD);
+  MPI_Send(full_route.data(), route_size, MPI_INT, dest, static_cast<int>(Tags::ROUTE), MPI_COMM_WORLD);
+}
+
+void LukinIThorTopologyMPI::Recieve(int &message_len, std::vector<int> &message, std::vector<int> &full_route,
+                                    int &route_size, int source) const {
+  MPI_Recv(&message_len, 1, MPI_INT, source, static_cast<int>(Tags::MLEN), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  message.resize(message_len);
+  MPI_Recv(message.data(), message_len, MPI_INT, source, static_cast<int>(Tags::MESSAGE), MPI_COMM_WORLD,
+           MPI_STATUS_IGNORE);
+  MPI_Recv(&route_size, 1, MPI_INT, source, static_cast<int>(Tags::ROUTESIZE), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  full_route.resize(route_size);
+  MPI_Recv(full_route.data(), route_size, MPI_INT, source, static_cast<int>(Tags::ROUTE), MPI_COMM_WORLD,
+           MPI_STATUS_IGNORE);
+}
+
+bool LukinIThorTopologyMPI::HandleTrivial(int &message_len, std::vector<int> &message, int proc_count) {
+  if (start == end) {
+    MPI_Bcast(&message_len, 1, MPI_INT, end, MPI_COMM_WORLD);
+    message.resize(message_len);
+    MPI_Bcast(message.data(), message_len, MPI_INT, end, MPI_COMM_WORLD);
+    GetOutput() = std::make_tuple(std::vector<int>{}, message);
+    return true;
+  }
+
+  if (proc_count == 1) {
+    GetOutput() = std::make_tuple(std::vector<int>{}, message);
+    return true;
+  }
+
+  return false;
+}
+
+void LukinIThorTopologyMPI::InitTopology(int &cols, int &rows, int proc_count) const {
+  for (rows = sqrt(proc_count); rows > 0; rows--) {
+    if (proc_count % rows == 0) {
+      cols = proc_count / rows;
+      break;
+    }
+  }
 }
 
 }  // namespace lukin_i_torus_topology
