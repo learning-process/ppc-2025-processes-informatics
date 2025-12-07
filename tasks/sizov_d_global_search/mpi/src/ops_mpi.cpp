@@ -58,7 +58,8 @@ bool SizovDGlobalSearchMPI::PreProcessingImpl() {
     const double f_left = p.func(left);
     const double f_right = p.func(right);
 
-    std::cout << "[MPI-0] Init: f_left=" << f_left << " f_right=" << f_right << std::endl;
+    std::cout << "[MPI-0] Init: left=" << left << " right=" << right << " f_left=" << f_left << " f_right=" << f_right
+              << std::endl;
 
     if (!std::isfinite(f_left) || !std::isfinite(f_right)) {
       ok = 0;
@@ -68,8 +69,13 @@ bool SizovDGlobalSearchMPI::PreProcessingImpl() {
       y_.push_back(f_left);
       y_.push_back(f_right);
 
-      best_x_ = (f_left <= f_right ? left : right);
-      best_y_ = (f_left <= f_right ? f_left : f_right);
+      if (f_left <= f_right) {
+        best_x_ = left;
+        best_y_ = f_left;
+      } else {
+        best_x_ = right;
+        best_y_ = f_right;
+      }
 
       iterations_ = 0;
       converged_ = false;
@@ -77,7 +83,7 @@ bool SizovDGlobalSearchMPI::PreProcessingImpl() {
   }
 
   MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (!ok) {
+  if (ok == 0) {
     return false;
   }
 
@@ -113,13 +119,14 @@ double SizovDGlobalSearchMPI::EstimateM(double r, int rank, int size) const {
 
   const auto intervals = n - 1U;
 
-  std::size_t begin, end;
+  std::size_t begin = 0;
+  std::size_t end = 0;
   GetChunk(intervals, rank, size, begin, end);
 
   double local_max = 0.0;
 
   for (std::size_t k = begin; k < end; ++k) {
-    std::size_t i = k + 1U;
+    const std::size_t i = k + 1U;
     const double dx = std::abs(x_[i] - x_[i - 1U]);
     if (dx <= 0.0) {
       continue;
@@ -141,11 +148,10 @@ double SizovDGlobalSearchMPI::EstimateM(double r, int rank, int size) const {
   MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
   constexpr double kMinSlope = 1e-2;
-  double m = r * std::max(global_max, kMinSlope);
+  const double m = r * std::max(global_max, kMinSlope);
 
-  if (rank == 0) {
-    std::cout << "[MPI-0] EstimateM: global_max=" << global_max << " M=" << m << std::endl;
-  }
+  // Лог EstimateM убрали, чтобы не заспамить CI
+  (void)rank;  // rank не используется после упрощения логирования
 
   return m;
 }
@@ -191,17 +197,20 @@ SizovDGlobalSearchMPI::IntervalChar SizovDGlobalSearchMPI::ComputeLocalBestInter
 
   const auto intervals = n - 1U;
 
-  std::size_t begin, end;
+  std::size_t begin = 0;
+  std::size_t end = 0;
   GetChunk(intervals, rank, size, begin, end);
 
   for (std::size_t k = begin; k < end; ++k) {
-    std::size_t i = k + 1U;
-    double c = Characteristic(i, m);
+    const std::size_t i = k + 1U;
+    const double c = Characteristic(i, m);
     if (c > res.characteristic) {
       res.characteristic = c;
       res.index = static_cast<int>(i);
     }
   }
+
+  (void)rank;  // rank не используется здесь, но нужен по сигнатуре
 
   return res;
 }
@@ -223,17 +232,15 @@ bool SizovDGlobalSearchMPI::CheckStopByAccuracy(const Problem &p, int best_idx_i
   bool stop_now = false;
 
   if (rank == 0) {
-    std::size_t i = static_cast<std::size_t>(best_idx_int);
-    double L = x_[i - 1U];
-    double R = x_[i];
-    double width = R - L;
-
-    std::cout << "[MPI-0] CheckStop: width=" << width << " accuracy=" << p.accuracy << std::endl;
+    const std::size_t i = static_cast<std::size_t>(best_idx_int);
+    const double left = x_[i - 1U];
+    const double right = x_[i];
+    const double width = right - left;
 
     if (width <= p.accuracy) {
       converged_ = true;
       stop_now = true;
-      std::cout << "[MPI-0] Stop triggered" << std::endl;
+      std::cout << "[MPI-0] Stop: width=" << width << " <= accuracy=" << p.accuracy << std::endl;
     }
   }
 
@@ -247,23 +254,24 @@ void SizovDGlobalSearchMPI::InsertNewPoint(const Problem &p, std::size_t best_id
     return;
   }
 
-  double x_new = NewPoint(best_idx, m);
-  double y_new = p.func(x_new);
+  const double x_new = NewPoint(best_idx, m);
+  const double y_new = p.func(x_new);
 
   static int insert_counter = 0;
-  if (insert_counter++ % 50 == 0) {
-    std::cout << "[MPI-0] Insert: x=" << x_new << " y=" << y_new << std::endl;
+  if (insert_counter < 5 || (insert_counter % 1000 == 0)) {
+    std::cout << "[MPI-0] Insert: x=" << x_new << " y=" << y_new << " idx=" << best_idx << std::endl;
   }
+  ++insert_counter;
 
   if (!std::isfinite(y_new)) {
     return;
   }
 
   auto pos = std::ranges::lower_bound(x_, x_new);
-  std::size_t idx = pos - x_.begin();
+  const std::size_t idx = static_cast<std::size_t>(pos - x_.begin());
 
   x_.insert(pos, x_new);
-  y_.insert(y_.begin() + idx, y_new);
+  y_.insert(y_.begin() + static_cast<std::ptrdiff_t>(idx), y_new);
 
   if (iterations_ == 1 || y_new < best_y_) {
     best_x_ = x_new;
@@ -272,7 +280,10 @@ void SizovDGlobalSearchMPI::InsertNewPoint(const Problem &p, std::size_t best_id
 }
 
 void SizovDGlobalSearchMPI::BroadcastState(int rank) {
-  int n = (rank == 0 ? static_cast<int>(x_.size()) : 0);
+  int n = 0;
+  if (rank == 0) {
+    n = static_cast<int>(x_.size());
+  }
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -320,8 +331,8 @@ bool SizovDGlobalSearchMPI::RunImpl() {
   for (int iter = 0; iter < p.max_iterations; ++iter) {
     iterations_ = iter + 1;
 
-    if (rank == 0 && (iter % 50 == 0)) {
-      std::cout << "[MPI-0] Iter=" << iterations_ << std::endl;
+    if (rank == 0 && (iterations_ == 1 || iterations_ % 1000 == 0 || iterations_ == p.max_iterations)) {
+      std::cout << "[MPI-0] Iter=" << iterations_ << " points=" << x_.size() << std::endl;
     }
 
     BroadcastState(rank);
@@ -334,12 +345,12 @@ bool SizovDGlobalSearchMPI::RunImpl() {
 
     const double m = EstimateM(p.reliability, rank, size);
 
-    IntervalChar local = ComputeLocalBestInterval(m, rank, size);
-    int best_idx_int = ReduceBestIntervalIndex(local, static_cast<int>(n));
+    const IntervalChar local = ComputeLocalBestInterval(m, rank, size);
+    const int best_idx_int = ReduceBestIntervalIndex(local, static_cast<int>(n));
 
     if (best_idx_int < 1) {
       if (rank == 0) {
-        std::cout << "[MPI-0] Invalid best_idx" << std::endl;
+        std::cout << "[MPI-0] Invalid best_idx=" << best_idx_int << std::endl;
       }
       converged_ = false;
       break;
