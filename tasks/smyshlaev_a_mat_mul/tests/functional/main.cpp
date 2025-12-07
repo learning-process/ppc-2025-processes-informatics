@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "smyshlaev_a_mat_mul/common/include/common.hpp"
@@ -35,11 +34,11 @@ class SmyshlaevAMatMulRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests
     const auto &mat_b = std::get<3>(input_data_);
     int n = static_cast<int>(mat_b.size()) / k;
 
-    std::vector<double> expected(m * n, 0.0);
+    std::vector<double> expected(static_cast<size_t>(m) * n, 0.0);
     for (int i = 0; i < m; ++i) {
       for (int j = 0; j < n; ++j) {
-        for (int l = 0; l < k; ++l) {
-          expected[i * n + j] += mat_a[i * k + l] * mat_b[l * n + j];
+        for (int idx = 0; idx < k; ++idx) {
+          expected[(i * n) + j] += mat_a[(i * k) + idx] * mat_b[(idx * n) + j];
         }
       }
     }
@@ -70,8 +69,8 @@ TEST_P(SmyshlaevAMatMulRunFuncTestsProcesses, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 TestType CreateRandomTest(int m, int n, int k, const std::string &name) {
-  std::vector<double> a(m * k);
-  std::vector<double> b(k * n);
+  std::vector<double> a(static_cast<size_t>(m) * k);
+  std::vector<double> b(static_cast<size_t>(k) * n);
   for (int i = 0; i < m * k; ++i) {
     a[i] = (i % 10) + 1.0;
   }
