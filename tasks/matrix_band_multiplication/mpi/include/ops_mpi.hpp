@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "matrix_band_multiplication/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace matrix_band_multiplication {
 
