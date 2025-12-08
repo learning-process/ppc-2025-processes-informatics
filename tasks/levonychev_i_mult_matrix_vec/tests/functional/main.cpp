@@ -42,12 +42,12 @@ class LevonychevIMultMatrixVecFuncTests : public ppc::util::BaseRunFuncTests<InT
     input_data_ = std::make_tuple(matrix, rows, cols, x);
     output_data_.resize(rows);
     for (int i = 0; i < rows; ++i) {
-    double scalar_product = 0.0;
-    for (int j = 0; j < cols; ++j) {
-      scalar_product += matrix[i*cols + j] * x[j];
+      double scalar_product = 0.0;
+      for (int j = 0; j < cols; ++j) {
+        scalar_product += matrix[i * cols + j] * x[j];
+      }
+      output_data_[i] = scalar_product;
     }
-    output_data_[i] = scalar_product;
-  }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -69,12 +69,13 @@ TEST_P(LevonychevIMultMatrixVecFuncTests, MultMatrixVec) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 8> kTestParam = {std::make_tuple(6, 6), std::make_tuple(4, 2), std::make_tuple(2, 4), std::make_tuple(1, 1), 
-std::make_tuple(2, 1), std::make_tuple(1, 2), std::make_tuple(2, 2), std::make_tuple(3, 7)};
+const std::array<TestType, 8> kTestParam = {std::make_tuple(6, 6), std::make_tuple(4, 2), std::make_tuple(2, 4),
+                                            std::make_tuple(1, 1), std::make_tuple(2, 1), std::make_tuple(1, 2),
+                                            std::make_tuple(2, 2), std::make_tuple(3, 7)};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<LevonychevIMultMatrixVecMPI, InType>(kTestParam, PPC_SETTINGS_levonychev_i_mult_matrix_vec),
-                   ppc::util::AddFuncTask<LevonychevIMultMatrixVecSEQ, InType>(kTestParam, PPC_SETTINGS_levonychev_i_mult_matrix_vec));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<LevonychevIMultMatrixVecMPI, InType>(kTestParam, PPC_SETTINGS_levonychev_i_mult_matrix_vec),
+    ppc::util::AddFuncTask<LevonychevIMultMatrixVecSEQ, InType>(kTestParam, PPC_SETTINGS_levonychev_i_mult_matrix_vec));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

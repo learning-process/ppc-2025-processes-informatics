@@ -64,7 +64,6 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
   std::vector<int> recvcounts_gatherv(proc_num);
   std::vector<int> displs_gatherv(proc_num);
 
-
   rows = std::get<1>(GetInput());
   cols = std::get<2>(GetInput());
   x = std::get<3>(GetInput());
@@ -80,7 +79,6 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
     displs_scatterv[i] = start * cols;
     displs_gatherv[i] = start;
   }
-  
 
   int local_count_of_rows = (proc_rank == (proc_num - 1)) ? ((rows / proc_num) + (rows % proc_num)) : (rows / proc_num);
   int recvcount = local_count_of_rows * cols;
@@ -106,9 +104,9 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
   }
   time2 = MPI_Wtime();
   std::cout << "Proc rank: " << proc_rank << " comp time: " << time2 - time1 << std::endl;
-  
-  MPI_Allgatherv(local_b.data(), local_count_of_rows, MPI_INT64_T, global_b.data(),
-              recvcounts_gatherv.data(), displs_gatherv.data(), MPI_INT64_T, MPI_COMM_WORLD);
+
+  MPI_Allgatherv(local_b.data(), local_count_of_rows, MPI_INT64_T, global_b.data(), recvcounts_gatherv.data(),
+                 displs_gatherv.data(), MPI_INT64_T, MPI_COMM_WORLD);
   return true;
 }
 

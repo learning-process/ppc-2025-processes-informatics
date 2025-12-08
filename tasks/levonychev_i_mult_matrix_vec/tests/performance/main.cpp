@@ -10,7 +10,6 @@
 #include "levonychev_i_mult_matrix_vec/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-
 namespace levonychev_i_mult_matrix_vec {
 
 class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -22,8 +21,8 @@ class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InT
     std::vector<double> matrix(static_cast<size_t>(ROWS_) * static_cast<size_t>(COLS_));
     std::vector<double> x(COLS_);
     for (int j = 0; j < COLS_; ++j) {
-        x[j] = double((j) % 100) * 0.57932;
-      }
+      x[j] = double((j) % 100) * 0.57932;
+    }
     for (int i = 0; i < ROWS_; ++i) {
       for (int j = 0; j < COLS_; ++j) {
         matrix[i * COLS_ + j] = double((i + j) % 100) * 89.56916;
@@ -32,12 +31,12 @@ class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InT
     input_data_ = std::make_tuple(matrix, ROWS_, COLS_, x);
     expected_result_.resize(ROWS_);
     for (int i = 0; i < ROWS_; ++i) {
-    double scalar_product = 0;
-    for (int j = 0; j < COLS_; ++j) {
-      scalar_product += matrix[i*COLS_ + j] * x[j];
+      double scalar_product = 0;
+      for (int j = 0; j < COLS_; ++j) {
+        scalar_product += matrix[i * COLS_ + j] * x[j];
+      }
+      expected_result_[i] = scalar_product;
     }
-    expected_result_[i] = scalar_product;
-  }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -54,7 +53,8 @@ TEST_P(LevonychevIMultMatrixVecPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LevonychevIMultMatrixVecMPI, LevonychevIMultMatrixVecSEQ>(PPC_SETTINGS_levonychev_i_mult_matrix_vec);
+    ppc::util::MakeAllPerfTasks<InType, LevonychevIMultMatrixVecMPI, LevonychevIMultMatrixVecSEQ>(
+        PPC_SETTINGS_levonychev_i_mult_matrix_vec);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
