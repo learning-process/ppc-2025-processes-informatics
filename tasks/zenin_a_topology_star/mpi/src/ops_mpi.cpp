@@ -19,12 +19,11 @@ bool ZeninATopologyStarMPI::ValidationImpl() {
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  const auto& in  = GetInput();
+  const auto &in = GetInput();
   size_t src = std::get<0>(in);
   size_t dst = std::get<1>(in);
 
-  if (src >= static_cast<size_t>(world_size) ||
-      dst >= static_cast<size_t>(world_size)) {
+  if (src >= static_cast<size_t>(world_size) || dst >= static_cast<size_t>(world_size)) {
     return false;
   }
   return true;
@@ -34,18 +33,17 @@ bool ZeninATopologyStarMPI::PreProcessingImpl() {
   return true;
 }
 
-
 bool ZeninATopologyStarMPI::RunImpl() {
   int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  const auto& in = GetInput();
+  const auto &in = GetInput();
   const size_t src = std::get<0>(in);
   const size_t dst = std::get<1>(in);
-  const auto& data = std::get<2>(in);
+  const auto &data = std::get<2>(in);
 
-  auto& out = GetOutput();
+  auto &out = GetOutput();
   out.clear();
 
   const int center = 0;
@@ -55,7 +53,6 @@ bool ZeninATopologyStarMPI::RunImpl() {
   const int dst_rank = static_cast<int>(dst);
   const int center_rank = center;
 
-  
   if (src_rank == dst_rank) {
     if (world_rank == src_rank) {
       out = data;
@@ -63,34 +60,26 @@ bool ZeninATopologyStarMPI::RunImpl() {
     return true;
   }
 
-  
   if (src_rank == center_rank || dst_rank == center_rank) {
     if (world_rank == src_rank) {
-      MPI_Send(data.data(), static_cast<int>(data.size()),
-               MPI_DOUBLE, dst_rank, tag, MPI_COMM_WORLD);
+      MPI_Send(data.data(), static_cast<int>(data.size()), MPI_DOUBLE, dst_rank, tag, MPI_COMM_WORLD);
     } else if (world_rank == dst_rank) {
       out.resize(data.size());
-      MPI_Recv(out.data(), static_cast<int>(out.size()),
-               src_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(out.data(), static_cast<int>(out.size()), MPI_DOUBLE, src_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
     return true;
   }
 
-  
   if (world_rank == src_rank) {
-    MPI_Send(data.data(), static_cast<int>(data.size()),
-             MPI_DOUBLE, center_rank, tag, MPI_COMM_WORLD);
+    MPI_Send(data.data(), static_cast<int>(data.size()), MPI_DOUBLE, center_rank, tag, MPI_COMM_WORLD);
   } else if (world_rank == center_rank) {
     std::vector<double> buf(data.size());
-    MPI_Recv(buf.data(), static_cast<int>(buf.size()),
-             src_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(buf.data(), static_cast<int>(buf.size()), MPI_DOUBLE, src_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-    MPI_Send(buf.data(), static_cast<int>(buf.size()),
-             dst_rank, tag, MPI_COMM_WORLD);
+    MPI_Send(buf.data(), static_cast<int>(buf.size()), MPI_DOUBLE, dst_rank, tag, MPI_COMM_WORLD);
   } else if (world_rank == dst_rank) {
     out.resize(data.size());
-    MPI_Recv(out.data(), static_cast<int>(out.size()),
-             center_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(out.data(), static_cast<int>(out.size()), MPI_DOUBLE, center_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
   return true;

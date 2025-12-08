@@ -23,12 +23,9 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  protected:
-  void SetUp() override {
-    
-  }
+  void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
-
     return true;
   }
 
@@ -52,10 +49,9 @@ const std::array<TestType, 15> kTestParam = {
     std::make_tuple(5, 3),     std::make_tuple(4, 5),   std::make_tuple(4, 3),       std::make_tuple(10000, 3),
     std::make_tuple(3, 10000), std::make_tuple(500, 1), std::make_tuple(1, 500)};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ZeninATopologyStarMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_zenin_a_topology_star),
-                                           ppc::util::AddFuncTask<ZeninATopologyStarSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_zenin_a_topology_star));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ZeninATopologyStarMPI, InType>(kTestParam, PPC_SETTINGS_zenin_a_topology_star),
+    ppc::util::AddFuncTask<ZeninATopologyStarSEQ, InType>(kTestParam, PPC_SETTINGS_zenin_a_topology_star));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

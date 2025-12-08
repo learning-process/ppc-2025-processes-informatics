@@ -19,7 +19,6 @@ class ZeninATopologyStarMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
 };
 
 }  // namespace zenin_a_topology_star

@@ -16,9 +16,7 @@ namespace zenin_a_topology_star {
 class ZeninATopologyStarPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
-  void SetUp() override {
-    
-  }
+  void SetUp() override {}
   bool CheckTestOutputData(OutType &output_data) final {
     return true;
   }
@@ -32,9 +30,8 @@ TEST_P(ZeninATopologyStarPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZeninATopologyStarMPI, ZeninATopologyStarSEQ>(
-        PPC_SETTINGS_zenin_a_topology_star);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZeninATopologyStarMPI, ZeninATopologyStarSEQ>(
+    PPC_SETTINGS_zenin_a_topology_star);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
