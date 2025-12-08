@@ -1,7 +1,8 @@
 #include "matrix_band_multiplication/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cstddef>
+
+#include "matrix_band_multiplication/common/include/common.hpp"
 
 namespace matrix_band_multiplication {
 
@@ -37,7 +38,7 @@ bool MatrixBandMultiplicationSeq::PreProcessingImpl() {
   for (std::size_t i = 0; i < rows_b; ++i) {
     const std::size_t row_offset = i * cols_b;
     for (std::size_t j = 0; j < cols_b; ++j) {
-      transposed_b_[j * rows_b + i] = matrix_b.values[row_offset + j];
+      transposed_b_[(j * rows_b) + i] = matrix_b.values[row_offset + j];
     }
   }
   return true;
@@ -52,14 +53,14 @@ bool MatrixBandMultiplicationSeq::RunImpl() {
   const double *a_data = matrix_a.values.data();
   const double *b_data = transposed_b_.data();
   for (std::size_t i = 0; i < rows_a; ++i) {
-    const double *a_row = a_data + i * cols_a;
+    const double *a_row = a_data + (i * cols_a);
     for (std::size_t j = 0; j < cols_b; ++j) {
-      const double *b_col = b_data + j * cols_a;
+      const double *b_col = b_data + (j * cols_a);
       double sum = 0.0;
       for (std::size_t k = 0; k < cols_a; ++k) {
         sum += a_row[k] * b_col[k];
       }
-      result_[i * cols_b + j] = sum;
+      result_[(i * cols_b) + j] = sum;
     }
   }
   return true;

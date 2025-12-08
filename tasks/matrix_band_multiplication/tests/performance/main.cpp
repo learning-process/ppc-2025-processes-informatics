@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "matrix_band_multiplication/common/include/common.hpp"
@@ -58,7 +57,7 @@ class MatrixBandMultiplicationPerfTests : public ppc::util::BaseRunPerfTests<InT
   }
 
  private:
-  Matrix ComputeReference() const {
+  [[nodiscard]] Matrix ComputeReference() const {
     Matrix result;
     result.rows = input_.a.rows;
     result.cols = input_.b.cols;

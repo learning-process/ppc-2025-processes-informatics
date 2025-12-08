@@ -3,8 +3,13 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
-#include <numeric>
+#include <ranges>
+#include <utility>
+#include <vector>
+
+#include "matrix_band_multiplication/common/include/common.hpp"
 
 namespace matrix_band_multiplication {
 
@@ -67,8 +72,8 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
     cols_b_ = matrix_b.cols;
   }
 
-  std::size_t dims[4] = {rows_a_, cols_a_, rows_b_, cols_b_};
-  MPI_Bcast(dims, 4, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+  std::array<std::size_t, 4> dims = {rows_a_, cols_a_, rows_b_, cols_b_};                            // GCOVR_EXCL_LINE
+  MPI_Bcast(dims.data(), static_cast<int>(dims.size()), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // GCOVR_EXCL_LINE
   rows_a_ = dims[0];
   cols_a_ = dims[1];
   rows_b_ = dims[2];
@@ -82,8 +87,8 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
   row_displs_ = BuildDisplacements(row_counts_);
 
   std::vector<int> send_counts(row_counts_.size());
-  std::transform(row_counts_.begin(), row_counts_.end(), send_counts.begin(),
-                 [this](int rows) { return rows * static_cast<int>(cols_a_); });
+  std::ranges::transform(row_counts_, send_counts.begin(),
+                         [this](int rows) { return rows * static_cast<int>(cols_a_); });
   std::vector<int> send_displs = BuildDisplacements(send_counts);
 
   const double *a_ptr = rank_ == 0 ? matrix_a.values.data() : nullptr;
@@ -95,18 +100,19 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   full_b_.resize(rows_b_ * cols_b_);
   if (rank_ == 0) {
-    std::copy(matrix_b.values.begin(), matrix_b.values.end(), full_b_.begin());
+    std::ranges::copy(matrix_b.values, full_b_.begin());
   }
   MPI_Bcast(full_b_.data(), static_cast<int>(rows_b_ * cols_b_), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  local_result_.assign(static_cast<std::size_t>(row_counts_[rank_] * static_cast<int>(cols_b_)), 0.0);
+  const auto local_elems_result = static_cast<std::size_t>(row_counts_[rank_]) * cols_b_;
+  local_result_.assign(local_elems_result, 0.0);
 
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
-  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(),
-                 [this](int rows) { return rows * static_cast<int>(cols_b_); });
-  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(),
-                 [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
+  std::ranges::transform(result_counts_, result_counts_.begin(),
+                         [this](int rows) { return rows * static_cast<int>(cols_b_); });
+  std::ranges::transform(result_displs_, result_displs_.begin(),
+                         [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
 
   return true;
 }
@@ -117,11 +123,11 @@ bool MatrixBandMultiplicationMpi::RunImpl() {
     for (std::size_t j = 0; j < cols_b_; ++j) {
       double sum = 0.0;
       for (std::size_t k = 0; k < cols_a_; ++k) {
-        const std::size_t a_idx = static_cast<std::size_t>(i) * cols_a_ + k;
-        const std::size_t b_idx = k * cols_b_ + j;
+        const std::size_t a_idx = (static_cast<std::size_t>(i) * cols_a_) + k;
+        const std::size_t b_idx = (k * cols_b_) + j;
         sum += local_a_[a_idx] * full_b_[b_idx];
       }
-      local_result_[static_cast<std::size_t>(i) * cols_b_ + j] = sum;
+      local_result_[(static_cast<std::size_t>(i) * cols_b_) + j] = sum;
     }
   }
   return true;
@@ -144,8 +150,8 @@ bool MatrixBandMultiplicationMpi::PostProcessingImpl() {
     output.values = std::move(gathered);
   }
 
-  std::size_t dims[2] = {output.rows, output.cols};
-  MPI_Bcast(dims, 2, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+  std::array<std::size_t, 2> dims = {output.rows, output.cols};                                      // GCOVR_EXCL_LINE
+  MPI_Bcast(dims.data(), static_cast<int>(dims.size()), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // GCOVR_EXCL_LINE
   output.rows = dims[0];
   output.cols = dims[1];
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "matrix_band_multiplication/common/include/common.hpp"

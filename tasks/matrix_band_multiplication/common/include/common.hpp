@@ -23,7 +23,8 @@ using OutType = Matrix;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 inline std::size_t FlattenIndex(std::size_t row, std::size_t col, std::size_t cols) {
-  return row * cols + col;
+  const std::size_t row_offset = row * cols;
+  return row_offset + col;
 }
 
 }  // namespace matrix_band_multiplication

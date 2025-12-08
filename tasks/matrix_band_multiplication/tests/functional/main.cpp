@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -10,6 +11,7 @@
 #include "matrix_band_multiplication/mpi/include/ops_mpi.hpp"
 #include "matrix_band_multiplication/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace matrix_band_multiplication {
 
@@ -80,9 +82,12 @@ class MatrixBandMultiplicationFuncTests : public ppc::util::BaseRunFuncTests<InT
 namespace {
 
 const std::array<TestType, 3> kTestParams = {
-    TestType{Matrix{2, 2, {1.0, 2.0, 3.0, 4.0}}, Matrix{2, 2, {5.0, 6.0, 7.0, 8.0}}},
-    TestType{Matrix{2, 3, {1.0, -1.0, 2.0, 0.0, 3.0, -2.0}}, Matrix{3, 2, {4.0, 1.0, 0.0, -3.0, 5.0, 2.0}}},
-    TestType{Matrix{3, 2, {1.0, 0.0, -1.0, 2.0, 3.0, -2.0}}, Matrix{2, 3, {2.0, 1.0, 0.0, 3.0, -1.0, 4.0}}}};
+    TestType{Matrix{.rows = 2, .cols = 2, .values = {1.0, 2.0, 3.0, 4.0}},
+             Matrix{.rows = 2, .cols = 2, .values = {5.0, 6.0, 7.0, 8.0}}},
+    TestType{Matrix{.rows = 2, .cols = 3, .values = {1.0, -1.0, 2.0, 0.0, 3.0, -2.0}},
+             Matrix{.rows = 3, .cols = 2, .values = {4.0, 1.0, 0.0, -3.0, 5.0, 2.0}}},
+    TestType{Matrix{.rows = 3, .cols = 2, .values = {1.0, 0.0, -1.0, 2.0, 3.0, -2.0}},
+             Matrix{.rows = 2, .cols = 3, .values = {2.0, 1.0, 0.0, 3.0, -1.0, 4.0}}}};
 
 const auto kTaskList = std::tuple_cat(
     ppc::util::AddFuncTask<MatrixBandMultiplicationSeq, InType>(kTestParams, PPC_SETTINGS_matrix_band_multiplication),
