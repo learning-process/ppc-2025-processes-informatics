@@ -7,6 +7,8 @@
 
 namespace matrix_band_multiplication {
 
+// GCOVR_EXCL_START
+// LCOV_EXCL_START
 struct Matrix {
   std::size_t rows = 0;
   std::size_t cols = 0;
@@ -17,6 +19,8 @@ struct MatrixMulInput {
   Matrix a;
   Matrix b;
 };
+// GCOVR_EXCL_STOP
+// LCOV_EXCL_STOP
 
 using InType = MatrixMulInput;
 using OutType = Matrix;
