@@ -13,7 +13,6 @@
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -64,54 +63,51 @@ class Lexer {
       t.type = TokenType::kEnd;
       return t;
     }
-
     const char ch = expression_[pos_];
-
     if ((std::isdigit(static_cast<unsigned char>(ch)) != 0) || ch == '.') {
       return ParseNumber();
     }
-
     if (IsIdentifierStart(ch)) {
       return ParseIdentifier();
     }
-
     ++pos_;
     Token t;
-    switch (ch) {
-      case '+':
-        t.type = TokenType::kPlus;
-        t.text = "+";
-        return t;
-      case '-':
-        t.type = TokenType::kMinus;
-        t.text = "-";
-        return t;
-      case '*':
-        t.type = TokenType::kStar;
-        t.text = "*";
-        return t;
-      case '/':
-        t.type = TokenType::kSlash;
-        t.text = "/";
-        return t;
-      case '^':
-        t.type = TokenType::kCaret;
-        t.text = "^";
-        return t;
-      case '(':
-        t.type = TokenType::kLParen;
-        t.text = "(";
-        return t;
-      case ')':
-        t.type = TokenType::kRParen;
-        t.text = ")";
-        return t;
-      default:
-        break;
+    if (ch == '+') {
+      t.type = TokenType::kPlus;
+      t.text = "+";
+      return t;
     }
-
-    throw std::runtime_error("Unexpected character '" + std::string(1, ch) + "' at position " +
-                             std::to_string(pos_ - 1) + " in expression " + path_.string());
+    if (ch == '-') {
+      t.type = TokenType::kMinus;
+      t.text = "-";
+      return t;
+    }
+    if (ch == '*') {
+      t.type = TokenType::kStar;
+      t.text = "*";
+      return t;
+    }
+    if (ch == '/') {
+      t.type = TokenType::kSlash;
+      t.text = "/";
+      return t;
+    }
+    if (ch == '^') {
+      t.type = TokenType::kCaret;
+      t.text = "^";
+      return t;
+    }
+    if (ch == '(') {
+      t.type = TokenType::kLParen;
+      t.text = "(";
+      return t;
+    }
+    if (ch == ')') {
+      t.type = TokenType::kRParen;
+      t.text = ")";
+      return t;
+    }
+    throw std::runtime_error("Unexpected character");
   }
 
  private:
@@ -126,10 +122,9 @@ class Lexer {
     char *end = nullptr;
     const double value = std::strtod(begin, &end);
     if (begin == end) {
-      throw std::runtime_error("Invalid number in " + path_.string());
+      throw std::runtime_error("Invalid number");
     }
     pos_ = static_cast<std::size_t>(end - expression_.c_str());
-
     Token t;
     t.type = TokenType::kNumber;
     t.number_value = value;
@@ -163,15 +158,15 @@ class Lexer {
 class Expr {
  public:
   virtual ~Expr() = default;
-  [[nodiscard]] virtual double Eval(double x) const = 0;
+  virtual double Eval(double x) const = 0;
 };
 
-using ExprPtr = std::shared_ptr<Expr>;
+using ExprPtr = std::unique_ptr<Expr>;
 
 class ConstantExpr : public Expr {
  public:
   explicit ConstantExpr(double v) : v_(v) {}
-  [[nodiscard]] double Eval(double /*x*/) const override {
+  double Eval(double) const override {
     return v_;
   }
 
@@ -181,8 +176,7 @@ class ConstantExpr : public Expr {
 
 class VariableExpr : public Expr {
  public:
-  VariableExpr() = default;
-  [[nodiscard]] double Eval(double x) const override {
+  double Eval(double x) const override {
     return x;
   }
 };
@@ -190,12 +184,9 @@ class VariableExpr : public Expr {
 class UnaryExpr : public Expr {
  public:
   UnaryExpr(char op, ExprPtr child) : op_(op), child_(std::move(child)) {}
-  [[nodiscard]] double Eval(double x) const override {
-    const double v = child_->Eval(x);
-    if (op_ == '-') {
-      return -v;
-    }
-    return v;
+  double Eval(double x) const override {
+    double v = child_->Eval(x);
+    return (op_ == '-') ? -v : v;
   }
 
  private:
@@ -206,10 +197,9 @@ class UnaryExpr : public Expr {
 class BinaryExpr : public Expr {
  public:
   BinaryExpr(char op, ExprPtr l, ExprPtr r) : op_(op), left_(std::move(l)), right_(std::move(r)) {}
-
-  [[nodiscard]] double Eval(double x) const override {
-    const double a = left_->Eval(x);
-    const double b = right_->Eval(x);
+  double Eval(double x) const override {
+    double a = left_->Eval(x);
+    double b = right_->Eval(x);
     switch (op_) {
       case '+':
         return a + b;
@@ -221,9 +211,8 @@ class BinaryExpr : public Expr {
         return a / b;
       case '^':
         return std::pow(a, b);
-      default:
-        return std::numeric_limits<double>::quiet_NaN();
     }
+    return std::numeric_limits<double>::quiet_NaN();
   }
 
  private:
@@ -235,10 +224,8 @@ class BinaryExpr : public Expr {
 class FunctionCallExpr : public Expr {
  public:
   using FuncPtr = double (*)(double);
-
   FunctionCallExpr(FuncPtr f, ExprPtr arg) : func_(f), arg_(std::move(arg)) {}
-
-  [[nodiscard]] double Eval(double x) const override {
+  double Eval(double x) const override {
     return func_(arg_->Eval(x));
   }
 
@@ -262,8 +249,7 @@ class Parser {
  private:
   struct OperatorEntry {
     enum class Kind : std::uint8_t { kPlus, kMinus, kMul, kDiv, kPow, kUnaryMinus, kLParen, kFunc };
-
-    Kind kind = Kind::kPlus;
+    Kind kind;
     FunctionCallExpr::FuncPtr func = nullptr;
   };
 
@@ -271,13 +257,13 @@ class Parser {
     current_ = lexer_.Next();
   }
 
-  [[nodiscard]] bool Check(TokenType t) const {
+  bool Check(TokenType t) const {
     return current_.type == t;
   }
 
   void Expect(TokenType t) {
     if (!Check(t)) {
-      throw std::runtime_error("Unexpected token in " + path_.string());
+      throw std::runtime_error("Unexpected token");
     }
     Advance();
   }
@@ -295,35 +281,30 @@ class Parser {
       case OperatorEntry::Kind::kUnaryMinus:
       case OperatorEntry::Kind::kFunc:
         return 4;
+
       case OperatorEntry::Kind::kLParen:
-      default:
         return 0;
     }
+    return 0;
   }
 
   static bool IsRightAssociative(const OperatorEntry &op) {
     return op.kind == OperatorEntry::Kind::kPow || op.kind == OperatorEntry::Kind::kUnaryMinus;
   }
 
-  static void ApplyOperator(std::vector<ExprPtr> &values, const OperatorEntry &op, const std::filesystem::path &path) {
+  static void ApplyOperator(std::vector<ExprPtr> &values, const OperatorEntry &op) {
     switch (op.kind) {
       case OperatorEntry::Kind::kUnaryMinus: {
-        if (values.empty()) {
-          throw std::runtime_error("Missing operand for unary '-' in " + path.string());
-        }
-        auto a = values.back();
+        auto a = std::move(values.back());
         values.pop_back();
-        values.push_back(std::make_shared<UnaryExpr>('-', a));
+        values.push_back(std::make_unique<UnaryExpr>('-', std::move(a)));
         return;
       }
 
       case OperatorEntry::Kind::kFunc: {
-        if (values.empty()) {
-          throw std::runtime_error("Missing operand for function call in " + path.string());
-        }
-        auto arg = values.back();
+        auto arg = std::move(values.back());
         values.pop_back();
-        values.push_back(std::make_shared<FunctionCallExpr>(op.func, arg));
+        values.push_back(std::make_unique<FunctionCallExpr>(op.func, std::move(arg)));
         return;
       }
 
@@ -332,138 +313,126 @@ class Parser {
       case OperatorEntry::Kind::kMul:
       case OperatorEntry::Kind::kDiv:
       case OperatorEntry::Kind::kPow: {
-        if (values.size() < 2U) {
-          throw std::runtime_error("Missing operands for binary operator in " + path.string());
-        }
-        auto rhs = values.back();
+        auto rhs = std::move(values.back());
         values.pop_back();
-        auto lhs = values.back();
+        auto lhs = std::move(values.back());
         values.pop_back();
 
-        char op_char = '?';
+        char c = '?';
         if (op.kind == OperatorEntry::Kind::kPlus) {
-          op_char = '+';
+          c = '+';
         } else if (op.kind == OperatorEntry::Kind::kMinus) {
-          op_char = '-';
+          c = '-';
         } else if (op.kind == OperatorEntry::Kind::kMul) {
-          op_char = '*';
+          c = '*';
         } else if (op.kind == OperatorEntry::Kind::kDiv) {
-          op_char = '/';
+          c = '/';
         } else if (op.kind == OperatorEntry::Kind::kPow) {
-          op_char = '^';
+          c = '^';
         }
 
-        values.push_back(std::make_shared<BinaryExpr>(op_char, lhs, rhs));
+        values.push_back(std::make_unique<BinaryExpr>(c, std::move(lhs), std::move(rhs)));
         return;
       }
 
       case OperatorEntry::Kind::kLParen:
-      default:
         return;
     }
   }
 
   static FunctionCallExpr::FuncPtr ResolveFunction(const std::string &name) {
-    static const std::unordered_map<std::string, double (*)(double)> kMap = {
-        {"sin", std::sin}, {"cos", std::cos},   {"tan", std::tan}, {"exp", std::exp},
-        {"log", std::log}, {"sqrt", std::sqrt}, {"abs", std::fabs}};
-    const auto it = kMap.find(name);
-    if (it == kMap.end()) {
-      throw std::runtime_error("Unknown function '" + name + "'");
+    if (name == "sin") {
+      return std::sin;
     }
-    return it->second;
+    if (name == "cos") {
+      return std::cos;
+    }
+    if (name == "tan") {
+      return std::tan;
+    }
+    if (name == "exp") {
+      return std::exp;
+    }
+    if (name == "log") {
+      return std::log;
+    }
+    if (name == "sqrt") {
+      return std::sqrt;
+    }
+    if (name == "abs") {
+      return static_cast<double (*)(double)>(std::fabs);
+    }
+    throw std::runtime_error("Unknown function");
   }
 
-  static void PushUnaryMinus(std::vector<OperatorEntry> &ops) {
-    OperatorEntry op;
-    op.kind = OperatorEntry::Kind::kUnaryMinus;
-    op.func = nullptr;
-    ops.push_back(op);
+  void PushUnaryMinus(std::vector<OperatorEntry> &ops) {
+    ops.push_back({OperatorEntry::Kind::kUnaryMinus, nullptr});
   }
 
-  static void PushLParen(std::vector<OperatorEntry> &ops) {
-    OperatorEntry op;
-    op.kind = OperatorEntry::Kind::kLParen;
-    op.func = nullptr;
-    ops.push_back(op);
+  void PushLParen(std::vector<OperatorEntry> &ops) {
+    ops.push_back({OperatorEntry::Kind::kLParen, nullptr});
   }
 
-  static void PushFunction(std::vector<OperatorEntry> &ops, const std::string &id) {
-    OperatorEntry func_op;
-    func_op.kind = OperatorEntry::Kind::kFunc;
-    func_op.func = ResolveFunction(id);
-    ops.push_back(func_op);
-
+  void PushFunction(std::vector<OperatorEntry> &ops, const std::string &id) {
+    ops.push_back({OperatorEntry::Kind::kFunc, ResolveFunction(id)});
     PushLParen(ops);
   }
 
   void PushBinaryOperator(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, OperatorEntry::Kind kind) {
-    OperatorEntry new_op;
-    new_op.kind = kind;
-    new_op.func = nullptr;
-
+    OperatorEntry new_op{kind, nullptr};
     while (!ops.empty() && ops.back().kind != OperatorEntry::Kind::kLParen) {
-      const int top_prec = Precedence(ops.back());
-      const int new_prec = Precedence(new_op);
-
-      if (top_prec > new_prec || (!IsRightAssociative(new_op) && top_prec == new_prec)) {
-        ApplyOperator(values, ops.back(), path_);
+      int top = Precedence(ops.back());
+      int now = Precedence(new_op);
+      if (top > now || (!IsRightAssociative(new_op) && top == now)) {
+        ApplyOperator(values, ops.back());
         ops.pop_back();
       } else {
         break;
       }
     }
-
     ops.push_back(new_op);
   }
 
   void HandleIdentifierToken(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, bool &expect_value) {
-    const std::string id = current_.text;
+    std::string id = current_.text;
     Advance();
-
     if (Check(TokenType::kLParen)) {
       PushFunction(ops, id);
       Advance();
       expect_value = true;
       return;
     }
-
     if (id == "x") {
-      values.push_back(std::make_shared<VariableExpr>());
+      values.push_back(std::make_unique<VariableExpr>());
       expect_value = false;
       return;
     }
-
     if (id == "pi") {
-      values.push_back(std::make_shared<ConstantExpr>(std::acos(-1.0)));
+      values.push_back(std::make_unique<ConstantExpr>(std::acos(-1.0)));
       expect_value = false;
       return;
     }
-
-    throw std::runtime_error("Unknown identifier '" + id + "'");
+    throw std::runtime_error("Unknown identifier");
   }
 
   void HandleExpectValue(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, bool &expect_value) {
     if (Check(TokenType::kNumber)) {
-      const double v = current_.number_value;
+      double v = current_.number_value;
       Advance();
-      values.push_back(std::make_shared<ConstantExpr>(v));
+      values.push_back(std::make_unique<ConstantExpr>(v));
       expect_value = false;
       return;
     }
-
     if (Check(TokenType::kIdentifier)) {
       HandleIdentifierToken(values, ops, expect_value);
       return;
     }
-
     if (Check(TokenType::kLParen)) {
       PushLParen(ops);
       Advance();
       expect_value = true;
       return;
     }
-
     if (Check(TokenType::kPlus) || Check(TokenType::kMinus)) {
       if (Check(TokenType::kMinus)) {
         PushUnaryMinus(ops);
@@ -472,22 +441,20 @@ class Parser {
       expect_value = true;
       return;
     }
-
-    throw std::runtime_error("Expected value in " + path_.string());
+    throw std::runtime_error("Expected value");
   }
 
   void HandleRParen(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops) {
     while (!ops.empty() && ops.back().kind != OperatorEntry::Kind::kLParen) {
-      ApplyOperator(values, ops.back(), path_);
+      ApplyOperator(values, ops.back());
       ops.pop_back();
     }
     if (ops.empty()) {
-      throw std::runtime_error("Mismatched parentheses in " + path_.string());
+      throw std::runtime_error("Mismatched parentheses");
     }
     ops.pop_back();
-
     if (!ops.empty() && ops.back().kind == OperatorEntry::Kind::kFunc) {
-      ApplyOperator(values, ops.back(), path_);
+      ApplyOperator(values, ops.back());
       ops.pop_back();
     }
   }
@@ -496,7 +463,6 @@ class Parser {
     if (Check(TokenType::kPlus) || Check(TokenType::kMinus) || Check(TokenType::kStar) || Check(TokenType::kSlash) ||
         Check(TokenType::kCaret)) {
       OperatorEntry::Kind kind = OperatorEntry::Kind::kPlus;
-
       if (Check(TokenType::kPlus)) {
         kind = OperatorEntry::Kind::kPlus;
       } else if (Check(TokenType::kMinus)) {
@@ -508,45 +474,41 @@ class Parser {
       } else {
         kind = OperatorEntry::Kind::kPow;
       }
-
       PushBinaryOperator(values, ops, kind);
       Advance();
       expect_value = true;
       return true;
     }
-
     if (Check(TokenType::kRParen)) {
       HandleRParen(values, ops);
       Advance();
       return true;
     }
-
     if (Check(TokenType::kEnd)) {
       return false;
     }
-
-    throw std::runtime_error("Unexpected token in " + path_.string());
+    throw std::runtime_error("Unexpected token");
   }
 
   void FinalizeExpression(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops) {
     while (!ops.empty()) {
       if (ops.back().kind == OperatorEntry::Kind::kLParen) {
-        throw std::runtime_error("Mismatched parentheses in " + path_.string());
+        throw std::runtime_error("Mismatched parentheses");
       }
-      ApplyOperator(values, ops.back(), path_);
+      ApplyOperator(values, ops.back());
       ops.pop_back();
     }
-
-    if (values.size() != 1U) {
-      throw std::runtime_error("Invalid expression in " + path_.string());
+    if (values.size() != 1) {
+      throw std::runtime_error("Invalid expression");
     }
   }
 
   ExprPtr ParseExpression() {
     std::vector<ExprPtr> values;
     std::vector<OperatorEntry> ops;
+    values.reserve(16);
+    ops.reserve(16);
     bool expect_value = true;
-
     while (true) {
       if (expect_value) {
         HandleExpectValue(values, ops, expect_value);
@@ -556,9 +518,8 @@ class Parser {
         }
       }
     }
-
     FinalizeExpression(values, ops);
-    return values.back();
+    return std::move(values.back());
   }
 
   Lexer lexer_;
@@ -566,39 +527,39 @@ class Parser {
   std::filesystem::path path_;
 };
 
-Function BuildFunction(const nlohmann::json &json, const std::filesystem::path &path) {
-  if (!json.contains("expression")) {
-    throw std::runtime_error("Missing expression field");
+struct SharedExprFunctor {
+  std::shared_ptr<Expr> ptr;
+  double operator()(double x) const {
+    return ptr->Eval(x);
   }
+};
 
-  const std::string expr = json.at("expression").get<std::string>();
-
+Function BuildFunction(const nlohmann::json &json, const std::filesystem::path &path) {
+  const std::string expr = json.at("expression");
   Lexer lex(expr, path);
   Parser parser(std::move(lex), path);
   ExprPtr ast = parser.Parse();
-
-  return Function{[ast](double x) { return ast->Eval(x); }};
+  auto sp = std::shared_ptr<Expr>(std::move(ast));
+  return Function{SharedExprFunctor{sp}};
 }
 
-[[nodiscard]] double ComputeSafeStep(double requested_step, double span) {
+double ComputeSafeStep(double requested_step, double span) {
   if (span <= 0.0) {
     return 1e-4;
   }
   if (requested_step > 0.0 && requested_step < span) {
     return requested_step;
   }
-  const double by_points = span / 1000.0;
+  double by_points = span / 1000.0;
   return std::max(by_points, 1e-4);
 }
 
-[[nodiscard]] bool IsIncrementAcceptable(double value, double last_value, double dx, double value_threshold,
-                                         double slope_threshold) {
+bool IsIncrementAcceptable(double value, double last_value, double dx, double value_threshold, double slope_threshold) {
   if (!std::isfinite(last_value)) {
     return true;
   }
-  const double diff = std::abs(value - last_value);
-  const double slope = (dx != 0.0) ? diff / std::abs(dx) : std::numeric_limits<double>::infinity();
-
+  double diff = std::abs(value - last_value);
+  double slope = (dx != 0.0) ? diff / std::abs(dx) : std::numeric_limits<double>::infinity();
   if (diff > value_threshold) {
     return false;
   }
@@ -611,118 +572,91 @@ Function BuildFunction(const nlohmann::json &json, const std::filesystem::path &
   return true;
 }
 
-[[nodiscard]] bool ShouldAcceptRightEndpoint(double vr, double last_value, double value_threshold) {
+bool ShouldAcceptRightEndpoint(double vr, double last_value, double value_threshold) {
   if (!std::isfinite(vr)) {
     return false;
   }
   if (!std::isfinite(last_value)) {
     return true;
   }
-
-  const double diff = std::abs(vr - last_value);
-
+  double diff = std::abs(vr - last_value);
   if (diff > value_threshold) {
     return false;
   }
-
   if (diff > 1e5 * std::abs(last_value)) {
     return false;
   }
-
   return true;
 }
 
 ReferenceResult BruteForceReference(const Problem &p, double step) {
-  const double span = p.right - p.left;
-  const double safe_step = ComputeSafeStep(step, span);
-
+  double span = p.right - p.left;
+  double safe_step = ComputeSafeStep(step, span);
   ReferenceResult r;
   r.argmin = p.left;
   r.value = std::numeric_limits<double>::infinity();
-
   double x = p.left;
   constexpr double kValueThreshold = 1e3;
   constexpr double kSlopeThreshold = 1e3;
-
-  double last_eval_value = std::numeric_limits<double>::quiet_NaN();
-  double last_eval_x = std::numeric_limits<double>::quiet_NaN();
-
+  double last = std::numeric_limits<double>::quiet_NaN();
+  double last_x = std::numeric_limits<double>::quiet_NaN();
   while (x <= p.right + 1e-12) {
-    const double v = p.func(x);
-    bool accept = std::isfinite(v);
-
-    if (accept && std::isfinite(last_eval_value)) {
-      const double dx = x - last_eval_x;
-      if (!IsIncrementAcceptable(v, last_eval_value, dx, kValueThreshold, kSlopeThreshold)) {
-        accept = false;
+    double v = p.func(x);
+    bool ok = std::isfinite(v);
+    if (ok && std::isfinite(last)) {
+      double dx = x - last_x;
+      if (!IsIncrementAcceptable(v, last, dx, kValueThreshold, kSlopeThreshold)) {
+        ok = false;
       }
     }
-
-    if (accept && v < r.value) {
+    if (ok && v < r.value) {
       r.value = v;
       r.argmin = x;
     }
-
     if (std::isfinite(v)) {
-      last_eval_value = v;
-      last_eval_x = x;
+      last = v;
+      last_x = x;
     }
-
     x += safe_step;
   }
-
-  const double vr = p.func(p.right);
-  if (ShouldAcceptRightEndpoint(vr, last_eval_value, kValueThreshold) && vr < r.value) {
+  double vr = p.func(p.right);
+  if (ShouldAcceptRightEndpoint(vr, last, kValueThreshold) && vr < r.value) {
     r.value = vr;
     r.argmin = p.right;
   }
-
   return r;
 }
 
 std::vector<TestCase> LoadTestCasesFromData() {
   namespace fs = std::filesystem;
-  const fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
-
+  fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
   std::ifstream file(json_path);
-  if (!file.is_open()) {
+  if (!file) {
     throw std::runtime_error("Cannot open tests.json");
   }
-
   nlohmann::json data;
   file >> data;
-
   if (!data.is_array()) {
     throw std::runtime_error("tests.json must contain array");
   }
-
   std::vector<TestCase> cases;
   cases.reserve(data.size());
-
   for (auto &item : data) {
     TestCase t;
-    t.name = item.at("name").get<std::string>();
-
+    t.name = item.at("name");
     const auto &pj = item.at("problem");
-
     Problem p{};
     p.left = pj.at("left");
     p.right = pj.at("right");
-
     p.accuracy = 1e-4;
     p.reliability = 2.5;
     p.max_iterations = 5000;
-
     p.func = BuildFunction(item.at("function"), json_path);
-
     t.problem = p;
-
     t.brute_force_step = 1e-5;
     t.tolerance = 0.002;
-
     cases.push_back(std::move(t));
   }
-
   return cases;
 }
 
@@ -731,20 +665,16 @@ using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
 std::vector<FuncParam> BuildTestTasks(const std::vector<TestType> &tests) {
   std::vector<FuncParam> tasks;
   tasks.reserve(tests.size() * 2U);
-
-  const std::string mpi_name =
+  std::string mpi_name =
       std::string(ppc::util::GetNamespace<SizovDGlobalSearchMPI>()) + "_" +
       ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
-
-  const std::string seq_name =
+  std::string seq_name =
       std::string(ppc::util::GetNamespace<SizovDGlobalSearchSEQ>()) + "_" +
       ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
-
   for (const auto &t : tests) {
     tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, mpi_name, t);
     tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, seq_name, t);
   }
-
   return tasks;
 }
 
@@ -752,37 +682,30 @@ std::vector<FuncParam> BuildTestTasks(const std::vector<TestType> &tests) {
 
 class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_case) {
-    return test_case.name;
+  static std::string PrintTestParam(const TestType &t) {
+    return t.name;
   }
 
  protected:
   void SetUp() override {
     test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_ = test_case_.problem;
-
     reference_ = BruteForceReference(input_, test_case_.brute_force_step);
   }
 
   bool CheckTestOutputData(OutType &o) final {
-    const double dx = std::abs(o.argmin - reference_.argmin);
-    const double dv = std::abs(o.value - reference_.value);
-
-    const double dx_tol = test_case_.tolerance;
-    const double dv_tol = 5.0 * test_case_.tolerance;
-
-    const bool good_numerically = (dx <= dx_tol && dv <= dv_tol);
-
-    bool cross_match = false;
+    double dx = std::abs(o.argmin - reference_.argmin);
+    double dv = std::abs(o.value - reference_.value);
+    double dx_tol = test_case_.tolerance;
+    double dv_tol = 5.0 * test_case_.tolerance;
+    bool good = (dx <= dx_tol && dv <= dv_tol);
+    bool cross = false;
     if (dv <= dv_tol) {
-      const auto &problem = input_;
-      const double ref_at_result = problem.func(o.argmin);
-      const double result_at_ref = problem.func(reference_.argmin);
-      cross_match =
-          (std::abs(ref_at_result - reference_.value) <= dv_tol) && (std::abs(result_at_ref - o.value) <= dv_tol);
+      double r1 = input_.func(o.argmin);
+      double r2 = input_.func(reference_.argmin);
+      cross = (std::abs(r1 - reference_.value) <= dv_tol) && (std::abs(r2 - o.value) <= dv_tol);
     }
-
-    return good_numerically || cross_match;
+    return good || cross;
   }
 
   InType GetTestInputData() final {
@@ -790,7 +713,7 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
   }
 
  private:
-  TestType test_case_;
+  TestCase test_case_;
   InType input_;
   ReferenceResult reference_{};
 };
@@ -803,11 +726,10 @@ TEST_P(SizovDGlobalSearchFunctionalTests, FindsGlobalMinimum) {
 
 const auto kTests = LoadTestCasesFromData();
 const auto kTasks = BuildTestTasks(kTests);
-const auto kGtestValues = ::testing::ValuesIn(kTasks);
+const auto kVals = ::testing::ValuesIn(kTasks);
+const auto kName = SizovDGlobalSearchFunctionalTests::PrintFuncTestName<SizovDGlobalSearchFunctionalTests>;
 
-const auto kTestName = SizovDGlobalSearchFunctionalTests::PrintFuncTestName<SizovDGlobalSearchFunctionalTests>;
-
-INSTANTIATE_TEST_SUITE_P(GlobalSearch, SizovDGlobalSearchFunctionalTests, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(GlobalSearch, SizovDGlobalSearchFunctionalTests, kVals, kName);
 
 }  // namespace
 
