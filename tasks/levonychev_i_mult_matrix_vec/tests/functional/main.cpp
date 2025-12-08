@@ -1,15 +1,10 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
@@ -34,17 +29,17 @@ class LevonychevIMultMatrixVecFuncTests : public ppc::util::BaseRunFuncTests<InT
     std::vector<double> matrix(static_cast<size_t>(rows) * static_cast<size_t>(cols));
     std::vector<double> x(cols);
     for (int i = 0; i < rows * cols; ++i) {
-      matrix[i] = double(i + 1);
+      matrix[i] = static_cast<double>(i + 1);
     }
     for (int i = 0; i < cols; ++i) {
-      x[i] = double(i + 1);
+      x[i] = static_cast<double>(i + 1);
     }
     input_data_ = std::make_tuple(matrix, rows, cols, x);
     output_data_.resize(rows);
     for (int i = 0; i < rows; ++i) {
       double scalar_product = 0.0;
       for (int j = 0; j < cols; ++j) {
-        scalar_product += matrix[i * cols + j] * x[j];
+        scalar_product += matrix[(i * cols) + j] * x[j];
       }
       output_data_[i] = scalar_product;
     }

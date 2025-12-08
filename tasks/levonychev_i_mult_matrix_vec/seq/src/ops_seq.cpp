@@ -1,10 +1,9 @@
 #include "levonychev_i_mult_matrix_vec/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace levonychev_i_mult_matrix_vec {
 
@@ -39,7 +38,7 @@ bool LevonychevIMultMatrixVecSEQ::RunImpl() {
   for (int i = 0; i < rows; ++i) {
     double scalar_product = 0;
     for (int j = 0; j < cols; ++j) {
-      scalar_product += matrix[i * cols + j] * vec_x[j];
+      scalar_product += matrix[(i * cols) + j] * vec_x[j];
     }
     result[i] = scalar_product;
   }

@@ -2,11 +2,10 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "levonychev_i_mult_matrix_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace levonychev_i_mult_matrix_vec {
 
