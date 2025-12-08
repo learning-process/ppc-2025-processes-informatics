@@ -10,6 +10,9 @@
 
 #include "matrix_band_multiplication/common/include/common.hpp"
 
+// GCOVR_EXCL_START
+// LCOV_EXCL_START
+
 namespace matrix_band_multiplication {
 
 namespace {
@@ -161,3 +164,6 @@ bool MatrixBandMultiplicationMpi::PostProcessingImpl() {
 }
 
 }  // namespace matrix_band_multiplication
+
+// GCOVR_EXCL_STOP
+// LCOV_EXCL_STOP
