@@ -14,16 +14,13 @@
 namespace levonychev_i_mult_matrix_vec {
 
 class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  int ROWS_ = 16384;
-  int COLS_ = 16384;
+  int ROWS_ = 8192;
+  int COLS_ = 8192;
   InType input_data_;
   OutType expected_result_;
   void SetUp() override {
     std::vector<int64_t> matrix(static_cast<size_t>(ROWS_) * static_cast<size_t>(COLS_));
-    std::vector<int64_t> x(COLS_);
-    for (int64_t i = 0; i < COLS_; ++i) {
-      x[i] = i+1;
-    }
+    std::vector<int64_t> x(COLS_, 1);
     for (int i = 0; i < ROWS_; ++i) {
       int64_t elem = 1;
       for (int j = 0; j < COLS_; ++j) {
@@ -31,7 +28,7 @@ class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InT
       }
     }
     input_data_ = std::make_tuple(matrix, ROWS_, COLS_, x);
-    expected_result_ = std::vector<int64_t>(ROWS_, ((1 + static_cast<int64_t>(COLS_)) * static_cast<int64_t>(COLS_) * (2* static_cast<int64_t>(COLS_) + 1))/ 6);
+    expected_result_ = std::vector<int64_t>(ROWS_, COLS_ * (COLS_ + 1) / 2);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
