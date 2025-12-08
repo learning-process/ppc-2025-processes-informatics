@@ -29,15 +29,15 @@ bool LevonychevIMultMatrixVecSEQ::PreProcessingImpl() {
 }
 
 bool LevonychevIMultMatrixVecSEQ::RunImpl() {
-  const std::vector<int64_t>& matrix = std::get<0>(GetInput());
+  const std::vector<double>& matrix = std::get<0>(GetInput());
   const int rows = std::get<1>(GetInput());
   const int cols = std::get<2>(GetInput());
-  const std::vector<int64_t>& vec_x = std::get<3>(GetInput());
+  const std::vector<double>& vec_x = std::get<3>(GetInput());
 
   OutType &result = GetOutput();
 
   for (int i = 0; i < rows; ++i) {
-    int scalar_product = 0;
+    double scalar_product = 0;
     for (int j = 0; j < cols; ++j) {
       scalar_product += matrix[i*cols + j] * vec_x[j];
     }
