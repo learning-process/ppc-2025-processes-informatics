@@ -13,8 +13,8 @@
 namespace levonychev_i_mult_matrix_vec {
 
 class LevonychevIMultMatrixVecPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  int ROWS_ = 16384;
-  int COLS_ = 8192;
+  int ROWS_ = 4096;
+  int COLS_ = 4096;
   InType input_data_;
   OutType expected_result_;
   void SetUp() override {

@@ -70,7 +70,7 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
   x.resize(cols);
-  MPI_Bcast(x.data(), cols, MPI_INT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(x.data(), cols, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   for (int i = 0; i < proc_num; ++i) {
     int local_count_of_rows = i == (proc_num - 1) ? ((rows / proc_num) + (rows % proc_num)) : (rows / proc_num);
     recvcounts_scatterv[i] = local_count_of_rows * cols;
@@ -82,18 +82,10 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
 
   int local_count_of_rows = (proc_rank == (proc_num - 1)) ? ((rows / proc_num) + (rows % proc_num)) : (rows / proc_num);
   int recvcount = local_count_of_rows * cols;
-  double time1 = MPI_Wtime();
   OutType local_matrix(recvcount);
-  double time2 = MPI_Wtime();
-  std::cout << "Proc rank: " << proc_rank << " allocate: " << time2 - time1 << std::endl;
-  time1 = MPI_Wtime();
-  MPI_Scatterv(std::get<0>(GetInput()).data(), recvcounts_scatterv.data(), displs_scatterv.data(), MPI_INT64_T,
-               local_matrix.data(), recvcount, MPI_INT64_T, 0, MPI_COMM_WORLD);
-  time2 = MPI_Wtime();
-  std::cout << "Proc rank: " << proc_rank << " scatter: " << time2 - time1 << std::endl;
-  time1 = MPI_Wtime();
+  MPI_Scatterv(std::get<0>(GetInput()).data(), recvcounts_scatterv.data(), displs_scatterv.data(), MPI_DOUBLE,
+               local_matrix.data(), recvcount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   OutType local_b(local_count_of_rows);
-  time1 = MPI_Wtime();
   for (int i = 0; i < local_count_of_rows; ++i) {
     const int start = cols * i;
     double scalar_product = 0;
@@ -102,11 +94,9 @@ bool LevonychevIMultMatrixVecMPI::RunImpl() {
     }
     local_b[i] = scalar_product;
   }
-  time2 = MPI_Wtime();
-  std::cout << "Proc rank: " << proc_rank << " comp time: " << time2 - time1 << std::endl;
 
-  MPI_Allgatherv(local_b.data(), local_count_of_rows, MPI_INT64_T, global_b.data(), recvcounts_gatherv.data(),
-                 displs_gatherv.data(), MPI_INT64_T, MPI_COMM_WORLD);
+  MPI_Allgatherv(local_b.data(), local_count_of_rows, MPI_DOUBLE, global_b.data(), recvcounts_gatherv.data(),
+                 displs_gatherv.data(), MPI_DOUBLE, MPI_COMM_WORLD);
   return true;
 }
 
