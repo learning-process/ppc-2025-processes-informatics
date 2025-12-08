@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -89,6 +90,7 @@ const auto kTaskList = std::tuple_cat(
 
 const auto kGTestValues = ppc::util::ExpandToValues(kTaskList);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MatrixProduct, MatrixBandMultiplicationFuncTests, kGTestValues,
                          MatrixBandMultiplicationFuncTests::PrintFuncTestName<MatrixBandMultiplicationFuncTests>);
 

@@ -67,8 +67,8 @@ class MatrixBandMultiplicationPerfTests : public ppc::util::BaseRunPerfTests<InT
       for (std::size_t j = 0; j < input_.b.cols; ++j) {
         double sum = 0.0;
         for (std::size_t k = 0; k < input_.a.cols; ++k) {
-          sum += input_.a.values[FlattenIndex(i, k, input_.a.cols)] *
-                 input_.b.values[FlattenIndex(k, j, input_.b.cols)];
+          sum +=
+              input_.a.values[FlattenIndex(i, k, input_.a.cols)] * input_.b.values[FlattenIndex(k, j, input_.b.cols)];
         }
         result.values[FlattenIndex(i, j, result.cols)] = sum;
       }
@@ -87,6 +87,7 @@ const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, MatrixBandMultiplica
 
 const auto kGTestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(MatrixProductPerf, MatrixBandMultiplicationPerfTests, kGTestValues,
                          MatrixBandMultiplicationPerfTests::CustomPerfTestName);
 

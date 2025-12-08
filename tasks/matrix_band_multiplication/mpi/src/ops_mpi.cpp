@@ -82,9 +82,8 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
   row_displs_ = BuildDisplacements(row_counts_);
 
   std::vector<int> send_counts(row_counts_.size());
-  std::transform(row_counts_.begin(), row_counts_.end(), send_counts.begin(), [this](int rows) {
-    return rows * static_cast<int>(cols_a_);
-  });
+  std::transform(row_counts_.begin(), row_counts_.end(), send_counts.begin(),
+                 [this](int rows) { return rows * static_cast<int>(cols_a_); });
   std::vector<int> send_displs = BuildDisplacements(send_counts);
 
   const double *a_ptr = rank_ == 0 ? matrix_a.values.data() : nullptr;
@@ -104,12 +103,10 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
-  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(), [this](int rows) {
-    return rows * static_cast<int>(cols_b_);
-  });
-  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(), [this](int rows_prefix) {
-    return rows_prefix * static_cast<int>(cols_b_);
-  });
+  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(),
+                 [this](int rows) { return rows * static_cast<int>(cols_b_); });
+  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(),
+                 [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
 
   return true;
 }
