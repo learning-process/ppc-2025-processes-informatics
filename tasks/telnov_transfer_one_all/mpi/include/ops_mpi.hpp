@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "task/include/task.hpp"
 #include "telnov_transfer_one_all/common/include/common.hpp"
 

@@ -2,11 +2,12 @@
 #include <mpi.h>
 #include <stb/stb_image.h>
 
-#include <cmath>
+#include <algorithm>
+#include <array>
 #include <cstdlib>
-#include <iostream>
-#include <type_traits>
-#include <vector>
+#include <random>
+#include <string>
+#include <tuple>
 
 #include "telnov_transfer_one_all/common/include/common.hpp"
 #include "telnov_transfer_one_all/mpi/include/ops_mpi.hpp"

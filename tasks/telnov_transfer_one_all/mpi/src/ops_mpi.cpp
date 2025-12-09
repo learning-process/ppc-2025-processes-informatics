@@ -2,11 +2,7 @@
 
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
-
-#include "telnov_transfer_one_all/common/include/common.hpp"
-#include "util/include/util.hpp"
+#include <type_traits>
 
 namespace telnov_transfer_one_all {
 
@@ -37,12 +33,12 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
   int count = static_cast<int>(this->GetInput().size());
   int root = 0;
 
-  MPI_Datatype mpi_type;
-  if constexpr (std::is_same<typename InType::value_type, int>::value) {
+  MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
+  if constexpr (std::is_same_v<T, int>) {
     mpi_type = MPI_INT;
-  } else if constexpr (std::is_same<typename InType::value_type, float>::value) {
+  } else if constexpr (std::is_same_v<T, float>) {
     mpi_type = MPI_FLOAT;
-  } else if constexpr (std::is_same<typename InType::value_type, double>::value) {
+  } else if constexpr (std::is_same_v<T, double>) {
     mpi_type = MPI_DOUBLE;
   } else {
     return false;

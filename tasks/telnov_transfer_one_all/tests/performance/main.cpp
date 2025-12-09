@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include "telnov_transfer_one_all/common/include/common.hpp"
 #include "telnov_transfer_one_all/mpi/include/ops_mpi.hpp"
 #include "telnov_transfer_one_all/seq/include/ops_seq.hpp"
@@ -8,7 +10,7 @@
 namespace telnov_transfer_one_all {
 
 class TelnovTransferOneAllPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     const int array_size = 1000000;
