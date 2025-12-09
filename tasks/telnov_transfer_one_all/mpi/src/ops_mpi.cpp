@@ -12,14 +12,14 @@ namespace telnov_transfer_one_all {
 
 template <typename T>
 TelnovTransferOneAllMPI<T>::TelnovTransferOneAllMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput().resize(0);
+  this->SetTypeOfTask(GetStaticTypeOfTask());
+  this->GetInput() = in;
+  this->GetOutput().resize(0);
 }
 
 template <typename T>
 bool TelnovTransferOneAllMPI<T>::ValidationImpl() {
-  return (!GetInput().empty()) && (GetOutput().empty());
+  return (!this->GetInput().empty()) && (this->GetOutput().empty());
 }
 
 template <typename T>
@@ -47,7 +47,7 @@ bool TelnovTransferOneAllMPI::RunImpl() {
     return false;
   }
 
-  auto data = GetInput();
+  auto data = this->GetInput();
   void *data_ptr = data.data();
 
   int virtual_rank = (rank + size - root) % size;
@@ -68,13 +68,13 @@ bool TelnovTransferOneAllMPI::RunImpl() {
     mask <<= 1;
   }
 
-  SetOutput(data);
+  this->SetOutput(data);
   return true;
 }
 
 template <typename T>
 bool TelnovTransferOneAllMPI<T>::PostProcessingImpl() {
-  return !GetOutput().empty();
+  return !this->GetOutput().empty();
 }
 
 template class TelnovTransferOneAllMPI<int>;
