@@ -13,11 +13,11 @@ namespace telnov_transfer_one_all {
 TelnovTransferOneAllMPI::TelnovTransferOneAllMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput().resize(0);
 }
 
 bool TelnovTransferOneAllMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return (!GetInput().empty()) && (GetOutput().empty());
 }
 
 bool TelnovTransferOneAllMPI::PreProcessingImpl() {

@@ -11,16 +11,15 @@ namespace telnov_transfer_one_all {
 TelnovTransferOneAllSEQ::TelnovTransferOneAllSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput().resize(0);
 }
 
 bool TelnovTransferOneAllSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return (!GetInput().empty()) && (GetOutput().empty());
 }
 
 bool TelnovTransferOneAllSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool TelnovTransferOneAllSEQ::RunImpl() {
@@ -31,5 +30,9 @@ bool TelnovTransferOneAllSEQ::RunImpl() {
 bool TelnovTransferOneAllSEQ::PostProcessingImpl() {
   return !GetOutput().empty();
 }
+
+template class TelnovTransferOneAllSEQ<int>;
+template class TelnovTransferOneAllSEQ<float>;
+template class TelnovTransferOneAllSEQ<double>;
 
 }  // namespace telnov_transfer_one_all
