@@ -28,12 +28,7 @@ TEST_P(TelnovTransferOneAllPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks(
-  std::make_tuple(
-    std::make_tuple(ppc::task::TaskGetter<TelnovTransferOneAllMPI<int>, InType>, "MPI"),
-      std::make_tuple(ppc::task::TaskGetter<TelnovTransferOneAllSEQ<int>, InType>, "SEQ")
-  ),
-  PPC_SETTINGS_telnov_transfer_one_all);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks(PPC_SETTINGS_telnov_transfer_one_all);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
