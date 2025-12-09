@@ -16,10 +16,14 @@ BaldinAMyScatterMPI::BaldinAMyScatterMPI(const InType &in) {
 }
 
 bool BaldinAMyScatterMPI::ValidationImpl() {
-  const auto& [sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = GetInput();
+  const auto &[sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = GetInput();
 
-  if (sendcount <= 0 || sendcount != recvcount || root < 0) return false;
-  if (sendtype != recvtype) return false;
+  if (sendcount <= 0 || sendcount != recvcount || root < 0) {
+    return false;
+  }
+  if (sendtype != recvtype) {
+    return false;
+  }
 
   auto is_sup_type = [](MPI_Datatype type) -> bool {
     return (type == MPI_INT || type == MPI_FLOAT || type == MPI_DOUBLE);
@@ -30,18 +34,17 @@ bool BaldinAMyScatterMPI::ValidationImpl() {
 
 bool BaldinAMyScatterMPI::PreProcessingImpl() {
   int root = std::get<6>(GetInput());
-  
+
   int world_size = 0;
   MPI_Comm_size(std::get<7>(GetInput()), &world_size);
-  
+
   // если root выходит за границы, корректируем его
   if (root >= world_size) {
-      std::get<6>(GetInput()) = root % world_size; 
+    std::get<6>(GetInput()) = root % world_size;
   }
 
   return true;
 }
-
 
 namespace {
 
@@ -58,20 +61,19 @@ int VirtualToRealRank(int v_rank, int root, int size) {
 int CalculateSubtreeSize(int v_dest, int mask, int size) {
   int subtree_size = v_dest + mask;
   if (subtree_size > size) {
-      subtree_size = size;
+    subtree_size = size;
   }
   return subtree_size;
 }
 
-void PrepareRootBuffer(const void* sendbuf, int size, int root, int count, 
-                      MPI_Aint extent, std::vector<char>& buffer) {
+void PrepareRootBuffer(const void *sendbuf, int size, int root, int count, MPI_Aint extent, std::vector<char> &buffer) {
   size_t total_bytes = (size_t)size * count * extent;
   size_t chunk_bytes = (size_t)count * extent;
 
   buffer.resize(total_bytes);
 
-  const char* send_ptr = static_cast<const char*>(sendbuf);
-  char* tmp_ptr = buffer.data();
+  const char *send_ptr = static_cast<const char *>(sendbuf);
+  char *tmp_ptr = buffer.data();
 
   // Логика сдвига: [root...end] -> начало, [0...root] -> конец
   size_t first_part_bytes = (size - root) * chunk_bytes;
@@ -81,12 +83,11 @@ void PrepareRootBuffer(const void* sendbuf, int size, int root, int count,
   std::memcpy(tmp_ptr + first_part_bytes, send_ptr, second_part_bytes);
 }
 
-
-}
+}  // namespace
 
 bool BaldinAMyScatterMPI::RunImpl() {
-  auto& input = GetInput();
-  const auto& [sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = input;
+  auto &input = GetInput();
+  const auto &[sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = input;
 
   int rank = 0;
   int size = 0;
@@ -94,64 +95,64 @@ bool BaldinAMyScatterMPI::RunImpl() {
   MPI_Comm_size(comm, &size);
 
   MPI_Aint extent = GetDataTypeExtent(rank == root ? sendtype : recvtype);
-  
+
   std::vector<char> temp_buffer;
-  const char* curr_buf_ptr = nullptr;
+  const char *curr_buf_ptr = nullptr;
 
   // --- ЭТАП 1: Подготовка (только на root) ---
   if (rank == root) {
     PrepareRootBuffer(sendbuf, size, root, sendcount, extent, temp_buffer);
-    curr_buf_ptr = temp_buffer.data(); 
+    curr_buf_ptr = temp_buffer.data();
   }
 
   int v_rank = (rank - root + size) % size;
   int mask = 1;
-  while (mask < size) mask <<= 1;
+  while (mask < size) {
+    mask <<= 1;
+  }
   mask >>= 1;
 
   // --- ЭТАП 2: Рассылка по дереву ---
   while (mask > 0) {
-      // Если процесс - отправитель на этом уровне
-      if (v_rank % (2 * mask) == 0) {
-          int v_dest = v_rank + mask;
+    // Если процесс - отправитель на этом уровне
+    if (v_rank % (2 * mask) == 0) {
+      int v_dest = v_rank + mask;
 
-          if (v_dest < size) {
-              int subtree_size = CalculateSubtreeSize(v_dest, mask, size);
-              int count_to_send = (subtree_size - v_dest) * recvcount;
-              
-              size_t offset_bytes = (size_t)(v_dest - v_rank) * recvcount * extent;
-              int real_dest = VirtualToRealRank(v_dest, root, size);
+      if (v_dest < size) {
+        int subtree_size = CalculateSubtreeSize(v_dest, mask, size);
+        int count_to_send = (subtree_size - v_dest) * recvcount;
 
-              MPI_Send(curr_buf_ptr + offset_bytes, count_to_send, 
-                        (rank == root ? sendtype : recvtype), 
-                        real_dest, 0, comm);
-          }
+        size_t offset_bytes = (size_t)(v_dest - v_rank) * recvcount * extent;
+        int real_dest = VirtualToRealRank(v_dest, root, size);
+
+        MPI_Send(curr_buf_ptr + offset_bytes, count_to_send, (rank == root ? sendtype : recvtype), real_dest, 0, comm);
       }
+    }
 
-      // Если процесс - получатель
-      else if (v_rank % (2 * mask) == mask) {
-          int v_source = v_rank - mask;
-          int real_source = VirtualToRealRank(v_source, root, size);
-          
-          int subtree_end = CalculateSubtreeSize(v_rank, mask, size);
-          int count_to_recv = (subtree_end - v_rank) * recvcount;
+    // Если процесс - получатель
+    else if (v_rank % (2 * mask) == mask) {
+      int v_source = v_rank - mask;
+      int real_source = VirtualToRealRank(v_source, root, size);
 
-          // Выделяем память под входящие данные
-          temp_buffer.resize((size_t)count_to_recv * extent); 
+      int subtree_end = CalculateSubtreeSize(v_rank, mask, size);
+      int count_to_recv = (subtree_end - v_rank) * recvcount;
 
-          MPI_Recv(temp_buffer.data(), count_to_recv, recvtype, real_source, 0, comm, MPI_STATUS_IGNORE);
-          
-          // Теперь работаем с полученным буфером
-          curr_buf_ptr = temp_buffer.data();
-      }
+      // Выделяем память под входящие данные
+      temp_buffer.resize((size_t)count_to_recv * extent);
 
-      mask >>= 1;
+      MPI_Recv(temp_buffer.data(), count_to_recv, recvtype, real_source, 0, comm, MPI_STATUS_IGNORE);
+
+      // Теперь работаем с полученным буфером
+      curr_buf_ptr = temp_buffer.data();
+    }
+
+    mask >>= 1;
   }
 
   // --- ЭТАП 3: Копирование в пользовательский буфер ---
   if (recvbuf != MPI_IN_PLACE) {
-      // Копируем только свою долю (recvcount)
-      std::memcpy(recvbuf, curr_buf_ptr, recvcount * extent);
+    // Копируем только свою долю (recvcount)
+    std::memcpy(recvbuf, curr_buf_ptr, recvcount * extent);
   }
   GetOutput() = recvbuf;
   return true;
