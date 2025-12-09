@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <array>
 #include <cstdlib>
-#include <random>
 #include <string>
 #include <tuple>
 
@@ -13,7 +12,6 @@
 #include "telnov_transfer_one_all/mpi/include/ops_mpi.hpp"
 #include "telnov_transfer_one_all/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_transfer_one_all {
 
@@ -29,11 +27,11 @@ class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType,
     input_data_.resize(array_size);
 
     for (int i = 0; i < array_size; ++i) {
-      input_data_[i] = std::rand() % 100;
+      input_data_[i] = input_data_[i] = (i * 13) % 100;
     }
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size_);
-    root_ = std::rand() % comm_size_;
+    root_ = 0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
