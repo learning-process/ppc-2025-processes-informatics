@@ -23,58 +23,104 @@ namespace baldin_a_my_scatter {
 class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const auto& [sendbuf, sendcount, sendtype, recvbuf_dummy, recvcount, recvtype, root, comm] = test_param;
+    auto [count, root, type] = test_param;
+    int size = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int world_size = 0;
-    MPI_Comm_size(comm, &world_size);
-
-    int rank = 0;
-    MPI_Comm_rank(comm, &rank);
-
-    std::string type = (sendtype == MPI_INT ? "int_" : (sendtype == MPI_FLOAT ? "float_" : "double_"));
-    return std::to_string(world_size) + "proc_" + std::to_string(world_size * sendcount) + type + std::to_string(root % world_size) + "root_" + std::to_string(root) + "rroot";
+    std::string type_str = (type == MPI_INT ? "INT" : (type == MPI_FLOAT ? "FLOAT" : "DOUBLE"));
+    return type_str + "_Count" + std::to_string(count) + "_Root" + std::to_string(root) + "_RRoot" + std::to_string(root % size);
   }
 
  protected:
+  
+  std::vector<int> send_vec_int_, recv_vec_int_;
+  std::vector<float> send_vec_float_, recv_vec_float_;
+  std::vector<double> send_vec_double_, recv_vec_double_;
+
+  InType input_data_;
+  
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = params;
-    expected_output_ = nullptr;
 
+    int count = std::get<0>(params);
+    int root = std::get<1>(params);
+    MPI_Datatype type = std::get<2>(params);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    root = root % size;
+
+    const void* sendbuf_ptr = nullptr;
+    void* recvbuf_ptr = nullptr;
+
+    if (type == MPI_INT) {
+        recv_vec_int_.resize(count);
+        recvbuf_ptr = recv_vec_int_.data();
+
+        if (rank == root) {
+            send_vec_int_.resize(count * size);
+            std::iota(send_vec_int_.begin(), send_vec_int_.end(), 0);
+            sendbuf_ptr = send_vec_int_.data();
+        }
+    } 
+    else if (type == MPI_FLOAT) {
+        recv_vec_float_.resize(count);
+        recvbuf_ptr = recv_vec_float_.data();
+
+        if (rank == root) {
+            send_vec_float_.resize(count * size);
+            for(int i=0; i < count*size; ++i) send_vec_float_[i] = static_cast<float>(i);
+            sendbuf_ptr = send_vec_float_.data();
+        }
+    }
+    else if (type == MPI_DOUBLE) {
+        recv_vec_double_.resize(count);
+        recvbuf_ptr = recv_vec_double_.data();
+
+        if (rank == root) {
+            send_vec_double_.resize(count * size);
+            for(int i=0; i < count*size; ++i) send_vec_double_[i] = static_cast<double>(i);
+            sendbuf_ptr = send_vec_double_.data();
+        }
+    }
+
+    input_data_ = std::make_tuple(sendbuf_ptr, count, type, recvbuf_ptr, count, type, root, MPI_COMM_WORLD);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto& input = GetTestInputData();
-    const auto& [sendbuf, sendcount, sendtype, recvbuf_dummy, recvcount, recvtype, root, comm] = input;
 
-    int rank = 0;
-    MPI_Comm_rank(comm, &rank);
-    
-    if (recvcount > 0 && output_data == nullptr) {
-        return false;
-    }
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int count = std::get<0>(params);
+    MPI_Datatype type = std::get<2>(params);
 
-    int start_value = rank * recvcount + 1;
-    if (recvtype == MPI_INT) {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (output_data == nullptr) return false;
+
+    int start_value = rank * count;
+    if (type == MPI_INT) {
         const int* actual_data = reinterpret_cast<const int*>(output_data);
-        for (int i = 0; i < recvcount; i++) {
+        for (int i = 0; i < count; i++) {
             if (actual_data[i] != start_value + i) {
                 return false;
             }
             //std::cout << rank << "i:" << actual_data[i] << ' ';
         }
-    } else if (recvtype == MPI_FLOAT) {
+    } else if (type == MPI_FLOAT) {
         const float* actual_data = reinterpret_cast<const float*>(output_data);
-        for (int i = 0; i < recvcount; i++) {
+        for (int i = 0; i < count; i++) {
             if (std::abs(actual_data[i] - (float)(start_value + i)) >= 1e-6) {
                 return false;
             }
             //std::cout << rank << "f:" << actual_data[i] << ' ';
         }
-    } else if (recvtype == MPI_DOUBLE) {
+    } else if (type == MPI_DOUBLE) {
         const double* actual_data = reinterpret_cast<const double*>(output_data);
-        for (int i = 0; i < recvcount; i++) {
-            if (std::abs(actual_data[i] - (double)(start_value + i)) >= 1e-6) {
+        for (int i = 0; i < count; i++) {
+            if (std::abs(actual_data[i] - (double)(start_value + i)) >= 1e-10) {
                 return false;
             }
             //std::cout << rank << "d:" << actual_data[i] << ' ';
@@ -89,10 +135,7 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   InType GetTestInputData() final {
     return input_data_;
   }
-
- private:
-  InType input_data_;
-  OutType expected_output_;
+  
 };
 
 namespace {
@@ -101,186 +144,32 @@ TEST_P(BaldinAMyScatterFuncTests, MyScatterTests) {
   ExecuteTest(GetParam());
 }
 
-int send_data1[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-int recv_data1[3] = {};
+const std::array<TestType, 19> kTestParam = { 
+    std::make_tuple(1, 0, MPI_INT),
 
-InType test1 = std::make_tuple(
-    static_cast<const void*>(send_data1), // 1. sendbuf (const void*)
-    3,                                    // 2. sendcount (int)
-    MPI_INT,                              // 3. sendtype (MPI_Datatype)
-    static_cast<void*>(recv_data1),       // 4. recvbuf (void *)
-    3,                                    // 5. recvcount (int)
-    MPI_INT,                              // 6. recvtype (MPI_Datatype)
-    0,                                    // 7. root (int)
-    MPI_COMM_WORLD                        // 8. comm (MPI_Comm)
-);
+    std::make_tuple(10, 0, MPI_INT),
+    std::make_tuple(10, 0, MPI_FLOAT),
+    std::make_tuple(10, 0, MPI_DOUBLE),
 
-float send_data2[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-float recv_data2[3] = {};
+    std::make_tuple(10, 1, MPI_INT),
+    std::make_tuple(10, 1, MPI_FLOAT),
+    std::make_tuple(10, 1, MPI_DOUBLE),
 
-InType test2 = std::make_tuple(
-    static_cast<const void*>(send_data2),
-    3,
-    MPI_FLOAT,
-    static_cast<void*>(recv_data2),
-    3,
-    MPI_FLOAT,
-    0,
-    MPI_COMM_WORLD
-);
+    std::make_tuple(10, 2, MPI_INT),
+    std::make_tuple(10, 2, MPI_FLOAT),
+    std::make_tuple(10, 2, MPI_DOUBLE),
 
-double send_data3[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-double recv_data3[3] = {};
+    std::make_tuple(10, 3, MPI_INT),
+    std::make_tuple(10, 3, MPI_FLOAT),
+    std::make_tuple(10, 3, MPI_DOUBLE),
 
-InType test3 = std::make_tuple(
-    static_cast<const void*>(send_data3),
-    3,
-    MPI_DOUBLE,
-    static_cast<void*>(recv_data3),
-    3,
-    MPI_DOUBLE,
-    0,
-    MPI_COMM_WORLD
-);
-
-int send_data4[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-int recv_data4[3] = {};
-
-InType test4 = std::make_tuple(
-    static_cast<const void*>(send_data4), // 1. sendbuf (const void*)
-    3,                                    // 2. sendcount (int)
-    MPI_INT,                              // 3. sendtype (MPI_Datatype)
-    static_cast<void*>(recv_data4),       // 4. recvbuf (void *)
-    3,                                    // 5. recvcount (int)
-    MPI_INT,                              // 6. recvtype (MPI_Datatype)
-    1,                                    // 7. root (int)
-    MPI_COMM_WORLD                        // 8. comm (MPI_Comm)
-);
-
-float send_data5[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-float recv_data5[3] = {};
-
-InType test5 = std::make_tuple(
-    static_cast<const void*>(send_data5),
-    3,
-    MPI_FLOAT,
-    static_cast<void*>(recv_data5),
-    3,
-    MPI_FLOAT,
-    1,
-    MPI_COMM_WORLD
-);
-
-double send_data6[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-double recv_data6[3] = {};
-
-InType test6 = std::make_tuple(
-    static_cast<const void*>(send_data6),
-    3,
-    MPI_DOUBLE,
-    static_cast<void*>(recv_data6),
-    3,
-    MPI_DOUBLE,
-    1,
-    MPI_COMM_WORLD
-);
-
-int send_data7[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-int recv_data7[3] = {};
-
-InType test7 = std::make_tuple(
-    static_cast<const void*>(send_data7), // 1. sendbuf (const void*)
-    3,                                    // 2. sendcount (int)
-    MPI_INT,                              // 3. sendtype (MPI_Datatype)
-    static_cast<void*>(recv_data7),       // 4. recvbuf (void *)
-    3,                                    // 5. recvcount (int)
-    MPI_INT,                              // 6. recvtype (MPI_Datatype)
-    2,                                    // 7. root (int)
-    MPI_COMM_WORLD                        // 8. comm (MPI_Comm)
-);
-
-float send_data8[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-float recv_data8[3] = {};
-
-InType test8 = std::make_tuple(
-    static_cast<const void*>(send_data8),
-    3,
-    MPI_FLOAT,
-    static_cast<void*>(recv_data8),
-    3,
-    MPI_FLOAT,
-    2,
-    MPI_COMM_WORLD
-);
-
-double send_data9[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-double recv_data9[3] = {};
-
-InType test9 = std::make_tuple(
-    static_cast<const void*>(send_data9),
-    3,
-    MPI_DOUBLE,
-    static_cast<void*>(recv_data9),
-    3,
-    MPI_DOUBLE,
-    2,
-    MPI_COMM_WORLD
-);
-
-int send_data10[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-int recv_data10[3] = {};
-
-InType test10 = std::make_tuple(
-    static_cast<const void*>(send_data10), // 1. sendbuf (const void*)
-    3,                                     // 2. sendcount (int)
-    MPI_INT,                               // 3. sendtype (MPI_Datatype)
-    static_cast<void*>(recv_data10),       // 4. recvbuf (void *)
-    3,                                     // 5. recvcount (int)
-    MPI_INT,                               // 6. recvtype (MPI_Datatype)
-    3,                                     // 7. root (int)
-    MPI_COMM_WORLD                         // 8. comm (MPI_Comm)
-);
-
-float send_data11[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-float recv_data11[3] = {};
-
-InType test11 = std::make_tuple(
-    static_cast<const void*>(send_data11),
-    3,
-    MPI_FLOAT,
-    static_cast<void*>(recv_data11),
-    3,
-    MPI_FLOAT,
-    3,
-    MPI_COMM_WORLD
-);
-
-double send_data12[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0};
-double recv_data12[3] = {};
-
-InType test12 = std::make_tuple(
-    static_cast<const void*>(send_data12),
-    3,
-    MPI_DOUBLE,
-    static_cast<void*>(recv_data12),
-    3,
-    MPI_DOUBLE,
-    3,
-    MPI_COMM_WORLD
-);
-
-const std::array<TestType, 12> kTestParam = { 
-    // отправка с rank = 0 (тип int, float, double)
-    test1, test2, test3,
-
-    // отправка с rank = 1
-    test4, test5, test6,
-
-    // отправка с rank = 2
-    test7, test8, test9,
-
-    // отправка с rank = 3
-    test10, test11, test12
+    std::make_tuple(17, 0, MPI_INT),
+    std::make_tuple(123, 0, MPI_INT),
+    std::make_tuple(7, 1, MPI_DOUBLE),
+    
+    std::make_tuple(1000, 0, MPI_INT),
+    std::make_tuple(500, 1, MPI_DOUBLE),
+    std::make_tuple(1500, 2, MPI_FLOAT)
 };
 
 const auto kTestTasksList =
