@@ -11,50 +11,52 @@ namespace baldin_a_gauss_filter {
 BaldinAGaussFilterSEQ::BaldinAGaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool BaldinAGaussFilterSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  ImageData im = GetInput();
+  return (im.width > 0 && im.height > 0 && im.channels > 0 && im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
 }
 
 bool BaldinAGaussFilterSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool BaldinAGaussFilterSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  ImageData &input = GetInput();
+  ImageData res = input;
+  int w = input.width;
+  int h = input.height;
+  int c = input.channels;
+  
+  const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  
+  for(int y=0; y<h; ++y) {
+      for(int x=0; x<w; ++x) {
+          for(int k=0; k<c; ++k) {
+              int sum = 0;
+              for(int dy=-1; dy<=1; ++dy) {
+                  for(int dx=-1; dx<=1; ++dx) {
+                      int ny = std::clamp(y + dy, 0, h - 1);
+                      int nx = std::clamp(x + dx, 0, w - 1);
+                      
+                      sum += input.pixels[(ny * w + nx) * c + k] * kernel[dy+1][dx+1];
+                  }
+              }
+              res.pixels[(y * w + x) * c + k] = static_cast<uint8_t>(sum / 16);
+          }
       }
-    }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  GetOutput() = res;
+  // for (int i = 0; i < 12; i++) {
+  //   std::cout << (int)(res.pixels[i]) << '\n';
+  // }
+  return true;
 }
 
 bool BaldinAGaussFilterSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace baldin_a_gauss_filter
