@@ -20,6 +20,14 @@
 
 namespace telnov_transfer_one_all {
 
+using TestType = std::tuple<int, std::string>;
+using InTypeInt = std::vector<int>;
+using InTypeFloat = std::vector<float>;
+using InTypeDouble = std::vector<double>;
+using OutTypeInt = InTypeInt;
+using OutTypeFloat = InTypeFloat;
+using OutTypeDouble = InTypeDouble;
+
 class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -32,13 +40,7 @@ class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType,
     input_data_.resize(array_size);
 
     for (int i = 0; i < array_size; ++i) {
-      if constexpr (std::is_same<typename InType::value_type, int>::value) {
-        input_data_[i] = std::rand() % 100;
-      } else if constexpr (std::is_same<typename InType::value_type, float>::value) {
-        input_data_[i] = static_cast<float>(std::rand()) / RAND_MAX * 100.0f;
-      } else if constexpr (std::is_same<typename InType::value_type, double>::value) {
-        input_data_[i] = static_cast<double>(std::rand()) / RAND_MAX * 100.0;
-      }
+      input_data_[i] = std::rand() % 100;
     }
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size_);
