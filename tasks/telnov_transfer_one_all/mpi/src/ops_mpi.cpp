@@ -28,7 +28,7 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
   int is_mpi_initialized = 0;
   MPI_Initialized(&is_mpi_initialized);
   
-  if (!is_mpi_initialized) {
+  if (is_mpi_initialized == 0) {
     this->GetOutput() = this->GetInput();
     return true;
   }
