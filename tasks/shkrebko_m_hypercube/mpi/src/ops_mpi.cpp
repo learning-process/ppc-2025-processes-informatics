@@ -67,20 +67,6 @@ bool ShkrebkoMHypercubeMPI::ValidationImpl() {
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  if (world_size == 1) {
-    if (GetInput().size() < 2) {
-      return false;
-    }
-    int destination = GetInput()[1];
-    if (destination != 0) {
-      return false;
-    }
-    if (GetInput()[0] <= 0) {
-      return false;
-    }
-    return true;
-  }
-
   if ((world_size & (world_size - 1)) != 0) {
     return false;
   }
@@ -105,12 +91,6 @@ bool ShkrebkoMHypercubeMPI::PreProcessingImpl() {
   if (GetInput().size() >= 2) {
     GetOutput().value = GetInput()[0];
     GetOutput().destination = GetInput()[1];
-
-    int world_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    if (world_size == 1) {
-      GetOutput().destination = 0;
-    }
   } else {
     GetOutput().value = 1;
     GetOutput().destination = 0;
@@ -134,22 +114,13 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
     if (local_data.destination != 0) {
       int next_rank = CalcNextRank(world_rank, local_data.destination, world_size);
       SendHypercubeData(local_data, next_rank, 0);
-
       RecvHypercubeData(local_data, MPI_ANY_SOURCE, 1);
     } else {
       local_data.finish = true;
     }
 
-    HypercubeData finish_msg;
-    finish_msg.finish = true;
-    finish_msg.value = local_data.value;
-    finish_msg.destination = local_data.destination;
-    finish_msg.path = local_data.path;
-
     for (int i = 1; i < world_size; i++) {
-      if (std::find(local_data.path.begin(), local_data.path.end(), i) == local_data.path.end()) {
-        SendHypercubeData(finish_msg, i, 0);
-      }
+      SendHypercubeData(local_data, i, 0);
     }
 
     GetOutput() = local_data;
@@ -163,10 +134,13 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
       if (world_rank == local_data.destination) {
         local_data.finish = true;
         SendHypercubeData(local_data, 0, 1);
+        RecvHypercubeData(local_data, 0, 0, &status);
         GetOutput() = local_data;
       } else {
         int next_rank = CalcNextRank(world_rank, local_data.destination, world_size);
         SendHypercubeData(local_data, next_rank, 0);
+        RecvHypercubeData(local_data, 0, 0, &status);
+        GetOutput() = local_data;
       }
     } else {
       GetOutput() = local_data;
@@ -178,29 +152,11 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
 }
 
 bool ShkrebkoMHypercubeMPI::PostProcessingImpl() {
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-  if (world_size == 1) {
-    return GetOutput().finish && GetOutput().value > 0 && GetOutput().destination == 0 &&
-           GetOutput().path == std::vector<int>{0};
-  }
-
-  if (GetOutput().path.empty()) {
-    return false;
-  }
-  if (GetOutput().path.front() != 0) {
-    return false;
-  }
-  if (GetOutput().path.back() != GetOutput().destination) {
-    return false;
-  }
-  if (!GetOutput().finish) {
-    return false;
-  }
-  if (GetOutput().value <= 0) {
-    return false;
-  }
+  if (!GetOutput().finish) return false;
+  if (GetOutput().value <= 0) return false;
+  if (GetOutput().path.empty()) return false;
+  if (GetOutput().path.front() != 0) return false;
+  if (GetOutput().path.back() != GetOutput().destination) return false;
 
   for (size_t i = 1; i < GetOutput().path.size(); i++) {
     int prev = GetOutput().path[i - 1];
