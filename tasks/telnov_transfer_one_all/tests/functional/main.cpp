@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
-#include <tuple>
-#include <utility>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <type_traits>
 #include <vector>
 
 #include "telnov_transfer_one_all/common/include/common.hpp"
@@ -19,14 +15,6 @@
 #include "util/include/util.hpp"
 
 namespace telnov_transfer_one_all {
-
-using TestType = std::tuple<int, std::string>;
-using InTypeInt = std::vector<int>;
-using InTypeFloat = std::vector<float>;
-using InTypeDouble = std::vector<double>;
-using OutTypeInt = InTypeInt;
-using OutTypeFloat = InTypeFloat;
-using OutTypeDouble = InTypeDouble;
 
 class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InTypeInt, OutTypeInt, TestType> {
  public:
