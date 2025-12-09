@@ -8,7 +8,6 @@
 namespace telnov_transfer_one_all {
 
 class TelnovTransferOneAllPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
 
   void SetUp() override {
@@ -29,7 +28,7 @@ TEST_P(TelnovTransferOneAllPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, TelnovTransferOneAllMPI, TelnovTransferOneAllSEQ>(
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<TelnovTransferOneAllMPI<int>, TelnovTransferOneAllSEQ<int>>(
     PPC_SETTINGS_telnov_transfer_one_all);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
