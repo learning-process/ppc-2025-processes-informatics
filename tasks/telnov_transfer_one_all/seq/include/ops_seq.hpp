@@ -14,6 +14,8 @@ class TelnovTransferOneAllSEQ : public BaseTask<T> {
     return ppc::task::TypeOfTask::kSEQ;
   }
   explicit TelnovTransferOneAllSEQ(const InType &in);
+  explicit TelnovTransferOneAllSEQ(const TelnovTransferOneAllMPI<T> &mpi) 
+    : TelnovTransferOneAllSEQ(mpi.getData()) {}
 
  private:
   bool ValidationImpl() override;
