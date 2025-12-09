@@ -1,93 +1,79 @@
-// #include <gtest/gtest.h>
+#include <gtest/gtest.h>
 
-// #include "baldin_a_my_scatter/common/include/common.hpp"
-// #include "baldin_a_my_scatter/mpi/include/ops_mpi.hpp"
-// #include "baldin_a_my_scatter/seq/include/ops_seq.hpp"
-// #include "util/include/perf_test_util.hpp"
+#include "baldin_a_my_scatter/common/include/common.hpp"
+#include "baldin_a_my_scatter/mpi/include/ops_mpi.hpp"
+#include "baldin_a_my_scatter/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
-// namespace baldin_a_my_scatter {
+namespace baldin_a_my_scatter {
 
-// class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-//   InType input_data_;
+class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  InType input_data_;
+  std::vector<int> send_vec_;
+  std::vector<int> recv_vec_;
 
+  const int count_per_proc_ = 1000008;
 
-//   void SetUp() override {
-//     int send_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-//     int recv_data[3] = {};
+  void SetUp() override {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-//     InType test1 = std::make_tuple(
-//         static_cast<const void*>(send_data1), // 1. sendbuf (const void*)
-//         3,                                    // 2. sendcount (int)
-//         MPI_INT,                              // 3. sendtype (MPI_Datatype)
-//         static_cast<void*>(recv_data1),       // 4. recvbuf (void *)
-//         3,                                    // 5. recvcount (int)
-//         MPI_INT,                              // 6. recvtype (MPI_Datatype)
-//         0,                                    // 7. root (int)
-//         MPI_COMM_WORLD                        // 8. comm (MPI_Comm)
-//     );
+    int root = 0;
 
+    recv_vec_.resize(count_per_proc_);
 
-//   }
+    if (rank == root) {
+        send_vec_.resize(count_per_proc_ * size);
+        std::iota(send_vec_.begin(), send_vec_.end(), 0);
+    }
 
-//   bool CheckTestOutputData(OutType &output_data) final {
-//     const auto& input = GetTestInputData();
-//     const auto& [sendbuf, sendcount, sendtype, recvbuf_dummy, recvcount, recvtype, root, comm] = input;
+    input_data_ = std::make_tuple(
+        (rank == root ? send_vec_.data() : nullptr),
+        count_per_proc_,
+        MPI_INT,
+        recv_vec_.data(),
+        count_per_proc_,
+        MPI_INT,
+        root,
+        MPI_COMM_WORLD
+    );
+  }
 
-//     int rank = 0;
-//     MPI_Comm_rank(comm, &rank);
-    
-//     if (recvcount > 0 && output_data == nullptr) {
-//         return false;
-//     }
+  bool CheckTestOutputData(OutType &output_data) final {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-//     int start_value = rank * recvcount + 1;
-//     if (recvtype == MPI_INT) {
-//         const int* actual_data = reinterpret_cast<const int*>(output_data);
-//         for (int i = 0; i < recvcount; i++) {
-//             if (actual_data[i] != start_value + i) {
-//                 return false;
-//             }
-//             //std::cout << rank << "i:" << actual_data[i] << ' ';
-//         }
-//     } else if (recvtype == MPI_FLOAT) {
-//         const float* actual_data = reinterpret_cast<const float*>(output_data);
-//         for (int i = 0; i < recvcount; i++) {
-//             if (std::abs(actual_data[i] - (float)(start_value + i)) >= 1e-6) {
-//                 return false;
-//             }
-//             //std::cout << rank << "f:" << actual_data[i] << ' ';
-//         }
-//     } else if (recvtype == MPI_DOUBLE) {
-//         const double* actual_data = reinterpret_cast<const double*>(output_data);
-//         for (int i = 0; i < recvcount; i++) {
-//             if (std::abs(actual_data[i] - (double)(start_value + i)) >= 1e-6) {
-//                 return false;
-//             }
-//             //std::cout << rank << "d:" << actual_data[i] << ' ';
-//         }
-//     } else {
-//         return false;
-//     }
+    if (output_data == nullptr) return false;
 
-//     return true;
-//   }
+    int start_value = rank * count_per_proc_;
+    const int* actual_data = reinterpret_cast<const int*>(output_data);
+    for (int i = 0; i < count_per_proc_; i++) {
+        if (actual_data[i] != start_value + i) {
+            return false;
+        }
+    }
 
-//   InType GetTestInputData() final {
-//     return input_data_;
-//   }
-// };
+    return true;
+  }
 
-// TEST_P(BaldinAMyScatterPerfTests, RunPerfModes) {
-//   ExecuteTest(GetParam());
-// }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+};
 
-// const auto kAllPerfTasks =
-//     ppc::util::MakeAllPerfTasks<InType, BaldinAMyScatterMPI, BaldinAMyScatterSEQ>(PPC_SETTINGS_baldin_a_my_scatter);
+TEST_P(BaldinAMyScatterPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
-// const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, BaldinAMyScatterMPI, BaldinAMyScatterSEQ>(PPC_SETTINGS_baldin_a_my_scatter);
 
-// const auto kPerfTestName = BaldinAMyScatterPerfTests::CustomPerfTestName;
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-// INSTANTIATE_TEST_SUITE_P(RunModeTests, BaldinAMyScatterPerfTests, kGtestValues, kPerfTestName);
+const auto kPerfTestName = BaldinAMyScatterPerfTests::CustomPerfTestName;
 
-// }  // namespace baldin_a_my_scatter
+INSTANTIATE_TEST_SUITE_P(RunModeTests, BaldinAMyScatterPerfTests, kGtestValues, kPerfTestName);
+
+}  // namespace baldin_a_my_scatter
