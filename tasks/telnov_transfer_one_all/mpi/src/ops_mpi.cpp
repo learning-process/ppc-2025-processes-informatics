@@ -25,6 +25,14 @@ bool TelnovTransferOneAllMPI<T>::PreProcessingImpl() {
 
 template <typename T>
 bool TelnovTransferOneAllMPI<T>::RunImpl() {
+  int is_mpi_initialized = 0;
+  MPI_Initialized(&is_mpi_initialized);
+  
+  if (!is_mpi_initialized) {
+    this->GetOutput() = this->GetInput();
+    return true;
+  }
+  
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
