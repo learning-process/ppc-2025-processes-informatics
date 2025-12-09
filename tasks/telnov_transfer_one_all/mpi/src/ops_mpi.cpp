@@ -27,7 +27,8 @@ bool TelnovTransferOneAllMPI<T>::PreProcessingImpl() {
   return true;
 }
 
-bool TelnovTransferOneAllMPI::RunImpl() {
+template <typename T>
+bool TelnovTransferOneAllMPI<T>::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

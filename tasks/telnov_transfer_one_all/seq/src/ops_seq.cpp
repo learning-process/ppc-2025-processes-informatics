@@ -27,7 +27,7 @@ bool TelnovTransferOneAllSEQ<T>::PreProcessingImpl() {
 
 template <typename T>
 bool TelnovTransferOneAllSEQ<T>::RunImpl() {
-  this->SetOutput(this->GetInput());
+  this->GetOutput() = this->GetInput();
   return true;
 }
 
