@@ -14,7 +14,7 @@ class TelnovTransferOneAllSEQ : public BaseTask<T> {
     return ppc::task::TypeOfTask::kSEQ;
   }
   explicit TelnovTransferOneAllSEQ(const std::vector<T>& input) : BaseTask<T>() {
-    this->GetInput() = input;
+    this->setData(input);
   }
 
  private:
