@@ -1,7 +1,6 @@
 #include "telnov_transfer_one_all/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-
 #include <type_traits>
 
 namespace telnov_transfer_one_all {
