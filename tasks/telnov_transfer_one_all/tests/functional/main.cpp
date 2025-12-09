@@ -16,7 +16,7 @@
 
 namespace telnov_transfer_one_all {
 
-class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InTypeInt, OutTypeInt, TestType> {
+class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -44,7 +44,9 @@ class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InTypeI
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  int comm_size_ = 0;
+  int root_ = 0;
 };
 
 namespace {
@@ -56,8 +58,8 @@ TEST_P(TelnovTransferOneAllFuncTests, MatmulFromPic) {
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
 const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<TelnovTransferOneAllMPI, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all),
-    ppc::util::AddFuncTask<TelnovTransferOneAllSEQ, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all));
+    ppc::util::AddFuncTask<TelnovTransferOneAllMPI<int>, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all),
+    ppc::util::AddFuncTask<TelnovTransferOneAllSEQ<int>, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
