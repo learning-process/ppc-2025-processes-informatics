@@ -15,47 +15,28 @@ BaldinAMyScatterSEQ::BaldinAMyScatterSEQ(const InType &in) {
 }
 
 bool BaldinAMyScatterSEQ::ValidationImpl() {
-  const auto& input = GetInput();
+  const auto& [sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = GetInput();
 
-  const auto& [sendbuf, sendcount, sendtype, 
-                 recvbuf, recvcount, recvtype, 
-                 root, comm] = input;
-
-  int world_size = 0;
-  MPI_Comm_size(comm, &world_size);
+  if (sendcount <= 0 || sendcount != recvcount || root < 0) return false;
+  if (sendtype != recvtype) return false;
 
   auto is_sup_type = [](MPI_Datatype type) -> bool {
     return (type == MPI_INT || type == MPI_FLOAT || type == MPI_DOUBLE);
   };
 
-  return (sendcount > 0 && 
-            sendcount == recvcount && 
-            sendtype == recvtype &&
-            is_sup_type(sendtype) && 
-            root >= 0);
+  return is_sup_type(sendtype);
 }
 
 bool BaldinAMyScatterSEQ::PreProcessingImpl() {
-  auto& input = GetInput();
-    
-  auto& [sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = input;
+  int root = std::get<6>(GetInput());
   
   int world_size = 0;
-  MPI_Comm_size(comm, &world_size);
-
+  MPI_Comm_size(std::get<7>(GetInput()), &world_size);
+  
+  // если root выходит за границы, корректируем его
   if (root >= world_size) {
-      std::get<6>(input) = root % world_size; 
+      std::get<6>(GetInput()) = root % world_size; 
   }
-
-  // int total_cnt = world_size * sendcount;
-  // if (sendtype == MPI_INT) {
-  //   std::vector<int> tmp(total_cnt);
-  //   for (int i = 0; i < total_cnt; i++) {
-  //     tmp[i] = i;
-  //   }
-  //   (int*)sendbuf = tmp.data();
-  //   tmp.data() = nullptr;
-  // }
 
   return true;
 }
