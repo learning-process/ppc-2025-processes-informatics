@@ -8,26 +8,31 @@
 
 namespace telnov_transfer_one_all {
 
-TelnovTransferOneAllSEQ::TelnovTransferOneAllSEQ(const InType &in) {
+template <typename T>
+TelnovTransferOneAllSEQ<T>::TelnovTransferOneAllSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput().resize(0);
 }
 
-bool TelnovTransferOneAllSEQ::ValidationImpl() {
+template <typename T>
+bool TelnovTransferOneAllSEQ<T>::ValidationImpl() {
   return (!GetInput().empty()) && (GetOutput().empty());
 }
 
-bool TelnovTransferOneAllSEQ::PreProcessingImpl() {
+template <typename T>
+bool TelnovTransferOneAllSEQ<T>::PreProcessingImpl() {
   return true;
 }
 
-bool TelnovTransferOneAllSEQ::RunImpl() {
+template <typename T>
+bool TelnovTransferOneAllSEQ<T>::RunImpl() {
   SetOutput(GetInput());
   return true;
 }
 
-bool TelnovTransferOneAllSEQ::PostProcessingImpl() {
+template <typename T>
+bool TelnovTransferOneAllSEQ<T>::PostProcessingImpl() {
   return !GetOutput().empty();
 }
 

@@ -10,19 +10,21 @@
 
 namespace telnov_transfer_one_all {
 
-TelnovTransferOneAllMPI::TelnovTransferOneAllMPI(const InType &in) {
+template <typename T>
+TelnovTransferOneAllMPI<T>::TelnovTransferOneAllMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput().resize(0);
 }
 
-bool TelnovTransferOneAllMPI::ValidationImpl() {
+template <typename T>
+bool TelnovTransferOneAllMPI<T>::ValidationImpl() {
   return (!GetInput().empty()) && (GetOutput().empty());
 }
 
-bool TelnovTransferOneAllMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+template <typename T>
+bool TelnovTransferOneAllMPI<T>::PreProcessingImpl() {
+  return true;
 }
 
 bool TelnovTransferOneAllMPI::RunImpl() {
@@ -70,8 +72,13 @@ bool TelnovTransferOneAllMPI::RunImpl() {
   return true;
 }
 
-bool TelnovTransferOneAllMPI::PostProcessingImpl() {
+template <typename T>
+bool TelnovTransferOneAllMPI<T>::PostProcessingImpl() {
   return !GetOutput().empty();
 }
+
+template class TelnovTransferOneAllMPI<int>;
+template class TelnovTransferOneAllMPI<float>;
+template class TelnovTransferOneAllMPI<double>;
 
 }  // namespace telnov_transfer_one_all
