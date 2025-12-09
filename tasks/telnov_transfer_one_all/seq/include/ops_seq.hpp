@@ -13,9 +13,7 @@ class TelnovTransferOneAllSEQ : public BaseTask<T> {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit TelnovTransferOneAllSEQ(const std::vector<T>& input) : BaseTask<T>() {
-    this->setData(input);
-  }
+  explicit TelnovTransferOneAllSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
