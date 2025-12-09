@@ -29,7 +29,7 @@ bool TelnovTransferOneAllSEQ::RunImpl() {
 }
 
 bool TelnovTransferOneAllSEQ::PostProcessingImpl() {
-    return !GetOutput().empty();
+  return !GetOutput().empty();
 }
 
 }  // namespace telnov_transfer_one_all

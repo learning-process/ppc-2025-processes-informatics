@@ -32,12 +32,13 @@ class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType,
     input_data_.resize(array_size);
 
     for (int i = 0; i < array_size; ++i) {
-        if constexpr (std::is_same<typename InType::value_type, int>::value)
-            input_data_[i] = std::rand() % 100;
-        else if constexpr (std::is_same<typename InType::value_type, float>::value)
-            input_data_[i] = static_cast<float>(std::rand()) / RAND_MAX * 100.0f;
-        else if constexpr (std::is_same<typename InType::value_type, double>::value)
-            input_data_[i] = static_cast<double>(std::rand()) / RAND_MAX * 100.0;
+      if constexpr (std::is_same<typename InType::value_type, int>::value) {
+        input_data_[i] = std::rand() % 100;
+      } else if constexpr (std::is_same<typename InType::value_type, float>::value) {
+        input_data_[i] = static_cast<float>(std::rand()) / RAND_MAX * 100.0f;
+      } else if constexpr (std::is_same<typename InType::value_type, double>::value) {
+        input_data_[i] = static_cast<double>(std::rand()) / RAND_MAX * 100.0;
+      }
     }
 
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size_);
@@ -64,9 +65,9 @@ TEST_P(TelnovTransferOneAllFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<TelnovTransferOneAllMPI, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all),
-                   ppc::util::AddFuncTask<TelnovTransferOneAllSEQ, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<TelnovTransferOneAllMPI, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all),
+    ppc::util::AddFuncTask<TelnovTransferOneAllSEQ, InType>(kTestParam, PPC_SETTINGS_telnov_transfer_one_all));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

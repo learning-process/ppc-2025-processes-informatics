@@ -29,8 +29,8 @@ TEST_P(TelnovTransferOneAllPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, TelnovTransferOneAllMPI, TelnovTransferOneAllSEQ>(PPC_SETTINGS_telnov_transfer_one_all);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, TelnovTransferOneAllMPI, TelnovTransferOneAllSEQ>(
+    PPC_SETTINGS_telnov_transfer_one_all);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
