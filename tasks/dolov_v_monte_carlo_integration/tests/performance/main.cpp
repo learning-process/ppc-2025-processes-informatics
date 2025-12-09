@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <cmath>  // Для std::abs
+#include <cmath>
 #include <vector>
 
 #include "dolov_v_monte_carlo_integration/common/include/common.hpp"
@@ -13,14 +13,13 @@ namespace {
 
 class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
-  // Количество семплов для Performance-теста (должно быть большим!)
+  // Количество семплов для Performance-теста
   static constexpr int kSamples = 1000000;  // 1 миллион точек
 
   InType input_data_{};
   OutType expected_result_ = 0.0;  // Интеграл равен нулю
 
-  // Функция для тестирования: f(x1, x2, x3) = x1 + x2 + x3
-  // (Точный интеграл на [-1, 1]^3 равен 0)
+  // Функция для тестирования: f(x1, x2, x3) = x1 + x2 + x3, (Точный интеграл на [-1, 1]^3 равен 0)
   static double func_sum_coords_3d(const std::vector<double> &x) {
     double sum = 0.0;
     for (double val : x) {
@@ -31,27 +30,24 @@ class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<
 
  protected:
   void SetUp() override {
-    // --- 1. Инициализация InType (InputParams) для 3D интегрирования ---
+    // 1. Инициализация InType (InputParams) для 3D интегрирования
     const int kDimension = 3;
     const double kRadius = 1.0;
     const std::vector<double> kCenter = {0.0, 0.0, 0.0};
 
-    input_data_ = {
-        .func = func_sum_coords_3d,
-        .dimension = kDimension,
-        .samples_count = kSamples,
-        .center = kCenter,
-        .radius = kRadius,
-        .domain_type = IntegrationDomain::kHyperCube  // Performance тест в простом режиме
-    };
+    input_data_ = {.func = func_sum_coords_3d,
+                   .dimension = kDimension,
+                   .samples_count = kSamples,
+                   .center = kCenter,
+                   .radius = kRadius,
+                   .domain_type = IntegrationDomain::kHyperCube};
 
-    // --- 2. Ожидаемый результат ---
+    // 2. Ожидаемый результат
     // Интеграл f(x1 + x2 + x3) на симметричном кубе [-1, 1]^3 равен 0.
     expected_result_ = 0.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Допуск для Монте-Карло. Должен быть малым, так как интеграл точно 0.
     const double kTolerance = 0.02;
     return std::abs(output_data - expected_result_) < kTolerance;
   }

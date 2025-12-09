@@ -1,18 +1,18 @@
 #include "dolov_v_monte_carlo_integration/seq/include/ops_seq.hpp"
 
-#include <cmath>   // Для std::pow, std::sqrt, std::isfinite
-#include <random>  // Для std::mt19937, std::uniform_real_distribution
+#include <cmath>
+#include <random>
 #include <vector>
 
 #include "dolov_v_monte_carlo_integration/common/include/common.hpp"
-#include "util/include/util.hpp"  // Сохраняем, как в исходном коде
+#include "util/include/util.hpp"
 
 namespace dolov_v_monte_carlo_integration {
 
 DolovVMonteCarloIntegrationSEQ::DolovVMonteCarloIntegrationSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0.0;  // Инициализация с double
+  GetOutput() = 0.0;
 }
 
 bool DolovVMonteCarloIntegrationSEQ::ValidationImpl() {
@@ -35,7 +35,6 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
 
   // Инициализация генератора случайных чисел
   std::mt19937 generator(42);
-  // Единое распределение для диапазона [-R, R]
   std::uniform_real_distribution<double> distribution(-R, R);
 
   double sum = 0.0;
@@ -45,7 +44,7 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
     double distance_sq = 0.0;
     bool is_in_domain = true;
 
-    // Генерация случайной точки в гиперкубе: [center[d] - R, center[d] + R]
+    // Генерация случайной точки в гиперкубе
     for (int d = 0; d < D; ++d) {
       point[d] = in.center[d] + distribution(generator);
     }
@@ -67,10 +66,8 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
     }
   }
 
-  // Объем описанного гиперкуба V_cube = (2*R)^D
+  // Объем описанного гиперкуба
   const double V_cube = std::pow(2.0 * R, D);
-
-  // Финальный расчет: Integral = V_cube * (среднее_значение_функции в кубе)
   double integral_approximation = V_cube * (sum / N);
 
   GetOutput() = integral_approximation;
@@ -79,7 +76,7 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
 }
 
 bool DolovVMonteCarloIntegrationSEQ::PostProcessingImpl() {
-  return true;  // Не требуются действия после обработки
+  return true;
 }
 
 }  // namespace dolov_v_monte_carlo_integration

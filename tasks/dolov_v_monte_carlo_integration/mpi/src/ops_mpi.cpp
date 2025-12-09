@@ -2,8 +2,8 @@
 
 #include <mpi.h>
 
-#include <cmath>   // Для std::pow, std::sqrt, std::isfinite
-#include <random>  // Для std::mt19937, std::uniform_real_distribution
+#include <cmath>
+#include <random>
 #include <vector>
 
 #include "dolov_v_monte_carlo_integration/common/include/common.hpp"
@@ -46,7 +46,7 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &current_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &total_procs);
 
-  // --- 1. BROADCAST KEY SCALARS AND VECTORS ---
+  // 1. BROADCAST KEY SCALARS AND VECTORS
   InType params = GetInput();
 
   int dim = params.dimension;
@@ -60,7 +60,7 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
   MPI_Bcast(&rad, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&domain_type_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Принимаем bcast'нутые значения на всех процессах
+  // Принимаем bcastнутые значения на всех процессах
   if (current_rank != 0) {
     params.dimension = dim;
     params.samples_count = total_samples;
@@ -71,25 +71,21 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     params.center.resize(dim);
   }
 
-  // Bcast вектора центра (только если размерность > 0)
+  // Bcast вектора центра
   if (dim > 0) {
     MPI_Bcast(params.center.data(), dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 
-  // *** ПРИМЕЧАНИЕ: Функция func известна всем процессам, поэтому Bcast не нужен ***
-  // (Подразумевается, что func_square_sum определена в common.hpp и статически связана)
-
-  // --- 2. CALCULATE LOCAL WORKLOAD ---
+  // 2. CALCULATE LOCAL WORKLOAD
   int local_samples = total_samples / total_procs;
   // Добавляем остаток к последнему процессу
   if (current_rank == total_procs - 1) {
     local_samples += total_samples % total_procs;
   }
 
-  // --- 3. LOCAL COMPUTATION (Монте-Карло) ---
+  // 3. LOCAL COMPUTATION (Монте-Карло)
   const double R_sq = params.radius * params.radius;
 
-  // Зерно для генератора зависит от ранга для уникальной последовательности
   std::mt19937 random_generator(current_rank + 101);
   std::uniform_real_distribution<double> value_distributor(-params.radius, params.radius);
 
@@ -121,7 +117,7 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     }
   }
 
-  // --- 4. REDUCE AND FINAL CALCULATION ---
+  // 4. REDUCE AND FINAL CALCULATION
   double global_sum_of_f = 0.0;
   // Собираем все локальные суммы на корневой процесс 0
   MPI_Reduce(&local_sum_of_f, &global_sum_of_f, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -129,10 +125,8 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
   double final_integral_result = 0.0;
 
   if (current_rank == 0) {
-    // Объем описанного гиперкуба V_cube = (2*R)^D
+    // Объем описанного гиперкуба
     const double hyperspace_volume = std::pow(2.0 * params.radius, params.dimension);
-
-    // Финальный расчет: Integral = V_cube * (global_sum / N_total)
     final_integral_result = hyperspace_volume * (global_sum_of_f / total_samples);
   }
 

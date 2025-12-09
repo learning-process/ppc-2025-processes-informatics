@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cmath>       // Для std::pow, M_PI
-#include <functional>  // Для std::function
+#include <cmath>
+#include <functional>
 #include <string>
 #include <tuple>
-#include <vector>  // Для std::vector<double>
+#include <vector>
 
 #include "task/include/task.hpp"
 
@@ -26,10 +26,7 @@ struct InputParams {
   IntegrationDomain domain_type = IntegrationDomain::kHyperCube;
 };
 
-// InType - Наша гибкая многомерная структура.
 using InType = InputParams;
-
-// OutType - Результат интегрирования (число с плавающей точкой).
 using OutType = double;
 
 using TestType = std::tuple<int, std::string>;
