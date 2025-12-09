@@ -13,7 +13,7 @@ class TelnovTransferOneAllSEQ : public BaseTask<T> {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-    explicit TelnovTransferOneAllSEQ(const Container &input)
+    explicit TelnovTransferOneAllSEQ(const std::vector<T> &input)
       : BaseTask<T>(std::vector<T>(input.begin(), input.end())) {}
 
  private:
