@@ -1,12 +1,15 @@
 #pragma once
 
-#include "telnov_transfer_one_all/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "telnov_transfer_one_all/common/include/common.hpp"
 
 namespace telnov_transfer_one_all {
 
-class TelnovTransferOneAllSEQ : public BaseTask {
+template <typename T>
+class TelnovTransferOneAllSEQ : public BaseTask<T> {
  public:
+  using InType = std::vector<T>;
+  using OutType = InType;
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
