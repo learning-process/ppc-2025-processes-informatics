@@ -34,8 +34,8 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int count = static_cast<int>(GetInput().size());
-  int root = root_;
+  int count = static_cast<int>(this->GetInput().size());
+  int root = 0;
 
   MPI_Datatype mpi_type;
   if constexpr (std::is_same<typename InType::value_type, int>::value) {
@@ -69,7 +69,7 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
     mask <<= 1;
   }
 
-  this->SetOutput(data);
+  this->GetOutput() = data;
   return true;
 }
 
