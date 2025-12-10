@@ -2,15 +2,18 @@
 
 #include <task/include/task.hpp>
 #include <vector>
+
 #include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
 class GaussFilterMPI : public BaseTask {
  public:
-  explicit GaussFilterMPI(const InType& in);
-  
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kMPI; }
+  explicit GaussFilterMPI(const InType &in);
+
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
 
  protected:
   bool ValidationImpl() override;

@@ -1,29 +1,30 @@
 #include "makovskiy_i_gauss_filter_vert/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 #include <vector>
 
 namespace makovskiy_i_gauss_filter_vert {
 
-GaussFilterSEQ::GaussFilterSEQ(const InType& in) {
+GaussFilterSEQ::GaussFilterSEQ(const InType &in) {
   InType temp(in);
   this->GetInput().swap(temp);
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
 bool GaussFilterSEQ::ValidationImpl() {
-  const auto& [input, width, height] = GetInput();
+  const auto &[input, width, height] = GetInput();
   return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width * height);
 }
 
 bool GaussFilterSEQ::PreProcessingImpl() {
-  const auto& [input, width, height] = GetInput();
+  const auto &[input, width, height] = GetInput();
   GetOutput().resize(width * height);
   return true;
 }
 
 bool GaussFilterSEQ::RunImpl() {
-  const auto& [input, width, height] = GetInput();
-  auto& output = GetOutput();
+  const auto &[input, width, height] = GetInput();
+  auto &output = GetOutput();
 
   const int kernel[] = {1, 2, 1, 2, 4, 2, 1, 2, 1};
   const int kernel_sum = 16;
@@ -42,6 +43,8 @@ bool GaussFilterSEQ::RunImpl() {
   return true;
 }
 
-bool GaussFilterSEQ::PostProcessingImpl() { return true; }
+bool GaussFilterSEQ::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace makovskiy_i_gauss_filter_vert

@@ -11,10 +11,10 @@ using OutType = std::vector<int>;
 
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-inline int get_pixel(const std::vector<int>& image, int x, int y, int width, int height) {
-    int clamped_x = std::clamp(x, 0, width - 1);
-    int clamped_y = std::clamp(y, 0, height - 1);
-    return image[clamped_y * width + clamped_x];
+inline int get_pixel(const std::vector<int> &image, int x, int y, int width, int height) {
+  int clamped_x = std::clamp(x, 0, width - 1);
+  int clamped_y = std::clamp(y, 0, height - 1);
+  return image[clamped_y * width + clamped_x];
 }
 
 }  // namespace makovskiy_i_gauss_filter_vert

@@ -1,15 +1,18 @@
 #pragma once
 
 #include <task/include/task.hpp>
+
 #include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
 class GaussFilterSEQ : public BaseTask {
  public:
-  explicit GaussFilterSEQ(const InType& in);
+  explicit GaussFilterSEQ(const InType &in);
 
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kMPI; }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
 
  protected:
   bool ValidationImpl() override;
