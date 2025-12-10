@@ -16,15 +16,9 @@ BaldinAGaussFilterMPI::BaldinAGaussFilterMPI(const InType &in) {
 }
 
 bool BaldinAGaussFilterMPI::ValidationImpl() {
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0) {
-    const auto &im = GetInput();
-    return (im.width > 0 && im.height > 0 && im.channels > 0 &&
-            im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
-  }
-  return true;
+  const auto &im = GetInput();
+  return (im.width > 0 && im.height > 0 && im.channels > 0 &&
+          im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
 }
 
 bool BaldinAGaussFilterMPI::PreProcessingImpl() {
