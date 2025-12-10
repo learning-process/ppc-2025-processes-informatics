@@ -40,6 +40,7 @@ ImageData GetRandomImage(int width, int height, int channels) {
 
   return data;
 }
+
 ImageData CalculateGaussFilter(const ImageData &src) {
   ImageData dst = src;
   int w = src.width;
