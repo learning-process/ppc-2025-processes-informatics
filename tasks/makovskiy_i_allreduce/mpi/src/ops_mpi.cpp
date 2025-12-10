@@ -2,9 +2,10 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <numeric>
 #include <vector>
+
+#include "makovskiy_i_allreduce/common/include/common.hpp"
 
 namespace makovskiy_i_allreduce {
 

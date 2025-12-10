@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -49,11 +49,15 @@ const auto kFuncTestName = AllreduceRunFuncTests::PrintFuncTestName<AllreduceRun
 
 const auto kSeqTasks = ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce);
 const auto kSeqGtestValues = ppc::util::ExpandToValues(kSeqTasks);
-INSTANTIATE_TEST_SUITE_P(AllreduceTestsSEQ, AllreduceRunFuncTests, kSeqGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(
+    AllreduceTestsSEQ, AllreduceRunFuncTests, kSeqGtestValues,
+    kFuncTestName);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 const auto kMpiTasks = ppc::util::AddFuncTask<TestTaskMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce);
 const auto kMpiGtestValues = ppc::util::ExpandToValues(kMpiTasks);
-INSTANTIATE_TEST_SUITE_P(AllreduceTestsMPI, AllreduceRunFuncTests, kMpiGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(
+    AllreduceTestsMPI, AllreduceRunFuncTests, kMpiGtestValues,
+    kFuncTestName);  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 }  // namespace
 

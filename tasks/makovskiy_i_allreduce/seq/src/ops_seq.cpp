@@ -3,6 +3,8 @@
 #include <numeric>
 #include <vector>
 
+#include "makovskiy_i_allreduce/common/include/common.hpp"
+
 namespace makovskiy_i_allreduce {
 
 TestTaskSEQ::TestTaskSEQ(const InType &in) {
