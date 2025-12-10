@@ -29,9 +29,6 @@ class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType,
     for (int i = 0; i < array_size; ++i) {
       input_data_[i] = input_data_[i] = (i * 13) % 100;
     }
-
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size_);
-    root_ = 0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

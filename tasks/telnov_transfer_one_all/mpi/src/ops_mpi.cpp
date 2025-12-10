@@ -25,13 +25,29 @@ bool TelnovTransferOneAllMPI<T>::PreProcessingImpl() {
 
 template <typename T>
 bool TelnovTransferOneAllMPI<T>::RunImpl() {
-  int is_mpi_initialized = 0;
-  MPI_Initialized(&is_mpi_initialized);
+  static bool mpi_initialized = []() {
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (!initialized) {
+      int argc = 0;
+      char **argv = nullptr;
+      MPI_Init(&argc, &argv);
 
-  if (is_mpi_initialized == 0) {
-    this->GetOutput() = this->GetInput();
+      static bool finalized = false;
+      if (!finalized) {
+        std::atexit([]() {
+          int finalized_check = 0;
+          MPI_Finalized(&finalized_check);
+          if (!finalized_check) {
+            MPI_Finalize();
+          }
+        });
+        finalized = true;
+      }
+    }
     return true;
-  }
+  }();
+  (void)mpi_initialized;
 
   int rank = 0;
   int size = 0;
