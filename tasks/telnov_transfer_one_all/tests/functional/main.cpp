@@ -41,7 +41,6 @@ class TelnovTransferOneAllFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  private:
   InType input_data_;
-  int root_ = 0;
 };
 
 namespace {
