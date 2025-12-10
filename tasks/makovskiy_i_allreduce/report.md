@@ -2,7 +2,7 @@
 
 - Студент: Маковский Илья Игоревич, группа 3823Б1ФИ2
 - Технология: SEQ, MPI
-- Вариант: 17
+- Вариант: 3
 
 ## 1. Введение
 
@@ -88,5 +88,9 @@
 
 ## 9. Источники
 
-1.  MPI_Allreduce documentation - [https://www.open-mpi.org/doc/v4.1/man3/MPI_Allreduce.3.php](https://www.open-mpi.org/doc/v4.1/man3/MPI_Allreduce.3.php)
-2.  std::accumulate documentation - [https://en.cppreference.com/w/cpp/algorithm/accumulate](https://en.cppreference.com/w/cpp/algorithm/accumulate)
+1.  Parallel Programming Course - [https://learning-process.github.io/parallel_programming_course/ru/](https://learning-process.github.io/parallel_programming_course/ru/)
+2.  Parallel Programming 2025-2026 Video-Records - [https://disk.yandex.ru/d/NvHFyhOJCQU65w](https://disk.yandex.ru/d/NvHFyhOJCQU65w)
+3.  Open MPI: Documentation — [https://www.open-mpi.org/doc/](https://www.open-mpi.org/doc/)
+4.  C++ reference (cppreference.com) — [https://en.cppreference.com/w/cpp/algorithm/ranges/min_element](https://en.cppreference.com/w/cpp/algorithm/ranges/min_element)
+5.  MPI_Allreduce documentation - [https://www.open-mpi.org/doc/v4.1/man3/MPI_Allreduce.3.php](https://www.open-mpi.org/doc/v4.1/man3/MPI_Allreduce.3.php)
+6.  std::accumulate documentation - [https://en.cppreference.com/w/cpp/algorithm/accumulate](https://en.cppreference.com/w/cpp/algorithm/accumulate)
