@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <cstdlib>
 #include <type_traits>
 
 namespace telnov_transfer_one_all {
@@ -25,37 +26,22 @@ bool TelnovTransferOneAllMPI<T>::PreProcessingImpl() {
 
 template <typename T>
 bool TelnovTransferOneAllMPI<T>::RunImpl() {
-  static bool mpi_initialized = []() {
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (!initialized) {
-      int argc = 0;
-      char **argv = nullptr;
-      MPI_Init(&argc, &argv);
-
-      static bool finalized = false;
-      if (!finalized) {
-        std::atexit([]() {
-          int finalized_check = 0;
-          MPI_Finalized(&finalized_check);
-          if (!finalized_check) {
-            MPI_Finalize();
-          }
-        });
-        finalized = true;
+  static struct MPIInit {
+    MPIInit() {
+      int initialized = 0;
+      MPI_Initialized(&initialized);
+      if (!initialized) {
+        int argc = 0;
+        char **argv = nullptr;
+        MPI_Init(&argc, &argv);
       }
     }
-    return true;
-  }();
-  (void)mpi_initialized;
+  } mpi_init;
+  (void)mpi_init;
 
-  int rank = 0;
-  int size = 0;
+  int rank = 0, size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  int count = static_cast<int>(this->GetInput().size());
-  int root = 0;
 
   MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
   if constexpr (std::is_same_v<T, int>) {
@@ -68,10 +54,13 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
     return false;
   }
 
-  auto data = this->GetInput();
-  void *data_ptr = data.data();
+  auto &input = this->GetInput();
+  int count = static_cast<int>(input.size());
+  void *data_ptr = input.data();
 
+  const int root = 0;
   int virtual_rank = (rank + size - root) % size;
+
   int mask = 1;
   while (mask < size) {
     if ((virtual_rank & mask) == 0) {
@@ -89,7 +78,7 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
     mask <<= 1;
   }
 
-  this->GetOutput() = data;
+  this->GetOutput() = input;
   return true;
 }
 

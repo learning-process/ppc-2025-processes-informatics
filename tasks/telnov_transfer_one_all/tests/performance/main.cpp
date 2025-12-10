@@ -13,7 +13,7 @@ class TelnovTransferOneAllPerfTests : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_;
 
   void SetUp() override {
-    const int array_size = 1000000;
+    const int array_size = 10000000;
     input_data_.resize(array_size, 42);
   }
 
