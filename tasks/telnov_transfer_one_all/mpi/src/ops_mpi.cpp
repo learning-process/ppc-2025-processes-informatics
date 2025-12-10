@@ -30,11 +30,6 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
     MPIInit() {
       int initialized = 0;
       MPI_Initialized(&initialized);
-      if (initialized == 0) {
-        int argc = 0;
-        char **argv = nullptr;
-        MPI_Init(&argc, &argv);
-      }
     }
   } mpi_init;
   (void)mpi_init;
