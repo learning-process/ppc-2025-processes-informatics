@@ -13,8 +13,7 @@ LukinIThorTopologySEQ::LukinIThorTopologySEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   std::vector<int> message = std::get<2>(GetInput());
-  OutType out = std::make_tuple(dummy_route, message);
-  GetOutput() = out;
+  GetOutput() = std::make_tuple(dummy_route, message);
 }
 
 bool LukinIThorTopologySEQ::ValidationImpl() {
