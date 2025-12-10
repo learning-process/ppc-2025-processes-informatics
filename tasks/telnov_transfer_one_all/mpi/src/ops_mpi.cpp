@@ -9,6 +9,7 @@ namespace telnov_transfer_one_all {
 
 template <typename T>
 TelnovTransferOneAllMPI<T>::TelnovTransferOneAllMPI(const InType &in) {
+  [[maybe_unused]] auto type = GetStaticTypeOfTask();
   this->SetTypeOfTask(GetStaticTypeOfTask());
   this->GetInput() = in;
   this->GetOutput().resize(0);

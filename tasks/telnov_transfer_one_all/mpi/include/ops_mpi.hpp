@@ -11,7 +11,7 @@ class TelnovTransferOneAllMPI : public BaseTask<T> {
  public:
   using InType = std::vector<T>;
   using OutType = InType;
-  ppc::task::TypeOfTask GetStaticTypeOfTask() const {
+  static ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit TelnovTransferOneAllMPI(const InType &in);
