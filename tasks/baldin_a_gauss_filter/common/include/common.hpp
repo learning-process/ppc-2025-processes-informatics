@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <tuple>
 #include <vector>
 
@@ -24,7 +23,7 @@ struct ImageData {
 
 using InType = ImageData;
 using OutType = ImageData;
-using TestType = std::string; // название картинки
+using TestType = std::tuple<int, int, int>; // width, height, channels
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace baldin_a_gauss_filter
