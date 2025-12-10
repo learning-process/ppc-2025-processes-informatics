@@ -11,6 +11,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <random>
 
 #include "baldin_a_gauss_filter/common/include/common.hpp"
 #include "baldin_a_gauss_filter/mpi/include/ops_mpi.hpp"
@@ -22,6 +23,23 @@ namespace baldin_a_gauss_filter {
 
 namespace {
 
+ImageData GetRandomImage(int width, int height, int channels) {
+  ImageData data;
+  data.width = width;
+  data.height = height;
+  data.channels = channels;
+
+  size_t size = width * height * channels;
+  data.pixels.resize(size);
+
+  std::mt19937 gen(42);
+
+  for(size_t i = 0; i < size; ++i) {
+      data.pixels[i] = static_cast<uint8_t>(gen() % 256);
+  }
+
+  return data;
+}
 ImageData CalculateGaussFilter(const ImageData& src) {
   ImageData dst = src;
   int w = src.width;
@@ -54,37 +72,22 @@ ImageData CalculateGaussFilter(const ImageData& src) {
 class BaldinAGaussFilterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return test_param;
+    auto [w, h, c] = test_param;
+    return "Size_" + std::to_string(w) + "x" + std::to_string(h) + "_Ch" + std::to_string(c);
   }
 
  protected:
   void SetUp() override {
-    TestType filename = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam())  + ".jpg";
-    //std::cout << "FILE: " << filename << '\n';
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_baldin_a_gauss_filter, filename);
-    //std::cout << "ABS PATH: " << abs_path << '\n';
-    auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 0);
-    if (data == nullptr) {
-      throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-    }
-    img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-    stbi_image_free(data);
-
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = ImageData(width, height, channels, img);
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int width = std::get<0>(params);
+    int height = std::get<1>(params);
+    int channels = std::get<2>(params);
+    
+    input_data_ = GetRandomImage(width, height, channels);
     expected_output_ = CalculateGaussFilter(input_data_);
-    //for (int i = 0; i < 12; i++) std::cout << (int)(expected_output_.pixels[i]) << ' ';
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // for (int i = 0; i < 1; i++) {
-    //   std::cout << expected_output_.pixels[i] << " : " << output_data.pixels[i] << '\n';
-    // }
     return (output_data == expected_output_);
   }
 
@@ -103,7 +106,21 @@ TEST_P(BaldinAGaussFilterFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = { "pic", "image", "image1" };
+const std::array<TestType, 7> kTestParam = { 
+    std::make_tuple(3, 3, 3),
+
+    std::make_tuple(100, 100, 3),
+
+    std::make_tuple(200, 50, 3),
+
+    std::make_tuple(50, 200, 3),
+
+    std::make_tuple(127, 113, 3),
+
+    std::make_tuple(64, 64, 1),
+
+    std::make_tuple(64, 64, 4)
+ };
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<BaldinAGaussFilterMPI, InType>(kTestParam, PPC_SETTINGS_baldin_a_gauss_filter),
