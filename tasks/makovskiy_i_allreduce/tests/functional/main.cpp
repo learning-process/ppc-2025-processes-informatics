@@ -1,0 +1,64 @@
+#include <gtest/gtest.h>
+#include <mpi.h>
+
+#include <array>
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "makovskiy_i_allreduce/common/include/common.hpp"
+#include "makovskiy_i_allreduce/mpi/include/ops_mpi.hpp"
+#include "makovskiy_i_allreduce/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
+
+namespace makovskiy_i_allreduce {
+
+class AllreduceRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    const auto &input = std::get<0>(test_param);
+    return "Size_" + std::to_string(input.size());
+  }
+
+ protected:
+  InType GetTestInputData() final {
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    return std::get<0>(params);
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    if (ppc::util::IsUnderMpirun()) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto &expected = std::get<1>(params);
+
+    return output_data == expected;
+  }
+};
+
+TEST_P(AllreduceRunFuncTests, SumVector) {
+  ExecuteTest(GetParam());
+}
+
+namespace {
+
+const auto kTestCases = std::array<TestType, 5>{
+    TestType{InType{1, 2, 3, 4}, OutType{10}}, TestType{InType{10, -10, 5}, OutType{5}},
+    TestType{InType{100}, OutType{100}}, TestType{InType{}, OutType{0}}, TestType{InType{1, 1, 1, 1, 1}, OutType{5}}};
+
+const auto kTasks =
+    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce),
+                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce));
+
+const auto kGtestValues = ppc::util::ExpandToValues(kTasks);
+const auto kFuncTestName = AllreduceRunFuncTests::PrintFuncTestName<AllreduceRunFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(AllreduceTests, AllreduceRunFuncTests, kGtestValues, kFuncTestName);
+
+}  // namespace
+
+}  // namespace makovskiy_i_allreduce
