@@ -1,0 +1,28 @@
+#pragma once
+
+#include <task/include/task.hpp>
+#include <vector>
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
+
+namespace makovskiy_i_gauss_filter_vert {
+
+class GaussFilterMPI : public BaseTask {
+ public:
+  explicit GaussFilterMPI(const InType& in);
+  
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kMPI; }
+
+ protected:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+ private:
+  std::vector<int> local_strip;
+  int strip_width = 0;
+  int total_width = 0;
+  int total_height = 0;
+};
+
+}  // namespace makovskiy_i_gauss_filter_vert
