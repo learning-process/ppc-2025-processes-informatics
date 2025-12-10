@@ -7,8 +7,8 @@ namespace makovskiy_i_allreduce {
 
 class TestTaskSEQ : public BaseTask {
  public:
+  // для покрытия
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    // чтобы покрытие было
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit TestTaskSEQ(const InType &in);
