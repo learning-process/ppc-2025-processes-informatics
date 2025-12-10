@@ -30,7 +30,7 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
     MPIInit() {
       int initialized = 0;
       MPI_Initialized(&initialized);
-      if (!initialized) {
+      if (initialized == 0) {
         int argc = 0;
         char **argv = nullptr;
         MPI_Init(&argc, &argv);
@@ -39,7 +39,8 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
   } mpi_init;
   (void)mpi_init;
 
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
