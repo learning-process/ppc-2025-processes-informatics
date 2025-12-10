@@ -55,7 +55,6 @@ bool TelnovTransferOneAllMPI<T>::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int count = static_cast<int>(this->GetInput().size());
-  int root = 0;
 
   MPI_Datatype mpi_type = MPI_DATATYPE_NULL;
   if constexpr (std::is_same_v<T, int>) {
