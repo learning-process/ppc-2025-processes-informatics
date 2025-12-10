@@ -14,12 +14,12 @@ namespace makovskiy_i_allreduce {
 class AllreducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   InType GetTestInputData() final {
-    constexpr int kCount = 10000000;
+    constexpr int kCount = 100000000;
     return InType(kCount, 1);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    constexpr int kCount = 10000000;
+    constexpr int kCount = 100000000;
     return !output_data.empty() && output_data[0] == kCount;
   }
 };
