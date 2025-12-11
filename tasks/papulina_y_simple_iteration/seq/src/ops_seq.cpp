@@ -19,16 +19,9 @@ PapulinaYSimpleIterationSEQ::PapulinaYSimpleIterationSEQ(const InType &in) {
 bool PapulinaYSimpleIterationSEQ::ValidationImpl() {
   size_t n = std::get<0>(GetInput());
   const auto &a_matrix = std::get<1>(GetInput());
-  if (n < 1) {
+  if ((n < 1) || (!DiagonalDominance(a_matrix, n)) || (!DetermChecking(a_matrix, n))) {
     return false;
   }
-  if (!DiagonalDominance(a_matrix, n)) {
-    return false;
-  }
-  if (!DetermChecking(a_matrix, n)) {
-    return false;
-  }
-
   double norm_b = CalculateNormB(a_matrix, n);
 
   if (norm_b >= 1.0) {

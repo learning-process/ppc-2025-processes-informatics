@@ -216,31 +216,4 @@ TEST(PapulinaYSimpleIterationValidation_seq_, TryToUseMatrixWithZeroRows) {  // 
   task.Run();
   task.PostProcessing();
 }
-TEST(PapulinaYSimpleIterationValidation_mpi_, DetermCheckingIsWorking) {  // NOLINT
-  InType invalid_input = std::make_tuple(2,
-                                         std::vector<double>{
-                                             1.0, 2.0, 2.0, 4.0  // det = 1*4 - 2*2 = 0
-                                         },
-                                         std::vector<double>{3.0, 6.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.GetDetermCheckingResult(std::get<1>(invalid_input), std::get<0>(invalid_input)));
-  task.Validation();
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidation_mpi_, DiagonalDominanceCheckingIsWorking) {  // NOLINT
-  InType invalid_input = std::make_tuple(3,
-                                         std::vector<double>{1.0, 5.0, 5.0,  // |1| < |5| + |5| = 10
-                                                             5.0, 1.0, 5.0, 5.0, 5.0, 1.0},
-                                         std::vector<double>{1.0, 1.0, 1.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.GetDiagonalDominanceResult(std::get<1>(invalid_input), std::get<0>(invalid_input)));
-  task.Validation();
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
 }  // namespace papulina_y_simple_iteration

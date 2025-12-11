@@ -10,8 +10,6 @@ namespace papulina_y_simple_iteration {
 
 class PapulinaYSimpleIterationMPI : public BaseTask {
  public:
-  static bool GetDetermCheckingResult(const std::vector<double> &a, const size_t &n);
-  static bool GetDiagonalDominanceResult(const std::vector<double> &a, const size_t &n);
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }

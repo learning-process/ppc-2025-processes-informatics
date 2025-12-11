@@ -36,12 +36,6 @@ bool PapulinaYSimpleIterationMPI::DiagonalDominance(const std::vector<double> &a
   }
   return flag;
 }
-bool PapulinaYSimpleIterationMPI::GetDetermCheckingResult(const std::vector<double> &a, const size_t &n) {
-  return DetermChecking(a, n);
-}
-bool PapulinaYSimpleIterationMPI::GetDiagonalDominanceResult(const std::vector<double> &a, const size_t &n) {
-  return DiagonalDominance(a, n);
-}
 bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double> &a, const size_t &n) {
   std::vector<double> tmp = a;
 
@@ -86,16 +80,9 @@ bool PapulinaYSimpleIterationMPI::ValidationImpl() {
     size_t n = std::get<0>(GetInput());
     const auto &a_matrix = std::get<1>(GetInput());
 
-    if (n < 1) {
+    if ((n < 1) || (!DiagonalDominance(a_matrix, n)) || (!DetermChecking(a_matrix, n))) {
       return false;
     }
-    if (!DiagonalDominance(a_matrix, n)) {
-      return false;
-    }
-    if (!DetermChecking(a_matrix, n)) {
-      return false;
-    }
-
     double norm_b = CalculateNormB(a_matrix, n);
 
     if (norm_b >= 1.0) {
