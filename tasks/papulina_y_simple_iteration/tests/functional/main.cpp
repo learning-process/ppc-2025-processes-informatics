@@ -216,4 +216,25 @@ TEST(PapulinaYSimpleIterationValidation_seq_, TryToUseMatrixWithZeroRows) {  // 
   task.Run();
   task.PostProcessing();
 }
+TEST(PapulinaYSimpleIterationValidation_mpi_, SingularMatrix) {  // NOLINT
+  InType invalid_input = std::make_tuple(2, std::vector<double>{1.0, 2.0, 2.0, 4.0}, std::vector<double>{3.0, 6.0});
+  {
+    PapulinaYSimpleIterationSEQ task(invalid_input);
+    EXPECT_FALSE(task.Validation());
+  }
+  EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
+  ppc::util::DestructorFailureFlag::Unset();
+}
+TEST(PapulinaYSimpleIterationValidation_mpi_, MatrixWithoutDiagonalDominance) {  // NOLINT
+  InType invalid_input = std::make_tuple(
+      5, std::vector<double>{10.0, -1.0, -2.0, -3.0, -4.0, -10.0, 5.0,  -1.0, -2.0, -3.0, -4.0, -5.0, 8.0,
+                             -1.0, -2.0, -3.0, -4.0, -5.0, 12.0,  -1.0, -2.0, -3.0, -4.0, -5.0, 20.0},
+      std::vector<double>{0.0, -11.0, -4.0, -1.0, 6.0});
+  {
+    PapulinaYSimpleIterationSEQ task(invalid_input);
+    EXPECT_FALSE(task.Validation());
+  }
+  EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
+  ppc::util::DestructorFailureFlag::Unset();
+}
 }  // namespace papulina_y_simple_iteration
