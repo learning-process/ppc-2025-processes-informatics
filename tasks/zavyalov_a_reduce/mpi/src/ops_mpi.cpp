@@ -11,6 +11,7 @@ namespace zavyalov_a_reduce {
 
 void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
                                   int root, MPI_Comm comm) {
+  std::get<1>(GetOutput()) = false;
   int world_size = 0;
   int world_rank = 0;
 
