@@ -1,12 +1,12 @@
 #include "konstantinov_s_elem_vec_sign_change_count/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-//#include <numeric>
+// #include <numeric>
+#include <cstring>
 #include <vector>
-#include<cstring>
 
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
-//#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace konstantinov_s_elem_vec_sign_change_count {
 
@@ -37,7 +37,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   if (rank == 0) {
     auto input = GetInput();  // получаем только на нулевом процессе - корне
     if (input.empty()) {
-      //std::cout << "GOT EMPTY INPUT!!!!!!!!!!!!!\n";
+      // std::cout << "GOT EMPTY INPUT!!!!!!!!!!!!!\n";
       return false;
     }
     elemcount = static_cast<int>(input.size());

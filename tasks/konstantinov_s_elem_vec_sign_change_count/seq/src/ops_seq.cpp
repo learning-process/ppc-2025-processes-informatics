@@ -1,12 +1,12 @@
 #include "konstantinov_s_elem_vec_sign_change_count/seq/include/ops_seq.hpp"
 
-//#include <iostream>
-//#include <numeric>
+// #include <iostream>
+// #include <numeric>
+#include <cstddef>
 #include <vector>
-#include <cstddef> 
 
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
-//#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace konstantinov_s_elem_vec_sign_change_count {
 

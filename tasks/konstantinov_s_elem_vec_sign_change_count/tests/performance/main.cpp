@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <array>
 
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
