@@ -1,7 +1,4 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
-
-#include <vector>
 
 #include "makovskiy_i_allreduce/common/include/common.hpp"
 #include "makovskiy_i_allreduce/mpi/include/ops_mpi.hpp"
@@ -15,7 +12,8 @@ class AllreducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   InType GetTestInputData() final {
     constexpr int kCount = 100000000;
-    return InType(kCount, 1);
+    InType data(static_cast<InType::size_type>(kCount), 1);
+    return data;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
