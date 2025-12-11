@@ -10,9 +10,6 @@
 
 #include "matrix_band_multiplication/common/include/common.hpp"
 
-// GCOVR_EXCL_START
-// LCOV_EXCL_START
-
 namespace matrix_band_multiplication {
 
 namespace {
@@ -74,8 +71,8 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
     cols_b_ = matrix_b.cols;
   }
 
-  std::array<std::size_t, 4> dims = {rows_a_, cols_a_, rows_b_, cols_b_};                            // GCOVR_EXCL_LINE
-  MPI_Bcast(dims.data(), static_cast<int>(dims.size()), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // GCOVR_EXCL_LINE
+  std::array<std::size_t, 4> dims = {rows_a_, cols_a_, rows_b_, cols_b_};
+  MPI_Bcast(dims.data(), static_cast<int>(dims.size()), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
   rows_a_ = dims[0];
   cols_a_ = dims[1];
   rows_b_ = dims[2];
@@ -88,50 +85,106 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
   row_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   row_displs_ = BuildDisplacements(row_counts_);
 
-  std::vector<int> send_counts(row_counts_.size());
-  std::ranges::transform(row_counts_, send_counts.begin(),
-                         [this](int rows) { return rows * static_cast<int>(cols_a_); });
-  std::vector<int> send_displs = BuildDisplacements(send_counts);
+  std::vector<int> row_send_counts(row_counts_.size());
+  std::transform(row_counts_.begin(), row_counts_.end(), row_send_counts.begin(),
+                 [this](int rows) { return rows * static_cast<int>(cols_a_); });
+  std::vector<int> row_send_displs = BuildDisplacements(row_send_counts);
 
-  const double *a_ptr = rank_ == 0 ? matrix_a.values.data() : nullptr;
-  const int local_elems = send_counts[rank_];
-  local_a_.assign(static_cast<std::size_t>(local_elems), 0.0);
+  const double *a_ptr = (rank_ == 0 && !matrix_a.values.empty()) ? matrix_a.values.data() : nullptr;
+  const int local_a_elems = row_send_counts[rank_];
+  local_a_.assign(static_cast<std::size_t>(local_a_elems), 0.0);
 
-  MPI_Scatterv(a_ptr, send_counts.data(), send_displs.data(), MPI_DOUBLE, local_a_.data(), local_elems, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
+  MPI_Scatterv(a_ptr, row_send_counts.data(), row_send_displs.data(), MPI_DOUBLE, local_a_.data(), local_a_elems,
+               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  full_b_.resize(rows_b_ * cols_b_);
+  col_counts_ = BuildCounts(static_cast<int>(cols_b_), world_size_);
+  col_displs_ = BuildDisplacements(col_counts_);
+  max_cols_per_proc_ = col_counts_.empty() ? 0 : *std::max_element(col_counts_.begin(), col_counts_.end());
+  const int buffer_cols = std::max(1, max_cols_per_proc_);
+  current_b_.assign(static_cast<std::size_t>(rows_b_) * static_cast<std::size_t>(buffer_cols), 0.0);
+  rotation_buffer_.assign(current_b_.size(), 0.0);
+
+  std::vector<int> col_send_counts(col_counts_.size());
+  std::transform(col_counts_.begin(), col_counts_.end(), col_send_counts.begin(),
+                 [this](int cols) { return cols * static_cast<int>(rows_b_); });
+  std::vector<int> col_send_displs = BuildDisplacements(col_send_counts);
+
+  std::vector<double> transposed;
   if (rank_ == 0) {
-    std::ranges::copy(matrix_b.values, full_b_.begin());
+    transposed.resize(static_cast<std::size_t>(rows_b_) * cols_b_);
+    for (std::size_t i = 0; i < rows_b_; ++i) {
+      for (std::size_t j = 0; j < cols_b_; ++j) {
+        transposed[j * rows_b_ + i] = matrix_b.values[(i * cols_b_) + j];
+      }
+    }
   }
-  MPI_Bcast(full_b_.data(), static_cast<int>(rows_b_ * cols_b_), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  const auto local_elems_result = static_cast<std::size_t>(row_counts_[rank_]) * cols_b_;
-  local_result_.assign(local_elems_result, 0.0);
+  const int recv_cols = col_counts_.empty() ? 0 : col_counts_[rank_];
+  const int recv_elems = recv_cols * static_cast<int>(rows_b_);
+  MPI_Scatterv(transposed.data(), col_send_counts.data(), col_send_displs.data(), MPI_DOUBLE, current_b_.data(),
+               recv_elems, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  stripe_owner_ = rank_;
+  current_cols_ = recv_cols;
+
+  const auto local_rows = static_cast<std::size_t>(row_counts_[rank_]);
+  local_result_.assign(local_rows * cols_b_, 0.0);
 
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
-  std::ranges::transform(result_counts_, result_counts_.begin(),
-                         [this](int rows) { return rows * static_cast<int>(cols_b_); });
-  std::ranges::transform(result_displs_, result_displs_.begin(),
-                         [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
+  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(),
+                 [this](int rows) { return rows * static_cast<int>(cols_b_); });
+  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(),
+                 [this](int prefix) { return prefix * static_cast<int>(cols_b_); });
 
   return true;
 }
 
 bool MatrixBandMultiplicationMpi::RunImpl() {
   const int local_rows = row_counts_[rank_];
-  for (int i = 0; i < local_rows; ++i) {
-    for (std::size_t j = 0; j < cols_b_; ++j) {
-      double sum = 0.0;
-      for (std::size_t k = 0; k < cols_a_; ++k) {
-        const std::size_t a_idx = (static_cast<std::size_t>(i) * cols_a_) + k;
-        const std::size_t b_idx = (k * cols_b_) + j;
-        sum += local_a_[a_idx] * full_b_[b_idx];
-      }
-      local_result_[(static_cast<std::size_t>(i) * cols_b_) + j] = sum;
-    }
+  if (cols_b_ == 0 || rows_b_ == 0) {
+    return true;
   }
+
+  auto multiply_stripe = [&](const double *stripe_data, int stripe_cols, int stripe_offset) {
+    if (stripe_cols == 0 || local_rows == 0) {
+      return;
+    }
+    for (int row = 0; row < local_rows; ++row) {
+      const double *a_row = local_a_.data() + static_cast<std::size_t>(row) * cols_a_;
+      double *result_row = local_result_.data() + static_cast<std::size_t>(row) * cols_b_;
+      for (int col = 0; col < stripe_cols; ++col) {
+        const double *b_col = stripe_data + static_cast<std::size_t>(col) * rows_b_;
+        double sum = 0.0;
+        for (std::size_t k = 0; k < cols_a_; ++k) {
+          sum += a_row[k] * b_col[k];
+        }
+        result_row[stripe_offset + col] = sum;
+      }
+    }
+  };
+
+  int stripe_owner = stripe_owner_;
+  int stripe_cols = current_cols_;
+
+  for (int step = 0; step < world_size_; ++step) {
+    const int col_offset = col_displs_.empty() ? 0 : col_displs_[stripe_owner];
+    multiply_stripe(current_b_.data(), stripe_cols, col_offset);
+    if (world_size_ == 1) {
+      break;
+    }
+    const int send_to = (rank_ - 1 + world_size_) % world_size_;
+    const int recv_from = (rank_ + 1) % world_size_;
+    const int next_owner = (stripe_owner + 1) % world_size_;
+    const int next_cols = col_counts_.empty() ? 0 : col_counts_[next_owner];
+    MPI_Sendrecv(current_b_.data(), stripe_cols * static_cast<int>(rows_b_), MPI_DOUBLE, send_to, 0,
+                 rotation_buffer_.data(), next_cols * static_cast<int>(rows_b_), MPI_DOUBLE, recv_from, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    std::swap(current_b_, rotation_buffer_);
+    stripe_owner = next_owner;
+    stripe_cols = next_cols;
+  }
+
   return true;
 }
 
@@ -152,8 +205,8 @@ bool MatrixBandMultiplicationMpi::PostProcessingImpl() {
     output.values = std::move(gathered);
   }
 
-  std::array<std::size_t, 2> dims = {output.rows, output.cols};                                      // GCOVR_EXCL_LINE
-  MPI_Bcast(dims.data(), static_cast<int>(dims.size()), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);  // GCOVR_EXCL_LINE
+  std::array<std::size_t, 2> dims = {output.rows, output.cols};
+  MPI_Bcast(dims.data(), static_cast<int>(dims.size()), MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
   output.rows = dims[0];
   output.cols = dims[1];
 
@@ -164,6 +217,3 @@ bool MatrixBandMultiplicationMpi::PostProcessingImpl() {
 }
 
 }  // namespace matrix_band_multiplication
-
-// GCOVR_EXCL_STOP
-// LCOV_EXCL_STOP

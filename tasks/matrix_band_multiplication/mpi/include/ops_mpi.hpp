@@ -29,12 +29,18 @@ class MatrixBandMultiplicationMpi : public BaseTask {
   std::size_t rows_b_ = 0;
   std::size_t cols_b_ = 0;
   std::vector<double> local_a_;
-  std::vector<double> full_b_;
+  std::vector<double> current_b_;
+  std::vector<double> rotation_buffer_;
   std::vector<double> local_result_;
   std::vector<int> row_counts_;
   std::vector<int> row_displs_;
   std::vector<int> result_counts_;
   std::vector<int> result_displs_;
+  std::vector<int> col_counts_;
+  std::vector<int> col_displs_;
+  int stripe_owner_ = 0;
+  int current_cols_ = 0;
+  int max_cols_per_proc_ = 0;
 };
 
 }  // namespace matrix_band_multiplication
