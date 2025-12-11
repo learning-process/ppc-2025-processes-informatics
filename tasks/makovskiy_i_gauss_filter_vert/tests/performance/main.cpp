@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 #include "makovskiy_i_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_gauss_filter_vert/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -25,8 +26,7 @@ class GaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int rank = ppc::util::GetMPIRank();
     if (rank == 0) {
       const auto &[_, width, height] = GetTestInputData();
       return output_data.size() == static_cast<size_t>(width) * height;

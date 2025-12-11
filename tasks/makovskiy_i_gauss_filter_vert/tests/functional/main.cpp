@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 #include "makovskiy_i_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_gauss_filter_vert/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
@@ -50,6 +51,14 @@ struct NameGenerator {
     return name + "_" + std::to_string(info.index);
   }
 };
+
+void RunTaskStages(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+}
+
 }  // namespace
 
 INSTANTIATE_TEST_SUITE_P(GaussFilterFuncTests, GaussFilterFuncTests, ppc::util::ExpandToValues(kTasks),
@@ -57,14 +66,15 @@ INSTANTIATE_TEST_SUITE_P(GaussFilterFuncTests, GaussFilterFuncTests, ppc::util::
 
 TEST_P(GaussFilterFuncTests, RunFuncTests) {
   int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int initialized = 0;
+  MPI_Initialized(&initialized);
+  if (initialized) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  }
 
   auto task = std::get<0>(GetParam())(GetTestInputData());
 
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
+  RunTaskStages(task);
 
   if (rank == 0) {
     auto result = task->GetOutput();

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <task/include/task.hpp>
-#include <vector>
 
 #include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 

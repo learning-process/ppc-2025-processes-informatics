@@ -29,8 +29,8 @@ class GaussFilterMPI : public BaseTask {
   std::vector<int> ComputeLocal(int rank, int world_size);
 
   void GatherData(int rank, int world_size, const std::vector<int> &local_output);
-  void GatherDataRoot(int world_size, std::vector<int> &final_output, const std::vector<int> &local_output);
-  void GatherDataLeaf(const std::vector<int> &local_output);
+  void GatherDataRoot(int world_size, std::vector<int> &final_output, const std::vector<int> &local_output) const;
+  void GatherDataLeaf(const std::vector<int> &local_output) const;
 
   std::vector<int> local_strip_;
   int strip_width_ = 0;

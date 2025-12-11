@@ -4,11 +4,7 @@
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
-#include <tuple>
 #include <vector>
-
-#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
@@ -18,14 +14,14 @@ int GetPixelValue(int x, int y, int strip_w, int total_h, int rank, int world_si
                   const std::vector<int> &all_strip_widths, const std::vector<int> &left_ghost,
                   const std::vector<int> &right_ghost, const std::vector<int> &local_strip) {
   if (x < 0) {
-    if (rank > 0 && all_strip_widths[rank - 1] > 0) {
-      return left_ghost[std::clamp(y, 0, total_h - 1)];
+    if (rank > 0 && all_strip_widths[static_cast<size_t>(rank) - 1] > 0) {
+      return left_ghost[static_cast<size_t>(std::clamp(y, 0, total_h - 1))];
     }
     return GetPixel(local_strip, x, y, strip_w, total_h);
   }
   if (x >= strip_w) {
-    if (rank < world_size - 1 && all_strip_widths[rank + 1] > 0) {
-      return right_ghost[std::clamp(y, 0, total_h - 1)];
+    if (rank < world_size - 1 && all_strip_widths[static_cast<size_t>(rank) + 1] > 0) {
+      return right_ghost[static_cast<size_t>(std::clamp(y, 0, total_h - 1))];
     }
     return GetPixel(local_strip, x, y, strip_w, total_h);
   }
@@ -43,11 +39,10 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
       int current_x = col + k_col;
       int current_y = row + k_row;
 
-      int pixel_val = 0;
-      pixel_val = GetPixelValue(current_x, current_y, strip_w, total_h, rank, world_size, all_strip_widths, left_ghost,
-                                right_ghost, local_strip);
+      int pixel_val = GetPixelValue(current_x, current_y, strip_w, total_h, rank, world_size, all_strip_widths,
+                                    left_ghost, right_ghost, local_strip);
 
-      sum += pixel_val * kernel[((k_row + 1) * 3) + (k_col + 1)];
+      sum += pixel_val * kernel[static_cast<size_t>((k_row + 1) * 3 + (k_col + 1))];
     }
   }
   return sum;
@@ -55,7 +50,7 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
 
 }  // namespace
 
-GaussFilterMPI::GaussFilterMPI(const InType &in) : local_strip_(), strip_width_(0), total_width_(0), total_height_(0) {
+GaussFilterMPI::GaussFilterMPI(const InType &in) {
   InType temp(in);
   this->GetInput().swap(temp);
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -157,22 +152,25 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
       right_border[row] = local_strip_[(static_cast<size_t>(row) * strip_width_) + strip_width_ - 1];
     }
 
-    if (rank > 0 && all_strip_widths[rank - 1] > 0) {
-      MPI_Isend(left_border.data(), total_height_, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
-      MPI_Irecv(left_ghost.data(), total_height_, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
+    if (rank > 0 && all_strip_widths[static_cast<size_t>(rank) - 1] > 0) {
+      MPI_Isend(left_border.data(), total_height_, MPI_INT, rank - 1, 0, MPI_COMM_WORLD,
+                &requests[static_cast<size_t>(req_count++)]);
+      MPI_Irecv(left_ghost.data(), total_height_, MPI_INT, rank - 1, 1, MPI_COMM_WORLD,
+                &requests[static_cast<size_t>(req_count++)]);
     }
-    if (rank < world_size - 1 && all_strip_widths[rank + 1] > 0) {
-      MPI_Isend(right_border.data(), total_height_, MPI_INT, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
-      MPI_Irecv(right_ghost.data(), total_height_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
+    if (rank < world_size - 1 && all_strip_widths[static_cast<size_t>(rank) + 1] > 0) {
+      MPI_Isend(right_border.data(), total_height_, MPI_INT, rank + 1, 1, MPI_COMM_WORLD,
+                &requests[static_cast<size_t>(req_count++)]);
+      MPI_Irecv(right_ghost.data(), total_height_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD,
+                &requests[static_cast<size_t>(req_count++)]);
     }
     MPI_Waitall(req_count, requests.data(), MPI_STATUSES_IGNORE);
 
     const int kernel_sum = 16;
     for (int row = 0; row < total_height_; ++row) {
       for (int col = 0; col < strip_width_; ++col) {
-        int sum = 0;
-        sum = ApplyKernel(row, col, strip_width_, total_height_, rank, world_size, all_strip_widths, left_ghost,
-                          right_ghost, local_strip_);
+        int sum = ApplyKernel(row, col, strip_width_, total_height_, rank, world_size, all_strip_widths, left_ghost,
+                              right_ghost, local_strip_);
         local_output[(static_cast<size_t>(row) * strip_width_) + col] = sum / kernel_sum;
       }
     }
@@ -181,7 +179,7 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
 }
 
 void GaussFilterMPI::GatherDataRoot(int world_size, std::vector<int> &final_output,
-                                    const std::vector<int> &local_output) {
+                                    const std::vector<int> &local_output) const {
   int offset = 0;
   for (int i = 0; i < world_size; ++i) {
     int current_strip_width = (total_width_ / world_size) + (i < (total_width_ % world_size) ? 1 : 0);
@@ -207,7 +205,7 @@ void GaussFilterMPI::GatherDataRoot(int world_size, std::vector<int> &final_outp
   }
 }
 
-void GaussFilterMPI::GatherDataLeaf(const std::vector<int> &local_output) {
+void GaussFilterMPI::GatherDataLeaf(const std::vector<int> &local_output) const {
   if (strip_width_ > 0) {
     MPI_Send(local_output.data(), static_cast<int>(local_output.size()), MPI_INT, 0, 1, MPI_COMM_WORLD);
   }
