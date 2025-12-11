@@ -11,40 +11,39 @@ GaussFilterSEQ::GaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
-bool GaussFilterSEQ::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool GaussFilterSEQ::ValidationImpl() {  // NOLINT
   const auto &[input, width, height] = GetInput();
   return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width * height);
 }
 
-bool GaussFilterSEQ::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
-  const auto &[input, width, height] = GetInput();
+bool GaussFilterSEQ::PreProcessingImpl() {  // NOLINT
+  const auto &[_, width, height] = GetInput();
   GetOutput().resize(width * height);
   return true;
 }
 
-bool GaussFilterSEQ::RunImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool GaussFilterSEQ::RunImpl() {  // NOLINT
   const auto &[input, width, height] = GetInput();
   auto &output = GetOutput();
 
-  constexpr std::array<int, 9> kKernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
-  constexpr int kKernelSum = 16;
+  const std::array<int, 9> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
+  const int kernel_sum = 16;
 
-  for (int y_coord = 0; y_coord < height; ++y_coord) {
-    for (int x_coord = 0; x_coord < width; ++x_coord) {
+  for (int row = 0; row < height; ++row) {
+    for (int col = 0; col < width; ++col) {
       int sum = 0;
-      for (int ky = -1; ky <= 1; ++ky) {
-        for (int kx = -1; kx <= 1; ++kx) {
-          sum += GetPixel(input, x_coord + kx, y_coord + ky, width, height) *
-                 kKernel[static_cast<size_t>(((ky + 1) * 3) + (kx + 1))];
+      for (int k_row = -1; k_row <= 1; ++k_row) {
+        for (int k_col = -1; k_col <= 1; ++k_col) {
+          sum += GetPixel(input, col + k_col, row + k_row, width, height) * kernel[((k_row + 1) * 3) + (k_col + 1)];
         }
       }
-      output[(y_coord * width) + x_coord] = sum / kKernelSum;
+      output[(row * width) + col] = sum / kernel_sum;
     }
   }
   return true;
 }
 
-bool GaussFilterSEQ::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool GaussFilterSEQ::PostProcessingImpl() {  // NOLINT
   return true;
 }
 
