@@ -14,6 +14,7 @@
 #include "nikitina_v_quick_sort_merge/mpi/include/ops_mpi.hpp"
 #include "nikitina_v_quick_sort_merge/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace nikitina_v_quick_sort_merge {
 
