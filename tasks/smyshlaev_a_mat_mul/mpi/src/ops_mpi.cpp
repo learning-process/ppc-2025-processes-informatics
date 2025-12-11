@@ -100,7 +100,7 @@ bool SmyshlaevAMatMulMPI::RunSequential() {
       for (int j = 0; j < num_cols_b; ++j) {
         double sum = 0.0;
         for (int k = 0; k < num_cols_a; ++k) {
-          sum += mat_a[(i * num_cols_a) + k] * mat_b[(k * num_cols_b) + j];
+          sum += mat_a[(i * num_cols_a) + k] * mat_b_transposed_[(j * num_cols_a) + k];
         }
         result[(i * num_cols_b) + j] = sum;
       }
