@@ -47,7 +47,6 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
       pixel_val = GetPixelValue(current_x, current_y, strip_w, total_h, rank, world_size, all_strip_widths, left_ghost,
                                 right_ghost, local_strip);
 
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       sum += pixel_val * kernel[((k_row + 1) * 3) + (k_col + 1)];
     }
   }
@@ -62,12 +61,12 @@ GaussFilterMPI::GaussFilterMPI(const InType &in) : local_strip_(), strip_width_(
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
-bool GaussFilterMPI::ValidationImpl() {  // NOLINT
+bool GaussFilterMPI::ValidationImpl() {
   const auto &[input, width, height] = GetInput();
   return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width) * height;
 }
 
-bool GaussFilterMPI::PreProcessingImpl() {  // NOLINT
+bool GaussFilterMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -98,7 +97,7 @@ bool GaussFilterMPI::PreProcessingImpl() {  // NOLINT
   return true;
 }
 
-void GaussFilterMPI::ScatterDataRoot(int world_size) {  // NOLINT
+void GaussFilterMPI::ScatterDataRoot(int world_size) {
   const auto &[input, _w, _h] = GetInput();
   int offset = 0;
   for (int i = 0; i < world_size; ++i) {
@@ -124,14 +123,14 @@ void GaussFilterMPI::ScatterDataRoot(int world_size) {  // NOLINT
   }
 }
 
-void GaussFilterMPI::ScatterDataLeaf() {  // NOLINT
+void GaussFilterMPI::ScatterDataLeaf() {
   if (strip_width_ > 0) {
     MPI_Recv(local_strip_.data(), static_cast<int>(local_strip_.size()), MPI_INT, 0, 0, MPI_COMM_WORLD,
              MPI_STATUS_IGNORE);
   }
 }
 
-void GaussFilterMPI::ScatterData(int rank, int world_size) {  // NOLINT
+void GaussFilterMPI::ScatterData(int rank, int world_size) {
   if (rank == 0) {
     ScatterDataRoot(world_size);
   } else {
@@ -159,15 +158,11 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
     }
 
     if (rank > 0 && all_strip_widths[rank - 1] > 0) {
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Isend(left_border.data(), total_height_, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Irecv(left_ghost.data(), total_height_, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
     }
     if (rank < world_size - 1 && all_strip_widths[rank + 1] > 0) {
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Isend(right_border.data(), total_height_, MPI_INT, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
-      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Irecv(right_ghost.data(), total_height_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
     }
     MPI_Waitall(req_count, requests.data(), MPI_STATUSES_IGNORE);
@@ -186,7 +181,7 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
 }
 
 void GaussFilterMPI::GatherDataRoot(int world_size, std::vector<int> &final_output,
-                                    const std::vector<int> &local_output) {  // NOLINT
+                                    const std::vector<int> &local_output) {
   int offset = 0;
   for (int i = 0; i < world_size; ++i) {
     int current_strip_width = (total_width_ / world_size) + (i < (total_width_ % world_size) ? 1 : 0);
@@ -212,13 +207,13 @@ void GaussFilterMPI::GatherDataRoot(int world_size, std::vector<int> &final_outp
   }
 }
 
-void GaussFilterMPI::GatherDataLeaf(const std::vector<int> &local_output) {  // NOLINT
+void GaussFilterMPI::GatherDataLeaf(const std::vector<int> &local_output) {
   if (strip_width_ > 0) {
     MPI_Send(local_output.data(), static_cast<int>(local_output.size()), MPI_INT, 0, 1, MPI_COMM_WORLD);
   }
 }
 
-void GaussFilterMPI::GatherData(int rank, int world_size, const std::vector<int> &local_output) {  // NOLINT
+void GaussFilterMPI::GatherData(int rank, int world_size, const std::vector<int> &local_output) {
   if (rank == 0) {
     auto &final_output = GetOutput();
     GatherDataRoot(world_size, final_output, local_output);
@@ -227,7 +222,7 @@ void GaussFilterMPI::GatherData(int rank, int world_size, const std::vector<int>
   }
 }
 
-bool GaussFilterMPI::RunImpl() {  // NOLINT
+bool GaussFilterMPI::RunImpl() {
   int rank = 0;
   int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -241,7 +236,7 @@ bool GaussFilterMPI::RunImpl() {  // NOLINT
   return true;
 }
 
-bool GaussFilterMPI::PostProcessingImpl() {  // NOLINT
+bool GaussFilterMPI::PostProcessingImpl() {
   return true;
 }
 

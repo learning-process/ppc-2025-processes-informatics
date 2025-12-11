@@ -16,18 +16,18 @@ GaussFilterSEQ::GaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
-bool GaussFilterSEQ::ValidationImpl() {  // NOLINT
+bool GaussFilterSEQ::ValidationImpl() {
   const auto &[input, width, height] = GetInput();
   return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width) * height;
 }
 
-bool GaussFilterSEQ::PreProcessingImpl() {  // NOLINT
+bool GaussFilterSEQ::PreProcessingImpl() {
   const auto &[_, width, height] = GetInput();
   GetOutput().resize(static_cast<size_t>(width) * height);
   return true;
 }
 
-bool GaussFilterSEQ::RunImpl() {  // NOLINT
+bool GaussFilterSEQ::RunImpl() {
   const auto &[input, width, height] = GetInput();
   auto &output = GetOutput();
 
@@ -39,7 +39,6 @@ bool GaussFilterSEQ::RunImpl() {  // NOLINT
       int sum = 0;
       for (int k_row = -1; k_row <= 1; ++k_row) {
         for (int k_col = -1; k_col <= 1; ++k_col) {
-          // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
           sum += GetPixel(input, col + k_col, row + k_row, width, height) * kernel[((k_row + 1) * 3) + (k_col + 1)];
         }
       }
@@ -49,7 +48,7 @@ bool GaussFilterSEQ::RunImpl() {  // NOLINT
   return true;
 }
 
-bool GaussFilterSEQ::PostProcessingImpl() {  // NOLINT
+bool GaussFilterSEQ::PostProcessingImpl() {
   return true;
 }
 

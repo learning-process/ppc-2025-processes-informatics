@@ -20,12 +20,10 @@ using TestDS = std::pair<InType, OutType>;
 
 class GaussFilterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestDS> {
  protected:
-  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   InType GetTestInputData() override {
     return std::get<2>(GetParam()).first;
   }
 
-  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   bool CheckTestOutputData(OutType &result) override {
     const auto &expected = std::get<2>(GetParam()).second;
     return result == expected;
@@ -47,7 +45,6 @@ const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<GaussFilterMPI, InType>(kTestData, PPC_SETTINGS_makovskiy_i_gauss_filter_vert));
 
 struct NameGenerator {
-  // NOLINTNEXTLINE(readability-identifier-naming, readability-named-parameter)
   std::string operator()(const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestDS>> &info) const {
     auto name = std::get<1>(info.param);
     return name + "_" + std::to_string(info.index);
@@ -55,12 +52,9 @@ struct NameGenerator {
 };
 }  // namespace
 
-// NOLINTBEGIN(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(GaussFilterFuncTests, GaussFilterFuncTests, ppc::util::ExpandToValues(kTasks),
                          NameGenerator());
-// NOLINTEND(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_P(GaussFilterFuncTests, RunFuncTests) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
