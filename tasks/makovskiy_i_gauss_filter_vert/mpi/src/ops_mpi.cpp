@@ -47,7 +47,7 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
                                     left_ghost, right_ghost, local_strip);
 
       // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
-      sum += pixel_val * kernel[static_cast<size_t>(((k_row + 1) * 3) + (k_col + 1))];
+      sum += pixel_val * kernel[(static_cast<size_t>(k_row + 1) * 3) + static_cast<size_t>(k_col + 1)];
     }
   }
   return sum;
