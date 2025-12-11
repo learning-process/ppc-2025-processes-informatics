@@ -78,32 +78,53 @@ bool PapulinaYSimpleIterationMPI::FindAndSwapRow(std::vector<double> &tmp, size_
   return false;
 }
 bool PapulinaYSimpleIterationMPI::ValidationImpl() {
-  size_t n = std::get<0>(GetInput());
-  const auto &a = std::get<1>(GetInput());
-  bool basic_check = n >= 1 && DiagonalDominance(a, n) && DetermChecking(a, n);
-  if (!basic_check) {
-    std::cout << "Basic validation failed\n";
-    return false;
+  bool flag = true;
+  int proc_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
+
+  if (proc_rank == 0) {
+    size_t n = std::get<0>(GetInput());
+    const auto &a_matrix = std::get<1>(GetInput());
+
+    if (n < 1) {
+      return false;
+    }
+    if (!DiagonalDominance(a_matrix, n)) {
+      return false;
+    }
+    if (!DetermChecking(a_matrix, n)) {
+      return false;
+    }
+
+    double norm_b = CalculateNormB(a_matrix, n);
+
+    if (norm_b >= 1.0) {
+      std::cout << "WARNING: sufficient condition for convergence may not hold (norm_b = " << norm_b << " >= 1)\n";
+    }
   }
 
-  double norm_b = 0.0;  // проверка нормы матрицы B (для сходимости к решению)
+  return flag;
+}
+double PapulinaYSimpleIterationMPI::CalculateNormB(const std::vector<double> &a, size_t n) {
+  double max_row_sum = 0.0;
+
   for (size_t i = 0; i < n; i++) {
+    double diag = a[i * n + i];
     double row_sum = 0.0;
+
     for (size_t j = 0; j < n; j++) {
-      if (i != j) {
-        row_sum += std::abs(a[i * n + j] / a[i * n + i]);
+      if (j != i) {
+        row_sum += std::abs(a[i * n + j] / diag);
       }
     }
-    if (row_sum > norm_b) {
-      norm_b = row_sum;
+
+    if (row_sum > max_row_sum) {
+      max_row_sum = row_sum;
     }
   }
-  if (norm_b >= 1.0) {
-    std::cout << "WARNING: sufficient condition for convergence may not hold (norm_b = " << norm_b << " >= 1)\n";
-  }
-  return true;
-}
 
+  return max_row_sum;
+}
 bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
   n_ = static_cast<size_t>(std::get<0>(GetInput()));
   A_.assign(n_ * n_, 0.0);

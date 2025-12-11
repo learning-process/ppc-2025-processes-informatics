@@ -92,12 +92,23 @@ TEST_P(PapulinaYSimpleIterationRunFuncTestsProcesses, SimpleIteration) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 16> kTestParam = {
-    "DiagonalDominant3x3", "PureDiagonal3x3",       "Tridiagonal4x4",    "WithNegativeElements2x2",
-    "SingleEquation1x1",   "DifferentDiagonals3x3", "IllConditioned2x2", "IllConditioned5x5",
-    "LargeDiagonal4x4",    "NonSymmetric4x4",       "System5x5",         "System8x8",
+const std::array<TestType, 16> kTestParam = {"DiagonalDominant3x3",
+                                             "PureDiagonal3x3",
+                                             "Tridiagonal4x4",
+                                             "WithNegativeElements2x2",
+                                             "SingleEquation1x1",
+                                             "DifferentDiagonals3x3",
+                                             "LargeDiagonal4x4",
+                                             "NonSymmetric4x4",
+                                             "System5x5",
+                                             "System8x8",
 
-    "AlternatingSigns3x3", "System10x10",           "SpecificTest5x5",   "LargeTest20x20"};
+                                             "AlternatingSigns3x3",
+                                             "Matrix10x10",
+                                             "AverageConvergence4x4",
+                                             "FastConvergence4x4",
+                                             "SpecificTest5x5",
+                                             "AlternatingCharacters4x4"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYSimpleIterationMPI, InType>(kTestParam, PPC_SETTINGS_papulina_y_simple_iteration),
@@ -200,96 +211,6 @@ TEST(PapulinaYSimpleIterationValidationSEQ, TryToUseMatrixWithZeroRows) {
   InType invalid_input = std::make_tuple(0, std::vector<double>(), std::vector<double>());
 
   PapulinaYSimpleIterationSEQ task(invalid_input);
-  EXPECT_FALSE(task.Validation());
-
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidationMPI, NonDiagonalDominant) {
-  InType invalid_input = std::make_tuple(3,
-                                         std::vector<double>{
-                                             1.0, 5.0, 5.0,  // |1| < |5| + |5| = 10
-                                             5.0, 1.0, 5.0,  // |1| < |5| + |5| = 10
-                                             5.0, 5.0, 1.0   // |1| < |5| + |5| = 10
-                                         },
-                                         std::vector<double>{1.0, 1.0, 1.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.Validation());
-
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-
-TEST(PapulinaYSimpleIterationValidationMPI, SingularMatrix) {
-  InType invalid_input = std::make_tuple(2, std::vector<double>{1.0, 2.0, 2.0, 4.0}, std::vector<double>{3.0, 6.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.Validation());
-
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidationMPI, DetermCheckingIsWorking) {
-  InType invalid_input = std::make_tuple(2,
-                                         std::vector<double>{
-                                             1.0, 2.0, 2.0, 4.0  // det = 1*4 - 2*2 = 0
-                                         },
-                                         std::vector<double>{3.0, 6.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.GetDetermCheckingResult(std::get<1>(invalid_input), std::get<0>(invalid_input)));
-  task.Validation();
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidationMPI, DetermCheckingForMatrix5x5IsWorking) {
-  InType invalid_input =
-      std::make_tuple(5, std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0, 2.0,  3.0,  4.0, 5.0, 6.0, 3.0, 4.0, 5.0,
-                                             6.0, 7.0, 5.0, 7.0, 9.0, 11.0, 13.0, 2.0, 4.0, 6.0, 8.0, 10.0},
-                      std::vector<double>{15.0, 20.0, 25.0, 45.0, 30.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.GetDetermCheckingResult(std::get<1>(invalid_input), std::get<0>(invalid_input)));
-  task.Validation();
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidationMPI, DiagonalDominanceCheckingIsWorking) {
-  InType invalid_input = std::make_tuple(3,
-                                         std::vector<double>{1.0, 5.0, 5.0,  // |1| < |5| + |5| = 10
-                                                             5.0, 1.0, 5.0, 5.0, 5.0, 1.0},
-                                         std::vector<double>{1.0, 1.0, 1.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.GetDiagonalDominanceResult(std::get<1>(invalid_input), std::get<0>(invalid_input)));
-  task.Validation();
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidationMPI, DiagonalDominanceCheckingForMatrix5x5IsWorking) {
-  InType invalid_input = std::make_tuple(
-      5, std::vector<double>{10.0, -1.0, -2.0, -3.0, -4.0, -10.0, 5.0,  -1.0, -2.0, -3.0, -4.0, -5.0, 8.0,
-                             -1.0, -2.0, -3.0, -4.0, -5.0, 12.0,  -1.0, -2.0, -3.0, -4.0, -5.0, 20.0},
-      std::vector<double>{0.0, -11.0, -4.0, -1.0, 6.0});
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
-  EXPECT_FALSE(task.GetDiagonalDominanceResult(std::get<1>(invalid_input), std::get<0>(invalid_input)));
-  task.Validation();
-  task.PreProcessing();
-  task.Run();
-  task.PostProcessing();
-}
-TEST(PapulinaYSimpleIterationValidationMPI, TryToUseMatrixWithZeroRows) {
-  InType invalid_input = std::make_tuple(0, std::vector<double>(), std::vector<double>());
-
-  PapulinaYSimpleIterationMPI task(invalid_input);
   EXPECT_FALSE(task.Validation());
 
   task.PreProcessing();

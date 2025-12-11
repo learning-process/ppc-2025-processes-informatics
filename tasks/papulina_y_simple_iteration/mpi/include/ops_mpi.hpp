@@ -18,6 +18,7 @@ class PapulinaYSimpleIterationMPI : public BaseTask {
   explicit PapulinaYSimpleIterationMPI(const InType &in);
 
  private:
+  static double CalculateNormB(const std::vector<double> &a, size_t n);
   void CalculateGatherParameters(int proc_rank, std::vector<int> &proc_count_elemts_x, std::vector<int> &x_displs,
                                  int rows_for_proc, int remainder) const;
   void PrepareLocalMatrices(std::vector<double> &local_b_matrix, std::vector<double> &local_d, int start_row,

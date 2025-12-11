@@ -17,35 +17,45 @@ PapulinaYSimpleIterationSEQ::PapulinaYSimpleIterationSEQ(const InType &in) {
   GetOutput() = std::vector<double>(0);
 }
 bool PapulinaYSimpleIterationSEQ::ValidationImpl() {
-  bool basic_check = std::get<0>(GetInput()) >= 1 &&
-                     DiagonalDominance(std::get<1>(GetInput()), std::get<0>(GetInput())) &&
-                     DetermChecking(std::get<1>(GetInput()), std::get<0>(GetInput()));
-  if (!basic_check) {
-    std::cout << "Basic validation failed\n";
+  size_t n = std::get<0>(GetInput());
+  const auto &a_matrix = std::get<1>(GetInput());
+  if (n < 1) {
+    return false;
+  }
+  if (!DiagonalDominance(a_matrix, n)) {
+    return false;
+  }
+  if (!DetermChecking(a_matrix, n)) {
     return false;
   }
 
-  size_t n = std::get<0>(GetInput());
-  const auto &a_matrix = std::get<1>(GetInput());
+  double norm_b = CalculateNormB(a_matrix, n);
 
-  double norm_b = 0.0;
-  for (size_t i = n; i < n; i++) {  // проверка нормы матрицы b_matrix (для сходимости к решению)
-    double row_sum = 0.0;
-    for (size_t j = 0; j < n; j++) {
-      if (i != j) {
-        row_sum += std::abs(a_matrix[i * n + j] / a_matrix[i * n + i]);
-      }
-    }
-    if (row_sum > norm_b) {
-      norm_b = row_sum;
-    }
-  }
   if (norm_b >= 1.0) {
     std::cout << "WARNING: sufficient condition for convergence may not hold (norm_b = " << norm_b << " >= 1)\n";
   }
   return true;
 }
+double PapulinaYSimpleIterationSEQ::CalculateNormB(const std::vector<double> &a, size_t n) {
+  double max_row_sum = 0.0;
 
+  for (size_t i = 0; i < n; i++) {
+    double diag = a[i * n + i];
+    double row_sum = 0.0;
+
+    for (size_t j = 0; j < n; j++) {
+      if (j != i) {
+        row_sum += std::abs(a[i * n + j] / diag);
+      }
+    }
+
+    if (row_sum > max_row_sum) {
+      max_row_sum = row_sum;
+    }
+  }
+
+  return max_row_sum;
+}
 bool PapulinaYSimpleIterationSEQ::PreProcessingImpl() {
   n_ = static_cast<size_t>(std::get<0>(GetInput()));
   A_.assign(n_ * n_, 0.0);
@@ -126,18 +136,17 @@ bool PapulinaYSimpleIterationSEQ::RunImpl() {
     d[i] = b_[i] / A_[i * n_ + i];
   }
   std::vector<double> x = d;
-  for (size_t step = 0; step <= steps_count_; step++) {
-    std::vector<double> x_new = ComputeNewX(b_matrix, d, x, n_);
-
+  for (size_t step = 0; step < steps_count_; step++) {
+    std::vector<double> x_new(n_, 0.0);
+    ComputeNewX(b_matrix, d, x, x_new, n_);
     double sum_sq = 0.0;
     for (size_t i = 0; i < n_; i++) {
       double diff = x_new[i] - x[i];
       sum_sq += diff * diff;
     }
-    double diff_norm = std::sqrt(sum_sq);
+    double diff = std::sqrt(sum_sq);
 
-    if (diff_norm < eps_) {  // сравниваем норму разницы
-      std::cout << "Result is found on the step " << step << "\n";
+    if (diff < eps_) {  // сравниваем норму разницы
       GetOutput() = x_new;
       return true;
     }
@@ -149,18 +158,14 @@ bool PapulinaYSimpleIterationSEQ::RunImpl() {
 bool PapulinaYSimpleIterationSEQ::PostProcessingImpl() {
   return true;
 }
-std::vector<double> PapulinaYSimpleIterationSEQ::ComputeNewX(const std::vector<double> &b_matrix,
-                                                             const std::vector<double> &d, const std::vector<double> &x,
-                                                             size_t n) {
-  std::vector<double> x_new(n, 0.0);
-
+void PapulinaYSimpleIterationSEQ::ComputeNewX(const std::vector<double> &b_matrix, const std::vector<double> &d,
+                                              const std::vector<double> &x, std::vector<double> &x_new, size_t n) {
   for (size_t i = 0; i < n; i++) {
+    double sum = 0.0;
     for (size_t j = 0; j < n; j++) {
-      x_new[i] += b_matrix[i * n + j] * x[j];
+      sum += b_matrix[i * n + j] * x[j];
     }
-    x_new[i] += d[i];
+    x_new[i] = sum + d[i];
   }
-
-  return x_new;
 }
 }  // namespace papulina_y_simple_iteration
