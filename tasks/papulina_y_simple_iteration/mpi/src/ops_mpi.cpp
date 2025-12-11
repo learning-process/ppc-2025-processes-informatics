@@ -72,7 +72,7 @@ bool PapulinaYSimpleIterationMPI::FindAndSwapRow(std::vector<double> &tmp, size_
   return false;
 }
 bool PapulinaYSimpleIterationMPI::ValidationImpl() {
-  bool flag = true;
+  int flag = 1;
   int proc_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
@@ -81,16 +81,18 @@ bool PapulinaYSimpleIterationMPI::ValidationImpl() {
     const auto &a_matrix = std::get<1>(GetInput());
 
     if ((n < 1) || (!DiagonalDominance(a_matrix, n)) || (!DetermChecking(a_matrix, n))) {
-      return false;
-    }
-    double norm_b = CalculateNormB(a_matrix, n);
-
-    if (norm_b >= 1.0) {
-      std::cout << "WARNING: sufficient condition for convergence may not hold (norm_b = " << norm_b << " >= 1)\n";
+      flag = 0;  // валидация не прошла
+    } else {
+      double norm_b = CalculateNormB(a_matrix, n);
+      if (norm_b >= 1.0) {
+        std::cout << "WARNING: sufficient condition for convergence may not hold (norm_b = " << norm_b << " >= 1)\n";
+      }
     }
   }
 
-  return flag;
+  MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  return (flag == 1);
 }
 double PapulinaYSimpleIterationMPI::CalculateNormB(const std::vector<double> &a, size_t n) {
   double max_row_sum = 0.0;
