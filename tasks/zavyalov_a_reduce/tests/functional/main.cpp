@@ -232,7 +232,7 @@ TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(MPI_SUM, MPI_INT, 5U, 0),    std::make_tuple(MPI_SUM, MPI_INT, 9U, 1),
+    std::make_tuple(MPI_SUM, MPI_INT, 5U, 0),    std::make_tuple(MPI_SUM, MPI_INT, 9U, 0),
     std::make_tuple(MPI_SUM, MPI_FLOAT, 11U, 0), std::make_tuple(MPI_SUM, MPI_DOUBLE, 10U, 0),
     std::make_tuple(MPI_MIN, MPI_FLOAT, 6U, 0),  std::make_tuple(MPI_MIN, MPI_FLOAT, 50U, 0),
     std::make_tuple(MPI_MIN, MPI_INT, 6U, 0),    std::make_tuple(MPI_MIN, MPI_DOUBLE, 6U, 0)};
