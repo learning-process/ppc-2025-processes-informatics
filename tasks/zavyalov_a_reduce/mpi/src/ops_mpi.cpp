@@ -2,29 +2,30 @@
 
 #include <mpi.h>
 
-#include <vector>
+#include <algorithm>
+#include <cstring>
 
 #include "zavyalov_a_reduce/common/include/common.hpp"
 
 namespace zavyalov_a_reduce {
 
-void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
-                                   int root, MPI_Comm comm) {
-  int world_size;
-  int world_rank;
+void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
+                                  int root, MPI_Comm comm) {
+  int world_size = 0;
+  int world_rank = 0;
 
   MPI_Comm_size(comm, &world_size);
   MPI_Comm_rank(comm, &world_rank);
 
   if (operation == MPI_SUM) {
     if (type == MPI_INT) {
-      int *temp_buf = new int[count];
+      auto *temp_buf = new int[count];
       int log2floored = 0;
       int tmp_rank = world_rank;
       int parent_offset = 1;
       if (world_rank == 0) {
-        int *res_buf = new int[count];
-        memcpy(res_buf, sendbuf, count * sizeof(int));
+        auto *res_buf = new int[count];
+        std::memcpy(res_buf, sendbuf, count * sizeof(int));
         tmp_rank = world_size;
         while (tmp_rank > 1) {
           log2floored++;
@@ -33,7 +34,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
 
         int sender_rank = 1;
         while (sender_rank < world_size) {
-          std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
           MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
           for (int i = 0; i < count; i++) {
@@ -42,7 +42,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           sender_rank *= 2;
         }
         if (root != 0) {
-          std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(int));
@@ -56,11 +55,10 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           parent_offset *= 2;
         }
         if (log2floored > 0) {
-          int *res_buf = new int[count];
+          auto *res_buf = new int[count];
           memcpy(res_buf, sendbuf, count * sizeof(int));
           int child_offset = 1;
           for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-            std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
             MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm,
                      MPI_STATUS_IGNORE);
             for (int i = 0; i < count; i++) {
@@ -68,11 +66,9 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
             }
             child_offset *= 2;
           }
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
           delete[] res_buf;
         } else {
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
         }
 
@@ -82,12 +78,12 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
       }
       delete[] temp_buf;
     } else if (type == MPI_FLOAT) {
-      float *temp_buf = new float[count];
+      auto *temp_buf = new float[count];
       int log2floored = 0;
       int tmp_rank = world_rank;
       int parent_offset = 1;
       if (world_rank == 0) {
-        float *res_buf = new float[count];
+        auto *res_buf = new float[count];
         memcpy(res_buf, sendbuf, count * sizeof(float));
         tmp_rank = world_size;
         while (tmp_rank > 1) {
@@ -97,7 +93,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
 
         int sender_rank = 1;
         while (sender_rank < world_size) {
-          std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
           MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
           for (int i = 0; i < count; i++) {
@@ -106,11 +101,11 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           sender_rank *= 2;
         }
         if (root != 0) {
-          std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
           delete[] res_buf;
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(float));
+          delete[] res_buf;
         }
       } else {
         while (tmp_rank % 2 == 0) {
@@ -119,11 +114,10 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           parent_offset *= 2;
         }
         if (log2floored > 0) {
-          float *res_buf = new float[count];
+          auto *res_buf = new float[count];
           memcpy(res_buf, sendbuf, count * sizeof(float));
           int child_offset = 1;
           for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-            std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
             MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm,
                      MPI_STATUS_IGNORE);
             for (int i = 0; i < count; i++) {
@@ -131,11 +125,9 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
             }
             child_offset *= 2;
           }
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
           delete[] res_buf;
         } else {
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
         }
 
@@ -160,7 +152,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
 
         int sender_rank = 1;
         while (sender_rank < world_size) {
-          std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
           MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
           for (int i = 0; i < count; i++) {
@@ -169,7 +160,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           sender_rank *= 2;
         }
         if (root != 0) {
-          std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
           delete[] res_buf;
         } else {
@@ -186,7 +176,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           memcpy(res_buf, sendbuf, count * sizeof(double));
           int child_offset = 1;
           for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-            std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
             MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm,
                      MPI_STATUS_IGNORE);
             for (int i = 0; i < count; i++) {
@@ -194,11 +183,9 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
             }
             child_offset *= 2;
           }
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
           delete[] res_buf;
         } else {
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
         }
 
@@ -210,12 +197,12 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
     }
   } else if (operation == MPI_MIN) {
     if (type == MPI_INT) {
-      int *temp_buf = new int[count];
+      auto *temp_buf = new int[count];
       int log2floored = 0;
       int tmp_rank = world_rank;
       int parent_offset = 1;
       if (world_rank == 0) {
-        int *res_buf = new int[count];
+        auto *res_buf = new int[count];
         memcpy(res_buf, sendbuf, count * sizeof(int));
         tmp_rank = world_size;
         while (tmp_rank > 1) {
@@ -225,7 +212,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
 
         int sender_rank = 1;
         while (sender_rank < world_size) {
-          std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
           MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
           for (int i = 0; i < count; i++) {
@@ -234,7 +220,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           sender_rank *= 2;
         }
         if (root != 0) {
-          std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(int));
@@ -248,11 +233,10 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           parent_offset *= 2;
         }
         if (log2floored > 0) {
-          int *res_buf = new int[count];
+          auto *res_buf = new int[count];
           memcpy(res_buf, sendbuf, count * sizeof(int));
           int child_offset = 1;
           for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-            std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
             MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm,
                      MPI_STATUS_IGNORE);
             for (int i = 0; i < count; i++) {
@@ -260,11 +244,9 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
             }
             child_offset *= 2;
           }
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
           delete[] res_buf;
         } else {
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
         }
 
@@ -274,12 +256,12 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
       }
       delete[] temp_buf;
     } else if (type == MPI_FLOAT) {
-      float *temp_buf = new float[count];
+      auto *temp_buf = new float[count];
       int log2floored = 0;
       int tmp_rank = world_rank;
       int parent_offset = 1;
       if (world_rank == 0) {
-        float *res_buf = new float[count];
+        auto *res_buf = new float[count];
         memcpy(res_buf, sendbuf, count * sizeof(float));
         tmp_rank = world_size;
         while (tmp_rank > 1) {
@@ -289,7 +271,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
 
         int sender_rank = 1;
         while (sender_rank < world_size) {
-          std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
           MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
           for (int i = 0; i < count; i++) {
@@ -298,12 +279,12 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           sender_rank *= 2;
         }
         if (root != 0) {
-          std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
-          delete[] res_buf;
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(float));
         }
+        delete[] res_buf;
+
       } else {
         while (tmp_rank % 2 == 0) {
           log2floored++;
@@ -311,11 +292,10 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           parent_offset *= 2;
         }
         if (log2floored > 0) {
-          float *res_buf = new float[count];
+          auto *res_buf = new float[count];
           memcpy(res_buf, sendbuf, count * sizeof(float));
           int child_offset = 1;
           for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-            std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
             MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm,
                      MPI_STATUS_IGNORE);
             for (int i = 0; i < count; i++) {
@@ -323,11 +303,9 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
             }
             child_offset *= 2;
           }
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
           delete[] res_buf;
         } else {
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
         }
 
@@ -352,7 +330,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
 
         int sender_rank = 1;
         while (sender_rank < world_size) {
-          std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
           MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
           for (int i = 0; i < count; i++) {
@@ -361,12 +338,12 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           sender_rank *= 2;
         }
         if (root != 0) {
-          std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
-          delete[] res_buf;
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(double));
         }
+        delete[] res_buf;
+
       } else {
         while (tmp_rank % 2 == 0) {
           log2floored++;
@@ -378,7 +355,6 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
           memcpy(res_buf, sendbuf, count * sizeof(double));
           int child_offset = 1;
           for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-            std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
             MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm,
                      MPI_STATUS_IGNORE);
             for (int i = 0; i < count; i++) {
@@ -386,11 +362,9 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
             }
             child_offset *= 2;
           }
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
           delete[] res_buf;
         } else {
-          std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
           MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
         }
 
@@ -447,22 +421,15 @@ bool ZavyalovAReduceMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  int type_size;
+  int type_size = 0;
   MPI_Type_size(cur_type, &type_size);
   void *result_buf = new char[sz * type_size];
-  /* if (cur_type == MPI_INT) {
-    result_buf = new int[sz]; // не всегда int[], в общем случае T[]
-  } else if (cur_type == MPI_FLOAT) {
-    result_buf = new float[sz];
-  } else if (cur_type == MPI_DOUBLE) {
-    result_buf = new double[sz];
-  } */
   if (rank == receiver_rank) {
-    my_reduce(mem, result_buf, sz, cur_type, operation, receiver_rank, MPI_COMM_WORLD);
-    MPI_Bcast(result_buf, sz, cur_type, receiver_rank, MPI_COMM_WORLD);
+    MyReduce(mem, result_buf, static_cast<int>(sz), cur_type, operation, receiver_rank, MPI_COMM_WORLD);
+    MPI_Bcast(result_buf, static_cast<int>(sz), cur_type, receiver_rank, MPI_COMM_WORLD);
   } else {
-    my_reduce(mem, nullptr, sz, cur_type, operation, receiver_rank, MPI_COMM_WORLD);
-    MPI_Bcast(result_buf, sz, cur_type, receiver_rank, MPI_COMM_WORLD);
+    MyReduce(mem, nullptr, static_cast<int>(sz), cur_type, operation, receiver_rank, MPI_COMM_WORLD);
+    MPI_Bcast(result_buf, static_cast<int>(sz), cur_type, receiver_rank, MPI_COMM_WORLD);
   }
 
   std::get<0>(GetOutput()) = result_buf;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mpi.h>
+
 #include "task/include/task.hpp"
 #include "zavyalov_a_reduce/common/include/common.hpp"
 
@@ -13,8 +15,8 @@ class ZavyalovAReduceMPI : public BaseTask {
   explicit ZavyalovAReduceMPI(const InType &in);
 
  private:
-  void my_reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation, int root,
-                 MPI_Comm comm);
+  void MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation, int root,
+                MPI_Comm comm);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

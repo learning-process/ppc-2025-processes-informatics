@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <tuple>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "zavyalov_a_reduce/common/include/common.hpp"
@@ -16,15 +15,15 @@ namespace zavyalov_a_reduce {
 class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const uint64_t kCount_ = 20000000ULL;
   InType input_data_;
-  int *data;
+  int *data_ = nullptr;
 
   void SetUp() override {
-    data = new int[kCount_];
+    data_ = new int[kCount_];
     for (uint64_t i = 0; i < kCount_; i++) {
-      data[i] = 1;
+      data_[i] = 1;
     }
 
-    input_data_ = std::make_tuple(MPI_SUM, MPI_INT, kCount_, data, 0);
+    input_data_ = std::make_tuple(MPI_SUM, MPI_INT, kCount_, data_, 0);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -32,12 +31,12 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
       return true;
     }
 
-    int world_size;
+    int world_size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
     bool ok = true;
     for (uint64_t i = 0; i < kCount_; i++) {
-      ok |= (((int *)(std::get<0>(output_data)))[i] == world_size);
+      ok |= ((static_cast<int *>(std::get<0>(output_data)))[i] == world_size);
     }
     return ok;
     /*
@@ -56,8 +55,8 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
   }
 
  public:
-  ~ZavyalovAReducePerfTestProcesses() {
-    delete[] data;
+  ~ZavyalovAReducePerfTestProcesses() override {
+    delete[] data_;
   }
 };
 

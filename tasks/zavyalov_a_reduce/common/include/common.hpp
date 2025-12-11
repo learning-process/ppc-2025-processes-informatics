@@ -2,8 +2,8 @@
 
 #include <mpi.h>
 
+#include <cstring>
 #include <tuple>
-#include <vector>
 
 #include "task/include/task.hpp"
 
