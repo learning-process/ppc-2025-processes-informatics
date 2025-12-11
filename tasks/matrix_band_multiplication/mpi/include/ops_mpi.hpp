@@ -22,6 +22,10 @@ class MatrixBandMultiplicationMpi : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
   void MultiplyStripe(const double *stripe_data, int stripe_cols, int stripe_offset, int local_rows);
+  bool BroadcastDimensions(const Matrix &matrix_a, const Matrix &matrix_b);
+  void PrepareRowDistribution(const Matrix &matrix_a);
+  void PrepareColumnDistribution(const Matrix &matrix_b);
+  void PrepareResultGatherInfo();
 
   int rank_ = 0;
   int world_size_ = 1;

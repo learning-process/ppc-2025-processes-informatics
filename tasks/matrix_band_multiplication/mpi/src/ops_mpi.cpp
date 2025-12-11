@@ -64,6 +64,18 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   const auto &matrix_a = GetInput().a;
   const auto &matrix_b = GetInput().b;
+  if (!BroadcastDimensions(matrix_a, matrix_b)) {
+    return false;
+  }
+
+  PrepareRowDistribution(matrix_a);
+  PrepareColumnDistribution(matrix_b);
+  PrepareResultGatherInfo();
+
+  return true;
+}
+
+bool MatrixBandMultiplicationMpi::BroadcastDimensions(const Matrix &matrix_a, const Matrix &matrix_b) {
   if (rank_ == 0) {
     rows_a_ = matrix_a.rows;
     cols_a_ = matrix_a.cols;
@@ -78,10 +90,10 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
   rows_b_ = dims[2];
   cols_b_ = dims[3];
 
-  if (rows_a_ == 0 || cols_a_ == 0 || rows_b_ == 0 || cols_b_ == 0) {
-    return false;
-  }
+  return !(rows_a_ == 0 || cols_a_ == 0 || rows_b_ == 0 || cols_b_ == 0);
+}
 
+void MatrixBandMultiplicationMpi::PrepareRowDistribution(const Matrix &matrix_a) {
   row_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   row_displs_ = BuildDisplacements(row_counts_);
 
@@ -97,14 +109,15 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   MPI_Scatterv(a_ptr, row_send_counts.data(), row_send_displs.data(), MPI_DOUBLE, local_a_.data(), local_a_elems,
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
 
+void MatrixBandMultiplicationMpi::PrepareColumnDistribution(const Matrix &matrix_b) {
   col_counts_ = BuildCounts(static_cast<int>(cols_b_), world_size_);
   col_displs_ = BuildDisplacements(col_counts_);
+
   max_cols_per_proc_ = 0;
   for (int count : col_counts_) {
-    if (count > max_cols_per_proc_) {
-      max_cols_per_proc_ = count;
-    }
+    max_cols_per_proc_ = std::max(count, max_cols_per_proc_);
   }
   const int buffer_cols = std::max(1, max_cols_per_proc_);
   current_b_.assign(rows_b_ * static_cast<std::size_t>(buffer_cols), 0.0);
@@ -133,20 +146,20 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   stripe_owner_ = rank_;
   current_cols_ = recv_cols;
+}
 
+void MatrixBandMultiplicationMpi::PrepareResultGatherInfo() {
   const auto local_rows = static_cast<std::size_t>(row_counts_[rank_]);
   local_result_.assign(local_rows * cols_b_, 0.0);
 
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
-  for (std::size_t i = 0; i < result_counts_.size(); ++i) {
-    result_counts_[i] = result_counts_[i] * static_cast<int>(cols_b_);
+  for (int &result_count : result_counts_) {
+    result_count *= static_cast<int>(cols_b_);
   }
-  for (std::size_t i = 0; i < result_displs_.size(); ++i) {
-    result_displs_[i] = result_displs_[i] * static_cast<int>(cols_b_);
+  for (int &result_displ : result_displs_) {
+    result_displ *= static_cast<int>(cols_b_);
   }
-
-  return true;
 }
 
 bool MatrixBandMultiplicationMpi::RunImpl() {
