@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <random>
+#include <vector>
 
 #include "baldin_a_gauss_filter/common/include/common.hpp"
 #include "baldin_a_gauss_filter/mpi/include/ops_mpi.hpp"
@@ -17,10 +22,11 @@ ImageData GetRandomImage(int width, int height) {
   data.height = height;
   data.channels = 3;
 
-  size_t size = width * height * 3;
+  size_t size = static_cast<size_t>(width) * height * 3;
   data.pixels.resize(size);
 
-  std::mt19937 gen(42);
+  unsigned int seed = static_cast<unsigned int>(width + height + 3);
+  std::mt19937 gen(seed);
 
   for (size_t i = 0; i < size; ++i) {
     data.pixels[i] = static_cast<uint8_t>(gen() % 256);
@@ -35,24 +41,27 @@ ImageData CalculateGaussFilter(const ImageData &src) {
   int h = src.height;
   int c = src.channels;
 
-  const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  constexpr std::array<int, 9> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
 
-  for (int y = 0; y < h; y++) {
-    for (int x = 0; x < w; x++) {
-      for (int k = 0; k < c; k++) {
+  for (int row = 0; row < h; row++) {
+    for (int col = 0; col < w; col++) {
+      for (int ch = 0; ch < c; ch++) {
         int sum = 0;
         for (int dy = -1; dy <= 1; dy++) {
           for (int dx = -1; dx <= 1; dx++) {
-            int ny = std::clamp(y + dy, 0, h - 1);
-            int nx = std::clamp(x + dx, 0, w - 1);
+            int ny = std::clamp(row + dy, 0, h - 1);
+            int nx = std::clamp(col + dx, 0, w - 1);
 
-            sum += src.pixels[(ny * w + nx) * c + k] * kernel[dy + 1][dx + 1];
+            int pixel_val = src.pixels[((ny * w + nx) * c) + ch];
+            int kernel_val = kernel[((dy + 1) * 3) + (dx + 1)];
+            sum += pixel_val * kernel_val;
           }
         }
-        dst.pixels[(y * w + x) * c + k] = static_cast<uint8_t>(sum / 16);
+        dst.pixels[((row * w + col) * c) + ch] = static_cast<uint8_t>(sum / 16);
       }
     }
   }
+
   return dst;
 }
 

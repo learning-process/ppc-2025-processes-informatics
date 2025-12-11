@@ -2,11 +2,13 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "baldin_a_gauss_filter/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace baldin_a_gauss_filter {
 
@@ -16,13 +18,13 @@ BaldinAGaussFilterMPI::BaldinAGaussFilterMPI(const InType &in) {
 }
 
 bool BaldinAGaussFilterMPI::ValidationImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (rank == 0) {
     const auto &im = GetInput();
-    return (im.width > 0 && im.height > 0 && im.channels > 0 &&
-            im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
+    bool size_match = (im.pixels.size() == (static_cast<size_t>(im.width) * im.height * im.channels));
+    return (im.width > 0 && im.height > 0 && im.channels > 0 && size_match);
   }
   return true;
 }
@@ -31,14 +33,85 @@ bool BaldinAGaussFilterMPI::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+
+void CalculatePartitions(int size, int height, int width, int channels, std::vector<int> &counts,
+                         std::vector<int> &displs, std::vector<int> &real_counts) {
+  const int rows_per_proc = height / size;
+  const int remainder = height % size;
+
+  int current_global_row = 0;
+  const int row_size_bytes = width * channels;
+
+  for (int i = 0; i < size; ++i) {
+    int rows = rows_per_proc + ((i < remainder) ? 1 : 0);
+    real_counts[i] = rows;
+
+    int send_start_row = std::max(0, current_global_row - 1);
+    int send_end_row = std::min(height - 1, current_global_row + rows);
+
+    int rows_to_send = send_end_row - send_start_row + 1;
+
+    counts[i] = rows_to_send * row_size_bytes;
+    displs[i] = send_start_row * row_size_bytes;
+
+    current_global_row += rows;
+  }
+}
+
+void ComputeHorizontalPass(int rows, int width, int channels, const std::vector<uint8_t> &src,
+                           std::vector<uint16_t> &dst) {
+  constexpr std::array<int, 3> kernel = {1, 2, 1};
+
+  for (int row = 0; row < rows; ++row) {
+    for (int col = 0; col < width; ++col) {
+      for (int ch = 0; ch < channels; ++ch) {
+        int sum = 0;
+        for (int k = -1; k <= 1; ++k) {
+          int n_col = std::clamp(col + k, 0, width - 1);
+          sum += src[((row * width) + n_col) * channels + ch] * kernel[k + 1];
+        }
+        dst[((row * width) + col) * channels + ch] = static_cast<uint16_t>(sum);
+      }
+    }
+  }
+}
+
+void ComputeVerticalPass(int real_rows, int recv_rows, int width, int channels, int row_offset,
+                         const std::vector<uint16_t> &src, std::vector<uint8_t> &dst) {
+  constexpr std::array<int, 3> kernel = {1, 2, 1};
+
+  for (int i = 0; i < real_rows; ++i) {
+    int local_row = row_offset + i;
+
+    for (int col = 0; col < width; ++col) {
+      for (int ch = 0; ch < channels; ++ch) {
+        int sum = 0;
+        for (int k = -1; k <= 1; ++k) {
+          int neighbor_row = local_row + k;
+          neighbor_row = std::clamp(neighbor_row, 0, recv_rows - 1);
+
+          sum += src[((neighbor_row * width) + col) * channels + ch] * kernel[k + 1];
+        }
+        dst[((i * width) + col) * channels + ch] = static_cast<uint8_t>(sum / 16);
+      }
+    }
+  }
+}
+
+}  // namespace
+
 bool BaldinAGaussFilterMPI::RunImpl() {
   ImageData &input = GetInput();
 
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int width = 0, height = 0, channels = 0;
+  int width = 0;
+  int height = 0;
+  int channels = 0;
 
   if (rank == 0) {
     width = input.width;
@@ -49,95 +122,33 @@ bool BaldinAGaussFilterMPI::RunImpl() {
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  const int rows_per_proc = height / size;
-  const int remainder = height % size;
-
   std::vector<int> counts(size);
   std::vector<int> displs(size);
   std::vector<int> real_counts(size);
 
-  int current_global_row = 0;
-  int row_size_bytes = width * channels;
-
-  for (int i = 0; i < size; i++) {
-    int rows = rows_per_proc + (i < remainder ? 1 : 0);
-    real_counts[i] = rows;
-
-    int send_start_row = current_global_row - 1;
-    int send_end_row = current_global_row + rows;
-
-    if (send_start_row < 0) {
-      send_start_row = 0;
-    }
-    if (send_end_row >= height) {
-      send_end_row = height - 1;
-    }
-
-    int rows_to_send = send_end_row - send_start_row + 1;
-
-    counts[i] = rows_to_send * row_size_bytes;
-    displs[i] = send_start_row * row_size_bytes;
-
-    current_global_row += rows;
-  }
+  CalculatePartitions(size, height, width, channels, counts, displs, real_counts);
 
   int my_real_rows = real_counts[rank];
-  int my_recv_rows = counts[rank] / row_size_bytes;
+  int my_recv_rows = counts[rank] / (width * channels);
 
-  std::vector<uint8_t> local_buffer(my_recv_rows * row_size_bytes);
-  std::vector<uint16_t> horiz_buffer(my_recv_rows * width * channels);
-  std::vector<uint8_t> result_buffer(my_real_rows * row_size_bytes);
+  int row_size_bytes = static_cast<size_t>(width) * channels;
+  std::vector<uint8_t> local_buffer(static_cast<size_t>(my_recv_rows) * row_size_bytes);
+  std::vector<uint16_t> horiz_buffer(static_cast<size_t>(my_recv_rows) * row_size_bytes);
+  std::vector<uint8_t> result_buffer(static_cast<size_t>(my_real_rows) * row_size_bytes);
 
   MPI_Scatterv(rank == 0 ? input.pixels.data() : nullptr, counts.data(), displs.data(), MPI_UINT8_T,
                local_buffer.data(), counts[rank], MPI_UINT8_T, 0, MPI_COMM_WORLD);
 
-  const int kernel[3] = {1, 2, 1};
-
-  // Горизонтальный проход
-  for (int y = 0; y < my_recv_rows; y++) {
-    for (int x = 0; x < width; x++) {
-      for (int c = 0; c < channels; c++) {
-        int sum = 0;
-        for (int k = -1; k <= 1; k++) {
-          int nx = std::clamp(x + k, 0, width - 1);
-          sum += local_buffer[(y * width + nx) * channels + c] * kernel[k + 1];
-        }
-        horiz_buffer[(y * width + x) * channels + c] = static_cast<uint16_t>(sum);
-      }
-    }
-  }
+  ComputeHorizontalPass(my_recv_rows, width, channels, local_buffer, horiz_buffer);
 
   int row_offset = (rank == 0) ? 0 : 1;
-
-  // Вертикальный проход
-  for (int i = 0; i < my_real_rows; i++) {
-    int local_y = row_offset + i;
-
-    for (int x = 0; x < width; x++) {
-      for (int c = 0; c < channels; c++) {
-        int sum = 0;
-        for (int k = -1; k <= 1; k++) {
-          int neighbor_y = local_y + k;
-          if (neighbor_y < 0) {
-            neighbor_y = 0;
-          }
-          if (neighbor_y >= my_recv_rows) {
-            neighbor_y = my_recv_rows - 1;
-          }
-
-          sum += horiz_buffer[(neighbor_y * width + x) * channels + c] * kernel[k + 1];
-        }
-
-        result_buffer[(i * width + x) * channels + c] = static_cast<uint8_t>(sum / 16);
-      }
-    }
-  }
+  ComputeVerticalPass(my_real_rows, my_recv_rows, width, channels, row_offset, horiz_buffer, result_buffer);
 
   if (rank == 0) {
     GetOutput().width = width;
     GetOutput().height = height;
     GetOutput().channels = channels;
-    GetOutput().pixels.resize(width * height * channels);
+    GetOutput().pixels.resize(static_cast<size_t>(width) * height * channels);
   }
 
   std::vector<int> recv_counts(size);
@@ -152,7 +163,7 @@ bool BaldinAGaussFilterMPI::RunImpl() {
     }
   }
 
-  MPI_Gatherv(result_buffer.data(), my_real_rows * row_size_bytes, MPI_UINT8_T,
+  MPI_Gatherv(result_buffer.data(), static_cast<int>(result_buffer.size()), MPI_UINT8_T,
               (rank == 0 ? GetOutput().pixels.data() : nullptr), recv_counts.data(), recv_displs.data(), MPI_UINT8_T, 0,
               MPI_COMM_WORLD);
 
@@ -160,10 +171,12 @@ bool BaldinAGaussFilterMPI::RunImpl() {
 }
 
 bool BaldinAGaussFilterMPI::PostProcessingImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int width = 0, height = 0, channels = 0;
+  int width = 0;
+  int height = 0;
+  int channels = 0;
 
   if (rank == 0) {
     width = GetOutput().width;
@@ -175,6 +188,8 @@ bool BaldinAGaussFilterMPI::PostProcessingImpl() {
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  size_t total_size = static_cast<size_t>(width) * height * channels;
+
   if (rank != 0) {
     GetOutput().width = width;
     GetOutput().height = height;
@@ -182,7 +197,7 @@ bool BaldinAGaussFilterMPI::PostProcessingImpl() {
     GetOutput().pixels.resize(width * height * channels);
   }
 
-  MPI_Bcast(GetOutput().pixels.data(), width * height * channels, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(GetOutput().pixels.data(), static_cast<int>(total_size), MPI_UINT8_T, 0, MPI_COMM_WORLD);
 
   return true;
 }

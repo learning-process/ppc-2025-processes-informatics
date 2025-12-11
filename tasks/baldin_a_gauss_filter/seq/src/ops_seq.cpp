@@ -1,10 +1,12 @@
 #include "baldin_a_gauss_filter/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "baldin_a_gauss_filter/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace baldin_a_gauss_filter {
 
@@ -14,9 +16,9 @@ BaldinAGaussFilterSEQ::BaldinAGaussFilterSEQ(const InType &in) {
 }
 
 bool BaldinAGaussFilterSEQ::ValidationImpl() {
-  ImageData im = GetInput();
-  return (im.width > 0 && im.height > 0 && im.channels > 0 &&
-          im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
+  const auto &im = GetInput();
+  bool size_match = (im.pixels.size() == (static_cast<size_t>(im.width) * im.height * im.channels));
+  return (im.width > 0 && im.height > 0 && im.channels > 0 && size_match);
 }
 
 bool BaldinAGaussFilterSEQ::PreProcessingImpl() {
@@ -30,21 +32,23 @@ bool BaldinAGaussFilterSEQ::RunImpl() {
   int h = input.height;
   int c = input.channels;
 
-  const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+  constexpr std::array<int, 9> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
 
-  for (int y = 0; y < h; y++) {
-    for (int x = 0; x < w; x++) {
-      for (int k = 0; k < c; k++) {
+  for (int row = 0; row < h; row++) {
+    for (int col = 0; col < w; col++) {
+      for (int ch = 0; ch < c; ch++) {
         int sum = 0;
         for (int dy = -1; dy <= 1; dy++) {
           for (int dx = -1; dx <= 1; dx++) {
-            int ny = std::clamp(y + dy, 0, h - 1);
-            int nx = std::clamp(x + dx, 0, w - 1);
+            int ny = std::clamp(row + dy, 0, h - 1);
+            int nx = std::clamp(col + dx, 0, w - 1);
 
-            sum += input.pixels[(ny * w + nx) * c + k] * kernel[dy + 1][dx + 1];
+            int pixel_val = input.pixels[((ny * w + nx) * c) + ch];
+            int kernel_val = kernel[((dy + 1) * 3) + (dx + 1)];
+            sum += pixel_val * kernel_val;
           }
         }
-        res.pixels[(y * w + x) * c + k] = static_cast<uint8_t>(sum / 16);
+        res.pixels[((row * w + col) * c) + ch] = static_cast<uint8_t>(sum / 16);
       }
     }
   }
