@@ -1,7 +1,12 @@
 #include "makovskiy_i_gauss_filter_vert/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <tuple>
+#include <vector>
+
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
@@ -13,12 +18,12 @@ GaussFilterSEQ::GaussFilterSEQ(const InType &in) {
 
 bool GaussFilterSEQ::ValidationImpl() {  // NOLINT
   const auto &[input, width, height] = GetInput();
-  return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width * height);
+  return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width) * height;
 }
 
 bool GaussFilterSEQ::PreProcessingImpl() {  // NOLINT
   const auto &[_, width, height] = GetInput();
-  GetOutput().resize(width * height);
+  GetOutput().resize(static_cast<size_t>(width) * height);
   return true;
 }
 
@@ -34,10 +39,11 @@ bool GaussFilterSEQ::RunImpl() {  // NOLINT
       int sum = 0;
       for (int k_row = -1; k_row <= 1; ++k_row) {
         for (int k_col = -1; k_col <= 1; ++k_col) {
+          // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
           sum += GetPixel(input, col + k_col, row + k_row, width, height) * kernel[((k_row + 1) * 3) + (k_col + 1)];
         }
       }
-      output[(row * width) + col] = sum / kernel_sum;
+      output[(static_cast<size_t>(row) * width) + col] = sum / kernel_sum;
     }
   }
   return true;

@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
 #include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 #include "makovskiy_i_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_gauss_filter_vert/seq/include/ops_seq.hpp"
@@ -52,9 +55,10 @@ struct NameGenerator {
 };
 }  // namespace
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
+// NOLINTBEGIN(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(GaussFilterFuncTests, GaussFilterFuncTests, ppc::util::ExpandToValues(kTasks),
                          NameGenerator());
+// NOLINTEND(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 TEST_P(GaussFilterFuncTests, RunFuncTests) {

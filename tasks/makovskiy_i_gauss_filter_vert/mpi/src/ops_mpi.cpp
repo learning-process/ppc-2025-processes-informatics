@@ -5,6 +5,10 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <tuple>
+#include <vector>
+
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
@@ -43,6 +47,7 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
       pixel_val = GetPixelValue(current_x, current_y, strip_w, total_h, rank, world_size, all_strip_widths, left_ghost,
                                 right_ghost, local_strip);
 
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       sum += pixel_val * kernel[((k_row + 1) * 3) + (k_col + 1)];
     }
   }
@@ -51,7 +56,7 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
 
 }  // namespace
 
-GaussFilterMPI::GaussFilterMPI(const InType &in) {
+GaussFilterMPI::GaussFilterMPI(const InType &in) : local_strip_(), strip_width_(0), total_width_(0), total_height_(0) {
   InType temp(in);
   this->GetInput().swap(temp);
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -59,7 +64,7 @@ GaussFilterMPI::GaussFilterMPI(const InType &in) {
 
 bool GaussFilterMPI::ValidationImpl() {  // NOLINT
   const auto &[input, width, height] = GetInput();
-  return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width * height);
+  return !input.empty() && width > 0 && height > 0 && input.size() == static_cast<size_t>(width) * height;
 }
 
 bool GaussFilterMPI::PreProcessingImpl() {  // NOLINT
@@ -83,11 +88,11 @@ bool GaussFilterMPI::PreProcessingImpl() {  // NOLINT
   strip_width_ = min_strip_width + (rank < remainder ? 1 : 0);
 
   if (strip_width_ > 0) {
-    local_strip_.resize(strip_width_ * total_height_);
+    local_strip_.resize(static_cast<size_t>(strip_width_) * total_height_);
   }
 
   if (rank == 0) {
-    GetOutput().resize(total_width_ * total_height_);
+    GetOutput().resize(static_cast<size_t>(total_width_) * total_height_);
   }
 
   return true;
@@ -102,10 +107,11 @@ void GaussFilterMPI::ScatterDataRoot(int world_size) {  // NOLINT
       continue;
     }
 
-    std::vector<int> strip_to_send(current_strip_width * total_height_);
+    std::vector<int> strip_to_send(static_cast<size_t>(current_strip_width) * total_height_);
     for (int row = 0; row < total_height_; ++row) {
       for (int col = 0; col < current_strip_width; ++col) {
-        strip_to_send[(row * current_strip_width) + col] = input[(row * total_width_) + offset + col];
+        strip_to_send[(static_cast<size_t>(row) * current_strip_width) + col] =
+            input[(static_cast<size_t>(row) * total_width_) + offset + col];
       }
     }
 
@@ -134,7 +140,7 @@ void GaussFilterMPI::ScatterData(int rank, int world_size) {  // NOLINT
 }
 
 std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
-  std::vector<int> local_output(strip_width_ * total_height_);
+  std::vector<int> local_output(static_cast<size_t>(strip_width_) * total_height_);
   std::vector<int> all_strip_widths(world_size);
   MPI_Allgather(&strip_width_, 1, MPI_INT, all_strip_widths.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
@@ -148,16 +154,20 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
     std::vector<int> right_border(total_height_);
 
     for (int row = 0; row < total_height_; ++row) {
-      left_border[row] = local_strip_[row * strip_width_];
-      right_border[row] = local_strip_[(row * strip_width_) + strip_width_ - 1];
+      left_border[row] = local_strip_[static_cast<size_t>(row) * strip_width_];
+      right_border[row] = local_strip_[(static_cast<size_t>(row) * strip_width_) + strip_width_ - 1];
     }
 
     if (rank > 0 && all_strip_widths[rank - 1] > 0) {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Isend(left_border.data(), total_height_, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Irecv(left_ghost.data(), total_height_, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
     }
     if (rank < world_size - 1 && all_strip_widths[rank + 1] > 0) {
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Isend(right_border.data(), total_height_, MPI_INT, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
       MPI_Irecv(right_ghost.data(), total_height_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
     }
     MPI_Waitall(req_count, requests.data(), MPI_STATUSES_IGNORE);
@@ -168,7 +178,7 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
         int sum = 0;
         sum = ApplyKernel(row, col, strip_width_, total_height_, rank, world_size, all_strip_widths, left_ghost,
                           right_ghost, local_strip_);
-        local_output[(row * strip_width_) + col] = sum / kernel_sum;
+        local_output[(static_cast<size_t>(row) * strip_width_) + col] = sum / kernel_sum;
       }
     }
   }
@@ -184,7 +194,7 @@ void GaussFilterMPI::GatherDataRoot(int world_size, std::vector<int> &final_outp
       continue;
     }
 
-    std::vector<int> received_strip(current_strip_width * total_height_);
+    std::vector<int> received_strip(static_cast<size_t>(current_strip_width) * total_height_);
     if (i == 0) {
       received_strip = local_output;
     } else {
@@ -194,7 +204,8 @@ void GaussFilterMPI::GatherDataRoot(int world_size, std::vector<int> &final_outp
 
     for (int row = 0; row < total_height_; ++row) {
       for (int col = 0; col < current_strip_width; ++col) {
-        final_output[(row * total_width_) + offset + col] = received_strip[(row * current_strip_width) + col];
+        final_output[(static_cast<size_t>(row) * total_width_) + offset + col] =
+            received_strip[(static_cast<size_t>(row) * current_strip_width) + col];
       }
     }
     offset += current_strip_width;

@@ -2,6 +2,9 @@
 #include <mpi.h>
 
 #include <cstddef>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 // NOLINTNEXTLINE(misc-include-cleaner)
 #include "makovskiy_i_gauss_filter_vert/mpi/include/ops_mpi.hpp"
@@ -17,7 +20,8 @@ class GaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
   InType GetTestInputData() final {
     constexpr int kWidth = 2000;
     constexpr int kHeight = 2000;
-    std::vector<int> input_image(kWidth * kHeight);
+    // Fix: Cast to size_t
+    std::vector<int> input_image(static_cast<size_t>(kWidth) * kHeight);
     for (size_t i = 0; i < input_image.size(); ++i) {
       input_image[i] = static_cast<int>(i % 256);
     }
@@ -30,7 +34,8 @@ class GaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank == 0) {
       const auto &[_, width, height] = GetTestInputData();
-      return output_data.size() == static_cast<size_t>(width * height);
+      // Fix: Cast to size_t
+      return output_data.size() == static_cast<size_t>(width) * height;
     }
     return true;
   }
@@ -47,15 +52,17 @@ const auto kSeqPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, GaussFilterSEQ>(PPC_SETTINGS_makovskiy_i_gauss_filter_vert);
 const auto kSeqGtestValues = ppc::util::TupleToGTestValues(kSeqPerfTasks);
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
+// NOLINTBEGIN(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(GaussFilterPerfSEQ, GaussFilterPerfTests, kSeqGtestValues, kPerfTestName);
+// NOLINTEND(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 
 const auto kMpiPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, GaussFilterMPI>(PPC_SETTINGS_makovskiy_i_gauss_filter_vert);
 const auto kMpiGtestValues = ppc::util::TupleToGTestValues(kMpiPerfTasks);
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
+// NOLINTBEGIN(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(GaussFilterPerfMPI, GaussFilterPerfTests, kMpiGtestValues, kPerfTestName);
+// NOLINTEND(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace)
 
 }  // namespace
 }  // namespace makovskiy_i_gauss_filter_vert

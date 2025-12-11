@@ -32,7 +32,7 @@ class GaussFilterMPI : public BaseTask {
   void GatherDataRoot(int world_size, std::vector<int> &final_output, const std::vector<int> &local_output);
   void GatherDataLeaf(const std::vector<int> &local_output);
 
-  std::vector<int> local_strip_ = {};
+  std::vector<int> local_strip_;
   int strip_width_ = 0;
   int total_width_ = 0;
   int total_height_ = 0;
