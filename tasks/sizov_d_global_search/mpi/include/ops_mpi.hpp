@@ -23,32 +23,28 @@ class SizovDGlobalSearchMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   struct IntervalChar {
-    double characteristic;
-    int index;
+    double characteristic = 0.0;
+    int index = -1;
   };
-
-  // ---------- Алгоритмические методы ----------
-  [[nodiscard]] double EstimateM(double r, int rank, int size) const;
-  [[nodiscard]] double Characteristic(std::size_t i, double m) const;
-  [[nodiscard]] double NewPoint(std::size_t i, double m) const;
 
   static void GetChunk(std::size_t intervals, int rank, int size, std::size_t &begin, std::size_t &end);
 
-  [[nodiscard]] IntervalChar ComputeLocalBestInterval(double m, int rank, int size) const;
+  [[nodiscard]] double EstimateM(double r, int rank, int size) const;
+  [[nodiscard]] double Characteristic(std::size_t i, double m) const;
+  [[nodiscard]] double NewPoint(std::size_t i, double m) const;
+  bool ProcessIteration(const Problem &p, double &m, int rank, int size);
+  void BroadcastNewPoint(int best_idx, double m, const Problem &p, int rank);
 
+  [[nodiscard]] IntervalChar ComputeLocalBestInterval(double m, int rank, int size) const;
   static int ReduceBestIntervalIndex(const IntervalChar &local, int n);
 
-  bool CheckStopByAccuracy(const Problem &p, int best_idx_int, int rank);
-  void InsertNewPoint(const Problem &p, std::size_t best_idx, double m, int rank);
+  bool CheckStopByAccuracy(const Problem &p, int best_idx, int rank);
 
-  // ---------- MPI-синхронизация ----------
   void BroadcastState(int rank);
   void BroadcastResult(int rank);
 
-  // ---------- Данные ----------
   std::vector<double> x_;
   std::vector<double> y_;
-
   double best_x_ = 0.0;
   double best_y_ = 0.0;
   int iterations_ = 0;

@@ -1,11 +1,18 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
+#include "performance/include/performance.hpp"
 #include "sizov_d_global_search/common/include/common.hpp"
 #include "sizov_d_global_search/mpi/include/ops_mpi.hpp"
 #include "sizov_d_global_search/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace sizov_d_global_search {
 
@@ -35,6 +42,28 @@ InType MakePerfProblem() {
   return p;
 }
 
+template <typename Tuple, typename Func, std::size_t... I>
+void ForEachTupleElement(const Tuple &tuple, Func func, std::index_sequence<I...> /*unused*/) {
+  (func(std::get<I>(tuple)), ...);
+}
+
+auto BuildPerfTestParams() {
+  const auto tuple_tasks = ppc::util::MakeAllPerfTasks<InType, SizovDGlobalSearchMPI, SizovDGlobalSearchSEQ>(
+      PPC_SETTINGS_sizov_d_global_search);
+  constexpr std::size_t kSize = std::tuple_size_v<decltype(tuple_tasks)>;
+  std::vector<ppc::util::PerfTestParam<InType, OutType>> result;
+  result.reserve(kSize);
+
+  ForEachTupleElement(tuple_tasks, [&result](const auto &task_tuple) {
+    const auto &task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(task_tuple);
+    const auto &name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(task_tuple);
+    const auto &mode = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(task_tuple);
+    result.emplace_back(task_getter, name, mode);
+  }, std::make_index_sequence<kSize>{});
+
+  return result;
+}
+
 class SizovDGlobalSearchPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_{};
@@ -62,15 +91,45 @@ class SizovDGlobalSearchPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(SizovDGlobalSearchPerfTests, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
+class PerfTestInstance : public SizovDGlobalSearchPerfTests {
+ public:
+  explicit PerfTestInstance(ppc::util::PerfTestParam<InType, OutType> param) : param_(std::move(param)) {}
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SizovDGlobalSearchMPI, SizovDGlobalSearchSEQ>(
-    PPC_SETTINGS_sizov_d_global_search);
+  void TestBody() override {
+    ExecuteTest(param_);
+  }
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SizovDGlobalSearchPerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
-                         SizovDGlobalSearchPerfTests::CustomPerfTestName);
+ private:
+  ppc::util::PerfTestParam<InType, OutType> param_;
+};
+
+struct PerfTestRegistrar {
+  explicit PerfTestRegistrar(std::vector<ppc::util::PerfTestParam<InType, OutType>> tasks) : tasks_(std::move(tasks)) {
+    std::size_t idx = 0;
+    for (const auto &param : tasks_) {
+      const auto &name_test = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
+      const auto &mode = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+      const std::string perf_name = ppc::performance::GetStringParamName(mode) + "_" + name_test;
+
+      test_names_.push_back(perf_name);
+      const std::size_t current_idx = idx++;
+
+      ::testing::RegisterTest(
+          "GlobalSearchPerfTests", test_names_.back().c_str(), nullptr, nullptr, __FILE__, __LINE__,
+          [this, current_idx]() -> ::testing::Test * { return new PerfTestInstance(tasks_[current_idx]); });
+    }
+  }
+
+ private:
+  std::vector<ppc::util::PerfTestParam<InType, OutType>> tasks_;
+  std::vector<std::string> test_names_;
+};
+
+const bool kRegisteredPerfTests = []() {
+  static const PerfTestRegistrar kRegistrar(BuildPerfTestParams());
+  (void)kRegistrar;
+  return true;
+}();
 
 }  // namespace
 

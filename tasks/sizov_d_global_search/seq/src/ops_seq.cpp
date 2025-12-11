@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "sizov_d_global_search/common/include/common.hpp"
@@ -92,28 +93,28 @@ double SizovDGlobalSearchSEQ::EstimateM(double reliability) const {
 }
 
 double SizovDGlobalSearchSEQ::Characteristic(std::size_t idx, double m) const {
-  const double xl = x_[idx - 1U];
-  const double xr = x_[idx];
-  const double yl = y_[idx - 1U];
-  const double yr = y_[idx];
+  const double x_right = x_[idx];
+  const double x_left = x_[idx - 1U];
+  const double y_right = y_[idx];
+  const double y_left = y_[idx - 1U];
 
-  const double dx = xr - xl;
-  const double df = yr - yl;
+  const double dx = x_right - x_left;
+  const double df = y_right - y_left;
 
-  return (m * dx) + (df * df) / (m * dx) - 2.0 * (yr + yl);
+  return (m * dx) + ((df * df) / (m * dx)) - (2.0 * (y_right + y_left));
 }
 
 double SizovDGlobalSearchSEQ::NewPoint(std::size_t idx, double m) const {
-  const double xl = x_[idx - 1U];
-  const double xr = x_[idx];
-  const double yl = y_[idx - 1U];
-  const double yr = y_[idx];
+  const double x_right = x_[idx];
+  const double x_left = x_[idx - 1U];
+  const double y_right = y_[idx];
+  const double y_left = y_[idx - 1U];
 
-  const double mid = 0.5 * (xl + xr);
-  const double shift = (yr - yl) / (2.0 * m);
+  const double mid = 0.5 * (x_left + x_right);
+  const double shift = (y_right - y_left) / (2.0 * m);
 
   double x_new = mid - shift;
-  if (x_new <= xl || x_new >= xr) {
+  if (x_new <= x_left || x_new >= x_right) {
     x_new = mid;
   }
 
@@ -142,20 +143,10 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
       break;
     }
 
-    double best_char = -std::numeric_limits<double>::infinity();
-    std::size_t best_idx = 1U;
-
-    for (std::size_t i = 1; i < n; ++i) {
-      const double c = Characteristic(i, m);
-      if (c > best_char) {
-        best_char = c;
-        best_idx = i;
-      }
-    }
-
-    const double L = x_[best_idx - 1U];
-    const double R = x_[best_idx];
-    const double width = R - L;
+    const auto [best_idx, best_char] = FindBestInterval(m);
+    const double interval_left = x_[best_idx - 1U];
+    const double interval_right = x_[best_idx];
+    const double width = interval_right - interval_left;
 
     if (width <= p.accuracy) {
       converged_ = true;
@@ -169,11 +160,7 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
       continue;
     }
 
-    auto pos = std::ranges::lower_bound(x_, x_new);
-    const std::size_t idx = static_cast<std::size_t>(pos - x_.begin());
-
-    x_.insert(pos, x_new);
-    y_.insert(y_.begin() + static_cast<std::ptrdiff_t>(idx), y_new);
+    [[maybe_unused]] const std::size_t idx = InsertSample(x_new, y_new);
 
     if (y_new < best_y_) {
       best_y_ = y_new;
@@ -181,12 +168,41 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
     }
   }
 
-  GetOutput() = Solution{best_x_, best_y_, iterations_, converged_};
+  GetOutput() = Solution{
+      .argmin = best_x_,
+      .value = best_y_,
+      .iterations = iterations_,
+      .converged = converged_,
+  };
   return true;
 }
 
 bool SizovDGlobalSearchSEQ::PostProcessingImpl() {
   return true;
+}
+
+std::pair<std::size_t, double> SizovDGlobalSearchSEQ::FindBestInterval(double m) const {
+  double best_char = -std::numeric_limits<double>::infinity();
+  std::size_t best_idx = 1U;
+
+  for (std::size_t i = 1; i < x_.size(); ++i) {
+    const double c = Characteristic(i, m);
+    if (c > best_char) {
+      best_char = c;
+      best_idx = i;
+    }
+  }
+
+  return {best_idx, best_char};
+}
+
+std::size_t SizovDGlobalSearchSEQ::InsertSample(double x_new, double y_new) {
+  auto pos = std::ranges::lower_bound(x_, x_new);
+  const std::size_t idx = static_cast<std::size_t>(pos - x_.begin());
+
+  x_.insert(pos, x_new);
+  y_.insert(y_.begin() + static_cast<std::ptrdiff_t>(idx), y_new);
+  return idx;
 }
 
 }  // namespace sizov_d_global_search

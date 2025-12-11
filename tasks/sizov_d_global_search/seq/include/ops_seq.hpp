@@ -26,6 +26,9 @@ class SizovDGlobalSearchSEQ : public BaseTask {
   [[nodiscard]] double Characteristic(std::size_t idx, double m) const;
   [[nodiscard]] double NewPoint(std::size_t idx, double m) const;
 
+  [[nodiscard]] std::pair<std::size_t, double> FindBestInterval(double m) const;
+  [[nodiscard]] std::size_t InsertSample(double x_new, double y_new);
+
   std::vector<double> x_;
   std::vector<double> y_;
 
