@@ -20,9 +20,9 @@ bool BaldinAGaussFilterMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (rank == 0) {
-      const auto &im = GetInput();
-      return (im.width > 0 && im.height > 0 && im.channels > 0 &&
-              im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
+    const auto &im = GetInput();
+    return (im.width > 0 && im.height > 0 && im.channels > 0 &&
+            im.pixels.size() == static_cast<size_t>(im.width * im.height * im.channels));
   }
   return true;
 }
@@ -152,10 +152,9 @@ bool BaldinAGaussFilterMPI::RunImpl() {
     }
   }
 
-  MPI_Gatherv(result_buffer.data(), my_real_rows * row_size_bytes, MPI_UINT8_T, 
-              (rank == 0 ? GetOutput().pixels.data() : nullptr),
-              recv_counts.data(), recv_displs.data(), MPI_UINT8_T, 
-              0, MPI_COMM_WORLD);
+  MPI_Gatherv(result_buffer.data(), my_real_rows * row_size_bytes, MPI_UINT8_T,
+              (rank == 0 ? GetOutput().pixels.data() : nullptr), recv_counts.data(), recv_displs.data(), MPI_UINT8_T, 0,
+              MPI_COMM_WORLD);
 
   return true;
 }
@@ -163,24 +162,24 @@ bool BaldinAGaussFilterMPI::RunImpl() {
 bool BaldinAGaussFilterMPI::PostProcessingImpl() {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+
   int width = 0, height = 0, channels = 0;
-  
+
   if (rank == 0) {
-      width = GetOutput().width;
-      height = GetOutput().height;
-      channels = GetOutput().channels;
+    width = GetOutput().width;
+    height = GetOutput().height;
+    channels = GetOutput().channels;
   }
-  
+
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
-      GetOutput().width = width;
-      GetOutput().height = height;
-      GetOutput().channels = channels;
-      GetOutput().pixels.resize(width * height * channels);
+    GetOutput().width = width;
+    GetOutput().height = height;
+    GetOutput().channels = channels;
+    GetOutput().pixels.resize(width * height * channels);
   }
 
   MPI_Bcast(GetOutput().pixels.data(), width * height * channels, MPI_UINT8_T, 0, MPI_COMM_WORLD);
