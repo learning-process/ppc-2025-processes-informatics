@@ -64,27 +64,40 @@ ShkrebkoMHypercubeMPI::ShkrebkoMHypercubeMPI(const InType &in) {
 }
 
 bool ShkrebkoMHypercubeMPI::ValidationImpl() {
-  int world_size;
+  int world_size, world_rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-  if ((world_size & (world_size - 1)) != 0) {
-    return false;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  
+  bool is_valid = true;
+  
+  if (world_rank == 0) {
+    // Проверка что количество процессов - степень двойки
+    if ((world_size & (world_size - 1)) != 0) {
+      is_valid = false;
+    }
+    
+    // Проверка входных данных
+    if (GetInput().size() < 2) {
+      is_valid = false;
+    }
+    
+    if (is_valid) {
+      int destination = GetInput()[1];
+      if (destination < 0 || destination >= world_size) {
+        is_valid = false;
+      }
+      
+      if (GetInput()[0] <= 0) {
+        is_valid = false;
+      }
+    }
   }
-
-  if (GetInput().size() < 2) {
-    return false;
-  }
-
-  int destination = GetInput()[1];
-  if (destination < 0 || destination >= world_size) {
-    return false;
-  }
-
-  if (GetInput()[0] <= 0) {
-    return false;
-  }
-
-  return true;
+  
+  // Рассылаем результат валидации от процесса 0 всем процессам
+  int valid_int = is_valid ? 1 : 0;
+  MPI_Bcast(&valid_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  
+  return valid_int == 1;
 }
 
 bool ShkrebkoMHypercubeMPI::PreProcessingImpl() {
@@ -102,9 +115,20 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
   int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
+  
   HypercubeData local_data;
-
+  
+  // Обработка случая с 1 процессом
+  if (world_size == 1) {
+    local_data.value = GetOutput().value;
+    local_data.destination = GetOutput().destination;
+    local_data.path.push_back(0);
+    local_data.finish = true;
+    GetOutput() = local_data;
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
+  }
+  
   if (world_rank == 0) {
     local_data.value = GetOutput().value;
     local_data.destination = GetOutput().destination;
