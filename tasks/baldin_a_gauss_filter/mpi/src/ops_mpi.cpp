@@ -61,7 +61,7 @@ void CalculatePartitions(int size, int height, int width, int channels, std::vec
 
 void ComputeHorizontalPass(int rows, int width, int channels, const std::vector<uint8_t> &src,
                            std::vector<uint16_t> &dst) {
-  constexpr std::array<int, 3> KERNEL = {1, 2, 1};
+  constexpr std::array<int, 3> kKernel = {1, 2, 1};
 
   for (int row = 0; row < rows; row++) {
     for (int col = 0; col < width; col++) {
@@ -69,7 +69,7 @@ void ComputeHorizontalPass(int rows, int width, int channels, const std::vector<
         int sum = 0;
         for (int k = -1; k <= 1; k++) {
           int n_col = std::clamp(col + k, 0, width - 1);
-          sum += src[(((row * width) + n_col) * channels) + ch] * KERNEL.at(k + 1);
+          sum += src[(((row * width) + n_col) * channels) + ch] * kKernel.at(k + 1);
         }
         dst[(((row * width) + col) * channels) + ch] = static_cast<uint16_t>(sum);
       }
@@ -79,7 +79,7 @@ void ComputeHorizontalPass(int rows, int width, int channels, const std::vector<
 
 void ComputeVerticalPass(int real_rows, int recv_rows, int width, int channels, int row_offset,
                          const std::vector<uint16_t> &src, std::vector<uint8_t> &dst) {
-  constexpr std::array<int, 3> KERNEL = {1, 2, 1};
+  constexpr std::array<int, 3> kKernel = {1, 2, 1};
 
   for (int i = 0; i < real_rows; i++) {
     int local_row = row_offset + i;
@@ -91,7 +91,7 @@ void ComputeVerticalPass(int real_rows, int recv_rows, int width, int channels, 
           int neighbor_row = local_row + k;
           neighbor_row = std::clamp(neighbor_row, 0, recv_rows - 1);
 
-          sum += src[(((neighbor_row * width) + col) * channels) + ch] * KERNEL.at(k + 1);
+          sum += src[(((neighbor_row * width) + col) * channels) + ch] * kKernel.at(k + 1);
         }
         dst[(((i * width) + col) * channels) + ch] = static_cast<uint8_t>(sum / 16);
       }
@@ -156,8 +156,9 @@ bool BaldinAGaussFilterMPI::RunImpl() {
 
   if (rank == 0) {
     int current_disp = 0;
+    int row_bytes_int = width * channels;
     for (int i = 0; i < size; i++) {
-      recv_counts[i] = real_counts[i] * row_size_bytes;
+      recv_counts[i] = real_counts[i] * row_bytes_int;
       recv_displs[i] = current_disp;
       current_disp += recv_counts[i];
     }

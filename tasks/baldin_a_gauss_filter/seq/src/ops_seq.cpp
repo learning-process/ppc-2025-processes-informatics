@@ -32,7 +32,7 @@ bool BaldinAGaussFilterSEQ::RunImpl() {
   int h = input.height;
   int c = input.channels;
 
-  constexpr std::array<int, 9> KERNEL = {1, 2, 1, 2, 4, 2, 1, 2, 1};
+  constexpr std::array<int, 9> kKernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
 
   for (int row = 0; row < h; row++) {
     for (int col = 0; col < w; col++) {
@@ -44,7 +44,7 @@ bool BaldinAGaussFilterSEQ::RunImpl() {
             int nx = std::clamp(col + dx, 0, w - 1);
 
             int pixel_val = input.pixels[((ny * w + nx) * c) + ch];
-            int kernel_val = KERNEL.at(static_cast<size_t>((dy + 1) * 3 + (dx + 1)));
+            int kernel_val = kKernel.at((static_cast<size_t>(dy + 1) * 3) + (dx + 1));
             sum += pixel_val * kernel_val;
           }
         }
