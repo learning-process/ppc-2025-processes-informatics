@@ -2,6 +2,10 @@
 
 #include <array>
 #include <cstddef>
+#include <tuple>
+#include <vector>
+
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
@@ -35,7 +39,8 @@ bool GaussFilterSEQ::RunImpl() {
       for (int k_row = -1; k_row <= 1; ++k_row) {
         for (int k_col = -1; k_col <= 1; ++k_col) {
           sum += GetPixel(input, col + k_col, row + k_row, width, height) *
-                 kernel[static_cast<size_t>((k_row + 1) * 3 + (k_col + 1))];
+                 // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+                 kernel[static_cast<size_t>(((k_row + 1) * 3) + (k_col + 1))];
         }
       }
       output[(static_cast<size_t>(row) * width) + col] = sum / kernel_sum;

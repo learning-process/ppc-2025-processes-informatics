@@ -4,7 +4,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <tuple>
 #include <vector>
+
+#include "makovskiy_i_gauss_filter_vert/common/include/common.hpp"
 
 namespace makovskiy_i_gauss_filter_vert {
 
@@ -42,7 +46,8 @@ int ApplyKernel(int row, int col, int strip_w, int total_h, int rank, int world_
       int pixel_val = GetPixelValue(current_x, current_y, strip_w, total_h, rank, world_size, all_strip_widths,
                                     left_ghost, right_ghost, local_strip);
 
-      sum += pixel_val * kernel[static_cast<size_t>((k_row + 1) * 3 + (k_col + 1))];
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      sum += pixel_val * kernel[static_cast<size_t>(((k_row + 1) * 3) + (k_col + 1))];
     }
   }
   return sum;
@@ -153,16 +158,16 @@ std::vector<int> GaussFilterMPI::ComputeLocal(int rank, int world_size) {
     }
 
     if (rank > 0 && all_strip_widths[static_cast<size_t>(rank) - 1] > 0) {
-      MPI_Isend(left_border.data(), total_height_, MPI_INT, rank - 1, 0, MPI_COMM_WORLD,
-                &requests[static_cast<size_t>(req_count++)]);
-      MPI_Irecv(left_ghost.data(), total_height_, MPI_INT, rank - 1, 1, MPI_COMM_WORLD,
-                &requests[static_cast<size_t>(req_count++)]);
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      MPI_Isend(left_border.data(), total_height_, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      MPI_Irecv(left_ghost.data(), total_height_, MPI_INT, rank - 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
     }
     if (rank < world_size - 1 && all_strip_widths[static_cast<size_t>(rank) + 1] > 0) {
-      MPI_Isend(right_border.data(), total_height_, MPI_INT, rank + 1, 1, MPI_COMM_WORLD,
-                &requests[static_cast<size_t>(req_count++)]);
-      MPI_Irecv(right_ghost.data(), total_height_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD,
-                &requests[static_cast<size_t>(req_count++)]);
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      MPI_Isend(right_border.data(), total_height_, MPI_INT, rank + 1, 1, MPI_COMM_WORLD, &requests[req_count++]);
+      // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+      MPI_Irecv(right_ghost.data(), total_height_, MPI_INT, rank + 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
     }
     MPI_Waitall(req_count, requests.data(), MPI_STATUSES_IGNORE);
 

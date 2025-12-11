@@ -2,7 +2,9 @@
 #include <mpi.h>
 
 #include <array>
+#include <memory>
 #include <string>
+#include <task/include/task.hpp>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -52,29 +54,35 @@ struct NameGenerator {
   }
 };
 
-void RunTaskStages(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
+void RunValidation(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
   ASSERT_TRUE(task->Validation());
   ASSERT_TRUE(task->PreProcessing());
+}
+
+void RunExecution(const std::shared_ptr<ppc::task::Task<InType, OutType>> &task) {
   ASSERT_TRUE(task->Run());
   ASSERT_TRUE(task->PostProcessing());
 }
 
 }  // namespace
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(GaussFilterFuncTests, GaussFilterFuncTests, ppc::util::ExpandToValues(kTasks),
                          NameGenerator());
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace, modernize-type-traits)
 
 TEST_P(GaussFilterFuncTests, RunFuncTests) {
   int rank = 0;
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (initialized) {
+  if (initialized != 0) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   }
 
   auto task = std::get<0>(GetParam())(GetTestInputData());
 
-  RunTaskStages(task);
+  RunValidation(task);
+  RunExecution(task);
 
   if (rank == 0) {
     auto result = task->GetOutput();
