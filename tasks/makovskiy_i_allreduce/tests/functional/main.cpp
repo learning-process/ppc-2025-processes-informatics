@@ -52,10 +52,11 @@ const auto kSeqGtestValues = ppc::util::ExpandToValues(kSeqTasks);
 const auto kMpiTasks = ppc::util::AddFuncTask<TestTaskMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce);
 const auto kMpiGtestValues = ppc::util::ExpandToValues(kMpiTasks);
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
-INSTANTIATE_TEST_SUITE_P(AllreduceTestsSEQ, AllreduceRunFuncTests, kSeqGtestValues, kFuncTestName);
-INSTANTIATE_TEST_SUITE_P(AllreduceTestsMPI, AllreduceRunFuncTests, kMpiGtestValues, kFuncTestName);
-// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+INSTANTIATE_TEST_SUITE_P(AllreducePerfSEQ, AllreducePerfTests, kSeqGtestValues, kPerfTestName);
+
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+INSTANTIATE_TEST_SUITE_P(AllreducePerfMPI, AllreducePerfTests, kMpiGtestValues, kPerfTestName);
 
 }  // namespace
 

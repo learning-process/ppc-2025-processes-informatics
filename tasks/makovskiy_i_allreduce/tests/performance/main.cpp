@@ -4,7 +4,6 @@
 #include "makovskiy_i_allreduce/mpi/include/ops_mpi.hpp"
 #include "makovskiy_i_allreduce/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace makovskiy_i_allreduce {
 
