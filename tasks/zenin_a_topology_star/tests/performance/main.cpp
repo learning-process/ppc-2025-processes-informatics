@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 #include <cstddef>
@@ -16,8 +17,39 @@ namespace zenin_a_topology_star {
 class ZeninATopologyStarPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
 
-  void SetUp() override {}
+  void SetUp() override {
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    const int center = 0;
+    const int src = center;
+    const int dst = (world_size > 1) ? world_size - 1 : 0;
+    const size_t msg_size = 100000;
+    std::vector<double> data(msg_size);
+    for (size_t i = 0; i < msg_size; ++i) {
+      data[i] = static_cast<double>(i);
+    }
+    input_data_ = std::make_tuple(static_cast<size_t>(src), static_cast<size_t>(dst), std::move(data));
+  }
   bool CheckTestOutputData(OutType &output_data) final {
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    const auto &in = input_data_;
+    const int dst = static_cast<int>(std::get<1>(in));
+    const auto &data = std::get<2>(in);
+    if (world_rank == dst) {
+      if (output_data.size() != data.size()) {
+        return false;
+      }
+      for (size_t i = 0; i < data.size(); ++i) {
+        if (output_data[i] != data[i]) {
+          return false;
+        }
+      }
+    } else {
+      if (!output_data.empty()) {
+        return false;
+      }
+    }
     return true;
   }
 

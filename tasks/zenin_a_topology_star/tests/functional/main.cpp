@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 #include <stb/stb_image.h>
 
 #include <array>
@@ -23,9 +24,69 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  protected:
-  void SetUp() override {}
+  void SetUp() override {
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    const size_t msg_size = std::get<0>(params);
+    const size_t pattern = std::get<1>(params);
+
+    int world_rank, world_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    const int center = 0;
+    int src = 0;
+    int dst = 0;
+    if (world_size == 1) {
+      src = dst = 0;
+    } else {
+      switch (pattern % 3) {
+        case 0:
+          src = center;
+          dst = world_size - 1;
+          break;
+        case 1:
+          src = world_size - 1;
+          dst = center;
+          break;
+        default:
+          if (world_size >= 3) {
+            src = 1;
+            dst = world_size - 1;
+          } else {
+            src = center;
+            dst = world_size - 1;
+          }
+          break;
+      }
+    }
+
+    std::vector<double> data(msg_size);
+    for (size_t i = 0; i < msg_size; ++i) {
+      data[i] = static_cast<double>(i + pattern);
+    }
+    input_data_ = std::make_tuple(static_cast<size_t>(src), static_cast<size_t>(dst), std::move(data));
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    const auto &in = input_data_;
+    const int dst = static_cast<int>(std::get<1>(in));
+    const auto &data = std::get<2>(in);
+    if (world_rank == dst) {
+      if (output_data.size() != data.size()) {
+        return false;
+      }
+      for (size_t i = 0; i < data.size(); ++i) {
+        if (output_data[i] != data[i]) {
+          return false;
+        }
+      }
+    } else {
+      if (!output_data.empty()) {
+        return false;
+      }
+    }
     return true;
   }
 
