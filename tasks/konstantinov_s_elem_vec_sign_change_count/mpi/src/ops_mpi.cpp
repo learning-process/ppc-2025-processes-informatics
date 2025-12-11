@@ -1,12 +1,12 @@
 #include "konstantinov_s_elem_vec_sign_change_count/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-
-#include <numeric>
+//#include <numeric>
 #include <vector>
+#include<cstring>
 
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
-#include "util/include/util.hpp"
+//#include "util/include/util.hpp"
 
 namespace konstantinov_s_elem_vec_sign_change_count {
 
@@ -37,16 +37,16 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   if (rank == 0) {
     auto input = GetInput();  // получаем только на нулевом процессе - корне
     if (input.empty()) {
-      std::cout << "GOT EMPTY INPUT!!!!!!!!!!!!!\n";
+      //std::cout << "GOT EMPTY INPUT!!!!!!!!!!!!!\n";
       return false;
     }
-    elemcount = input.size();
+    elemcount = static_cast<int>(input.size());
     // sendbuf = input.data(); //input инвалидируется позже????
     sendbuf = new EType[elemcount];
     std::memcpy(sendbuf, input.data(), input.size() * sizeof(EType));
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
     step = (elemcount + 1) / pcount;
-    rem = elemcount - step * (pcount - 1);
+    rem = elemcount - (step * (pcount - 1));
 
     // std::cout<<"ROOT got "<<elemcount<<" step, rem = "<<step<<" "<<rem<<"\n";
     // for(int i=0;i<elemcount;i++)
@@ -91,14 +91,14 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     delete[] sendcounts;
     delete[] displs;
     for (int i = 0; i < step; i++) {
-      local_res += (recbuf[i] > 0) != (recbuf[i + 1] > 0);
+      local_res += static_cast<int>((recbuf[i] > 0) != (recbuf[i + 1] > 0));
     }
     // std::cout<<rank<<"# counted = "<<local_res<<"\n";
   } else {
     if (rem > 1) {
       for (int i = elemcount - rem; i < elemcount - 1; i++) {
         // std::cout<<sendbuf[i];
-        local_res += (sendbuf[i] > 0) != (sendbuf[i + 1] > 0);
+        local_res += static_cast<int>((sendbuf[i] > 0) != (sendbuf[i + 1] > 0));
       }
       // std::cout<<" root counted = "<<local_res<<"\n";
       // for(int i=0;i<elemcount;i++)

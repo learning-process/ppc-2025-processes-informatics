@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
+//#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+//#include <cstdint>
+//#include <numeric>
+//#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
+//#include <utility>
+//#include <vector>
 
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
 #include "konstantinov_s_elem_vec_sign_change_count/mpi/include/ops_mpi.hpp"
@@ -33,11 +33,11 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
 
     InType vec(params);
     vec.resize(params);
-    const EType arr[] = {1, -1, 23, -11, -12, -167, 13, 42, -12, 2, -43, 33, 44, -7, 1};
+    std::array<EType, 15> arr = {1, -1, 23, -11, -12, -167, 13, 42, -12, 2, -43, 33, 44, -7, 1};
     const int arrsz = 15;
     const int chngcnt = 10;
 
-    result_right = generateTestData(arr, arrsz, chngcnt, vec);
+    result_right_ = GenerateTestData(arr.data(), arrsz, chngcnt, vec);
     input_data_ = vec;
   }
 
@@ -46,7 +46,7 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
     // for(int i=0;i<input_data_.size();i++)
     //   std::cout<<input_data_[i]<<" ";
     // std::cout<<"CHECK DATA: "<<output_data<<" ?= "<<result_right<<"\n";
-    return (output_data == result_right);
+    return (output_data == result_right_);
   }
 
   InType GetTestInputData() final {
@@ -55,7 +55,7 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
 
  private:
   InType input_data_;
-  OutType result_right;
+  OutType result_right_{};
 };
 
 namespace {
