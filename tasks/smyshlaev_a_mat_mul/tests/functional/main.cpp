@@ -81,7 +81,7 @@ TestType CreateRandomTest(int m, int n, int k, const std::string &name) {
   return std::make_tuple(m, a, k, b, name);
 }
 
-const std::array<TestType, 10> kTestParam = {
+const std::array<TestType, 12> kTestParam = {
     std::make_tuple(1, std::vector<double>{2.0}, 1, std::vector<double>{3.0}, "SingleElement"),
 
     std::make_tuple(2, std::vector<double>{1.0, 2.0, 3.0, 4.0}, 2, std::vector<double>{1.0, 0.0, 0.0, 1.0},
@@ -103,6 +103,10 @@ const std::array<TestType, 10> kTestParam = {
     CreateRandomTest(7, 5, 3, "PrimeDimensions_7x5_x_5x3"),
 
     CreateRandomTest(2, 2, 10, "Wide_B_Matrix"),
+
+    CreateRandomTest(10, 1, 10, "ForceSeq_10_x_1_x_1_10"),
+
+    CreateRandomTest(32, 32, 32, "Square_32x32_LoadTest")
 };
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SmyshlaevAMatMulMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_mat_mul),
