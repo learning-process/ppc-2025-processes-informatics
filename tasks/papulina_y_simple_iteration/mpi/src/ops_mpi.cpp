@@ -14,13 +14,13 @@
 
 namespace papulina_y_simple_iteration {
 
-PapulinaYSimpleIterationMPI::PapulinaYSimpleIterationMPI(const InType& in) {
+PapulinaYSimpleIterationMPI::PapulinaYSimpleIterationMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>(0);
   MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
 }
-bool PapulinaYSimpleIterationMPI::DiagonalDominance(const std::vector<double>& a, const size_t& n) {
+bool PapulinaYSimpleIterationMPI::DiagonalDominance(const std::vector<double> &a, const size_t &n) {
   bool flag = true;
   for (size_t i = 0; i < n; i++) {
     double sum = 0.0;
@@ -36,13 +36,13 @@ bool PapulinaYSimpleIterationMPI::DiagonalDominance(const std::vector<double>& a
   }
   return flag;
 }
-bool PapulinaYSimpleIterationMPI::GetDetermCheckingResult(const std::vector<double>& a, const size_t& n) {
+bool PapulinaYSimpleIterationMPI::GetDetermCheckingResult(const std::vector<double> &a, const size_t &n) {
   return DetermChecking(a, n);
 }
-bool PapulinaYSimpleIterationMPI::GetDiagonalDominanceResult(const std::vector<double>& a, const size_t& n) {
+bool PapulinaYSimpleIterationMPI::GetDiagonalDominanceResult(const std::vector<double> &a, const size_t &n) {
   return DiagonalDominance(a, n);
 }
-bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double>& a, const size_t& n) {
+bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double> &a, const size_t &n) {
   std::vector<double> tmp = a;
 
   for (size_t i = 0; i < n; i++) {
@@ -66,7 +66,7 @@ bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double>& a, c
 
   return true;
 }
-bool PapulinaYSimpleIterationMPI::FindAndSwapRow(std::vector<double>& tmp, size_t i, size_t n) {
+bool PapulinaYSimpleIterationMPI::FindAndSwapRow(std::vector<double> &tmp, size_t i, size_t n) {
   for (size_t j = i + 1; j < n; j++) {
     if (std::fabs(tmp[j * n + i]) > 1e-10) {
       for (size_t k = i; k < n; k++) {
@@ -79,7 +79,7 @@ bool PapulinaYSimpleIterationMPI::FindAndSwapRow(std::vector<double>& tmp, size_
 }
 bool PapulinaYSimpleIterationMPI::ValidationImpl() {
   size_t n = std::get<0>(GetInput());
-  const auto& a = std::get<1>(GetInput());
+  const auto &a = std::get<1>(GetInput());
   bool basic_check = n >= 1 && DiagonalDominance(a, n) && DetermChecking(a, n);
   if (!basic_check) {
     std::cout << "Basic validation failed\n";
@@ -215,8 +215,8 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
 bool PapulinaYSimpleIterationMPI::PostProcessingImpl() {
   return true;
 }
-void PapulinaYSimpleIterationMPI::CalculateGatherParameters(int proc_rank, std::vector<int>& proc_count_elemts_x,
-                                                            std::vector<int>& x_displs, int rows_for_proc,
+void PapulinaYSimpleIterationMPI::CalculateGatherParameters(int proc_rank, std::vector<int> &proc_count_elemts_x,
+                                                            std::vector<int> &x_displs, int rows_for_proc,
                                                             int remainder) const {
   if (proc_rank != 0) {
     return;
@@ -232,8 +232,8 @@ void PapulinaYSimpleIterationMPI::CalculateGatherParameters(int proc_rank, std::
     }
   }
 }
-void PapulinaYSimpleIterationMPI::PrepareLocalMatrices(std::vector<double>& local_b_matrix,
-                                                       std::vector<double>& local_d, int start_row,
+void PapulinaYSimpleIterationMPI::PrepareLocalMatrices(std::vector<double> &local_b_matrix,
+                                                       std::vector<double> &local_d, int start_row,
                                                        int local_rows_count, int n) {
   for (int i = 0; i < local_rows_count; i++) {
     int global_i = start_row + i;

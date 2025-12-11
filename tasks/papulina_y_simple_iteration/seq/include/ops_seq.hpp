@@ -10,19 +10,19 @@ namespace papulina_y_simple_iteration {
 
 class PapulinaYSimpleIterationSEQ : public BaseTask {
  public:
-  static bool GetDetermCheckingResult(const std::vector<double>& a, const size_t& n);
-  static bool GetDiagonalDominanceResult(const std::vector<double>& a, const size_t& n);
+  static bool GetDetermCheckingResult(const std::vector<double> &a, const size_t &n);
+  static bool GetDiagonalDominanceResult(const std::vector<double> &a, const size_t &n);
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit PapulinaYSimpleIterationSEQ(const InType& in);
+  explicit PapulinaYSimpleIterationSEQ(const InType &in);
 
  private:
-  static bool FindAndSwapRow(std::vector<double>& tmp, size_t i, size_t n);
-  static bool DetermChecking(const std::vector<double>& a, const size_t& n);
-  static bool DiagonalDominance(const std::vector<double>& a, const size_t& n);
-  static std::vector<double> ComputeNewX(const std::vector<double>& b_matrix, const std::vector<double>& d,
-                                         const std::vector<double>& x, size_t n);
+  static bool FindAndSwapRow(std::vector<double> &tmp, size_t i, size_t n);
+  static bool DetermChecking(const std::vector<double> &a, const size_t &n);
+  static bool DiagonalDominance(const std::vector<double> &a, const size_t &n);
+  static std::vector<double> ComputeNewX(const std::vector<double> &b_matrix, const std::vector<double> &d,
+                                         const std::vector<double> &x, size_t n);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

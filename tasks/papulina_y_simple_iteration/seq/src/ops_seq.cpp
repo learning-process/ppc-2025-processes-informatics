@@ -11,7 +11,7 @@
 
 namespace papulina_y_simple_iteration {
 
-PapulinaYSimpleIterationSEQ::PapulinaYSimpleIterationSEQ(const InType& in) {
+PapulinaYSimpleIterationSEQ::PapulinaYSimpleIterationSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>(0);
@@ -26,7 +26,7 @@ bool PapulinaYSimpleIterationSEQ::ValidationImpl() {
   }
 
   size_t n = std::get<0>(GetInput());
-  const auto& a_matrix = std::get<1>(GetInput());
+  const auto &a_matrix = std::get<1>(GetInput());
 
   double norm_b = 0.0;
   for (size_t i = n; i < n; i++) {  // проверка нормы матрицы b_matrix (для сходимости к решению)
@@ -55,7 +55,7 @@ bool PapulinaYSimpleIterationSEQ::PreProcessingImpl() {
   std::copy(std::get<2>(GetInput()).data(), std::get<2>(GetInput()).data() + n_, b_.data());
   return true;
 }
-bool PapulinaYSimpleIterationSEQ::DiagonalDominance(const std::vector<double>& a_matrix, const size_t& n) {
+bool PapulinaYSimpleIterationSEQ::DiagonalDominance(const std::vector<double> &a_matrix, const size_t &n) {
   bool flag = true;
   for (size_t i = 0; i < n; i++) {
     double sum = 0.0;
@@ -71,13 +71,13 @@ bool PapulinaYSimpleIterationSEQ::DiagonalDominance(const std::vector<double>& a
   }
   return flag;
 }
-bool PapulinaYSimpleIterationSEQ::GetDetermCheckingResult(const std::vector<double>& a_matrix, const size_t& n) {
+bool PapulinaYSimpleIterationSEQ::GetDetermCheckingResult(const std::vector<double> &a_matrix, const size_t &n) {
   return DetermChecking(a_matrix, n);
 }
-bool PapulinaYSimpleIterationSEQ::GetDiagonalDominanceResult(const std::vector<double>& a_matrix, const size_t& n) {
+bool PapulinaYSimpleIterationSEQ::GetDiagonalDominanceResult(const std::vector<double> &a_matrix, const size_t &n) {
   return DiagonalDominance(a_matrix, n);
 }
-bool PapulinaYSimpleIterationSEQ::DetermChecking(const std::vector<double>& a, const size_t& n) {
+bool PapulinaYSimpleIterationSEQ::DetermChecking(const std::vector<double> &a, const size_t &n) {
   std::vector<double> tmp = a;
 
   for (size_t i = 0; i < n; i++) {
@@ -101,7 +101,7 @@ bool PapulinaYSimpleIterationSEQ::DetermChecking(const std::vector<double>& a, c
 
   return true;
 }
-bool PapulinaYSimpleIterationSEQ::FindAndSwapRow(std::vector<double>& tmp, size_t i,
+bool PapulinaYSimpleIterationSEQ::FindAndSwapRow(std::vector<double> &tmp, size_t i,
                                                  size_t n) {  // вспомогательная функция для поиска и замены строки
   for (size_t j = i + 1; j < n; j++) {
     if (std::fabs(tmp[j * n + i]) > 1e-10) {
@@ -149,8 +149,8 @@ bool PapulinaYSimpleIterationSEQ::RunImpl() {
 bool PapulinaYSimpleIterationSEQ::PostProcessingImpl() {
   return true;
 }
-std::vector<double> PapulinaYSimpleIterationSEQ::ComputeNewX(const std::vector<double>& b_matrix,
-                                                             const std::vector<double>& d, const std::vector<double>& x,
+std::vector<double> PapulinaYSimpleIterationSEQ::ComputeNewX(const std::vector<double> &b_matrix,
+                                                             const std::vector<double> &d, const std::vector<double> &x,
                                                              size_t n) {
   std::vector<double> x_new(n, 0.0);
 

@@ -10,21 +10,21 @@ namespace papulina_y_simple_iteration {
 
 class PapulinaYSimpleIterationMPI : public BaseTask {
  public:
-  static bool GetDetermCheckingResult(const std::vector<double>& a, const size_t& n);
-  static bool GetDiagonalDominanceResult(const std::vector<double>& a, const size_t& n);
+  static bool GetDetermCheckingResult(const std::vector<double> &a, const size_t &n);
+  static bool GetDiagonalDominanceResult(const std::vector<double> &a, const size_t &n);
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit PapulinaYSimpleIterationMPI(const InType& in);
+  explicit PapulinaYSimpleIterationMPI(const InType &in);
 
  private:
-  void CalculateGatherParameters(int proc_rank, std::vector<int>& proc_count_elemts_x, std::vector<int>& x_displs,
+  void CalculateGatherParameters(int proc_rank, std::vector<int> &proc_count_elemts_x, std::vector<int> &x_displs,
                                  int rows_for_proc, int remainder) const;
-  void PrepareLocalMatrices(std::vector<double>& local_b_matrix, std::vector<double>& local_d, int start_row,
+  void PrepareLocalMatrices(std::vector<double> &local_b_matrix, std::vector<double> &local_d, int start_row,
                             int local_rows_count, int n);
-  static bool FindAndSwapRow(std::vector<double>& tmp, size_t i, size_t n);
-  static bool DetermChecking(const std::vector<double>& a, const size_t& n);
-  static bool DiagonalDominance(const std::vector<double>& a, const size_t& n);
+  static bool FindAndSwapRow(std::vector<double> &tmp, size_t i, size_t n);
+  static bool DetermChecking(const std::vector<double> &a, const size_t &n);
+  static bool DiagonalDominance(const std::vector<double> &a, const size_t &n);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
