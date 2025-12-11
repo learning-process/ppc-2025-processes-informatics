@@ -11,7 +11,7 @@ class GaussFilterSEQ : public BaseTask {
   explicit GaussFilterSEQ(const InType &in);
 
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kMPI;
+    return ppc::task::TypeOfTask::kSEQ;
   }
 
  protected:

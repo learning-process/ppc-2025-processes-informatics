@@ -22,10 +22,10 @@ class GaussFilterMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  std::vector<int> local_strip;
-  int strip_width = 0;
-  int total_width = 0;
-  int total_height = 0;
+  std::vector<int> local_strip_{};
+  int strip_width_ = 0;
+  int total_width_ = 0;
+  int total_height_ = 0;
 };
 
 }  // namespace makovskiy_i_gauss_filter_vert
