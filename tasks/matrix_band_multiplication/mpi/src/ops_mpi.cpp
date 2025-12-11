@@ -85,9 +85,10 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
   row_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   row_displs_ = BuildDisplacements(row_counts_);
 
-  std::vector<int> row_send_counts(row_counts_.size());
-  std::transform(row_counts_.begin(), row_counts_.end(), row_send_counts.begin(),
-                 [this](int rows) { return rows * static_cast<int>(cols_a_); });
+  std::vector<int> row_send_counts(row_counts_.size(), 0);
+  for (std::size_t i = 0; i < row_counts_.size(); ++i) {
+    row_send_counts[i] = row_counts_[i] * static_cast<int>(cols_a_);
+  }
   std::vector<int> row_send_displs = BuildDisplacements(row_send_counts);
 
   const double *a_ptr = (rank_ == 0 && !matrix_a.values.empty()) ? matrix_a.values.data() : nullptr;
@@ -99,22 +100,28 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   col_counts_ = BuildCounts(static_cast<int>(cols_b_), world_size_);
   col_displs_ = BuildDisplacements(col_counts_);
-  max_cols_per_proc_ = col_counts_.empty() ? 0 : *std::max_element(col_counts_.begin(), col_counts_.end());
+  max_cols_per_proc_ = 0;
+  for (int count : col_counts_) {
+    if (count > max_cols_per_proc_) {
+      max_cols_per_proc_ = count;
+    }
+  }
   const int buffer_cols = std::max(1, max_cols_per_proc_);
-  current_b_.assign(static_cast<std::size_t>(rows_b_) * static_cast<std::size_t>(buffer_cols), 0.0);
+  current_b_.assign(rows_b_ * static_cast<std::size_t>(buffer_cols), 0.0);
   rotation_buffer_.assign(current_b_.size(), 0.0);
 
-  std::vector<int> col_send_counts(col_counts_.size());
-  std::transform(col_counts_.begin(), col_counts_.end(), col_send_counts.begin(),
-                 [this](int cols) { return cols * static_cast<int>(rows_b_); });
+  std::vector<int> col_send_counts(col_counts_.size(), 0);
+  for (std::size_t i = 0; i < col_counts_.size(); ++i) {
+    col_send_counts[i] = col_counts_[i] * static_cast<int>(rows_b_);
+  }
   std::vector<int> col_send_displs = BuildDisplacements(col_send_counts);
 
   std::vector<double> transposed;
   if (rank_ == 0) {
-    transposed.resize(static_cast<std::size_t>(rows_b_) * cols_b_);
+    transposed.resize(rows_b_ * cols_b_);
     for (std::size_t i = 0; i < rows_b_; ++i) {
       for (std::size_t j = 0; j < cols_b_; ++j) {
-        transposed[j * rows_b_ + i] = matrix_b.values[(i * cols_b_) + j];
+        transposed[(j * rows_b_) + i] = matrix_b.values[(i * cols_b_) + j];
       }
     }
   }
@@ -132,44 +139,28 @@ bool MatrixBandMultiplicationMpi::PreProcessingImpl() {
 
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
-  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(),
-                 [this](int rows) { return rows * static_cast<int>(cols_b_); });
-  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(),
-                 [this](int prefix) { return prefix * static_cast<int>(cols_b_); });
+  for (std::size_t i = 0; i < result_counts_.size(); ++i) {
+    result_counts_[i] = result_counts_[i] * static_cast<int>(cols_b_);
+  }
+  for (std::size_t i = 0; i < result_displs_.size(); ++i) {
+    result_displs_[i] = result_displs_[i] * static_cast<int>(cols_b_);
+  }
 
   return true;
 }
 
 bool MatrixBandMultiplicationMpi::RunImpl() {
   const int local_rows = row_counts_[rank_];
-  if (cols_b_ == 0 || rows_b_ == 0) {
+  if (cols_b_ == 0 || rows_b_ == 0 || local_rows == 0) {
     return true;
   }
-
-  auto multiply_stripe = [&](const double *stripe_data, int stripe_cols, int stripe_offset) {
-    if (stripe_cols == 0 || local_rows == 0) {
-      return;
-    }
-    for (int row = 0; row < local_rows; ++row) {
-      const double *a_row = local_a_.data() + static_cast<std::size_t>(row) * cols_a_;
-      double *result_row = local_result_.data() + static_cast<std::size_t>(row) * cols_b_;
-      for (int col = 0; col < stripe_cols; ++col) {
-        const double *b_col = stripe_data + static_cast<std::size_t>(col) * rows_b_;
-        double sum = 0.0;
-        for (std::size_t k = 0; k < cols_a_; ++k) {
-          sum += a_row[k] * b_col[k];
-        }
-        result_row[stripe_offset + col] = sum;
-      }
-    }
-  };
 
   int stripe_owner = stripe_owner_;
   int stripe_cols = current_cols_;
 
   for (int step = 0; step < world_size_; ++step) {
     const int col_offset = col_displs_.empty() ? 0 : col_displs_[stripe_owner];
-    multiply_stripe(current_b_.data(), stripe_cols, col_offset);
+    MultiplyStripe(current_b_.data(), stripe_cols, col_offset, local_rows);
     if (world_size_ == 1) {
       break;
     }
@@ -186,6 +177,27 @@ bool MatrixBandMultiplicationMpi::RunImpl() {
   }
 
   return true;
+}
+
+void MatrixBandMultiplicationMpi::MultiplyStripe(const double *stripe_data, int stripe_cols, int stripe_offset,
+                                                 int local_rows) {
+  if (stripe_cols == 0 || local_rows == 0) {
+    return;
+  }
+  for (int row = 0; row < local_rows; ++row) {
+    const auto a_row_offset = static_cast<std::size_t>(row) * cols_a_;
+    const auto result_row_offset = static_cast<std::size_t>(row) * cols_b_;
+    const double *a_row = local_a_.data() + a_row_offset;
+    double *result_row = local_result_.data() + result_row_offset;
+    for (int col = 0; col < stripe_cols; ++col) {
+      const double *b_col = stripe_data + (static_cast<std::size_t>(col) * rows_b_);
+      double sum = 0.0;
+      for (std::size_t k = 0; k < cols_a_; ++k) {
+        sum += a_row[k] * b_col[k];
+      }
+      result_row[stripe_offset + col] = sum;
+    }
+  }
 }
 
 bool MatrixBandMultiplicationMpi::PostProcessingImpl() {
