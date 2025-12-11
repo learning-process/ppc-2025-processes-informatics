@@ -22,7 +22,7 @@ constexpr double kLeft = -5.0;
 constexpr double kRight = 5.0;
 constexpr double kAccuracy = 1e-4;
 constexpr double kReliability = 3.0;
-constexpr int kMaxIterations = 150000;
+constexpr int kMaxIterations = 50000;
 
 InType MakePerfProblem() {
   InType p{};

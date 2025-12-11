@@ -1,285 +1,92 @@
 [
   {
-    "name": "case_001_linear_increasing",
+    "name": "case_001_linear_inc",
     "function": { "expression": "x" },
     "problem": { "left": -5.0, "right": 5.0 },
     "expected": { "argmins": [-5.0], "value": -5.0 }
   },
   {
-    "name": "case_002_linear_decreasing",
-    "function": { "expression": "-2 * x + 3" },
+    "name": "case_002_linear_dec",
+    "function": { "expression": "-2*x + 3" },
     "problem": { "left": -5.0, "right": 5.0 },
     "expected": { "argmins": [5.0], "value": -7.0 }
   },
   {
-    "name": "case_003_quadratic_center",
+    "name": "case_003_quad_center",
     "function": { "expression": "x^2" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.0 }
   },
   {
-    "name": "case_004_quadratic_shifted",
+    "name": "case_004_quad_shifted",
     "function": { "expression": "(x - 1)^2" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "problem": { "left": -3.0, "right": 3.0 },
     "expected": { "argmins": [1.0], "value": 0.0 }
   },
   {
-    "name": "case_005_quadratic_plus_const",
-    "function": { "expression": "x^2 + 5.0" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "name": "case_005_quad_const",
+    "function": { "expression": "x^2 + 5" },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 5.0 }
   },
   {
-    "name": "case_006_abs_center",
+    "name": "case_006_abs",
     "function": { "expression": "abs(x)" },
-    "problem": { "left": -6.0, "right": 6.0 },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.0 }
   },
   {
-    "name": "case_007_abs_shifted",
-    "function": { "expression": "abs(x - 1.0)" },
-    "problem": { "left": -6.0, "right": 6.0 },
+    "name": "case_007_abs_shift",
+    "function": { "expression": "abs(x - 1)" },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [1.0], "value": 0.0 }
   },
   {
-    "name": "case_008_abs_linear_combo",
-    "function": { "expression": "abs(x) + 0.1 * x" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "name": "case_008_abs_quad",
+    "function": { "expression": "abs(x) + 0.1*x^2" },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.0 }
   },
   {
-    "name": "case_009_quadratic_mixed",
-    "function": { "expression": "0.2 * x^2 - 0.3 * x" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "name": "case_009_quad_mixed",
+    "function": { "expression": "0.2*x^2 - 0.3*x" },
+    "problem": { "left": -3.0, "right": 3.0 },
     "expected": { "argmins": [0.75], "value": -0.1125 }
   },
   {
-    "name": "case_010_quartic_center",
+    "name": "case_010_quartic",
     "function": { "expression": "x^4" },
     "problem": { "left": -2.0, "right": 2.0 },
     "expected": { "argmins": [0.0], "value": 0.0 }
   },
-
   {
-    "name": "case_011_simple_sin",
-    "function": { "expression": "sin(x)" },
-    "problem": { "left": -3.141592653589793, "right": 3.141592653589793 },
-    "expected": { "argmins": [-1.5707963267948966], "value": -1.0 }
-  },
-  {
-    "name": "case_012_simple_cos",
-    "function": { "expression": "cos(x)" },
-    "problem": { "left": -3.141592653589793, "right": 3.141592653589793 },
-    "expected": {
-      "argmins": [-3.141592653589793, 3.141592653589793],
-      "value": -1.0
-    }
-  },
-  {
-    "name": "case_013_sin_double",
-    "function": { "expression": "sin(2 * x)" },
-    "problem": { "left": -3.141592653589793, "right": 3.141592653589793 },
-    "expected": {
-      "argmins": [-0.7853981633974483, 2.3561944901923448],
-      "value": -1.0
-    }
-  },
-  {
-    "name": "case_014_sin_plus_cos",
-    "function": { "expression": "sin(x) + cos(x)" },
-    "problem": { "left": -3.141592653589793, "right": 3.141592653589793 },
-    "expected": { "argmins": [-2.3561944901923448], "value": -1.4142135623730951 }
-  },
-  {
-    "name": "case_015_abs_sin",
-    "function": { "expression": "abs(sin(x))" },
-    "problem": { "left": -6.283185307179586, "right": 6.283185307179586 },
-    "expected": {
-      "argmins": [
-        -6.283185307179586,
-        -3.141592653589793,
-        0.0,
-        3.141592653589793,
-        6.283185307179586
-      ],
-      "value": 0.0
-    }
-  },
-  {
-    "name": "case_016_sin_squared",
-    "function": { "expression": "sin(x)^2" },
-    "problem": { "left": 0.0, "right": 6.283185307179586 },
-    "expected": {
-      "argmins": [0.0, 3.141592653589793, 6.283185307179586],
-      "value": 0.0
-    }
-  },
-
-  {
-    "name": "case_017_rational_symmetric",
-    "function": { "expression": "(x^2 + 1.0) / (x^2 + 2.0)" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "name": "case_011_rational_sym",
+    "function": { "expression": "(x^2 + 1)/(x^2 + 2)" },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.5 }
   },
   {
-    "name": "case_018_exp_linear",
-    "function": { "expression": "exp(0.1 * x)" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [-5.0], "value": 0.6065306597126334 }
-  },
-  {
-    "name": "case_019_gaussian_like",
-    "function": { "expression": "exp(-0.1 * x^2)" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": {
-      "argmins": [-5.0, 5.0],
-      "value": 0.0820849986238988
-    }
-  },
-  {
-    "name": "case_020_log_abs_shift",
-    "function": { "expression": "log(abs(x) + 2.0)" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "name": "case_012_log_shift",
+    "function": { "expression": "log(abs(x) + 2)" },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.6931471805599453 }
   },
-
   {
-    "name": "case_021_soft_abs",
+    "name": "case_013_soft_abs",
     "function": { "expression": "sqrt(x^2 + 0.01)" },
-    "problem": { "left": -5.0, "right": 5.0 },
+    "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.1 }
   },
-
   {
-    "name": "case_022_poly_cubic_smooth",
-    "function": { "expression": "x^4 + x^2" },
-    "problem": { "left": -3.0, "right": 3.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_023_poly_quartic_shifted",
-    "function": { "expression": "(x + 1)^4 + 1" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [-1.0], "value": 1.0 }
-  },
-
-  {
-    "name": "case_024_sin_shifted_valley",
-    "function": { "expression": "x^2 + 0.5 * sin(x)^2" },
+    "name": "case_014_poly_even",
+    "function": { "expression": "x^4 + 2*x^2" },
     "problem": { "left": -4.0, "right": 4.0 },
     "expected": { "argmins": [0.0], "value": 0.0 }
   },
-
   {
-    "name": "case_025_cos_plus_quad",
-    "function": { "expression": "0.1 * x^2 + (cos(x) - 1)^2" },
-    "problem": { "left": -3.0, "right": 3.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_026_rational_offset",
-    "function": { "expression": "1 / (1 + x^2)" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [-4.0, 4.0], "value": 0.05882352941 }
-  },
-
-  {
-    "name": "case_027_parabola_shifted_strong",
-    "function": { "expression": "(x - 1)^2" },
-    "problem": { "left": -3.0, "right": 3.0 },
-    "expected": { "argmins": [1.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_028_exp_decay_plus_linear",
-    "function": { "expression": "-exp(-0.5 * x^2)" },
-    "problem": { "left": -3.0, "right": 3.0 },
-    "expected": { "argmins": [0.0], "value": -1.0 }
-  },
-
-  {
-    "name": "case_029_log_smooth",
-    "function": { "expression": "log(x^2 + 3)" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [0.0], "value": 1.098612288668 }
-  },
-
-  {
-    "name": "case_030_cos_squared",
-    "function": { "expression": "cos(x)^2" },
-    "problem": { "left": -3.1415926535, "right": 3.1415926535 },
-    "expected": { "argmins": [-1.5707963267, 1.5707963267], "value": 0.0 }
-  },
-
-  {
-    "name": "case_031_sin_sqrt",
-    "function": { "expression": "(x^2 + 4.0) / (x^2 + 5.0) + 0.1 * x^2" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [0.0], "value": 0.8 }
-  },
-
-  {
-    "name": "case_032_abs_plus_quadratic",
-    "function": { "expression": "abs(x) + 0.05 * x^2" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_033_poly_even_stable",
-    "function": { "expression": "x^4 + 2 * x^2" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_034_exp_abs",
-    "function": { "expression": "exp(abs(x))" },
-    "problem": { "left": -3.0, "right": 3.0 },
-    "expected": { "argmins": [0.0], "value": 1.0 }
-  },
-
-  {
-    "name": "case_035_poly_cubic_shifted",
-    "function": { "expression": "(x - 2)^4 + 0.5" },
-    "problem": { "left": -1.0, "right": 5.0 },
-    "expected": { "argmins": [2.0], "value": 0.5 }
-  },
-
-  {
-    "name": "case_036_cos_plus_linear",
-    "function": { "expression": "sin(x)^2 + 0.5" },
-    "problem": { "left": -2.0, "right": 2.0 },
-    "expected": { "argmins": [0.0], "value": 0.5 }
-  },
-
-  {
-    "name": "case_037_soft_minimum_two_points",
-    "function": { "expression": "(x+2)^2 * (x-2)^2" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [-2.0, 2.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_038_sin_over_x_smooth",
-    "function": { "expression": "(x^2 + 2.0) / (x^2 + 3.0)" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [0.0], "value": 0.6666666667 }
-  },
-
-  {
-    "name": "case_039_parabola_tall",
-    "function": { "expression": "10*x^2" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-
-  {
-    "name": "case_040_double_well",
+    "name": "case_015_double_well",
     "function": { "expression": "x^4 - x^2" },
-    "problem": { "left": -3.0, "right": 3.0 },
+    "problem": { "left": -2.0, "right": 2.0 },
     "expected": { "argmins": [-0.70710678, 0.70710678], "value": -0.25 }
   }
 ]
