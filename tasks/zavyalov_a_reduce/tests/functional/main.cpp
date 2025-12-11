@@ -115,8 +115,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       if (cur_type == MPI_INT) {
         std::vector<int> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
-          res[i] = ((int *)(std::get<3>(input_data_)))[i] *
-                   world_size;  // TODO это только для MPI_SUM, для других тоже надо ифнуть
+          res[i] = ((int *)(std::get<3>(input_data_)))[i] * world_size;
           std::cout << res[i] << ' ';
         }
         std::cout << "- actual res \n";
@@ -132,8 +131,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       } else if (cur_type == MPI_FLOAT) {
         std::vector<float> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
-          res[i] = ((float *)(std::get<3>(input_data_)))[i] *
-                   world_size;  // TODO это только для MPI_SUM, для других тоже надо ифнуть
+          res[i] = ((float *)(std::get<3>(input_data_)))[i] * world_size;
           std::cout << res[i] << ' ';
         }
 
@@ -148,8 +146,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       } else if (cur_type == MPI_DOUBLE) {
         std::vector<double> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
-          res[i] = ((double *)(std::get<3>(input_data_)))[i] *
-                   world_size;  // TODO это только для MPI_SUM, для других тоже надо ифнуть
+          res[i] = ((double *)(std::get<3>(input_data_)))[i] * world_size;
           std::cout << res[i] << ' ';
         }
 
