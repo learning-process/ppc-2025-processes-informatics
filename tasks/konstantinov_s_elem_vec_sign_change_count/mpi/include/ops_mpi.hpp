@@ -15,6 +15,7 @@ class KonstantinovSElemVecSignChangeMPI : public BaseTask {
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
+  void CountSignChange(int &res, EType *data, int start, int iterations);
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 };

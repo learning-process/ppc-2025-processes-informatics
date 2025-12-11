@@ -25,6 +25,21 @@ bool KonstantinovSElemVecSignChangeMPI::PreProcessingImpl() {
   return true;
 }
 
+void KonstantinovSElemVecSignChangeMPI::CountSignChange(int &res, EType *data, int start, int iterations) {
+  for (int i = start; i < iterations; i++) {
+    res += static_cast<int>((data[i] > 0) != (data[i + 1] > 0));
+  }
+
+  // for (int i = elemcount - rem; i < elemcount - 1; i++) {
+  //       // std::cout<<sendbuf[i];
+  //       local_res += static_cast<int>((sendbuf[i] > 0) != (sendbuf[i + 1] > 0));
+  //     }
+
+  // for (int i = 0; i < step; i++) {
+  //   local_res += static_cast<int>((recbuf[i] > 0) != (recbuf[i + 1] > 0));
+  // }
+}
+
 bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   int pcount = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &pcount);
@@ -47,11 +62,6 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
     step = (elemcount + 1) / pcount;
     rem = elemcount - (step * (pcount - 1));
-
-    // std::cout<<"ROOT got "<<elemcount<<" step, rem = "<<step<<" "<<rem<<"\n";
-    // for(int i=0;i<elemcount;i++)
-    //   std::cout<<sendbuf[i]<<" ";
-    // std::cout<<"\n\n";
   }
   //
   MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);  // корень отправляет, остальные получают
@@ -73,14 +83,10 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   } else {
     recbuf = new EType[chunksz];  // только некорни выыделяют буфер
   }
-  // std::cout<<"Rank "<<rank<<" sendbuf pre and post scatterv\n";
-  // for(int i=0;i<elemcount;i++)
-  //     std::cout<<sendbuf[i]<<" ";
-  //   std::cout<<"\n\n";
 
   // существуют только буферы нужные получателям/отправителю, ненужные = nullptr (например sendbuf у некорней)
-  //rank0: sendbuf, sendcounts, displs
-  //rank1+: recbuf
+  // rank0: sendbuf, sendcounts, displs
+  // rank1+: recbuf
   MPI_Scatterv(sendbuf, sendcounts, displs, MPI_SHORT, recbuf, rank == 0 ? 0 : chunksz, MPI_SHORT, 0, MPI_COMM_WORLD);
 
   // for(int i=0;i<elemcount;i++)
@@ -93,25 +99,23 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     delete[] sendcounts;
     delete[] displs;
     if (rem > 1) {
-      for (int i = elemcount - rem; i < elemcount - 1; i++) {
-        // std::cout<<sendbuf[i];
-        local_res += static_cast<int>((sendbuf[i] > 0) != (sendbuf[i + 1] > 0));
-      }
-      // std::cout<<" root counted = "<<local_res<<"\n";
-      // for(int i=0;i<elemcount;i++)
-      // std::cout<<sendbuf[i]<<" ";
-      // std::cout<<"\n\n";
+      // for (int i = elemcount - rem; i < elemcount - 1; i++) {
+      //   // std::cout<<sendbuf[i];
+      //   local_res += static_cast<int>((sendbuf[i] > 0) != (sendbuf[i + 1] > 0));
+      // }
+      CountSignChange(local_res, sendbuf, elemcount - rem, elemcount - 1);
     }
-    
+
   } else {
-    for (int i = 0; i < step; i++) {
-      local_res += static_cast<int>((recbuf[i] > 0) != (recbuf[i + 1] > 0));
-    }
+    // for (int i = 0; i < step; i++) {
+    //   local_res += static_cast<int>((recbuf[i] > 0) != (recbuf[i + 1] > 0));
+    // }
     // std::cout<<rank<<"# counted = "<<local_res<<"\n";
+    CountSignChange(local_res, recbuf, 0, step);
   }
 
-  //rank0: sendbuf
-  //rank1+: recbuf
+  // rank0: sendbuf
+  // rank1+: recbuf
 
   if (rank == 0) {
     delete[] sendbuf;
@@ -119,7 +123,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     delete[] recbuf;
   }
 
-  //all memory deleted
+  // all memory deleted
 
   int global_res = 0;
   MPI_Allreduce(&local_res, &global_res, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
