@@ -106,8 +106,7 @@ const std::array<TestType, 12> kTestParam = {
 
     CreateRandomTest(10, 1, 10, "ForceSeq_10_x_1_x_1_10"),
 
-    CreateRandomTest(32, 32, 32, "Square_32x32_LoadTest")
-};
+    CreateRandomTest(32, 32, 32, "Square_32x32_LoadTest")};
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<SmyshlaevAMatMulMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_mat_mul),
                    ppc::util::AddFuncTask<SmyshlaevAMatMulSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_mat_mul));
