@@ -27,7 +27,7 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     if (mpi_initialized) {
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
-    
+
     int destination = (world_size > 1) ? 1 : 0;
     input_data_ = {value, destination};
   }
