@@ -32,7 +32,7 @@ struct TestCase {
 
 static constexpr double kDefaultAccuracy = 1e-4;
 static constexpr double kDefaultReliability = 2.5;
-static constexpr int kDefaultMaxIterations = 2000;
+static constexpr int kDefaultMaxIterations = 300;
 
 using InType = Problem;
 using OutType = Solution;
