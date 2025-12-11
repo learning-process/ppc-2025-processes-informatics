@@ -87,6 +87,9 @@ bool GaussFilterMPI::RunImpl() {
   }
 
   std::vector<int> local_output;
+  std::vector<int> all_strip_widths(world_size);
+  MPI_Allgather(&strip_width, 1, MPI_INT, all_strip_widths.data(), 1, MPI_INT, MPI_COMM_WORLD);
+
   if (strip_width > 0) {
     std::vector<int> left_ghost(total_height);
     std::vector<int> right_ghost(total_height);
@@ -100,9 +103,6 @@ bool GaussFilterMPI::RunImpl() {
       left_border[y] = local_strip[y * strip_width];
       right_border[y] = local_strip[y * strip_width + strip_width - 1];
     }
-
-    std::vector<int> all_strip_widths(world_size);
-    MPI_Allgather(&strip_width, 1, MPI_INT, all_strip_widths.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
     if (rank > 0 && all_strip_widths[rank - 1] > 0) {
       MPI_Isend(left_border.data(), total_height, MPI_INT, rank - 1, 0, MPI_COMM_WORLD, &requests[req_count++]);
