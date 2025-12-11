@@ -34,14 +34,14 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
 
   bool CheckTestOutputData(OutType &output_data) final {
 
-    return true || output_data == nullptr;
+    return true || std::get<0>(output_data) == nullptr;
     /*
     double res = 0.0;
     for (uint64_t i = 0; i < kCount_; i++) {
       res += std::get<0>(input_data_)[i] * std::get<1>(input_data_)[i];
     }
-    double diff = fabs(res - output_data);
-    double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(output_data)));
+    double diff = fabs(res - std::get<0>(output_data));
+    double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(std::get<0>(output_data))));
     return diff < epsilon;
     */
 
@@ -99,13 +99,13 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
     input_data_ = std::make_tuple(left_vec, right_vec);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &std::get<0>(output_data)) final {
     double res = 0.0;
     for (uint64_t i = 0; i < kCount_; i++) {
       res += std::get<0>(input_data_)[i] * std::get<1>(input_data_)[i];
     }
-    double diff = fabs(res - output_data);
-    double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(output_data)));
+    double diff = fabs(res - std::get<0>(output_data));
+    double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(std::get<0>(output_data))));
     return diff < epsilon;
   }
 

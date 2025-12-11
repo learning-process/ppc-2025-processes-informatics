@@ -81,6 +81,7 @@ void ZavyalovAReduceMPI::my_reduce(const void* sendbuf, void* recvbuf, int count
                 MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
             }
         }
+        delete[] temp_buf;
       } else if (type == MPI_FLOAT) {
         float* temp_buf = new float[count];
         int log2floored = 0;
@@ -145,6 +146,7 @@ void ZavyalovAReduceMPI::my_reduce(const void* sendbuf, void* recvbuf, int count
                 MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
             }
         }
+        delete[] temp_buf;
       } else if (type == MPI_DOUBLE) {
         double* temp_buf = new double[count];
         int log2floored = 0;
@@ -207,7 +209,7 @@ void ZavyalovAReduceMPI::my_reduce(const void* sendbuf, void* recvbuf, int count
             }
 
             if (world_rank == root) {
-                MPI_Recv(recvbuf, count, type, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
             }
         }
         delete[] temp_buf;
@@ -234,7 +236,7 @@ void ZavyalovAReduceMPI::my_reduce(const void* sendbuf, void* recvbuf, int count
                 MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
 
                 for (int i = 0; i < count; i++) {
-                    res_buf[i] += temp_buf[i];
+                    res_buf[i] = std::min(res_buf[i], temp_buf[i]);
                 }
                 sender_rank *= 2;
             }
@@ -261,7 +263,7 @@ void ZavyalovAReduceMPI::my_reduce(const void* sendbuf, void* recvbuf, int count
                     std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
                     MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm, MPI_STATUS_IGNORE);
                     for (int i = 0; i < count; i++) {
-                        res_buf[i] += temp_buf[i];
+                        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
                     }
                     child_offset *= 2;
                 }
@@ -278,20 +280,146 @@ void ZavyalovAReduceMPI::my_reduce(const void* sendbuf, void* recvbuf, int count
                 MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
             }
         }
+        delete[] temp_buf;
       } else if (type == MPI_FLOAT) {
-        // TODO 
+        float* temp_buf = new float[count];
+        int log2floored = 0;
+        int tmp_rank = world_rank;
+        int parent_offset = 1;
+        if (world_rank == 0) {
+            float* res_buf = new float[count];
+            memcpy(res_buf, sendbuf, count * sizeof(float));
+            tmp_rank = world_size;
+            while (tmp_rank > 1) {
+                log2floored++;
+                tmp_rank >>= 1; // tmp_rank /= 2
+            }
+
+            int sender_rank = 1;
+            while (sender_rank < world_size) {
+                std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
+                MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
+
+                for (int i = 0; i < count; i++) {
+                    res_buf[i] = std::min(res_buf[i], temp_buf[i]);
+                }
+                sender_rank *= 2;
+            }
+            if (root != 0) {
+                std::cout << "process " << world_rank << " is sending to " << root << std::endl;
+                MPI_Send(res_buf, count, type, root, world_rank, comm);
+                delete[] res_buf;
+            }
+            else {
+                memcpy(recvbuf, res_buf, count * sizeof(float));
+            }
+        }
+        else {
+            while (tmp_rank % 2 == 0) {
+                log2floored++;
+                tmp_rank >>= 1; // tmp_rank /= 2
+                parent_offset *= 2;
+            }
+            if (log2floored > 0) {
+                float* res_buf = new float[count];
+                memcpy(res_buf, sendbuf, count * sizeof(float));
+                int child_offset = 1;
+                for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
+                    std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
+                    MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm, MPI_STATUS_IGNORE);
+                    for (int i = 0; i < count; i++) {
+                        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
+                    }
+                    child_offset *= 2;
+                }
+                std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
+                MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
+                delete[] res_buf;
+            }
+            else {
+                std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
+                MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
+            }
+
+            if (world_rank == root) {
+                MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
+            }
+        }
+        delete[] temp_buf;
       } else if (type == MPI_DOUBLE) {
-        // TODO
+        double* temp_buf = new double[count];
+        int log2floored = 0;
+        int tmp_rank = world_rank;
+        int parent_offset = 1;
+        if (world_rank == 0) {
+            double* res_buf = new double[count];
+            memcpy(res_buf, sendbuf, count * sizeof(double));
+            tmp_rank = world_size;
+            while (tmp_rank > 1) {
+                log2floored++;
+                tmp_rank >>= 1; // tmp_rank /= 2
+            }
+
+            int sender_rank = 1;
+            while (sender_rank < world_size) {
+                std::cout << "process " << world_rank << " is receiving from " << sender_rank << std::endl;
+                MPI_Recv(temp_buf, count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
+
+                for (int i = 0; i < count; i++) {
+                    res_buf[i] = std::min(res_buf[i], temp_buf[i]);
+                }
+                sender_rank *= 2;
+            }
+            if (root != 0) {
+                std::cout << "process " << world_rank << " is sending to " << root << std::endl;
+                MPI_Send(res_buf, count, type, root, world_rank, comm);
+                delete[] res_buf;
+            }
+            else {
+                memcpy(recvbuf, res_buf, count * sizeof(double));
+            }
+        }
+        else {
+            while (tmp_rank % 2 == 0) {
+                log2floored++;
+                tmp_rank >>= 1; // tmp_rank /= 2
+                parent_offset *= 2;
+            }
+            if (log2floored > 0) {
+                double* res_buf = new double[count];
+                memcpy(res_buf, sendbuf, count * sizeof(double));
+                int child_offset = 1;
+                for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
+                    std::cout << "process " << world_rank << " is receiving from " << world_rank + child_offset << std::endl;
+                    MPI_Recv(temp_buf, count, type, world_rank + child_offset, world_rank + child_offset, comm, MPI_STATUS_IGNORE);
+                    for (int i = 0; i < count; i++) {
+                        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
+                    }
+                    child_offset *= 2;
+                }
+                std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
+                MPI_Send(res_buf, count, type, world_rank - parent_offset, world_rank, comm);
+                delete[] res_buf;
+            }
+            else {
+                std::cout << "process " << world_rank << " is sending to " << world_rank - parent_offset << std::endl;
+                MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
+            }
+
+            if (world_rank == root) {
+                MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
+            }
+        }
+        delete[] temp_buf;
       }
     }
   }
 
 
-
 ZavyalovAReduceMPI::ZavyalovAReduceMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = nullptr;
+  std::get<0>(GetOutput()) = nullptr;
 }
 
 bool ZavyalovAReduceMPI::ValidationImpl() {
@@ -351,7 +479,7 @@ bool ZavyalovAReduceMPI::RunImpl() {
     MPI_Bcast(result_buf, sz, cur_type, receiver_rank, MPI_COMM_WORLD);
   }
 
-  GetOutput() = result_buf;
+  std::get<0>(GetOutput()) = result_buf;
 
   return true;
 }

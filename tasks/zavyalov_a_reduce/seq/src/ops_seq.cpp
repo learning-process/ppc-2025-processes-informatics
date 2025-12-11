@@ -11,7 +11,7 @@ namespace zavyalov_a_reduce {
 ZavyalovAReduceSEQ::ZavyalovAReduceSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = nullptr;
+  std::get<0>(GetOutput()) = nullptr;
 }
 
 bool ZavyalovAReduceSEQ::ValidationImpl() {
@@ -44,6 +44,7 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAReduceSEQ::RunImpl() {
+  std::get<1>(GetOutput()) = true;
   return true;
   MPI_Op operation = std::get<0>(GetInput());
   MPI_Datatype cur_type = std::get<1>(GetInput());
@@ -55,14 +56,12 @@ bool ZavyalovAReduceSEQ::RunImpl() {
   int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
   
   std::cout << "rank " << rank << " mem: ";
   for (size_t i = 0; i < sz; i++) {
     std::cout << ((int*)(mem))[i] << " ";
   }
   std::cout << std::endl;
-  
 
   void* result_buf = new int[sz]; // не всегда int[], в общем случае T[]
   if (rank == receiver_rank) {
@@ -73,16 +72,16 @@ bool ZavyalovAReduceSEQ::RunImpl() {
     MPI_Bcast(result_buf, sz, cur_type, receiver_rank, MPI_COMM_WORLD);
   }
 
-  GetOutput() = result_buf;
+  std::get<0>(GetOutput()) = result_buf;
   
   std::cout << "rank " << rank << " result_buf: ";
   for (size_t i = 0; i < sz; i++) {
     std::cout << ((int*)(result_buf))[i] << " ";
   }
   std::cout << std::endl;
-  std::cout << "rank " << rank << " GetOutput(): ";
+  std::cout << "rank " << rank << " std::get<0>(GetOutput()): ";
   for (size_t i = 0; i < sz; i++) {
-    std::cout << ((int*)(GetOutput()))[i] << " ";
+    std::cout << ((int*)(std::get<0>(GetOutput())))[i] << " ";
   }
   std::cout << std::endl;
   return true;
