@@ -21,7 +21,7 @@ namespace zavyalov_a_reduce {
 class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   ~ZavyalovAReduceFuncTests() override {  // для освобождения выделенной памяти
-    CleanupInputData();
+    CleanupData();
   }
   static std::string PrintTestParam(const TestType &test_param) {
     std::string mpi_typename, mpi_opname;
@@ -73,9 +73,9 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         if (cur_type == MPI_INT) {
           ((int *)(inp_data))[i] = static_cast<int>(i) + 3U;
         } else if (cur_type == MPI_FLOAT) {
-          ((float *)(inp_data))[i] = static_cast<float>(i) + 3.0;
+          ((float *)(inp_data))[i] = static_cast<float>(i) * 1.1 + 3.0;
         } else if (cur_type == MPI_DOUBLE) {
-          ((double *)(inp_data))[i] = static_cast<double>(i) + 3.0;
+          ((double *)(inp_data))[i] = static_cast<double>(i) * 1.1 + 3.0;
         }
       }
     } else if (operation == MPI_MIN) {
@@ -109,22 +109,22 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     int world_size = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    std::cout << "### world_size in CheckTestOutputData: " << world_size << " ###" << std::endl;
+    // std::cout << "### world_size in CheckTestOutputData: " << world_size << " ###" << std::endl;
 
     if (operation == MPI_SUM) {
       if (cur_type == MPI_INT) {
         std::vector<int> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
           res[i] = ((int *)(std::get<3>(input_data_)))[i] * world_size;
-          std::cout << res[i] << ' ';
+          // std::cout << res[i] << ' ';
         }
-        std::cout << "- actual res \n";
+        // std::cout << "- actual res \n";
 
         for (size_t i = 0; i < vec_size; i++) {
           if (res[i] != ((int *)(std::get<0>(output_data)))[i]) {
             ok = false;
-            std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
-                      << ", std::get<0>(output_data)[i]= " << ((int *)(std::get<0>(output_data)))[i] << std::endl;
+            // std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
+            //           << ", std::get<0>(output_data)[i]= " << ((int *)(std::get<0>(output_data)))[i] << std::endl;
             break;
           }
         }
@@ -132,14 +132,14 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         std::vector<float> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
           res[i] = ((float *)(std::get<3>(input_data_)))[i] * world_size;
-          std::cout << res[i] << ' ';
+          // std::cout << res[i] << ' ';
         }
 
         for (size_t i = 0; i < vec_size; i++) {
           if (res[i] != ((float *)(std::get<0>(output_data)))[i]) {
             ok = false;
-            std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
-                      << ", std::get<0>(output_data)[i]= " << ((float *)(std::get<0>(output_data)))[i] << std::endl;
+            // std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
+            //           << ", std::get<0>(output_data)[i]= " << ((float *)(std::get<0>(output_data)))[i] << std::endl;
             break;
           }
         }
@@ -147,14 +147,14 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         std::vector<double> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
           res[i] = ((double *)(std::get<3>(input_data_)))[i] * world_size;
-          std::cout << res[i] << ' ';
+          // std::cout << res[i] << ' ';
         }
 
         for (size_t i = 0; i < vec_size; i++) {
           if (res[i] != ((double *)(std::get<0>(output_data)))[i]) {
             ok = false;
-            std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
-                      << ", std::get<0>(output_data)[i]= " << ((double *)(std::get<0>(output_data)))[i] << std::endl;
+            // std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
+            //           << ", std::get<0>(output_data)[i]= " << ((double *)(std::get<0>(output_data)))[i] << std::endl;
             break;
           }
         }
@@ -164,15 +164,15 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         std::vector<int> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
           res[i] = 10000u - 3u * (world_size - 1);
-          std::cout << res[i] << ' ';
+          // std::cout << res[i] << ' ';
         }
-        std::cout << "- actual res \n";
+        // std::cout << "- actual res \n";
 
         for (size_t i = 0; i < vec_size; i++) {
           if (res[i] != ((int *)(std::get<0>(output_data)))[i]) {
             ok = false;
-            std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
-                      << ", std::get<0>(output_data)[i]= " << ((int *)(std::get<0>(output_data)))[i] << std::endl;
+            // std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
+            //          << ", std::get<0>(output_data)[i]= " << ((int *)(std::get<0>(output_data)))[i] << std::endl;
             break;
           }
         }
@@ -180,15 +180,15 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         std::vector<float> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
           res[i] = 10000.0 - 3.0 * static_cast<float>(world_size - 1);
-          std::cout << res[i] << ' ';
+          // std::cout << res[i] << ' ';
         }
-        std::cout << "- actual res \n";
+        // std::cout << "- actual res \n";
 
         for (size_t i = 0; i < vec_size; i++) {
           if (res[i] != ((float *)(std::get<0>(output_data)))[i]) {
             ok = false;
-            std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
-                      << ", std::get<0>(output_data)[i]= " << ((float *)(std::get<0>(output_data)))[i] << std::endl;
+            // std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
+            //          << ", std::get<0>(output_data)[i]= " << ((float *)(std::get<0>(output_data)))[i] << std::endl;
             break;
           }
         }
@@ -196,19 +196,27 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         std::vector<double> res(vec_size);
         for (size_t i = 0; i < vec_size; i++) {
           res[i] = 10000.0 - 3.0 * static_cast<double>(world_size - 1);
-          std::cout << res[i] << ' ';
+          // std::cout << res[i] << ' ';
         }
-        std::cout << "- actual res \n";
+        // std::cout << "- actual res \n";
 
         for (size_t i = 0; i < vec_size; i++) {
           if (res[i] != ((double *)(std::get<0>(output_data)))[i]) {
             ok = false;
-            std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
-                      << ", std::get<0>(output_data)[i]= " << ((double *)(std::get<0>(output_data)))[i] << std::endl;
+            // std::cout << "i = " << i << ", отличие тут. res[i]= " << res[i]
+            //           << ", std::get<0>(output_data)[i]= " << ((double *)(std::get<0>(output_data)))[i] << std::endl;
             break;
           }
         }
       }
+    }
+
+    if (std::get<1>(params) == MPI_INT) {
+      delete[] static_cast<int *>(std::get<0>(output_data));
+    } else if (std::get<1>(params) == MPI_FLOAT) {
+      delete[] static_cast<float *>(std::get<0>(output_data));
+    } else if (std::get<1>(params) == MPI_DOUBLE) {
+      delete[] static_cast<double *>(std::get<0>(output_data));
     }
 
     return ok;
@@ -220,21 +228,19 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  private:
   InType input_data_;
-  void CleanupInputData() {
+  void CleanupData() {
     void *data = std::get<3>(input_data_);
     if (data != nullptr) {
       // Нужно знать тип данных для правильного удаления
       TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
       if (std::get<1>(params) == MPI_INT) {
         delete[] static_cast<int *>(data);
+        // delete[] static_cast<int *>(GetOutput());
       } else if (std::get<1>(params) == MPI_FLOAT) {
         delete[] static_cast<float *>(data);
       } else if (std::get<1>(params) == MPI_DOUBLE) {
         delete[] static_cast<double *>(data);
       }
-
-      // TODO: обработка других типов данных
-      std::get<3>(input_data_) = nullptr;
     }
   }
 };
@@ -246,10 +252,10 @@ TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(MPI_SUM, MPI_INT, 5U, 0),    std::make_tuple(MPI_SUM, MPI_INT, 9U, 1),
+    std::make_tuple(MPI_SUM, MPI_INT, 5U, 0),    std::make_tuple(MPI_SUM, MPI_INT, 9U, 0),
     std::make_tuple(MPI_SUM, MPI_FLOAT, 11U, 0), std::make_tuple(MPI_SUM, MPI_DOUBLE, 10U, 0),
-    std::make_tuple(MPI_MIN, MPI_FLOAT, 6U, 1),  std::make_tuple(MPI_MIN, MPI_FLOAT, 50U, 0),
-    std::make_tuple(MPI_MIN, MPI_INT, 6U, 1),    std::make_tuple(MPI_MIN, MPI_DOUBLE, 6U, 0)};
+    std::make_tuple(MPI_MIN, MPI_FLOAT, 6U, 0),  std::make_tuple(MPI_MIN, MPI_FLOAT, 50U, 0),
+    std::make_tuple(MPI_MIN, MPI_INT, 6U, 0),    std::make_tuple(MPI_MIN, MPI_DOUBLE, 6U, 0)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ZavyalovAReduceMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce),

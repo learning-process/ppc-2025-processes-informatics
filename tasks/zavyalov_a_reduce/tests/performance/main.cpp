@@ -16,7 +16,7 @@ namespace zavyalov_a_reduce {
 class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const uint64_t kCount_ = 20000000ULL;
   InType input_data_;
-  int* data;
+  int *data;
 
   void SetUp() override {
     data = new int[kCount_];
@@ -25,11 +25,10 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
     }
 
     input_data_ = std::make_tuple(MPI_SUM, MPI_INT, kCount_, data, 0);
-    
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if(std::get<1>(output_data)) {
+    if (std::get<1>(output_data)) {
       return true;
     }
 
@@ -38,7 +37,7 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
 
     bool ok = true;
     for (uint64_t i = 0; i < kCount_; i++) {
-      ok |= (((int*)(std::get<0>(output_data)))[i] == world_size);
+      ok |= (((int *)(std::get<0>(output_data)))[i] == world_size);
     }
     return ok;
     /*
@@ -55,7 +54,8 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
   InType GetTestInputData() final {
     return input_data_;
   }
-public:
+
+ public:
   ~ZavyalovAReducePerfTestProcesses() {
     delete[] data;
   }

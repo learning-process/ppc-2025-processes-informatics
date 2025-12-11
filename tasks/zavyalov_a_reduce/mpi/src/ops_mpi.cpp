@@ -44,10 +44,11 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
         if (root != 0) {
           std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
-          delete[] res_buf;
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(int));
         }
+        delete[] res_buf;
+
       } else {
         while (tmp_rank % 2 == 0) {
           log2floored++;
@@ -235,10 +236,11 @@ void ZavyalovAReduceMPI::my_reduce(const void *sendbuf, void *recvbuf, int count
         if (root != 0) {
           std::cout << "process " << world_rank << " is sending to " << root << std::endl;
           MPI_Send(res_buf, count, type, root, world_rank, comm);
-          delete[] res_buf;
         } else {
           memcpy(recvbuf, res_buf, count * sizeof(int));
         }
+        delete[] res_buf;
+
       } else {
         while (tmp_rank % 2 == 0) {
           log2floored++;
@@ -417,10 +419,9 @@ bool ZavyalovAReduceMPI::ValidationImpl() {
   }
   bool res = true;
   MPI_Op operation = std::get<0>(GetInput());
-  res &= (operation == MPI_SUM || operation == MPI_MIN);  // TODO Добавить все поддерживаемые операции
+  res &= (operation == MPI_SUM || operation == MPI_MIN);
   MPI_Datatype cur_type = std::get<1>(GetInput());
-  res &= (cur_type == MPI_INT || cur_type == MPI_FLOAT ||
-          cur_type == MPI_DOUBLE);  // TODO Добавить все поддерживаемые типы данных
+  res &= (cur_type == MPI_INT || cur_type == MPI_FLOAT || cur_type == MPI_DOUBLE);
   size_t sz = std::get<2>(GetInput());
   res &= sz > 0;
   void *mem = std::get<3>(GetInput());
