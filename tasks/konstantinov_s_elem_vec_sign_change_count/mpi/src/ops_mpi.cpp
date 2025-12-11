@@ -25,7 +25,7 @@ bool KonstantinovSElemVecSignChangeMPI::PreProcessingImpl() {
   return true;
 }
 
-void KonstantinovSElemVecSignChangeMPI::CountSignChange(int &res, EType *data, int start, int iterations) {
+void KonstantinovSElemVecSignChangeMPI::CountSignChange(int &res, const EType *data, int start, int iterations) {
   for (int i = start; i < iterations; i++) {
     res += static_cast<int>((data[i] > 0) != (data[i + 1] > 0));
   }
