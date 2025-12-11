@@ -19,7 +19,6 @@ bool ShkrebkoMHypercubeSEQ::ValidationImpl() {
     return false;
   }
   
-  // В SEQ версии не проверяем destination, т.к. нет MPI_COMM_WORLD
   int destination = GetInput()[1];
   if (destination < 0) {
     return false;

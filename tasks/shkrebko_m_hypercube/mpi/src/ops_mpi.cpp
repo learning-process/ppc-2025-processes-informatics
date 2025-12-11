@@ -71,12 +71,11 @@ bool ShkrebkoMHypercubeMPI::ValidationImpl() {
   bool is_valid = true;
   
   if (world_rank == 0) {
-    // Проверка что количество процессов - степень двойки
     if ((world_size & (world_size - 1)) != 0) {
       is_valid = false;
     }
     
-    // Проверка входных данных
+
     if (GetInput().size() < 2) {
       is_valid = false;
     }
@@ -93,7 +92,6 @@ bool ShkrebkoMHypercubeMPI::ValidationImpl() {
     }
   }
   
-  // Рассылаем результат валидации от процесса 0 всем процессам
   int valid_int = is_valid ? 1 : 0;
   MPI_Bcast(&valid_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
   
@@ -118,7 +116,6 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
   
   HypercubeData local_data;
   
-  // Обработка случая с 1 процессом
   if (world_size == 1) {
     local_data.value = GetOutput().value;
     local_data.destination = GetOutput().destination;

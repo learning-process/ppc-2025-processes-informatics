@@ -1,28 +1,13 @@
 #include <gtest/gtest.h>
 
 #include <vector>
-#include <mpi.h>
+
 #include "shkrebko_m_hypercube/common/include/common.hpp"
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_hypercube/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
 namespace shkrebko_m_hypercube {
-
-namespace {
-bool ShouldSkipHypercubeTest() {
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  
-  bool skip_local = (world_size < 2 || (world_size & (world_size - 1)) != 0);
-  
-  int skip_int = skip_local ? 1 : 0;
-  int skip_all = 0;
-  MPI_Allreduce(&skip_int, &skip_all, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-  
-  return (skip_all == 1);
-}
-}  // namespace
 
 class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -50,15 +35,6 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 };
 
 TEST_P(ShkrebkoMHypercubeFuncTests, HypercubeRouting) {
-  // Для MPI версии пропускаем тест, если число процессов не соответствует гиперкубу
-  auto task_info = GetParam();
-  std::string task_name = std::get<1>(task_info);
-  
-  if (task_name == "shkrebko_m_hypercube_mpi_enabled") {
-    if (ShouldSkipHypercubeTest()) {
-      GTEST_SKIP() << "Skipping hypercube test for non-power-of-two process count or process count < 2";
-    }
-  }
   ExecuteTest(GetParam());
 }
 
