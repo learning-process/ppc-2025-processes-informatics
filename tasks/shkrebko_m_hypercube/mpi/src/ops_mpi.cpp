@@ -67,34 +67,33 @@ bool ShkrebkoMHypercubeMPI::ValidationImpl() {
   int world_size, world_rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  
+
   bool is_valid = true;
-  
+
   if (world_rank == 0) {
     if ((world_size & (world_size - 1)) != 0) {
       is_valid = false;
     }
-    
 
     if (GetInput().size() < 2) {
       is_valid = false;
     }
-    
+
     if (is_valid) {
       int destination = GetInput()[1];
       if (destination < 0 || destination >= world_size) {
         is_valid = false;
       }
-      
+
       if (GetInput()[0] <= 0) {
         is_valid = false;
       }
     }
   }
-  
+
   int valid_int = is_valid ? 1 : 0;
   MPI_Bcast(&valid_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  
+
   return valid_int == 1;
 }
 
@@ -113,9 +112,9 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
   int world_rank, world_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  
+
   HypercubeData local_data;
-  
+
   if (world_size == 1) {
     local_data.value = GetOutput().value;
     local_data.destination = GetOutput().destination;
@@ -125,7 +124,7 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
-  
+
   if (world_rank == 0) {
     local_data.value = GetOutput().value;
     local_data.destination = GetOutput().destination;
@@ -173,11 +172,21 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
 }
 
 bool ShkrebkoMHypercubeMPI::PostProcessingImpl() {
-  if (!GetOutput().finish) return false;
-  if (GetOutput().value <= 0) return false;
-  if (GetOutput().path.empty()) return false;
-  if (GetOutput().path.front() != 0) return false;
-  if (GetOutput().path.back() != GetOutput().destination) return false;
+  if (!GetOutput().finish) {
+    return false;
+  }
+  if (GetOutput().value <= 0) {
+    return false;
+  }
+  if (GetOutput().path.empty()) {
+    return false;
+  }
+  if (GetOutput().path.front() != 0) {
+    return false;
+  }
+  if (GetOutput().path.back() != GetOutput().destination) {
+    return false;
+  }
 
   for (size_t i = 1; i < GetOutput().path.size(); i++) {
     int prev = GetOutput().path[i - 1];
