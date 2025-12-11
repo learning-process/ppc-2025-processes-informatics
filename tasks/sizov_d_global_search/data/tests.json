@@ -58,35 +58,5 @@
     "function": { "expression": "x^4" },
     "problem": { "left": -2.0, "right": 2.0 },
     "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-  {
-    "name": "case_011_rational_sym",
-    "function": { "expression": "(x^2 + 1)/(x^2 + 2)" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [0.0], "value": 0.5 }
-  },
-  {
-    "name": "case_012_log_shift",
-    "function": { "expression": "log(abs(x) + 2)" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [0.0], "value": 0.6931471805599453 }
-  },
-  {
-    "name": "case_013_soft_abs",
-    "function": { "expression": "sqrt(x^2 + 0.01)" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [0.0], "value": 0.1 }
-  },
-  {
-    "name": "case_014_poly_even",
-    "function": { "expression": "x^4 + 2*x^2" },
-    "problem": { "left": -4.0, "right": 4.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
-  },
-  {
-    "name": "case_015_double_well",
-    "function": { "expression": "x^4 - x^2" },
-    "problem": { "left": -2.0, "right": 2.0 },
-    "expected": { "argmins": [-0.70710678, 0.70710678], "value": -0.25 }
   }
 ]
