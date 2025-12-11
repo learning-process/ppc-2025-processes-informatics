@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -19,9 +20,8 @@ namespace zavyalov_a_reduce {
 
 class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  ~ZavyalovAReduceFuncTests() override {  // для освобождения выделенной памяти
-    CleanupData();
-  }
+  ~ZavyalovAReduceFuncTests() override = default;  // shared_ptr автоматически управляет памятью
+
   static std::string PrintTestParam(const TestType &test_param) {
     std::string mpi_opname;
     std::string mpi_typename;
@@ -56,14 +56,17 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    void *inp_data = nullptr;
+    std::shared_ptr<void> inp_data;
 
     if (cur_type == MPI_INT) {
-      inp_data = new int[vec_size];
+      int *raw_data = new int[vec_size];
+      inp_data = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<int *>(p); });
     } else if (cur_type == MPI_FLOAT) {
-      inp_data = new float[vec_size];
+      float *raw_data = new float[vec_size];
+      inp_data = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<float *>(p); });
     } else if (cur_type == MPI_DOUBLE) {
-      inp_data = new double[vec_size];
+      double *raw_data = new double[vec_size];
+      inp_data = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<double *>(p); });
     } else {
       throw "unsupported datatype";
     }
@@ -71,21 +74,21 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     if (operation == MPI_SUM) {
       for (unsigned int i = 0; i < vec_size; i++) {
         if (cur_type == MPI_INT) {
-          (static_cast<int *>(inp_data))[i] = static_cast<int>(i) + 3;
+          (static_cast<int *>(inp_data.get()))[i] = static_cast<int>(i) + 3;
         } else if (cur_type == MPI_FLOAT) {
-          (static_cast<float *>(inp_data))[i] = (static_cast<float>(i) * 1.1f) + 3.0F;
+          (static_cast<float *>(inp_data.get()))[i] = (static_cast<float>(i) * 1.1f) + 3.0F;
         } else if (cur_type == MPI_DOUBLE) {
-          (static_cast<double *>(inp_data))[i] = (static_cast<double>(i) * 1.1) + 3.0;
+          (static_cast<double *>(inp_data.get()))[i] = (static_cast<double>(i) * 1.1) + 3.0;
         }
       }
     } else if (operation == MPI_MIN) {
       for (unsigned int i = 0; i < vec_size; i++) {
         if (cur_type == MPI_INT) {
-          (static_cast<int *>(inp_data))[i] = 10000U - (3U * rank);
+          (static_cast<int *>(inp_data.get()))[i] = 10000U - (3U * rank);
         } else if (cur_type == MPI_FLOAT) {
-          (static_cast<float *>(inp_data))[i] = 10000.0F - (3.0F * static_cast<float>(rank));
+          (static_cast<float *>(inp_data.get()))[i] = 10000.0F - (3.0F * static_cast<float>(rank));
         } else if (cur_type == MPI_DOUBLE) {
-          (static_cast<double *>(inp_data))[i] = 10000.0 - (3.0 * static_cast<double>(rank));
+          (static_cast<double *>(inp_data.get()))[i] = 10000.0 - (3.0 * static_cast<double>(rank));
         }
       }
     } else {
@@ -99,9 +102,12 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     if (std::get<1>(output_data)) {
       return true;
     }
-    if (std::get<0>(output_data) == nullptr) {
+
+    std::shared_ptr<void> result_ptr = std::get<0>(output_data);
+    if (!result_ptr) {
       return false;
     }
+
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     MPI_Op operation = std::get<0>(params);
     MPI_Datatype cur_type = std::get<1>(params);
@@ -113,39 +119,48 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
+    // Получаем входные данные из shared_ptr
+    std::shared_ptr<void> input_ptr = std::get<3>(input_data_);
+
     if (operation == MPI_SUM) {
       if (cur_type == MPI_INT) {
         std::vector<int> res(vec_size);
+        int *input_data = static_cast<int *>(input_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          res[i] = (static_cast<int *>(std::get<3>(input_data_)))[i] * world_size;
+          res[i] = input_data[i] * world_size;
         }
 
+        int *result_data = static_cast<int *>(result_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != (static_cast<int *>(std::get<0>(output_data)))[i]) {
+          if (res[i] != result_data[i]) {
             ok = false;
             break;
           }
         }
       } else if (cur_type == MPI_FLOAT) {
         std::vector<float> res(vec_size);
+        float *input_data = static_cast<float *>(input_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          res[i] = (static_cast<float *>(std::get<3>(input_data_)))[i] * static_cast<float>(world_size);
+          res[i] = input_data[i] * static_cast<float>(world_size);
         }
 
+        float *result_data = static_cast<float *>(result_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != (static_cast<float *>(std::get<0>(output_data)))[i]) {
+          if (res[i] != result_data[i]) {
             ok = false;
             break;
           }
         }
       } else if (cur_type == MPI_DOUBLE) {
         std::vector<double> res(vec_size);
+        double *input_data = static_cast<double *>(input_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          res[i] = (static_cast<double *>(std::get<3>(input_data_)))[i] * static_cast<double>(world_size);
+          res[i] = input_data[i] * static_cast<double>(world_size);
         }
 
+        double *result_data = static_cast<double *>(result_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != (static_cast<double *>(std::get<0>(output_data)))[i]) {
+          if (res[i] != result_data[i]) {
             ok = false;
             break;
           }
@@ -158,8 +173,9 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
           res[i] = 10000 - (3 * (world_size - 1));
         }
 
+        int *result_data = static_cast<int *>(result_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != (static_cast<int *>(std::get<0>(output_data)))[i]) {
+          if (res[i] != result_data[i]) {
             ok = false;
             break;
           }
@@ -170,8 +186,9 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
           res[i] = 10000.0F - (3.0F * static_cast<float>(world_size - 1));
         }
 
+        float *result_data = static_cast<float *>(result_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != (static_cast<float *>(std::get<0>(output_data)))[i]) {
+          if (res[i] != result_data[i]) {
             ok = false;
             break;
           }
@@ -182,8 +199,9 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
           res[i] = 10000.0 - (3.0 * static_cast<double>(world_size - 1));
         }
 
+        double *result_data = static_cast<double *>(result_ptr.get());
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != (static_cast<double *>(std::get<0>(output_data)))[i]) {
+          if (res[i] != result_data[i]) {
             ok = false;
             break;
           }
@@ -191,13 +209,8 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       }
     }
 
-    if (std::get<1>(params) == MPI_INT) {
-      delete[] static_cast<int *>(std::get<0>(output_data));
-    } else if (std::get<1>(params) == MPI_FLOAT) {
-      delete[] static_cast<float *>(std::get<0>(output_data));
-    } else if (std::get<1>(params) == MPI_DOUBLE) {
-      delete[] static_cast<double *>(std::get<0>(output_data));
-    }
+    // Не нужно удалять вручную - shared_ptr сам управляет памятью
+    // Память автоматически освободится при выходе из scope
 
     return ok;
   }
@@ -208,21 +221,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  private:
   InType input_data_;
-  void CleanupData() {
-    void *data = std::get<3>(input_data_);
-    if (data != nullptr) {
-      // Нужно знать тип данных для правильного удаления
-      TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-      if (std::get<1>(params) == MPI_INT) {
-        delete[] static_cast<int *>(data);
-        // delete[] static_cast<int *>(GetOutput());
-      } else if (std::get<1>(params) == MPI_FLOAT) {
-        delete[] static_cast<float *>(data);
-      } else if (std::get<1>(params) == MPI_DOUBLE) {
-        delete[] static_cast<double *>(data);
-      }
-    }
-  }
+  // CleanupData больше не нужен - память управляется shared_ptr
 };
 
 namespace {

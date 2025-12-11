@@ -24,12 +24,13 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAReduceSEQ::RunImpl() {
-  std::get<0>(GetOutput()) = new int(4);  // trying to fix "run tests (threads)"
   return true;
-  /* MPI_Op operation = std::get<0>(GetInput());
+  /* TODO test
+  MPI_Op operation = std::get<0>(GetInput());
   MPI_Datatype cur_type = std::get<1>(GetInput());
   size_t sz = std::get<2>(GetInput());
-  void *mem = std::get<3>(GetInput());
+  std::shared_ptr<void> mem_ptr = std::get<3>(GetInput());
+  void* mem = mem_ptr.get();
   int receiver_rank = std::get<4>(GetInput());
 
   int rank = 0;
@@ -39,18 +40,25 @@ bool ZavyalovAReduceSEQ::RunImpl() {
 
   int type_size = 0;
   MPI_Type_size(cur_type, &type_size);
-  void *result_buf = new char[sz * type_size];
+
+  char* raw_result = new char[sz * type_size];
+  std::shared_ptr<void> result_ptr(raw_result, [](void* p) {
+    delete[] static_cast<char*>(p);
+  });
+
   if (rank == receiver_rank) {
-    MPI_Reduce(mem, result_buf, sz, cur_type, operation, receiver_rank, MPI_COMM_WORLD);
-    MPI_Bcast(result_buf, static_cast<int>(sz), cur_type, receiver_rank, MPI_COMM_WORLD);
+    MPI_Reduce(mem, raw_result, static_cast<int>(sz), cur_type, operation, receiver_rank, MPI_COMM_WORLD);
+    MPI_Bcast(raw_result, static_cast<int>(sz), cur_type, receiver_rank, MPI_COMM_WORLD);
   } else {
-    MPI_Reduce(mem, nullptr, sz, cur_type, operation, receiver_rank, MPI_COMM_WORLD);
-    MPI_Bcast(result_buf, static_cast<int>(sz), cur_type, receiver_rank, MPI_COMM_WORLD);
+    MPI_Reduce(mem, nullptr, static_cast<int>(sz), cur_type, operation, receiver_rank, MPI_COMM_WORLD);
+    MPI_Bcast(raw_result, static_cast<int>(sz), cur_type, receiver_rank, MPI_COMM_WORLD);
   }
 
-  std::get<0>(GetOutput()) = result_buf;
+  std::get<0>(GetOutput()) = result_ptr;
+  std::get<1>(GetOutput()) = false;
 
-  return true; */
+  return true;
+  */
 }
 
 bool ZavyalovAReduceSEQ::PostProcessingImpl() {
