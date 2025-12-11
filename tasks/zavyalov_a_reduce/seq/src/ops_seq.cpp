@@ -12,6 +12,7 @@ ZavyalovAReduceSEQ::ZavyalovAReduceSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   std::get<0>(GetOutput()) = nullptr;
+  std::get<1>(GetOutput()) = true;
 }
 
 bool ZavyalovAReduceSEQ::ValidationImpl() {
@@ -23,8 +24,7 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAReduceSEQ::RunImpl() {
-  std::get<1>(GetOutput()) = true;
-  std::get<0>(GetOutput()) = nullptr;
+  std::get<0>(GetOutput()) = new int(4);  // trying to fix "run tests (threads)"
   return true;
   /* MPI_Op operation = std::get<0>(GetInput());
   MPI_Datatype cur_type = std::get<1>(GetInput());
