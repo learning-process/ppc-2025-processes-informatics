@@ -57,7 +57,7 @@ ImageData CalculateGaussFilter(const ImageData &src) {
             int nx = std::clamp(col + dx, 0, w - 1);
 
             int pixel_val = src.pixels[((ny * w + nx) * c) + ch];
-            int kernel_val = kKernel.at((static_cast<size_t>(dy + 1) * 3) + (dx + 1)));
+            int kernel_val = kKernel.at((static_cast<size_t>(dy + 1) * 3) + (dx + 1));
             sum += pixel_val * kernel_val;
           }
         }
