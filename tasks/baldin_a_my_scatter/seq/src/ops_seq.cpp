@@ -1,5 +1,6 @@
 #include "baldin_a_my_scatter/seq/include/ops_seq.hpp"
 
+#include <cstring>
 #include <numeric>
 #include <vector>
 
@@ -11,16 +12,21 @@ namespace baldin_a_my_scatter {
 BaldinAMyScatterSEQ::BaldinAMyScatterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = nullptr;
 }
 
 bool BaldinAMyScatterSEQ::ValidationImpl() {
   const auto &[sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = GetInput();
 
-  if (sendcount <= 0 || sendcount != recvcount || root < 0) {
+  if (sendcount <= 0 || sendcount != recvcount) {
     return false;
   }
+
   if (sendtype != recvtype) {
+    return false;
+  }
+
+  if (sendbuf == nullptr || recvbuf == nullptr) {
     return false;
   }
 
@@ -32,23 +38,27 @@ bool BaldinAMyScatterSEQ::ValidationImpl() {
 }
 
 bool BaldinAMyScatterSEQ::PreProcessingImpl() {
-  int root = std::get<6>(GetInput());
-
-  int world_size = 0;
-  MPI_Comm_size(std::get<7>(GetInput()), &world_size);
-
-  // если root выходит за границы, корректируем его
-  if (root >= world_size) {
-    std::get<6>(GetInput()) = root % world_size;
-  }
-
   return true;
 }
 
 bool BaldinAMyScatterSEQ::RunImpl() {
   auto &input = GetInput();
   const auto &[sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm] = input;
-  MPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+
+  size_t type_size = 0;
+  if (sendtype == MPI_INT) {
+    type_size = sizeof(int);
+  } else if (sendtype == MPI_FLOAT) {
+    type_size = sizeof(float);
+  } else if (sendtype == MPI_DOUBLE) {
+    type_size = sizeof(double);
+  }
+
+  size_t bytes_to_copy = static_cast<size_t>(sendcount) * type_size;
+
+  if (recvbuf != sendbuf) {
+    std::memcpy(recvbuf, sendbuf, bytes_to_copy);
+  }
 
   GetOutput() = recvbuf;
   return true;
