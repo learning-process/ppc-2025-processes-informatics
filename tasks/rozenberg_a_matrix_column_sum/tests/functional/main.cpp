@@ -83,8 +83,9 @@ TEST_P(RozenbergAMatrixColumnFuncTests, MatrixColumnSum) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {"basic_test",         "large_test",      "same_value_test",
-                                            "single_column_test", "single_row_test", "single_value_test"};
+const std::array<TestType, 8> kTestParam = {"basic_test",         "large_test",        "same_value_test",
+                                            "single_column_test", "single_row_test",   "single_value_test",
+                                            "random_data_test",   "random_data_test_2"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergAMatrixColumnSumMPI, InType>(
                                                kTestParam, PPC_SETTINGS_rozenberg_a_matrix_column_sum),
