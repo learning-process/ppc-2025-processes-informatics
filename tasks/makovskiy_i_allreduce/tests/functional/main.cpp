@@ -49,14 +49,15 @@ const auto kFuncTestName = AllreduceRunFuncTests::PrintFuncTestName<AllreduceRun
 
 const auto kSeqTasks = ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce);
 const auto kSeqGtestValues = ppc::util::ExpandToValues(kSeqTasks);
+
 const auto kMpiTasks = ppc::util::AddFuncTask<TestTaskMPI, InType>(kTestCases, PPC_SETTINGS_makovskiy_i_allreduce);
 const auto kMpiGtestValues = ppc::util::ExpandToValues(kMpiTasks);
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
-INSTANTIATE_TEST_SUITE_P(AllreducePerfSEQ, AllreducePerfTests, kSeqGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(AllreducePerfSEQ, AllreduceRunFuncTests, kSeqGtestValues, kFuncTestName);
 
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
-INSTANTIATE_TEST_SUITE_P(AllreducePerfMPI, AllreducePerfTests, kMpiGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(AllreducePerfMPI, AllreduceRunFuncTests, kMpiGtestValues, kFuncTestName);
 
 }  // namespace
 
