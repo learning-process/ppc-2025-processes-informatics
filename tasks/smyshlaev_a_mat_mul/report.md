@@ -71,4 +71,4 @@
 1.  Лекции по параллельному программированию ННГУ
 2.  Стандарт MPI
 3.  Гергель В.П. — Теория и практика параллельных вычислений
-4.  Michael J. Quinn — Parallel Programming in C with MPI and OpenMP
+4.  Michael J. Quinn — Parallel Programming in C with MPI and OpenMP 
