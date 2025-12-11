@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "nikitina_v_quick_sort_merge/common/include/common.hpp"
+
 namespace nikitina_v_quick_sort_merge {
 
 TestTaskMPI::TestTaskMPI(const InType &in) {
@@ -55,7 +57,7 @@ bool TestTaskMPI::RunImpl() {
   MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_vec.data(),
                send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::sort(local_vec.begin(), local_vec.end());
+  std::ranges::sort(local_vec);
 
   if (rank == 0) {
     GetOutput().resize(total_elements);

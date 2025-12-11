@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "nikitina_v_quick_sort_merge/common/include/common.hpp"
+
 namespace nikitina_v_quick_sort_merge {
 
 TestTaskSEQ::TestTaskSEQ(const InType &in) {
@@ -23,7 +25,7 @@ bool TestTaskSEQ::RunImpl() {
   if (GetOutput().empty()) {
     return true;
   }
-  std::sort(GetOutput().begin(), GetOutput().end());
+  std::ranges::sort(GetOutput());
   return true;
 }
 

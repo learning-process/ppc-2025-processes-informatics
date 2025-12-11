@@ -3,8 +3,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstddef>
 #include <random>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "nikitina_v_quick_sort_merge/common/include/common.hpp"
@@ -38,12 +41,12 @@ class RunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestPar
     int rank = 0;
     int initialized = 0;
     MPI_Initialized(&initialized);
-    if (initialized) {
+    if (initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
     if (rank == 0) {
       std::vector<int> sorted_ref = input_data_;
-      std::sort(sorted_ref.begin(), sorted_ref.end());
+      std::ranges::sort(sorted_ref);
       return output_data == sorted_ref;
     }
     return true;
@@ -60,7 +63,7 @@ class RunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestPar
 namespace {
 
 std::vector<int> GenerateRandomVector(size_t size) {
-  std::mt19937 gen(42);
+  std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
   std::uniform_int_distribution<int> dist(-1000, 1000);
   std::vector<int> vec(size);
   for (size_t i = 0; i < size; ++i) {
@@ -89,7 +92,7 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = RunFuncTests::PrintFuncTestName<RunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(QuickSortTests, RunFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(QuickSortTests, RunFuncTests, kGtestValues, kPerfTestName);  // NOLINT
 
 }  // namespace
 
