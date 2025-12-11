@@ -43,7 +43,7 @@ void CalculatePartitions(int size, int height, int width, int channels, std::vec
   int current_global_row = 0;
   const int row_size_bytes = width * channels;
 
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < size; i++) {
     int rows = rows_per_proc + ((i < remainder) ? 1 : 0);
     real_counts[i] = rows;
 
@@ -61,17 +61,17 @@ void CalculatePartitions(int size, int height, int width, int channels, std::vec
 
 void ComputeHorizontalPass(int rows, int width, int channels, const std::vector<uint8_t> &src,
                            std::vector<uint16_t> &dst) {
-  constexpr std::array<int, 3> kernel = {1, 2, 1};
+  constexpr std::array<int, 3> KERNEL = {1, 2, 1};
 
-  for (int row = 0; row < rows; ++row) {
-    for (int col = 0; col < width; ++col) {
-      for (int ch = 0; ch < channels; ++ch) {
+  for (int row = 0; row < rows; row++) {
+    for (int col = 0; col < width; col++) {
+      for (int ch = 0; ch < channels; ch++) {
         int sum = 0;
-        for (int k = -1; k <= 1; ++k) {
+        for (int k = -1; k <= 1; k++) {
           int n_col = std::clamp(col + k, 0, width - 1);
-          sum += src[((row * width) + n_col) * channels + ch] * kernel[k + 1];
+          sum += src[(((row * width) + n_col) * channels) + ch] * KERNEL.at(k + 1);
         }
-        dst[((row * width) + col) * channels + ch] = static_cast<uint16_t>(sum);
+        dst[(((row * width) + col) * channels) + ch] = static_cast<uint16_t>(sum);
       }
     }
   }
@@ -79,21 +79,21 @@ void ComputeHorizontalPass(int rows, int width, int channels, const std::vector<
 
 void ComputeVerticalPass(int real_rows, int recv_rows, int width, int channels, int row_offset,
                          const std::vector<uint16_t> &src, std::vector<uint8_t> &dst) {
-  constexpr std::array<int, 3> kernel = {1, 2, 1};
+  constexpr std::array<int, 3> KERNEL = {1, 2, 1};
 
-  for (int i = 0; i < real_rows; ++i) {
+  for (int i = 0; i < real_rows; i++) {
     int local_row = row_offset + i;
 
-    for (int col = 0; col < width; ++col) {
-      for (int ch = 0; ch < channels; ++ch) {
+    for (int col = 0; col < width; col++) {
+      for (int ch = 0; ch < channels; ch++) {
         int sum = 0;
-        for (int k = -1; k <= 1; ++k) {
+        for (int k = -1; k <= 1; k++) {
           int neighbor_row = local_row + k;
           neighbor_row = std::clamp(neighbor_row, 0, recv_rows - 1);
 
-          sum += src[((neighbor_row * width) + col) * channels + ch] * kernel[k + 1];
+          sum += src[(((neighbor_row * width) + col) * channels) + ch] * KERNEL.at(k + 1);
         }
-        dst[((i * width) + col) * channels + ch] = static_cast<uint8_t>(sum / 16);
+        dst[(((i * width) + col) * channels) + ch] = static_cast<uint8_t>(sum / 16);
       }
     }
   }
@@ -131,7 +131,7 @@ bool BaldinAGaussFilterMPI::RunImpl() {
   int my_real_rows = real_counts[rank];
   int my_recv_rows = counts[rank] / (width * channels);
 
-  int row_size_bytes = static_cast<size_t>(width) * channels;
+  size_t row_size_bytes = static_cast<size_t>(width) * channels;
   std::vector<uint8_t> local_buffer(static_cast<size_t>(my_recv_rows) * row_size_bytes);
   std::vector<uint16_t> horiz_buffer(static_cast<size_t>(my_recv_rows) * row_size_bytes);
   std::vector<uint8_t> result_buffer(static_cast<size_t>(my_real_rows) * row_size_bytes);
@@ -194,10 +194,11 @@ bool BaldinAGaussFilterMPI::PostProcessingImpl() {
     GetOutput().width = width;
     GetOutput().height = height;
     GetOutput().channels = channels;
-    GetOutput().pixels.resize(width * height * channels);
+    GetOutput().pixels.resize(total_size);
   }
 
-  MPI_Bcast(GetOutput().pixels.data(), static_cast<int>(total_size), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(static_cast<void *>(GetOutput().pixels.data()), static_cast<int>(total_size), MPI_UINT8_T, 0,
+            MPI_COMM_WORLD);
 
   return true;
 }

@@ -29,7 +29,7 @@ ImageData GetRandomImage(int width, int height, int channels) {
   size_t size = static_cast<size_t>(width) * height * channels;
   data.pixels.resize(size);
 
-  unsigned int seed = static_cast<unsigned int>(width + height + channels);
+  auto seed = static_cast<unsigned int>(width + height + channels);
   std::mt19937 gen(seed);
 
   for (size_t i = 0; i < size; i++) {
@@ -45,7 +45,7 @@ ImageData CalculateGaussFilter(const ImageData &src) {
   int h = src.height;
   int c = src.channels;
 
-  constexpr std::array<int, 9> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
+  constexpr std::array<int, 9> KERNEL = {1, 2, 1, 2, 4, 2, 1, 2, 1};
 
   for (int row = 0; row < h; row++) {
     for (int col = 0; col < w; col++) {
@@ -57,7 +57,7 @@ ImageData CalculateGaussFilter(const ImageData &src) {
             int nx = std::clamp(col + dx, 0, w - 1);
 
             int pixel_val = src.pixels[((ny * w + nx) * c) + ch];
-            int kernel_val = kernel[((dy + 1) * 3) + (dx + 1)];
+            int kernel_val = KERNEL.at(static_cast<size_t>((dy + 1) * 3 + (dx + 1)));
             sum += pixel_val * kernel_val;
           }
         }
