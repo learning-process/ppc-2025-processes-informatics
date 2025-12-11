@@ -37,12 +37,12 @@ ImageData CalculateGaussFilter(const ImageData &src) {
 
   const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      for (int k = 0; k < c; ++k) {
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      for (int k = 0; k < c; k++) {
         int sum = 0;
-        for (int dy = -1; dy <= 1; ++dy) {
-          for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; dy++) {
+          for (int dx = -1; dx <= 1; dx++) {
             int ny = std::clamp(y + dy, 0, h - 1);
             int nx = std::clamp(x + dx, 0, w - 1);
 

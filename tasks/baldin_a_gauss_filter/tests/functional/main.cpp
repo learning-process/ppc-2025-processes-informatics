@@ -34,7 +34,7 @@ ImageData GetRandomImage(int width, int height, int channels) {
 
   std::mt19937 gen(42);
 
-  for (size_t i = 0; i < size; ++i) {
+  for (size_t i = 0; i < size; i++) {
     data.pixels[i] = static_cast<uint8_t>(gen() % 256);
   }
 
@@ -49,12 +49,12 @@ ImageData CalculateGaussFilter(const ImageData &src) {
 
   const int kernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      for (int k = 0; k < c; ++k) {
+  for (int y = 0; y < h; y++) {
+    for (int x = 0; x < w; x++) {
+      for (int k = 0; k < c; k++) {
         int sum = 0;
-        for (int dy = -1; dy <= 1; ++dy) {
-          for (int dx = -1; dx <= 1; ++dx) {
+        for (int dy = -1; dy <= 1; dy++) {
+          for (int dx = -1; dx <= 1; dx++) {
             int ny = std::clamp(y + dy, 0, h - 1);
             int nx = std::clamp(x + dx, 0, w - 1);
 
@@ -107,19 +107,26 @@ TEST_P(BaldinAGaussFilterFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {std::make_tuple(3, 3, 3),
+const std::array<TestType, 15> kTestParam = {
+    std::make_tuple(1, 1, 1),
+    std::make_tuple(1, 1, 3),
+    std::make_tuple(3, 3, 1),
+    std::make_tuple(3, 3, 3),
+    std::make_tuple(10, 3, 3),
 
-                                            std::make_tuple(100, 100, 3),
+    std::make_tuple(100, 1, 3),
+    std::make_tuple(1, 100, 3),
+    std::make_tuple(100, 100, 3),
 
-                                            std::make_tuple(200, 50, 3),
+    std::make_tuple(200, 50, 3),
+    std::make_tuple(50, 200, 3),
+    std::make_tuple(200, 50, 1),
+    std::make_tuple(50, 200, 1),
 
-                                            std::make_tuple(50, 200, 3),
+    std::make_tuple(127, 113, 3),
 
-                                            std::make_tuple(127, 113, 3),
-
-                                            std::make_tuple(64, 64, 1),
-
-                                            std::make_tuple(64, 64, 4)};
+    std::make_tuple(64, 64, 1),
+    std::make_tuple(64, 64, 4)};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BaldinAGaussFilterMPI, InType>(kTestParam, PPC_SETTINGS_baldin_a_gauss_filter),
