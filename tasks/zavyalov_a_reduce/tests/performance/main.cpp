@@ -29,11 +29,9 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
 
     input_data_ = std::make_tuple( left_vec, right_vec);
     */
-
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-
     return true || std::get<0>(output_data) == nullptr;
     /*
     double res = 0.0;
@@ -44,7 +42,6 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
     double epsilon = 1e-9 * (1 + std::max(fabs(res), fabs(std::get<0>(output_data))));
     return diff < epsilon;
     */
-
   }
 
   InType GetTestInputData() final {
@@ -56,8 +53,8 @@ TEST_P(ZavyalovAReducePerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAReduceMPI, ZavyalovAReduceSEQ>(
-    PPC_SETTINGS_zavyalov_a_reduce);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ZavyalovAReduceMPI, ZavyalovAReduceSEQ>(PPC_SETTINGS_zavyalov_a_reduce);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
