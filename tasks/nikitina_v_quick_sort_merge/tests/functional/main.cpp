@@ -36,7 +36,11 @@ class RunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestPar
 
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
     if (rank == 0) {
       std::vector<int> sorted_ref = input_data_;
       std::sort(sorted_ref.begin(), sorted_ref.end());
