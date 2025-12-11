@@ -24,6 +24,7 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 
 bool ZavyalovAReduceSEQ::RunImpl() {
   std::get<1>(GetOutput()) = true;
+  std::get<0>(GetOutput()) = nullptr;
   return true;
   /* MPI_Op operation = std::get<0>(GetInput());
   MPI_Datatype cur_type = std::get<1>(GetInput());
