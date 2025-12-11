@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <vector>
 
@@ -19,7 +20,16 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   void SetUp() override {
     auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int value = std::get<0>(test_params);
-    input_data_ = {value, 1};
+
+    int world_size = 1;
+    int mpi_initialized;
+    MPI_Initialized(&mpi_initialized);
+    if (mpi_initialized) {
+      MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    }
+    
+    int destination = (world_size > 1) ? 1 : 0;
+    input_data_ = {value, destination};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
