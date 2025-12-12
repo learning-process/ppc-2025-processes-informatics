@@ -105,8 +105,6 @@ class SizovDRunFuncTestsGlobalSearch : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-constexpr double kPi = std::numbers::pi;
-
 std::vector<LocalTestCase> GetTestCases() {
   std::vector<LocalTestCase> cases;
   cases.reserve(2);
