@@ -11,6 +11,10 @@
 
 namespace yurkin_counting_number {
 
+
+void SetTextForInput(const InType key, const std::string &text);
+const std::string &GetTextForInput(const InType key);
+
 static std::unordered_map<InType, std::string> g_text_store_;
 static std::mutex g_text_store_mutex_;
 

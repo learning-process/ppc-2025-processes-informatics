@@ -37,10 +37,29 @@ bool YurkinCountingNumberMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const std::string &text = GetTextForInput(GetInput());
+  
+  std::string text_local;
+  if (rank == 0) {
+    text_local = GetTextForInput(GetInput());
+  }
+
+  
+  int length = (rank == 0 ? static_cast<int>(text_local.size()) : 0);
+  MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    text_local.resize(length);
+  }
+
+  if (length > 0) {
+    MPI_Bcast(text_local.data(), length, MPI_CHAR, 0, MPI_COMM_WORLD);
+  }
+
+  const std::string &text = text_local;
   if (text.empty()) {
     return false;
   }
+ 
 
   const int n = static_cast<int>(text.size());
   if (n == 0) {
