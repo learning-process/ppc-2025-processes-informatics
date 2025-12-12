@@ -72,8 +72,7 @@ SmyshlaevAGaussFiltMPI::SmyshlaevAGaussFiltMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank == 0)
-  {
+  if (rank == 0) {
     GetInput() = in;
   }
 }
@@ -97,22 +96,21 @@ bool SmyshlaevAGaussFiltMPI::PreProcessingImpl() {
   return true;
 }
 
-void SmyshlaevAGaussFiltMPI::BroadcastImageDimensions(int& width, int& height, int& channels) {
+void SmyshlaevAGaussFiltMPI::BroadcastImageDimensions(int &width, int &height, int &channels) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+
   if (rank == 0) {
-    const auto& input = GetInput();
+    const auto &input = GetInput();
     width = input.width;
     height = input.height;
     channels = input.channels;
   }
-  
+
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
-
 
 bool SmyshlaevAGaussFiltMPI::RunImpl() {
   int rank = 0;
@@ -137,7 +135,7 @@ bool SmyshlaevAGaussFiltMPI::RunImpl() {
   std::vector<uint8_t> scatter_buffer;
 
   if (rank == 0) {
-    const auto& input_image = GetInput();
+    const auto &input_image = GetInput();
     int total_packed = 0;
 
     for (int p = 0; p < size; ++p) {

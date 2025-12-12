@@ -13,7 +13,7 @@ class SmyshlaevAGaussFiltMPI : public BaseTask {
   explicit SmyshlaevAGaussFiltMPI(const InType &in);
 
  private:
-  void BroadcastImageDimensions(int& width, int& height, int& channels);
+  void BroadcastImageDimensions(int &width, int &height, int &channels);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
