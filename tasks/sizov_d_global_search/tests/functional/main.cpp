@@ -1,11 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <cctype>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -25,133 +22,100 @@
 
 namespace sizov_d_global_search {
 
-namespace {
-
-enum class TokenType : std::uint8_t {
-  kEnd,
-  kNumber,
-  kIdentifier,
-  kPlus,
-  kMinus,
-  kStar,
-  kSlash,
-  kCaret,
-  kLParen,
-  kRParen
+struct ExpectedSolution {
+  std::vector<double> argmins{};
+  double value = 0.0;
 };
 
+struct LocalTestCase {
+  std::string name{};
+  Problem problem{};
+  ExpectedSolution expected{};
+};
+
+using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestCase>;
+
+namespace expr_detail {
+
+enum class TokenType : std::uint8_t { kEnd, kNumber, kIdentifier, kPlus, kMinus, kMul, kDiv, kPow, kLParen, kRParen };
+
 struct Token {
-  TokenType type = TokenType::kEnd;
-  std::string text;
-  double number_value = 0.0;
+  TokenType type{TokenType::kEnd};
+  double number{0.0};
+  std::string text{};
 };
 
 class Lexer {
  public:
-  explicit Lexer(std::string expression) : expression_(std::move(expression)) {}
+  explicit Lexer(std::string s) : s_(std::move(s)) {}
 
   Token Next() {
-    SkipWhitespace();
-    if (pos_ >= expression_.size()) {
-      Token t;
-      t.type = TokenType::kEnd;
-      return t;
+    SkipSpaces();
+    if (pos_ >= s_.size()) {
+      return {};
     }
 
-    const char ch = expression_[pos_];
-    if ((std::isdigit(static_cast<unsigned char>(ch)) != 0) || ch == '.') {
+    const char c = s_[pos_];
+
+    if (std::isdigit(static_cast<unsigned char>(c)) != 0 || c == '.') {
       return ParseNumber();
     }
-    if (IsIdentifierStart(ch)) {
+
+    if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
       return ParseIdentifier();
     }
 
     ++pos_;
-    Token t;
-    if (ch == '+') {
-      t.type = TokenType::kPlus;
-      t.text = "+";
-      return t;
-    }
-    if (ch == '-') {
-      t.type = TokenType::kMinus;
-      t.text = "-";
-      return t;
-    }
-    if (ch == '*') {
-      t.type = TokenType::kStar;
-      t.text = "*";
-      return t;
-    }
-    if (ch == '/') {
-      t.type = TokenType::kSlash;
-      t.text = "/";
-      return t;
-    }
-    if (ch == '^') {
-      t.type = TokenType::kCaret;
-      t.text = "^";
-      return t;
-    }
-    if (ch == '(') {
-      t.type = TokenType::kLParen;
-      t.text = "(";
-      return t;
-    }
-    if (ch == ')') {
-      t.type = TokenType::kRParen;
-      t.text = ")";
-      return t;
+    switch (c) {
+      case '+':
+        return {TokenType::kPlus, 0.0, "+"};
+      case '-':
+        return {TokenType::kMinus, 0.0, "-"};
+      case '*':
+        return {TokenType::kMul, 0.0, "*"};
+      case '/':
+        return {TokenType::kDiv, 0.0, "/"};
+      case '^':
+        return {TokenType::kPow, 0.0, "^"};
+      case '(':
+        return {TokenType::kLParen, 0.0, "("};
+      case ')':
+        return {TokenType::kRParen, 0.0, ")"};
+      default:
+        break;
     }
 
     throw std::runtime_error("Unexpected character");
   }
 
  private:
-  void SkipWhitespace() {
-    while (pos_ < expression_.size() && (std::isspace(static_cast<unsigned char>(expression_[pos_])) != 0)) {
+  void SkipSpaces() {
+    while (pos_ < s_.size() && std::isspace(static_cast<unsigned char>(s_[pos_])) != 0) {
       ++pos_;
     }
   }
 
   Token ParseNumber() {
-    const char *begin = expression_.c_str() + pos_;
+    const char *begin = s_.c_str() + pos_;
     char *end = nullptr;
-    const double value = std::strtod(begin, &end);
+    const double v = std::strtod(begin, &end);
     if (begin == end) {
       throw std::runtime_error("Invalid number");
     }
-
-    pos_ = static_cast<std::size_t>(end - expression_.c_str());
-
-    Token t;
-    t.type = TokenType::kNumber;
-    t.number_value = value;
-    return t;
+    pos_ = static_cast<std::size_t>(end - s_.c_str());
+    return {TokenType::kNumber, v, ""};
   }
 
   Token ParseIdentifier() {
     const std::size_t start = pos_;
-    while (pos_ < expression_.size() && IsIdentifierChar(expression_[pos_])) {
+    while (pos_ < s_.size() && std::isalnum(static_cast<unsigned char>(s_[pos_])) != 0) {
       ++pos_;
     }
-
-    Token token;
-    token.type = TokenType::kIdentifier;
-    token.text = expression_.substr(start, pos_ - start);
-    return token;
+    return {TokenType::kIdentifier, 0.0, s_.substr(start, pos_ - start)};
   }
 
-  static bool IsIdentifierStart(char ch) {
-    return (std::isalpha(static_cast<unsigned char>(ch)) != 0) || ch == '_';
-  }
-
-  static bool IsIdentifierChar(char ch) {
-    return (std::isalnum(static_cast<unsigned char>(ch)) != 0) || ch == '_';
-  }
-
-  std::string expression_;
-  std::size_t pos_ = 0;
+  std::string s_;
+  std::size_t pos_{0};
 };
 
 class Expr {
@@ -162,12 +126,10 @@ class Expr {
 
 using ExprPtr = std::unique_ptr<Expr>;
 
-class ConstantExpr : public Expr {
+class ConstantExpr final : public Expr {
  public:
   explicit ConstantExpr(double v) : v_(v) {}
-
-  [[nodiscard]] double Eval(double x) const override {
-    (void)x;
+  [[nodiscard]] double Eval(double) const override {
     return v_;
   }
 
@@ -175,37 +137,34 @@ class ConstantExpr : public Expr {
   double v_;
 };
 
-class VariableExpr : public Expr {
+class VariableExpr final : public Expr {
  public:
   [[nodiscard]] double Eval(double x) const override {
     return x;
   }
 };
 
-class UnaryExpr : public Expr {
+class UnaryExpr final : public Expr {
  public:
-  UnaryExpr(char op, ExprPtr child) : op_(op), child_(std::move(child)) {}
+  UnaryExpr(char op, ExprPtr arg) : op_(op), arg_(std::move(arg)) {}
 
   [[nodiscard]] double Eval(double x) const override {
-    const double v = child_->Eval(x);
-    if (op_ == '-') {
-      return -v;
-    }
-    return v;
+    const double v = arg_->Eval(x);
+    return (op_ == '-') ? -v : v;
   }
 
  private:
   char op_;
-  ExprPtr child_;
+  ExprPtr arg_;
 };
 
-class BinaryExpr : public Expr {
+class BinaryExpr final : public Expr {
  public:
-  BinaryExpr(char op, ExprPtr l, ExprPtr r) : op_(op), left_(std::move(l)), right_(std::move(r)) {}
+  BinaryExpr(char op, ExprPtr lhs, ExprPtr rhs) : op_(op), lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
   [[nodiscard]] double Eval(double x) const override {
-    const double a = left_->Eval(x);
-    const double b = right_->Eval(x);
+    const double a = lhs_->Eval(x);
+    const double b = rhs_->Eval(x);
     switch (op_) {
       case '+':
         return a + b;
@@ -225,361 +184,161 @@ class BinaryExpr : public Expr {
 
  private:
   char op_;
-  ExprPtr left_;
-  ExprPtr right_;
+  ExprPtr lhs_;
+  ExprPtr rhs_;
 };
 
-class FunctionCallExpr : public Expr {
+class FunctionCallExpr final : public Expr {
  public:
   using FuncPtr = double (*)(double);
 
-  FunctionCallExpr(FuncPtr f, ExprPtr arg) : func_(f), arg_(std::move(arg)) {}
+  FunctionCallExpr(FuncPtr f, ExprPtr arg) : f_(f), arg_(std::move(arg)) {}
 
   [[nodiscard]] double Eval(double x) const override {
-    return func_(arg_->Eval(x));
+    return f_(arg_->Eval(x));
   }
 
  private:
-  FuncPtr func_;
+  FuncPtr f_;
   ExprPtr arg_;
 };
 
 class Parser {
  public:
-  explicit Parser(Lexer lex) : lexer_(std::move(lex)) {
-    Advance();
+  explicit Parser(Lexer lex) : lex_(std::move(lex)) {
+    cur_ = lex_.Next();
   }
 
   ExprPtr Parse() {
-    ExprPtr expr = ParseExpression();
-    Expect(TokenType::kEnd);
-    return expr;
+    auto e = ParseExpr();
+    if (cur_.type != TokenType::kEnd) {
+      throw std::runtime_error("Unexpected tokens after expression");
+    }
+    return e;
   }
 
  private:
-  struct OperatorEntry {
-    enum class Kind : std::uint8_t { kPlus, kMinus, kMul, kDiv, kPow, kUnaryMinus, kLParen, kFunc };
-    Kind kind;
-    FunctionCallExpr::FuncPtr func = nullptr;
-  };
-
-  void Advance() {
-    current_ = lexer_.Next();
+  ExprPtr ParseExpr() {
+    auto lhs = ParseTerm();
+    while (cur_.type == TokenType::kPlus || cur_.type == TokenType::kMinus) {
+      const char op = (cur_.type == TokenType::kPlus) ? '+' : '-';
+      Advance();
+      lhs = std::make_unique<BinaryExpr>(op, std::move(lhs), ParseTerm());
+    }
+    return lhs;
   }
 
-  [[nodiscard]] bool Check(TokenType t) const {
-    return current_.type == t;
+  ExprPtr ParseTerm() {
+    auto lhs = ParsePow();
+    while (cur_.type == TokenType::kMul || cur_.type == TokenType::kDiv) {
+      const char op = (cur_.type == TokenType::kMul) ? '*' : '/';
+      Advance();
+      lhs = std::make_unique<BinaryExpr>(op, std::move(lhs), ParsePow());
+    }
+    return lhs;
+  }
+
+  ExprPtr ParsePow() {
+    auto lhs = ParseFactor();
+    if (cur_.type == TokenType::kPow) {
+      Advance();
+      lhs = std::make_unique<BinaryExpr>('^', std::move(lhs), ParsePow());
+    }
+    return lhs;
+  }
+
+  ExprPtr ParseFactor() {
+    if (cur_.type == TokenType::kMinus) {
+      Advance();
+      return std::make_unique<UnaryExpr>('-', ParseFactor());
+    }
+
+    if (cur_.type == TokenType::kNumber) {
+      const double v = cur_.number;
+      Advance();
+      return std::make_unique<ConstantExpr>(v);
+    }
+
+    if (cur_.type == TokenType::kIdentifier) {
+      const std::string id = cur_.text;
+      Advance();
+
+      if (cur_.type == TokenType::kLParen) {
+        Advance();
+        auto arg = ParseExpr();
+        Expect(TokenType::kRParen);
+
+        using F = double (*)(double);
+        if (id == "sin") {
+          return std::make_unique<FunctionCallExpr>(static_cast<F>(std::sin), std::move(arg));
+        }
+        if (id == "cos") {
+          return std::make_unique<FunctionCallExpr>(static_cast<F>(std::cos), std::move(arg));
+        }
+        if (id == "exp") {
+          return std::make_unique<FunctionCallExpr>(static_cast<F>(std::exp), std::move(arg));
+        }
+        if (id == "log") {
+          return std::make_unique<FunctionCallExpr>(static_cast<F>(std::log), std::move(arg));
+        }
+        if (id == "sqrt") {
+          return std::make_unique<FunctionCallExpr>(static_cast<F>(std::sqrt), std::move(arg));
+        }
+        if (id == "abs") {
+          return std::make_unique<FunctionCallExpr>(static_cast<F>(std::fabs), std::move(arg));
+        }
+
+        throw std::runtime_error("Unknown function: " + id);
+      }
+
+      if (id == "x") {
+        return std::make_unique<VariableExpr>();
+      }
+      if (id == "pi") {
+        return std::make_unique<ConstantExpr>(std::acos(-1.0));
+      }
+
+      throw std::runtime_error("Unknown identifier: " + id);
+    }
+
+    if (cur_.type == TokenType::kLParen) {
+      Advance();
+      auto e = ParseExpr();
+      Expect(TokenType::kRParen);
+      return e;
+    }
+
+    throw std::runtime_error("Invalid expression");
   }
 
   void Expect(TokenType t) {
-    if (!Check(t)) {
+    if (cur_.type != t) {
       throw std::runtime_error("Unexpected token");
     }
     Advance();
   }
 
-  static int Precedence(const OperatorEntry &op) {
-    switch (op.kind) {
-      case OperatorEntry::Kind::kPlus:
-      case OperatorEntry::Kind::kMinus:
-        return 1;
-      case OperatorEntry::Kind::kMul:
-      case OperatorEntry::Kind::kDiv:
-        return 2;
-      case OperatorEntry::Kind::kPow:
-        return 3;
-      case OperatorEntry::Kind::kUnaryMinus:
-      case OperatorEntry::Kind::kFunc:
-        return 4;
-      case OperatorEntry::Kind::kLParen:
-        return 0;
-    }
-    return 0;
+  void Advance() {
+    cur_ = lex_.Next();
   }
 
-  static bool IsRightAssociative(const OperatorEntry &op) {
-    return op.kind == OperatorEntry::Kind::kPow || op.kind == OperatorEntry::Kind::kUnaryMinus;
-  }
-
-  static void ApplyOperator(std::vector<ExprPtr> &values, const OperatorEntry &op) {
-    switch (op.kind) {
-      case OperatorEntry::Kind::kUnaryMinus: {
-        auto a = std::move(values.back());
-        values.pop_back();
-        values.push_back(std::make_unique<UnaryExpr>('-', std::move(a)));
-        return;
-      }
-      case OperatorEntry::Kind::kFunc: {
-        auto arg = std::move(values.back());
-        values.pop_back();
-        values.push_back(std::make_unique<FunctionCallExpr>(op.func, std::move(arg)));
-        return;
-      }
-      case OperatorEntry::Kind::kPlus:
-      case OperatorEntry::Kind::kMinus:
-      case OperatorEntry::Kind::kMul:
-      case OperatorEntry::Kind::kDiv:
-      case OperatorEntry::Kind::kPow: {
-        auto rhs = std::move(values.back());
-        values.pop_back();
-        auto lhs = std::move(values.back());
-        values.pop_back();
-
-        char c = '?';
-        if (op.kind == OperatorEntry::Kind::kPlus) {
-          c = '+';
-        } else if (op.kind == OperatorEntry::Kind::kMinus) {
-          c = '-';
-        } else if (op.kind == OperatorEntry::Kind::kMul) {
-          c = '*';
-        } else if (op.kind == OperatorEntry::Kind::kDiv) {
-          c = '/';
-        } else if (op.kind == OperatorEntry::Kind::kPow) {
-          c = '^';
-        }
-
-        values.push_back(std::make_unique<BinaryExpr>(c, std::move(lhs), std::move(rhs)));
-        return;
-      }
-      case OperatorEntry::Kind::kLParen:
-        return;
-    }
-  }
-
-  static FunctionCallExpr::FuncPtr ResolveFunction(const std::string &name) {
-    if (name == "sin") {
-      return std::sin;
-    }
-    if (name == "cos") {
-      return std::cos;
-    }
-    if (name == "tan") {
-      return std::tan;
-    }
-    if (name == "exp") {
-      return std::exp;
-    }
-    if (name == "log") {
-      return std::log;
-    }
-    if (name == "sqrt") {
-      return std::sqrt;
-    }
-    if (name == "abs") {
-      return static_cast<double (*)(double)>(std::fabs);
-    }
-    throw std::runtime_error("Unknown function");
-  }
-
-  static void PushUnaryMinus(std::vector<OperatorEntry> &ops) {
-    ops.push_back({OperatorEntry::Kind::kUnaryMinus, nullptr});
-  }
-
-  static void PushLParen(std::vector<OperatorEntry> &ops) {
-    ops.push_back({OperatorEntry::Kind::kLParen, nullptr});
-  }
-
-  static void PushFunction(std::vector<OperatorEntry> &ops, const std::string &id) {
-    ops.push_back({OperatorEntry::Kind::kFunc, ResolveFunction(id)});
-    PushLParen(ops);
-  }
-
-  static void PushBinaryOperator(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops,
-                                 OperatorEntry::Kind kind) {
-    OperatorEntry new_op{.kind = kind, .func = nullptr};
-    while (!ops.empty() && ops.back().kind != OperatorEntry::Kind::kLParen) {
-      const int top = Precedence(ops.back());
-      const int now = Precedence(new_op);
-      if (top > now || (!IsRightAssociative(new_op) && top == now)) {
-        ApplyOperator(values, ops.back());
-        ops.pop_back();
-      } else {
-        break;
-      }
-    }
-    ops.push_back(new_op);
-  }
-
-  void HandleIdentifierToken(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, bool &expect_value) {
-    std::string id = current_.text;
-    Advance();
-
-    if (Check(TokenType::kLParen)) {
-      PushFunction(ops, id);
-      Advance();
-      expect_value = true;
-      return;
-    }
-
-    if (id == "x") {
-      values.push_back(std::make_unique<VariableExpr>());
-      expect_value = false;
-      return;
-    }
-    if (id == "pi") {
-      values.push_back(std::make_unique<ConstantExpr>(std::acos(-1.0)));
-      expect_value = false;
-      return;
-    }
-
-    throw std::runtime_error("Unknown identifier");
-  }
-
-  void HandleExpectValue(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, bool &expect_value) {
-    if (Check(TokenType::kNumber)) {
-      const double v = current_.number_value;
-      Advance();
-      values.push_back(std::make_unique<ConstantExpr>(v));
-      expect_value = false;
-      return;
-    }
-    if (Check(TokenType::kIdentifier)) {
-      HandleIdentifierToken(values, ops, expect_value);
-      return;
-    }
-    if (Check(TokenType::kLParen)) {
-      PushLParen(ops);
-      Advance();
-      expect_value = true;
-      return;
-    }
-    if (Check(TokenType::kPlus) || Check(TokenType::kMinus)) {
-      if (Check(TokenType::kMinus)) {
-        PushUnaryMinus(ops);
-      }
-      Advance();
-      expect_value = true;
-      return;
-    }
-
-    throw std::runtime_error("Expected value");
-  }
-
-  static void HandleRParen(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops) {
-    while (!ops.empty() && ops.back().kind != OperatorEntry::Kind::kLParen) {
-      ApplyOperator(values, ops.back());
-      ops.pop_back();
-    }
-    if (ops.empty()) {
-      throw std::runtime_error("Mismatched parentheses");
-    }
-    ops.pop_back();
-
-    if (!ops.empty() && ops.back().kind == OperatorEntry::Kind::kFunc) {
-      ApplyOperator(values, ops.back());
-      ops.pop_back();
-    }
-  }
-
-  bool HandleOperatorOrEnd(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, bool &expect_value) {
-    if (Check(TokenType::kPlus) || Check(TokenType::kMinus) || Check(TokenType::kStar) || Check(TokenType::kSlash) ||
-        Check(TokenType::kCaret)) {
-      OperatorEntry::Kind kind = OperatorEntry::Kind::kPlus;
-      if (Check(TokenType::kPlus)) {
-        kind = OperatorEntry::Kind::kPlus;
-      } else if (Check(TokenType::kMinus)) {
-        kind = OperatorEntry::Kind::kMinus;
-      } else if (Check(TokenType::kStar)) {
-        kind = OperatorEntry::Kind::kMul;
-      } else if (Check(TokenType::kSlash)) {
-        kind = OperatorEntry::Kind::kDiv;
-      } else {
-        kind = OperatorEntry::Kind::kPow;
-      }
-
-      PushBinaryOperator(values, ops, kind);
-      Advance();
-      expect_value = true;
-      return true;
-    }
-
-    if (Check(TokenType::kRParen)) {
-      HandleRParen(values, ops);
-      Advance();
-      return true;
-    }
-
-    if (Check(TokenType::kEnd)) {
-      return false;
-    }
-
-    throw std::runtime_error("Unexpected token");
-  }
-
-  static void FinalizeExpression(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops) {
-    while (!ops.empty()) {
-      if (ops.back().kind == OperatorEntry::Kind::kLParen) {
-        throw std::runtime_error("Mismatched parentheses");
-      }
-      ApplyOperator(values, ops.back());
-      ops.pop_back();
-    }
-    if (values.size() != 1) {
-      throw std::runtime_error("Invalid expression");
-    }
-  }
-
-  ExprPtr ParseExpression() {
-    std::vector<ExprPtr> values;
-    std::vector<OperatorEntry> ops;
-    values.reserve(16);
-    ops.reserve(16);
-
-    bool expect_value = true;
-    while (true) {
-      if (expect_value) {
-        HandleExpectValue(values, ops, expect_value);
-      } else {
-        if (!HandleOperatorOrEnd(values, ops, expect_value)) {
-          break;
-        }
-      }
-    }
-
-    FinalizeExpression(values, ops);
-    return std::move(values.back());
-  }
-
-  Lexer lexer_;
-  Token current_{};
+  Lexer lex_;
+  Token cur_{};
 };
 
-struct SharedExprFunctor {
-  std::shared_ptr<Expr> ptr;
+}  // namespace expr_detail
 
-  double operator()(double x) const {
-    return ptr->Eval(x);
-  }
-};
-
-Function BuildFunction(const nlohmann::json &json) {
-  const std::string expr = json.at("expression");
-  Lexer lex(expr);
-  Parser parser(std::move(lex));
-  ExprPtr ast = parser.Parse();
-  auto sp = std::shared_ptr<Expr>(std::move(ast));
-  return Function{SharedExprFunctor{sp}};
+static Function BuildFunction(const nlohmann::json &json) {
+  const std::string expr = json.at("expression").get<std::string>();
+  expr_detail::Parser parser{expr_detail::Lexer{expr}};
+  auto ast = parser.Parse();
+  auto shared = std::shared_ptr<expr_detail::Expr>(std::move(ast));
+  return Function{[shared](double x) { return shared->Eval(x); }};
 }
 
-struct ExpectedSolution {
-  std::vector<double> argmins;
-  double value = 0.0;
-};
-
-struct LocalTestCase {
-  std::string name;
-  Problem problem;
-  ExpectedSolution expected;
-};
-
-using LocalTestType = LocalTestCase;
-using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestType>;
-
-std::vector<LocalTestType> LoadTestCasesFromData() {
-  namespace fs = std::filesystem;
-
-  fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
-  std::ifstream file(json_path);
+static std::vector<LocalTestCase> LoadTestCasesFromData() {
+  const auto path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
+  std::ifstream file(path);
   if (!file) {
     throw std::runtime_error("Cannot open tests.json");
   }
@@ -587,44 +346,43 @@ std::vector<LocalTestType> LoadTestCasesFromData() {
   nlohmann::json data;
   file >> data;
   if (!data.is_array()) {
-    throw std::runtime_error("tests.json must contain array");
+    throw std::runtime_error("tests.json must be an array");
   }
 
-  std::vector<LocalTestType> cases;
+  std::vector<LocalTestCase> cases;
   cases.reserve(data.size());
 
-  for (auto &item : data) {
-    LocalTestType t;
-    t.name = item.at("name");
+  for (const auto &item : data) {
+    LocalTestCase tc{};
+    tc.name = item.at("name").get<std::string>();
 
     const auto &pj = item.at("problem");
-    Problem p{};
-    p.left = pj.at("left");
-    p.right = pj.at("right");
-    p.accuracy = 1e-4;
-    p.reliability = 3.0;
-    p.max_iterations = 300;
-    p.func = BuildFunction(item.at("function"));
-    t.problem = p;
+    tc.problem.left = pj.at("left");
+    tc.problem.right = pj.at("right");
+    tc.problem.accuracy = 1e-4;
+    tc.problem.reliability = 3.0;
+    tc.problem.max_iterations = 300;
+    tc.problem.func = BuildFunction(item.at("function"));
 
     const auto &ej = item.at("expected");
-    t.expected.argmins = ej.at("argmins").get<std::vector<double>>();
-    t.expected.value = ej.at("value");
+    tc.expected.argmins = ej.at("argmins").get<std::vector<double>>();
+    tc.expected.value = ej.at("value");
 
-    cases.push_back(std::move(t));
+    cases.push_back(std::move(tc));
   }
 
   return cases;
 }
 
-std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
+static std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestCase> &tests) {
   std::vector<FuncParam> tasks;
   tasks.reserve(tests.size() * 2U);
 
-  std::string mpi_name =
+  const std::string mpi_name =
       std::string(ppc::util::GetNamespace<SizovDGlobalSearchMPI>()) + "_" +
       ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
-  std::string seq_name =
+
+  const std::string seq_name =
       std::string(ppc::util::GetNamespace<SizovDGlobalSearchSEQ>()) + "_" +
       ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
 
@@ -636,30 +394,30 @@ std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
   return tasks;
 }
 
-}  // namespace
-
-class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestType> {
+class SizovDRunFuncTestsGlobalSearch : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestCase> {
  public:
-  void RunFunctionalTestCase(const FuncParam &param) {
-    PrepareTestCase(param);
-    ExecuteTest(param);
+  static std::string PrintTestParam(const LocalTestCase &tc) {
+    return tc.name;
   }
 
-  void TestBody() override {}
-
-  static std::string PrintTestParam(const LocalTestType &t) {
-    return t.name;
+  void PrepareTestCase(const FuncParam &param) {
+    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+    input_ = test_case_.problem;
+    expected_ = test_case_.expected;
   }
 
-  bool CheckTestOutputData(OutType &o) final {
-    if (!std::isfinite(o.value)) {
+ protected:
+  InType GetTestInputData() override final {
+    return input_;
+  }
+
+  bool CheckTestOutputData(OutType &out) override final {
+    if (!std::isfinite(out.value)) {
       return false;
     }
 
-    const double dv = std::abs(o.value - expected_.value);
-    const double dv_tol = 20.0 * input_.accuracy;
-
-    if (dv > dv_tol) {
+    const double dv = std::abs(out.value - expected_.value);
+    if (dv > 20.0 * input_.accuracy) {
       return false;
     }
 
@@ -669,80 +427,30 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
 
     double min_dx = std::numeric_limits<double>::infinity();
     for (double a : expected_.argmins) {
-      const double dx = std::abs(o.argmin - a);
-      min_dx = std::min(min_dx, dx);
+      min_dx = std::min(min_dx, std::abs(out.argmin - a));
     }
 
-    const double dx_tol = 5.0 * input_.accuracy;
-
-    if (expected_.argmins.size() == 1U) {
-      return min_dx <= dx_tol;
-    }
-
-    return true;
-  }
-
-  InType GetTestInputData() final {
-    return input_;
+    return min_dx <= 5.0 * input_.accuracy;
   }
 
  private:
-  void PrepareTestCase(const FuncParam &param) {
-    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
-    input_ = test_case_.problem;
-    expected_ = test_case_.expected;
-  }
-
-  LocalTestType test_case_{};
+  LocalTestCase test_case_{};
   InType input_{};
   ExpectedSolution expected_{};
 };
 
-namespace {
-
-std::vector<FuncParam> BuildFunctionalTestParams() {
-  const auto tests = LoadTestCasesFromData();
-  return BuildTestTasks(tests);
+TEST_P(SizovDRunFuncTestsGlobalSearch, FromJson) {
+  PrepareTestCase(GetParam());
+  ExecuteTest(GetParam());
 }
 
-class FunctionalTestInstance : public SizovDGlobalSearchFunctionalTests {
- public:
-  explicit FunctionalTestInstance(FuncParam param) : param_(std::move(param)) {}
+namespace {
 
-  void TestBody() override {
-    RunFunctionalTestCase(param_);
-  }
+const auto kCases = LoadTestCasesFromData();
+const auto kTasks = BuildTestTasks(kCases);
 
- private:
-  FuncParam param_;
-};
-
-struct FunctionalTestRegistrar {
-  explicit FunctionalTestRegistrar(std::vector<FuncParam> tasks) : tasks_(std::move(tasks)) {
-    test_names_.reserve(tasks_.size());
-    std::size_t idx = 0;
-    for (const auto &param : tasks_) {
-      const LocalTestType &local = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
-      const std::string &test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
-      test_names_.push_back(test_name + "_" + local.name);
-      const std::size_t current_idx = idx++;
-
-      ::testing::RegisterTest(
-          "GlobalSearchFunctionalTests", test_names_.back().c_str(), nullptr, nullptr, __FILE__, __LINE__,
-          [this, current_idx]() -> ::testing::Test * { return new FunctionalTestInstance(tasks_[current_idx]); });
-    }
-  }
-
- private:
-  std::vector<FuncParam> tasks_;
-  std::vector<std::string> test_names_;
-};
-
-const bool kRegisteredFunctionalTests = []() {
-  static const FunctionalTestRegistrar kRegistrar(BuildFunctionalTestParams());
-  (void)kRegistrar;
-  return true;
-}();
+INSTANTIATE_TEST_SUITE_P(SizovDGlobalSearch, SizovDRunFuncTestsGlobalSearch, ::testing::ValuesIn(kTasks),
+                         SizovDRunFuncTestsGlobalSearch::PrintFuncTestName<SizovDRunFuncTestsGlobalSearch>);
 
 }  // namespace
 

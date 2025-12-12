@@ -16,15 +16,13 @@
 
 namespace sizov_d_global_search {
 
-namespace {
-
 constexpr double kLeft = -5.0;
 constexpr double kRight = 5.0;
 constexpr double kAccuracy = 1e-4;
 constexpr double kReliability = 3.0;
-constexpr int kMaxIterations = 50000;
+constexpr int kMaxIterations = 50'000;
 
-InType MakePerfProblem() {
+static InType MakePerfProblem() {
   InType p{};
   p.left = kLeft;
   p.right = kRight;
@@ -39,36 +37,46 @@ InType MakePerfProblem() {
     v += 0.1 * std::cos(300.0 * x);
     return v;
   };
+
   return p;
 }
 
 template <typename Tuple, typename Func, std::size_t... I>
-void ForEachTupleElement(const Tuple &tuple, Func func, std::index_sequence<I...> /*unused*/) {
+void ForEachTupleElement(const Tuple &tuple, Func func, std::index_sequence<I...>) {
   (func(std::get<I>(tuple)), ...);
 }
 
-auto BuildPerfTestParams() {
+static std::vector<ppc::util::PerfTestParam<InType, OutType>> BuildPerfTestParams() {
   const auto tuple_tasks = ppc::util::MakeAllPerfTasks<InType, SizovDGlobalSearchMPI, SizovDGlobalSearchSEQ>(
       PPC_SETTINGS_sizov_d_global_search);
-  constexpr std::size_t kSize = std::tuple_size_v<decltype(tuple_tasks)>;
-  std::vector<ppc::util::PerfTestParam<InType, OutType>> result;
-  result.reserve(kSize);
 
-  ForEachTupleElement(tuple_tasks, [&result](const auto &task_tuple) {
+  constexpr std::size_t kSize = std::tuple_size_v<decltype(tuple_tasks)>;
+
+  std::vector<ppc::util::PerfTestParam<InType, OutType>> params;
+  params.reserve(kSize);
+
+  ForEachTupleElement(tuple_tasks, [&params](const auto &task_tuple) {
     const auto &task_getter = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTaskGetter)>(task_tuple);
     const auto &name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(task_tuple);
     const auto &mode = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(task_tuple);
-    result.emplace_back(task_getter, name, mode);
+
+    params.emplace_back(task_getter, name, mode);
   }, std::make_index_sequence<kSize>{});
 
-  return result;
+  return params;
 }
 
 class SizovDGlobalSearchPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
- private:
-  InType input_data_{};
+ protected:
+  void SetUp() override {
+    input_data_ = MakePerfProblem();
+  }
 
-  bool CheckTestOutputData(OutType &out) final {
+  InType GetTestInputData() override {
+    return input_data_;
+  }
+
+  bool CheckTestOutputData(OutType &out) override {
     if (!out.converged) {
       return false;
     }
@@ -81,17 +89,11 @@ class SizovDGlobalSearchPerfTests : public ppc::util::BaseRunPerfTests<InType, O
     return true;
   }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
-
- protected:
-  void SetUp() override {
-    input_data_ = MakePerfProblem();
-  }
+ private:
+  InType input_data_{};
 };
 
-class PerfTestInstance : public SizovDGlobalSearchPerfTests {
+class PerfTestInstance final : public SizovDGlobalSearchPerfTests {
  public:
   explicit PerfTestInstance(ppc::util::PerfTestParam<InType, OutType> param) : param_(std::move(param)) {}
 
@@ -105,13 +107,16 @@ class PerfTestInstance : public SizovDGlobalSearchPerfTests {
 
 struct PerfTestRegistrar {
   explicit PerfTestRegistrar(std::vector<ppc::util::PerfTestParam<InType, OutType>> tasks) : tasks_(std::move(tasks)) {
+    test_names_.reserve(tasks_.size());
+
     std::size_t idx = 0;
     for (const auto &param : tasks_) {
       const auto &name_test = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
       const auto &mode = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
-      const std::string perf_name = ppc::performance::GetStringParamName(mode) + "_" + name_test;
 
-      test_names_.push_back(perf_name);
+      const std::string test_name = ppc::performance::GetStringParamName(mode) + "_" + name_test;
+
+      test_names_.push_back(test_name);
       const std::size_t current_idx = idx++;
 
       ::testing::RegisterTest(
@@ -126,11 +131,9 @@ struct PerfTestRegistrar {
 };
 
 const bool kRegisteredPerfTests = []() {
-  static const PerfTestRegistrar kRegistrar(BuildPerfTestParams());
-  (void)kRegistrar;
+  static const PerfTestRegistrar registrar(BuildPerfTestParams());
+  (void)registrar;
   return true;
 }();
-
-}  // namespace
 
 }  // namespace sizov_d_global_search
