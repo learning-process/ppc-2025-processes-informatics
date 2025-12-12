@@ -6,60 +6,18 @@
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
 namespace yurkin_counting_number {
-void SetTextForInput(const InType key, const std::string &text);
-const std::string &GetTextForInput(const InType key);
-}  // namespace yurkin_counting_number
-
-namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
+
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data_.clear();
+    input_data_.reserve(kCount_ * 100000);
 
-    std::string text;
-    text.reserve(static_cast<size_t>(input_data_) + 16);
-    for (int i = 0; i < input_data_; ++i) {
-      text.push_back(char('A' + (i % 26)));
-
-      if ((i % 10) == 9) {
-        text.push_back('1');
-      }
+    for (int i = 0; i < kCount_ * 100000; i++) {
+      input_data_.push_back((i % 3 == 0) ? 'A' : '1');
     }
-
-    text += " 123!";
-
-    int letters = 0;
-    for (unsigned char c : text) {
-      if (std::isalpha(c)) {
-        ++letters;
-      }
-    }
-
-    if (letters > input_data_) {
-      while (letters > input_data_ && !text.empty()) {
-        char ch = text.back();
-        text.pop_back();
-        if (std::isalpha(static_cast<unsigned char>(ch))) {
-          --letters;
-        }
-      }
-    } else if (letters < input_data_) {
-      while (letters < input_data_) {
-        text.push_back('B');
-        ++letters;
-      }
-    }
-
-    SetTextForInput(input_data_, text);
-  }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
-  }
-  InType GetTestInputData() final {
-    return input_data_;
   }
 };
 

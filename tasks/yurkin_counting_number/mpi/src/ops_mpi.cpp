@@ -6,13 +6,7 @@
 #include <cctype>
 #include <string>
 
-#include "util/include/util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
-
-namespace yurkin_counting_number {
-void SetTextForInput(const InType key, const std::string &text);
-const std::string &GetTextForInput(const InType key);
-}  // namespace yurkin_counting_number
 
 namespace yurkin_counting_number {
 
@@ -32,75 +26,33 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberMPI::RunImpl() {
-  int rank = 0;
-  int size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int world_size, world_rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  std::string text_local;
-  if (rank == 0) {
-    text_local = GetTextForInput(GetInput());
-  }
+  const std::string &full = GetInput();
+  int n = full.size();
 
-  int length = (rank == 0 ? static_cast<int>(text_local.size()) : 0);
-  MPI_Bcast(&length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  int chunk = n / world_size;
+  int rem = n % world_size;
 
-  if (rank != 0) {
-    text_local.resize(length);
-  }
+  int start = world_rank * chunk + std::min(world_rank, rem);
+  int size = chunk + (world_rank < rem ? 1 : 0);
 
-  if (length > 0) {
-    MPI_Bcast(text_local.data(), length, MPI_CHAR, 0, MPI_COMM_WORLD);
-  }
-
-  const std::string &text = text_local;
-  if (text.empty()) {
-    return false;
-  }
-
-  const int n = static_cast<int>(text.size());
-  if (n == 0) {
-    if (rank == 0) {
-      GetOutput() = 0;
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
-  }
-
-  int base = n / size;
-  int rem = n % size;
-  int start = rank * base + std::min(rank, rem);
-  int len = base + (rank < rem ? 1 : 0);
-  int end = start + len;
-
-  int local_letters = 0;
-  for (int i = start; i < end; ++i) {
-    unsigned char c = static_cast<unsigned char>(text[i]);
-    if (std::isalpha(c)) {
-      ++local_letters;
+  int local = 0;
+  for (int i = start; i < start + size; i++) {
+    if (std::isalpha(static_cast<unsigned char>(full[i]))) {
+      local++;
     }
   }
 
-  const int base_rep = 10000;
-  int scale_down = 1 + (GetInput() / 100);
-  int reps = std::max(1, base_rep / scale_down);
+  int global = 0;
+  MPI_Reduce(&local, &global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  volatile int dummy = 0;
-  for (int r = 0; r < reps; ++r) {
-    for (int i = start; i < end; ++i) {
-      dummy += (text[i] & 0x1);
-    }
-  }
-  (void)dummy;
-
-  int global_letters = 0;
-  MPI_Reduce(&local_letters, &global_letters, 1, MPI_INT, MPI_SUM, /*root=*/0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    GetOutput() = global_letters;
+  if (world_rank == 0) {
+    GetOutput() = global;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
