@@ -57,10 +57,9 @@ bool SmyshlaevAMatMulMPI::ValidationImpl() {
       error_flag = 1;
     }
 
-    else{
+    else {
       const auto &num_cols_a = static_cast<int>(mat_a.size()) / num_rows_a;
-      if (num_cols_a != num_rows_b)
-      {
+      if (num_cols_a != num_rows_b) {
         error_flag = 1;
       }
     }
@@ -219,7 +218,7 @@ bool SmyshlaevAMatMulMPI::RunImpl() {
   int num_cols_b = 0;
 
   BroadcastDimensions(num_rows_a, num_cols_a, num_cols_b);
-  
+
   if (size > num_rows_a || size > num_cols_b) {
     return RunSequential();
   }
