@@ -19,8 +19,7 @@ namespace smyshlaev_a_gauss_filt {
 class SmyshlaevAGaussFiltRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const ImageType &img = std::get<0>(test_param);
-    return std::to_string(img.width) + "x" + std::to_string(img.height) + "_" + std::get<1>(test_param);
+    return std::get<1>(test_param);
   }
 
  protected:
