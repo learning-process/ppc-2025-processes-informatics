@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
 #include <tuple>
 #include <unordered_map>
@@ -30,7 +29,7 @@ bool LukinIThorTopologyMPI::ValidationImpl() {
   int proc_count = -1;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
 
-  return !(start_v > proc_count - 1 || end_v > proc_count - 1);
+  return start_v <= proc_count - 1 && end_v <= proc_count - 1;
 }
 
 bool LukinIThorTopologyMPI::PreProcessingImpl() {
@@ -95,7 +94,7 @@ bool LukinIThorTopologyMPI::RunImpl() {
 
   if (rank == end_) {
     full_route.push_back(rank);
-    route_size = full_route.size();
+    route_size = static_cast<int>(full_route.size());
   }
 
   MPI_Bcast(&route_size, 1, MPI_INT, end_, MPI_COMM_WORLD);
@@ -136,7 +135,7 @@ void LukinIThorTopologyMPI::Send(int &message_len, std::vector<int> &message, st
   MPI_Send(&message_len, 1, MPI_INT, dest, static_cast<int>(Tags::kMlen), MPI_COMM_WORLD);
   MPI_Send(message.data(), message_len, MPI_INT, dest, static_cast<int>(Tags::kMessage), MPI_COMM_WORLD);
   full_route.push_back(rank);
-  route_size = full_route.size();
+  route_size = static_cast<int>(full_route.size());
   MPI_Send(&route_size, 1, MPI_INT, dest, static_cast<int>(Tags::kRoutesize), MPI_COMM_WORLD);
   MPI_Send(full_route.data(), route_size, MPI_INT, dest, static_cast<int>(Tags::kRoute), MPI_COMM_WORLD);
 }

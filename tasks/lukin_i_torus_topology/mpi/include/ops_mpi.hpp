@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "lukin_i_torus_topology/common/include/common.hpp"
@@ -24,7 +25,7 @@ class LukinIThorTopologyMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  Direction GetDir(int sx, int sy, int dx, int dy, int cols, int rows);
+  static Direction GetDir(int sx, int sy, int dx, int dy, int cols, int rows);
 
   static void Send(int &message_len, std::vector<int> &message, std::vector<int> &full_route, int &route_size, int dest,
                    int rank);

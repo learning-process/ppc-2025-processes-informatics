@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <fstream>
+#include <tuple>
 #include <vector>
 
 #include "lukin_i_torus_topology/common/include/common.hpp"
@@ -29,19 +29,23 @@ class LukinIRunPerfTestProceses3 : public ppc::util::BaseRunPerfTests<InType, Ou
       input_data_ = std::make_tuple(0, 0, message_);
       expected_result_ = std::make_tuple(std::vector<int>{}, message_);
       return;
-    } else if (proc_count == 2) {
+    }
+
+    if (proc_count == 2) {
       input_data_ = std::make_tuple(0, 1, message_);
       expected_result_ = std::make_tuple(std::vector<int>{0, 1}, message_);
       return;
-    } else if (proc_count == 3) {
+    }
+
+    if (proc_count == 3) {
       input_data_ = std::make_tuple(0, 2, message_);
       expected_result_ = std::make_tuple(std::vector<int>{0, 2}, message_);
       return;
-    } else if (proc_count == 4) {
-      input_data_ = std::make_tuple(0, 3, message_);
-      expected_result_ = std::make_tuple(std::vector<int>{0, 2, 3}, message_);
-      return;
     }
+
+    // proc_count == 4
+    input_data_ = std::make_tuple(0, 3, message_);
+    expected_result_ = std::make_tuple(std::vector<int>{0, 2, 3}, message_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

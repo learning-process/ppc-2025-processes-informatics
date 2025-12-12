@@ -43,74 +43,110 @@ class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, O
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     if (params == "send_myself") {
-      input_data_ = std::make_tuple(0, 0, message_);
-      expected_ = std::make_tuple(std::vector<int>{}, message_);
+      SendMyself();
     } else if (params == "send_to_right_neighbour") {
-      input_data_ = std::make_tuple(0, 1, message_);
-      expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+      SendRightNeighbour();
     } else if (params == "send_to_left_neighbour") {
+      SendLeftNeighbour();
+    } else if (params == "send_to_bottom_neighbour") {
+      SendBottomNeighbour(proc_count);
+    } else if (params == "send_to_top_neighbour") {
+      SendTopNeighbour(proc_count);
+    } else if (params == "send_through_right_boundary") {
+      SendRightBound(proc_count);
+    } else if (params == "send_through_left_boundary") {
+      SendLeftBound(proc_count);
+    } else if (params == "send_through_bottom_boundary") {
+      SendBottomBound(proc_count);
+    } else if (params == "send_through_top_boundary") {
+      SendTopBound(proc_count);
+    }
+  }
+
+  void SendMyself() {
+    input_data_ = std::make_tuple(0, 0, message_);
+    expected_ = std::make_tuple(std::vector<int>{}, message_);
+  }
+
+  void SendRightNeighbour() {
+    input_data_ = std::make_tuple(0, 1, message_);
+    expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+  }
+
+  void SendLeftNeighbour() {
+    input_data_ = std::make_tuple(1, 0, message_);
+    expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
+  }
+
+  void SendBottomNeighbour(int proc_count) {
+    if (proc_count < 4) {
+      input_data_ = std::make_tuple(1, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (proc_count == 4) {
+      input_data_ = std::make_tuple(1, 3, message_);
+      expected_ = std::make_tuple(std::vector<int>{1, 3}, message_);
+    }
+  }
+
+  void SendTopNeighbour(int proc_count) {
+    if (proc_count < 4) {
+      input_data_ = std::make_tuple(1, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (proc_count == 4) {
+      input_data_ = std::make_tuple(2, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
+    }
+  }
+
+  void SendRightBound(int proc_count) {
+    if (proc_count == 2) {
       input_data_ = std::make_tuple(1, 0, message_);
       expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
-    } else if (params == "send_to_bottom_neighbour") {
-      if (proc_count < 4) {
-        input_data_ = std::make_tuple(1, 1, message_);
-        expected_ = std::make_tuple(std::vector<int>{}, message_);
-      } else if (proc_count == 4) {
-        input_data_ = std::make_tuple(1, 3, message_);
-        expected_ = std::make_tuple(std::vector<int>{1, 3}, message_);
-      }
-    } else if (params == "send_to_top_neighbour") {
-      if (proc_count < 4) {
-        input_data_ = std::make_tuple(1, 1, message_);
-        expected_ = std::make_tuple(std::vector<int>{}, message_);
-      } else if (proc_count == 4) {
-        input_data_ = std::make_tuple(2, 0, message_);
-        expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
-      }
-    } else if (params == "send_through_right_boundary") {
-      if (proc_count == 2) {
-        input_data_ = std::make_tuple(1, 0, message_);
-        expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
-      } else if (proc_count == 3) {
-        input_data_ = std::make_tuple(2, 0, message_);
-        expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
-      } else if (proc_count == 4) {
-        input_data_ = std::make_tuple(1, 0, message_);
-        expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
-      }
-    } else if (params == "send_through_left_boundary") {
-      if (proc_count == 2) {
-        input_data_ = std::make_tuple(0, 1, message_);
-        expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
-      } else if (proc_count == 3) {
-        input_data_ = std::make_tuple(0, 2, message_);
-        expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
-      } else if (proc_count == 4) {
-        input_data_ = std::make_tuple(0, 1, message_);
-        expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
-      }
-    } else if (params == "send_through_bottom_boundary") {
-      if (proc_count == 2) {
-        input_data_ = std::make_tuple(1, 1, message_);
-        expected_ = std::make_tuple(std::vector<int>{}, message_);
-      } else if (proc_count == 3) {
-        input_data_ = std::make_tuple(2, 2, message_);
-        expected_ = std::make_tuple(std::vector<int>{}, message_);
-      } else if (proc_count == 4) {
-        input_data_ = std::make_tuple(2, 0, message_);
-        expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
-      }
-    } else if (params == "send_through_top_boundary") {
-      if (proc_count == 2) {
-        input_data_ = std::make_tuple(1, 1, message_);
-        expected_ = std::make_tuple(std::vector<int>{}, message_);
-      } else if (proc_count == 3) {
-        input_data_ = std::make_tuple(2, 2, message_);
-        expected_ = std::make_tuple(std::vector<int>{}, message_);
-      } else if (proc_count == 4) {
-        input_data_ = std::make_tuple(0, 2, message_);
-        expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
-      }
+    } else if (proc_count == 3) {
+      input_data_ = std::make_tuple(2, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
+    } else if (proc_count == 4) {
+      input_data_ = std::make_tuple(1, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
+    }
+  }
+
+  void SendLeftBound(int proc_count) {
+    if (proc_count == 2) {
+      input_data_ = std::make_tuple(0, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+    } else if (proc_count == 3) {
+      input_data_ = std::make_tuple(0, 2, message_);
+      expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
+    } else if (proc_count == 4) {
+      input_data_ = std::make_tuple(0, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+    }
+  }
+
+  void SendBottomBound(int proc_count) {
+    if (proc_count == 2) {
+      input_data_ = std::make_tuple(1, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (proc_count == 3) {
+      input_data_ = std::make_tuple(2, 2, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (proc_count == 4) {
+      input_data_ = std::make_tuple(2, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
+    }
+  }
+
+  void SendTopBound(int proc_count) {
+    if (proc_count == 2) {
+      input_data_ = std::make_tuple(1, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (proc_count == 3) {
+      input_data_ = std::make_tuple(2, 2, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (proc_count == 4) {
+      input_data_ = std::make_tuple(0, 2, message_);
+      expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
     }
   }
 
