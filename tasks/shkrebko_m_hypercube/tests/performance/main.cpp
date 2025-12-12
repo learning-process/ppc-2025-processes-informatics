@@ -30,7 +30,10 @@ class ShkrebkoMHypercubePerfTests : public ppc::util::BaseRunPerfTests<InType, O
 };
 
 TEST_P(ShkrebkoMHypercubePerfTests, RunPerfModes) {
-  ExecuteTest(GetParam());
+  const int repetitions = 100;
+  for (int i = 0; i < repetitions; i++) {
+    ExecuteTest(GetParam());
+  }
 }
 
 const auto kAllPerfTasks =
