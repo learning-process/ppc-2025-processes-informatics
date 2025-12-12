@@ -28,88 +28,88 @@ class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, O
     int is_init = 0;
     MPI_Initialized(&is_init);
 
-    if (!is_init) {
+    if (is_init == 0) {
       return;
-    } else {
-      int proc_count = 0;
-      MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
-      if (proc_count == 1) {
-        input_data_ = std::make_tuple(0, 0, message);
-        expected_ = std::make_tuple(std::vector<int>{}, message);
-        return;
+    }
+
+    int proc_count = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
+    if (proc_count == 1) {
+      input_data_ = std::make_tuple(0, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+      return;
+    }
+
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    if (params == "send_myself") {
+      input_data_ = std::make_tuple(0, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{}, message_);
+    } else if (params == "send_to_right_neighbour") {
+      input_data_ = std::make_tuple(0, 1, message_);
+      expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+    } else if (params == "send_to_left_neighbour") {
+      input_data_ = std::make_tuple(1, 0, message_);
+      expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
+    } else if (params == "send_to_bottom_neighbour") {
+      if (proc_count < 4) {
+        input_data_ = std::make_tuple(1, 1, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+      } else if (proc_count == 4) {
+        input_data_ = std::make_tuple(1, 3, message_);
+        expected_ = std::make_tuple(std::vector<int>{1, 3}, message_);
       }
-
-      TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-      if (params == "send_myself") {
-        input_data_ = std::make_tuple(0, 0, message);
-        expected_ = std::make_tuple(std::vector<int>{}, message);
-      } else if (params == "send_to_right_neighbour") {
-        input_data_ = std::make_tuple(0, 1, message);
-        expected_ = std::make_tuple(std::vector<int>{0, 1}, message);
-      } else if (params == "send_to_left_neighbour") {
-        input_data_ = std::make_tuple(1, 0, message);
-        expected_ = std::make_tuple(std::vector<int>{1, 0}, message);
-      } else if (params == "send_to_bottom_neighbour") {
-        if (proc_count < 4) {
-          input_data_ = std::make_tuple(1, 1, message);
-          expected_ = std::make_tuple(std::vector<int>{}, message);
-        } else if (proc_count == 4) {
-          input_data_ = std::make_tuple(1, 3, message);
-          expected_ = std::make_tuple(std::vector<int>{1, 3}, message);
-        }
-      } else if (params == "send_to_top_neighbour") {
-        if (proc_count < 4) {
-          input_data_ = std::make_tuple(1, 1, message);
-          expected_ = std::make_tuple(std::vector<int>{}, message);
-        } else if (proc_count == 4) {
-          input_data_ = std::make_tuple(2, 0, message);
-          expected_ = std::make_tuple(std::vector<int>{2, 0}, message);
-        }
-      } else if (params == "send_through_right_boundary") {
-        if (proc_count == 2) {
-          input_data_ = std::make_tuple(1, 0, message);
-          expected_ = std::make_tuple(std::vector<int>{1, 0}, message);
-        } else if (proc_count == 3) {
-          input_data_ = std::make_tuple(2, 0, message);
-          expected_ = std::make_tuple(std::vector<int>{2, 0}, message);
-        } else if (proc_count == 4) {
-          input_data_ = std::make_tuple(1, 0, message);
-          expected_ = std::make_tuple(std::vector<int>{1, 0}, message);
-        }
-      } else if (params == "send_through_left_boundary") {
-        if (proc_count == 2) {
-          input_data_ = std::make_tuple(0, 1, message);
-          expected_ = std::make_tuple(std::vector<int>{0, 1}, message);
-        } else if (proc_count == 3) {
-          input_data_ = std::make_tuple(0, 2, message);
-          expected_ = std::make_tuple(std::vector<int>{0, 2}, message);
-        } else if (proc_count == 4) {
-          input_data_ = std::make_tuple(0, 1, message);
-          expected_ = std::make_tuple(std::vector<int>{0, 1}, message);
-        }
-      } else if (params == "send_through_bottom_boundary") {
-        if (proc_count == 2) {
-          input_data_ = std::make_tuple(1, 1, message);
-          expected_ = std::make_tuple(std::vector<int>{}, message);
-        } else if (proc_count == 3) {
-          input_data_ = std::make_tuple(2, 2, message);
-          expected_ = std::make_tuple(std::vector<int>{}, message);
-        } else if (proc_count == 4) {
-          input_data_ = std::make_tuple(2, 0, message);
-          expected_ = std::make_tuple(std::vector<int>{2, 0}, message);
-        }
-      } else if (params == "send_through_top_boundary") {
-        if (proc_count == 2) {
-          input_data_ = std::make_tuple(1, 1, message);
-          expected_ = std::make_tuple(std::vector<int>{}, message);
-        } else if (proc_count == 3) {
-          input_data_ = std::make_tuple(2, 2, message);
-          expected_ = std::make_tuple(std::vector<int>{}, message);
-        } else if (proc_count == 4) {
-          input_data_ = std::make_tuple(0, 2, message);
-          expected_ = std::make_tuple(std::vector<int>{0, 2}, message);
-        }
+    } else if (params == "send_to_top_neighbour") {
+      if (proc_count < 4) {
+        input_data_ = std::make_tuple(1, 1, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+      } else if (proc_count == 4) {
+        input_data_ = std::make_tuple(2, 0, message_);
+        expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
+      }
+    } else if (params == "send_through_right_boundary") {
+      if (proc_count == 2) {
+        input_data_ = std::make_tuple(1, 0, message_);
+        expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
+      } else if (proc_count == 3) {
+        input_data_ = std::make_tuple(2, 0, message_);
+        expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
+      } else if (proc_count == 4) {
+        input_data_ = std::make_tuple(1, 0, message_);
+        expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
+      }
+    } else if (params == "send_through_left_boundary") {
+      if (proc_count == 2) {
+        input_data_ = std::make_tuple(0, 1, message_);
+        expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+      } else if (proc_count == 3) {
+        input_data_ = std::make_tuple(0, 2, message_);
+        expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
+      } else if (proc_count == 4) {
+        input_data_ = std::make_tuple(0, 1, message_);
+        expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+      }
+    } else if (params == "send_through_bottom_boundary") {
+      if (proc_count == 2) {
+        input_data_ = std::make_tuple(1, 1, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+      } else if (proc_count == 3) {
+        input_data_ = std::make_tuple(2, 2, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+      } else if (proc_count == 4) {
+        input_data_ = std::make_tuple(2, 0, message_);
+        expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
+      }
+    } else if (params == "send_through_top_boundary") {
+      if (proc_count == 2) {
+        input_data_ = std::make_tuple(1, 1, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+      } else if (proc_count == 3) {
+        input_data_ = std::make_tuple(2, 2, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+      } else if (proc_count == 4) {
+        input_data_ = std::make_tuple(0, 2, message_);
+        expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
       }
     }
   }
@@ -118,16 +118,16 @@ class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, O
     int is_init = 0;
     MPI_Initialized(&is_init);
 
-    if (!is_init) {  // защита от threads
+    if (is_init == 0) {  // защита от threads
       return true;
     }
 
     std::vector<int> route = std::get<0>(output_data);
-    if (route == dummy) {  // заглушка для seq
+    if (route == dummy_) {  // заглушка для seq
       return true;
-    } else {
-      return expected_ == output_data;
     }
+
+    return expected_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -137,8 +137,8 @@ class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, O
  private:
   InType input_data_;
   OutType expected_;
-  const std::vector<int> message = {2, 0, 2, 5};
-  const std::vector<int> dummy = {2, 0, 2, 6};
+  const std::vector<int> message_ = {2, 0, 2, 5};
+  const std::vector<int> dummy_ = {2, 0, 2, 6};
 };
 
 namespace {

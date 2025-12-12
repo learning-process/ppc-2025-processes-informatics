@@ -2,7 +2,9 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <cmath>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
@@ -27,16 +29,13 @@ bool LukinIThorTopologyMPI::ValidationImpl() {
 
   int proc_count = -1;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
-  if (start_v > proc_count - 1 || end_v > proc_count - 1) {
-    return false;
-  }
 
-  return true;
+  return !(start_v > proc_count - 1 || end_v > proc_count - 1);
 }
 
 bool LukinIThorTopologyMPI::PreProcessingImpl() {
-  start = std::get<0>(GetInput());
-  end = std::get<1>(GetInput());
+  start_ = std::get<0>(GetInput());
+  end_ = std::get<1>(GetInput());
   return true;
 }
 
@@ -49,7 +48,7 @@ bool LukinIThorTopologyMPI::RunImpl() {
   std::vector<int> message;
   int message_len = -1;
 
-  if (rank == start) {
+  if (rank == start_) {
     message = std::get<2>(GetInput());
     message_len = static_cast<int>(message.size());
   }
@@ -70,17 +69,17 @@ bool LukinIThorTopologyMPI::RunImpl() {
   int left = (y * cols) + ((x - 1 + cols) % cols);
   int right = (y * cols) + ((x + 1) % cols);
   std::unordered_map<Direction, int> dir_mapping = {
-      {Direction::UP, up}, {Direction::DOWN, down}, {Direction::LEFT, left}, {Direction::RIGHT, right}};
+      {Direction::kUp, up}, {Direction::kDown, down}, {Direction::kLeft, left}, {Direction::kRight, right}};
 
-  int source = start;
+  int source = start_;
   int dest = -1;
   std::vector<int> full_route;
   int route_size = -1;
 
-  int end_x = end % cols;
-  int end_y = end / cols;
+  int end_x = end_ % cols;
+  int end_y = end_ / cols;
 
-  while (source != end) {
+  while (source != end_) {
     if (rank == source) {
       Direction direction = GetDir(x, y, end_x, end_y, cols, rows);
       dest = dir_mapping[direction];
@@ -94,17 +93,17 @@ bool LukinIThorTopologyMPI::RunImpl() {
     source = dest;
   }
 
-  if (rank == end) {
+  if (rank == end_) {
     full_route.push_back(rank);
     route_size = full_route.size();
   }
 
-  MPI_Bcast(&route_size, 1, MPI_INT, end, MPI_COMM_WORLD);
+  MPI_Bcast(&route_size, 1, MPI_INT, end_, MPI_COMM_WORLD);
   full_route.resize(route_size);
-  MPI_Bcast(full_route.data(), route_size, MPI_INT, end, MPI_COMM_WORLD);
-  MPI_Bcast(&message_len, 1, MPI_INT, end, MPI_COMM_WORLD);
+  MPI_Bcast(full_route.data(), route_size, MPI_INT, end_, MPI_COMM_WORLD);
+  MPI_Bcast(&message_len, 1, MPI_INT, end_, MPI_COMM_WORLD);
   message.resize(message_len);
-  MPI_Bcast(message.data(), message_len, MPI_INT, end, MPI_COMM_WORLD);
+  MPI_Bcast(message.data(), message_len, MPI_INT, end_, MPI_COMM_WORLD);
 
   GetOutput() = std::make_tuple(full_route, message);
   return true;
@@ -122,10 +121,10 @@ LukinIThorTopologyMPI::Direction LukinIThorTopologyMPI::GetDir(int sx, int sy, i
   }
 
   if (abs(mx) > abs(my)) {
-    return mx < 0 ? Direction::LEFT : Direction::RIGHT;
-  } else {
-    return my < 0 ? Direction::UP : Direction::DOWN;
+    return mx < 0 ? Direction::kLeft : Direction::kRight;
   }
+
+  return my < 0 ? Direction::kUp : Direction::kDown;
 }
 
 bool LukinIThorTopologyMPI::PostProcessingImpl() {
@@ -133,32 +132,32 @@ bool LukinIThorTopologyMPI::PostProcessingImpl() {
 }
 
 void LukinIThorTopologyMPI::Send(int &message_len, std::vector<int> &message, std::vector<int> &full_route,
-                                 int &route_size, int dest, int rank) const {
-  MPI_Send(&message_len, 1, MPI_INT, dest, static_cast<int>(Tags::MLEN), MPI_COMM_WORLD);
-  MPI_Send(message.data(), message_len, MPI_INT, dest, static_cast<int>(Tags::MESSAGE), MPI_COMM_WORLD);
+                                 int &route_size, int dest, int rank) {
+  MPI_Send(&message_len, 1, MPI_INT, dest, static_cast<int>(Tags::kMlen), MPI_COMM_WORLD);
+  MPI_Send(message.data(), message_len, MPI_INT, dest, static_cast<int>(Tags::kMessage), MPI_COMM_WORLD);
   full_route.push_back(rank);
   route_size = full_route.size();
-  MPI_Send(&route_size, 1, MPI_INT, dest, static_cast<int>(Tags::ROUTESIZE), MPI_COMM_WORLD);
-  MPI_Send(full_route.data(), route_size, MPI_INT, dest, static_cast<int>(Tags::ROUTE), MPI_COMM_WORLD);
+  MPI_Send(&route_size, 1, MPI_INT, dest, static_cast<int>(Tags::kRoutesize), MPI_COMM_WORLD);
+  MPI_Send(full_route.data(), route_size, MPI_INT, dest, static_cast<int>(Tags::kRoute), MPI_COMM_WORLD);
 }
 
 void LukinIThorTopologyMPI::Recieve(int &message_len, std::vector<int> &message, std::vector<int> &full_route,
-                                    int &route_size, int source) const {
-  MPI_Recv(&message_len, 1, MPI_INT, source, static_cast<int>(Tags::MLEN), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                                    int &route_size, int source) {
+  MPI_Recv(&message_len, 1, MPI_INT, source, static_cast<int>(Tags::kMlen), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   message.resize(message_len);
-  MPI_Recv(message.data(), message_len, MPI_INT, source, static_cast<int>(Tags::MESSAGE), MPI_COMM_WORLD,
+  MPI_Recv(message.data(), message_len, MPI_INT, source, static_cast<int>(Tags::kMessage), MPI_COMM_WORLD,
            MPI_STATUS_IGNORE);
-  MPI_Recv(&route_size, 1, MPI_INT, source, static_cast<int>(Tags::ROUTESIZE), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Recv(&route_size, 1, MPI_INT, source, static_cast<int>(Tags::kRoutesize), MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   full_route.resize(route_size);
-  MPI_Recv(full_route.data(), route_size, MPI_INT, source, static_cast<int>(Tags::ROUTE), MPI_COMM_WORLD,
+  MPI_Recv(full_route.data(), route_size, MPI_INT, source, static_cast<int>(Tags::kRoute), MPI_COMM_WORLD,
            MPI_STATUS_IGNORE);
 }
 
 bool LukinIThorTopologyMPI::HandleTrivial(int &message_len, std::vector<int> &message, int proc_count) {
-  if (start == end) {
-    MPI_Bcast(&message_len, 1, MPI_INT, end, MPI_COMM_WORLD);
+  if (start_ == end_) {
+    MPI_Bcast(&message_len, 1, MPI_INT, end_, MPI_COMM_WORLD);
     message.resize(message_len);
-    MPI_Bcast(message.data(), message_len, MPI_INT, end, MPI_COMM_WORLD);
+    MPI_Bcast(message.data(), message_len, MPI_INT, end_, MPI_COMM_WORLD);
     GetOutput() = std::make_tuple(std::vector<int>{}, message);
     return true;
   }
@@ -171,8 +170,8 @@ bool LukinIThorTopologyMPI::HandleTrivial(int &message_len, std::vector<int> &me
   return false;
 }
 
-void LukinIThorTopologyMPI::InitTopology(int &cols, int &rows, int proc_count) const {
-  for (rows = sqrt(proc_count); rows > 0; rows--) {
+void LukinIThorTopologyMPI::InitTopology(int &cols, int &rows, int proc_count) {
+  for (rows = static_cast<int>(std::sqrt(static_cast<double>(proc_count))); rows > 0; rows--) {
     if (proc_count % rows == 0) {
       cols = proc_count / rows;
       break;

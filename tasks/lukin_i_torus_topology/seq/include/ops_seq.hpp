@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "lukin_i_torus_topology/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,6 +20,6 @@ class LukinIThorTopologySEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  const std::vector<int> dummy_route = {2, 0, 2, 6};
+  std::vector<int> dummy_route_ = {2, 0, 2, 6};
 };
 }  // namespace lukin_i_torus_topology

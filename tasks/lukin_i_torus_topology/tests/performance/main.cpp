@@ -10,43 +10,47 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace lukin_i_torus_topology {
-const int large_vector_size = 10'000'000;
+const int kLargeVectorSize = 10'000'000;
 
 class LukinIRunPerfTestProceses3 : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   OutType expected_result_;
 
-  const std::vector<int> dummy = {2, 0, 2, 6};
-  std::vector<int> message;
+  std::vector<int> dummy_ = {2, 0, 2, 6};
+  std::vector<int> message_;
 
   void SetUp() override {
-    message = std::vector<int>(large_vector_size, 1);
+    message_ = std::vector<int>(kLargeVectorSize, 1);
 
     int proc_count = -1;
     MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
 
     if (proc_count == 1) {
-      input_data_ = std::make_tuple(0, 0, message);
-      expected_result_ = std::make_tuple(std::vector<int>{}, message);
+      input_data_ = std::make_tuple(0, 0, message_);
+      expected_result_ = std::make_tuple(std::vector<int>{}, message_);
+      return;
     } else if (proc_count == 2) {
-      input_data_ = std::make_tuple(0, 1, message);
-      expected_result_ = std::make_tuple(std::vector<int>{0, 1}, message);
+      input_data_ = std::make_tuple(0, 1, message_);
+      expected_result_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+      return;
     } else if (proc_count == 3) {
-      input_data_ = std::make_tuple(0, 2, message);
-      expected_result_ = std::make_tuple(std::vector<int>{0, 2}, message);
+      input_data_ = std::make_tuple(0, 2, message_);
+      expected_result_ = std::make_tuple(std::vector<int>{0, 2}, message_);
+      return;
     } else if (proc_count == 4) {
-      input_data_ = std::make_tuple(0, 3, message);
-      expected_result_ = std::make_tuple(std::vector<int>{0, 2, 3}, message);
+      input_data_ = std::make_tuple(0, 3, message_);
+      expected_result_ = std::make_tuple(std::vector<int>{0, 2, 3}, message_);
+      return;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     std::vector<int> route = std::get<0>(output_data);
-    if (route == dummy) {  // seq
+    if (route == dummy_) {  // seq
       return true;
-    } else {
-      return expected_result_ == output_data;
     }
+
+    return expected_result_ == output_data;
   }
 
   InType GetTestInputData() final {

@@ -25,11 +25,13 @@ bool LukinIThorTopologySEQ::RunImpl() {
   const int size = 1e7;
 
   std::vector<int> tmp;
+  tmp.reserve(size);
+
   for (int i = 0; i < size; i++) {
     tmp.push_back(i);
   }
 
-  GetOutput() = std::make_tuple(dummy_route, tmp);
+  GetOutput() = std::make_tuple(dummy_route_, tmp);
 
   return true;
 }
