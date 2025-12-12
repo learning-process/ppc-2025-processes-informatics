@@ -8,15 +8,25 @@
 namespace smyshlaev_a_gauss_filt {
 
 class SmyshlaevAGaussFiltRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    int size = 512;
+    input_data_.width = size;
+    input_data_.height = size;
+    input_data_.channels = 3;
+    input_data_.data.resize(size * size * 3);
+    
+    for (size_t i = 0; i < input_data_.data.size(); ++i) {
+      input_data_.data[i] = static_cast<uint8_t>(i % 256);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return (input_data_.width == output_data.width && 
+            input_data_.height == output_data.height &&
+            input_data_.channels == output_data.channels &&
+            !output_data.data.empty());
   }
 
   InType GetTestInputData() final {
