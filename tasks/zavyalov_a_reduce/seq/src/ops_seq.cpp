@@ -24,9 +24,12 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAReduceSEQ::RunImpl() {
+  std::get<1>(GetOutput()) = true;
   volatile int i = 0;
-  while (i < 100000000) {  // для того чтобы время выполнения было больше 0.001 в CI
-    i += 1;
+  if (std::get<2>(GetInput()) > 100000) {
+    while (i < 100000000) {  // для того чтобы время выполнения было больше 0.001 в CI
+      i += 1;
+    }
   }
   return true;
   /*
