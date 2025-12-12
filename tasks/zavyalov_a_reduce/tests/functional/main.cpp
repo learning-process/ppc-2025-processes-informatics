@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -65,13 +66,13 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     std::shared_ptr<void> inp_data;
 
     if (cur_type == MPI_INT) {
-      int *raw_data = new int[vec_size];
+      auto *raw_data = new int[vec_size];
       inp_data = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<int *>(p); });
     } else if (cur_type == MPI_FLOAT) {
-      float *raw_data = new float[vec_size];
+      auto *raw_data = new float[vec_size];
       inp_data = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<float *>(p); });
     } else if (cur_type == MPI_DOUBLE) {
-      double *raw_data = new double[vec_size];
+      auto *raw_data = new double[vec_size];
       inp_data = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<double *>(p); });
     } else {
       throw "unsupported datatype";
@@ -82,7 +83,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         if (cur_type == MPI_INT) {
           (static_cast<int *>(inp_data.get()))[i] = static_cast<int>(i) + 3;
         } else if (cur_type == MPI_FLOAT) {
-          (static_cast<float *>(inp_data.get()))[i] = (static_cast<float>(i) * 1.1f) + 3.0F;
+          (static_cast<float *>(inp_data.get()))[i] = (static_cast<float>(i) * 1.1F) + 3.0F;
         } else if (cur_type == MPI_DOUBLE) {
           (static_cast<double *>(inp_data.get()))[i] = (static_cast<double>(i) * 1.1) + 3.0;
         }
@@ -90,7 +91,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     } else if (operation == MPI_MIN) {
       for (unsigned int i = 0; i < vec_size; i++) {
         if (cur_type == MPI_INT) {
-          (static_cast<int *>(inp_data.get()))[i] = 10000U - (3U * rank);
+          (static_cast<int *>(inp_data.get()))[i] = 10000 - (3 * rank);
         } else if (cur_type == MPI_FLOAT) {
           (static_cast<float *>(inp_data.get()))[i] = 10000.0F - (3.0F * static_cast<float>(rank));
         } else if (cur_type == MPI_DOUBLE) {
@@ -115,116 +116,43 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     }
 
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
     MPI_Op operation = std::get<0>(params);
-    MPI_Datatype cur_type = std::get<1>(params);
-    size_t vec_size = std::get<2>(params);
-    bool ok = true;
+    MPI_Datatype dataType = std::get<1>(params);
+    size_t vecSize = std::get<2>(params);
 
-    int rank = 0;
-    int world_size = 1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    int worldSize = 1;
+    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
 
-    // Получаем входные данные из shared_ptr
-    std::shared_ptr<void> input_ptr = std::get<3>(input_data_);
+    std::shared_ptr<void> inputPtr = std::get<3>(input_data_);
 
     if (operation == MPI_SUM) {
-      if (cur_type == MPI_INT) {
-        std::vector<int> res(vec_size);
-        int *input_data = static_cast<int *>(input_ptr.get());
-        for (size_t i = 0; i < vec_size; i++) {
-          res[i] = input_data[i] * world_size;
-        }
-
-        int *result_data = static_cast<int *>(result_ptr.get());
-        for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != result_data[i]) {
-            ok = false;
-            break;
-          }
-        }
-      } else if (cur_type == MPI_FLOAT) {
-        std::vector<float> res(vec_size);
-        float *input_data = static_cast<float *>(input_ptr.get());
-        for (size_t i = 0; i < vec_size; i++) {
-          res[i] = input_data[i] * static_cast<float>(world_size);
-        }
-
-        float *result_data = static_cast<float *>(result_ptr.get());
-        const float eps = 1e-4f;
-
-        for (size_t i = 0; i < vec_size; i++) {
-          if (std::fabs(res[i] - result_data[i]) > eps) {
-            ok = false;
-            break;
-          }
-        }
-      } else if (cur_type == MPI_DOUBLE) {
-        std::vector<double> res(vec_size);
-        double *input_data = static_cast<double *>(input_ptr.get());
-        for (size_t i = 0; i < vec_size; i++) {
-          res[i] = input_data[i] * static_cast<double>(world_size);
-        }
-
-        double *result_data = static_cast<double *>(result_ptr.get());
-        const double eps = 1e-9;
-
-        for (size_t i = 0; i < vec_size; i++) {
-          if (std::fabs(res[i] - result_data[i]) > eps) {
-            ok = false;
-            break;
-          }
-        }
+      if (dataType == MPI_INT) {
+        return HandleSum(static_cast<int *>(inputPtr.get()), static_cast<int *>(result_ptr.get()), vecSize, worldSize);
       }
-
-    } else if (operation == MPI_MIN) {
-      if (cur_type == MPI_INT) {
-        std::vector<int> res(vec_size);
-        for (size_t i = 0; i < vec_size; i++) {
-          res[i] = 10000 - (3 * (world_size - 1));
-        }
-
-        int *result_data = static_cast<int *>(result_ptr.get());
-        for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != result_data[i]) {
-            ok = false;
-            break;
-          }
-        }
-      } else if (cur_type == MPI_FLOAT) {
-        std::vector<float> res(vec_size);
-        for (size_t i = 0; i < vec_size; i++) {
-          res[i] = 10000.0F - (3.0F * static_cast<float>(world_size - 1));
-        }
-
-        float *result_data = static_cast<float *>(result_ptr.get());
-        const float eps = 1e-4f;
-
-        for (size_t i = 0; i < vec_size; i++) {
-          if (std::fabs(res[i] - result_data[i]) > eps) {
-            ok = false;
-            break;
-          }
-        }
-      } else if (cur_type == MPI_DOUBLE) {
-        std::vector<double> res(vec_size);
-        for (size_t i = 0; i < vec_size; i++) {
-          res[i] = 10000.0 - (3.0 * static_cast<double>(world_size - 1));
-        }
-
-        double *result_data = static_cast<double *>(result_ptr.get());
-        const double eps = 1e-9;
-
-        for (size_t i = 0; i < vec_size; i++) {
-          if (std::fabs(res[i] - result_data[i]) > eps) {
-            ok = false;
-            break;
-          }
-        }
+      if (dataType == MPI_FLOAT) {
+        return HandleSum(static_cast<float *>(inputPtr.get()), static_cast<float *>(result_ptr.get()), vecSize,
+                         worldSize);
+      }
+      if (dataType == MPI_DOUBLE) {
+        return HandleSum(static_cast<double *>(inputPtr.get()), static_cast<double *>(result_ptr.get()), vecSize,
+                         worldSize);
       }
     }
 
-    return ok;
+    if (operation == MPI_MIN) {
+      if (dataType == MPI_INT) {
+        return HandleMin(static_cast<int *>(result_ptr.get()), vecSize, worldSize);
+      }
+      if (dataType == MPI_FLOAT) {
+        return HandleMin(static_cast<float *>(result_ptr.get()), vecSize, worldSize);
+      }
+      if (dataType == MPI_DOUBLE) {
+        return HandleMin(static_cast<double *>(result_ptr.get()), vecSize, worldSize);
+      }
+    }
+
+    return false;
   }
 
   InType GetTestInputData() final {
@@ -233,6 +161,49 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  private:
   InType input_data_;
+  template <typename T>
+  static bool CheckEqualArrays(const T *expected, const T *actual, size_t size, double eps) {
+    for (size_t i = 0; i < size; i++) {
+      if constexpr (std::is_floating_point_v<T>) {
+        if (std::fabs(expected[i] - actual[i]) > eps) {
+          return false;
+        }
+      } else {
+        if (expected[i] != actual[i]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  template <typename T>
+  static bool HandleSum(const T *input, const T *output, size_t size, int worldSize) {
+    std::vector<T> expected(size);
+    T multiplier = static_cast<T>(worldSize);
+
+    for (size_t i = 0; i < size; i++) {
+      expected[i] = input[i] * multiplier;
+    }
+
+    double eps = std::is_same_v<T, float> ? 1e-4 : std::is_same_v<T, double> ? 1e-9 : 0.0;
+
+    return CheckEqualArrays(expected.data(), output, size, eps);
+  }
+
+  template <typename T>
+  static bool HandleMin(const T *output, size_t size, int worldSize) {
+    std::vector<T> expected(size);
+    T value = static_cast<T>(10000 - 3 * (worldSize - 1));
+
+    for (size_t i = 0; i < size; i++) {
+      expected[i] = value;
+    }
+
+    double eps = std::is_same_v<T, float> ? 1e-4 : std::is_same_v<T, double> ? 1e-9 : 0.0;
+
+    return CheckEqualArrays(expected.data(), output, size, eps);
+  }
 };
 
 namespace {

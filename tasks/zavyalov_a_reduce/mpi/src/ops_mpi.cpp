@@ -14,22 +14,22 @@ namespace zavyalov_a_reduce {
 namespace {  // внутренние helper-ы
 
 template <typename T>
-inline void apply_sum(std::vector<T> &acc, const std::vector<T> &temp, int count) {
+inline void ApplySum(std::vector<T> &acc, const std::vector<T> &temp, int count) {
   for (int i = 0; i < count; i++) {
     acc[i] += temp[i];
   }
 }
 
 template <typename T>
-inline void apply_min(std::vector<T> &acc, const std::vector<T> &temp, int count) {
+inline void ApplyMin(std::vector<T> &acc, const std::vector<T> &temp, int count) {
   for (int i = 0; i < count; i++) {
     acc[i] = std::min(acc[i], temp[i]);
   }
 }
 
 template <typename T>
-void reduce_binary_tree(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type,
-                        void (*apply_op)(std::vector<T> &, const std::vector<T> &, int)) {
+void ReduceBinaryTree(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type,
+                      void (*apply_op)(std::vector<T> &, const std::vector<T> &, int)) {
   int world_size = 0, world_rank = 0;
   MPI_Comm_size(comm, &world_size);
   MPI_Comm_rank(comm, &world_rank);
@@ -68,12 +68,12 @@ void reduce_binary_tree(const void *sendbuf, void *recvbuf, int count, int root,
 
 template <typename T>
 void ReduceSumImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type) {
-  reduce_binary_tree<T>(sendbuf, recvbuf, count, root, comm, type, apply_sum<T>);
+  ReduceBinaryTree<T>(sendbuf, recvbuf, count, root, comm, type, ApplySum<T>);
 }
 
 template <typename T>
 void ReduceMinImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type) {
-  reduce_binary_tree<T>(sendbuf, recvbuf, count, root, comm, type, apply_min<T>);
+  ReduceBinaryTree<T>(sendbuf, recvbuf, count, root, comm, type, ApplyMin<T>);
 }
 
 }  // namespace
@@ -132,7 +132,8 @@ ZavyalovAReduceMPI::ZavyalovAReduceMPI(const InType &in) {
 }
 
 bool ZavyalovAReduceMPI::ValidationImpl() {
-  int rank = 0, world_size = 0;
+  int rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   if (rank != 0) {
@@ -176,7 +177,7 @@ bool ZavyalovAReduceMPI::RunImpl() {
   int type_size = 0;
   MPI_Type_size(type, &type_size);
 
-  auto raw_output = new char[sz * type_size];
+  auto *raw_output = new char[sz * type_size];
   std::shared_ptr<void> out_ptr(raw_output, [](void *p) { delete[] static_cast<char *>(p); });
 
   if (rank == root) {
