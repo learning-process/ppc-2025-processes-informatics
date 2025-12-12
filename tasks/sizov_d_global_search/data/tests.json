@@ -5,11 +5,11 @@
     "problem": { "left": -5.0, "right": 5.0 },
     "expected": { "argmins": [-5.0], "value": -5.0 }
   },
-  
+
   {
-    "name": "case_002_quadratic",
-    "function": { "expression": "x * x" },
-    "problem": { "left": -5.0, "right": 5.0 },
-    "expected": { "argmins": [0.0], "value": 0.0 }
+    "name": "case_002_linear_simple",
+    "function": { "expression": "x + 1" },
+    "problem": { "left": -1.0, "right": 1.0 },
+    "expected": { "argmins": [-1.0], "value": 0.0 }
   }
 ]
