@@ -1,4 +1,12 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
+
+#include <algorithm>
+#include <cstddef>
+#include <ranges>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "baldin_a_my_scatter/common/include/common.hpp"
 #include "baldin_a_my_scatter/mpi/include/ops_mpi.hpp"
@@ -14,7 +22,7 @@ class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
 
   const int count_per_proc_ = 10000008;
 
-  bool IsSeqTest() {
+  bool static IsSeqTest() {
     const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     std::string test_name = test_info->name();
     return (test_name.find("seq") != std::string::npos);
@@ -39,7 +47,7 @@ class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
       size_t total_send_count = is_seq ? count_per_proc_ : (count_per_proc_ * size);
 
       send_vec_.resize(total_send_count);
-      std::iota(send_vec_.begin(), send_vec_.end(), 0);
+      std::ranges::iota(send_vec_, 0);
     }
 
     const void *sendbuf_ptr = i_am_root ? send_vec_.data() : nullptr;

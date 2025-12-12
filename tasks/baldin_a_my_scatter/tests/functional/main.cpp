@@ -1,15 +1,13 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
+#include <mpi.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
+#include <cstdlib>
 #include <numeric>
-#include <stdexcept>
+#include <ranges>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "baldin_a_my_scatter/common/include/common.hpp"
@@ -24,11 +22,18 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     auto [count, root, type] = test_param;
-    std::string type_str = (type == MPI_INT ? "INT" : (type == MPI_FLOAT ? "FLOAT" : "DOUBLE"));
+    std::string type_str;
+    if (type == MPI_INT) {
+      type_str = "INT";
+    } else if (type == MPI_FLOAT) {
+      type_str = "FLOAT";
+    } else {
+      type_str = "DOUBLE";
+    }
     return type_str + "_Count" + std::to_string(count) + "_Root" + std::to_string(root);
   }
 
-  bool IsSeqTest() {
+  bool static IsSeqTest() {
     const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     std::string test_name = test_info->name();
     return (test_name.find("seq") != std::string::npos);
@@ -72,7 +77,7 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
       if (i_am_root) {
         size_t total_send_count = is_seq ? count : (count * size);
         send_vec_int_.resize(total_send_count);
-        std::iota(send_vec_int_.begin(), send_vec_int_.end(), 0);
+        std::ranges::iota(send_vec_int_, 0);
         sendbuf_ptr = send_vec_int_.data();
       }
     } else if (type == MPI_FLOAT) {
@@ -123,23 +128,23 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     int start_value = rank * count;
 
     if (type == MPI_INT) {
-      const int *actual_data = reinterpret_cast<const int *>(output_data);
+      const auto *actual_data = reinterpret_cast<const int *>(output_data);
       for (int i = 0; i < count; i++) {
         if (actual_data[i] != start_value + i) {
           return false;
         }
       }
     } else if (type == MPI_FLOAT) {
-      const float *actual_data = reinterpret_cast<const float *>(output_data);
+      const auto *actual_data = reinterpret_cast<const float *>(output_data);
       for (int i = 0; i < count; i++) {
-        if (std::abs(actual_data[i] - (float)(start_value + i)) >= 1e-6) {
+        if (std::abs(actual_data[i] - static_cast<float>(start_value + i)) >= 1e-6) {
           return false;
         }
       }
     } else if (type == MPI_DOUBLE) {
-      const double *actual_data = reinterpret_cast<const double *>(output_data);
+      const auto *actual_data = reinterpret_cast<const double *>(output_data);
       for (int i = 0; i < count; i++) {
-        if (std::abs(actual_data[i] - (double)(start_value + i)) >= 1e-10) {
+        if (std::abs(actual_data[i] - static_cast<double>(start_value + i)) >= 1e-10) {
           return false;
         }
       }

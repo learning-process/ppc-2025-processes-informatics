@@ -1,11 +1,10 @@
 #include "baldin_a_my_scatter/seq/include/ops_seq.hpp"
 
+#include <mpi.h>
+
 #include <cstring>
-#include <numeric>
-#include <vector>
 
 #include "baldin_a_my_scatter/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace baldin_a_my_scatter {
 

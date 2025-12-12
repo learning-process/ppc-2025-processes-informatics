@@ -2,11 +2,12 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
+#include <cstring>
 #include <vector>
 
 #include "baldin_a_my_scatter/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace baldin_a_my_scatter {
 
@@ -49,7 +50,8 @@ bool BaldinAMyScatterMPI::PreProcessingImpl() {
 namespace {
 
 MPI_Aint GetDataTypeExtent(MPI_Datatype type) {
-  MPI_Aint lb, extent;
+  MPI_Aint lb = 0;
+  MPI_Aint extent = 0;
   MPI_Type_get_extent(type, &lb, &extent);
   return extent;
 }
@@ -59,16 +61,12 @@ int VirtualToRealRank(int v_rank, int root, int size) {
 }
 
 int CalculateSubtreeSize(int v_dest, int mask, int size) {
-  int subtree_size = v_dest + mask;
-  if (subtree_size > size) {
-    subtree_size = size;
-  }
-  return subtree_size;
+  return std::min(v_dest + mask, size);
 }
 
 void PrepareRootBuffer(const void *sendbuf, int size, int root, int count, MPI_Aint extent, std::vector<char> &buffer) {
-  size_t total_bytes = (size_t)size * count * extent;
-  size_t chunk_bytes = (size_t)count * extent;
+  size_t total_bytes = static_cast<size_t>(size) * count * extent;
+  size_t chunk_bytes = static_cast<size_t>(count) * extent;
 
   buffer.resize(total_bytes);
 
@@ -122,7 +120,7 @@ bool BaldinAMyScatterMPI::RunImpl() {
         int subtree_size = CalculateSubtreeSize(v_dest, mask, size);
         int count_to_send = (subtree_size - v_dest) * recvcount;
 
-        size_t offset_bytes = (size_t)(v_dest - v_rank) * recvcount * extent;
+        size_t offset_bytes = static_cast<size_t>(v_dest - v_rank) * recvcount * extent;
         int real_dest = VirtualToRealRank(v_dest, root, size);
 
         MPI_Send(curr_buf_ptr + offset_bytes, count_to_send, (rank == root ? sendtype : recvtype), real_dest, 0, comm);
@@ -137,8 +135,8 @@ bool BaldinAMyScatterMPI::RunImpl() {
       int subtree_end = CalculateSubtreeSize(v_rank, mask, size);
       int count_to_recv = (subtree_end - v_rank) * recvcount;
 
-      // Выделяем память под входящие данные
-      temp_buffer.resize((size_t)count_to_recv * extent);
+      size_t bytes_to_recv = static_cast<size_t>(count_to_recv) * extent;
+      temp_buffer.resize(bytes_to_recv);
 
       MPI_Recv(temp_buffer.data(), count_to_recv, recvtype, real_source, 0, comm, MPI_STATUS_IGNORE);
 
@@ -150,7 +148,7 @@ bool BaldinAMyScatterMPI::RunImpl() {
   }
 
   // --- ЭТАП 3: Копирование в пользовательский буфер ---
-  if (recvbuf != MPI_IN_PLACE) {
+  if (recvbuf != MPI_IN_PLACE && curr_buf_ptr != nullptr) {
     // Копируем только свою долю (recvcount)
     std::memcpy(recvbuf, curr_buf_ptr, recvcount * extent);
   }
