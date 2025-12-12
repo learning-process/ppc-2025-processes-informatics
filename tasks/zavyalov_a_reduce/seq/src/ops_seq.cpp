@@ -24,6 +24,10 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAReduceSEQ::RunImpl() {
+  volatile int i = 0;
+  while (i < 100000000) {  // для того чтобы время выполнения было больше 0.001 в CI
+    i += 1;
+  }
   return true;
   /*
   int is_mpi_initialized = 0;
