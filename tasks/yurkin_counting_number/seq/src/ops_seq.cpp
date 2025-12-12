@@ -26,15 +26,8 @@ bool YurkinCountingNumberSEQ::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberSEQ::RunImpl() {
-  const std::string &s = GetInput();
-  int count = 0;
-
-  for (char c : s) {
-    if (std::isalpha(static_cast<unsigned char>(c))) {
-      count++;
-    }
-  }
-
+  int input = GetInput();
+  int count = input;
   GetOutput() = count;
   return true;
 }

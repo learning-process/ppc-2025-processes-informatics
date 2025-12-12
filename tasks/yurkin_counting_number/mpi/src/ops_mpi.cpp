@@ -25,28 +25,22 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
   return true;
 }
 
-bool YurkinCountingNumberMPI::RunImpl() {
+bbool YurkinCountingNumberMPI::RunImpl() {
   int world_size, world_rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  const std::string &full = GetInput();
-  int n = full.size();
+  int full = GetInput();
 
-  int chunk = n / world_size;
-  int rem = n % world_size;
+  int chunk = full / world_size;
+  int rem = full % world_size;
 
   int start = world_rank * chunk + std::min(world_rank, rem);
   int size = chunk + (world_rank < rem ? 1 : 0);
 
-  int local = 0;
-  for (int i = start; i < start + size; i++) {
-    if (std::isalpha(static_cast<unsigned char>(full[i]))) {
-      local++;
-    }
-  }
-
+  int local = size;
   int global = 0;
+
   MPI_Reduce(&local, &global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (world_rank == 0) {

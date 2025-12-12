@@ -7,7 +7,7 @@
 
 namespace yurkin_counting_number {
 
-using InType = std::string;
+using InType = int;
 using OutType = int;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
