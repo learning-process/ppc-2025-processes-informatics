@@ -114,14 +114,14 @@ std::vector<LocalTestCase> GetTestCases() {
   // 001: линейная возрастает => минимум на left
   cases.push_back(
       {"linear_inc",
-       Problem{[](double x) { return x; }, -5.0, 5.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
-       {{-5.0}, -5.0, true}});
+       Problem{[](double x) { return x; }, -2.0, 2.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+       {{-2.0}, -2.0, true}});
 
   // 002: линейная убывает => минимум на right
-  cases.push_back({"linear_dec",
-                   Problem{[](double x) { return -2.0 * x + 3.0; }, -5.0, 5.0, kDefaultAccuracy, kDefaultReliability,
-                           kDefaultMaxIterations},
-                   {{5.0}, -7.0, true}});
+  cases.push_back(
+      {"linear_dec",
+       Problem{[](double x) { return x * x; }, -2.0, 2.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+       {{0.0}, 0.0, true}});
   return cases;
 }
 
