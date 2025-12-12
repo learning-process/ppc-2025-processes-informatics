@@ -18,12 +18,6 @@ class LukinIThorTopologySEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  bool HandleTrivial(int &message_len, std::vector<int> &message, int proc_count);
-  void InitTopology(int &cols, int &rows, int proc_count) const;
-
-  int start = -1;
-  int end = -1;
-
-  const std::vector<int> dummy_route = {2, 0, 2, 6};  // MPI скрывает маршрутизацию
+  const std::vector<int> dummy_route = {2, 0, 2, 6};
 };
 }  // namespace lukin_i_torus_topology

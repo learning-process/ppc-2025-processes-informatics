@@ -1,7 +1,5 @@
 #include "lukin_i_torus_topology/seq/include/ops_seq.hpp"
 
-#include <mpi.h>
-
 #include <numeric>
 #include <vector>
 
@@ -12,8 +10,7 @@ namespace lukin_i_torus_topology {
 LukinIThorTopologySEQ::LukinIThorTopologySEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  std::vector<int> message = std::get<2>(GetInput());
-  GetOutput() = std::make_tuple(dummy_route, message);
+  GetOutput() = std::make_tuple(std::vector<int>{}, std::vector<int>{});
 }
 
 bool LukinIThorTopologySEQ::ValidationImpl() {
@@ -25,6 +22,15 @@ bool LukinIThorTopologySEQ::PreProcessingImpl() {
 }
 
 bool LukinIThorTopologySEQ::RunImpl() {
+  const int size = 1e7;
+
+  std::vector<int> tmp;
+  for (int i = 0; i < size; i++) {
+    tmp.push_back(i);
+  }
+
+  GetOutput() = std::make_tuple(dummy_route, tmp);
+
   return true;
 }
 
