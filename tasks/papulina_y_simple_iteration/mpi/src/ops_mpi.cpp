@@ -124,8 +124,6 @@ bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
   }
 
   MPI_Bcast(&n_, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-
-  MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
   int rows_for_proc = static_cast<int>(n_) / procNum_;
   int remainder = static_cast<int>(n_) % procNum_;
 
@@ -195,10 +193,11 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
     std::vector<int> proc_count_elemts_x(procNum_, 0);
     std::vector<int> x_displs(procNum_, 0);
     CalculateGatherParameters(proc_count_elemts_x, x_displs, rows_for_proc, remainder);
-    MPI_Gatherv(local_x_new.data(), local_rows_count, MPI_DOUBLE, x_new.data(), proc_count_elemts_x.data(),
-                x_displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(x_new.data(), static_cast<int>(n_), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
+    // MPI_Gatherv(local_x_new.data(), local_rows_count, MPI_DOUBLE, x_new.data(), proc_count_elemts_x.data(),
+    // x_displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD); MPI_Bcast(x_new.data(), static_cast<int>(n_), MPI_DOUBLE, 0,
+    // MPI_COMM_WORLD);
+    MPI_Allgatherv(local_x_new.data(), local_rows_count, MPI_DOUBLE, x_new.data(), proc_count_elemts_x.data(),
+                   x_displs.data(), MPI_DOUBLE, MPI_COMM_WORLD);
     double local_sum_for_norm = 0.0;
     for (int i = 0; i < local_rows_count; i++) {
       int global_i = start_row + i;
