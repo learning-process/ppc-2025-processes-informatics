@@ -8,10 +8,10 @@
 
 namespace smyshlaev_a_gauss_filt {
 struct ImageType {
-  int width;
-  int height;
-  int channels;
-  std::vector<uint8_t> data;
+  int width = 0;
+  int height = 0;
+  int channels = 0;
+  std::vector<uint8_t> data = {};
 };
 
 using InType = ImageType;
