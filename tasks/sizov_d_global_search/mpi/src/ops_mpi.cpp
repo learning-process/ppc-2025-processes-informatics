@@ -323,9 +323,7 @@ bool SizovDGlobalSearchMPI::RunImpl() {
   for (int iter = 0; iter < p.max_iterations; ++iter) {
     iterations_ = iter + 1;
 
-    if ((iter % 10) == 0) {
-      m = EstimateM(p.reliability, rank, size);
-    }
+    m = EstimateM(p.reliability, rank, size);
 
     const int n = static_cast<int>(x_.size());
     if (n < 2) {

@@ -169,9 +169,7 @@ bool SizovDGlobalSearchSEQ::RunImpl() {
   for (int iter = 0; iter < p.max_iterations; ++iter) {
     iterations_ = iter + 1;
 
-    if ((iter % 10) == 0) {
-      m = EstimateM(p.reliability);
-    }
+    m = EstimateM(p.reliability);
 
     if (x_.size() < 2U) {
       converged_ = false;
