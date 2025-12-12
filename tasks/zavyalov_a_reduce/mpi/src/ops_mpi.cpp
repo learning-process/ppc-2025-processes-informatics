@@ -79,43 +79,23 @@ void ReduceMinImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_
 
 }  // namespace
 
-void ZavyalovAReduceMPI::ReduceSumInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  ReduceSumImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
-}
-void ZavyalovAReduceMPI::ReduceSumFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  ReduceSumImpl<float>(sendbuf, recvbuf, count, root, comm, MPI_FLOAT);
-}
-void ZavyalovAReduceMPI::ReduceSumDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  ReduceSumImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
-}
-
-void ZavyalovAReduceMPI::ReduceMinInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  ReduceMinImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
-}
-void ZavyalovAReduceMPI::ReduceMinFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  ReduceMinImpl<float>(sendbuf, recvbuf, count, root, comm, MPI_FLOAT);
-}
-void ZavyalovAReduceMPI::ReduceMinDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  ReduceMinImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
-}
-
 void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
                                   int root, MPI_Comm comm) {
   if (operation == MPI_SUM) {
     if (type == MPI_INT) {
-      ReduceSumInt(sendbuf, recvbuf, count, root, comm);
+      ReduceSumImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
     } else if (type == MPI_FLOAT) {
-      ReduceSumFloat(sendbuf, recvbuf, count, root, comm);
+      ReduceSumImpl<float>(sendbuf, recvbuf, count, root, comm, MPI_FLOAT);
     } else {
-      ReduceSumDouble(sendbuf, recvbuf, count, root, comm);
+      ReduceSumImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
     }
   } else if (operation == MPI_MIN) {
     if (type == MPI_INT) {
-      ReduceMinInt(sendbuf, recvbuf, count, root, comm);
+      ReduceMinImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
     } else if (type == MPI_FLOAT) {
-      ReduceMinFloat(sendbuf, recvbuf, count, root, comm);
+      ReduceMinImpl<float>(sendbuf, recvbuf, count, root, comm, MPI_FLOAT);
     } else {
-      ReduceMinDouble(sendbuf, recvbuf, count, root, comm);
+      ReduceMinImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
     }
   }
 }
