@@ -602,7 +602,7 @@ std::vector<LocalTestType> LoadTestCasesFromData() {
     p.left = pj.at("left");
     p.right = pj.at("right");
     p.accuracy = 1e-4;
-    p.reliability = 2.5;
+    p.reliability = 3.0;
     p.max_iterations = 300;
     p.func = BuildFunction(item.at("function"));
     t.problem = p;

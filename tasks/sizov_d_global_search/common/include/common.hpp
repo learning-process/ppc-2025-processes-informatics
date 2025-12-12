@@ -14,8 +14,10 @@ struct Problem {
   double left = 0.0;
   double right = 0.0;
   double accuracy = 1e-4;
-  double reliability = 2.5;
-  int max_iterations = 2000;
+  double reliability = 3.0;
+  int max_iterations = 300;
+  bool enable_stable_heuristic = true;
+  bool enable_point_limit = true;
 };
 
 struct Solution {
@@ -31,7 +33,7 @@ struct TestCase {
 };
 
 static constexpr double kDefaultAccuracy = 1e-4;
-static constexpr double kDefaultReliability = 2.5;
+static constexpr double kDefaultReliability = 3.0;
 static constexpr int kDefaultMaxIterations = 300;
 
 using InType = Problem;

@@ -22,13 +22,13 @@ bool SizovDGlobalSearchSEQ::ValidationImpl() {
   if (!p.func) {
     return false;
   }
-  if (p.left >= p.right) {
+  if (!(p.left < p.right)) {
     return false;
   }
-  if (p.accuracy <= 0.0) {
+  if (!(p.accuracy > 0.0)) {
     return false;
   }
-  if (p.reliability <= 0.0) {
+  if (!(p.reliability > 0.0)) {
     return false;
   }
   if (p.max_iterations <= 0) {
@@ -43,26 +43,29 @@ bool SizovDGlobalSearchSEQ::PreProcessingImpl() {
   x_.clear();
   y_.clear();
 
-  x_.reserve(static_cast<std::size_t>(p.max_iterations) + 2U);
-  y_.reserve(static_cast<std::size_t>(p.max_iterations) + 2U);
+  x_.reserve(static_cast<std::size_t>(p.max_iterations) + 8U);
+  y_.reserve(static_cast<std::size_t>(p.max_iterations) + 8U);
 
-  const double f_left = p.func(p.left);
-  const double f_right = p.func(p.right);
+  const double left = p.left;
+  const double right = p.right;
+
+  const double f_left = p.func(left);
+  const double f_right = p.func(right);
 
   if (!std::isfinite(f_left) || !std::isfinite(f_right)) {
     return false;
   }
 
-  x_.push_back(p.left);
-  x_.push_back(p.right);
+  x_.push_back(left);
+  x_.push_back(right);
   y_.push_back(f_left);
   y_.push_back(f_right);
 
   if (f_left <= f_right) {
-    best_x_ = p.left;
+    best_x_ = left;
     best_y_ = f_left;
   } else {
-    best_x_ = p.right;
+    best_x_ = right;
     best_y_ = f_right;
   }
 
@@ -73,23 +76,33 @@ bool SizovDGlobalSearchSEQ::PreProcessingImpl() {
 }
 
 double SizovDGlobalSearchSEQ::EstimateM(double reliability) const {
-  double max_slope = 0.0;
+  constexpr double kMinSlope = 1e-2;
 
   const std::size_t n = x_.size();
+  if (n < 2U) {
+    return reliability * kMinSlope;
+  }
+
+  double max_slope = 0.0;
   for (std::size_t i = 1; i < n; ++i) {
-    const double dx = std::abs(x_[i] - x_[i - 1U]);
-    if (dx <= 0.0) {
+    const double dx = x_[i] - x_[i - 1U];
+    if (!(dx > 0.0)) {
       continue;
     }
 
-    const double dy = std::abs(y_[i] - y_[i - 1U]) / dx;
-    if (std::isfinite(dy)) {
-      max_slope = std::max(max_slope, dy);
+    const double y1 = y_[i];
+    const double y2 = y_[i - 1U];
+    if (!std::isfinite(y1) || !std::isfinite(y2)) {
+      continue;
+    }
+
+    const double slope = std::abs(y1 - y2) / dx;
+    if (std::isfinite(slope)) {
+      max_slope = std::max(max_slope, slope);
     }
   }
 
-  constexpr double kMinimalSlope = 1e-2;
-  return reliability * std::max(max_slope, kMinimalSlope);
+  return reliability * std::max(max_slope, kMinSlope);
 }
 
 double SizovDGlobalSearchSEQ::Characteristic(std::size_t idx, double m) const {
@@ -117,68 +130,7 @@ double SizovDGlobalSearchSEQ::NewPoint(std::size_t idx, double m) const {
   if (x_new <= x_left || x_new >= x_right) {
     x_new = mid;
   }
-
   return x_new;
-}
-
-bool SizovDGlobalSearchSEQ::RunImpl() {
-  const auto &p = GetInput();
-
-  if (x_.size() < 2U) {
-    return false;
-  }
-
-  double m = EstimateM(p.reliability);
-
-  for (int iter = 0; iter < p.max_iterations; ++iter) {
-    iterations_ = iter + 1;
-
-    if ((iter % 5) == 0) {
-      m = EstimateM(p.reliability);
-    }
-
-    const std::size_t n = x_.size();
-    if (n < 2U) {
-      converged_ = false;
-      break;
-    }
-
-    const auto [best_idx, best_char] = FindBestInterval(m);
-    const double interval_left = x_[best_idx - 1U];
-    const double interval_right = x_[best_idx];
-    const double width = interval_right - interval_left;
-
-    if (width <= p.accuracy) {
-      converged_ = true;
-      break;
-    }
-
-    const double x_new = NewPoint(best_idx, m);
-    const double y_new = p.func(x_new);
-
-    if (!std::isfinite(y_new)) {
-      continue;
-    }
-
-    [[maybe_unused]] const std::size_t idx = InsertSample(x_new, y_new);
-
-    if (y_new < best_y_) {
-      best_y_ = y_new;
-      best_x_ = x_new;
-    }
-  }
-
-  GetOutput() = Solution{
-      .argmin = best_x_,
-      .value = best_y_,
-      .iterations = iterations_,
-      .converged = converged_,
-  };
-  return true;
-}
-
-bool SizovDGlobalSearchSEQ::PostProcessingImpl() {
-  return true;
 }
 
 std::pair<std::size_t, double> SizovDGlobalSearchSEQ::FindBestInterval(double m) const {
@@ -203,6 +155,64 @@ std::size_t SizovDGlobalSearchSEQ::InsertSample(double x_new, double y_new) {
   x_.insert(pos, x_new);
   y_.insert(y_.begin() + static_cast<std::ptrdiff_t>(idx), y_new);
   return idx;
+}
+
+bool SizovDGlobalSearchSEQ::RunImpl() {
+  const auto &p = GetInput();
+
+  if (x_.size() < 2U) {
+    return false;
+  }
+
+  double m = EstimateM(p.reliability);
+
+  for (int iter = 0; iter < p.max_iterations; ++iter) {
+    iterations_ = iter + 1;
+
+    if ((iter % 10) == 0) {
+      m = EstimateM(p.reliability);
+    }
+
+    if (x_.size() < 2U) {
+      converged_ = false;
+      break;
+    }
+
+    const auto [best_idx, _best_char] = FindBestInterval(m);
+    const double left = x_[best_idx - 1U];
+    const double right = x_[best_idx];
+    const double width = right - left;
+
+    if (width <= p.accuracy) {
+      converged_ = true;
+      break;
+    }
+
+    const double x_new = NewPoint(best_idx, m);
+    const double y_new = p.func(x_new);
+    if (!std::isfinite(y_new)) {
+      continue;
+    }
+
+    (void)InsertSample(x_new, y_new);
+
+    if (y_new < best_y_) {
+      best_y_ = y_new;
+      best_x_ = x_new;
+    }
+  }
+
+  GetOutput() = Solution{
+      .argmin = best_x_,
+      .value = best_y_,
+      .iterations = iterations_,
+      .converged = converged_,
+  };
+  return true;
+}
+
+bool SizovDGlobalSearchSEQ::PostProcessingImpl() {
+  return true;
 }
 
 }  // namespace sizov_d_global_search

@@ -27,24 +27,30 @@ class SizovDGlobalSearchMPI : public BaseTask {
     int index = -1;
   };
 
+  struct InsertMsg {
+    double x_new = 0.0;
+    double y_new = 0.0;
+    int idx = -1;
+  };
+
   static void GetChunk(std::size_t intervals, int rank, int size, std::size_t &begin, std::size_t &end);
 
-  [[nodiscard]] double EstimateM(double r, int rank, int size) const;
+  [[nodiscard]] double EstimateM(double reliability, int rank, int size) const;
   [[nodiscard]] double Characteristic(std::size_t i, double m) const;
   [[nodiscard]] double NewPoint(std::size_t i, double m) const;
-  bool ProcessIteration(const Problem &p, double &m, int rank, int size);
-  void BroadcastNewPoint(int best_idx, double m, const Problem &p, int rank);
 
   [[nodiscard]] IntervalChar ComputeLocalBestInterval(double m, int rank, int size) const;
   static int ReduceBestIntervalIndex(const IntervalChar &local, int n);
 
-  bool CheckStopByAccuracy(const Problem &p, int best_idx, int rank);
+  [[nodiscard]] bool CheckStopByAccuracy(const Problem &p, int best_idx, int rank) const;
 
   void BroadcastState(int rank);
+  void BroadcastNewPoint(int best_idx, double m, const Problem &p, int rank);
   void BroadcastResult(int rank);
 
   std::vector<double> x_;
   std::vector<double> y_;
+
   double best_x_ = 0.0;
   double best_y_ = 0.0;
   int iterations_ = 0;
