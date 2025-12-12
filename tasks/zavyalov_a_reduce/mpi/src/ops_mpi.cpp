@@ -79,8 +79,6 @@ void ReduceMinImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_
 
 }  // namespace
 
-// ===== API обёртки =====
-
 void ZavyalovAReduceMPI::ReduceSumInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
   ReduceSumImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
 }
@@ -101,8 +99,6 @@ void ZavyalovAReduceMPI::ReduceMinDouble(const void *sendbuf, void *recvbuf, int
   ReduceMinImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
 }
 
-// ===== универсальная обёртка =====
-
 void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
                                   int root, MPI_Comm comm) {
   if (operation == MPI_SUM) {
@@ -115,7 +111,7 @@ void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count,
     }
   } else if (operation == MPI_MIN) {
     if (type == MPI_INT) {
-      ReduceMinInt(sendbuf, recvbuf, count, root, comm);  // TODO заменить на просто ReduceMinImpl<int>?
+      ReduceMinInt(sendbuf, recvbuf, count, root, comm);
     } else if (type == MPI_FLOAT) {
       ReduceMinFloat(sendbuf, recvbuf, count, root, comm);
     } else {
