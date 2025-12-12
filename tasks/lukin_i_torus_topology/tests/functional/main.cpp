@@ -106,8 +106,8 @@ class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, O
       input_data_ = std::make_tuple(2, 0, message_);
       expected_ = std::make_tuple(std::vector<int>{2, 0}, message_);
     } else if (proc_count == 4) {
-      input_data_ = std::make_tuple(1, 0, message_);
-      expected_ = std::make_tuple(std::vector<int>{1, 0}, message_);
+      input_data_ = std::make_tuple(3, 2, message_);
+      expected_ = std::make_tuple(std::vector<int>{3, 2}, message_);
     }
   }
 
@@ -119,8 +119,8 @@ class LukinIRunFuncTestsProceses3 : public ppc::util::BaseRunFuncTests<InType, O
       input_data_ = std::make_tuple(0, 2, message_);
       expected_ = std::make_tuple(std::vector<int>{0, 2}, message_);
     } else if (proc_count == 4) {
-      input_data_ = std::make_tuple(0, 1, message_);
-      expected_ = std::make_tuple(std::vector<int>{0, 1}, message_);
+      input_data_ = std::make_tuple(2, 3, message_);
+      expected_ = std::make_tuple(std::vector<int>{2, 3}, message_);
     }
   }
 
