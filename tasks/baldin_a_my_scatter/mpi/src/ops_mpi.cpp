@@ -64,6 +64,14 @@ int CalculateSubtreeSize(int v_dest, int mask, int size) {
   return std::min(v_dest + mask, size);
 }
 
+int CalculateInitialMask(int size) {
+  int mask = 1;
+  while (mask < size) {
+    mask <<= 1;
+  }
+  return mask >> 1;
+}
+
 void PrepareRootBuffer(const void *sendbuf, int size, int root, int count, MPI_Aint extent, std::vector<char> &buffer) {
   size_t total_bytes = static_cast<size_t>(size) * count * extent;
   size_t chunk_bytes = static_cast<size_t>(count) * extent;
@@ -104,11 +112,7 @@ bool BaldinAMyScatterMPI::RunImpl() {
   }
 
   int v_rank = (rank - root + size) % size;
-  int mask = 1;
-  while (mask < size) {
-    mask <<= 1;
-  }
-  mask >>= 1;
+  int mask = CalculateInitialMask(size);
 
   // --- ЭТАП 2: Рассылка по дереву ---
   while (mask > 0) {

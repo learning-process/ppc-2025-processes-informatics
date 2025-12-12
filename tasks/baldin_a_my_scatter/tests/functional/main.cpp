@@ -2,10 +2,8 @@
 #include <mpi.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdlib>
-#include <numeric>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -40,11 +38,11 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   }
 
  protected:
-  std::vector<int> send_vec_int_, recv_vec_int_;
-  std::vector<float> send_vec_float_, recv_vec_float_;
-  std::vector<double> send_vec_double_, recv_vec_double_;
+  std::vector<int> send_vec_int, recv_vec_int;
+  std::vector<float> send_vec_float, recv_vec_float;
+  std::vector<double> send_vec_double, recv_vec_double;
 
-  InType input_data_;
+  InType input_data;
 
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -71,42 +69,44 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     bool i_am_root = (rank == effective_root);
 
     if (type == MPI_INT) {
-      recv_vec_int_.resize(count);
-      recvbuf_ptr = recv_vec_int_.data();
+      recv_vec_int.resize(count);
+      recvbuf_ptr = recv_vec_int.data();
 
       if (i_am_root) {
         size_t total_send_count = is_seq ? count : (count * size);
-        send_vec_int_.resize(total_send_count);
-        std::ranges::iota(send_vec_int_, 0);
-        sendbuf_ptr = send_vec_int_.data();
+        send_vec_int.resize(total_send_count);
+        for (size_t i = 0; i < total_send_count; i++) {
+          send_vec_int[i] = static_cast<int>(i);
+        }
+        sendbuf_ptr = send_vec_int.data();
       }
     } else if (type == MPI_FLOAT) {
-      recv_vec_float_.resize(count);
-      recvbuf_ptr = recv_vec_float_.data();
+      recv_vec_float.resize(count);
+      recvbuf_ptr = recv_vec_float.data();
 
       if (i_am_root) {
         size_t total_send_count = is_seq ? count : (count * size);
-        send_vec_float_.resize(total_send_count);
-        for (size_t i = 0; i < total_send_count; ++i) {
-          send_vec_float_[i] = static_cast<float>(i);
+        send_vec_float.resize(total_send_count);
+        for (size_t i = 0; i < total_send_count; i++) {
+          send_vec_float[i] = static_cast<float>(i);
         }
-        sendbuf_ptr = send_vec_float_.data();
+        sendbuf_ptr = send_vec_float.data();
       }
     } else if (type == MPI_DOUBLE) {
-      recv_vec_double_.resize(count);
-      recvbuf_ptr = recv_vec_double_.data();
+      recv_vec_double.resize(count);
+      recvbuf_ptr = recv_vec_double.data();
 
       if (i_am_root) {
         size_t total_send_count = is_seq ? count : (count * size);
-        send_vec_double_.resize(total_send_count);
-        for (size_t i = 0; i < total_send_count; ++i) {
-          send_vec_double_[i] = static_cast<double>(i);
+        send_vec_double.resize(total_send_count);
+        for (size_t i = 0; i < total_send_count; i++) {
+          send_vec_double[i] = static_cast<double>(i);
         }
-        sendbuf_ptr = send_vec_double_.data();
+        sendbuf_ptr = send_vec_double.data();
       }
     }
 
-    input_data_ = std::make_tuple(sendbuf_ptr, count, type, recvbuf_ptr, count, type, root, MPI_COMM_WORLD);
+    input_data = std::make_tuple(sendbuf_ptr, count, type, recvbuf_ptr, count, type, root, MPI_COMM_WORLD);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -156,7 +156,7 @@ class BaldinAMyScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 

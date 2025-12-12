@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -47,7 +45,9 @@ class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
       size_t total_send_count = is_seq ? count_per_proc_ : (count_per_proc_ * size);
 
       send_vec_.resize(total_send_count);
-      std::ranges::iota(send_vec_, 0);
+      for (size_t i = 0; i < total_send_count; i++) {
+        send_vec_[i] = static_cast<int>(i);
+      }
     }
 
     const void *sendbuf_ptr = i_am_root ? send_vec_.data() : nullptr;
