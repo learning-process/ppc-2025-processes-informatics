@@ -1,0 +1,43 @@
+#include "example_processes/seq/include/ops_seq.hpp"
+
+#include <numeric>
+#include <vector>
+
+#include "example_processes/common/include/common.hpp"
+#include "util/include/util.hpp"
+
+namespace chaschin_v_broadcast {
+
+template <typename T>
+ChaschinVBroadcastSEQ<T>::ChaschinVBroadcastSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput().resize(0);
+}
+
+template <typename T>
+bool ChaschinVBroadcastSEQ<T>::ValidationImpl() {
+  return (!this->GetInput().empty()) && (this->GetOutput().empty());
+}
+
+template <typename T>
+bool ChaschinVBroadcastSEQ<T>::PreProcessingImpl() {
+  return true;
+}
+
+template <typename T>
+bool ChaschinVBroadcastSEQ<T>::RunImpl() {
+  this->GetOutput() = this->GetInput();
+  return true;
+}
+
+template <typename T>
+bool ChaschinVBroadcastSEQ<T>::PostProcessingImpl() {
+  return true;
+}
+
+template class ChaschinVBroadcastSEQ<int>;
+template class ChaschinVBroadcastSEQ<float>;
+template class ChaschinVBroadcastSEQ<double>;
+
+}  // namespace chaschin_v_broadcast
