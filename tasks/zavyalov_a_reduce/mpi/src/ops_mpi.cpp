@@ -60,7 +60,7 @@ void ZavyalovAReduceMPI::ReduceSumInt(const void *sendbuf, void *recvbuf, int co
       int child_offset = 1;
       for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
         MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                  MPI_STATUS_IGNORE);
+                 MPI_STATUS_IGNORE);
         for (int i = 0; i < count; i++) {
           res_buf[i] += temp_buf[i];
         }
@@ -127,7 +127,7 @@ void ZavyalovAReduceMPI::ReduceSumFloat(const void *sendbuf, void *recvbuf, int 
       int child_offset = 1;
       for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
         MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                  MPI_STATUS_IGNORE);
+                 MPI_STATUS_IGNORE);
         for (int i = 0; i < count; i++) {
           res_buf[i] += temp_buf[i];
         }
@@ -194,7 +194,7 @@ void ZavyalovAReduceMPI::ReduceSumDouble(const void *sendbuf, void *recvbuf, int
       int child_offset = 1;
       for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
         MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                  MPI_STATUS_IGNORE);
+                 MPI_STATUS_IGNORE);
         for (int i = 0; i < count; i++) {
           res_buf[i] += temp_buf[i];
         }
@@ -209,7 +209,6 @@ void ZavyalovAReduceMPI::ReduceSumDouble(const void *sendbuf, void *recvbuf, int
       MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
     }
   }
-
 }
 
 void ZavyalovAReduceMPI::ReduceMinInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
@@ -262,7 +261,7 @@ void ZavyalovAReduceMPI::ReduceMinInt(const void *sendbuf, void *recvbuf, int co
       int child_offset = 1;
       for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
         MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                  MPI_STATUS_IGNORE);
+                 MPI_STATUS_IGNORE);
         for (int i = 0; i < count; i++) {
           res_buf[i] = std::min(res_buf[i], temp_buf[i]);
         }
@@ -329,7 +328,7 @@ void ZavyalovAReduceMPI::ReduceMinFloat(const void *sendbuf, void *recvbuf, int 
       int child_offset = 1;
       for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
         MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                  MPI_STATUS_IGNORE);
+                 MPI_STATUS_IGNORE);
         for (int i = 0; i < count; i++) {
           res_buf[i] = std::min(res_buf[i], temp_buf[i]);
         }
@@ -396,7 +395,7 @@ void ZavyalovAReduceMPI::ReduceMinDouble(const void *sendbuf, void *recvbuf, int
       int child_offset = 1;
       for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
         MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                  MPI_STATUS_IGNORE);
+                 MPI_STATUS_IGNORE);
         for (int i = 0; i < count; i++) {
           res_buf[i] = std::min(res_buf[i], temp_buf[i]);
         }
@@ -415,7 +414,6 @@ void ZavyalovAReduceMPI::ReduceMinDouble(const void *sendbuf, void *recvbuf, int
 
 void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
                                   int root, MPI_Comm comm) {
-
   if (operation == MPI_SUM) {
     if (type == MPI_INT) {
       ReduceSumInt(sendbuf, recvbuf, count, root, comm);
