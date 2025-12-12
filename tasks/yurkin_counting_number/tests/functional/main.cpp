@@ -29,9 +29,6 @@ class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   void SetUp() override {
     const auto &param = GetParam();
     TestType test = std::get<2>(param);
-
-    int expected = std::get<0>(test);
-
     input_data_ = std::get<1>(test);
   }
 
@@ -43,7 +40,7 @@ class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_ = "";
 };
 
 namespace {
