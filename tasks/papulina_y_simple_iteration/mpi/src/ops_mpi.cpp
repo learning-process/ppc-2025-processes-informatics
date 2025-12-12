@@ -183,7 +183,7 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
 
   for (unsigned int step = 0; step < steps_count_; step++) {
     std::vector<double> local_x_new(local_rows_count, 0.0);
-    for (size_t i = 0; i < static_cast<size_t>(local_rows_count); i++) {
+    for (size_t i = 0; std::cmp_less(i, local_rows_count); i++) {
       for (size_t j = 0; j < n_; j++) {
         local_x_new[i] += local_b_matrix[(i * n_) + j] * x[j];
       }
