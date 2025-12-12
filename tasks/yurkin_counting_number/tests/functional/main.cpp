@@ -27,10 +27,12 @@ class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    int expected = std::get<0>(GetParam());
-    std::string s = std::get<1>(GetParam());
+    const auto &param = GetParam();
+    TestType test = std::get<2>(param);
 
-    input_data_ = s;
+    int expected = std::get<0>(test);
+
+    input_data_ = std::get<1>(test);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
