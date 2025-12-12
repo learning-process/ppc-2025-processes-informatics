@@ -328,7 +328,44 @@ bool SmyshlaevAGaussFiltMPI::RunImpl() {
 }
 
 bool SmyshlaevAGaussFiltMPI::PostProcessingImpl() {
-  return true;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    auto& output = GetOutput();
+    
+    if (rank == 0) {
+        // Процесс 0 уже имеет результат
+        // Рассылаем размеры
+        int width = output.width;
+        int height = output.height;
+        int channels = output.channels;
+        
+        MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        
+        // Рассылаем данные
+        MPI_Bcast(output.data.data(), width * height * channels, 
+                  MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+    } else {
+        // Получаем размеры
+        int width, height, channels;
+        MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&channels, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        
+        // Выделяем память
+        output.width = width;
+        output.height = height;
+        output.channels = channels;
+        output.data.resize(width * height * channels);
+        
+        // Получаем данные
+        MPI_Bcast(output.data.data(), width * height * channels,
+                  MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+    }
+    
+    return true;
 }
 
 }  // namespace smyshlaev_a_gauss_filt
