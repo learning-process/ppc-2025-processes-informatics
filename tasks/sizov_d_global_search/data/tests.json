@@ -4,5 +4,12 @@
     "function": { "expression": "x" },
     "problem": { "left": -5.0, "right": 5.0 },
     "expected": { "argmins": [-5.0], "value": -5.0 }
+  },
+  
+  {
+    "name": "case_002_quadratic",
+    "function": { "expression": "x * x" },
+    "problem": { "left": -5.0, "right": 5.0 },
+    "expected": { "argmins": [0.0], "value": 0.0 }
   }
 ]
