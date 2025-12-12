@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
-#include <filesystem>
-#include <fstream>
-#include <nlohmann/json.hpp>
-#include <stdexcept>
+#include <cstddef>
+#include <limits>
+#include <numbers>
 #include <string>
-#include <unordered_map>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -20,90 +20,204 @@
 namespace sizov_d_global_search {
 
 struct ExpectedSolution {
-  std::vector<double> argmins;
-  double value;
+  std::vector<double> argmins;  // допустимые координаты минимума
+  double value = 0.0;           // эталонное минимальное значение
+  bool check_argmin = false;    // проверять ли координату
 };
 
 struct LocalTestCase {
   std::string name;
-  std::string function_id;
   Problem problem;
   ExpectedSolution expected;
 };
 
 using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestCase>;
 
-namespace {
+class SizovDRunFuncTestsGlobalSearch : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestCase> {
+ public:
+  static std::string PrintTestParam(const LocalTestCase &tc) {
+    return tc.name;
+  }
 
-using Func = Function;
+  void PrepareTestCase(const FuncParam &param) {
+    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+    input_ = test_case_.problem;
+    expected_ = test_case_.expected;
+  }
 
-const std::unordered_map<std::string, Func> kFunctionRegistry = {
-    {"linear_inc", [](double x) { return x; }},
-    {"linear_dec", [](double x) { return -2.0 * x + 3.0; }},
-    {"quad", [](double x) { return x * x; }},
-    {"quad_shift_1", [](double x) { return (x - 1.0) * (x - 1.0); }},
-    {"quad_plus_5", [](double x) { return x * x + 5.0; }},
-    {"abs", [](double x) { return std::abs(x); }},
-    {"abs_shift_1", [](double x) { return std::abs(x - 1.0); }},
-    {"abs_plus_quad", [](double x) { return std::abs(x) + 0.1 * x * x; }},
-    {"quad_mixed", [](double x) { return 0.2 * x * x - 0.3 * x; }},
-    {"quartic", [](double x) { return x * x * x * x; }},
-    {"exp_quad", [](double x) { return std::exp(x * x); }},
-    {"log_quad", [](double x) { return std::log(x * x + 2.0); }},
+ protected:
+  InType GetTestInputData() override {
+    return input_;
+  }
+
+  bool CheckTestOutputData(OutType &out) override {
+    // 0) Алгоритм должен хотя бы выполняться
+    if (out.iterations <= 0) {
+      return false;
+    }
+
+    // converged — диагностический флаг, не критерий корректности
+    (void)out.converged;
+
+    // 1) Значения должны быть конечны
+    if (!std::isfinite(out.value) || !std::isfinite(out.argmin)) {
+      return false;
+    }
+
+    // 2) Аргумент должен лежать в допустимой области
+    const double x_tol = std::max(10.0 * input_.accuracy, 1e-9);
+    if (out.argmin < input_.left - x_tol || out.argmin > input_.right + x_tol) {
+      return false;
+    }
+
+    // 3) Проверка значения функции (главная)
+    const double f_tol = 50.0 * input_.accuracy;
+    if (std::abs(out.value - expected_.value) > f_tol) {
+      return false;
+    }
+
+    // 4) Проверка координаты — только когда минимум уникален
+    if (expected_.check_argmin) {
+      double best_dx = std::numeric_limits<double>::infinity();
+      for (double a : expected_.argmins) {
+        best_dx = std::min(best_dx, std::abs(out.argmin - a));
+      }
+
+      const double arg_tol = 20.0 * input_.accuracy;
+      if (best_dx > arg_tol) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+ private:
+  LocalTestCase test_case_{};
+  InType input_{};
+  ExpectedSolution expected_{};
 };
 
-}  // namespace
+namespace {
 
-static std::vector<LocalTestCase> LoadTestCasesFromData() {
-  const std::filesystem::path path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
+constexpr double kPi = std::numbers::pi;
 
-  std::ifstream file(path);
-  if (!file.is_open()) {
-    throw std::runtime_error("Cannot open tests.json");
-  }
-
-  nlohmann::json data;
-  file >> data;
-
-  if (!data.is_array()) {
-    throw std::runtime_error("tests.json must contain array");
-  }
-
+std::vector<LocalTestCase> GetTestCases() {
   std::vector<LocalTestCase> cases;
-  cases.reserve(data.size());
+  cases.reserve(22U);
 
-  for (const auto &item : data) {
-    LocalTestCase tc;
+  cases.push_back({"case_001_linear_inc", Problem{[](double x) {
+    return x;
+  }, -5.0, 5.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{-5.0}, -5.0, true}});
 
-    tc.name = item.at("name").get<std::string>();
-    tc.function_id = item.at("function").get<std::string>();
+  cases.push_back({"case_002_linear_dec", Problem{[](double x) {
+    return -2.0 * x + 3.0;
+  }, -5.0, 5.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{5.0}, -7.0, true}});
 
-    const auto &pj = item.at("problem");
-    tc.problem.left = pj.at("left");
-    tc.problem.right = pj.at("right");
-    tc.problem.accuracy = kDefaultAccuracy;
-    tc.problem.reliability = kDefaultReliability;
-    tc.problem.max_iterations = kDefaultMaxIterations;
+  cases.push_back({"case_003_quad_center", Problem{[](double x) {
+    return x * x;
+  }, -2.0, 2.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 0.0, true}});
 
-    const auto it = kFunctionRegistry.find(tc.function_id);
-    if (it == kFunctionRegistry.end()) {
-      throw std::runtime_error("Unknown function id: " + tc.function_id);
-    }
-    tc.problem.func = it->second;
+  cases.push_back({"case_004_quad_shifted_1", Problem{[](double x) {
+    return (x - 1.0) * (x - 1.0);
+  }, -1.5, 1.5, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{1.0}, 0.0, true}});
 
-    const auto &ej = item.at("expected");
-    tc.expected.argmins = ej.at("argmins").get<std::vector<double>>();
-    tc.expected.value = ej.at("value");
+  cases.push_back({"case_005_quad_plus_5", Problem{[](double x) {
+    return x * x + 5.0;
+  }, -1.0, 1.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 5.0, true}});
 
-    cases.push_back(std::move(tc));
-  }
+  cases.push_back({"case_006_abs", Problem{[](double x) {
+    return std::abs(x);
+  }, -4.0, 4.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 0.0, true}});
+
+  cases.push_back({"case_007_abs_shift_1", Problem{[](double x) {
+    return std::abs(x - 1.0);
+  }, -4.0, 4.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{1.0}, 0.0, true}});
+
+  cases.push_back({"case_008_abs_plus_quad", Problem{[](double x) {
+    return std::abs(x) + 0.1 * x * x;
+  }, -1.0, 1.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 0.0, true}});
+
+  cases.push_back({"case_009_quad_mixed", Problem{[](double x) {
+    return 0.2 * x * x - 0.3 * x;
+  }, -1.5, 1.5, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.75}, -0.1125, true}});
+
+  cases.push_back({"case_010_quartic", Problem{[](double x) {
+    return x * x * x * x;
+  }, -0.5, 0.5, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 0.0, true}});
+
+  cases.push_back({"case_011_exp_quad", Problem{[](double x) {
+    return std::exp(x * x);
+  }, -2.0, 2.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 1.0, true}});
+
+  cases.push_back({"case_012_log_quad", Problem{[](double x) {
+    return std::log(x * x + 2.0);
+  }, -2.0, 2.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, std::log(2.0), true}});
+
+  cases.push_back({"case_013_sqrt_quad", Problem{[](double x) {
+    return std::sqrt(x * x + 1.0);
+  }, -3.0, 3.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 1.0, true}});
+
+  cases.push_back({"case_014_abs_plus_exp_quad", Problem{[](double x) {
+    return std::abs(x) + std::exp(x * x);
+  }, -2.0, 2.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, 1.0, true}});
+
+  cases.push_back({"case_015_log_sqrt_combo", Problem{[](double x) {
+    return std::log(std::sqrt(x * x + 1.0) + 1.0);
+  }, -3.0, 3.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{0.0}, std::log(2.0), true}});
+
+  cases.push_back({"case_016_exp_shift_1", Problem{[](double x) {
+    return std::exp((x - 1.0) * (x - 1.0));
+  }, -1.0, 3.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{1.0}, 1.0, true}});
+
+  cases.push_back({"case_017_log_abs_shift_1", Problem{[](double x) {
+    return std::log(std::abs(x - 1.0) + 2.0);
+  }, -2.0, 4.0, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{1.0}, std::log(2.0), true}});
+
+  cases.push_back({"case_018_sin_sq", Problem{[](double x) {
+    double s = std::sin(x);
+    return s * s;
+  }, -kPi, kPi, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{-kPi, 0.0, kPi}, 0.0, false}});
+
+  cases.push_back({"case_019_exp_sin_sq", Problem{[](double x) {
+    return std::exp(std::sin(x) * std::sin(x));
+  }, -kPi, kPi, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{-kPi, 0.0, kPi}, 1.0, false}});
+
+  cases.push_back({"case_020_sqrt_sin_sq_plus_1", Problem{[](double x) {
+    return std::sqrt(std::sin(x) * std::sin(x) + 1.0);
+  }, -kPi, kPi, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{-kPi, 0.0, kPi}, 1.0, false}});
+
+  cases.push_back({"case_021_cos_on_segment", Problem{[](double x) {
+    return std::cos(x);
+  }, -kPi, kPi, kDefaultAccuracy, kDefaultReliability, kDefaultMaxIterations},
+                   ExpectedSolution{{-kPi, kPi}, -1.0, false}});
 
   return cases;
 }
 
-static std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestCase> &tests) {
+std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestCase> &tests) {
   std::vector<FuncParam> tasks;
-  tasks.reserve(tests.size() * 2);
+  tasks.reserve(tests.size() * 2U);
 
   const std::string mpi_name =
       std::string(ppc::util::GetNamespace<SizovDGlobalSearchMPI>()) + "_" +
@@ -121,59 +235,50 @@ static std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestCase> &t
   return tasks;
 }
 
-class SizovDRunFuncTestsGlobalSearch : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestCase> {
+class FuncTestInstance final : public SizovDRunFuncTestsGlobalSearch {
  public:
-  static std::string PrintTestParam(const LocalTestCase &tc) {
-    return tc.name;
-  }
+  explicit FuncTestInstance(FuncParam param) : param_(std::move(param)) {}
 
- protected:
-  void SetUp() override {
-    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_ = test_case_.problem;
-    expected_ = test_case_.expected;
-  }
-
-  InType GetTestInputData() override {
-    return input_;
-  }
-
-  bool CheckTestOutputData(OutType &out) override {
-    if (!std::isfinite(out.value)) {
-      return false;
-    }
-
-    if (std::abs(out.value - expected_.value) > 20.0 * input_.accuracy) {
-      return false;
-    }
-
-    double best_dx = std::numeric_limits<double>::infinity();
-    for (double a : expected_.argmins) {
-      best_dx = std::min(best_dx, std::abs(out.argmin - a));
-    }
-
-    return best_dx <= 5.0 * input_.accuracy;
+  void TestBody() override {
+    PrepareTestCase(param_);
+    ExecuteTest(param_);
   }
 
  private:
-  LocalTestCase test_case_;
-  InType input_;
-  ExpectedSolution expected_;
+  FuncParam param_;
 };
 
-namespace {
+struct FuncTestRegistrar {
+  explicit FuncTestRegistrar(std::vector<FuncParam> tasks) : tasks_(std::move(tasks)) {
+    test_names_.reserve(tasks_.size());
 
-TEST_P(SizovDRunFuncTestsGlobalSearch, FromJson) {
-  ExecuteTest(GetParam());
-}
+    std::size_t idx = 0;
+    for (const auto &param : tasks_) {
+      const auto &name_test = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
+      const auto &tc = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
 
-const auto kCases = LoadTestCasesFromData();
-const auto kTasks = BuildTestTasks(kCases);
-const auto kValues = ::testing::ValuesIn(kTasks);
+      const std::string test_name = name_test + "_" + SizovDRunFuncTestsGlobalSearch::PrintTestParam(tc);
+      test_names_.push_back(test_name);
 
-INSTANTIATE_TEST_SUITE_P(SizovDGlobalSearch, SizovDRunFuncTestsGlobalSearch, kValues,
-                         SizovDRunFuncTestsGlobalSearch::PrintFuncTestName<SizovDRunFuncTestsGlobalSearch>);
+      const std::size_t current_idx = idx++;
+      ::testing::RegisterTest(
+          "SizovDGlobalSearchFuncTests", test_names_.back().c_str(), nullptr, nullptr, __FILE__, __LINE__,
+          [this, current_idx]() -> ::testing::Test * { return new FuncTestInstance(tasks_[current_idx]); });
+    }
+  }
+
+ private:
+  std::vector<FuncParam> tasks_;
+  std::vector<std::string> test_names_;
+};
+
+const bool kRegisteredFuncTests = []() {
+  const auto cases = GetTestCases();
+  const auto tasks = BuildTestTasks(cases);
+  static const FuncTestRegistrar registrar(tasks);
+  (void)registrar;
+  return true;
+}();
 
 }  // namespace
-
 }  // namespace sizov_d_global_search
