@@ -30,7 +30,8 @@ inline void ApplyMin(std::vector<T> &acc, const std::vector<T> &temp, int count)
 template <typename T>
 void ReduceBinaryTree(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type,
                       void (*apply_op)(std::vector<T> &, const std::vector<T> &, int)) {
-  int world_size = 0, world_rank = 0;
+  int world_size = 0;
+  int world_rank = 0;
   MPI_Comm_size(comm, &world_size);
   MPI_Comm_rank(comm, &world_rank);
 

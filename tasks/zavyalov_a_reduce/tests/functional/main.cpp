@@ -118,37 +118,38 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     MPI_Op operation = std::get<0>(params);
-    MPI_Datatype dataType = std::get<1>(params);
-    size_t vecSize = std::get<2>(params);
+    MPI_Datatype data_type = std::get<1>(params);
+    size_t vec_size = std::get<2>(params);
 
-    int worldSize = 1;
-    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+    int world_size = 1;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-    std::shared_ptr<void> inputPtr = std::get<3>(input_data_);
+    std::shared_ptr<void> input_ptr = std::get<3>(input_data_);
 
     if (operation == MPI_SUM) {
-      if (dataType == MPI_INT) {
-        return HandleSum(static_cast<int *>(inputPtr.get()), static_cast<int *>(result_ptr.get()), vecSize, worldSize);
+      if (data_type == MPI_INT) {
+        return HandleSum(static_cast<int *>(input_ptr.get()), static_cast<int *>(result_ptr.get()), vec_size,
+                         world_size);
       }
-      if (dataType == MPI_FLOAT) {
-        return HandleSum(static_cast<float *>(inputPtr.get()), static_cast<float *>(result_ptr.get()), vecSize,
-                         worldSize);
+      if (data_type == MPI_FLOAT) {
+        return HandleSum(static_cast<float *>(input_ptr.get()), static_cast<float *>(result_ptr.get()), vec_size,
+                         world_size);
       }
-      if (dataType == MPI_DOUBLE) {
-        return HandleSum(static_cast<double *>(inputPtr.get()), static_cast<double *>(result_ptr.get()), vecSize,
-                         worldSize);
+      if (data_type == MPI_DOUBLE) {
+        return HandleSum(static_cast<double *>(input_ptr.get()), static_cast<double *>(result_ptr.get()), vec_size,
+                         world_size);
       }
     }
 
     if (operation == MPI_MIN) {
-      if (dataType == MPI_INT) {
-        return HandleMin(static_cast<int *>(result_ptr.get()), vecSize, worldSize);
+      if (data_type == MPI_INT) {
+        return HandleMin(static_cast<int *>(result_ptr.get()), vec_size, world_size);
       }
-      if (dataType == MPI_FLOAT) {
-        return HandleMin(static_cast<float *>(result_ptr.get()), vecSize, worldSize);
+      if (data_type == MPI_FLOAT) {
+        return HandleMin(static_cast<float *>(result_ptr.get()), vec_size, world_size);
       }
-      if (dataType == MPI_DOUBLE) {
-        return HandleMin(static_cast<double *>(result_ptr.get()), vecSize, worldSize);
+      if (data_type == MPI_DOUBLE) {
+        return HandleMin(static_cast<double *>(result_ptr.get()), vec_size, world_size);
       }
     }
 
@@ -178,29 +179,39 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
   }
 
   template <typename T>
-  static bool HandleSum(const T *input, const T *output, size_t size, int worldSize) {
+  static bool HandleSum(const T *input, const T *output, size_t size, int world_size) {
     std::vector<T> expected(size);
-    T multiplier = static_cast<T>(worldSize);
+    T multiplier = static_cast<T>(world_size);
 
     for (size_t i = 0; i < size; i++) {
       expected[i] = input[i] * multiplier;
     }
 
-    double eps = std::is_same_v<T, float> ? 1e-4 : std::is_same_v<T, double> ? 1e-9 : 0.0;
+    double eps = 0.0;
+    if (std::is_same_v<T, float>) {
+      eps = 1e-4F;
+    } else if (std::is_same_v<T, double>) {
+      eps = 1e-9F;
+    }
 
     return CheckEqualArrays(expected.data(), output, size, eps);
   }
 
   template <typename T>
-  static bool HandleMin(const T *output, size_t size, int worldSize) {
+  static bool HandleMin(const T *output, size_t size, int world_size) {
     std::vector<T> expected(size);
-    T value = static_cast<T>(10000 - 3 * (worldSize - 1));
+    T value = static_cast<T>(10000 - (3 * (world_size - 1)));
 
     for (size_t i = 0; i < size; i++) {
       expected[i] = value;
     }
 
-    double eps = std::is_same_v<T, float> ? 1e-4 : std::is_same_v<T, double> ? 1e-9 : 0.0;
+    double eps = 0.0;
+    if (std::is_same_v<T, float>) {
+      eps = 1e-4F;
+    } else if (std::is_same_v<T, double>) {
+      eps = 1e-9F;
+    }
 
     return CheckEqualArrays(expected.data(), output, size, eps);
   }
