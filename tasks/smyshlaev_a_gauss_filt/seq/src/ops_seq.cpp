@@ -9,17 +9,17 @@
 namespace smyshlaev_a_gauss_filt {
 
 namespace {
-  int GetPixelClamped(const InType& img, int x, int y, int ch) {
-    const int w = img.width;
-    const int h = img.height;
-    const int c = img.channels;
+int GetPixelClamped(const InType &img, int x, int y, int ch) {
+  const int w = img.width;
+  const int h = img.height;
+  const int c = img.channels;
 
-    x = std::clamp(x, 0, w - 1);
-    y = std::clamp(y, 0, h - 1);
-    
-    return img.data[(y * w + x) * c + ch];
-  }
+  x = std::clamp(x, 0, w - 1);
+  y = std::clamp(y, 0, h - 1);
+
+  return img.data[(y * w + x) * c + ch];
 }
+}  // namespace
 
 SmyshlaevAGaussFiltSEQ::SmyshlaevAGaussFiltSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -36,29 +36,24 @@ bool SmyshlaevAGaussFiltSEQ::PreProcessingImpl() {
 
 bool SmyshlaevAGaussFiltSEQ::RunImpl() {
   const auto &input_image = GetInput();
-  auto& output_image = GetOutput();
+  auto &output_image = GetOutput();
 
   output_image.width = input_image.width;
   output_image.height = input_image.height;
   output_image.channels = input_image.channels;
-  
+
   const int w = input_image.width;
   const int h = input_image.height;
   const int c = input_image.channels;
-  
+
   output_image.data.resize(w * h * c);
 
-  const std::vector<int> kernel = {
-      1, 2, 1,
-      2, 4, 2,
-      1, 2, 1
-  };
+  const std::vector<int> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
   const int kernel_sum = 16;
 
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
       for (int ch = 0; ch < c; ++ch) {
-        
         int sum = 0;
         for (int ky = -1; ky <= 1; ++ky) {
           for (int kx = -1; kx <= 1; ++kx) {
@@ -70,7 +65,7 @@ bool SmyshlaevAGaussFiltSEQ::RunImpl() {
             sum += value * k_value;
           }
         }
-        
+
         output_image.data[(y * w + x) * c + ch] = static_cast<uint8_t>(sum / kernel_sum);
       }
     }

@@ -15,7 +15,7 @@ struct ImageType {
 };
 
 using InType = ImageType;
-using OutType = ImageType;    
+using OutType = ImageType;
 using TestType = std::tuple<ImageType, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

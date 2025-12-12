@@ -16,17 +16,15 @@ class SmyshlaevAGaussFiltRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
     input_data_.height = size;
     input_data_.channels = 3;
     input_data_.data.resize(size * size * 3);
-    
+
     for (size_t i = 0; i < input_data_.data.size(); ++i) {
       input_data_.data[i] = static_cast<uint8_t>(i % 256);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_.width == output_data.width && 
-            input_data_.height == output_data.height &&
-            input_data_.channels == output_data.channels &&
-            !output_data.data.empty());
+    return (input_data_.width == output_data.width && input_data_.height == output_data.height &&
+            input_data_.channels == output_data.channels && !output_data.data.empty());
   }
 
   InType GetTestInputData() final {
