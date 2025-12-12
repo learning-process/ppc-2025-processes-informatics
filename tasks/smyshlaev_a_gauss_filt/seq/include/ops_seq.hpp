@@ -13,6 +13,8 @@ class SmyshlaevAGaussFiltSEQ : public BaseTask {
   explicit SmyshlaevAGaussFiltSEQ(const InType &in);
 
  private:
+
+  static int GetPixelClamped(const InType& img, int x, int y, int ch);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
