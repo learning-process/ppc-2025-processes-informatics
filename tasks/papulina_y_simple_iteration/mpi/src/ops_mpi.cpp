@@ -43,7 +43,6 @@ bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double> &a, c
   for (size_t i = 0; i < n; i++) {
     if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
       if (!FindAndSwapRow(tmp, i, n)) {
-        std::cout << "Determinant is zero\n";
         return false;
       }
     }
@@ -81,7 +80,7 @@ bool PapulinaYSimpleIterationMPI::ValidationImpl() {
     size_t n = std::get<0>(GetInput());
     const auto &a_matrix = std::get<1>(GetInput());
 
-    if ((n < 1) || (!DiagonalDominance(a_matrix, n)) || (!DetermChecking(a_matrix, n))) {
+    if ((n < 1) || (!DetermChecking(a_matrix, n) || (!DiagonalDominance(a_matrix, n)))) {
       flag = 0;  // валидация не прошла
     } else {
       double norm_b = CalculateNormB(a_matrix, n);
@@ -112,15 +111,21 @@ double PapulinaYSimpleIterationMPI::CalculateNormB(const std::vector<double> &a,
   return max_row_sum;
 }
 bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
-  n_ = static_cast<size_t>(std::get<0>(GetInput()));
-  A_.assign(n_ * n_, 0.0);
-  b_.assign(n_, 0.0);
-  // copying input data
-  std::copy(std::get<1>(GetInput()).data(), std::get<1>(GetInput()).data() + (n_ * n_), A_.data());
-  std::copy(std::get<2>(GetInput()).data(), std::get<2>(GetInput()).data() + n_, b_.data());
-  MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
   int proc_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
+
+  if (proc_rank == 0) {
+    n_ = static_cast<size_t>(std::get<0>(GetInput()));
+    A_.assign(n_ * n_, 0.0);
+    b_.assign(n_, 0.0);
+
+    std::copy(std::get<1>(GetInput()).data(), std::get<1>(GetInput()).data() + (n_ * n_), A_.data());
+    std::copy(std::get<2>(GetInput()).data(), std::get<2>(GetInput()).data() + n_, b_.data());
+  }
+
+  MPI_Bcast(&n_, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+  MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
   int rows_for_proc = static_cast<int>(n_) / procNum_;
   int remainder = static_cast<int>(n_) % procNum_;
 
@@ -128,35 +133,31 @@ bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
   int last_row = start_row + rows_for_proc + (proc_rank < remainder ? 1 : 0);
   int local_rows_count = last_row - start_row;
 
-  local_a_ = std::vector<double>(local_rows_count * n_, 0);
-  local_b_ = std::vector<double>(local_rows_count, 0);
+  local_a_.resize(local_rows_count * n_);
+  local_b_.resize(local_rows_count);
 
   std::vector<int> proc_count_elements_a(procNum_, 0);
   std::vector<int> proc_count_elements_b(procNum_, 0);
-  std::vector<int> a_displs(procNum_,
-                            0);  // индексы начала частей матрицы a, которые обрабатываются определенными потоками
+  std::vector<int> a_displs(procNum_, 0);
   std::vector<int> b_displs(procNum_, 0);
 
-  if (proc_rank == 0) {
-    for (int i = 0; i < procNum_; i++) {
-      int start = (i * rows_for_proc) + std::min(i, remainder);
-      int end = start + rows_for_proc + (i < remainder ? 1 : 0);
-      int count = end - start;
-      proc_count_elements_a[i] = count * static_cast<int>(n_);
-      proc_count_elements_b[i] = count;
-      if (i > 0) {
-        a_displs[i] = a_displs[i - 1] + proc_count_elements_a[i - 1];
-        b_displs[i] = b_displs[i - 1] + proc_count_elements_b[i - 1];
-      }
+  for (int i = 0; i < procNum_; i++) {
+    int start = (i * rows_for_proc) + std::min(i, remainder);
+    int end = start + rows_for_proc + (i < remainder ? 1 : 0);
+    int count = end - start;
+
+    proc_count_elements_a[i] = count * static_cast<int>(n_);
+    proc_count_elements_b[i] = count;
+
+    if (i > 0) {
+      a_displs[i] = a_displs[i - 1] + proc_count_elements_a[i - 1];
+      b_displs[i] = b_displs[i - 1] + proc_count_elements_b[i - 1];
     }
   }
-  MPI_Bcast(proc_count_elements_a.data(), procNum_, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(proc_count_elements_b.data(), procNum_, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(a_displs.data(), procNum_, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(b_displs.data(), procNum_, MPI_INT, 0, MPI_COMM_WORLD);
 
   MPI_Scatterv((proc_rank == 0) ? A_.data() : nullptr, proc_count_elements_a.data(), a_displs.data(), MPI_DOUBLE,
                local_a_.data(), local_rows_count * static_cast<int>(n_), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
   MPI_Scatterv((proc_rank == 0) ? b_.data() : nullptr, proc_count_elements_b.data(), b_displs.data(), MPI_DOUBLE,
                local_b_.data(), local_rows_count, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -193,10 +194,7 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
 
     std::vector<int> proc_count_elemts_x(procNum_, 0);
     std::vector<int> x_displs(procNum_, 0);
-    CalculateGatherParameters(proc_rank, proc_count_elemts_x, x_displs, rows_for_proc, remainder);
-
-    MPI_Bcast(proc_count_elemts_x.data(), procNum_, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(x_displs.data(), procNum_, MPI_INT, 0, MPI_COMM_WORLD);
+    CalculateGatherParameters(proc_count_elemts_x, x_displs, rows_for_proc, remainder);
     MPI_Gatherv(local_x_new.data(), local_rows_count, MPI_DOUBLE, x_new.data(), proc_count_elemts_x.data(),
                 x_displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(x_new.data(), static_cast<int>(n_), MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -222,12 +220,12 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
 bool PapulinaYSimpleIterationMPI::PostProcessingImpl() {
   return true;
 }
-void PapulinaYSimpleIterationMPI::CalculateGatherParameters(int proc_rank, std::vector<int> &proc_count_elemts_x,
+void PapulinaYSimpleIterationMPI::CalculateGatherParameters(std::vector<int> &proc_count_elemts_x,
                                                             std::vector<int> &x_displs, int rows_for_proc,
                                                             int remainder) const {
-  if (proc_rank != 0) {
-    return;
-  }
+  // if (proc_rank != 0) {
+  //   return;
+  // }
   for (int i = 0; i < procNum_; i++) {
     unsigned int start = (i * rows_for_proc) + std::min(i, remainder);
     unsigned int end = start + rows_for_proc + (i < remainder ? 1 : 0);
@@ -245,12 +243,13 @@ void PapulinaYSimpleIterationMPI::PrepareLocalMatrices(std::vector<double> &loca
   for (int i = 0; i < local_rows_count; i++) {
     int global_i = start_row + i;
     double diag = local_a_[(i * n) + global_i];
+    double inv_diag = 1.0 / diag;
     for (int j = 0; j < n; j++) {
       if (j != global_i) {
-        local_b_matrix[(i * n) + j] = -local_a_[(i * n) + j] / diag;
+        local_b_matrix[(i * n) + j] = -local_a_[(i * n) + j] * inv_diag;
       }
     }
-    local_d[i] = local_b_[i] / diag;
+    local_d[i] = local_b_[i] * inv_diag;
   }
 }
 }  // namespace papulina_y_simple_iteration

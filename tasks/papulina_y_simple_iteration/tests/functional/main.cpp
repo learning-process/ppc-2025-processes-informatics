@@ -216,6 +216,20 @@ TEST(PapulinaYSimpleIterationValidation_seq_, ZeroOnDiagonal) {  // NOLINT
   EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
   ppc::util::DestructorFailureFlag::Unset();
 }
+TEST(PapulinaYSimpleIterationValidation_seq_, RowSwapsToRevealZeroDeterminant) {  // NOLINT
+  InType invalid_input = std::make_tuple(
+      4,
+      std::vector<double>{1e-15, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0, 14.0, 16.0,  // строка 2 = 2 * строка 1
+                          1e-14, 3.0, 4.0, 5.0},
+      std::vector<double>{10.0, 26.0, 52.0, 13.0});
+  {
+    PapulinaYSimpleIterationSEQ task(invalid_input);
+    EXPECT_FALSE(task.Validation());
+  }
+
+  EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
+  ppc::util::DestructorFailureFlag::Unset();
+}
 TEST(PapulinaYSimpleIterationValidation_mpi_, SingularMatrix) {  // NOLINT
   InType invalid_input = std::make_tuple(2, std::vector<double>{1.0, 2.0, 2.0, 4.0}, std::vector<double>{3.0, 6.0});
   {
@@ -244,6 +258,18 @@ TEST(PapulinaYSimpleIterationValidation_mpi_, ZeroOnDiagonal) {  // NOLINT
     PapulinaYSimpleIterationMPI task(invalid_input);
     EXPECT_FALSE(task.Validation());
   }
+  EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
+  ppc::util::DestructorFailureFlag::Unset();
+}
+TEST(PapulinaYSimpleIterationValidation_mpi_, ExplicitZeroOnDiagonal) {  // NOLINT
+  InType invalid_input = std::make_tuple(3, std::vector<double>{0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0},
+                                         std::vector<double>{8.0, 2.0, 4.0});
+
+  {
+    PapulinaYSimpleIterationMPI task(invalid_input);
+    EXPECT_FALSE(task.Validation());
+  }
+
   EXPECT_TRUE(ppc::util::DestructorFailureFlag::Get());
   ppc::util::DestructorFailureFlag::Unset();
 }
