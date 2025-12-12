@@ -57,7 +57,12 @@ bool BaldinAMyScatterSEQ::RunImpl() {
   size_t bytes_to_copy = static_cast<size_t>(sendcount) * type_size;
 
   if (recvbuf != sendbuf) {
-    std::memcpy(recvbuf, sendbuf, bytes_to_copy);
+    const char *src = static_cast<const char *>(sendbuf);
+    char *dst = static_cast<char *>(recvbuf);
+
+    for (size_t i = 0; i < bytes_to_copy; ++i) {
+      dst[i] = src[i];
+    }
   }
 
   GetOutput() = recvbuf;

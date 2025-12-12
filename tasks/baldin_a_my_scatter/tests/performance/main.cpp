@@ -12,12 +12,16 @@ class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   std::vector<int> send_vec_;
   std::vector<int> recv_vec_;
 
-  const int count_per_proc_ = 1000008;
+  const int count_per_proc_ = 10000008;
 
-  void SetUp() override {
+  bool IsSeqTest() {
     const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     std::string test_name = test_info->name();
-    bool is_seq = (test_name.find("seq") != std::string::npos);
+    return (test_name.find("seq") != std::string::npos);
+  }
+
+  void SetUp() override {
+    bool is_seq = IsSeqTest();
 
     int rank = 0;
     int size = 1;
@@ -45,22 +49,24 @@ class BaldinAMyScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // int rank, size;
-    // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    // MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (output_data == nullptr) {
+      return false;
+    }
 
-    // if (output_data == nullptr) {
-    //   return false;
-    // }
+    bool is_seq = IsSeqTest();
+    int rank = 0;
 
-    // int start_value = rank * count_per_proc_;
-    // const int *actual_data = reinterpret_cast<const int *>(output_data);
-    // for (int i = 0; i < count_per_proc_; i++) {
-    //   if (actual_data[i] != start_value + i) {
-    //     return false;
-    //   }
-    // }
-    output_data = nullptr;
+    if (!is_seq) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    int start_value = rank * count_per_proc_;
+    const int *actual_data = reinterpret_cast<const int *>(output_data);
+    for (int i = 0; i < count_per_proc_; i++) {
+      if (actual_data[i] != start_value + i) {
+        return false;
+      }
+    }
     return true;
   }
 
