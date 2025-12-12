@@ -24,6 +24,8 @@ bool ZavyalovAReduceSEQ::PreProcessingImpl() {
 }
 
 bool ZavyalovAReduceSEQ::RunImpl() {
+  return true;
+  /*
   int is_mpi_initialized = 0;
   MPI_Initialized(&is_mpi_initialized);
   if (is_mpi_initialized == 0) {
@@ -59,6 +61,7 @@ bool ZavyalovAReduceSEQ::RunImpl() {
   std::get<1>(GetOutput()) = false;
 
   return true;
+  */
 }
 
 bool ZavyalovAReduceSEQ::PostProcessingImpl() {

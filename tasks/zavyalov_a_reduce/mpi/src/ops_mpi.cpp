@@ -22,64 +22,38 @@ void ReduceSumImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_
 
   std::vector<T> temp_buf(count);
 
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
+  // Каждый процесс держит текущий накопленный буфер (если понадобится отправлять дальше)
+  std::vector<T> acc_buf(count);
+  std::memcpy(acc_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
 
-  if (world_rank == 0) {
-    std::vector<T> res_buf(count);
-    std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
-
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      ++log2floored;
-      tmp_rank >>= 1;
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.data(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-      for (int i = 0; i < count; ++i) {
-        res_buf[i] += temp_buf[i];
-      }
-      sender_rank *= 2;
-    }
-
-    if (root != 0) {
-      MPI_Send(res_buf.data(), count, type, root, world_rank, comm);
-    } else {
-      std::memcpy(recvbuf, res_buf.data(), static_cast<std::size_t>(count) * sizeof(T));
-    }
-
-  } else {
-    while ((tmp_rank % 2) == 0) {
-      ++log2floored;
-      tmp_rank >>= 1;
-      parent_offset *= 2;
-    }
-
-    if (log2floored > 0) {
-      std::vector<T> res_buf(count);
-      std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
-
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); ++iter) {
-        MPI_Recv(temp_buf.data(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
+  // Постепенное слияние: offset = 1,2,4,...
+  for (int offset = 1; offset < world_size; offset *= 2) {
+    if ((world_rank % (2 * offset)) == 0) {
+      int src = world_rank + offset;
+      if (src < world_size) {
+        MPI_Recv(temp_buf.data(), count, type, src, src, comm, MPI_STATUS_IGNORE);
         for (int i = 0; i < count; ++i) {
-          res_buf[i] += temp_buf[i];
+          acc_buf[i] += temp_buf[i];
         }
-        child_offset *= 2;
       }
-
-      MPI_Send(res_buf.data(), count, type, world_rank - parent_offset, world_rank, comm);
     } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
+      int dst = world_rank - offset;
+      MPI_Send(acc_buf.data(), count, type, dst, world_rank, comm);
+      // После отправки процесс выходит из цикла — он больше не участвует
+      break;
     }
+  }
 
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
+  // В результате сборка по умолчанию на rank 0
+  if (world_rank == 0) {
+    if (root != 0) {
+      MPI_Send(acc_buf.data(), count, type, root, 0, comm);
+    } else {
+      std::memcpy(recvbuf, acc_buf.data(), static_cast<std::size_t>(count) * sizeof(T));
     }
+  } else if (world_rank == root && root != 0) {
+    // root должен получить от 0 итог, если root != 0
+    MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
   }
 }
 
@@ -92,64 +66,33 @@ void ReduceMinImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_
 
   std::vector<T> temp_buf(count);
 
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
+  std::vector<T> acc_buf(count);
+  std::memcpy(acc_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
+
+  for (int offset = 1; offset < world_size; offset *= 2) {
+    if ((world_rank % (2 * offset)) == 0) {
+      int src = world_rank + offset;
+      if (src < world_size) {
+        MPI_Recv(temp_buf.data(), count, type, src, src, comm, MPI_STATUS_IGNORE);
+        for (int i = 0; i < count; ++i) {
+          acc_buf[i] = std::min(acc_buf[i], temp_buf[i]);
+        }
+      }
+    } else {
+      int dst = world_rank - offset;
+      MPI_Send(acc_buf.data(), count, type, dst, world_rank, comm);
+      break;
+    }
+  }
 
   if (world_rank == 0) {
-    std::vector<T> res_buf(count);
-    std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
-
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      ++log2floored;
-      tmp_rank >>= 1;
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.data(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-      for (int i = 0; i < count; ++i) {
-        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-      }
-      sender_rank *= 2;
-    }
-
     if (root != 0) {
-      MPI_Send(res_buf.data(), count, type, root, world_rank, comm);
+      MPI_Send(acc_buf.data(), count, type, root, 0, comm);
     } else {
-      std::memcpy(recvbuf, res_buf.data(), static_cast<std::size_t>(count) * sizeof(T));
+      std::memcpy(recvbuf, acc_buf.data(), static_cast<std::size_t>(count) * sizeof(T));
     }
-
-  } else {
-    while ((tmp_rank % 2) == 0) {
-      ++log2floored;
-      tmp_rank >>= 1;
-      parent_offset *= 2;
-    }
-
-    if (log2floored > 0) {
-      std::vector<T> res_buf(count);
-      std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
-
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); ++iter) {
-        MPI_Recv(temp_buf.data(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; ++i) {
-          res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-        }
-        child_offset *= 2;
-      }
-
-      MPI_Send(res_buf.data(), count, type, world_rank - parent_offset, world_rank, comm);
-    } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
-    }
-
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
+  } else if (world_rank == root && root != 0) {
+    MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
   }
 }
 

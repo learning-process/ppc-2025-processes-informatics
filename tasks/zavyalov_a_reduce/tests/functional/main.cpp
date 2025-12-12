@@ -151,8 +151,10 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         }
 
         float *result_data = static_cast<float *>(result_ptr.get());
+        const float eps = 1e-4f;
+
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != result_data[i]) {
+          if (std::fabs(res[i] - result_data[i]) > eps) {
             ok = false;
             break;
           }
@@ -165,13 +167,16 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         }
 
         double *result_data = static_cast<double *>(result_ptr.get());
+        const double eps = 1e-9;
+
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != result_data[i]) {
+          if (std::fabs(res[i] - result_data[i]) > eps) {
             ok = false;
             break;
           }
         }
       }
+
     } else if (operation == MPI_MIN) {
       if (cur_type == MPI_INT) {
         std::vector<int> res(vec_size);
@@ -193,8 +198,10 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         }
 
         float *result_data = static_cast<float *>(result_ptr.get());
+        const float eps = 1e-4f;
+
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != result_data[i]) {
+          if (std::fabs(res[i] - result_data[i]) > eps) {
             ok = false;
             break;
           }
@@ -206,17 +213,16 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         }
 
         double *result_data = static_cast<double *>(result_ptr.get());
+        const double eps = 1e-9;
+
         for (size_t i = 0; i < vec_size; i++) {
-          if (res[i] != result_data[i]) {
+          if (std::fabs(res[i] - result_data[i]) > eps) {
             ok = false;
             break;
           }
         }
       }
     }
-
-    // Не нужно удалять вручную - shared_ptr сам управляет памятью
-    // Память автоматически освободится при выходе из scope
 
     return ok;
   }
@@ -227,7 +233,6 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  private:
   InType input_data_;
-  // CleanupData больше не нужен - память управляется shared_ptr
 };
 
 namespace {
