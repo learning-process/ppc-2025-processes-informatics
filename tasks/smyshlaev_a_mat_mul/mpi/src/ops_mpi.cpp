@@ -45,19 +45,12 @@ bool SmyshlaevAMatMulMPI::ValidationImpl() {
     const auto &num_rows_b = std::get<2>(GetInput());
     const auto &mat_b = std::get<3>(GetInput());
 
-    if (num_rows_a <= 0 || num_rows_b <= 0) {
-      error_flag = 1;
-    }
+    bool is_invalid = (num_rows_a <= 0 || num_rows_b <= 0) || (mat_a.empty() || mat_b.empty()) ||
+                      (mat_a.size() % num_rows_a != 0) || (mat_b.size() % num_rows_b != 0);
 
-    else if (mat_a.empty() || mat_b.empty()) {
+    if (is_invalid) {
       error_flag = 1;
-    }
-
-    else if (mat_a.size() % num_rows_a != 0 || mat_b.size() % num_rows_b != 0) {
-      error_flag = 1;
-    }
-
-    else {
+    } else {
       const auto &num_cols_a = static_cast<int>(mat_a.size()) / num_rows_a;
       if (num_cols_a != num_rows_b) {
         error_flag = 1;
