@@ -37,6 +37,8 @@ SmyshlaevAMatMulMPI::SmyshlaevAMatMulMPI(const InType &in) {
 bool SmyshlaevAMatMulMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int error_flag = 0;
+
   if (rank == 0) {
     const auto &num_rows_a = std::get<0>(GetInput());
     const auto &mat_a = std::get<1>(GetInput());
@@ -44,22 +46,27 @@ bool SmyshlaevAMatMulMPI::ValidationImpl() {
     const auto &mat_b = std::get<3>(GetInput());
 
     if (num_rows_a <= 0 || num_rows_b <= 0) {
-      return false;
+      error_flag = 1;
     }
 
-    if (mat_a.empty() || mat_b.empty()) {
-      return false;
+    else if (mat_a.empty() || mat_b.empty()) {
+      error_flag = 1;
     }
 
-    if (mat_a.size() % num_rows_a != 0 || mat_b.size() % num_rows_b != 0) {
-      return false;
+    else if (mat_a.size() % num_rows_a != 0 || mat_b.size() % num_rows_b != 0) {
+      error_flag = 1;
     }
 
-    const auto &num_cols_a = static_cast<int>(mat_a.size()) / num_rows_a;
-    return (num_cols_a == num_rows_b);
+    else{
+      const auto &num_cols_a = static_cast<int>(mat_a.size()) / num_rows_a;
+      if (num_cols_a != num_rows_b)
+      {
+        error_flag = 1;
+      }
+    }
   }
-
-  return true;
+  MPI_Bcast(&error_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  return (error_flag == 0);
 }
 
 bool SmyshlaevAMatMulMPI::PreProcessingImpl() {
@@ -95,7 +102,6 @@ bool SmyshlaevAMatMulMPI::RunSequential() {
 
     num_elms = num_rows_a * num_cols_b;
     result.resize(num_elms, 0.0);
-    num_elms = num_rows_a * num_cols_b;
     for (int i = 0; i < num_rows_a; ++i) {
       for (int j = 0; j < num_cols_b; ++j) {
         double sum = 0.0;
@@ -212,19 +218,8 @@ bool SmyshlaevAMatMulMPI::RunImpl() {
   int num_cols_a = 0;
   int num_cols_b = 0;
 
-  if (rank == 0) {
-    num_rows_a = std::get<0>(GetInput());
-    const auto &mat_a = std::get<1>(GetInput());
-    num_cols_a = static_cast<int>(mat_a.size()) / num_rows_a;
-    const auto &num_rows_b = std::get<2>(GetInput());
-    const auto &mat_b = std::get<3>(GetInput());
-    num_cols_b = static_cast<int>(mat_b.size()) / num_rows_b;
-  }
-
-  MPI_Bcast(&num_rows_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&num_cols_a, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&num_cols_b, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+  BroadcastDimensions(num_rows_a, num_cols_a, num_cols_b);
+  
   if (size > num_rows_a || size > num_cols_b) {
     return RunSequential();
   }
