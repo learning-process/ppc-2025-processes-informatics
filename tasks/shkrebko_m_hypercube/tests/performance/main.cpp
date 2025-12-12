@@ -8,25 +8,10 @@
 
 namespace shkrebko_m_hypercube {
 
-namespace {
-bool ShouldSkipHypercubeTest() {
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-  bool skip_local = (world_size < 2 || (world_size & (world_size - 1)) != 0);
-
-  int skip_int = skip_local ? 1 : 0;
-  int skip_all = 0;
-  MPI_Allreduce(&skip_int, &skip_all, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  return (skip_all == 1);
-}
-}  // namespace
-
 class ShkrebkoMHypercubePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    input_data_ = {100, 1};
+    input_data_ = {100, 0};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -45,10 +30,6 @@ class ShkrebkoMHypercubePerfTests : public ppc::util::BaseRunPerfTests<InType, O
 };
 
 TEST_P(ShkrebkoMHypercubePerfTests, RunPerfModes) {
-  if (ShouldSkipHypercubeTest()) {
-    return;
-  }
-
   ExecuteTest(GetParam());
 }
 
