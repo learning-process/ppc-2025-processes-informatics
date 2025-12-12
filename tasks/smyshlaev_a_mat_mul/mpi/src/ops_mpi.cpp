@@ -189,7 +189,7 @@ void SmyshlaevAMatMulMPI::GatherAndBroadcastResults(int rank, int size, int rows
     final_res.resize(static_cast<size_t>(rows_a) * cols_b);
     int offset = 0;
     for (int i = 0; i < size; ++i) {
-      int r_rows = counts_a[i] / cols_a;  // cols_a здесь это K
+      int r_rows = counts_a[i] / cols_a;
       recvcounts_c[i] = r_rows * cols_b;
       disps_c[i] = offset;
       offset += recvcounts_c[i];
