@@ -15,6 +15,16 @@ class ZavyalovAReduceMPI : public BaseTask {
   explicit ZavyalovAReduceMPI(const InType &in);
 
  private:
+  void ReduceSumInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
+  void ReduceSumFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
+  void ReduceSumDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
+
+  void ReduceMinInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
+  void ReduceMinFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
+  void ReduceMinDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
+
+  void ReduceSum(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation, int root,
+                MPI_Comm comm);
   void MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation, int root,
                 MPI_Comm comm);
   bool ValidationImpl() override;
