@@ -67,6 +67,20 @@
   "function": { "expression": "cos(x)" },
   "problem": { "left": 0.0, "right": 3.141592653589793 },
   "expected": { "argmins": [3.141592653589793], "value": -1.0 }
-  }
+  },
+
+  {
+  "name": "case_011_sin_two_minima",
+  "function": { "expression": "sin(x)" },
+  "problem": { "left": -4.71238898038469, "right": 1.5707963267948966 },
+  "expected": { "argmins": [-4.71238898038469, -1.5707963267948966], "value": -1.0}
+  },
+
+  {
+  "name": "case_012_tan",
+  "function": { "expression": "tan(x)" },
+  "problem": { "left": -1.0, "right": 1.0 },
+  "expected": {"argmins": [-1.0], "value": -1.5574077246549023}
+}
 
 ]
