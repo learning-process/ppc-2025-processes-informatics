@@ -26,10 +26,10 @@ bool PapulinaYSimpleIterationMPI::DiagonalDominance(const std::vector<double> &a
     double sum = 0.0;
     for (size_t j = 0; j < n; j++) {
       if (j != i) {
-        sum += abs(a[i * n + j]);
+        sum += abs(a[(i * n) + j]);
       }
     }
-    if (sum > abs(a[i * n + i])) {
+    if (sum > abs(a[(i * n) + i])) {
       flag = false;
       break;
     }
@@ -40,20 +40,20 @@ bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double> &a, c
   std::vector<double> tmp = a;
 
   for (size_t i = 0; i < n; i++) {
-    if (std::fabs(tmp[i * n + i]) < 1e-10) {
+    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
       if (!FindAndSwapRow(tmp, i, n)) {
         std::cout << "Determinant is zero\n";
         return false;
       }
     }
-    double pivot = tmp[i * n + i];
+    double pivot = tmp[(i * n) + i];
     for (size_t j = i; j < n; j++) {
-      tmp[i * n + j] /= pivot;
+      tmp[(i * n) + j] /= pivot;
     }
     for (size_t j = i + 1; j < n; j++) {
-      double factor = tmp[j * n + i];
+      double factor = tmp[(j * n) + i];
       for (size_t k = i; k < n; k++) {
-        tmp[j * n + k] -= tmp[i * n + k] * factor;
+        tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
       }
     }
   }
@@ -62,9 +62,9 @@ bool PapulinaYSimpleIterationMPI::DetermChecking(const std::vector<double> &a, c
 }
 bool PapulinaYSimpleIterationMPI::FindAndSwapRow(std::vector<double> &tmp, size_t i, size_t n) {
   for (size_t j = i + 1; j < n; j++) {
-    if (std::fabs(tmp[j * n + i]) > 1e-10) {
+    if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
       for (size_t k = i; k < n; k++) {
-        std::swap(tmp[i * n + k], tmp[j * n + k]);
+        std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
       }
       return true;
     }
@@ -96,20 +96,16 @@ bool PapulinaYSimpleIterationMPI::ValidationImpl() {
 }
 double PapulinaYSimpleIterationMPI::CalculateNormB(const std::vector<double> &a, size_t n) {
   double max_row_sum = 0.0;
-
   for (size_t i = 0; i < n; i++) {
-    double diag = a[i * n + i];
+    double diag = a[(i * n) + i];
     double row_sum = 0.0;
 
     for (size_t j = 0; j < n; j++) {
       if (j != i) {
-        row_sum += std::abs(a[i * n + j] / diag);
+        row_sum += std::abs(a[(i * n) + j] / diag);
       }
     }
-
-    if (row_sum > max_row_sum) {
-      max_row_sum = row_sum;
-    }
+    max_row_sum = std::max(row_sum, max_row_sum);
   }
 
   return max_row_sum;
@@ -119,7 +115,7 @@ bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
   A_.assign(n_ * n_, 0.0);
   b_.assign(n_, 0.0);
   // copying input data
-  std::copy(std::get<1>(GetInput()).data(), std::get<1>(GetInput()).data() + n_ * n_, A_.data());
+  std::copy(std::get<1>(GetInput()).data(), std::get<1>(GetInput()).data() + (n_ * n_), A_.data());
   std::copy(std::get<2>(GetInput()).data(), std::get<2>(GetInput()).data() + n_, b_.data());
   MPI_Comm_size(MPI_COMM_WORLD, &procNum_);
   int proc_rank = 0;
@@ -127,7 +123,7 @@ bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
   int rows_for_proc = static_cast<int>(n_) / procNum_;
   int remainder = static_cast<int>(n_) % procNum_;
 
-  int start_row = proc_rank * rows_for_proc + std::min(proc_rank, remainder);
+  int start_row = (proc_rank * rows_for_proc) + std::min(proc_rank, remainder);
   int last_row = start_row + rows_for_proc + (proc_rank < remainder ? 1 : 0);
   int local_rows_count = last_row - start_row;
 
@@ -142,7 +138,7 @@ bool PapulinaYSimpleIterationMPI::PreProcessingImpl() {
 
   if (proc_rank == 0) {
     for (int i = 0; i < procNum_; i++) {
-      int start = i * rows_for_proc + std::min(i, remainder);
+      int start = (i * rows_for_proc) + std::min(i, remainder);
       int end = start + rows_for_proc + (i < remainder ? 1 : 0);
       int count = end - start;
       proc_count_elements_a[i] = count * static_cast<int>(n_);
@@ -172,7 +168,7 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
   int rows_for_proc = static_cast<int>(n_) / procNum_;
   int remainder = static_cast<int>(n_) % procNum_;
 
-  int start_row = proc_rank * rows_for_proc + std::min(proc_rank, remainder);
+  int start_row = (proc_rank * rows_for_proc) + std::min(proc_rank, remainder);
   int last_row = start_row + rows_for_proc + (proc_rank < remainder ? 1 : 0);
   int local_rows_count = last_row - start_row;
   std::vector<double> local_b_matrix(local_rows_count * n_, 0);
@@ -187,9 +183,9 @@ bool PapulinaYSimpleIterationMPI::RunImpl() {
 
   for (unsigned int step = 0; step < steps_count_; step++) {
     std::vector<double> local_x_new(local_rows_count, 0.0);
-    for (int i = 0; i < local_rows_count; i++) {
-      for (int j = 0; j < static_cast<int>(n_); j++) {
-        local_x_new[i] += local_b_matrix[i * n_ + j] * x[j];
+    for (size_t i = 0; i < static_cast<size_t>(local_rows_count); i++) {
+      for (size_t j = 0; j < n_; j++) {
+        local_x_new[i] += local_b_matrix[(i * n_) + j] * x[j];
       }
       local_x_new[i] += local_d[i];
     }
@@ -232,7 +228,7 @@ void PapulinaYSimpleIterationMPI::CalculateGatherParameters(int proc_rank, std::
     return;
   }
   for (int i = 0; i < procNum_; i++) {
-    unsigned int start = i * rows_for_proc + std::min(i, remainder);
+    unsigned int start = (i * rows_for_proc) + std::min(i, remainder);
     unsigned int end = start + rows_for_proc + (i < remainder ? 1 : 0);
     unsigned int count = end - start;
     proc_count_elemts_x[i] = static_cast<int>(count);
@@ -247,10 +243,10 @@ void PapulinaYSimpleIterationMPI::PrepareLocalMatrices(std::vector<double> &loca
                                                        int local_rows_count, int n) {
   for (int i = 0; i < local_rows_count; i++) {
     int global_i = start_row + i;
-    double diag = local_a_[i * n + global_i];
+    double diag = local_a_[(i * n) + global_i];
     for (int j = 0; j < n; j++) {
       if (j != global_i) {
-        local_b_matrix[i * n + j] = -local_a_[i * n + j] / diag;
+        local_b_matrix[(i * n) + j] = -local_a_[(i * n) + j] / diag;
       }
     }
     local_d[i] = local_b_[i] / diag;

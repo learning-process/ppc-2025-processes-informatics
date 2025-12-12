@@ -24,34 +24,34 @@ class PapulinaYSimpleIterationRunPerfTestProcesses : public ppc::util::BaseRunPe
     std::vector<double> expected_x(n, 1.0);
 
     for (size_t i = 0; i < n; i++) {
-      matrix_a[i * n + i] = 5.0;
+      matrix_a[(i * n) + i] = 5.0;
 
       if (i > 0) {
-        matrix_a[i * n + (i - 1)] = 2.0;
+        matrix_a[(i * n) + (i - 1)] = 2.0;
       }
       if (i < n - 1) {
-        matrix_a[i * n + (i + 1)] = 2.0;
+        matrix_a[(i * n) + (i + 1)] = 2.0;
       }
 
       if (i > 1) {
-        matrix_a[i * n + (i - 2)] = 0.5;
+        matrix_a[(i * n) + (i - 2)] = 0.5;
       }
       if (i < n - 2) {
-        matrix_a[i * n + (i + 2)] = 0.5;
+        matrix_a[(i * n) + (i + 2)] = 0.5;
       }
 
-      b[i] = matrix_a[i * n + i] * 1.0;
+      b[i] = matrix_a[(i * n) + i] * 1.0;
       if (i > 0) {
-        b[i] += matrix_a[i * n + (i - 1)] * 1.0;
+        b[i] += matrix_a[(i * n) + (i - 1)] * 1.0;
       }
       if (i < n - 1) {
-        b[i] += matrix_a[i * n + (i + 1)] * 1.0;
+        b[i] += matrix_a[(i * n) + (i + 1)] * 1.0;
       }
       if (i > 1) {
-        b[i] += matrix_a[i * n + (i - 2)] * 1.0;
+        b[i] += matrix_a[(i * n) + (i - 2)] * 1.0;
       }
       if (i < n - 2) {
-        b[i] += matrix_a[i * n + (i + 2)] * 1.0;
+        b[i] += matrix_a[(i * n) + (i + 2)] * 1.0;
       }
     }
 

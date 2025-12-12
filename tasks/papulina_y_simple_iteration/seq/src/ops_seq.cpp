@@ -33,18 +33,15 @@ double PapulinaYSimpleIterationSEQ::CalculateNormB(const std::vector<double> &a,
   double max_row_sum = 0.0;
 
   for (size_t i = 0; i < n; i++) {
-    double diag = a[i * n + i];
+    double diag = a[(i * n) + i];
     double row_sum = 0.0;
 
     for (size_t j = 0; j < n; j++) {
       if (j != i) {
-        row_sum += std::abs(a[i * n + j] / diag);
+        row_sum += std::abs(a[(i * n) + j] / diag);
       }
     }
-
-    if (row_sum > max_row_sum) {
-      max_row_sum = row_sum;
-    }
+    max_row_sum = std::max(row_sum, max_row_sum);
   }
 
   return max_row_sum;
@@ -54,7 +51,7 @@ bool PapulinaYSimpleIterationSEQ::PreProcessingImpl() {
   A_.assign(n_ * n_, 0.0);
   b_.assign(n_, 0.0);
   // copying input data
-  std::copy(std::get<1>(GetInput()).data(), std::get<1>(GetInput()).data() + n_ * n_, A_.data());
+  std::copy(std::get<1>(GetInput()).data(), std::get<1>(GetInput()).data() + (n_ * n_), A_.data());
   std::copy(std::get<2>(GetInput()).data(), std::get<2>(GetInput()).data() + n_, b_.data());
   return true;
 }
@@ -64,10 +61,10 @@ bool PapulinaYSimpleIterationSEQ::DiagonalDominance(const std::vector<double> &a
     double sum = 0.0;
     for (size_t j = 0; j < n; j++) {
       if (j != i) {
-        sum += abs(a_matrix[i * n + j]);
+        sum += abs(a_matrix[(i * n) + j]);
       }
     }
-    if (sum > abs(a_matrix[i * n + i])) {
+    if (sum > abs(a_matrix[(i * n) + i])) {
       flag = false;
       break;
     }
@@ -84,20 +81,20 @@ bool PapulinaYSimpleIterationSEQ::DetermChecking(const std::vector<double> &a, c
   std::vector<double> tmp = a;
 
   for (size_t i = 0; i < n; i++) {
-    if (std::fabs(tmp[i * n + i]) < 1e-10) {  // проверка и замена нулевого диагонального элемента
+    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {  // проверка и замена нулевого диагонального элемента
       if (!FindAndSwapRow(tmp, i, n)) {
         std::cout << "Determinant is zero\n";
         return false;
       }
     }
-    double pivot = tmp[i * n + i];
+    double pivot = tmp[(i * n) + i];
     for (size_t j = i; j < n; j++) {  // нормализация текущей строки
-      tmp[i * n + j] /= pivot;
+      tmp[(i * n) + j] /= pivot;
     }
     for (size_t j = i + 1; j < n; j++) {  // вычитание из остальных строк (зануление)
-      double factor = tmp[j * n + i];
+      double factor = tmp[(j * n) + i];
       for (size_t k = i; k < n; k++) {
-        tmp[j * n + k] -= tmp[i * n + k] * factor;
+        tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
       }
     }
   }
@@ -107,9 +104,9 @@ bool PapulinaYSimpleIterationSEQ::DetermChecking(const std::vector<double> &a, c
 bool PapulinaYSimpleIterationSEQ::FindAndSwapRow(std::vector<double> &tmp, size_t i,
                                                  size_t n) {  // вспомогательная функция для поиска и замены строки
   for (size_t j = i + 1; j < n; j++) {
-    if (std::fabs(tmp[j * n + i]) > 1e-10) {
+    if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
       for (size_t k = i; k < n; k++) {
-        std::swap(tmp[i * n + k], tmp[j * n + k]);
+        std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
       }
       return true;
     }
@@ -123,10 +120,10 @@ bool PapulinaYSimpleIterationSEQ::RunImpl() {
   for (size_t i = 0; i < n_; i++) {
     for (size_t j = 0; j < n_; j++) {
       if (i != j) {
-        b_matrix[i * n_ + j] = -A_[i * n_ + j] / A_[i * n_ + i];
+        b_matrix[(i * n_) + j] = -A_[(i * n_) + j] / A_[(i * n_) + i];
       }
     }
-    d[i] = b_[i] / A_[i * n_ + i];
+    d[i] = b_[i] / A_[(i * n_) + i];
   }
   std::vector<double> x = d;
   for (size_t step = 0; step < steps_count_; step++) {
@@ -156,7 +153,7 @@ void PapulinaYSimpleIterationSEQ::ComputeNewX(const std::vector<double> &b_matri
   for (size_t i = 0; i < n; i++) {
     double sum = 0.0;
     for (size_t j = 0; j < n; j++) {
-      sum += b_matrix[i * n + j] * x[j];
+      sum += b_matrix[(i * n) + j] * x[j];
     }
     x_new[i] = sum + d[i];
   }

@@ -38,7 +38,7 @@ class PapulinaYSimpleIterationRunFuncTestsProcesses : public ppc::util::BaseRunF
     for (size_t i = 0; i < n * n; i++) {
       char comma = 0;
       file >> a[i];
-      if (i < n * n - 1) {
+      if (i < (n * n) - 1) {
         file >> comma;
       }
     }
