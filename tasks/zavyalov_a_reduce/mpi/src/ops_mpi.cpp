@@ -5,69 +5,74 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <vector>
 
 #include "zavyalov_a_reduce/common/include/common.hpp"
 
 namespace zavyalov_a_reduce {
-void ZavyalovAReduceMPI::ReduceSumInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
+
+namespace {  // анонимное пространство имён для внутренних шаблонов
+
+template <typename T>
+void ReduceSumImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type) {
   int world_size = 0;
   int world_rank = 0;
-
-  MPI_Datatype type = MPI_INT;
-
   MPI_Comm_size(comm, &world_size);
   MPI_Comm_rank(comm, &world_rank);
 
-  std::shared_ptr<int[]> temp_buf(new int[count], [](int *p) { delete[] p; });
+  std::vector<T> temp_buf(count);
+
   int log2floored = 0;
   int tmp_rank = world_rank;
   int parent_offset = 1;
 
   if (world_rank == 0) {
-    std::shared_ptr<int[]> res_buf(new int[count], [](int *p) { delete[] p; });
-    std::memcpy(res_buf.get(), sendbuf, count * sizeof(int));
+    std::vector<T> res_buf(count);
+    std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
+
     tmp_rank = world_size;
     while (tmp_rank > 1) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
+      ++log2floored;
+      tmp_rank >>= 1;
     }
 
     int sender_rank = 1;
     while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.get(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-
-      for (int i = 0; i < count; i++) {
+      MPI_Recv(temp_buf.data(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
+      for (int i = 0; i < count; ++i) {
         res_buf[i] += temp_buf[i];
       }
       sender_rank *= 2;
     }
+
     if (root != 0) {
-      MPI_Send(res_buf.get(), count, type, root, world_rank, comm);
+      MPI_Send(res_buf.data(), count, type, root, world_rank, comm);
     } else {
-      std::memcpy(recvbuf, res_buf.get(), count * sizeof(int));
+      std::memcpy(recvbuf, res_buf.data(), static_cast<std::size_t>(count) * sizeof(T));
     }
-    // Память автоматически освободится при выходе из блока
 
   } else {
-    while (tmp_rank % 2 == 0) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
+    while ((tmp_rank % 2) == 0) {
+      ++log2floored;
+      tmp_rank >>= 1;
       parent_offset *= 2;
     }
+
     if (log2floored > 0) {
-      std::shared_ptr<int[]> res_buf(new int[count], [](int *p) { delete[] p; });
-      std::memcpy(res_buf.get(), sendbuf, count * sizeof(int));
+      std::vector<T> res_buf(count);
+      std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
+
       int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-        MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
+      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); ++iter) {
+        MPI_Recv(temp_buf.data(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
                  MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count; ++i) {
           res_buf[i] += temp_buf[i];
         }
         child_offset *= 2;
       }
-      MPI_Send(res_buf.get(), count, type, world_rank - parent_offset, world_rank, comm);
-      // Память автоматически освободится
+
+      MPI_Send(res_buf.data(), count, type, world_rank - parent_offset, world_rank, comm);
     } else {
       MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
     }
@@ -76,340 +81,99 @@ void ZavyalovAReduceMPI::ReduceSumInt(const void *sendbuf, void *recvbuf, int co
       MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
     }
   }
+}
+
+template <typename T>
+void ReduceMinImpl(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm, MPI_Datatype type) {
+  int world_size = 0;
+  int world_rank = 0;
+  MPI_Comm_size(comm, &world_size);
+  MPI_Comm_rank(comm, &world_rank);
+
+  std::vector<T> temp_buf(count);
+
+  int log2floored = 0;
+  int tmp_rank = world_rank;
+  int parent_offset = 1;
+
+  if (world_rank == 0) {
+    std::vector<T> res_buf(count);
+    std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
+
+    tmp_rank = world_size;
+    while (tmp_rank > 1) {
+      ++log2floored;
+      tmp_rank >>= 1;
+    }
+
+    int sender_rank = 1;
+    while (sender_rank < world_size) {
+      MPI_Recv(temp_buf.data(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
+      for (int i = 0; i < count; ++i) {
+        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
+      }
+      sender_rank *= 2;
+    }
+
+    if (root != 0) {
+      MPI_Send(res_buf.data(), count, type, root, world_rank, comm);
+    } else {
+      std::memcpy(recvbuf, res_buf.data(), static_cast<std::size_t>(count) * sizeof(T));
+    }
+
+  } else {
+    while ((tmp_rank % 2) == 0) {
+      ++log2floored;
+      tmp_rank >>= 1;
+      parent_offset *= 2;
+    }
+
+    if (log2floored > 0) {
+      std::vector<T> res_buf(count);
+      std::memcpy(res_buf.data(), sendbuf, static_cast<std::size_t>(count) * sizeof(T));
+
+      int child_offset = 1;
+      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); ++iter) {
+        MPI_Recv(temp_buf.data(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
+                 MPI_STATUS_IGNORE);
+        for (int i = 0; i < count; ++i) {
+          res_buf[i] = std::min(res_buf[i], temp_buf[i]);
+        }
+        child_offset *= 2;
+      }
+
+      MPI_Send(res_buf.data(), count, type, world_rank - parent_offset, world_rank, comm);
+    } else {
+      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
+    }
+
+    if (world_rank == root) {
+      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
+    }
+  }
+}
+
+}  // namespace
+
+// Тонкие обёртки, чтобы сохранить прежний интерфейс класса
+void ZavyalovAReduceMPI::ReduceSumInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
+  ReduceSumImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
 }
 void ZavyalovAReduceMPI::ReduceSumFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  int world_size = 0;
-  int world_rank = 0;
-
-  MPI_Datatype type = MPI_FLOAT;
-
-  MPI_Comm_size(comm, &world_size);
-  MPI_Comm_rank(comm, &world_rank);
-
-  std::shared_ptr<float[]> temp_buf(new float[count], [](float *p) { delete[] p; });
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
-
-  if (world_rank == 0) {
-    std::shared_ptr<float[]> res_buf(new float[count], [](float *p) { delete[] p; });
-    std::memcpy(res_buf.get(), sendbuf, count * sizeof(float));
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.get(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-
-      for (int i = 0; i < count; i++) {
-        res_buf[i] += temp_buf[i];
-      }
-      sender_rank *= 2;
-    }
-    if (root != 0) {
-      MPI_Send(res_buf.get(), count, type, root, world_rank, comm);
-    } else {
-      std::memcpy(recvbuf, res_buf.get(), count * sizeof(float));
-    }
-
-  } else {
-    while (tmp_rank % 2 == 0) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-      parent_offset *= 2;
-    }
-    if (log2floored > 0) {
-      std::shared_ptr<float[]> res_buf(new float[count], [](float *p) { delete[] p; });
-      std::memcpy(res_buf.get(), sendbuf, count * sizeof(float));
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-        MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; i++) {
-          res_buf[i] += temp_buf[i];
-        }
-        child_offset *= 2;
-      }
-      MPI_Send(res_buf.get(), count, type, world_rank - parent_offset, world_rank, comm);
-    } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
-    }
-
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
-  }
+  ReduceSumImpl<float>(sendbuf, recvbuf, count, root, comm, MPI_FLOAT);
 }
-
 void ZavyalovAReduceMPI::ReduceSumDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  int world_size = 0;
-  int world_rank = 0;
-
-  MPI_Datatype type = MPI_DOUBLE;
-
-  MPI_Comm_size(comm, &world_size);
-  MPI_Comm_rank(comm, &world_rank);
-
-  std::shared_ptr<double[]> temp_buf(new double[count], [](double *p) { delete[] p; });
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
-
-  if (world_rank == 0) {
-    std::shared_ptr<double[]> res_buf(new double[count], [](double *p) { delete[] p; });
-    std::memcpy(res_buf.get(), sendbuf, count * sizeof(double));
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.get(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-
-      for (int i = 0; i < count; i++) {
-        res_buf[i] += temp_buf[i];
-      }
-      sender_rank *= 2;
-    }
-    if (root != 0) {
-      MPI_Send(res_buf.get(), count, type, root, world_rank, comm);
-    } else {
-      std::memcpy(recvbuf, res_buf.get(), count * sizeof(double));
-    }
-
-  } else {
-    while (tmp_rank % 2 == 0) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-      parent_offset *= 2;
-    }
-    if (log2floored > 0) {
-      std::shared_ptr<double[]> res_buf(new double[count], [](double *p) { delete[] p; });
-      std::memcpy(res_buf.get(), sendbuf, count * sizeof(double));
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-        MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; i++) {
-          res_buf[i] += temp_buf[i];
-        }
-        child_offset *= 2;
-      }
-      MPI_Send(res_buf.get(), count, type, world_rank - parent_offset, world_rank, comm);
-    } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
-    }
-
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
-  }
+  ReduceSumImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
 }
 
 void ZavyalovAReduceMPI::ReduceMinInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  int world_size = 0;
-  int world_rank = 0;
-
-  MPI_Datatype type = MPI_INT;
-
-  MPI_Comm_size(comm, &world_size);
-  MPI_Comm_rank(comm, &world_rank);
-
-  std::shared_ptr<int[]> temp_buf(new int[count], [](int *p) { delete[] p; });
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
-
-  if (world_rank == 0) {
-    std::shared_ptr<int[]> res_buf(new int[count], [](int *p) { delete[] p; });
-    std::memcpy(res_buf.get(), sendbuf, count * sizeof(int));
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.get(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-
-      for (int i = 0; i < count; i++) {
-        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-      }
-      sender_rank *= 2;
-    }
-    if (root != 0) {
-      MPI_Send(res_buf.get(), count, type, root, world_rank, comm);
-    } else {
-      std::memcpy(recvbuf, res_buf.get(), count * sizeof(int));
-    }
-
-  } else {
-    while (tmp_rank % 2 == 0) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-      parent_offset *= 2;
-    }
-    if (log2floored > 0) {
-      std::shared_ptr<int[]> res_buf(new int[count], [](int *p) { delete[] p; });
-      std::memcpy(res_buf.get(), sendbuf, count * sizeof(int));
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-        MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; i++) {
-          res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-        }
-        child_offset *= 2;
-      }
-      MPI_Send(res_buf.get(), count, type, world_rank - parent_offset, world_rank, comm);
-    } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
-    }
-
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
-  }
+  ReduceMinImpl<int>(sendbuf, recvbuf, count, root, comm, MPI_INT);
 }
-
 void ZavyalovAReduceMPI::ReduceMinFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  int world_size = 0;
-  int world_rank = 0;
-
-  MPI_Datatype type = MPI_FLOAT;
-
-  MPI_Comm_size(comm, &world_size);
-  MPI_Comm_rank(comm, &world_rank);
-
-  std::shared_ptr<float[]> temp_buf(new float[count], [](float *p) { delete[] p; });
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
-
-  if (world_rank == 0) {
-    std::shared_ptr<float[]> res_buf(new float[count], [](float *p) { delete[] p; });
-    std::memcpy(res_buf.get(), sendbuf, count * sizeof(float));
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.get(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-
-      for (int i = 0; i < count; i++) {
-        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-      }
-      sender_rank *= 2;
-    }
-    if (root != 0) {
-      MPI_Send(res_buf.get(), count, type, root, world_rank, comm);
-    } else {
-      std::memcpy(recvbuf, res_buf.get(), count * sizeof(float));
-    }
-
-  } else {
-    while (tmp_rank % 2 == 0) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-      parent_offset *= 2;
-    }
-    if (log2floored > 0) {
-      std::shared_ptr<float[]> res_buf(new float[count], [](float *p) { delete[] p; });
-      std::memcpy(res_buf.get(), sendbuf, count * sizeof(float));
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-        MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; i++) {
-          res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-        }
-        child_offset *= 2;
-      }
-      MPI_Send(res_buf.get(), count, type, world_rank - parent_offset, world_rank, comm);
-    } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
-    }
-
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
-  }
+  ReduceMinImpl<float>(sendbuf, recvbuf, count, root, comm, MPI_FLOAT);
 }
-
 void ZavyalovAReduceMPI::ReduceMinDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm) {
-  int world_size = 0;
-  int world_rank = 0;
-
-  MPI_Datatype type = MPI_DOUBLE;
-
-  MPI_Comm_size(comm, &world_size);
-  MPI_Comm_rank(comm, &world_rank);
-
-  std::shared_ptr<double[]> temp_buf(new double[count], [](double *p) { delete[] p; });
-  int log2floored = 0;
-  int tmp_rank = world_rank;
-  int parent_offset = 1;
-
-  if (world_rank == 0) {
-    std::shared_ptr<double[]> res_buf(new double[count], [](double *p) { delete[] p; });
-    std::memcpy(res_buf.get(), sendbuf, count * sizeof(double));
-    tmp_rank = world_size;
-    while (tmp_rank > 1) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-    }
-
-    int sender_rank = 1;
-    while (sender_rank < world_size) {
-      MPI_Recv(temp_buf.get(), count, type, sender_rank, sender_rank, comm, MPI_STATUS_IGNORE);
-
-      for (int i = 0; i < count; i++) {
-        res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-      }
-      sender_rank *= 2;
-    }
-    if (root != 0) {
-      MPI_Send(res_buf.get(), count, type, root, world_rank, comm);
-    } else {
-      std::memcpy(recvbuf, res_buf.get(), count * sizeof(double));
-    }
-
-  } else {
-    while (tmp_rank % 2 == 0) {
-      log2floored++;
-      tmp_rank >>= 1;  // tmp_rank /= 2
-      parent_offset *= 2;
-    }
-    if (log2floored > 0) {
-      std::shared_ptr<double[]> res_buf(new double[count], [](double *p) { delete[] p; });
-      std::memcpy(res_buf.get(), sendbuf, count * sizeof(double));
-      int child_offset = 1;
-      for (int iter = 1; (iter <= log2floored) && ((world_rank + child_offset) < world_size); iter++) {
-        MPI_Recv(temp_buf.get(), count, type, world_rank + child_offset, world_rank + child_offset, comm,
-                 MPI_STATUS_IGNORE);
-        for (int i = 0; i < count; i++) {
-          res_buf[i] = std::min(res_buf[i], temp_buf[i]);
-        }
-        child_offset *= 2;
-      }
-      MPI_Send(res_buf.get(), count, type, world_rank - parent_offset, world_rank, comm);
-    } else {
-      MPI_Send(sendbuf, count, type, world_rank - parent_offset, world_rank, comm);
-    }
-
-    if (world_rank == root) {
-      MPI_Recv(recvbuf, count, type, 0, 0, comm, MPI_STATUS_IGNORE);
-    }
-  }
+  ReduceMinImpl<double>(sendbuf, recvbuf, count, root, comm, MPI_DOUBLE);
 }
 
 void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation,
