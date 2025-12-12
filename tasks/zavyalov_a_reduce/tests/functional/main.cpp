@@ -48,6 +48,12 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  protected:
   void SetUp() override {
+    int is_mpi_initialized = 0;
+    MPI_Initialized(&is_mpi_initialized);
+    if (is_mpi_initialized == 0) {
+      return;
+    }
+
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     MPI_Op operation = std::get<0>(params);
     MPI_Datatype cur_type = std::get<1>(params);

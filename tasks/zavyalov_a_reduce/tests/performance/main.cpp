@@ -35,6 +35,12 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
       return true;
     }
 
+    int is_mpi_initialized = 0;
+    MPI_Initialized(&is_mpi_initialized);
+    if (is_mpi_initialized == 0) {
+      return true;
+    }
+
     int world_size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
