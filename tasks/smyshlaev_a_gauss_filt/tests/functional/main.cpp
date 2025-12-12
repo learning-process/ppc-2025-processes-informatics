@@ -52,13 +52,14 @@ TEST_P(SmyshlaevAGaussFiltRunFuncTestsProcesses, GaussFiltTest) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<SmyshlaevAGaussFiltMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_gauss_filt),
-                   ppc::util::AddFuncTask<SmyshlaevAGaussFiltSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_gauss_filt));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SmyshlaevAGaussFiltMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_gauss_filt),
+    ppc::util::AddFuncTask<SmyshlaevAGaussFiltSEQ, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_gauss_filt));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SmyshlaevAGaussFiltRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAGaussFiltRunFuncTestsProcesses>;
+const auto kPerfTestName =
+    SmyshlaevAGaussFiltRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAGaussFiltRunFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, SmyshlaevAGaussFiltRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 

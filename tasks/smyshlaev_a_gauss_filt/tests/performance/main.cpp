@@ -7,7 +7,7 @@
 
 namespace smyshlaev_a_gauss_filt {
 
-class SmyshlaevAGaussFiltRunPerfTestsProcesses  : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SmyshlaevAGaussFiltRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
   InType input_data_{};
 
@@ -24,17 +24,17 @@ class SmyshlaevAGaussFiltRunPerfTestsProcesses  : public ppc::util::BaseRunPerfT
   }
 };
 
-TEST_P(SmyshlaevAGaussFiltRunPerfTestsProcesses , RunPerfModes) {
+TEST_P(SmyshlaevAGaussFiltRunPerfTestsProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SmyshlaevAGaussFiltMPI, SmyshlaevAGaussFiltSEQ>(PPC_SETTINGS_smyshlaev_a_gauss_filt);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SmyshlaevAGaussFiltMPI, SmyshlaevAGaussFiltSEQ>(
+    PPC_SETTINGS_smyshlaev_a_gauss_filt);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = SmyshlaevAGaussFiltRunPerfTestsProcesses ::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SmyshlaevAGaussFiltRunPerfTestsProcesses , kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SmyshlaevAGaussFiltRunPerfTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace smyshlaev_a_gauss_filt
