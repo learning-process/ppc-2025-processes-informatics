@@ -8,7 +8,8 @@
 
 namespace smyshlaev_a_gauss_filt {
 
-int GetPixelClamped(const InType& img, int x, int y, int ch) {
+namespace {
+  int GetPixelClamped(const InType& img, int x, int y, int ch) {
     const int w = img.width;
     const int h = img.height;
     const int c = img.channels;
@@ -17,6 +18,7 @@ int GetPixelClamped(const InType& img, int x, int y, int ch) {
     y = std::clamp(y, 0, h - 1);
     
     return img.data[(y * w + x) * c + ch];
+  }
 }
 
 SmyshlaevAGaussFiltSEQ::SmyshlaevAGaussFiltSEQ(const InType &in) {
@@ -45,8 +47,6 @@ bool SmyshlaevAGaussFiltSEQ::RunImpl() {
   const int c = input_image.channels;
   
   output_image.data.resize(w * h * c);
-  const std::vector<uint8_t> &input_data = input_image.data;
-
 
   const std::vector<int> kernel = {
       1, 2, 1,
