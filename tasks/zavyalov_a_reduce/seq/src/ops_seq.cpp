@@ -1,7 +1,5 @@
 #include "zavyalov_a_reduce/seq/include/ops_seq.hpp"
 
-#include <mpi.h>
-
 #include <cstdlib>
 
 #include "zavyalov_a_reduce/common/include/common.hpp"
