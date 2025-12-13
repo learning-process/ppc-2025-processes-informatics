@@ -143,8 +143,10 @@ double SizovDGlobalSearchMPI::EstimateM(double reliability, int rank, int size) 
     }
   }
 
-  double global_max = 0.0;
-  MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  double global_max = local_max;
+  if (size > 1) {
+    MPI_Allreduce(&local_max, &global_max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+  }
 
   return reliability * std::max(global_max, kMinSlope);
 }
@@ -206,9 +208,12 @@ SizovDGlobalSearchMPI::IntervalChar SizovDGlobalSearchMPI::ComputeLocalBestInter
   return res;
 }
 
-int SizovDGlobalSearchMPI::ReduceBestIntervalIndex(const IntervalChar &local, int n) {
-  IntervalChar global{};
-  MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+int SizovDGlobalSearchMPI::ReduceBestIntervalIndex(const IntervalChar &local, int n, int size) {
+  IntervalChar global = local;
+
+  if (size > 1) {
+    MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+  }
 
   if (global.index < 1 || global.index >= n) {
     return -1;
@@ -220,8 +225,9 @@ bool SizovDGlobalSearchMPI::CheckStopByAccuracy(const Problem &p, int best_idx, 
   int flag = 0;
 
   if (rank == 0) {
-    const double left = x_[static_cast<std::size_t>(best_idx - 1)];
-    const double right = x_[static_cast<std::size_t>(best_idx)];
+    const auto i = static_cast<std::size_t>(best_idx);
+    const double left = x_[i - 1U];
+    const double right = x_[i];
     const double width = right - left;
 
     if (width <= p.accuracy) {
@@ -250,11 +256,21 @@ void SizovDGlobalSearchMPI::BroadcastState(int rank) {
   }
 }
 
+void SizovDGlobalSearchMPI::BroadcastInsertMsg(InsertMsg &msg, int rank) {
+  MPI_Bcast(&msg.idx, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&msg.x_new, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&msg.y_new, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  (void)rank;
+}
+
 void SizovDGlobalSearchMPI::BroadcastNewPoint(int best_idx, double m, const Problem &p, int rank) {
   InsertMsg msg{};
 
   if (rank == 0) {
-    const double x_new = NewPoint(static_cast<std::size_t>(best_idx), m);
+    const auto i = static_cast<std::size_t>(best_idx);
+
+    const double x_new = NewPoint(i, m);
     const double y_new = p.func(x_new);
 
     if (std::isfinite(y_new)) {
@@ -277,12 +293,14 @@ void SizovDGlobalSearchMPI::BroadcastNewPoint(int best_idx, double m, const Prob
     }
   }
 
-  MPI_Bcast(&msg, static_cast<int>(sizeof(InsertMsg)), MPI_BYTE, 0, MPI_COMM_WORLD);
+  BroadcastInsertMsg(msg, rank);
 
   if (rank != 0 && msg.idx >= 0) {
-    const auto pos = x_.begin() + msg.idx;
-    x_.insert(pos, msg.x_new);
-    y_.insert(y_.begin() + msg.idx, msg.y_new);
+    const auto idx = static_cast<std::size_t>(msg.idx);
+    if (idx <= x_.size()) {
+      x_.insert(x_.begin() + static_cast<std::ptrdiff_t>(idx), msg.x_new);
+      y_.insert(y_.begin() + static_cast<std::ptrdiff_t>(idx), msg.y_new);
+    }
   }
 }
 
@@ -334,7 +352,7 @@ bool SizovDGlobalSearchMPI::RunImpl() {
     }
 
     const IntervalChar local = ComputeLocalBestInterval(m, rank, size);
-    const int best_idx = ReduceBestIntervalIndex(local, n);
+    const int best_idx = ReduceBestIntervalIndex(local, n, size);
     if (best_idx < 1) {
       converged_ = false;
       break;
