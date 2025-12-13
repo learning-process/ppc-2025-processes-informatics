@@ -177,8 +177,8 @@ void MatrixBandMultiplicationMpi::MultiplyStripe(const double *stripe_data, int 
         const std::size_t b_idx = k * static_cast<std::size_t>(stripe_cols) + static_cast<std::size_t>(col);
         sum += local_a_[a_idx] * stripe_data[b_idx];
       }
-      const std::size_t result_idx = static_cast<std::size_t>(row) * cols_b_
-                                      + static_cast<std::size_t>(stripe_offset + col);
+      const std::size_t result_idx =
+          static_cast<std::size_t>(row) * cols_b_ + static_cast<std::size_t>(stripe_offset + col);
       local_result_[result_idx] = sum;
     }
   }
@@ -246,4 +246,3 @@ bool MatrixBandMultiplicationMpi::PostProcessingImpl() {
 }
 
 }  // namespace matrix_band_multiplication
-
