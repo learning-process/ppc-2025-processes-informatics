@@ -2,10 +2,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstddef>
 #include <ranges>
 #include <string>
-#include <cmath>
 
 #include "krykov_e_simple_iteration/common/include/common.hpp"
 
@@ -16,7 +16,7 @@ KrykovESimpleIterationSEQ::KrykovESimpleIterationSEQ(const InType &in) {
 }
 
 bool KrykovESimpleIterationSEQ::ValidationImpl() {
-  const auto& [n, A, b] = GetInput();
+  const auto &[n, A, b] = GetInput();
   return n > 0 && A.size() == n * n && b.size() == n;
 }
 
@@ -25,7 +25,7 @@ bool KrykovESimpleIterationSEQ::PreProcessingImpl() {
 }
 
 bool KrykovESimpleIterationSEQ::RunImpl() {
-  const auto& [n, A, b] = GetInput();
+  const auto &[n, A, b] = GetInput();
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
@@ -50,7 +50,9 @@ bool KrykovESimpleIterationSEQ::RunImpl() {
     }
 
     x = x_new;
-    if (diff < eps) break;
+    if (diff < eps) {
+      break;
+    }
   }
 
   GetOutput() = x;

@@ -18,7 +18,7 @@ class KrykovESimpleIterationPerfTests : public ppc::util::BaseRunPerfTests<InTyp
 
   void SetUp() override {
     constexpr size_t n = 100;
-    
+
     std::vector<double> A(n * n, 0.0);
     std::vector<double> b(n, 0.0);
     expected_output_.assign(n, 1.0);
@@ -56,8 +56,8 @@ TEST_P(KrykovESimpleIterationPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KrykovESimpleIterationMPI, KrykovESimpleIterationSEQ>(PPC_SETTINGS_krykov_e_simple_iteration);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KrykovESimpleIterationMPI, KrykovESimpleIterationSEQ>(
+    PPC_SETTINGS_krykov_e_simple_iteration);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

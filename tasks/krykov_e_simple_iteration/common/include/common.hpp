@@ -7,11 +7,10 @@
 
 namespace krykov_e_simple_iteration {
 
-using InType = std::tuple<
-    size_t,                              // n
-    std::vector<double>,    // A
-    std::vector<double>                  // b
->;
+using InType = std::tuple<size_t,               // n
+                          std::vector<double>,  // A
+                          std::vector<double>   // b
+                          >;
 
 using OutType = std::vector<double>;
 using TestType = std::tuple<InType, OutType>;

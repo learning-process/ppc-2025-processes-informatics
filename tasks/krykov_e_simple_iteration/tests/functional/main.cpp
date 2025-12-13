@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-
 #include <cmath>
 #include <tuple>
 #include <vector>
@@ -26,10 +25,9 @@ class KrykovESimpleIterationFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
  protected:
   void SetUp() override {
-    const auto& param =
-        std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-        input_data_ = std::get<0>(param);
-        expected_output_ = std::get<1>(param);
+    const auto &param = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = std::get<0>(param);
+    expected_output_ = std::get<1>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -59,51 +57,29 @@ namespace {
 
 // 1) Простая 1x1 система
 // x = 1
-const TestType test_1 = {
-    {1, {1.0}, {1.0}},
-    {1.0}
-};
+const TestType test_1 = {{1, {1.0}, {1.0}}, {1.0}};
 
 // 2) Диагональная система 2x2
 // 2x = 4
 // 3y = 6
-const TestType test_2 = {
-    {2, {2.0, 0.0,
-         0.0, 3.0},
-     {4.0, 6.0}},
-    {2.0, 2.0}
-};
+const TestType test_2 = {{2, {2.0, 0.0, 0.0, 3.0}, {4.0, 6.0}}, {2.0, 2.0}};
 
 // 3) Простая 2x2 система
 // 4x + y = 9
 // x + 3y = 5
-const TestType test_3 = {
-    {2, {4.0, 1.0,
-         1.0, 3.0},
-     {9.0, 5.0}},
-    {2.0, 1.0}
-};
+const TestType test_3 = {{2, {4.0, 1.0, 1.0, 3.0}, {9.0, 5.0}}, {2.0, 1.0}};
 
 // 4) 3x3 диагонально доминирующая система
-const TestType test_4 = {
-    {3,
-     {10.0, 1.0, 1.0,
-       2.0, 10.0, 1.0,
-       2.0, 2.0, 10.0},
-     {12.0, 13.0, 14.0}},
-    {1.0, 1.0, 1.0}
-};
+const TestType test_4 = {{3, {10.0, 1.0, 1.0, 2.0, 10.0, 1.0, 2.0, 2.0, 10.0}, {12.0, 13.0, 14.0}}, {1.0, 1.0, 1.0}};
 
 TEST_P(KrykovESimpleIterationFuncTests, SimpleIterationTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {
-    test_1, test_2, test_3, test_4
-};
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KrykovESimpleIterationMPI, InType>(kTestParam, PPC_SETTINGS_krykov_e_simple_iteration),
-                   ppc::util::AddFuncTask<KrykovESimpleIterationSEQ, InType>(kTestParam, PPC_SETTINGS_krykov_e_simple_iteration));
+const std::array<TestType, 4> kTestParam = {test_1, test_2, test_3, test_4};
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KrykovESimpleIterationMPI, InType>(kTestParam, PPC_SETTINGS_krykov_e_simple_iteration),
+    ppc::util::AddFuncTask<KrykovESimpleIterationSEQ, InType>(kTestParam, PPC_SETTINGS_krykov_e_simple_iteration));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
