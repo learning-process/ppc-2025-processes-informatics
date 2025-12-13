@@ -19,13 +19,14 @@
 **Требуется**:
 Применить фильтр Гаусса к изображению. Для каждого пикселя `(x, y)` новое значение вычисляется как взвешенная сумма соседей.
 Формула ядра (с нормировочным коэффициентом 16):
-$$
-K = \frac{1}{16} \begin{bmatrix}
+```math
+K = \frac{1}{16}
+\begin{bmatrix}
 1 & 2 & 1 \\
 2 & 4 & 2 \\
 1 & 2 & 1
 \end{bmatrix}
-$$
+```
 
 **Выходные данные**:
 - Изображение тех же размеров (`W`, `H`) и с тем же количеством каналов (`C`), что и входное.
@@ -56,9 +57,11 @@ $$
 
 ### 4.1. Оптимизация:
 Ядро Гаусса `3 x 3` можно представить как произведение двух одномерных векторов:
+```math
 $$
 \begin{bmatrix} 1 & 2 & 1 \\ 2 & 4 & 2 \\ 1 & 2 & 1 \end{bmatrix} = \begin{bmatrix} 1 \\ 2 \\ 1 \end{bmatrix} \times \begin{bmatrix} 1 & 2 & 1 \end{bmatrix}
 $$
+```
 Это позволяет заменить одну 2D-свертку (9 умножений на пиксель) на две 1D-свертки (3 + 3 = 6 умножений на пиксель).
 
 1.  **Горизонтальный проход:** Свертка по строкам вектором $[1, 2, 1]$.
@@ -78,9 +81,9 @@ $$
 ## 5. Детали реализации
 
 **Ключевые файлы:**
-	- `baldin_a_gauss_filter/seq/include/ops_seq.hpp` и `baldin_a_gauss_filter/seq/src/ops_seq.cpp` - последовательная реализация.
-	- `baldin_a_gauss_filter/mpi/include/ops_mpi.hpp` и `baldin_a_gauss_filter/mpi/src/ops_mpi.cpp` - параллельная реализация.
-	- `baldin_a_gauss_filter/common/include/common.hpp` - общие определения типов и интерфейсов.
+- `baldin_a_gauss_filter/seq/include/ops_seq.hpp` и `baldin_a_gauss_filter/seq/src/ops_seq.cpp` - последовательная реализация.
+- `baldin_a_gauss_filter/mpi/include/ops_mpi.hpp` и `baldin_a_gauss_filter/mpi/src/ops_mpi.cpp` - параллельная реализация.
+- `baldin_a_gauss_filter/common/include/common.hpp` - общие определения типов и интерфейсов.
 
 **Основные функции:**
 - `CalculatePartitions` - вспомогательная функция для расчета распределения нагрузки. Вычисляет, какие строки (включая перекрытия) отправить каждому процессу.
