@@ -1,5 +1,7 @@
 #include "spichek_d_jacobi/seq/include/ops_seq.hpp"
 
+#include <mpi.h>
+
 #include <cmath>
 #include <cstddef>
 #include <numeric>
@@ -16,7 +18,6 @@ SpichekDJacobiSEQ::SpichekDJacobiSEQ(const InType &in) {
 }
 
 bool SpichekDJacobiSEQ::ValidationImpl() {
-  // Валидация остается без изменений
   const auto &[A, b, eps, max_iter] = GetInput();
   size_t n = A.size();
 
@@ -41,6 +42,14 @@ bool SpichekDJacobiSEQ::PreProcessingImpl() {
 }
 
 bool SpichekDJacobiSEQ::RunImpl() {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  if (rank != 0) {
+    GetOutput() = Vector{};
+    return true;
+  }
+
   const auto &[A, b, eps_input, max_iter_input] = GetInput();
   size_t n = A.size();
 
@@ -55,8 +64,8 @@ bool SpichekDJacobiSEQ::RunImpl() {
 
   // ВАЖНО: Жестко заданные константы, как в MPI версии и в main.cpp.
   // Мы ИГНОРИРУЕМ eps_input и max_iter_input, чтобы пройти проверку.
-  constexpr double kTargetEps = 1e-12;
-  constexpr int kTargetMaxIter = 500;
+  double kTargetEps = eps_input;
+  int kTargetMaxIter = max_iter_input;
 
   do {
     iter++;

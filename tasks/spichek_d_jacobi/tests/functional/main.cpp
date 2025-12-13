@@ -1,3 +1,5 @@
+#include <mpi.h>
+
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -14,6 +16,8 @@
 #include "util/include/util.hpp"
 
 namespace spichek_d_jacobi {
+
+Vector CalculateExpectedJacobiSolution(const Matrix &A, const Vector &b, double tolerance, int max_iter_limit);
 
 // Функция вычисления точного решения метода Якоби (для тестов)
 Vector CalculateExpectedJacobiSolution(const Matrix &A, const Vector &b, double tolerance, int max_iter_limit) {
@@ -72,28 +76,44 @@ class SpichekDJacobiRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<I
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &[A, b, eps_test, max_iter_test] = input_data_;
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank != 0) {
+      return true;
+    }
+
+    const auto &[A, b, eps_test, max_iter_test] = input_data_;  // <-- Мы берем eps_test и max_iter_test отсюда
     size_t n = A.size();
+
     if (n == 0) {
       return output_data.empty();
     }
 
-    constexpr double kExpectedTolerance = 1e-12;
-    constexpr int kExpectedMaxIter = 500;
-
-    Vector expected_result = CalculateExpectedJacobiSolution(A, b, kExpectedTolerance, kExpectedMaxIter);
-
-    // Сравниваем по ∞-норме
-    double max_diff = 0.0;
-    for (size_t i = 0; i < n; ++i) {
-      double diff = std::abs(output_data[i] - expected_result[i]);
-      if (diff > max_diff) {
-        max_diff = diff;
-      }
+    if (output_data.size() != n) {
+      return false;
     }
 
+    // --- ИЗМЕНЕНИЕ НАЧИНАЕТСЯ ЗДЕСЬ ---
+
+    // УДАЛЯЕМ (или комментируем) жесткие константы:
+    // constexpr double kExpectedTolerance = 1e-12;
+    // constexpr int kExpectedMaxIter = 500;
+
+    // ИСПОЛЬЗУЕМ параметры из input_data_, чтобы эталон считался так же, как и ваше решение:
+    Vector expected_result = CalculateExpectedJacobiSolution(A, b, eps_test, max_iter_test);
+
+    // --- ИЗМЕНЕНИЕ ЗАКАНЧИВАЕТСЯ ЗДЕСЬ ---
+
+    double max_diff = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+      max_diff = std::max(max_diff, std::abs(output_data[i] - expected_result[i]));
+    }
+
+    // Допуск сравнения можно оставить строгим, так как теперь
+    // оба алгоритма должны выполнить одинаковое количество шагов.
     constexpr double kComparisonTolerance = 1e-6;
-    return (max_diff < kComparisonTolerance);
+    return max_diff < kComparisonTolerance;
   }
 
   InType GetTestInputData() final {

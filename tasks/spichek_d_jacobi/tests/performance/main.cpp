@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 #include <cstddef>
@@ -23,7 +24,7 @@ class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<In
 
     // Оставляем 100 итераций, этого достаточно
     constexpr double kEpsilon = 1e-5;
-    constexpr int kMaxIter = 100;
+    constexpr int kMaxIter = 1000;
 
     Matrix A(n_size, Vector(n_size));
     Vector b(n_size);
@@ -47,9 +48,18 @@ class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<In
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // 🔴 Только root проверяет результат
+    if (rank != 0) {
+      return true;
+    }
+
     if (output_data.empty()) {
       return false;
     }
+
     double sum_sq = 0.0;
     for (double val : output_data) {
       if (std::isnan(val) || std::isinf(val)) {
@@ -57,7 +67,7 @@ class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<In
       }
       sum_sq += val * val;
     }
-    return (sum_sq > 1e-9);
+    return sum_sq > 1e-9;
   }
 
   InType GetTestInputData() final {

@@ -4,9 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
 #include <vector>
 
 #include "spichek_d_jacobi/common/include/common.hpp"
@@ -26,13 +23,12 @@ bool SpichekDJacobiMPI::ValidationImpl() {
   if (n == 0) {
     return true;
   }
-
   if (A[0].size() != n || b.size() != n) {
     return false;
   }
 
   for (size_t i = 0; i < n; ++i) {
-    if (std::abs(A[i][i]) < 1e-9) {
+    if (std::abs(A[i][i]) < 1e-12) {
       return false;
     }
   }
@@ -45,130 +41,109 @@ bool SpichekDJacobiMPI::PreProcessingImpl() {
 }
 
 bool SpichekDJacobiMPI::RunImpl() {
-  int rank = 0;
-  int size = 0;
+  int rank = 0, size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // 1. Получаем входные параметры, включая eps и max_iter
   const auto &[A_global, b_global, eps, max_iter] = GetInput();
-  int n_global = static_cast<int>(A_global.size());
 
-  MPI_Bcast(&n_global, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  // ---------- 1. Размер задачи ----------
+  int n = 0;
+  if (rank == 0) {
+    n = static_cast<int>(A_global.size());
+  }
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (n_global == 0) {
+  if (n == 0) {
     GetOutput() = Vector{};
     return true;
   }
 
-  std::vector<int> counts(size);
-  std::vector<int> displs(size);
+  // ---------- 2. Разбиение ----------
+  std::vector<int> counts(size), displs(size);
 
-  int base = n_global / size;
-  int rem = n_global % size;
+  int base = n / size;
+  int rem = n % size;
 
   for (int i = 0; i < size; ++i) {
     counts[i] = base + (i < rem ? 1 : 0);
-    // Более надежный расчет displs (накопительная сумма)
-    if (i == 0) {
-      displs[i] = 0;
-    } else {
-      displs[i] = displs[i - 1] + counts[i - 1];
-    }
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
   }
 
   int local_n = counts[rank];
 
-  // ОПТИМИЗАЦИЯ: Используем плоский вектор вместо vector<vector>
-  // Это значительно ускоряет доступ к памяти при N=10000
-  std::vector<double> local_A(local_n * n_global);
+  // ---------- 3. Локальные данные ----------
+  std::vector<double> local_A(local_n * n);
   Vector local_b(local_n);
 
-  Vector x_k(n_global, 0.0);
-  Vector x_k_plus_1(n_global, 0.0);
+  Vector x(n, 0.0);
+  Vector x_new(n, 0.0);
 
-  // ---------- Рассылка данных ----------
+  // ---------- 4. Рассылка ----------
   if (rank == 0) {
     for (int p = 0; p < size; ++p) {
-      for (int r = 0; r < counts[p]; ++r) {
-        int global_row = displs[p] + r;
+      for (int i = 0; i < counts[p]; ++i) {
+        int gi = displs[p] + i;
 
         if (p == 0) {
-          // Копируем строку в плоский буфер
-          std::copy(A_global[global_row].begin(), A_global[global_row].end(), local_A.begin() + r * n_global);
-          local_b[r] = b_global[global_row];
+          std::copy(A_global[gi].begin(), A_global[gi].end(), local_A.begin() + i * n);
+          local_b[i] = b_global[gi];
         } else {
-          // Отправляем строку как массив double
-          MPI_Send(A_global[global_row].data(), n_global, MPI_DOUBLE, p, global_row, MPI_COMM_WORLD);
-          MPI_Send(&b_global[global_row], 1, MPI_DOUBLE, p, global_row + n_global, MPI_COMM_WORLD);
+          MPI_Send(A_global[gi].data(), n, MPI_DOUBLE, p, gi, MPI_COMM_WORLD);
+          MPI_Send(&b_global[gi], 1, MPI_DOUBLE, p, gi + n, MPI_COMM_WORLD);
         }
       }
     }
   } else {
-    for (int r = 0; r < local_n; ++r) {
-      int global_row = displs[rank] + r;
-      MPI_Status status;
-
-      // Принимаем сразу в нужную позицию плоского вектора
-      MPI_Recv(local_A.data() + r * n_global, n_global, MPI_DOUBLE, 0, global_row, MPI_COMM_WORLD, &status);
-      MPI_Recv(&local_b[r], 1, MPI_DOUBLE, 0, global_row + n_global, MPI_COMM_WORLD, &status);
+    for (int i = 0; i < local_n; ++i) {
+      int gi = displs[rank] + i;
+      MPI_Status st;
+      MPI_Recv(local_A.data() + i * n, n, MPI_DOUBLE, 0, gi, MPI_COMM_WORLD, &st);
+      MPI_Recv(&local_b[i], 1, MPI_DOUBLE, 0, gi + n, MPI_COMM_WORLD, &st);
     }
   }
 
-  // ---------- Итерации Якоби ----------
+  // ---------- 5. Итерации Якоби ----------
   double max_diff = 0.0;
   int iter = 0;
 
-  // ИСПРАВЛЕНИЕ: Используем жестко заданные константы для критериев останова,
-  // чтобы соответствовать логике, заложенной в тестовой функции main.cpp.
-  constexpr double kTargetEps = 1e-12;
-  constexpr int kTargetMaxIter = 500;
-
   do {
     ++iter;
-    Vector local_x_new(local_n);
+    std::vector<double> local_x_new(local_n);
 
     for (int i = 0; i < local_n; ++i) {
-      int gi = displs[rank] + i;  // Глобальный индекс строки
+      int gi = displs[rank] + i;
+      const double *row = local_A.data() + i * n;
+
       double sum = 0.0;
-
-      // ОПТИМИЗАЦИЯ: Доступ к плоскому массиву быстрее
-      const double *row_ptr = &local_A[i * n_global];
-
-      for (int j = 0; j < n_global; ++j) {
+      for (int j = 0; j < n; ++j) {
         if (j != gi) {
-          sum += row_ptr[j] * x_k[j];
+          sum += row[j] * x[j];
         }
       }
 
-      // Диагональный элемент: local_A[i][gi] -> row_ptr[gi]
-      local_x_new[i] = (local_b[i] - sum) / row_ptr[gi];
+      local_x_new[i] = (local_b[i] - sum) / row[gi];
     }
 
-    MPI_Allgatherv(local_x_new.data(), local_n, MPI_DOUBLE, x_k_plus_1.data(), counts.data(), displs.data(), MPI_DOUBLE,
+    std::fill(x_new.begin(), x_new.end(), 0.0);
+
+    MPI_Allgatherv(local_x_new.data(), local_n, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
 
-    // ИСПРАВЛЕНИЕ: Считаем максимальную разность (L_inf-норма) для соответствия main.cpp
-    double local_max_diff = 0.0;
+    double local_max = 0.0;
     for (int i = 0; i < local_n; ++i) {
-      // Используем глобальный индекс gi для доступа к x_k_plus_1, но это не нужно,
-      // так как x_k_plus_1 уже содержит весь вектор после Allgatherv
       int gi = displs[rank] + i;
-      double diff = std::abs(x_k_plus_1[gi] - x_k[gi]);
-      if (diff > local_max_diff) {
-        local_max_diff = diff;
-      }
+      local_max = std::max(local_max, std::abs(x_new[gi] - x[gi]));
     }
 
-    // Находим глобальный максимум среди локальных максимумов
-    MPI_Allreduce(&local_max_diff, &max_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    x_k = x_k_plus_1;
+    MPI_Allreduce(&local_max, &max_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-    // ИСПРАВЛЕНИЕ: Используем константы kTargetEps и kTargetMaxIter
-  } while (max_diff > kTargetEps && iter < kTargetMaxIter);
+    x.swap(x_new);
 
-  GetOutput() = x_k_plus_1;
+  } while (max_diff > eps && iter < max_iter);
 
+  // ---------- 6. Результат ----------
+  GetOutput() = x;  // БЕЗ if(rank == 0)
   return true;
 }
 
