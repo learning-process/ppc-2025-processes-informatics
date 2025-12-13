@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <random>
 #include <vector>
 
@@ -35,11 +34,9 @@ class RunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     }
 
     std::vector<int> ref = input_data_;
-
     if (!ref.empty()) {
       QuickSortImpl(ref, 0, static_cast<int>(ref.size()) - 1);
     }
-
     return output_data == ref;
   }
 
