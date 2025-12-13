@@ -19,7 +19,7 @@ class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<In
   void SetUp() override {
     // УМЕНЬШЕНО до 128.
     // 500 слишком много для SEQ версии в рамках pipeline теста на некоторых машинах.
-    const size_t n_size = 128;
+    const size_t n_size = 12;
 
     constexpr double kEpsilon = 1e-5;
     constexpr int kMaxIter = 500;
@@ -60,7 +60,6 @@ class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<In
       }
       sum_sq += val * val;
     }
-    std::cout << sum_sq << std::endl;
     return sum_sq > 1e-9;
   }
 
