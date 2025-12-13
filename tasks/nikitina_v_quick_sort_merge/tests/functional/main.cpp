@@ -99,9 +99,9 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = RunFuncTests::PrintFuncTestName<RunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(QuickSortTests, RunFuncTests, kGtestValues,
-                         kPerfTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
-                                          // modernize-type-traits, misc-use-anonymous-namespace)
+// NOLINTBEGIN(cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits,misc-use-anonymous-namespace)
+INSTANTIATE_TEST_SUITE_P(QuickSortTests, RunFuncTests, kGtestValues, kPerfTestName);
+// NOLINTEND(cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits,misc-use-anonymous-namespace)
 
 }  // namespace
 

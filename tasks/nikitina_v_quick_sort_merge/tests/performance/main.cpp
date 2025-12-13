@@ -58,8 +58,8 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = RunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(QuickSortPerfTests, RunPerfTests, kGtestValues,
-                         kPerfTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
-                                          // modernize-type-traits, misc-use-anonymous-namespace)
+// NOLINTBEGIN(cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits,misc-use-anonymous-namespace)
+INSTANTIATE_TEST_SUITE_P(QuickSortPerfTests, RunPerfTests, kGtestValues, kPerfTestName);
+// NOLINTEND(cert-err58-cpp,cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits,misc-use-anonymous-namespace)
 
 }  // namespace nikitina_v_quick_sort_merge
