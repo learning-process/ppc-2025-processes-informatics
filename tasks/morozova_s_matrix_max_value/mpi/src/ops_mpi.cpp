@@ -10,25 +10,6 @@
 
 namespace morozova_s_matrix_max_value {
 
-namespace {
-bool CheckMatrix(const InType &mat, int &rows, int &cols) {
-  rows = static_cast<int>(mat.size());
-  if (rows <= 0) {
-    return false;
-  }
-  cols = static_cast<int>(mat[0].size());
-  if (cols <= 0) {
-    return false;
-  }
-  for (size_t i = 1; i < mat.size(); ++i) {
-    if (mat[i].size() != static_cast<size_t>(cols)) {
-      return false;
-    }
-  }
-  return true;
-}
-}  // namespace
-
 MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = InType(in);
@@ -36,17 +17,17 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
-  int rows = 0;
-  int cols = 0;
   const auto &mat = GetInput();
-  rows = static_cast<int>(mat.size());
+  int rows = static_cast<int>(mat.size());
   if (rows <= 0) {
     return false;
   }
-  cols = static_cast<int>(mat[0].size());
+
+  int cols = static_cast<int>(mat[0].size());
   if (cols <= 0) {
     return false;
   }
+
   for (size_t i = 1; i < mat.size(); ++i) {
     if (mat[i].size() != static_cast<size_t>(cols)) {
       return false;
