@@ -359,12 +359,6 @@ tasks/sizov_d_global_search
 
 Correctness was verified using functional tests defined in `tests.json`.
 
-The test set includes:
-
-- monotonic functions;
-- trigonometric functions;
-- functions with multiple global minima;
-
 Both SEQ and MPI implementations:
 
 - converge to valid global minima;
