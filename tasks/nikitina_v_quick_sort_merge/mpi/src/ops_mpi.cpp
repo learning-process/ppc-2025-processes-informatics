@@ -9,6 +9,37 @@
 
 namespace nikitina_v_quick_sort_merge {
 
+namespace {
+
+void QuickSortImpl(std::vector<int> &vec, int left, int right) {
+  int i = left;
+  int j = right;
+  int pivot = vec[(left + right) / 2];
+
+  while (i <= j) {
+    while (vec[i] < pivot) {
+      i++;
+    }
+    while (vec[j] > pivot) {
+      j--;
+    }
+    if (i <= j) {
+      std::swap(vec[i], vec[j]);
+      i++;
+      j--;
+    }
+  }
+
+  if (left < j) {
+    QuickSortImpl(vec, left, j);
+  }
+  if (i < right) {
+    QuickSortImpl(vec, i, right);
+  }
+}
+
+}  // namespace
+
 TestTaskMPI::TestTaskMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -57,7 +88,9 @@ bool TestTaskMPI::RunImpl() {
   MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_vec.data(),
                send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::ranges::sort(local_vec);
+  if (!local_vec.empty()) {
+    QuickSortImpl(local_vec, 0, static_cast<int>(local_vec.size()) - 1);
+  }
 
   if (rank == 0) {
     GetOutput().resize(total_elements);

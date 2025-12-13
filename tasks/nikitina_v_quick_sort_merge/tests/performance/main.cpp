@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <random>
+#include <vector>
 
 #include "nikitina_v_quick_sort_merge/common/include/common.hpp"
 #include "nikitina_v_quick_sort_merge/mpi/include/ops_mpi.hpp"
@@ -15,7 +17,7 @@ class RunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     const int count = 1000000;
     input_data_.resize(count);
-    std::mt19937 gen(1337);  // NOLINT(cert-msc51-cpp)
+    std::mt19937 gen(1337);
     std::uniform_int_distribution<int> dist(-100000, 100000);
     for (int &val : input_data_) {
       val = dist(gen);
@@ -44,6 +46,6 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = RunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(QuickSortPerfTests, RunPerfTests, kGtestValues, kPerfTestName);  // NOLINT
+INSTANTIATE_TEST_SUITE_P(QuickSortPerfTests, RunPerfTests, kGtestValues, kPerfTestName);  // NOLINT(cert-err58-cpp)
 
 }  // namespace nikitina_v_quick_sort_merge
