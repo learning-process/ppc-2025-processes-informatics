@@ -90,7 +90,7 @@ bool MatrixBandMultiplicationMpi::BroadcastDimensions(const Matrix &matrix_a, co
   rows_b_ = dims[2];
   cols_b_ = dims[3];
 
-  return rows_a_ != 0 && cols_a_ != 0 && rows_b_ != 0 && cols_b_ != 0;
+  return !(rows_a_ == 0 || cols_a_ == 0 || rows_b_ == 0 || cols_b_ == 0);
 }
 
 void MatrixBandMultiplicationMpi::PrepareRowDistribution(const Matrix &matrix_a) {
