@@ -19,7 +19,6 @@ bool GaseninLImageSmoothMPI::ValidationImpl() {
   int width = GetInput().width;
   int height = GetInput().height;
 
-  // Рассылаем размеры всем, чтобы все процессы прошли валидацию одинаково
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -34,13 +33,11 @@ bool GaseninLImageSmoothMPI::PreProcessingImpl() {
     GetOutput() = GetInput();
     GetOutput().data.assign(GetInput().data.size(), 0);
   } else {
-    // Не-root процессам тоже нужны метаданные в GetOutput для корректной работы RunImpl
     GetOutput().width = GetInput().width;
     GetOutput().height = GetInput().height;
     GetOutput().kernel_size = GetInput().kernel_size;
   }
 
-  // Синхронизируем метаданные вывода
   MPI_Bcast(&GetOutput().width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&GetOutput().height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&GetOutput().kernel_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -61,18 +58,25 @@ bool GaseninLImageSmoothMPI::RunImpl() {
   if (rank == 0) {
     full_input_data = GetInput().data;
   } else {
-    full_input_data.resize(static_cast<size_t>(w) * static_cast<size_t>(h));
+    full_input_data.resize(w * h);
   }
 
-  // Рассылаем всё изображение всем процессам
   MPI_Bcast(full_input_data.data(), w * h, MPI_UINT8_T, 0, MPI_COMM_WORLD);
 
-  // Расчет строк
   int delta = h / size;
   int rem = h % size;
   int start_row = rank * delta + std::min(rank, rem);
   int end_row = start_row + delta + (rank < rem ? 1 : 0);
   int local_rows = end_row - start_row;
+
+  std::vector<int> recv_counts(size);
+  std::vector<int> displs(size);
+  for (int i = 0; i < size; ++i) {
+    int r_start = i * delta + std::min(i, rem);
+    int r_end = r_start + delta + (i < rem ? 1 : 0);
+    recv_counts[i] = (r_end - r_start) * w;
+    displs[i] = r_start * w;
+  }
 
   if (local_rows > 0) {
     std::vector<uint8_t> local_result(local_rows * w);
@@ -94,25 +98,11 @@ bool GaseninLImageSmoothMPI::RunImpl() {
       }
     }
 
-    // Подготовка к сборке
-    std::vector<int> recv_counts(size);
-    std::vector<int> displs(size);
-    for (int i = 0; i < size; ++i) {
-      int r_start = i * delta + std::min(i, rem);
-      int r_end = r_start + delta + (i < rem ? 1 : 0);
-      recv_counts[i] = (r_end - r_start) * w;
-      displs[i] = r_start * w;
-    }
-
     MPI_Gatherv(local_result.data(), local_rows * w, MPI_UINT8_T, (rank == 0 ? GetOutput().data.data() : nullptr),
                 recv_counts.data(), displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
   } else {
-    // Процессы без строк тоже должны участвовать в коллективном Gatherv
-    std::vector<int> recv_counts(size, 0);
-    std::vector<int> displs(size, 0);
-    if (rank == 0) { /* заполнить counts */
-    }
-    MPI_Gatherv(nullptr, 0, MPI_UINT8_T, nullptr, nullptr, nullptr, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(nullptr, 0, MPI_UINT8_T, (rank == 0 ? GetOutput().data.data() : nullptr), recv_counts.data(),
+                displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
   }
 
   return true;

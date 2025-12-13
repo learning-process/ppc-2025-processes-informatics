@@ -16,9 +16,7 @@ bool GaseninLImageSmoothSEQ::ValidationImpl() {
 }
 
 bool GaseninLImageSmoothSEQ::PreProcessingImpl() {
-  // Инициализируем output теми же метаданными
   GetOutput() = GetInput();
-  // Очищаем данные, так как будем перезаписывать
   GetOutput().data.assign(GetInput().data.size(), 0);
   return true;
 }

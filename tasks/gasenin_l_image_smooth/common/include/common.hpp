@@ -13,7 +13,7 @@ struct TaskData {
   std::vector<uint8_t> data;
   int width;
   int height;
-  int kernel_size;  // Размер ядра (например, 3 для 3x3)
+  int kernel_size;
 
   bool operator==(const TaskData &other) const {
     return data == other.data && width == other.width && height == other.height;
@@ -22,10 +22,9 @@ struct TaskData {
 
 using InType = TaskData;
 using OutType = TaskData;
-using TestType = std::tuple<int, std::string>;  // kernel_size, name
+using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-// Вспомогательная функция для clamping координат
 inline int clamp(int val, int min, int max) {
   if (val < min) {
     return min;

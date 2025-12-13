@@ -26,13 +26,10 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     int height = -1;
     int channels = -1;
 
-    // Загрузка изображения
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gasenin_l_image_smooth, "pic.jpg");
-    // Грузим как GreyScale (1 канал) для упрощения задачи сглаживания в лабе
     auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 1);
 
     if (data == nullptr) {
-      // Если картинки нет, создаем синтетическую "шахматную доску" для теста
       width = 64;
       height = 64;
       input_data_.width = width;
@@ -48,38 +45,28 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
       stbi_image_free(data);
     }
 
-    // ИСПРАВЛЕНИЕ 1: Правильное извлечение параметров теста из кортежа GTest
     auto test_params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_.kernel_size = std::get<0>(test_params);
 
-    // Генерируем reference result (последовательная версия)
-    ref_output_ = input_data_;  // копируем метаданные
+    ref_output_ = input_data_;
     ref_output_.data.assign(input_data_.data.size(), 0);
 
-    // Простой последовательный прогон для проверки (Reference)
     GaseninLImageSmoothSEQ task(input_data_);
 
-    // ИСПРАВЛЕНИЕ 2: Вызов публичных методов интерфейса, а не приватных Impl
     task.Validation();
     task.PreProcessing();
     task.Run();
     task.PostProcessing();
 
-    // Копируем результат последовательной задачи в reference
     auto result_task = task.GetOutput();
     ref_output_.data = result_task.data;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверяем данные только если они не пустые
-    // Это работает для обоих случаев:
-    // - SEQ: всегда есть данные
-    // - MPI: данные есть только на root-процессе
     if (output_data.data.empty()) {
-      return true;  // Пустые данные - пропускаем проверку
+      return true;
     }
 
-    // Сравниваем с reference результатом
     return output_data == ref_output_;
   }
 
