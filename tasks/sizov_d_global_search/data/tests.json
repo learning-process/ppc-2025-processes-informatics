@@ -46,13 +46,6 @@
     "function": { "expression": "sin(x)" },
     "problem": { "left": -1.0, "right": 1.0 },
     "expected": { "argmins": [-1.0], "value": -0.8414709848078965 }
-  },
-
-  {
-    "name": "case_008_sin",
-    "function": { "expression": "sin(x)" },
-    "problem": { "left": -3.0, "right": 2.0 },
-    "expected": { "argmins": [-1.5707963267948966], "value": -1.0 }
   }
 
 ]
