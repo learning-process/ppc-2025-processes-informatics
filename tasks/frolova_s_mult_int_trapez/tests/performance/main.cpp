@@ -5,9 +5,11 @@
 #include <cmath>
 #include <vector>
 
-#include "frolova_s_star_topology/common/include/common.hpp"
-#include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
-#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
+#include "frolova_s_mult_int_trapez/common/include/common.hpp"
+#include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
+#include "frolova_s_mult_int_trapez/seq/include/ops_seq.hpp"
+
+using namespace frolova_s_mult_int_trapez;
 
 double function1(std::vector<double> input) {
   return pow(input[0], 3) + pow(input[1], 3);
@@ -17,12 +19,12 @@ double function2(std::vector<double> input) {
 }
 
 // SEQ Performance Tests
-TEST(frolova_s_star_topology_seq_perf, test_small_problem) {
+TEST(frolova_s_mult_int_trapez_seq_perf, test_small_problem) {
   std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
   std::vector<unsigned int> intervals = {100, 100};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function2};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function2};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   auto start = std::chrono::high_resolution_clock::now();
@@ -38,12 +40,12 @@ TEST(frolova_s_star_topology_seq_perf, test_small_problem) {
   std::cout << "SEQ Small problem time: " << duration.count() << " seconds" << std::endl;
 }
 
-TEST(frolova_s_star_topology_seq_perf, test_medium_problem) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {300, 300};
+TEST(frolova_s_mult_int_trapez_seq_perf, test_large_problem) {
+  std::vector<std::pair<double, double>> limits = {{0.0, 2.0}, {0.0, 2.0}};
+  std::vector<unsigned int> intervals = {500, 500};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function2};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function1};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   auto start = std::chrono::high_resolution_clock::now();
@@ -81,15 +83,15 @@ TEST(frolova_s_star_topology_seq_perf, test_large_problem) {
 }
 
 // MPI Performance Tests
-TEST(frolova_s_star_topology_mpi_perf, test_small_problem) {
+TEST(frolova_s_mult_int_trapez_mpi_perf, test_large_problem) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {100, 100};
+  std::vector<std::pair<double, double>> limits = {{0.0, 2.0}, {0.0, 2.0}};
+  std::vector<unsigned int> intervals = {500, 500};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function2};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function1};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   auto start = std::chrono::high_resolution_clock::now();
@@ -106,15 +108,15 @@ TEST(frolova_s_star_topology_mpi_perf, test_small_problem) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_perf, test_medium_problem) {
+TEST(frolova_s_mult_int_trapez_mpi_perf, test_medium_problem) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
   std::vector<unsigned int> intervals = {300, 300};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function2};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function2};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   auto start = std::chrono::high_resolution_clock::now();

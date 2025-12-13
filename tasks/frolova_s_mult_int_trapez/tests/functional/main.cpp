@@ -9,6 +9,8 @@
 #include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
 #include "frolova_s_mult_int_trapez/seq/include/ops_seq.hpp"
 
+using namespace frolova_s_mult_int_trapez;
+
 std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
   std::random_device dev;
   std::mt19937 gen(dev());
@@ -48,12 +50,12 @@ double function6(std::vector<double> input) {
 }
 
 // SEQ Tests
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_1) {
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_1) {
   std::vector<std::pair<double, double>> limits = {{2.5, 4.5}, {1.0, 3.2}};
   std::vector<unsigned int> intervals = {100, 100};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function1};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function1};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -64,12 +66,12 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_1) {
   EXPECT_GT(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_2) {
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_2) {
   std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
   std::vector<unsigned int> intervals = {80, 80, 80};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function2};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function2};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -80,12 +82,12 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_2) {
   EXPECT_NE(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_3) {
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_3) {
   std::vector<std::pair<double, double>> limits = {{0.0, 3.0}, {0.0, 4.0}, {0.0, 5.0}};
   std::vector<unsigned int> intervals = {80, 80, 80};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function3};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function3};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -96,28 +98,12 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_3) {
   EXPECT_GT(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_4) {
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_4) {
   std::vector<std::pair<double, double>> limits = {{0.0, 0.5}};
-  std::vector<unsigned int> intervals = {1000};
+  std::vector<unsigned int> intervals = {70};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function4};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_LT(result, 0.0);
-}
-
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_5) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}};
-  std::vector<unsigned int> intervals = {100, 100};
-
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function5};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function4};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -128,12 +114,28 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_5) {
   EXPECT_LT(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_6) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {100, 100};
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_5) {
+  std::vector<std::pair<double, double>> limits = {{1.0, 2.5}, {0.0, 1.0}, {2.0, 3.0}};
+  std::vector<unsigned int> intervals = {50, 50, 50};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function6};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function5};
+  FrolovaSMultIntTrapezSEQ task(input);
+
+  ASSERT_TRUE(task.ValidationImpl());
+  ASSERT_TRUE(task.PreProcessingImpl());
+  ASSERT_TRUE(task.RunImpl());
+  ASSERT_TRUE(task.PostProcessingImpl());
+
+  double result = task.GetOutput();
+  EXPECT_LT(result, 0.0);
+}
+
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_6) {
+  std::vector<std::pair<double, double>> limits = {{-1.0, 1.0}, {-1.0, 1.0}};
+  std::vector<unsigned int> intervals = {60, 60};
+
+  TrapezoidalIntegrationInput input{limits, intervals, function6};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -144,13 +146,13 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_6) {
   EXPECT_NE(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_limits) {
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_random_limits) {
   std::vector<std::pair<double, double>> limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0),
                                                    GetRandomLimit(0.0, 10.0)};
   std::vector<unsigned int> intervals = {80, 80, 80};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function3};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function3};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -161,12 +163,12 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_limits
   EXPECT_GT(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_intervals) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {GetRandomIntegerData(100, 150), GetRandomIntegerData(100, 150)};
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_random_intervals) {
+  std::vector<std::pair<double, double>> limits = {{0.0, 2.0}, {0.0, 2.0}};
+  std::vector<unsigned int> intervals{GetRandomIntegerData(50, 100), GetRandomIntegerData(50, 100)};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function6};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function6};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -177,14 +179,14 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_interv
   EXPECT_NE(result, 0.0);
 }
 
-TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_limits_and_intervals) {
+TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_random_limits_and_intervals) {
   std::vector<std::pair<double, double>> limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0),
                                                    GetRandomLimit(0.0, 10.0)};
   std::vector<unsigned int> intervals = {GetRandomIntegerData(40, 60), GetRandomIntegerData(40, 60),
                                          GetRandomIntegerData(40, 60)};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function3};
-  frolova_s_star_topology::FrolovaSStarTopologySEQ task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function3};
+  FrolovaSMultIntTrapezSEQ task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -196,15 +198,15 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_limits
 }
 
 // MPI Tests
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_1) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_1) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{2.5, 4.5}, {1.0, 3.2}};
   std::vector<unsigned int> intervals = {100, 100};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function1};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function1};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -217,15 +219,15 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_1) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_2) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_2) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
   std::vector<unsigned int> intervals = {80, 80, 80};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function2};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function2};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -238,15 +240,15 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_2) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_3) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_3) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{0.0, 3.0}, {0.0, 4.0}, {0.0, 5.0}};
   std::vector<unsigned int> intervals = {80, 80, 80};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function3};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function3};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -259,15 +261,15 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_3) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_4) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_4) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{0.0, 0.5}};
   std::vector<unsigned int> intervals = {1000};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function4};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function4};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -280,15 +282,15 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_4) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_5) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_5) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}};
   std::vector<unsigned int> intervals = {100, 100};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function5};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function5};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -301,15 +303,15 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_5) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_6) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_6) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
   std::vector<unsigned int> intervals = {100, 100};
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function6};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function6};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -322,7 +324,7 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_6) {
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_random_limits) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_random_limits) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -333,8 +335,8 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_random_limits
     limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0)};
   }
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function3};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function3};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
@@ -347,7 +349,7 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_random_limits
   }
 }
 
-TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_random_intervals) {
+TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_random_intervals) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -358,8 +360,8 @@ TEST(frolova_s_star_topology_mpi_functional, Test_of_functionality_random_interv
     intervals = {GetRandomIntegerData(100, 150), GetRandomIntegerData(100, 150)};
   }
 
-  frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function6};
-  frolova_s_star_topology::FrolovaSStarTopologyMPI task(input);
+  TrapezoidalIntegrationInput input{limits, intervals, function6};
+  FrolovaSMultIntTrapezMPI task(input);
 
   ASSERT_TRUE(task.ValidationImpl());
   ASSERT_TRUE(task.PreProcessingImpl());
