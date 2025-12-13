@@ -2,10 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <ranges>
 #include <vector>
 
 #include "telnov_strongin_algorithm/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_strongin_algorithm {
 
@@ -17,7 +18,7 @@ TelnovStronginAlgorithmSEQ::TelnovStronginAlgorithmSEQ(const InType &in) {
 
 bool TelnovStronginAlgorithmSEQ::ValidationImpl() {
   const auto &in = GetInput();
-  return in.eps > 0 && in.b > in.a;
+  return (in.eps > 0.0) && (in.b > in.a);
 }
 
 bool TelnovStronginAlgorithmSEQ::PreProcessingImpl() {
@@ -30,39 +31,44 @@ bool TelnovStronginAlgorithmSEQ::RunImpl() {
   const double b = in.b;
   const double eps = in.eps;
 
-  auto f = [](double x) { return (x - 1) * (x - 1) + 1; };  // тестовая функция
+  auto f = [](double x) { return ((x - 1.0) * (x - 1.0)) + 1.0; };
 
-  std::vector<double> X = {a, b};
-  std::vector<double> F = {f(a), f(b)};
+  std::vector<double> x_vals = {a, b};
+  std::vector<double> f_vals = {f(a), f(b)};
 
-  while ((X.back() - X.front()) > eps) {
-    double M = 0.0;
-    for (size_t i = 1; i < X.size(); ++i) {
-      M = std::max(M, std::abs(F[i] - F[i - 1]) / (X[i] - X[i - 1]));
-    }
-    if (M == 0) {
-      M = 1.0;
+  while ((x_vals.back() - x_vals.front()) > eps) {
+    double m = 0.0;
+    for (std::size_t i = 1; i < x_vals.size(); ++i) {
+      m = std::max(m, std::abs(f_vals[i] - f_vals[i - 1]) / (x_vals[i] - x_vals[i - 1]));
     }
 
-    double r = 2.0;
-    double maxR = -1e9;
-    size_t t = 0;
+    if (m == 0.0) {
+      m = 1.0;
+    }
 
-    for (size_t i = 1; i < X.size(); ++i) {
-      double Ri = r * (X[i] - X[i - 1]) + (F[i] - F[i - 1]) * (F[i] - F[i - 1]) / (r * (X[i] - X[i - 1])) -
-                  2 * (F[i] + F[i - 1]);
-      if (Ri > maxR) {
-        maxR = Ri;
-        t = i;
+    const double r = 2.0;
+    double max_r = -1e9;
+    std::size_t best_idx = 1;
+
+    for (std::size_t i = 1; i < x_vals.size(); ++i) {
+      const double dx = x_vals[i] - x_vals[i - 1];
+      const double df = f_vals[i] - f_vals[i - 1];
+      const double r_val = (r * dx) + ((df * df) / (r * dx)) - (2.0 * (f_vals[i] + f_vals[i - 1]));
+
+      if (r_val > max_r) {
+        max_r = r_val;
+        best_idx = i;
       }
     }
 
-    double x_new = 0.5 * (X[t] + X[t - 1]) - (F[t] - F[t - 1]) / (2 * M);
-    X.insert(X.begin() + t, x_new);
-    F.insert(F.begin() + t, f(x_new));
+    const double new_x =
+        (0.5 * (x_vals[best_idx] + x_vals[best_idx - 1])) - ((f_vals[best_idx] - f_vals[best_idx - 1]) / (2.0 * m));
+
+    x_vals.insert(x_vals.begin() + static_cast<std::ptrdiff_t>(best_idx), new_x);
+    f_vals.insert(f_vals.begin() + static_cast<std::ptrdiff_t>(best_idx), f(new_x));
   }
 
-  GetOutput() = *std::min_element(F.begin(), F.end());
+  GetOutput() = *std::ranges::min_element(f_vals);
   return true;
 }
 
