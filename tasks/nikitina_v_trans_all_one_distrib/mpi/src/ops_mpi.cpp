@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <vector>
 
 #include "nikitina_v_trans_all_one_distrib/common/include/common.hpp"
@@ -23,16 +24,46 @@ bool TestTaskMPI::PreProcessingImpl() {
 }
 
 bool TestTaskMPI::RunImpl() {
-  if (GetInput().empty()) {
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  int input_size = 0;
+  if (rank == 0) {
+    input_size = static_cast<int>(GetInput().size());
+  }
+  MPI_Bcast(&input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (input_size == 0) {
     return true;
   }
 
-  GetOutput().resize(GetInput().size());
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
 
-  auto size = static_cast<int>(GetInput().size());
-  MPI_Reduce(GetInput().data(), GetOutput().data(), size, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  int chunk_size = input_size / size;
+  int remainder = input_size % size;
 
-  MPI_Bcast(GetOutput().data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+  for (int i = 0; i < size; ++i) {
+    counts[i] = chunk_size + (i < remainder ? 1 : 0);
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
+  }
+
+  std::vector<int> local_input(counts[rank]);
+  std::vector<int> local_output(counts[rank]);
+
+  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, counts.data(), displs.data(), MPI_INT, local_input.data(),
+               counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::copy(local_input.begin(), local_input.end(), local_output.begin());
+
+  if (rank == 0) {
+    GetOutput().resize(input_size);
+  }
+
+  MPI_Gatherv(local_output.data(), counts[rank], MPI_INT, rank == 0 ? GetOutput().data() : nullptr, counts.data(),
+              displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;
 }

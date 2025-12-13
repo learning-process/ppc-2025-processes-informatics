@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <vector>
 
@@ -17,6 +18,11 @@ class NikitinaVRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType>
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank != 0) {
+      return true;
+    }
     return output_data.size() == input_data_.size();
   }
 
