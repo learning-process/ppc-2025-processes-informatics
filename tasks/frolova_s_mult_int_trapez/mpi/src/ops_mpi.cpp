@@ -1,8 +1,9 @@
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
 #include <algorithm>
 #include <cmath>
-#include <mpi.h>
 #include <numeric>
 #include <vector>
 
@@ -14,7 +15,7 @@ FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) {
   GetOutput() = 0.0;
 }
 
-unsigned int FrolovaSStarTopologyMPI::CalculationOfCoefficient(const std::vector<double>& point) {
+unsigned int FrolovaSStarTopologyMPI::CalculationOfCoefficient(const std::vector<double> &point) {
   unsigned int degree = limits.size();
   for (unsigned int i = 0; i < limits.size(); i++) {
     if ((limits[i].first == point[i]) || (limits[i].second == point[i])) {
@@ -25,8 +26,8 @@ unsigned int FrolovaSStarTopologyMPI::CalculationOfCoefficient(const std::vector
   return pow(2, degree);
 }
 
-void FrolovaSStarTopologyMPI::Recursive(std::vector<double>& _point, unsigned int& definition, 
-                                        unsigned int divider, unsigned int variable) {
+void FrolovaSStarTopologyMPI::Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider,
+                                        unsigned int variable) {
   if (variable > 0) {
     Recursive(_point, definition, divider * (number_of_intervals[variable] + 1), variable - 1);
   }
@@ -111,7 +112,8 @@ bool FrolovaSStarTopologyMPI::RunImpl() {
   }
 
   MPI_Scatter(count_of_points.data(), 1, MPI_UNSIGNED, &local_count_of_points, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-  MPI_Scatter(first_point_numbers.data(), 1, MPI_UNSIGNED, &local_first_point_numbers, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Scatter(first_point_numbers.data(), 1, MPI_UNSIGNED, &local_first_point_numbers, 1, MPI_UNSIGNED, 0,
+              MPI_COMM_WORLD);
 
   for (unsigned int i = 0; i < local_count_of_points; i++) {
     std::vector<double> point = GetPointFromNumber(local_first_point_numbers + i);

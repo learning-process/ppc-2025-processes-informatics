@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-
 #include <mpi.h>
 
 #include <cmath>
@@ -7,8 +6,8 @@
 #include <vector>
 
 #include "frolova_s_star_topology/common/include/common.hpp"
-#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
+#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
 
 std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
   std::random_device dev;
@@ -29,12 +28,24 @@ unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value
   return gen() % (max_value - min_value) + min_value;
 }
 
-double function1(std::vector<double> input) { return pow(input[0], 3) + pow(input[1], 3); }
-double function2(std::vector<double> input) { return sin(input[0]) + sin(input[1]) + sin(input[2]); }
-double function3(std::vector<double> input) { return 8 * input[0] * input[1] * input[2]; }
-double function4(std::vector<double> input) { return -1.0 / sqrt(1 - pow(input[0], 2)); }
-double function5(std::vector<double> input) { return -(sin(input[0]) * cos(input[1])); }
-double function6(std::vector<double> input) { return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2; }
+double function1(std::vector<double> input) {
+  return pow(input[0], 3) + pow(input[1], 3);
+}
+double function2(std::vector<double> input) {
+  return sin(input[0]) + sin(input[1]) + sin(input[2]);
+}
+double function3(std::vector<double> input) {
+  return 8 * input[0] * input[1] * input[2];
+}
+double function4(std::vector<double> input) {
+  return -1.0 / sqrt(1 - pow(input[0], 2));
+}
+double function5(std::vector<double> input) {
+  return -(sin(input[0]) * cos(input[1]));
+}
+double function6(std::vector<double> input) {
+  return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2;
+}
 
 // SEQ Tests
 TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_1) {
@@ -135,7 +146,7 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_6) {
 
 TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_limits) {
   std::vector<std::pair<double, double>> limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0),
-                                                     GetRandomLimit(0.0, 10.0)};
+                                                   GetRandomLimit(0.0, 10.0)};
   std::vector<unsigned int> intervals = {80, 80, 80};
 
   frolova_s_star_topology::TrapezoidalIntegrationInput input{limits, intervals, function3};
@@ -168,7 +179,7 @@ TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_interv
 
 TEST(frolova_s_star_topology_seq_functional, Test_of_functionality_random_limits_and_intervals) {
   std::vector<std::pair<double, double>> limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0),
-                                                     GetRandomLimit(0.0, 10.0)};
+                                                   GetRandomLimit(0.0, 10.0)};
   std::vector<unsigned int> intervals = {GetRandomIntegerData(40, 60), GetRandomIntegerData(40, 60),
                                          GetRandomIntegerData(40, 60)};
 

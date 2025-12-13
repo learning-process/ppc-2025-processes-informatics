@@ -1,17 +1,20 @@
 #include <gtest/gtest.h>
-
 #include <mpi.h>
 
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <vector>
 
 #include "frolova_s_star_topology/common/include/common.hpp"
-#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
+#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
 
-double function1(std::vector<double> input) { return pow(input[0], 3) + pow(input[1], 3); }
-double function2(std::vector<double> input) { return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2; }
+double function1(std::vector<double> input) {
+  return pow(input[0], 3) + pow(input[1], 3);
+}
+double function2(std::vector<double> input) {
+  return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2;
+}
 
 // SEQ Performance Tests
 TEST(frolova_s_star_topology_seq_perf, test_small_problem) {

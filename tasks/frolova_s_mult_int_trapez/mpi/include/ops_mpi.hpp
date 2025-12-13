@@ -20,8 +20,8 @@ class FrolovaSStarTopologyMPI : public BaseTask {
   explicit FrolovaSStarTopologyMPI(const InType &in);
 
  private:
-  unsigned int CalculationOfCoefficient(const std::vector<double>& point);
-  void Recursive(std::vector<double>& _point, unsigned int& definition, unsigned int divider, unsigned int variable);
+  unsigned int CalculationOfCoefficient(const std::vector<double> &point);
+  void Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider, unsigned int variable);
   std::vector<double> GetPointFromNumber(unsigned int number);
 
   bool ValidationImpl() override;

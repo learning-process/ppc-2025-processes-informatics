@@ -14,7 +14,7 @@ FrolovaSStarTopologySEQ::FrolovaSStarTopologySEQ(const InType &in) {
   GetOutput() = 0.0;
 }
 
-unsigned int FrolovaSStarTopologySEQ::CalculationOfCoefficient(const std::vector<double>& point) {
+unsigned int FrolovaSStarTopologySEQ::CalculationOfCoefficient(const std::vector<double> &point) {
   unsigned int degree = limits.size();
   for (unsigned int i = 0; i < limits.size(); i++) {
     if ((limits[i].first == point[i]) || (limits[i].second == point[i])) {
@@ -25,8 +25,8 @@ unsigned int FrolovaSStarTopologySEQ::CalculationOfCoefficient(const std::vector
   return pow(2, degree);
 }
 
-void FrolovaSStarTopologySEQ::Recursive(std::vector<double>& _point, unsigned int& definition, 
-                                        unsigned int divider, unsigned int variable) {
+void FrolovaSStarTopologySEQ::Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider,
+                                        unsigned int variable) {
   if (variable > 0) {
     Recursive(_point, definition, divider * (number_of_intervals[variable] + 1), variable - 1);
   }
