@@ -17,6 +17,17 @@ class FrolovaSSumElemMatrixMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void BroadcastMetadata(int rank, int &rows);
+  void BroadcastRowSizes(int rank, int rows, std::vector<int> &row_sizes);
+  void FlattenMatrixOnRoot(int rank, const std::vector<std::vector<int>> &matrix,
+                            const std::vector<int> &row_sizes, std::vector<int> &flat_data,
+                            std::vector<int> &displs);
+  void ComputeDistribution(int size, int rows, std::vector<int> &counts,
+                            std::vector<int> &displacements);
+  void ComputeSendCounts(int rank, int size, const std::vector<int> &counts,
+                         const std::vector<int> &displacements, const std::vector<int> &row_sizes,
+                         std::vector<int> &sendcounts, std::vector<int> &senddispls);
 };
 
 }  // namespace frolova_s_sum_elem_matrix

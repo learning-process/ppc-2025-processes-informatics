@@ -1,6 +1,5 @@
 cmake_minimum_required( VERSION 3.25 )
 
-
 if(DEFINED CMAKE_OSX_SYSROOT AND NOT EXISTS "${CMAKE_OSX_SYSROOT}")
   unset(CMAKE_OSX_SYSROOT CACHE)
 endif()

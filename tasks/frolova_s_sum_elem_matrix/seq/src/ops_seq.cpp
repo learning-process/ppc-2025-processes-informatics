@@ -47,8 +47,8 @@ bool FrolovaSSumElemMatrixSEQ::RunImpl() {
     }
   } else {
     // Для маленьких матриц печатаем все
-    for (size_t r = 0; r < matrix.size(); ++r) {
-      std::cerr << "ROW[" << r << "] size=" << matrix[r].size() << "\n";
+    for (size_t row = 0; row < matrix.size(); ++row) {
+      std::cerr << "ROW[" << row << "] size=" << matrix[row].size() << "\n";
     }
   }
 
