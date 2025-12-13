@@ -29,41 +29,57 @@ bool TestTaskMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int input_size = 0;
-  if (rank == 0) {
-    input_size = static_cast<int>(GetInput().size());
-  }
-  MPI_Bcast(&input_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  int input_size = static_cast<int>(GetInput().size());
 
-  if (input_size == 0) {
+  int global_vec_size = input_size;
+  MPI_Bcast(&global_vec_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (global_vec_size == 0) {
     return true;
   }
 
-  std::vector<int> counts(size);
-  std::vector<int> displs(size);
-
-  int chunk_size = input_size / size;
-  int remainder = input_size % size;
-
-  for (int i = 0; i < size; ++i) {
-    counts[i] = chunk_size + (i < remainder ? 1 : 0);
-    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
+  std::vector<int> current_values = GetInput();
+  if (current_values.size() != static_cast<size_t>(global_vec_size)) {
+    current_values.resize(global_vec_size, 0);
   }
 
-  std::vector<int> local_input(counts[rank]);
-  std::vector<int> local_output(counts[rank]);
+  int left_child = 2 * rank + 1;
+  int right_child = 2 * rank + 2;
+  int parent = (rank - 1) / 2;
 
-  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, counts.data(), displs.data(), MPI_INT, local_input.data(),
-               counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Status status;
 
-  std::copy(local_input.begin(), local_input.end(), local_output.begin());
+  if (left_child < size) {
+    std::vector<int> recv_buf(global_vec_size);
+    MPI_Recv(recv_buf.data(), global_vec_size, MPI_INT, left_child, 0, MPI_COMM_WORLD, &status);
+    std::ranges::transform(current_values, recv_buf, current_values.begin(), std::plus<int>());
+  }
+
+  if (right_child < size) {
+    std::vector<int> recv_buf(global_vec_size);
+    MPI_Recv(recv_buf.data(), global_vec_size, MPI_INT, right_child, 0, MPI_COMM_WORLD, &status);
+    std::ranges::transform(current_values, recv_buf, current_values.begin(), std::plus<int>());
+  }
+
+  if (rank != 0) {
+    MPI_Send(current_values.data(), global_vec_size, MPI_INT, parent, 0, MPI_COMM_WORLD);
+  }
+
+  if (rank != 0) {
+    MPI_Recv(current_values.data(), global_vec_size, MPI_INT, parent, 1, MPI_COMM_WORLD, &status);
+  }
+
+  if (left_child < size) {
+    MPI_Send(current_values.data(), global_vec_size, MPI_INT, left_child, 1, MPI_COMM_WORLD);
+  }
+  if (right_child < size) {
+    MPI_Send(current_values.data(), global_vec_size, MPI_INT, right_child, 1, MPI_COMM_WORLD);
+  }
 
   if (rank == 0) {
-    GetOutput().resize(input_size);
+    GetOutput().resize(global_vec_size);
+    std::ranges::copy(current_values, GetOutput().begin());
   }
-
-  MPI_Gatherv(local_output.data(), counts[rank], MPI_INT, rank == 0 ? GetOutput().data() : nullptr, counts.data(),
-              displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;
 }

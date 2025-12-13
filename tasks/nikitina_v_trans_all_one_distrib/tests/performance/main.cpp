@@ -38,6 +38,7 @@ TEST_P(NikitinaVRunPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
+namespace {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, TestTaskMPI, TestTaskSEQ>(PPC_SETTINGS_nikitina_v_trans_all_one_distrib);
 
@@ -46,5 +47,6 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = NikitinaVRunPerfTest::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, NikitinaVRunPerfTest, kGtestValues, kPerfTestName);
+}  // namespace
 
 }  // namespace nikitina_v_trans_all_one_distrib
