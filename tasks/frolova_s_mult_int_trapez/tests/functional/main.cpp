@@ -5,9 +5,9 @@
 #include <random>
 #include <vector>
 
-#include "frolova_s_star_topology/common/include/common.hpp"
-#include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
-#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
+#include "frolova_s_mult_int_trapez/common/include/common.hpp"
+#include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
+#include "frolova_s_mult_int_trapez/seq/include/ops_seq.hpp"
 
 std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
   std::random_device dev;
