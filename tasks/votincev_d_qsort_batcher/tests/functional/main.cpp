@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <algorithm>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -44,19 +44,16 @@ class VotincevDQsortBatcherRunFuncTestsProcesses : public ppc::util::BaseRunFunc
       file >> v;
     }
 
-
     // for( auto& el : vect_data) {
     //   std::cout << el << ' ';
     // }
     // std::cout << "\n";
-
 
     input_data = vect_data;
 
     // получаю ожидаемый результат
     expected_res = vect_data;
     std::sort(expected_res.begin(), expected_res.end());
-    
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -83,11 +80,10 @@ TEST_P(VotincevDQsortBatcherRunFuncTestsProcesses, QsortBatcherTests) {
   ExecuteTest(GetParam());
 }
 
+// const std::array<TestType, 1> kTestParam = {"test1"};
 
-const std::array<TestType, 1> kTestParam = {"test1"};
-
-// const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4", "test5",
-//                                              "test6", "test7", "test8", "test9", "test10"};
+const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4", "test5",
+                                             "test6", "test7", "test8", "test9", "test10"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<VotincevDQsortBatcherMPI, InType>(kTestParam, PPC_SETTINGS_votincev_d_qsort_batcher),

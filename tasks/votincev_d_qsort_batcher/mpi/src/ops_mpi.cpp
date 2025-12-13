@@ -2,138 +2,180 @@
 
 #include <mpi.h>
 
-#include <algorithm>
+#include <algorithm>  // max_element, merge, copy
+#include <numeric>
 #include <vector>
-#include <cstddef>
 
 namespace votincev_d_qsort_batcher {
+
+// ручная быстрая сортировка
+// обычный quicksort для массива double
+// сортирует элементы на месте
+void VotincevDQsortBatcherMPI::QuickSort(double *arr, int left, int right) {
+  int i = left;
+  int j = right;
+
+  // берем опорный элемент из середины
+  double pivot = arr[(left + right) / 2];
+
+  // разделяем массив на две части
+  while (i <= j) {
+    while (arr[i] < pivot) {
+      i++;
+    }
+    while (arr[j] > pivot) {
+      j--;
+    }
+
+    if (i <= j) {
+      std::swap(arr[i], arr[j]);
+      i++;
+      j--;
+    }
+  }
+
+  // рекурсивно сортируем левую и правую части
+  if (left < j) {
+    QuickSort(arr, left, j);
+  }
+  if (i < right) {
+    QuickSort(arr, i, right);
+  }
+}
 
 VotincevDQsortBatcherMPI::VotincevDQsortBatcherMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
-// входные данные — просто std::vector<double>
+// проверка входных данных
+// просто убеждаемся, что массив не пустой
 bool VotincevDQsortBatcherMPI::ValidationImpl() {
   const auto &vec = GetInput();
-  return !vec.empty();  // просто проверяем, что не пустой
+  return !vec.empty();
 }
 
+// препроцессинг
 bool VotincevDQsortBatcherMPI::PreProcessingImpl() {
   return true;
 }
 
+// главный MPI метод
 bool VotincevDQsortBatcherMPI::RunImpl() {
+  // получаем общее число процессов
   int proc_n = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_n);
 
+  // получаем ранг текущего процесса
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  const std::vector<double> &input = GetInput();
-  int total_size = static_cast<int>(input.size());
+  // размер массива знает только 0й процесс
+  int total_size = 0;
+  if (rank == 0) {
+    total_size = static_cast<int>(GetInput().size());
+  }
 
+  // рассылаем размер массива всем процессам
+  MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  // ---------- случай одного процесса ----------
+  // просто обычная сортировка без MPI
   if (proc_n == 1) {
-    std::vector<double> seq_sorted = input;
-    std::sort(seq_sorted.begin(), seq_sorted.end());
-    GetOutput() = seq_sorted;
+    if (rank == 0) {
+      auto out = GetInput();
+      QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
+      GetOutput() = out;
+    }
     return true;
   }
 
-  // ---------- деление массива ----------
-  int base = total_size / proc_n;
-  int extra = total_size % proc_n;
-
+  // ---------- вычисляем размеры блоков ----------
   std::vector<int> sizes(proc_n);
   std::vector<int> offsets(proc_n);
 
+  int base = total_size / proc_n;   // минимальный размер блока
+  int extra = total_size % proc_n;  // остаток
+
+  // распределяем остаток по первым процессам
   for (int i = 0; i < proc_n; i++) {
     sizes[i] = base + (i < extra ? 1 : 0);
   }
 
+  // считаем смещения
   offsets[0] = 0;
   for (int i = 1; i < proc_n; i++) {
     offsets[i] = offsets[i - 1] + sizes[i - 1];
   }
 
-  // ---------- получение локального блока ----------
+  // ---------- Scatter ----------
+  // каждый процесс получает свой кусок массива
   std::vector<double> local(sizes[rank]);
-  if (rank == 0) {
-    // 0-й шлёт всем
-    for (int p = 1; p < proc_n; p++) {
-      MPI_Send(input.data() + offsets[p], sizes[p], MPI_DOUBLE, p, 0, MPI_COMM_WORLD);
-    }
-    std::copy(input.begin(), input.begin() + sizes[0], local.begin());
-  } else {
-    MPI_Recv(local.data(), sizes[rank], MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
+
+  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, sizes.data(), offsets.data(), MPI_DOUBLE, local.data(),
+               sizes[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   // ---------- локальная сортировка ----------
-  std::sort(local.begin(), local.end());
+  // сортируем свой кусок вручную
+  if (!local.empty()) {
+    QuickSort(local.data(), 0, static_cast<int>(local.size()) - 1);
+  }
 
-  // ---------- вспомогательный буфер ----------
-  std::vector<double> recv_buf;
-  recv_buf.reserve(base + 1);
+  // ---------- буферы ----------
+  // максимальный размер блока
+  int max_block = *std::max_element(sizes.begin(), sizes.end());
 
-  // ---------- odd-even Batcher merge ----------
+  // буфер для приема данных от соседа
+  std::vector<double> recv_buf(max_block);
+
+  // буфер для слияния двух отсортированных блоков
+  std::vector<double> merge_buf(sizes[rank] + max_block);
+
+  // ---------- четно-нечетное слияние Бэтчера ----------
   for (int phase = 0; phase < proc_n; phase++) {
     int partner = -1;
 
+    // определяем соседа для текущей фазы
     if (phase % 2 == 0) {
-      // чётная фаза
-      if (rank % 2 == 0) partner = rank + 1;
-      else partner = rank - 1;
+      partner = (rank % 2 == 0) ? rank + 1 : rank - 1;
     } else {
-      // нечётная фаза
-      if (rank % 2 == 1) partner = rank + 1;
-      else partner = rank - 1;
+      partner = (rank % 2 == 1) ? rank + 1 : rank - 1;
     }
 
+    // если соседа нет — пропускаем фазу
     if (partner < 0 || partner >= proc_n) {
-      continue;  // нет соседа
+      continue;
     }
 
-    recv_buf.resize(sizes[partner]);
+    // обмениваемся отсортированными блоками
+    MPI_Sendrecv(local.data(), sizes[rank], MPI_DOUBLE, partner, 0, recv_buf.data(), sizes[partner], MPI_DOUBLE,
+                 partner, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-    // обмен локальных отсортированных частей
-    MPI_Sendrecv(local.data(), sizes[rank], MPI_DOUBLE, partner, 0,
-                 recv_buf.data(), sizes[partner], MPI_DOUBLE, partner, 0,
-                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    // сливаем два отсортированных массива
+    std::merge(local.begin(), local.end(), recv_buf.begin(), recv_buf.begin() + sizes[partner], merge_buf.begin());
 
-    // слить два блока
-    std::vector<double> merged;
-    merged.resize(sizes[rank] + sizes[partner]);
-
-    std::merge(local.begin(), local.end(),
-               recv_buf.begin(), recv_buf.end(),
-               merged.begin());
-
-    // младший ранг — нижняя часть, старший — верхняя часть
+    // младший ранг оставляет меньшую часть
     if (rank < partner) {
-      // берём первые sizes[rank]
-      local.assign(merged.begin(), merged.begin() + sizes[rank]);
-    } else {
-      // берём последние sizes[rank]
-      local.assign(merged.end() - sizes[rank], merged.end());
+      std::copy(merge_buf.begin(), merge_buf.begin() + sizes[rank], local.begin());
+    }
+    // старший ранг оставляет большую часть
+    else {
+      std::copy(merge_buf.begin() + sizes[partner], merge_buf.begin() + sizes[partner] + sizes[rank], local.begin());
     }
   }
 
-  // ---------- сбор результата ----------
+  // ---------- Gather ----------
+  // собираем отсортированные блоки обратно
   if (rank == 0) {
     std::vector<double> result(total_size);
 
-    std::copy(local.begin(), local.end(), result.begin());
-
-    int offset = sizes[0];
-    for (int p = 1; p < proc_n; p++) {
-      MPI_Recv(result.data() + offset, sizes[p], MPI_DOUBLE, p, 0,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      offset += sizes[p];
-    }
+    MPI_Gatherv(local.data(), sizes[rank], MPI_DOUBLE, result.data(), sizes.data(), offsets.data(), MPI_DOUBLE, 0,
+                MPI_COMM_WORLD);
 
     GetOutput() = result;
   } else {
-    MPI_Send(local.data(), sizes[rank], MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+    // остальные процессы просто отправляют свои данные
+    MPI_Gatherv(local.data(), sizes[rank], MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 
   return true;

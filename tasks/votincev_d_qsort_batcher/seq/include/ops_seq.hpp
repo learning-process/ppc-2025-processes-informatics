@@ -17,6 +17,8 @@ class VotincevDQsortBatcherSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void QuickSort(double *arr, int left, int right);
 };
 
 }  // namespace votincev_d_qsort_batcher

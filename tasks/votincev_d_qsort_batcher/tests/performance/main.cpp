@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <tuple>
 #include <vector>
@@ -22,7 +23,16 @@ class VotincevDQsortBatcherRunPerfTestsProcesses : public ppc::util::BaseRunPerf
   OutType expected_res;
 
   void SetUp() override {
-    
+    size_t vect_sz = 40000000;
+    double sgn_swapper = 1;
+    input_data.assign(vect_sz, 0.0);
+    for (size_t i = 0; i < vect_sz; i++) {
+      input_data[i] = static_cast<double>(i % 5) * sgn_swapper;
+      sgn_swapper *= -1;
+    }
+
+    expected_res = input_data;
+    std::sort(expected_res.begin(), expected_res.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

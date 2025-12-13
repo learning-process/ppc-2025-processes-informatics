@@ -22,7 +22,7 @@ class VotincevDQsortBatcherMPI : public BaseTask {
 
   // ==============================
   // мои дополнительные функции ===
-
+  void QuickSort(double *arr, int left, int right);
 };
 
 }  // namespace votincev_d_qsort_batcher
