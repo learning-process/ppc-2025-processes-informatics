@@ -148,16 +148,20 @@ bool SpichekDJacobiMPI::RunImpl() {
     MPI_Allgatherv(local_x_new.data(), local_n, MPI_DOUBLE, x_k_plus_1.data(), counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
 
-    double local_diff = 0.0;
+    // ИСПРАВЛЕНИЕ: Считаем максимальную разность (L_inf-норма) для соответствия main.cpp
+    double local_max_diff = 0.0;
     for (int i = 0; i < local_n; ++i) {
+      // Используем глобальный индекс gi для доступа к x_k_plus_1, но это не нужно,
+      // так как x_k_plus_1 уже содержит весь вектор после Allgatherv
       int gi = displs[rank] + i;
-      double d = x_k_plus_1[gi] - x_k[gi];
-      local_diff += d * d;
+      double diff = std::abs(x_k_plus_1[gi] - x_k[gi]);
+      if (diff > local_max_diff) {
+        local_max_diff = diff;
+      }
     }
 
-    MPI_Allreduce(&local_diff, &max_diff, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-    max_diff = std::sqrt(max_diff);
+    // Находим глобальный максимум среди локальных максимумов
+    MPI_Allreduce(&local_max_diff, &max_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     x_k = x_k_plus_1;
 
     // ИСПРАВЛЕНИЕ: Используем константы kTargetEps и kTargetMaxIter

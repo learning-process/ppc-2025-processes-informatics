@@ -72,12 +72,13 @@ bool SpichekDJacobiSEQ::RunImpl() {
     }
 
     // ВАЖНО: Считаем Евклидову норму (L2), а не максимальную разность.
-    double diff_sq = 0.0;
+    max_diff = 0.0;
     for (size_t i = 0; i < n; ++i) {
-      double diff = x_k_plus_1[i] - x_k[i];
-      diff_sq += diff * diff;
+      double diff = std::abs(x_k_plus_1[i] - x_k[i]);
+      if (diff > max_diff) {
+        max_diff = diff;
+      }
     }
-    max_diff = std::sqrt(diff_sq);
 
     x_k = x_k_plus_1;
 
