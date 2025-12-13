@@ -48,7 +48,9 @@ class RunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestPar
     }
     if (rank == 0) {
       std::vector<int> sorted_ref = input_data_;
-      std::ranges::sort(sorted_ref);
+      if (!sorted_ref.empty()) {
+        QuickSortImpl(sorted_ref, 0, static_cast<int>(sorted_ref.size()) - 1);
+      }
       return output_data == sorted_ref;
     }
     return true;
@@ -65,7 +67,8 @@ class RunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestPar
 namespace {
 
 std::vector<int> GenerateRandomVector(size_t size) {
-  std::mt19937 gen(42);
+  std::random_device rd;
+  std::mt19937 gen(rd());
   std::uniform_int_distribution<int> dist(-1000, 1000);
   std::vector<int> vec(size);
   for (size_t i = 0; i < size; ++i) {
@@ -97,7 +100,9 @@ const auto kTestTasksList =
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = RunFuncTests::PrintFuncTestName<RunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(QuickSortTests, RunFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(QuickSortTests, RunFuncTests, kGtestValues,
+                         kPerfTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
+                                          // modernize-type-traits, misc-use-anonymous-namespace)
 
 }  // namespace
 

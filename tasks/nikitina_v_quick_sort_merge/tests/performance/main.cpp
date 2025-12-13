@@ -17,7 +17,9 @@ class RunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     const int count = 1000000;
     input_data_.resize(count);
-    std::mt19937 gen(1337);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_int_distribution<int> dist(-100000, 100000);
     for (int &val : input_data_) {
       val = dist(gen);
@@ -25,7 +27,20 @@ class RunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::ranges::is_sorted(output_data);
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank != 0) {
+      return true;
+    }
+
+    std::vector<int> ref = input_data_;
+
+    if (!ref.empty()) {
+      QuickSortImpl(ref, 0, static_cast<int>(ref.size()) - 1);
+    }
+
+    return output_data == ref;
   }
 
   InType GetTestInputData() final {
@@ -46,6 +61,8 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = RunPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(QuickSortPerfTests, RunPerfTests, kGtestValues, kPerfTestName);  // NOLINT(cert-err58-cpp)
+INSTANTIATE_TEST_SUITE_P(QuickSortPerfTests, RunPerfTests, kGtestValues,
+                         kPerfTestName);  // NOLINT(cert-err58-cpp, cppcoreguidelines-avoid-non-const-global-variables,
+                                          // modernize-type-traits, misc-use-anonymous-namespace)
 
 }  // namespace nikitina_v_quick_sort_merge
