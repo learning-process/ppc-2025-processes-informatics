@@ -1,6 +1,7 @@
 #include "gasenin_l_image_smooth/seq/include/ops_seq.hpp"
-#include <vector>
+
 #include <algorithm>
+#include <vector>
 
 namespace gasenin_l_image_smooth {
 
@@ -10,7 +11,7 @@ GaseninLImageSmoothSEQ::GaseninLImageSmoothSEQ(const InType &in) {
 }
 
 bool GaseninLImageSmoothSEQ::ValidationImpl() {
-  return GetInput().width > 0 && GetInput().height > 0 && 
+  return GetInput().width > 0 && GetInput().height > 0 &&
          GetInput().data.size() == static_cast<size_t>(GetInput().width * GetInput().height);
 }
 
@@ -23,16 +24,16 @@ bool GaseninLImageSmoothSEQ::PreProcessingImpl() {
 }
 
 bool GaseninLImageSmoothSEQ::RunImpl() {
-  const auto& in = GetInput();
-  auto& out = GetOutput();
-  
+  const auto &in = GetInput();
+  auto &out = GetOutput();
+
   int w = in.width;
   int h = in.height;
   int k_size = in.kernel_size;
   int radius = k_size / 2;
 
-  const uint8_t* src = in.data.data();
-  uint8_t* dst = out.data.data();
+  const uint8_t *src = in.data.data();
+  uint8_t *dst = out.data.data();
 
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
@@ -43,7 +44,7 @@ bool GaseninLImageSmoothSEQ::RunImpl() {
         for (int kx = -radius; kx <= radius; ++kx) {
           int ny = clamp(y + ky, 0, h - 1);
           int nx = clamp(x + kx, 0, w - 1);
-          
+
           sum += src[ny * w + nx];
           count++;
         }

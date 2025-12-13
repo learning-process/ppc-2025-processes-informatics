@@ -1,7 +1,9 @@
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"
+
 #include <mpi.h>
-#include <vector>
+
 #include <algorithm>
+#include <vector>
 
 namespace gasenin_l_image_smooth {
 
@@ -13,10 +15,10 @@ GaseninLImageSmoothMPI::GaseninLImageSmoothMPI(const InType &in) {
 bool GaseninLImageSmoothMPI::ValidationImpl() {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+
   int width = GetInput().width;
   int height = GetInput().height;
-  
+
   // Рассылаем размеры всем, чтобы все процессы прошли валидацию одинаково
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -27,7 +29,7 @@ bool GaseninLImageSmoothMPI::ValidationImpl() {
 bool GaseninLImageSmoothMPI::PreProcessingImpl() {
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+
   if (rank == 0) {
     GetOutput() = GetInput();
     GetOutput().data.assign(GetInput().data.size(), 0);
@@ -37,12 +39,12 @@ bool GaseninLImageSmoothMPI::PreProcessingImpl() {
     GetOutput().height = GetInput().height;
     GetOutput().kernel_size = GetInput().kernel_size;
   }
-  
+
   // Синхронизируем метаданные вывода
   MPI_Bcast(&GetOutput().width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&GetOutput().height, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&GetOutput().kernel_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  
+
   return true;
 }
 
@@ -54,7 +56,7 @@ bool GaseninLImageSmoothMPI::RunImpl() {
   int w = GetOutput().width;
   int h = GetOutput().height;
   int k_size = GetOutput().kernel_size;
-  
+
   std::vector<uint8_t> full_input_data;
   if (rank == 0) {
     full_input_data = GetInput().data;
@@ -102,14 +104,14 @@ bool GaseninLImageSmoothMPI::RunImpl() {
       displs[i] = r_start * w;
     }
 
-    MPI_Gatherv(local_result.data(), local_rows * w, MPI_UINT8_T,
-                (rank == 0 ? GetOutput().data.data() : nullptr),
+    MPI_Gatherv(local_result.data(), local_rows * w, MPI_UINT8_T, (rank == 0 ? GetOutput().data.data() : nullptr),
                 recv_counts.data(), displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
   } else {
     // Процессы без строк тоже должны участвовать в коллективном Gatherv
     std::vector<int> recv_counts(size, 0);
     std::vector<int> displs(size, 0);
-    if (rank == 0) { /* заполнить counts */ }
+    if (rank == 0) { /* заполнить counts */
+    }
     MPI_Gatherv(nullptr, 0, MPI_UINT8_T, nullptr, nullptr, nullptr, MPI_UINT8_T, 0, MPI_COMM_WORLD);
   }
 

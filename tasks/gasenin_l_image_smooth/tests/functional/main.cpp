@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 #include <stb/stb_image.h>
-#include <vector>
+
 #include <algorithm>
 #include <string>
-#include <mpi.h>
+#include <vector>
+
 #include "gasenin_l_image_smooth/common/include/common.hpp"
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"
 #include "gasenin_l_image_smooth/seq/include/ops_seq.hpp"
@@ -23,46 +25,48 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     int width = -1;
     int height = -1;
     int channels = -1;
-    
+
     // Загрузка изображения
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gasenin_l_image_smooth, "pic.jpg");
     // Грузим как GreyScale (1 канал) для упрощения задачи сглаживания в лабе
     auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 1);
-    
+
     if (data == nullptr) {
-        // Если картинки нет, создаем синтетическую "шахматную доску" для теста
-        width = 64; 
-        height = 64;
-        input_data_.width = width;
-        input_data_.height = height;
-        input_data_.data.resize(width * height);
-        for(int i = 0; i < width * height; ++i) input_data_.data[i] = (i % 2) * 255;
+      // Если картинки нет, создаем синтетическую "шахматную доску" для теста
+      width = 64;
+      height = 64;
+      input_data_.width = width;
+      input_data_.height = height;
+      input_data_.data.resize(width * height);
+      for (int i = 0; i < width * height; ++i) {
+        input_data_.data[i] = (i % 2) * 255;
+      }
     } else {
-        input_data_.width = width;
-        input_data_.height = height;
-        input_data_.data = std::vector<uint8_t>(data, data + (width * height));
-        stbi_image_free(data);
+      input_data_.width = width;
+      input_data_.height = height;
+      input_data_.data = std::vector<uint8_t>(data, data + (width * height));
+      stbi_image_free(data);
     }
-    
+
     // ИСПРАВЛЕНИЕ 1: Правильное извлечение параметров теста из кортежа GTest
     auto test_params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_.kernel_size = std::get<0>(test_params);
-    
+
     // Генерируем reference result (последовательная версия)
-    ref_output_ = input_data_; // копируем метаданные
+    ref_output_ = input_data_;  // копируем метаданные
     ref_output_.data.assign(input_data_.data.size(), 0);
-    
+
     // Простой последовательный прогон для проверки (Reference)
     GaseninLImageSmoothSEQ task(input_data_);
-    
+
     // ИСПРАВЛЕНИЕ 2: Вызов публичных методов интерфейса, а не приватных Impl
     task.Validation();
     task.PreProcessing();
     task.Run();
     task.PostProcessing();
-    
+
     // Копируем результат последовательной задачи в reference
-    auto result_task = task.GetOutput(); 
+    auto result_task = task.GetOutput();
     ref_output_.data = result_task.data;
   }
 
@@ -72,7 +76,7 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     if (rank == 0) {
       return output_data == ref_output_;
     }
-    return true; // Остальные процессы всегда возвращают true, чтобы не валить тест
+    return true;  // Остальные процессы всегда возвращают true, чтобы не валить тест
   }
 
   InType GetTestInputData() final {
@@ -90,15 +94,12 @@ TEST_P(GaseninLRunFuncTestsProcesses, ImageSmoothing) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(3, "kernel3"), 
-    std::make_tuple(5, "kernel5"), 
-    std::make_tuple(7, "kernel7")
-};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "kernel3"), std::make_tuple(5, "kernel5"),
+                                            std::make_tuple(7, "kernel7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<GaseninLImageSmoothMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth),
-                   ppc::util::AddFuncTask<GaseninLImageSmoothSEQ, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<GaseninLImageSmoothMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth),
+    ppc::util::AddFuncTask<GaseninLImageSmoothSEQ, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
