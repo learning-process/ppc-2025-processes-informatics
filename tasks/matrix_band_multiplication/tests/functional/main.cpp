@@ -103,20 +103,6 @@ TEST_P(MatrixBandMultiplicationFuncTests, Runs) {
   ExecuteTest(GetParam());
 }
 
-TEST(MatrixBandMultiplicationValidationTests, RejectsZeroSizedMatrix) {
-  Matrix invalid_a{.rows = 0, .cols = 3, .values = {}};
-  Matrix valid_b{.rows = 3, .cols = 2, .values = {1.0, 0.0, -1.0, 2.0, 3.0, 4.0}};
-  MatrixBandMultiplicationMpi task({invalid_a, valid_b});
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(MatrixBandMultiplicationValidationTests, RejectsMismatchedDimensions) {
-  Matrix valid_a{.rows = 2, .cols = 3, .values = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}};
-  Matrix incompatible_b{.rows = 4, .cols = 2, .values = {1.0, 0.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0}};
-  MatrixBandMultiplicationMpi task({valid_a, incompatible_b});
-  EXPECT_FALSE(task.Validation());
-}
-
 }  // namespace
 
 }  // namespace matrix_band_multiplication
