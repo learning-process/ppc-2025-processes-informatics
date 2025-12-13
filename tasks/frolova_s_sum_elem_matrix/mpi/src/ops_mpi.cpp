@@ -1,4 +1,4 @@
-#include "frolova_s_sum_elem_matrix/mpi/include/ops_mpi.hpp"
+﻿#include "frolova_s_sum_elem_matrix/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
@@ -58,7 +58,7 @@ void FrolovaSSumElemMatrixMPI::FlattenMatrixOnRoot(int rank, const std::vector<s
 }
 
 void FrolovaSSumElemMatrixMPI::ComputeDistribution(int size, int rows, std::vector<int> &counts,
-                                                    std::vector<int> &displacements) {
+                                                   std::vector<int> &displacements) {
   int total_rows_per_process = rows / size;
   int remainder = rows % size;
 
@@ -71,9 +71,9 @@ void FrolovaSSumElemMatrixMPI::ComputeDistribution(int size, int rows, std::vect
 }
 
 void FrolovaSSumElemMatrixMPI::ComputeSendCounts(int rank, int size, const std::vector<int> &counts,
-                                                  const std::vector<int> &displacements,
-                                                  const std::vector<int> &row_sizes, std::vector<int> &sendcounts,
-                                                  std::vector<int> &senddispls) {
+                                                 const std::vector<int> &displacements,
+                                                 const std::vector<int> &row_sizes, std::vector<int> &sendcounts,
+                                                 std::vector<int> &senddispls) {
   if (rank == 0) {
     for (int i = 0; i < size; i++) {
       senddispls[i] = (i == 0) ? 0 : senddispls[i - 1] + sendcounts[i - 1];
