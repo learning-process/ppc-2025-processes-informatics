@@ -61,7 +61,7 @@ bool GaseninLImageSmoothMPI::RunImpl() {
   if (rank == 0) {
     full_input_data = GetInput().data;
   } else {
-    full_input_data.resize(w * h);
+    full_input_data.resize(static_cast<size_t>(w) * static_cast<size_t>(h));
   }
 
   // Рассылаем всё изображение всем процессам
