@@ -39,7 +39,7 @@ class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InT
       matrix_ = std::vector<std::vector<int>>(3);
       expected_sum_ = 0;
     } else if (label == "zero_rows") {
-      matrix_ = {};
+      matrix_ = std::vector<std::vector<int>>(0);
       expected_sum_ = 0;
     } else if (label == "jagged_matrix") {
       matrix_ = {{1, 2, 3}, {4, 5}};
