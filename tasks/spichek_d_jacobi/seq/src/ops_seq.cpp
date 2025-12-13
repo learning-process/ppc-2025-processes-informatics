@@ -44,11 +44,7 @@ bool SpichekDJacobiSEQ::RunImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // В SEQ версии вычисления делает только 0-й ранг.
-  // Остальные сразу выходят, чтобы не мешать замерам времени
-  // (иначе фреймворк может ждать их или суммировать время некорректно).
   if (rank != 0) {
-    GetOutput() = Vector{};
     return true;
   }
 
@@ -62,40 +58,31 @@ bool SpichekDJacobiSEQ::RunImpl() {
 
   Vector x_k(n, 0.0);
   Vector x_k_plus_1(n, 0.0);
+
   int iter = 0;
   double max_diff;
 
-  // ИСПОЛЬЗУЕМ ВХОДНЫЕ ПАРАМЕТРЫ (мы убрали хардкод)
-  double target_eps = eps_input;
-  int target_max_iter = max_iter_input;
-
   do {
-    iter++;
+    ++iter;
     max_diff = 0.0;
 
     for (size_t i = 0; i < n; ++i) {
       double sum = 0.0;
-      double a_ii = A[i][i];
-      // Оптимизация: выносим указатель на строку
-      const auto &row_i = A[i];
+      const auto &row = A[i];
 
       for (size_t j = 0; j < n; ++j) {
-        if (i != j) {
-          sum += row_i[j] * x_k[j];
+        if (j != i) {
+          sum += row[j] * x_k[j];
         }
       }
-      x_k_plus_1[i] = (b[i] - sum) / a_ii;
 
-      // Считаем норму разности сразу здесь
-      double diff = std::abs(x_k_plus_1[i] - x_k[i]);
-      if (diff > max_diff) {
-        max_diff = diff;
-      }
+      x_k_plus_1[i] = (b[i] - sum) / row[i];
+      max_diff = std::max(max_diff, std::abs(x_k_plus_1[i] - x_k[i]));
     }
 
-    x_k = x_k_plus_1;
+    x_k.swap(x_k_plus_1);
 
-  } while (max_diff > target_eps && iter < target_max_iter);
+  } while (max_diff > eps_input && iter < max_iter_input);
 
   GetOutput() = x_k;
   return true;

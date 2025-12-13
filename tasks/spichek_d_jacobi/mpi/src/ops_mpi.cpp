@@ -143,7 +143,11 @@ bool SpichekDJacobiMPI::RunImpl() {
   } while (max_diff > eps && iter < max_iter);
 
   // ---------- 6. Результат ----------
-  GetOutput() = x;  // БЕЗ if(rank == 0)
+  if (rank == 0) {
+    GetOutput() = x;  // БЕЗ if(rank == 0)
+    return true;
+  }
+  GetOutput() = Vector{};
   return true;
 }
 
