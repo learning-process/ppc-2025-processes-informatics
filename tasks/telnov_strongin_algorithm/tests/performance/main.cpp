@@ -13,7 +13,12 @@ class TelnovStronginAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InTy
   void SetUp() override {
     input_data_.a = 0.0;
     input_data_.b = 2.0;
-    input_data_.eps = 1e-3;
+
+    static const std::array<double, 4> kEpsLevels = {1e-2, 1e-4, 1e-6, 1e-8};
+
+    static std::size_t idx = 0;
+    input_data_.eps = kEpsLevels[idx % kEpsLevels.size()];
+    ++idx;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
