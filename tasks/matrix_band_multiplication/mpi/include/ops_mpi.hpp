@@ -26,7 +26,7 @@ class MatrixBandMultiplicationMpi : public BaseTask {
   void PrepareRowDistribution(const Matrix &matrix_a);
   void PrepareColumnDistribution(const Matrix &matrix_b);
   void PrepareResultGatherInfo();
-  int ComputeMaxColumns() const;
+  [[nodiscard]] int ComputeMaxColumns() const;
   void PreparePackedColumns(const Matrix &matrix_b, std::vector<double> &packed, std::vector<int> &send_counts,
                             std::vector<int> &send_displs) const;
   void ScatterInitialStripe(const std::vector<double> &packed, const std::vector<int> &send_counts,

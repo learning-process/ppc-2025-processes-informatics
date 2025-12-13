@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <ranges>
 #include <utility>
 #include <vector>
 
