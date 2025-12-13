@@ -7,17 +7,17 @@
 #include <utility>
 #include <vector>
 
-#include "frolova_s_star_topology/common/include/common.hpp"
+#include "frolova_s_mult_int_trapez/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace frolova_s_star_topology {
+namespace frolova_s_mult_int_trapez {
 
-class FrolovaSStarTopologyMPI : public BaseTask {
+class FrolovaSMultIntTrapezMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit FrolovaSStarTopologyMPI(const InType &in);
+  explicit FrolovaSMultIntTrapezMPI(const InType &in);
 
  private:
   unsigned int CalculationOfCoefficient(const std::vector<double> &point);
@@ -34,4 +34,4 @@ class FrolovaSStarTopologyMPI : public BaseTask {
   double result;
 };
 
-}  // namespace frolova_s_star_topology
+}  // namespace frolova_s_mult_int_trapez

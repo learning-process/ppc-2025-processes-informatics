@@ -8,7 +8,7 @@
 
 #include "task/include/task.hpp"
 
-namespace frolova_s_star_topology {
+namespace frolova_s_mult_int_trapez {
 
 struct TrapezoidalIntegrationInput {
   std::vector<std::pair<double, double>> limits;
@@ -21,4 +21,4 @@ using OutType = double;
 using TestType = std::tuple<TrapezoidalIntegrationInput, double>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace frolova_s_star_topology
+}  // namespace frolova_s_mult_int_trapez

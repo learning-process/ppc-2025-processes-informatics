@@ -1,4 +1,4 @@
-#include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
+#include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
@@ -7,15 +7,15 @@
 #include <numeric>
 #include <vector>
 
-namespace frolova_s_star_topology {
+namespace frolova_s_mult_int_trapez {
 
-FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) {
+FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
-unsigned int FrolovaSStarTopologyMPI::CalculationOfCoefficient(const std::vector<double> &point) {
+unsigned int FrolovaSMultIntTrapezMPI::CalculationOfCoefficient(const std::vector<double> &point) {
   unsigned int degree = limits.size();
   for (unsigned int i = 0; i < limits.size(); i++) {
     if ((limits[i].first == point[i]) || (limits[i].second == point[i])) {
@@ -26,8 +26,8 @@ unsigned int FrolovaSStarTopologyMPI::CalculationOfCoefficient(const std::vector
   return pow(2, degree);
 }
 
-void FrolovaSStarTopologyMPI::Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider,
-                                        unsigned int variable) {
+void FrolovaSMultIntTrapezMPI::Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider,
+                                         unsigned int variable) {
   if (variable > 0) {
     Recursive(_point, definition, divider * (number_of_intervals[variable] + 1), variable - 1);
   }
@@ -37,7 +37,7 @@ void FrolovaSStarTopologyMPI::Recursive(std::vector<double> &_point, unsigned in
   definition = definition % divider;
 }
 
-std::vector<double> FrolovaSStarTopologyMPI::GetPointFromNumber(unsigned int number) {
+std::vector<double> FrolovaSMultIntTrapezMPI::GetPointFromNumber(unsigned int number) {
   std::vector<double> point(limits.size());
   unsigned int definition = number;
   Recursive(point, definition, 1, limits.size() - 1);
@@ -45,11 +45,11 @@ std::vector<double> FrolovaSStarTopologyMPI::GetPointFromNumber(unsigned int num
   return point;
 }
 
-bool FrolovaSStarTopologyMPI::ValidationImpl() {
+bool FrolovaSMultIntTrapezMPI::ValidationImpl() {
   return true;
 }
 
-bool FrolovaSStarTopologyMPI::PreProcessingImpl() {
+bool FrolovaSMultIntTrapezMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -62,7 +62,7 @@ bool FrolovaSStarTopologyMPI::PreProcessingImpl() {
   return true;
 }
 
-bool FrolovaSStarTopologyMPI::RunImpl() {
+bool FrolovaSMultIntTrapezMPI::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -132,7 +132,7 @@ bool FrolovaSStarTopologyMPI::RunImpl() {
   return true;
 }
 
-bool FrolovaSStarTopologyMPI::PostProcessingImpl() {
+bool FrolovaSMultIntTrapezMPI::PostProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -144,4 +144,4 @@ bool FrolovaSStarTopologyMPI::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace frolova_s_star_topology
+}  // namespace frolova_s_mult_int_trapez

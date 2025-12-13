@@ -1,16 +1,16 @@
 #pragma once
 
-#include "frolova_s_star_topology/common/include/common.hpp"
+#include "frolova_s_mult_int_trapez/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace frolova_s_star_topology {
+namespace frolova_s_mult_int_trapez {
 
-class FrolovaSStarTopologySEQ : public BaseTask {
+class FrolovaSMultIntTrapezSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit FrolovaSStarTopologySEQ(const InType &in);
+  explicit FrolovaSMultIntTrapezSEQ(const InType &in);
 
  private:
   unsigned int CalculationOfCoefficient(const std::vector<double> &point);
@@ -27,4 +27,4 @@ class FrolovaSStarTopologySEQ : public BaseTask {
   double result;
 };
 
-}  // namespace frolova_s_star_topology
+}  // namespace frolova_s_mult_int_trapez
