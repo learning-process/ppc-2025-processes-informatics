@@ -17,16 +17,13 @@ MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseT
 
 bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
-  int rows = static_cast<int>(matrix.size());
-  if (rows <= 0) {
+  if (matrix.empty()) {
     return false;
   }
-
+  if (matrix[0].empty()) {
+    return false;
+  }
   int cols = static_cast<int>(matrix[0].size());
-  if (cols <= 0) {
-    return false;
-  }
-
   for (size_t i = 1; i < matrix.size(); ++i) {
     if (matrix[i].size() != static_cast<size_t>(cols)) {
       return false;

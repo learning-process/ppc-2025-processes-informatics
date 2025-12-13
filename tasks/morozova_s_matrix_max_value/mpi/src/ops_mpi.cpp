@@ -18,16 +18,13 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
   const auto &mat = GetInput();
-  int rows = static_cast<int>(mat.size());
-  if (rows <= 0) {
+  if (mat.empty()) {
     return false;
   }
-
+  if (mat[0].empty()) {
+    return false;
+  }
   int cols = static_cast<int>(mat[0].size());
-  if (cols <= 0) {
-    return false;
-  }
-
   for (size_t i = 1; i < mat.size(); ++i) {
     if (mat[i].size() != static_cast<size_t>(cols)) {
       return false;
