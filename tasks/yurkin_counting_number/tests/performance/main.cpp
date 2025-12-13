@@ -12,9 +12,8 @@ class YurkinCountingNumberPerfTest : public ppc::util::BaseRunPerfTests<InType, 
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_ * 100000;  
-}
-
+    input_data_ = kCount_ * 100000;
+  }
 };
 
 TEST_P(YurkinCountingNumberPerfTest, RunPerfModes) {
