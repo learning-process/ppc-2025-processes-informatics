@@ -18,8 +18,8 @@ class FrolovaSSumElemMatrixMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void BroadcastMetadata(int rank, int &rows);
-  void BroadcastRowSizes(int rank, int rows, std::vector<int> &row_sizes);
+  void BroadcastMetadata(int &rows);
+  void BroadcastRowSizes(int rows, std::vector<int> &row_sizes);
   void FlattenMatrixOnRoot(int rank, const std::vector<std::vector<int>> &matrix,
                             const std::vector<int> &row_sizes, std::vector<int> &flat_data,
                             std::vector<int> &displs);

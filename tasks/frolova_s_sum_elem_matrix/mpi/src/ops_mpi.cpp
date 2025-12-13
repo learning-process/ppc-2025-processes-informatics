@@ -29,11 +29,11 @@ bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
   return true;
 }
 
-void FrolovaSSumElemMatrixMPI::BroadcastMetadata(int rank, int &rows) {
+void FrolovaSSumElemMatrixMPI::BroadcastMetadata(int &rows) {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-void FrolovaSSumElemMatrixMPI::BroadcastRowSizes(int rank, int rows, std::vector<int> &row_sizes) {
+void FrolovaSSumElemMatrixMPI::BroadcastRowSizes(int rows, std::vector<int> &row_sizes) {
   MPI_Bcast(row_sizes.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
@@ -99,7 +99,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
     rows = static_cast<int>(matrix.size());
   }
 
-  BroadcastMetadata(rank, rows);
+  BroadcastMetadata(rows);
 
   std::vector<int> row_sizes(rows);
   if (rank == 0) {
@@ -107,7 +107,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
       row_sizes[i] = static_cast<int>(matrix[i].size());
     }
   }
-  BroadcastRowSizes(rank, rows, row_sizes);
+  BroadcastRowSizes(rows, row_sizes);
 
   std::vector<int> flat_data;
   std::vector<int> displs(rows);
