@@ -41,12 +41,7 @@ bool SpichekDJacobiSEQ::PreProcessingImpl() {
 }
 
 bool SpichekDJacobiSEQ::RunImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank != 0) {
-    return true;
-  }
+  // НЕТ вызовов MPI!
 
   const auto &[A, b, eps_input, max_iter_input] = GetInput();
   size_t n = A.size();
@@ -77,10 +72,13 @@ bool SpichekDJacobiSEQ::RunImpl() {
       }
 
       x_k_plus_1[i] = (b[i] - sum) / row[i];
+    }
+
+    for (size_t i = 0; i < n; ++i) {
       max_diff = std::max(max_diff, std::abs(x_k_plus_1[i] - x_k[i]));
     }
 
-    x_k.swap(x_k_plus_1);
+    x_k = x_k_plus_1;
 
   } while (max_diff > eps_input && iter < max_iter_input);
 
