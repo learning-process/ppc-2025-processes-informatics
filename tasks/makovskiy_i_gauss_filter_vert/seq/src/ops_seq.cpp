@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <task/include/task.hpp>
 #include <tuple>
 #include <vector>
 
