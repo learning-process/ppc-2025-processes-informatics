@@ -5,11 +5,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <ranges>
 #include <vector>
 
 #include "telnov_strongin_algorithm/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_strongin_algorithm {
 
@@ -58,7 +56,7 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
     double local_max_r = -1e9;
     int local_idx = 1;
 
-    for (std::size_t i = static_cast<std::size_t>(rank + 1); i < x_vals.size(); i += static_cast<std::size_t>(size)) {
+    for (auto i = static_cast<std::size_t>(rank) + 1; i < x_vals.size(); i += static_cast<std::size_t>(size)) {
       const double dx = x_vals[i] - x_vals[i - 1];
       const double df = f_vals[i] - f_vals[i - 1];
       const double r_val = (r * dx) + ((df * df) / (r * dx)) - (2.0 * (f_vals[i] + f_vals[i - 1]));
@@ -74,7 +72,7 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
       int index{};
     };
 
-    MaxData local_data{local_max_r, local_idx};
+    MaxData local_data{.value = local_max_r, .index = local_idx};
     MaxData global_data{};
 
     MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);

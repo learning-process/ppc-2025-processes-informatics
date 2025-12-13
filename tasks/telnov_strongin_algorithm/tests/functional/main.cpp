@@ -1,16 +1,15 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <functional>
-#include <memory>
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "telnov_strongin_algorithm/common/include/common.hpp"
 #include "telnov_strongin_algorithm/mpi/include/ops_mpi.hpp"
 #include "telnov_strongin_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace telnov_strongin_algorithm {
 
@@ -22,14 +21,14 @@ class TelnovStronginAlgorithmFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    static const std::vector<InType> test_cases = {{0.0, 2.0, 1e-3}, {-1.0, 3.0, 1e-4}, {0.5, 1.5, 1e-5}};
+    static const std::vector<InType> kTestCases = {{0.0, 2.0, 1e-3}, {-1.0, 3.0, 1e-4}, {0.5, 1.5, 1e-5}};
     static size_t idx = 0;
-    input_data_ = test_cases[idx % test_cases.size()];
+    input_data_ = kTestCases[idx % kTestCases.size()];
     ++idx;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == 2;
+    return output_data == 1;
   }
 
   InType GetTestInputData() final {

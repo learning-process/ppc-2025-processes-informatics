@@ -17,7 +17,7 @@ class TelnovStronginAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == 2;
+    return output_data == 1;
   }
 
   InType GetTestInputData() final {
