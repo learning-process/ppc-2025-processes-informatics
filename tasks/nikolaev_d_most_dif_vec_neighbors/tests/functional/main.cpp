@@ -62,7 +62,8 @@ TEST_P(NikolaevDMostDifVecNeighborsFuncTests, FuncTestsRun) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParam = {
+const std::array<TestType, 10> kTestParam = {
+    std::make_tuple(std::make_pair(0, 0), std::vector<int>{0, 0}),
     std::make_tuple(std::make_pair(1, 3), std::vector<int>{1, 3}),
     std::make_tuple(std::make_pair(3, 15), std::vector<int>{1, 3, 15}),
     std::make_tuple(std::make_pair(1, 32), std::vector<int>{2, 1, 1, 32, 12, 16, 5, -2, -1, -3}),
@@ -70,7 +71,9 @@ const std::array<TestType, 7> kTestParam = {
     std::make_tuple(std::make_pair(1, 50), std::vector<int>{1, 1, 1, 1, 1, 50, 30, 1, 1}),
     std::make_tuple(std::make_pair(-1, -6), std::vector<int>{1, 2, -1, -6, -2, 2}),
     std::make_tuple(std::make_pair(INT_MIN, INT_MAX),
-                    std::vector<int>{-1'000'000'000, 1'000'000'000, INT_MIN, INT_MAX})};
+                    std::vector<int>{-1'000'000'000, 1'000'000'000, INT_MIN, INT_MAX}),
+    std::make_tuple(std::make_pair(-200, -50), std::vector<int>{-100, -200, -50, 50, 150, 2}),
+    std::make_tuple(std::make_pair(100, 1000), std::vector<int>{350, 1000, 150, 100, 1000})};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<NikolaevDMostDifVecNeighborsMPI, InType>(
                                                kTestParam, PPC_SETTINGS_nikolaev_d_most_dif_vec_neighbors),
