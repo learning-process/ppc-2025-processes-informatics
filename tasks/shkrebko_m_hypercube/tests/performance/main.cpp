@@ -11,7 +11,7 @@ namespace shkrebko_m_hypercube {
 class ShkrebkoMHypercubePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    input_data_ = {100, 7};
+    input_data_ = {100, 0};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
