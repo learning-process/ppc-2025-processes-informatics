@@ -39,7 +39,20 @@ bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
   int rows = 0;
   int cols = 0;
   const auto &mat = GetInput();
-  return CheckMatrix(mat, rows, cols);
+  rows = static_cast<int>(mat.size());
+  if (rows <= 0) {
+    return false;
+  }
+  cols = static_cast<int>(mat[0].size());
+  if (cols <= 0) {
+    return false;
+  }
+  for (size_t i = 1; i < mat.size(); ++i) {
+    if (mat[i].size() != static_cast<size_t>(cols)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
@@ -52,18 +65,14 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   const auto &mat = GetInput();
-
-  int rows = static_cast<int>(mat.size());
-  int cols = (rows > 0) ? static_cast<int>(mat[0].size()) : 0;
-
+  int rows = 0;
+  int cols = 0;
+  if (rank == 0) {
+    rows = static_cast<int>(mat.size());
+    cols = static_cast<int>(mat[0].size());
+  }
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rows <= 0 || cols <= 0) {
-    GetOutput() = std::numeric_limits<int>::min();
-    return true;
-  }
-
   const int total = rows * cols;
   std::vector<int> data;
   if (rank == 0) {
@@ -72,7 +81,6 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
       data.insert(data.end(), row.begin(), row.end());
     }
   }
-
   std::vector<int> counts(size);
   std::vector<int> displs(size);
   int base = total / size;
@@ -84,17 +92,14 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
     displs[i] = offset;
     offset += counts[i];
   }
-
   const int local_size = counts[rank];
   std::vector<int> local(local_size);
   MPI_Scatterv((rank == 0) ? data.data() : nullptr, counts.data(), displs.data(), MPI_INT, local.data(), local_size,
                MPI_INT, 0, MPI_COMM_WORLD);
-
   int local_max = std::numeric_limits<int>::min();
   for (int value : local) {
     local_max = (value > local_max) ? value : local_max;
   }
-
   int global_max = std::numeric_limits<int>::min();
   MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   GetOutput() = global_max;

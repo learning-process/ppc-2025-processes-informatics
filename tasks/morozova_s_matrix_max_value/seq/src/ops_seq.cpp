@@ -16,6 +16,22 @@ MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
+  const auto &matrix = GetInput();
+  int rows = static_cast<int>(matrix.size());
+  if (rows <= 0) {
+    return false;
+  }
+
+  int cols = static_cast<int>(matrix[0].size());
+  if (cols <= 0) {
+    return false;
+  }
+
+  for (size_t i = 1; i < matrix.size(); ++i) {
+    if (matrix[i].size() != static_cast<size_t>(cols)) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -25,17 +41,6 @@ bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {
 
 bool MorozovaSMatrixMaxValueSEQ::RunImpl() {
   const auto &matrix = GetInput();
-  if (matrix.empty()) {
-    GetOutput() = std::numeric_limits<int>::min();
-    return true;
-  }
-  const size_t first_row_size = matrix[0].size();
-  for (const auto &row : matrix) {
-    if (row.size() != first_row_size) {
-      GetOutput() = std::numeric_limits<int>::min();
-      return true;
-    }
-  }
   int max_value = std::numeric_limits<int>::min();
   for (const auto &row : matrix) {
     for (int value : row) {
