@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-// #include <cstddef>
-// #include <random>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
@@ -17,27 +15,10 @@
 namespace nikolaev_d_most_dif_vec_neighbors {
 
 class NikolaevDMostDifVecNeighborsPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  // const size_t kCount_ = 10'000'000;
   InType input_data_;
   OutType expected_output_;
 
   void SetUp() override {
-    // input_data_.resize(kCount_);
-
-    // std::random_device dev;
-    // std::mt19937 rng(dev());
-    // std::uniform_int_distribution<int> dist(-10'000, 10'000);
-
-    // for (size_t i = 0; i < kCount_; ++i) {
-    //   input_data_[i] = dist(rng);
-    // }
-
-    // std::uniform_int_distribution<size_t> pos_dist(0, kCount_ - 2);
-    // size_t max_dif_pos = pos_dist(rng);
-
-    // input_data_[max_dif_pos] = -15'000;
-    // input_data_[max_dif_pos + 1] = 15'000;
-    // expected_output_ = std::make_pair(-15'000, 15'000);
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_nikolaev_d_most_dif_vec_neighbors, "test_vec.txt");
     std::ifstream file(abs_path);
 
