@@ -1,83 +1,106 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
-#include <array>
-#include <cstddef>
-#include <string>
-#include <tuple>
+#include <chrono>
+#include <iostream>
 #include <vector>
 
-#include "frolova_s_sum_elem_matrix/common/include/common.hpp"
 #include "frolova_s_sum_elem_matrix/mpi/include/ops_mpi.hpp"
 #include "frolova_s_sum_elem_matrix/seq/include/ops_seq.hpp"
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace frolova_s_sum_elem_matrix {
 
-class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    int rows = std::get<0>(test_param);
-    int cols = std::get<1>(test_param);
-    const std::string &label = std::get<2>(test_param);
-    return std::to_string(rows) + "x" + std::to_string(cols) + "_" + label;
+// Объявление функции
+static std::vector<std::vector<int>> CreateMatrix(int rows, int cols, int value = 1);
+
+// Вспомогательная функция для создания матрицы
+std::vector<std::vector<int>> CreateMatrix(int rows, int cols, int value) {
+  std::vector<std::vector<int>> matrix(rows);
+  for (auto &row : matrix) {
+    row.resize(cols, value);
   }
-
- protected:
-  void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-    int rows = std::get<0>(params);
-    int cols = std::get<1>(params);
-
-    if (rows > 0 && cols > 0) {
-      matrix_.resize(rows);
-      for (auto &row : matrix_) {
-        row.resize(cols, 1);
-      }
-      expected_sum_ = static_cast<OutType>(rows) * cols;
-    } else {
-      matrix_ = {};
-      expected_sum_ = 0;
-    }
-  }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_sum_;
-  }
-
-  InType GetTestInputData() final {
-    return matrix_;
-  }
-
- private:
-  InType matrix_;
-  OutType expected_sum_{0};
-};
-
-namespace {
-
-TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
-  ExecuteTest(GetParam());
+  return matrix;
 }
 
-const std::array<TestType, 4> kTestParam = {
-    std::make_tuple(3, 3, "small"),
-    std::make_tuple(10, 10, "medium"),
-    std::make_tuple(20, 15, "rect"),
-    std::make_tuple(1, 1, "single_element"),
+class FrolovaSSumElemMatrixPerformanceTests : public ::testing::Test {
+ protected:
+  void SetUp() override {
+    matrix_1000x1000 = CreateMatrix(1000, 1000);
+    matrix_2000x2000 = CreateMatrix(2000, 2000);
+  }
+
+  std::vector<std::vector<int>> matrix_1000x1000;
+  std::vector<std::vector<int>> matrix_2000x2000;
 };
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<FrolovaSSumElemMatrixMPI, InType>(kTestParam, PPC_SETTINGS_frolova_s_sum_elem_matrix),
-    ppc::util::AddFuncTask<FrolovaSSumElemMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_frolova_s_sum_elem_matrix));
+// Тест производительности SEQ версии
+TEST_F(FrolovaSSumElemMatrixPerformanceTests, SEQ1000x1000) {
+  FrolovaSSumElemMatrixSEQ task(matrix_1000x1000);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+  auto start = std::chrono::high_resolution_clock::now();
+  bool result = task.Run();
+  auto end = std::chrono::high_resolution_clock::now();
 
-const auto kFuncTestName = FrolovaSSumElemMatrixRunFuncTests::PrintFuncTestName<FrolovaSSumElemMatrixRunFuncTests>;
+  ASSERT_TRUE(result);
 
-INSTANTIATE_TEST_SUITE_P(SumMatrixTests, FrolovaSSumElemMatrixRunFuncTests, kGtestValues, kFuncTestName);
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << "SEQ 1000×1000: " << duration.count() << " ms" << '\n';
+}
 
-}  // namespace
+TEST_F(FrolovaSSumElemMatrixPerformanceTests, SEQ2000x2000) {
+  FrolovaSSumElemMatrixSEQ task(matrix_2000x2000);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  bool result = task.Run();
+  auto end = std::chrono::high_resolution_clock::now();
+
+  ASSERT_TRUE(result);
+
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+  std::cout << "SEQ 2000×2000: " << duration.count() << " ms" << '\n';
+}
+
+TEST_F(FrolovaSSumElemMatrixPerformanceTests, MPI1000x1000) {
+  FrolovaSSumElemMatrixMPI task(matrix_1000x1000);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  bool result = task.Run();
+  auto end = std::chrono::high_resolution_clock::now();
+
+  ASSERT_TRUE(result);
+
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+  int rank = 0;
+  int size = 1;
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (rank == 0) {
+    std::cout << "MPI 1000×1000 (processes: " << size << "): " << duration.count() << " ms" << '\n';
+  }
+}
+
+TEST_F(FrolovaSSumElemMatrixPerformanceTests, MPI2000x2000) {
+  FrolovaSSumElemMatrixMPI task(matrix_2000x2000);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  bool result = task.Run();
+  auto end = std::chrono::high_resolution_clock::now();
+
+  ASSERT_TRUE(result);
+
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+  int rank = 0;
+  int size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  if (rank == 0) {
+    std::cout << "MPI 2000×2000 (processes: " << size << "): " << duration.count() << " ms" << '\n';
+  }
+}
 
 }  // namespace frolova_s_sum_elem_matrix

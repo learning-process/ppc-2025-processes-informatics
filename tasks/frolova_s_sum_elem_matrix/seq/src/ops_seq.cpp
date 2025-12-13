@@ -1,8 +1,8 @@
 #include "frolova_s_sum_elem_matrix/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <numeric>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
@@ -21,18 +21,7 @@ FrolovaSSumElemMatrixSEQ::FrolovaSSumElemMatrixSEQ(const InType &in) {
 }
 
 bool FrolovaSSumElemMatrixSEQ::ValidationImpl() {
-  const auto &matrix = GetInput();
-
-  if (matrix.empty()) {
-    return false;
-  }
-
-  const std::size_t cols = matrix.front().size();
-  if (cols == 0) {
-    return false;
-  }
-
-  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
+  return true;
 }
 
 bool FrolovaSSumElemMatrixSEQ::PreProcessingImpl() {
@@ -42,13 +31,36 @@ bool FrolovaSSumElemMatrixSEQ::PreProcessingImpl() {
 
 bool FrolovaSSumElemMatrixSEQ::RunImpl() {
   const auto &matrix = GetInput();
-  int64_t sum = 0;
 
+  // Отладка для больших матриц
+  std::cerr << "=== RUN IMPL DEBUG START ===\n";
+  std::cerr << "matrix.size = " << matrix.size() << "\n";
+
+  // Для больших матриц не печатаем все элементы
+  if (matrix.size() > 10) {
+    std::cerr << "Large matrix, checking first few rows...\n";
+    if (!matrix.empty()) {
+      std::cerr << "First row size: " << matrix[0].size() << "\n";
+      if (!matrix[0].empty()) {
+        std::cerr << "First element: " << matrix[0][0] << "\n";
+      }
+    }
+  } else {
+    // Для маленьких матриц печатаем все
+    for (size_t r = 0; r < matrix.size(); ++r) {
+      std::cerr << "ROW[" << r << "] size=" << matrix[r].size() << "\n";
+    }
+  }
+
+  int64_t sum = 0;
   for (const auto &row : matrix) {
-    sum += std::accumulate(row.begin(), row.end(), static_cast<int64_t>(0));
+    sum += std::accumulate(row.begin(), row.end(), 0LL);
   }
 
   GetOutput() = sum;
+  std::cerr << "computed sum = " << sum << "\n";
+  std::cerr << "=== RUN IMPL DEBUG END ===\n";
+
   return true;
 }
 

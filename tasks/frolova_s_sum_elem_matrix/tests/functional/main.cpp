@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstddef>
+#include <iostream>  // Добавлено для отладки
 #include <string>
 #include <tuple>
 #include <vector>
@@ -29,17 +30,50 @@ class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InT
 
     int rows = std::get<0>(params);
     int cols = std::get<1>(params);
+    const std::string &label = std::get<2>(params);
 
-    matrix_.resize(rows);
-    for (auto &row : matrix_) {
-      row.resize(cols, 1);
+    if (label == "empty_matrix") {
+      matrix_ = {};
+      expected_sum_ = 0;
+    } else if (label == "zero_cols") {
+      matrix_ = std::vector<std::vector<int>>(3);
+      expected_sum_ = 0;
+    } else if (label == "zero_rows") {
+      matrix_ = {};
+      expected_sum_ = 0;
+    } else if (label == "jagged_matrix") {
+      matrix_ = {{1, 2, 3}, {4, 5}};
+      expected_sum_ = 15;
+    } else if (label == "large") {
+      // Тест для большой матрицы 2000x2000
+      std::cerr << "DEBUG: Creating large matrix " << rows << "x" << cols << '\n';
+      matrix_.resize(rows);
+      for (auto &row : matrix_) {
+        row.resize(cols, 1);
+      }
+      expected_sum_ = static_cast<OutType>(rows) * cols;
+      std::cerr << "DEBUG: Expected sum = " << expected_sum_ << '\n';
+    } else {
+      // Обычные тесты
+      if (rows > 0 && cols > 0) {
+        matrix_.resize(rows);
+        for (auto &row : matrix_) {
+          row.resize(cols, 1);
+        }
+        expected_sum_ = static_cast<OutType>(rows) * cols;
+      } else {
+        matrix_ = {};
+        expected_sum_ = 0;
+      }
     }
-
-    expected_sum_ = static_cast<OutType>(rows) * cols;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_sum_;
+    bool result = (output_data == expected_sum_);
+    if (!result) {
+      std::cerr << "DEBUG: Test failed! Expected: " << expected_sum_ << ", Got: " << output_data << '\n';
+    }
+    return result;
   }
 
   InType GetTestInputData() final {
@@ -57,10 +91,12 @@ TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(3, 3, "small"),
-    std::make_tuple(10, 10, "medium"),
-    std::make_tuple(20, 15, "rect"),
+const std::array<TestType, 9> kTestParam = {
+    std::make_tuple(3, 3, "small"),        std::make_tuple(10, 10, "medium"),
+    std::make_tuple(20, 15, "rect"),       std::make_tuple(1, 1, "single_element"),
+    std::make_tuple(0, 0, "empty_matrix"), std::make_tuple(3, 0, "zero_cols"),
+    std::make_tuple(0, 3, "zero_rows"),    std::make_tuple(2, 2, "jagged_matrix"),
+    std::make_tuple(2000, 2000, "large"),
 };
 
 const auto kTestTasksList = std::tuple_cat(
