@@ -11,6 +11,13 @@
     "function": { "expression": "-2*x + 3" },
     "problem": { "left": -5.0, "right": 5.0 },
     "expected": { "argmins": [5.0], "value": -7.0 }
+  },
+  
+  {
+    "name": "case_003_quadratic",
+    "function": { "expression": "(x - 2)^2 + 1" },
+    "problem": { "left": 0.0, "right": 4.0 },
+    "expected": { "argmins": [2.0], "value": 1.0 }
   }
 
 ]
