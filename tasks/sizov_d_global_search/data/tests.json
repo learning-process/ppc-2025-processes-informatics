@@ -39,6 +39,34 @@
     "function": { "expression": "exp(x - 1)" },
     "problem": { "left": -3.0, "right": 2.0 },
     "expected": { "argmins": [-3.0], "value": 0.01831563888873418 }
+  },
+
+  {
+    "name": "case_007_sin_monotonic_segment",
+    "function": { "expression": "sin(x)" },
+    "problem": { "left": -1.0, "right": 1.0 },
+    "expected": { "argmins": [-1.0], "value": -0.8414709848078965 }
+  },
+
+  {
+    "name": "case_008_sin",
+    "function": { "expression": "sin(x)" },
+    "problem": { "left": -3.0, "right": 2.0 },
+    "expected": { "argmins": [-1.5707963267948966], "value": -1.0 }
+  },
+
+  {
+  "name": "case_009_cos_neg_center",
+  "function": { "expression": "-cos(x)" },
+  "problem": { "left": -1.0, "right": 1.0 },
+  "expected": { "argmins": [0.0], "value": -1.0 }
+  },
+
+  {
+  "name": "case_010_cos_on_0_pi",
+  "function": { "expression": "cos(x)" },
+  "problem": { "left": 0.0, "right": 3.141592653589793 },
+  "expected": { "argmins": [3.141592653589793], "value": -1.0 }
   }
 
 ]
