@@ -21,8 +21,6 @@ namespace zavyalov_a_reduce {
 
 class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  ~ZavyalovAReduceFuncTests() override = default;  // shared_ptr автоматически управляет памятью
-
   static std::string PrintTestParam(const TestType &test_param) {
     std::string mpi_opname;
     std::string mpi_typename;
@@ -44,7 +42,8 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       throw "unsupported datatype";
     }
 
-    return mpi_opname + "_" + mpi_typename + "_" + std::to_string(std::get<2>(test_param));
+    return mpi_opname + "_" + mpi_typename + "_" + std::to_string(std::get<2>(test_param)) + "_" +
+           std::to_string(std::get<3>(test_param));
   }
 
  protected:
@@ -223,11 +222,26 @@ TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(MPI_SUM, MPI_INT, 5U, 0),    std::make_tuple(MPI_SUM, MPI_INT, 9U, 1),
-    std::make_tuple(MPI_SUM, MPI_FLOAT, 11U, 0), std::make_tuple(MPI_SUM, MPI_DOUBLE, 10U, 0),
-    std::make_tuple(MPI_MIN, MPI_FLOAT, 6U, 0),  std::make_tuple(MPI_MIN, MPI_FLOAT, 50U, 0),
-    std::make_tuple(MPI_MIN, MPI_INT, 6U, 0),    std::make_tuple(MPI_MIN, MPI_DOUBLE, 6U, 0)};
+const std::array<TestType, 36> kTestParam = {
+    std::make_tuple(MPI_SUM, MPI_INT, 10U, 0),    std::make_tuple(MPI_SUM, MPI_INT, 10U, 1),
+    std::make_tuple(MPI_SUM, MPI_INT, 9U, 0),     std::make_tuple(MPI_SUM, MPI_INT, 9U, 1),
+    std::make_tuple(MPI_SUM, MPI_FLOAT, 10U, 0),  std::make_tuple(MPI_SUM, MPI_FLOAT, 10U, 1),
+    std::make_tuple(MPI_SUM, MPI_FLOAT, 9U, 0),   std::make_tuple(MPI_SUM, MPI_FLOAT, 9U, 1),
+    std::make_tuple(MPI_SUM, MPI_DOUBLE, 10U, 0), std::make_tuple(MPI_SUM, MPI_DOUBLE, 10U, 1),
+    std::make_tuple(MPI_SUM, MPI_DOUBLE, 9U, 0),  std::make_tuple(MPI_SUM, MPI_DOUBLE, 9U, 1),
+    std::make_tuple(MPI_SUM, MPI_FLOAT, 50U, 0),  std::make_tuple(MPI_SUM, MPI_INT, 50U, 0),
+    std::make_tuple(MPI_SUM, MPI_DOUBLE, 50U, 0), std::make_tuple(MPI_SUM, MPI_FLOAT, 50U, 1),
+    std::make_tuple(MPI_SUM, MPI_INT, 50U, 1),    std::make_tuple(MPI_SUM, MPI_DOUBLE, 50U, 1),
+    std::make_tuple(MPI_MIN, MPI_INT, 10U, 0),    std::make_tuple(MPI_MIN, MPI_INT, 10U, 1),
+    std::make_tuple(MPI_MIN, MPI_INT, 9U, 0),     std::make_tuple(MPI_MIN, MPI_INT, 9U, 1),
+    std::make_tuple(MPI_MIN, MPI_FLOAT, 10U, 0),  std::make_tuple(MPI_MIN, MPI_FLOAT, 10U, 1),
+    std::make_tuple(MPI_MIN, MPI_FLOAT, 9U, 0),   std::make_tuple(MPI_MIN, MPI_FLOAT, 9U, 1),
+    std::make_tuple(MPI_MIN, MPI_DOUBLE, 10U, 0), std::make_tuple(MPI_MIN, MPI_DOUBLE, 10U, 1),
+    std::make_tuple(MPI_MIN, MPI_DOUBLE, 9U, 0),  std::make_tuple(MPI_MIN, MPI_DOUBLE, 9U, 1),
+    std::make_tuple(MPI_MIN, MPI_FLOAT, 50U, 0),  std::make_tuple(MPI_MIN, MPI_INT, 50U, 0),
+    std::make_tuple(MPI_MIN, MPI_DOUBLE, 50U, 0), std::make_tuple(MPI_MIN, MPI_FLOAT, 50U, 1),
+    std::make_tuple(MPI_MIN, MPI_INT, 50U, 1),    std::make_tuple(MPI_MIN, MPI_DOUBLE, 50U, 1),
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ZavyalovAReduceMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_reduce),

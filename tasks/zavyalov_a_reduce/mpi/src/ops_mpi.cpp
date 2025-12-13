@@ -55,7 +55,6 @@ void ReduceBinaryTree(const void *sendbuf, void *recvbuf, int count, int root, M
     }
   }
 
-  // Перемещение результата на root
   if (world_rank == 0) {
     if (root == 0) {
       std::memcpy(recvbuf, acc.data(), sizeof(T) * count);
@@ -99,8 +98,6 @@ void ZavyalovAReduceMPI::MyReduce(const void *sendbuf, void *recvbuf, int count,
     }
   }
 }
-
-// ===== Встроенные методы фреймворка =====
 
 ZavyalovAReduceMPI::ZavyalovAReduceMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
