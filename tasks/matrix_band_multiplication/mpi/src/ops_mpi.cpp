@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -98,8 +97,8 @@ void MatrixBandMultiplicationMpi::PrepareRowDistribution(const Matrix &matrix_a)
   row_displs_ = BuildDisplacements(row_counts_);
 
   std::vector<int> send_counts(row_counts_.size());
-  std::ranges::transform(row_counts_, send_counts.begin(),
-                         [this](int rows) { return rows * static_cast<int>(cols_a_); });
+  std::transform(row_counts_.begin(), row_counts_.end(), send_counts.begin(),
+                 [this](int rows) { return rows * static_cast<int>(cols_a_); });
   std::vector<int> send_displs = BuildDisplacements(send_counts);
 
   const double *a_ptr = rank_ == 0 ? matrix_a.values.data() : nullptr;
@@ -113,9 +112,14 @@ void MatrixBandMultiplicationMpi::PrepareRowDistribution(const Matrix &matrix_a)
 void MatrixBandMultiplicationMpi::PrepareColumnDistribution(const Matrix &matrix_b) {
   col_counts_ = BuildCounts(static_cast<int>(cols_b_), world_size_);
   col_displs_ = BuildDisplacements(col_counts_);
-  max_cols_per_proc_ = col_counts_.empty() ? 0 : *std::max_element(col_counts_.begin(), col_counts_.end());
+  max_cols_per_proc_ = 0;
+  for (int count : col_counts_) {
+    if (count > max_cols_per_proc_) {
+      max_cols_per_proc_ = count;
+    }
+  }
 
-  const std::size_t stripe_capacity = static_cast<std::size_t>(rows_b_) * static_cast<std::size_t>(max_cols_per_proc_);
+  const std::size_t stripe_capacity = rows_b_ * static_cast<std::size_t>(max_cols_per_proc_);
   current_b_.assign(stripe_capacity, 0.0);
   rotation_buffer_.assign(stripe_capacity, 0.0);
 
@@ -133,7 +137,7 @@ void MatrixBandMultiplicationMpi::PrepareColumnDistribution(const Matrix &matrix
       const int col_start = col_displs_[owner];
       for (std::size_t row = 0; row < rows_b_; ++row) {
         for (int col = 0; col < cols; ++col) {
-          const std::size_t src_index = row * cols_b_ + static_cast<std::size_t>(col_start + col);
+          const std::size_t src_index = (row * cols_b_) + static_cast<std::size_t>(col_start + col);
           packed.push_back(matrix_b.values[src_index]);
         }
       }
@@ -157,10 +161,10 @@ void MatrixBandMultiplicationMpi::PrepareResultGatherInfo() {
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
 
-  std::ranges::transform(result_counts_, result_counts_.begin(),
-                         [this](int rows) { return rows * static_cast<int>(cols_b_); });
-  std::ranges::transform(result_displs_, result_displs_.begin(),
-                         [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
+  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(),
+                 [this](int rows) { return rows * static_cast<int>(cols_b_); });
+  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(),
+                 [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
 }
 
 void MatrixBandMultiplicationMpi::MultiplyStripe(const double *stripe_data, int stripe_cols, int stripe_offset,
@@ -173,12 +177,12 @@ void MatrixBandMultiplicationMpi::MultiplyStripe(const double *stripe_data, int 
     for (int col = 0; col < stripe_cols; ++col) {
       double sum = 0.0;
       for (std::size_t k = 0; k < cols_a_; ++k) {
-        const std::size_t a_idx = static_cast<std::size_t>(row) * cols_a_ + k;
-        const std::size_t b_idx = k * static_cast<std::size_t>(stripe_cols) + static_cast<std::size_t>(col);
+        const std::size_t a_idx = (static_cast<std::size_t>(row) * cols_a_) + k;
+        const std::size_t b_idx = (k * static_cast<std::size_t>(stripe_cols)) + static_cast<std::size_t>(col);
         sum += local_a_[a_idx] * stripe_data[b_idx];
       }
       const std::size_t result_idx =
-          static_cast<std::size_t>(row) * cols_b_ + static_cast<std::size_t>(stripe_offset + col);
+          (static_cast<std::size_t>(row) * cols_b_) + static_cast<std::size_t>(stripe_offset + col);
       local_result_[result_idx] = sum;
     }
   }
