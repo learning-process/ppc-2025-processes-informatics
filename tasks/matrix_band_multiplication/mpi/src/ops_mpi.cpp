@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -97,8 +98,8 @@ void MatrixBandMultiplicationMpi::PrepareRowDistribution(const Matrix &matrix_a)
   row_displs_ = BuildDisplacements(row_counts_);
 
   std::vector<int> send_counts(row_counts_.size());
-  std::transform(row_counts_.begin(), row_counts_.end(), send_counts.begin(),
-                 [this](int rows) { return rows * static_cast<int>(cols_a_); });
+  std::ranges::transform(row_counts_, send_counts.begin(),
+                         [this](int rows) { return rows * static_cast<int>(cols_a_); });
   std::vector<int> send_displs = BuildDisplacements(send_counts);
 
   const double *a_ptr = rank_ == 0 ? matrix_a.values.data() : nullptr;
@@ -112,12 +113,7 @@ void MatrixBandMultiplicationMpi::PrepareRowDistribution(const Matrix &matrix_a)
 void MatrixBandMultiplicationMpi::PrepareColumnDistribution(const Matrix &matrix_b) {
   col_counts_ = BuildCounts(static_cast<int>(cols_b_), world_size_);
   col_displs_ = BuildDisplacements(col_counts_);
-  max_cols_per_proc_ = 0;
-  for (int count : col_counts_) {
-    if (count > max_cols_per_proc_) {
-      max_cols_per_proc_ = count;
-    }
-  }
+  max_cols_per_proc_ = ComputeMaxColumns();
 
   const std::size_t stripe_capacity = rows_b_ * static_cast<std::size_t>(max_cols_per_proc_);
   current_b_.assign(stripe_capacity, 0.0);
@@ -126,32 +122,58 @@ void MatrixBandMultiplicationMpi::PrepareColumnDistribution(const Matrix &matrix
   std::vector<double> packed;
   std::vector<int> send_counts(world_size_, 0);
   std::vector<int> send_displs(world_size_, 0);
-  if (rank_ == 0) {
-    packed.reserve(matrix_b.values.size());
-    int offset = 0;
-    for (int owner = 0; owner < world_size_; ++owner) {
-      const int cols = col_counts_[owner];
-      const int elems = cols * static_cast<int>(rows_b_);
-      send_counts[owner] = elems;
-      send_displs[owner] = offset;
-      const int col_start = col_displs_[owner];
-      for (std::size_t row = 0; row < rows_b_; ++row) {
-        for (int col = 0; col < cols; ++col) {
-          const std::size_t src_index = (row * cols_b_) + static_cast<std::size_t>(col_start + col);
-          packed.push_back(matrix_b.values[src_index]);
-        }
-      }
-      offset += elems;
-    }
-  }
+  PreparePackedColumns(matrix_b, packed, send_counts, send_displs);
 
   const int recv_elements = col_counts_[rank_] * static_cast<int>(rows_b_);
-  MPI_Scatterv(rank_ == 0 ? packed.data() : nullptr, rank_ == 0 ? send_counts.data() : nullptr,
-               rank_ == 0 ? send_displs.data() : nullptr, MPI_DOUBLE, current_b_.data(), recv_elements, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
+  ScatterInitialStripe(packed, send_counts, send_displs, recv_elements);
 
   stripe_owner_ = rank_;
   current_cols_ = col_counts_[rank_];
+}
+
+int MatrixBandMultiplicationMpi::ComputeMaxColumns() const {
+  int max_cols = 0;
+  for (int count : col_counts_) {
+    max_cols = std::max(max_cols, count);
+  }
+  return max_cols;
+}
+
+void MatrixBandMultiplicationMpi::PreparePackedColumns(const Matrix &matrix_b, std::vector<double> &packed,
+                                                       std::vector<int> &send_counts,
+                                                       std::vector<int> &send_displs) const {
+  if (rank_ != 0) {
+    return;
+  }
+
+  packed.reserve(matrix_b.values.size());
+  int offset = 0;
+  for (int owner = 0; owner < world_size_; ++owner) {
+    const int cols = col_counts_[owner];
+    const int elems = cols * static_cast<int>(rows_b_);
+    send_counts[owner] = elems;
+    send_displs[owner] = offset;
+    const int col_start = col_displs_[owner];
+    for (std::size_t row = 0; row < rows_b_; ++row) {
+      const std::size_t base = row * cols_b_;
+      for (int col = 0; col < cols; ++col) {
+        const std::size_t src_index = base + static_cast<std::size_t>(col_start + col);
+        packed.push_back(matrix_b.values[src_index]);
+      }
+    }
+    offset += elems;
+  }
+}
+
+void MatrixBandMultiplicationMpi::ScatterInitialStripe(const std::vector<double> &packed,
+                                                       const std::vector<int> &send_counts,
+                                                       const std::vector<int> &send_displs, int recv_elements) {
+  const double *send_buffer = rank_ == 0 ? packed.data() : nullptr;
+  const int *counts_ptr = rank_ == 0 ? send_counts.data() : nullptr;
+  const int *displs_ptr = rank_ == 0 ? send_displs.data() : nullptr;
+
+  MPI_Scatterv(send_buffer, counts_ptr, displs_ptr, MPI_DOUBLE, current_b_.data(), recv_elements, MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
 }
 
 void MatrixBandMultiplicationMpi::PrepareResultGatherInfo() {
@@ -161,10 +183,10 @@ void MatrixBandMultiplicationMpi::PrepareResultGatherInfo() {
   result_counts_ = BuildCounts(static_cast<int>(rows_a_), world_size_);
   result_displs_ = BuildDisplacements(result_counts_);
 
-  std::transform(result_counts_.begin(), result_counts_.end(), result_counts_.begin(),
-                 [this](int rows) { return rows * static_cast<int>(cols_b_); });
-  std::transform(result_displs_.begin(), result_displs_.end(), result_displs_.begin(),
-                 [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
+  std::ranges::transform(result_counts_, result_counts_.begin(),
+                         [this](int rows) { return rows * static_cast<int>(cols_b_); });
+  std::ranges::transform(result_displs_, result_displs_.begin(),
+                         [this](int rows_prefix) { return rows_prefix * static_cast<int>(cols_b_); });
 }
 
 void MatrixBandMultiplicationMpi::MultiplyStripe(const double *stripe_data, int stripe_cols, int stripe_offset,
