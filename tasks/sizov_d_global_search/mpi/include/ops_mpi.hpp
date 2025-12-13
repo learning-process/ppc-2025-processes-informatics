@@ -40,15 +40,13 @@ class SizovDGlobalSearchMPI : public BaseTask {
   [[nodiscard]] double NewPoint(std::size_t i, double m) const;
 
   [[nodiscard]] IntervalChar ComputeLocalBestInterval(double m, int rank, int size) const;
-  static int ReduceBestIntervalIndex(const IntervalChar &local, int n, int size);
+  static int ReduceBestIntervalIndex(const IntervalChar &local, int n);
 
   [[nodiscard]] bool CheckStopByAccuracy(const Problem &p, int best_idx, int rank) const;
 
   void BroadcastState(int rank);
   void BroadcastNewPoint(int best_idx, double m, const Problem &p, int rank);
   void BroadcastResult(int rank);
-
-  static void BroadcastInsertMsg(InsertMsg &msg, int rank);
 
   std::vector<double> x_;
   std::vector<double> y_;
