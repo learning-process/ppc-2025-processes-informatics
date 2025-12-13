@@ -69,198 +69,163 @@ $$
 
 ## 3. Baseline Algorithm (Sequential)
 
-The sequential implementation strictly follows the classical **Strongin global
-search algorithm** for one-dimensional optimization problems.
+The sequential implementation follows the classical **Strongin global search
+algorithm** for one-dimensional optimization.
 
-The algorithm operates on a closed interval:
+The algorithm operates on a closed interval
 
 $$
 [a, b]
 $$
 
-and incrementally builds an ordered set of sampled points in order to
-approximate the global minimum of the objective function.
+and incrementally refines it by sampling new points in order to approximate the
+global minimum of the objective function.
 
-The method is **deterministic**: for fixed parameters and identical input
-function, it produces the same sequence of sampling points and the same result.
-
-The algorithm does not require prior knowledge of the Lipschitz constant.
-Instead, a **Lipschitz-like estimate** is computed adaptively using the values
-of the function at already sampled points.
+The method is **deterministic** and does not require prior knowledge of the
+Lipschitz constant. Instead, a **Lipschitz-like estimate** is computed adaptively
+from the already sampled function values.
 
 ---
 
 ### 3.1 Initial Sampling
 
-At the initial step, the function is evaluated at the interval boundaries.
+At the initial step, the function is evaluated at the interval boundaries:
 
 $$
-x_0 = a, \quad x_1 = b
+x_0 = a, \quad x_1 = b,
 $$
 
-These two points form the initial partition of the interval.
-The corresponding function values are evaluated as:
+with corresponding values
 
 $$
-f(x_0), \quad f(x_1)
+f(x_0), \quad f(x_1).
 $$
 
-The sampled points are stored in sorted order and define the initial set of
-intervals for further refinement.
+These points form the initial ordered set of samples and define the first interval
+for further refinement.
 
 ---
 
 ### 3.2 Estimation of the Lipschitz-Like Constant
 
-At each iteration, the algorithm computes an adaptive estimate of a
-Lipschitz-like constant using the currently sampled points.
-
-The estimate is defined as:
+At each iteration, the algorithm computes an adaptive estimate
 
 $$
 M = r \cdot \max_i
-\frac{\lvert f(x_i) - f(x_{i-1}) \rvert}{x_i - x_{i-1}}
+\frac{\lvert f(x_i) - f(x_{i-1}) \rvert}{x_i - x_{i-1}},
 $$
 
-where:
+where $r > 0$ is the reliability parameter and the maximum is taken over all
+current intervals.
 
-- `r > 0` is the reliability parameter,
-- the maximum is taken over all existing intervals.
-
-If all slopes are equal to zero, a small positive constant is used instead in
-order to avoid division by zero.
-
-This estimate does not assume global Lipschitz continuity of the function and
-is recomputed adaptively as new sampling points are added.
+If all slopes are zero, a small positive constant is used to avoid division by
+zero.
 
 ---
 
 ### 3.3 Interval Characteristic
 
-For each interval defined by consecutive sampling points
-
-$$
-[x_{i-1}, x_i],
-$$
-
-the algorithm computes the Strongin characteristic value:
+For each interval $[x_{i-1}, x_i]$, the Strongin characteristic is computed as
 
 $$
 R_i =
 M \bigl(x_i - x_{i-1}\bigr)
 + \frac{\bigl(f(x_i) - f(x_{i-1})\bigr)^2}
        {M \bigl(x_i - x_{i-1}\bigr)}
-- 2 \bigl(f(x_i) + f(x_{i-1})\bigr)
+- 2 \bigl(f(x_i) + f(x_{i-1})\bigr).
 $$
 
-The characteristic quantifies how promising the interval is with respect to
-containing the global minimum. Intervals with larger values of $R_i$ are
-considered more favorable for further subdivision.  
+Intervals with larger values of $R_i$ are considered more promising for
+containing the global minimum.
 
 ---
 
 ### 3.4 Selection of the Best Interval
 
-Among all current intervals, the algorithm selects the interval with the
-maximum characteristic value:
+The interval with the maximum characteristic is selected:
 
 $$
-i^\ast = \operatorname{argmax}_i R_i
+i^\ast = \operatorname{argmax}_i R_i,
 $$
 
-The corresponding interval
-
-$$
-[x_{i^\ast-1}, x_{i^\ast}]
-$$
-
-is chosen for further refinement in the current iteration.
+and the corresponding interval $[x_{i^\ast-1}, x_{i^\ast}]$ is refined.
 
 ---
 
 ### 3.5 Generation of a New Sampling Point
 
-A new sampling point inside the selected interval is computed according to the
-Strongin formula:
+A new sampling point is computed as
 
 $$
 x_{\text{new}} =
 \frac{x_{i-1} + x_i}{2}
-- \frac{f(x_i) - f(x_{i-1})}{2M}
+- \frac{f(x_i) - f(x_{i-1})}{2M}.
 $$
 
-If the computed point lies outside the interval
+If this point lies outside the interval $[x_{i-1}, x_i]$, the midpoint is used
+instead.
 
-$$
-[x_{i-1}, x_i],
-$$
-
-the midpoint of the interval is used instead:
-
-$$
-x_{\text{new}} = \frac{x_{i-1} + x_i}{2}
-$$
-
-The function value at the new point is evaluated, and the point is inserted into
-the ordered set of sampled points.
+The new point and its function value are inserted into the ordered sample set.
 
 ---
 
 ### 3.6 Stopping Criterion
 
-The algorithm terminates if the length of the selected interval satisfies the
-condition:
+The algorithm terminates when
 
 $$
-x_i - x_{i-1} \le \varepsilon
+x_i - x_{i-1} \le \varepsilon,
 $$
 
-where $\varepsilon$ is the required accuracy.
-
-The algorithm also stops if the predefined maximum number of iterations is
-reached.
+where $\varepsilon$ is the required accuracy, or when the maximum number of
+iterations is reached.
 
 ---
 
 ## 4. Parallelization by Interval Characteristics (MPI)
 
-The MPI implementation employs **parallelization by interval characteristics**, which directly follows the mathematical structure of Strongin’s global search algorithm and preserves its deterministic behavior.
+The MPI implementation uses **parallelization by interval characteristics**,
+which directly follows the structure of Strongin’s global search algorithm and
+preserves its deterministic behavior.
 
-At each iteration, the algorithm operates on the current ordered set of sampling points
+At each iteration, the algorithm operates on the ordered set of sampled points
 
 $$
 \{x_0, x_1, \dots, x_n\},
 $$
 
-which defines $n$ intervals $[x_{i-1}, x_i]$.  
-Only the computation of interval characteristics and the estimation of the Lipschitz-like constant are parallelized.
+which defines $n$ intervals $[x_{i-1}, x_i]$.
+Only the computation of interval characteristics and the estimation of the
+Lipschitz-like constant are parallelized; all other steps follow the sequential
+algorithm.
+
+---
 
 ### 4.1 Partitioning of Intervals
 
-The total number of intervals $n$ is divided among the available MPI processes.  
-Each process $p$ is assigned a **contiguous subset of intervals**:
+The total number of intervals $n$ is divided among $P$ MPI processes.
+Each process $p$ is assigned a **contiguous subset of intervals**
 
 $$
 [x_{k-1}, x_k], \quad k \in \mathcal{I}_p,
 $$
 
-where $\mathcal{I}_p$ denotes the index range handled by process $p$
+where $\mathcal{I}_p$ denotes the index range handled by process $p$.
 
-The partitioning strategy is static and nearly uniform: each process receives either
+The partitioning is static and nearly uniform: each process receives either
 
 $$
 \lfloor n / P \rfloor \quad \text{or} \quad \lceil n / P \rceil
 $$
 
-intervals, where $P$ is the total number of MPI processes.
-
-This approach minimizes load imbalance and avoids dynamic scheduling overhead.
+intervals. This minimizes load imbalance and avoids dynamic scheduling overhead.
 
 ---
 
 ### 4.2 Local Characteristic Computation
 
-For each assigned interval $[x_{i-1}, x_i]$, a process computes the Strongin interval characteristic:
+For each assigned interval $[x_{i-1}, x_i]$, a process computes the Strongin
+characteristic
 
 $$
 R_i =
@@ -269,24 +234,26 @@ M (x_i - x_{i-1})
 - 2 \bigl(f(x_i) + f(x_{i-1})\bigr).
 $$
 
-Each process determines the **maximum characteristic value** within its local subset of intervals and stores both the value and the corresponding interval index.
+Each process selects the maximum $R_i$ within its local subset and stores the
+corresponding interval index.
 
 ---
 
 ### 4.3 Global Maximum Selection
 
-The globally best interval is selected using the collective MPI operation `MPI_Allreduce`
-with the `MPI_MAXLOC` reduction operator.
+The globally best interval is determined using the collective operation
+`MPI_Allreduce` with the `MPI_MAXLOC` operator.
 
-This operation compares the locally maximal characteristic values computed by each process and identifies the interval with the overall maximum characteristic.
-
-As a result, **all MPI processes obtain the same interval index**, ensuring deterministic behavior identical to the sequential implementation.
+This operation compares local maxima from all processes and selects the interval
+with the maximum characteristic value. As a result, **all MPI processes obtain
+the same interval index**, ensuring deterministic behavior identical to the
+sequential version.
 
 ---
 
 ### 4.4 Generation and Broadcast of a New Sampling Point
 
-Once the interval with the maximum characteristic is selected, a new sampling point is computed according to the Strongin formula:
+After selecting the best interval, a new sampling point is computed as
 
 $$
 x_{\text{new}} =
@@ -294,14 +261,10 @@ x_{\text{new}} =
 - \frac{f(x_i) - f(x_{i-1})}{2M}.
 $$
 
-If the computed point lies outside the interval $[x_{i-1}, x_i]$, the midpoint is used instead:
+If this point lies outside $[x_{i-1}, x_i]$, the midpoint is used instead.
 
-$$
-x_{\text{new}} = \frac{x_{i-1} + x_i}{2}.
-$$
-
-The newly generated point and its function value are broadcast to all MPI processes.  
-Each process inserts the new point into its local copy of the ordered sampling set.
+The new point and its function value are broadcast to all MPI processes, which
+insert it into their local copies of the ordered sampling set.
 
 ---
 
@@ -312,19 +275,28 @@ Each process inserts the new point into its local copy of the ordered sampling s
 ```text
 tasks/sizov_d_global_search
 ├── common
-│   └── include/common.hpp
-├── seq
-│   ├── include/ops_seq.hpp
-│   └── src/ops_seq.cpp
+│   └── include
+│       └── common.hpp
+├── data
+│   └── tests.json
 ├── mpi
-│   ├── include/ops_mpi.hpp
-│   └── src/ops_mpi.cpp
+│   ├── include
+│   │   └── ops_mpi.hpp
+│   └── src
+│       └── ops_mpi.cpp
+├── seq
+│   ├── include
+│   │   └── ops_seq.hpp
+│   └── src
+│       └── ops_seq.cpp
 ├── tests
-│   ├── functional/main.cpp
-│   └── performance/main.cpp
-├── tests.json
+│   ├── functional
+│   │   └── main.cpp
+│   └── performance
+│       └── main.cpp
 ├── info.json
-└── report.md
+├── report.md
+└── settings.json
 ```
 
 ### 5.2 Key Implementation Aspects
@@ -434,9 +406,6 @@ constexpr int kMaxIterations = 50000;
 - MPI shows speedup for sufficiently computationally intensive cases, where
   characteristic evaluation dominates communication overhead.
 - Scalability is limited by synchronization points and collective MPI operations.
-- The potential performance gains increase with the number of sampled intervals;
-  however, the achievable speedup is constrained by communication and
-  synchronization costs.
 
 ---
 
@@ -447,7 +416,6 @@ In this work:
 - Strongin’s global search algorithm was implemented in SEQ and MPI versions;
 - a mathematically correct parallelization by interval characteristics was achieved;
 - both implementations demonstrated identical convergence behavior;
-- MPI provided measurable speedup for sufficiently expensive objective functions.
 
 ---
 
