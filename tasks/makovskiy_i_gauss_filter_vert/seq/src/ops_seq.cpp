@@ -12,7 +12,7 @@ namespace makovskiy_i_gauss_filter_vert {
 GaussFilterSEQ::GaussFilterSEQ(const InType &in) {
   InType temp(in);
   this->GetInput().swap(temp);
-  SetTypeOfTask(GetStaticTypeOfTask());
+  SetTypeOfTask(ppc::task::TypeOfTask::kSEQ);
 }
 
 bool GaussFilterSEQ::ValidationImpl() {
@@ -39,10 +39,10 @@ bool GaussFilterSEQ::RunImpl() {
       for (int k_row = -1; k_row <= 1; ++k_row) {
         for (int k_col = -1; k_col <= 1; ++k_col) {
           sum += GetPixel(input, col + k_col, row + k_row, width, height) *
-                 kernel[(static_cast<size_t>(k_row + 1) * 3) + static_cast<size_t>(k_col + 1)];
+                 kernel.at((static_cast<size_t>(k_row + 1) * 3) + static_cast<size_t>(k_col + 1));
         }
       }
-      output[(static_cast<size_t>(row) * width) + col] = sum / kernel_sum;
+      output.at((static_cast<size_t>(row) * width) + col) = sum / kernel_sum;
     }
   }
   return true;
