@@ -167,6 +167,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   int my_elem_count = 0;
   MPI_Scatter(elem_counts.data(), 1, MPI_INT, &my_elem_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  // Шаг 6: Scatter matrix elements
   std::vector<int> local_data;
   if (my_elem_count > 0) {
     local_data.resize(my_elem_count);
