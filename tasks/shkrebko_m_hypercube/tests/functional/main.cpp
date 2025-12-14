@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <tuple>
-#include <string>
 #include <array>
-#include <vector>
 #include <cstddef>
+#include <string>
+#include <tuple>
+#include <vector>
 
 #include "shkrebko_m_hypercube/common/include/common.hpp"
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"

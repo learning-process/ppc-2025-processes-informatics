@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <tuple>
 #include <string>
+#include <tuple>
 
 #include "shkrebko_m_hypercube/common/include/common.hpp"
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"

@@ -3,8 +3,8 @@
 #include <mpi.h>
 
 #include <cmath>
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 #include "shkrebko_m_hypercube/common/include/common.hpp"
 
