@@ -145,7 +145,7 @@ bool GaseninLImageSmoothMPI::RunImpl() {
   const int overlap_top = (radius > 0) ? radius : 0;
   const int overlap_bottom = (radius > 0) ? radius : 0;
 
-  int total_send_offset = 0;
+  // int total_send_offset = 0;
   for (int i = 0; i < size; ++i) {
     const int i_start = i * base_rows + std::min(i, extra_rows);
     const int i_end = i_start + base_rows + (i < extra_rows ? 1 : 0);
@@ -158,7 +158,7 @@ bool GaseninLImageSmoothMPI::RunImpl() {
 
       sendcounts[i] = extended_rows * width;
       displs[i] = actual_start * width;
-      total_send_offset += extended_rows * width;
+      // total_send_offset += extended_rows * width;
     }
   }
 
