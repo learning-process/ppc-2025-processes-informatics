@@ -184,7 +184,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
 
   // Step 8: Reduce to global sum
   int64_t global_sum = 0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   // Step 9: Set output ONLY on rank 0
   if (rank == 0) {
