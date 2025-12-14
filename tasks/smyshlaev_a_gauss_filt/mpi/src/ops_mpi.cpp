@@ -47,7 +47,7 @@ uint8_t ApplyGaussianFilter(const std::vector<uint8_t> &padded_data, int x, int 
       sum += pixel * k_value;
     }
   }
-  return static_cast<uint8_t>(sum / kernel_sum);
+  return static_cast<uint8_t>(sum / kErnel_sum);
 }
 
 }  // namespace
@@ -193,7 +193,7 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::PrepareScatterBuffer(const Decompos
   scatter_buffer.resize(info.displs[size - 1] + info.sendcounts[size - 1]);
 
   for (int pdx = 0; pdx < size; ++pdx) {
-    uint8_t *buffer_ptr = scatter_buffer.data() + info.displs[p];
+    uint8_t *buffer_ptr = scatter_buffer.data() + info.displs[pdx];
     const auto &block = info.blocks[pdx];
     int src_y_start = block.start_row - 1;
     int src_x_start = block.start_col - 1;
@@ -278,7 +278,7 @@ void SmyshlaevAGaussFiltMPI::CollectResult(const std::vector<uint8_t> &local_res
     for (int pdx = 0; pdx < size; ++pdx) {
       const uint8_t *src_ptr = gathered_data.data() + recv_displs[pdx];
       const auto &block = info.blocks[pdx];
-      for (int idy = 0; y < block.block_height; ++idy) {
+      for (int idy = 0; idy < block.block_height; ++idy) {
         int global_y = block.start_row + idy;
         uint8_t *dst_ptr = &output_image.data[(static_cast<size_t>(global_y) * width + block.start_col) * channels];
         std::copy_n(src_ptr + (static_cast<size_t>(idy) * block.block_width * channels), block.block_width * channels,
