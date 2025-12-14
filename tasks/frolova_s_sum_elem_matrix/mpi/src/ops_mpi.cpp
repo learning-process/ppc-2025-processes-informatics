@@ -8,11 +8,6 @@
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
 
-#ifdef __GNUC__
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wnull-dereference"
-#endif
-
 namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
@@ -224,7 +219,6 @@ bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
 }
 
 }  // namespace frolova_s_sum_elem_matrix
-
 bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
   return true;
 }
