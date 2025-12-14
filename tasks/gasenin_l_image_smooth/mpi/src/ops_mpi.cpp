@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -21,11 +22,13 @@ bool GaseninLImageSmoothMPI::ValidationImpl() {
 
   int width = GetInput().width;
   int height = GetInput().height;
+  int kernel_size = GetInput().kernel_size;
 
   MPI_Bcast(&width, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&height, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&kernel_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  return width > 0 && height > 0;
+  return width > 0 && height > 0 && kernel_size > 0;
 }
 
 bool GaseninLImageSmoothMPI::PreProcessingImpl() {
@@ -48,8 +51,9 @@ bool GaseninLImageSmoothMPI::PreProcessingImpl() {
   return true;
 }
 
-static void ProcessLocalRows(int start_row, int end_row, int width, int height, int kernel_size,
-                             const std::vector<uint8_t> &input, std::vector<uint8_t> &output) {
+namespace {
+void ProcessLocalRows(int start_row, int end_row, int width, int height, int kernel_size,
+                      const std::vector<uint8_t> &input, std::vector<uint8_t> &output) {
   const int radius = kernel_size / 2;
 
   for (int row_idx = start_row; row_idx < end_row; ++row_idx) {
@@ -68,6 +72,7 @@ static void ProcessLocalRows(int start_row, int end_row, int width, int height, 
     }
   }
 }
+}  // namespace
 
 bool GaseninLImageSmoothMPI::RunImpl() {
   int rank = 0;

@@ -14,7 +14,7 @@ GaseninLImageSmoothSEQ::GaseninLImageSmoothSEQ(const InType &in) {
 }
 
 bool GaseninLImageSmoothSEQ::ValidationImpl() {
-  return GetInput().width > 0 && GetInput().height > 0 &&
+  return GetInput().width > 0 && GetInput().height > 0 && GetInput().kernel_size > 0 &&
          GetInput().data.size() == static_cast<size_t>(GetInput().width) * static_cast<size_t>(GetInput().height);
 }
 
@@ -33,6 +33,10 @@ bool GaseninLImageSmoothSEQ::RunImpl() {
   const int kernel_size = in.kernel_size;
   const int radius = kernel_size / 2;
 
+  if (kernel_size <= 0) {
+    return false;
+  }
+
   const uint8_t *src = in.data.data();
   uint8_t *dst = out.data.data();
 
@@ -50,8 +54,11 @@ bool GaseninLImageSmoothSEQ::RunImpl() {
           ++count;
         }
       }
-      // count всегда > 0, так как kernel_size >= 3 и radius >= 1
-      dst[(row_idx * width) + col_idx] = static_cast<uint8_t>(sum / count);
+      if (count > 0) {
+        dst[(row_idx * width) + col_idx] = static_cast<uint8_t>(sum / count);
+      } else {
+        dst[(row_idx * width) + col_idx] = 0;
+      }
     }
   }
   return true;
