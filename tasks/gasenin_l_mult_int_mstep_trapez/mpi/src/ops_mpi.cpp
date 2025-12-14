@@ -28,39 +28,67 @@ bool GaseninLMultIntMstepTrapezMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  TaskData data = GetInput();
-  MPI_Bcast(&data, sizeof(TaskData), MPI_BYTE, 0, MPI_COMM_WORLD);
+  TaskData data;
+
+  // Только процесс 0 имеет исходные данные
+  if (rank == 0) {
+    data = GetInput();
+  }
+
+  // Рассылаем данные всем процессам
+  MPI_Bcast(&data.n_steps, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&data.func_id, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&data.x1, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&data.x2, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&data.y1, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&data.y2, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   double hx = (data.x2 - data.x1) / data.n_steps;
   double hy = (data.y2 - data.y1) / data.n_steps;
   auto f = GetFunction(data.func_id);
 
-  int delta = data.n_steps / size;
-  int rem = data.n_steps % size;
-  int start_i = rank * delta + std::min(rank, rem);
-  int end_i = start_i + delta + (rank < rem ? 1 : 0);
+  // Распределение работы: каждый процесс обрабатывает свою часть строк
+  int total_steps = data.n_steps;
+  int steps_per_process = total_steps / size;
+  int remainder = total_steps % size;
 
+  int start_i = rank * steps_per_process + std::min(rank, remainder);
+  int end_i = start_i + steps_per_process + (rank < remainder ? 1 : 0);
+
+  // Локальная сумма на каждом процессе
   double local_sum = 0.0;
-  for (int i = start_i; i < end_i; ++i) {
-    double x = data.x1 + i * hx;
-    double x_next = data.x1 + (i + 1) * hx;
-    for (int j = 0; j < data.n_steps; ++j) {
-      double y = data.y1 + j * hy;
-      double y_next = data.y1 + (j + 1) * hy;
 
-      local_sum += (f(x, y) + f(x_next, y) + f(x, y_next) + f(x_next, y_next));
+  for (int i = start_i; i < end_i; ++i) {
+    double x_i = data.x1 + i * hx;
+    double x_i1 = data.x1 + (i + 1) * hx;
+
+    for (int j = 0; j < total_steps; ++j) {
+      double y_j = data.y1 + j * hy;
+      double y_j1 = data.y1 + (j + 1) * hy;
+
+      double f00 = f(x_i, y_j);
+      double f10 = f(x_i1, y_j);
+      double f01 = f(x_i, y_j1);
+      double f11 = f(x_i1, y_j1);
+
+      local_sum += (f00 + f10 + f01 + f11);
     }
   }
 
+  // Собираем все частичные суммы на процессе 0
   double global_sum = 0.0;
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+  // Процесс 0 вычисляет финальный результат
   double result = 0.0;
   if (rank == 0) {
-    result = global_sum * hx * hy * 0.25;
+    result = global_sum * (hx * hy) / 4.0;
   }
 
+  // Рассылаем результат всем процессам (важно для тестов!)
   MPI_Bcast(&result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  // Все процессы сохраняют результат
   GetOutput() = result;
 
   return true;

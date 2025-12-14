@@ -27,36 +27,40 @@ bool GaseninLMultIntMstepTrapezSEQ::RunImpl() {
   double hx = (data.x2 - data.x1) / data.n_steps;
   double hy = (data.y2 - data.y1) / data.n_steps;
 
-  std::vector<double> x_vals(data.n_steps + 1);
-  std::vector<double> y_vals(data.n_steps + 1);
+  // Метод трапеций для двойного интеграла
+  double sum = 0.0;
 
-#pragma omp parallel for if (data.n_steps > 1000)
-  for (int i = 0; i <= data.n_steps; i++) {
-    x_vals[i] = data.x1 + i * hx;
-    y_vals[i] = data.y1 + i * hy;
-  }
-
-  double res = 0.0;
-  double hxhy = hx * hy;
-
-#pragma omp parallel for reduction(+ : res) if (data.n_steps > 500)
-  for (int i = 0; i < data.n_steps; i++) {
-    for (int j = 0; j < data.n_steps; j++) {
-      double x_i = x_vals[i];
-      double x_i1 = x_vals[i + 1];
-      double y_j = y_vals[j];
-      double y_j1 = y_vals[j + 1];
-
-      double f00 = f(x_i, y_j);
-      double f10 = f(x_i1, y_j);
-      double f01 = f(x_i, y_j1);
-      double f11 = f(x_i1, y_j1);
-
-      res += (f00 + f10 + f01 + f11) * 0.25;
+  // Внутренние точки (вес 1)
+  for (int i = 1; i < data.n_steps; i++) {
+    double x = data.x1 + i * hx;
+    for (int j = 1; j < data.n_steps; j++) {
+      double y = data.y1 + j * hy;
+      sum += f(x, y);
     }
   }
 
-  GetOutput() = res * hxhy;
+  // Граничные точки (вес 0.5)
+  // Верхняя и нижняя границы (исключая углы)
+  for (int i = 1; i < data.n_steps; i++) {
+    double x = data.x1 + i * hx;
+    sum += 0.5 * f(x, data.y1);
+    sum += 0.5 * f(x, data.y2);
+  }
+
+  // Левая и правая границы (исключая углы)
+  for (int j = 1; j < data.n_steps; j++) {
+    double y = data.y1 + j * hy;
+    sum += 0.5 * f(data.x1, y);
+    sum += 0.5 * f(data.x2, y);
+  }
+
+  // Угловые точки (вес 0.25)
+  sum += 0.25 * f(data.x1, data.y1);
+  sum += 0.25 * f(data.x2, data.y1);
+  sum += 0.25 * f(data.x1, data.y2);
+  sum += 0.25 * f(data.x2, data.y2);
+
+  GetOutput() = sum * hx * hy;
 
   return true;
 }
