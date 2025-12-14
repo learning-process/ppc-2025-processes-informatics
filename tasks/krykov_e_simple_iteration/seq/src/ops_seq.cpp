@@ -13,13 +13,13 @@ namespace krykov_e_simple_iteration {
 constexpr double kEps = 1e-5;
 constexpr int kMaxIter = 10000;
 
-KrykovESimpleIterationSEQ::KrykovESimpleIterationSEQ(const InType& in) {
+KrykovESimpleIterationSEQ::KrykovESimpleIterationSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool KrykovESimpleIterationSEQ::ValidationImpl() {
-  const auto& [n, A, b] = GetInput();
+  const auto &[n, A, b] = GetInput();
   return n > 0 && A.size() == n * n && b.size() == n;
 }
 
@@ -28,7 +28,7 @@ bool KrykovESimpleIterationSEQ::PreProcessingImpl() {
 }
 
 bool KrykovESimpleIterationSEQ::RunImpl() {
-  const auto& [n, A, b] = GetInput();
+  const auto &[n, A, b] = GetInput();
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
@@ -49,7 +49,6 @@ bool KrykovESimpleIterationSEQ::RunImpl() {
       double diff = x_new[i] - x[i];
       norm += diff * diff;
     }
-
 
     x = x_new;
 

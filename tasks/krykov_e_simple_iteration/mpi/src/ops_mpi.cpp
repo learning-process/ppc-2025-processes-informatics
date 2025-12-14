@@ -18,11 +18,8 @@ namespace {
 constexpr double kEps = 1e-5;
 constexpr int kMaxIter = 10000;
 
-void CalculateLocalXNew(int start, int count, size_t n,
-                       const std::vector<double>& A,
-                       const std::vector<double>& b,
-                       const std::vector<double>& x,
-                       std::vector<double>* local_x_new) {
+void CalculateLocalXNew(int start, int count, size_t n, const std::vector<double> &A, const std::vector<double> &b,
+                        const std::vector<double> &x, std::vector<double> *local_x_new) {
   for (int i = 0; i < count; ++i) {
     int global_i = start + i;
     double sum = 0.0;
@@ -35,9 +32,7 @@ void CalculateLocalXNew(int start, int count, size_t n,
   }
 }
 
-double CalculateLocalNorm(int start, int count,
-                         const std::vector<double>& x_new,
-                         const std::vector<double>& x) {
+double CalculateLocalNorm(int start, int count, const std::vector<double> &x_new, const std::vector<double> &x) {
   double local_norm = 0.0;
   for (int i = 0; i < count; ++i) {
     int gi = start + i;
@@ -47,9 +42,8 @@ double CalculateLocalNorm(int start, int count,
   return local_norm;
 }
 
-void CalculateRecvCountsAndDispls(int size, int base, int rem,
-                                 std::vector<int>* recv_counts,
-                                 std::vector<int>* displs) {
+void CalculateRecvCountsAndDispls(int size, int base, int rem, std::vector<int> *recv_counts,
+                                  std::vector<int> *displs) {
   (*recv_counts)[0] = base + (0 < rem ? 1 : 0);
   (*displs)[0] = 0;
   for (int i = 1; i < size; ++i) {
@@ -60,13 +54,13 @@ void CalculateRecvCountsAndDispls(int size, int base, int rem,
 
 }  // namespace
 
-KrykovESimpleIterationMPI::KrykovESimpleIterationMPI(const InType& in) {
+KrykovESimpleIterationMPI::KrykovESimpleIterationMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool KrykovESimpleIterationMPI::ValidationImpl() {
-  const auto& [n, A, b] = GetInput();
+  const auto &[n, A, b] = GetInput();
   return n > 0 && A.size() == n * n && b.size() == n;
 }
 
@@ -80,7 +74,7 @@ bool KrykovESimpleIterationMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  const auto& [n, A, b] = GetInput();
+  const auto &[n, A, b] = GetInput();
 
   int base = static_cast<int>(n) / size;
   int rem = static_cast<int>(n) % size;
@@ -98,14 +92,12 @@ bool KrykovESimpleIterationMPI::RunImpl() {
   for (int iter = 0; iter < kMaxIter; ++iter) {
     CalculateLocalXNew(start, count, n, A, b, x, &local_x_new);
 
-    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(),
-                   recv_counts.data(), displs.data(), MPI_DOUBLE,
+    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
 
     double local_norm = CalculateLocalNorm(start, count, x_new, x);
     double global_norm = 0.0;
-    MPI_Allreduce(&local_norm, &global_norm, 1, MPI_DOUBLE, MPI_SUM,
-                  MPI_COMM_WORLD);
+    MPI_Allreduce(&local_norm, &global_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     x = x_new;
     if (std::sqrt(global_norm) < kEps) {

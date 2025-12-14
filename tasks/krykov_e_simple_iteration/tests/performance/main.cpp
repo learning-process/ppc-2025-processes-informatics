@@ -32,7 +32,7 @@ class KrykovESimpleIterationPerfTests : public ppc::util::BaseRunPerfTests<InTyp
           row_sum += 1.0;
         }
       }
-      a[(i * kN) + i] = row_sum + 5.0;  
+      a[(i * kN) + i] = row_sum + 5.0;
       b[i] = a[(i * kN) + i] + row_sum;
     }
 

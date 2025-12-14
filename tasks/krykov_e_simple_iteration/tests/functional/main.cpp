@@ -58,7 +58,7 @@ class KrykovESimpleIterationFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
 namespace {
 
-// 1) 1x1 
+// 1) 1x1
 const TestType kTest1 = {{1, {4.0}, {8.0}}, {2.0}};
 
 // 2) 2x2
