@@ -19,7 +19,7 @@ constexpr double kEps = 1e-5;
 constexpr int kMaxIter = 10000;
 
 void CalculateLocalXNew(int start, int count, size_t n, const std::vector<double> &A, const std::vector<double> &b,
-                        const std::vector<double> &x, std::vector<double> *local_x_new) {
+                        const std::vector<double> &x, std::vector<double> &local_x_new) {
   for (int i = 0; i < count; ++i) {
     int global_i = start + i;
     double sum = 0.0;
@@ -28,7 +28,7 @@ void CalculateLocalXNew(int start, int count, size_t n, const std::vector<double
         sum += A[(global_i * n) + j] * x[j];
       }
     }
-    (*local_x_new)[i] = (b[global_i] - sum) / A[(global_i * n) + global_i];
+    local_x_new[i] = (b[global_i] - sum) / A[(global_i * n) + global_i];
   }
 }
 
@@ -42,13 +42,17 @@ double CalculateLocalNorm(int start, int count, const std::vector<double> &x_new
   return local_norm;
 }
 
-void CalculateRecvCountsAndDispls(int size, int base, int rem, std::vector<int> *recv_counts,
-                                  std::vector<int> *displs) {
-  (*recv_counts)[0] = base + (0 < rem ? 1 : 0);
-  (*displs)[0] = 0;
+void CalculateRecvCountsAndDispls(int size, int base, int rem, std::vector<int> &recv_counts,
+                                  std::vector<int> &displs) {
+  if (recv_counts.empty() || displs.empty() || size <= 0) {
+    return;
+  }
+
+  recv_counts[0] = base + (0 < rem ? 1 : 0);
+  displs[0] = 0;
   for (int i = 1; i < size; ++i) {
-    (*recv_counts)[i] = base + (i < rem ? 1 : 0);
-    (*displs)[i] = (*displs)[i - 1] + (*recv_counts)[i - 1];
+    recv_counts[i] = base + (i < rem ? 1 : 0);
+    displs[i] = displs[i - 1] + recv_counts[i - 1];
   }
 }
 
@@ -76,6 +80,10 @@ bool KrykovESimpleIterationMPI::RunImpl() {
 
   const auto &[n, A, b] = GetInput();
 
+  if (size <= 0) {
+    return false;
+  }
+
   int base = static_cast<int>(n) / size;
   int rem = static_cast<int>(n) % size;
   int start = (rank * base) + std::min(rank, rem);
@@ -87,10 +95,10 @@ bool KrykovESimpleIterationMPI::RunImpl() {
 
   std::vector<int> recv_counts(size);
   std::vector<int> displs(size);
-  CalculateRecvCountsAndDispls(size, base, rem, &recv_counts, &displs);
+  CalculateRecvCountsAndDispls(size, base, rem, recv_counts, displs);
 
   for (int iter = 0; iter < kMaxIter; ++iter) {
-    CalculateLocalXNew(start, count, n, A, b, x, &local_x_new);
+    CalculateLocalXNew(start, count, n, A, b, x, local_x_new);
 
     MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
