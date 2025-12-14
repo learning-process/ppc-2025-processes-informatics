@@ -21,18 +21,18 @@ class KruglovaAVerticalRibMatPerfTests : public ppc::util::BaseRunPerfTests<InTy
     const int m = k_sizem_;
     const int n = k_sizen_;
 
-    std::vector<double> A_matrix(static_cast<size_t>(m) * n);
-    std::vector<double> B_vector(n);
+    std::vector<double> a_matrix(static_cast<size_t>(m) * n);
+    std::vector<double> b_vector(n);
 
-    std::fill(A_matrix.begin(), A_matrix.end(), 1.0);  // NOLINT(modernize-use-ranges)
-    std::fill(B_vector.begin(), B_vector.end(), 1.0);  // NOLINT(modernize-use-ranges)
+    std::fill(a_matrix.begin(), a_matrix.end(), 1.0);
+    std::fill(b_vector.begin(), b_vector.end(), 1.0);
 
-    input_data_ = std::make_tuple(m, n, A_matrix, B_vector);
+    input_data_ = std::make_tuple(m, n, a_matrix, b_vector);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     const int m = k_sizem_;
-    return static_cast<int>(output_data.size()) == m;
+    return output_data.size() == static_cast<std::size_t>(m);
   }
 
   InType GetTestInputData() final {

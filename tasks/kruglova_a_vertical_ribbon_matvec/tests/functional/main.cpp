@@ -34,7 +34,8 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
     std::vector<double> matrix(matrix_size);
     std::vector<double> vec(static_cast<std::size_t>(cols));
 
-    for (std::size_t i = 0; i < matrix_size; ++i) {
+    std::size_t n_cols = static_cast<std::size_t>(cols);
+    for (std::size_t i = 0; i < n_cols; ++i) {
       matrix[i] = static_cast<double>(i + 1);
     }
     for (std::size_t i = 0; i < static_cast<std::size_t>(cols); ++i) {
@@ -45,7 +46,7 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
     for (int i = 0; i < rows; ++i) {
       double sum = 0.0;
       for (int j = 0; j < cols; ++j) {
-        sum += matrix[static_cast<std::size_t>(i) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(j)] *
+        sum += matrix[(static_cast<std::size_t>(i) * static_cast<std::size_t>(cols)) + static_cast<std::size_t>(j)] *
                vec[static_cast<std::size_t>(j)];
       }
       ref_output_[static_cast<std::size_t>(i)] = sum;
@@ -59,7 +60,7 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
     int is_mpi_init = 0;
 
     MPI_Initialized(&is_mpi_init);
-    if (is_mpi_init) {
+    if (is_mpi_init != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
@@ -71,9 +72,9 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
       return false;
     }
 
-    const double kEpsilon = 1e-6;
+    const double k_epsilon = 1e-6;
     for (std::size_t i = 0; i < output_data.size(); ++i) {
-      if (std::abs(output_data[i] - ref_output_[i]) > kEpsilon) {
+      if (std::abs(output_data[i] - ref_output_[i]) > k_epsilon) {
         return false;
       }
     }
