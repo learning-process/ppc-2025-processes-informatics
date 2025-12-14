@@ -46,7 +46,10 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = NikitinaVRunPerfTest::CustomPerfTestName;
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(RunModeTests, NikitinaVRunPerfTest, kGtestValues, kPerfTestName);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits, misc-use-anonymous-namespace)
+
 }  // namespace
 
 }  // namespace nikitina_v_trans_all_one_distrib

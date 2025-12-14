@@ -3,6 +3,8 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <vector>
 
 #include "nikitina_v_trans_all_one_distrib/common/include/common.hpp"
@@ -30,7 +32,6 @@ bool TestTaskMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int input_size = static_cast<int>(GetInput().size());
-
   int global_vec_size = input_size;
   MPI_Bcast(&global_vec_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -40,25 +41,25 @@ bool TestTaskMPI::RunImpl() {
 
   std::vector<int> current_values = GetInput();
   if (current_values.size() != static_cast<size_t>(global_vec_size)) {
-    current_values.resize(global_vec_size, 0);
+    current_values.resize(static_cast<size_t>(global_vec_size), 0);
   }
 
-  int left_child = 2 * rank + 1;
-  int right_child = 2 * rank + 2;
+  int left_child = (2 * rank) + 1;
+  int right_child = (2 * rank) + 2;
   int parent = (rank - 1) / 2;
 
   MPI_Status status;
 
   if (left_child < size) {
-    std::vector<int> recv_buf(global_vec_size);
+    std::vector<int> recv_buf(static_cast<size_t>(global_vec_size));
     MPI_Recv(recv_buf.data(), global_vec_size, MPI_INT, left_child, 0, MPI_COMM_WORLD, &status);
-    std::ranges::transform(current_values, recv_buf, current_values.begin(), std::plus<int>());
+    std::ranges::transform(current_values, recv_buf, current_values.begin(), std::plus<>());
   }
 
   if (right_child < size) {
-    std::vector<int> recv_buf(global_vec_size);
+    std::vector<int> recv_buf(static_cast<size_t>(global_vec_size));
     MPI_Recv(recv_buf.data(), global_vec_size, MPI_INT, right_child, 0, MPI_COMM_WORLD, &status);
-    std::ranges::transform(current_values, recv_buf, current_values.begin(), std::plus<int>());
+    std::ranges::transform(current_values, recv_buf, current_values.begin(), std::plus<>());
   }
 
   if (rank != 0) {
@@ -77,7 +78,7 @@ bool TestTaskMPI::RunImpl() {
   }
 
   if (rank == 0) {
-    GetOutput().resize(global_vec_size);
+    GetOutput().resize(static_cast<size_t>(global_vec_size));
     std::ranges::copy(current_values, GetOutput().begin());
   }
 

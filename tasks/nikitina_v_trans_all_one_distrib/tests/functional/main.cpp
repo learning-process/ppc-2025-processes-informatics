@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -43,12 +44,7 @@ class NikitinaVRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
     if (output_data.size() != input_data_.size()) {
       return false;
     }
-    for (const int val : output_data) {
-      if (val == 0) {
-        return false;
-      }
-    }
-    return true;
+    return std::ranges::all_of(output_data, [](int val) { return val != 0; });
   }
 
   InType GetTestInputData() final {
@@ -73,23 +69,24 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits, misc-use-anonymous-namespace)
 INSTANTIATE_TEST_SUITE_P(AllReduceTests, NikitinaVRunFuncTests, kGtestValues, NikitinaVRunFuncTests::PrintTestParam);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits, misc-use-anonymous-namespace)
+
+void RunCheck(const std::shared_ptr<BaseTask> &task, ppc::task::TypeOfTask type) {
+  ASSERT_EQ(task->GetStaticTypeOfTask(), type);
+  ASSERT_TRUE(task->Validation());
+  task->PreProcessing();
+  task->Run();
+  task->PostProcessing();
+  ASSERT_TRUE(task->GetOutput().empty());
+}
 }  // namespace
 
 TEST(NikitinaVAllReduceMisc, RunWithEmptyVector) {
   std::vector<int> empty_vec;
-
-  auto run_check = [&](const std::shared_ptr<BaseTask> &task, ppc::task::TypeOfTask type) {
-    ASSERT_EQ(task->GetStaticTypeOfTask(), type);
-    ASSERT_TRUE(task->Validation());
-    task->PreProcessing();
-    task->Run();
-    task->PostProcessing();
-    ASSERT_TRUE(task->GetOutput().empty());
-  };
-
-  run_check(std::make_shared<TestTaskMPI>(empty_vec), ppc::task::TypeOfTask::kMPI);
-  run_check(std::make_shared<TestTaskSEQ>(empty_vec), ppc::task::TypeOfTask::kSEQ);
+  RunCheck(std::make_shared<TestTaskMPI>(empty_vec), ppc::task::TypeOfTask::kMPI);
+  RunCheck(std::make_shared<TestTaskSEQ>(empty_vec), ppc::task::TypeOfTask::kSEQ);
 }
 
 }  // namespace nikitina_v_trans_all_one_distrib
