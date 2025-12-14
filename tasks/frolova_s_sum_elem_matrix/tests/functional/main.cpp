@@ -91,12 +91,10 @@ TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 9> kTestParam = {
-    std::make_tuple(3, 3, "small"),        std::make_tuple(10, 10, "medium"),
-    std::make_tuple(20, 15, "rect"),       std::make_tuple(1, 1, "single_element"),
-    std::make_tuple(0, 0, "empty_matrix"), std::make_tuple(3, 0, "zero_cols"),
-    std::make_tuple(0, 3, "zero_rows"),    std::make_tuple(-1, -1, "jagged_matrix"),
-    std::make_tuple(2000, 2000, "large"),
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple(3, 3, "small"),          std::make_tuple(10, 10, "medium"),     std::make_tuple(20, 15, "rect"),
+    std::make_tuple(1, 1, "single_element"), std::make_tuple(0, 0, "empty_matrix"), std::make_tuple(3, 0, "zero_cols"),
+    std::make_tuple(0, 3, "zero_rows"),      std::make_tuple(2000, 2000, "large"),
 };
 
 const auto kTestTasksList = std::tuple_cat(
@@ -108,6 +106,46 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kFuncTestName = FrolovaSSumElemMatrixRunFuncTests::PrintFuncTestName<FrolovaSSumElemMatrixRunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(SumMatrixTests, FrolovaSSumElemMatrixRunFuncTests, kGtestValues, kFuncTestName);
+
+TEST(FrolovaSSumElemMatrixMPITest, JaggedMatrix) {
+  // Создаем jagged матрицу
+  InType jagged_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8, 9}};
+
+  // Ожидаемая сумма: 1+2+3+4+5+6+7+8+9 = 45
+  OutType expected_sum = 45;
+
+  // Создаем и запускаем тестируемый объект
+  FrolovaSSumElemMatrixMPI task(jagged_matrix);
+
+  // Выполняем все этапы
+  EXPECT_TRUE(task.Validation());
+  EXPECT_TRUE(task.PreProcessing());
+  EXPECT_TRUE(task.Run());
+  EXPECT_TRUE(task.PostProcessing());
+
+  // Проверяем результат
+  EXPECT_EQ(task.GetOutput(), expected_sum);
+}
+
+TEST(FrolovaSSumElemMatrixSEQTest, JaggedMatrix) {
+  // Создаем jagged матрицу
+  InType jagged_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8, 9}};
+
+  // Ожидаемая сумма: 1+2+3+4+5+6+7+8+9 = 45
+  OutType expected_sum = 45;
+
+  // Создаем и запускаем тестируемый объект
+  FrolovaSSumElemMatrixSEQ task(jagged_matrix);
+
+  // Выполняем все этапы
+  EXPECT_TRUE(task.Validation());
+  EXPECT_TRUE(task.PreProcessing());
+  EXPECT_TRUE(task.Run());
+  EXPECT_TRUE(task.PostProcessing());
+
+  // Проверяем результат
+  EXPECT_EQ(task.GetOutput(), expected_sum);
+}
 
 }  // namespace
 
