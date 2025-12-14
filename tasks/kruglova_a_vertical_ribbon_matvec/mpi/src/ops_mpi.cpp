@@ -53,10 +53,14 @@ bool KruglovaAVerticalRibbMatMPI::PreProcessingImpl() {
 
   return true;
 }
-static std::vector<int> ComputeSendCountsAndDispls(int cols, int size, std::vector<int> &displs) {
+
+namespace {
+
+// Вычисление sendcounts и displs для распределения столбцов
+std::vector<int> ComputeSendCountsAndDispls(int cols, int size, std::vector<int> &displs) {
   std::vector<int> sendcounts(size);
-  int base_cols = cols / size;
-  int rem_cols = cols % size;
+  const int base_cols = cols / size;
+  const int rem_cols = cols % size;
   int offset = 0;
   for (int i = 0; i < size; ++i) {
     sendcounts[i] = base_cols + (i < rem_cols ? 1 : 0);
@@ -66,31 +70,36 @@ static std::vector<int> ComputeSendCountsAndDispls(int cols, int size, std::vect
   return sendcounts;
 }
 
-static void TransposeMatrix(const std::vector<double> &matrix, std::vector<double> &transposed, int rows, int cols) {
-  transposed.resize(static_cast<size_t>(rows) * cols);
+// Транспонирование матрицы
+void TransposeMatrix(const std::vector<double> &matrix, std::vector<double> &transposed, int rows, int cols) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
-      transposed[(j * rows) + i] = matrix[(i * cols) + j];
+      transposed[static_cast<size_t>(j) * rows + i] = matrix[static_cast<size_t>(i) * cols + j];
     }
   }
 }
 
-static void LocalMatVecMul(const std::vector<double> &local_matrix, const std::vector<double> &local_b,
-                           std::vector<double> &local_res, int rows, int local_cols) {
+// Локальное умножение матрицы на вектор
+void LocalMatVecMul(const std::vector<double> &local_matrix, const std::vector<double> &local_b,
+                    std::vector<double> &local_res, int rows, int local_cols) {
   for (int j = 0; j < local_cols; ++j) {
-    double b_val = local_b[j];
+    const double b_val = local_b[j];
     for (int i = 0; i < rows; ++i) {
-      local_res[i] += local_matrix[(j * rows) + i] * b_val;
+      local_res[i] += local_matrix[static_cast<size_t>(j) * rows + i] * b_val;
     }
   }
 }
+
+}  // namespace
 
 bool KruglovaAVerticalRibbMatMPI::RunImpl() {
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int rows = 0, cols = 0;
+  int rows = 0;
+  int cols = 0;
   if (rank == 0) {
     rows = std::get<0>(GetInput());
     cols = std::get<1>(GetInput());
@@ -112,6 +121,7 @@ bool KruglovaAVerticalRibbMatMPI::RunImpl() {
   std::vector<double> transposed_matrix;
   if (rank == 0) {
     const auto &matrix = std::get<2>(GetInput());
+    transposed_matrix.resize(static_cast<size_t>(rows) * cols);
     TransposeMatrix(matrix, transposed_matrix, rows, cols);
   }
 

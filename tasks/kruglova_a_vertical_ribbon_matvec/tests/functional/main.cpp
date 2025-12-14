@@ -34,11 +34,11 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
     std::vector<double> matrix(matrix_size);
     std::vector<double> vec(static_cast<std::size_t>(cols));
 
-    std::size_t n_cols = static_cast<std::size_t>(cols);
+    auto n_cols = static_cast<std::size_t>(cols);
     for (std::size_t i = 0; i < n_cols; ++i) {
       matrix[i] = static_cast<double>(i + 1);
     }
-    for (std::size_t i = 0; i < static_cast<std::size_t>(cols); ++i) {
+    for (std::size_t i = 0; i < n_cols; ++i) {
       vec[i] = static_cast<double>(i + 1);
     }
 
