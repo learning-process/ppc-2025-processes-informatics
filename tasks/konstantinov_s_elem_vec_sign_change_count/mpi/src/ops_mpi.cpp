@@ -63,13 +63,12 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
     step = (elemcount + 1) / pcount;
     rem = elemcount - (step * (pcount - 1));
-
-    if (step < 2) {
-      step = 0;
-      rem = elemcount;
-    }
   }
-  //
+  if (step < 2) {
+    step = 0;
+    rem = elemcount;
+  }
+
   MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);  // корень отправляет, остальные получают
   int chunksz = step + 1;
   int *sendcounts = nullptr;
