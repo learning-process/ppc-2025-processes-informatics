@@ -67,7 +67,7 @@ TEST_P(SmyshlaevAGaussFiltRunFuncTestsProcesses, GaussFiltTest) {
   ExecuteTest(GetParam());
 }
 
-TestType CreateRandomTest(int w, int h, int c, const std::string &name) {
+static TestType CreateRandomTest(int w, int h, int c, const std::string &name) {
   std::vector<uint8_t> data(static_cast<size_t>(w) * h * c);
   for (size_t i = 0; i < data.size(); ++i) {
     data[i] = static_cast<uint8_t>(i % 256);
