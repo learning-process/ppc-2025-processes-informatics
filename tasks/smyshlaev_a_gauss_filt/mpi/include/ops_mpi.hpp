@@ -33,7 +33,7 @@ class SmyshlaevAGaussFiltMPI : public BaseTask {
 
   bool RunSequential();
   void BroadcastImageDimensions(int &width, int &height, int &channels);
-  void SetupDecompostion(DecompositionInfo &info, int width, int height, int channels);
+  void SetupDecomposition(DecompositionInfo &info, int width, int height, int channels);
   std::vector<uint8_t> ProcessLocalBlock(const DecompositionInfo &info, int width, int height, int channels);
   void CollectResult(const std::vector<uint8_t> &local_result, const DecompositionInfo &info, int width, int height,
                      int channels);
