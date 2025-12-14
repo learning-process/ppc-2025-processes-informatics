@@ -23,8 +23,13 @@ class KruglovaAVerticalRibMatPerfTests : public ppc::util::BaseRunPerfTests<InTy
     std::vector<double> a_matrix(static_cast<size_t>(m) * n);
     std::vector<double> b_vector(n);
 
-    std::fill(a_matrix.begin(), a_matrix.end(), 1.0);
-    std::fill(b_vector.begin(), b_vector.end(), 1.0);
+    for (double &x : a_matrix) {
+      x = 1.0;
+    }
+
+    for (double &x : b_vector) {
+      x = 1.0;
+    }
 
     input_data_ = std::make_tuple(m, n, a_matrix, b_vector);
   }

@@ -72,7 +72,7 @@ std::vector<int> ComputeSendCountsAndDispls(int cols, int size, std::vector<int>
 void TransposeMatrix(const std::vector<double> &matrix, std::vector<double> &transposed, int rows, int cols) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
-      transposed[static_cast<size_t>(j) * rows + i] = matrix[(static_cast<size_t>(i) * cols) + j];
+      transposed[(static_cast<size_t>(j) * rows) + i] = matrix[(static_cast<size_t>(i) * cols) + j];
     }
   }
 }
