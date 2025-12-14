@@ -8,8 +8,8 @@
 namespace kruglova_a_vertical_ribbon_matvec {
 
 class KruglovaAVerticalRibMatPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kSizeN_ = 5000;
-  const int kSizeM_ = 5000;
+  const int kSizeN_ = 6000;
+  const int kSizeM_ = 6000;
   InType input_data_{};
 
   void SetUp() override {
