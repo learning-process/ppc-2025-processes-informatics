@@ -5,9 +5,10 @@
 #include "gasenin_l_mult_int_mstep_trapez/mpi/include/ops_mpi.hpp"
 #include "gasenin_l_mult_int_mstep_trapez/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+
 namespace gasenin_l_mult_int_mstep_trapez {
 
-class GaseninLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class GaseninLIntegralPerformanceTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
     input_data_ = TaskData{2000, 1, 0.0, 1.0, 0.0, 1.0};
@@ -34,7 +35,7 @@ class GaseninLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, 
   InType input_data_{};
 };
 
-TEST_P(GaseninLRunPerfTestProcesses, RunPerfModes) {
+TEST_P(GaseninLIntegralPerformanceTests, PerformanceTests) {
   ExecuteTest(GetParam());
 }
 
@@ -43,8 +44,8 @@ const auto kAllPerfTasks =
         PPC_SETTINGS_gasenin_l_mult_int_mstep_trapez);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-const auto kPerfTestName = GaseninLRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = GaseninLIntegralPerformanceTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(GaseninLIntegralPerfTests, GaseninLRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaseninLPerformanceTestSuite, GaseninLIntegralPerformanceTests, kGtestValues, kPerfTestName);
 
 }  // namespace gasenin_l_mult_int_mstep_trapez

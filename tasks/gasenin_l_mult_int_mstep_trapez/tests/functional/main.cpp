@@ -14,10 +14,7 @@
 
 namespace gasenin_l_mult_int_mstep_trapez {
 
-const std::vector<TestType> kTestParam = {std::make_tuple(TaskData{100, 1, 0.0, 1.0, 0.0, 1.0}, "Func1_x2_y2"),
-                                          std::make_tuple(TaskData{50, 2, 0.0, 3.14, 0.0, 3.14}, "Func2_SinCos")};
-
-class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class GaseninLIntegralFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
@@ -51,9 +48,7 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
   InType input_data_;
 };
 
-namespace {
-
-TEST_P(GaseninLRunFuncTestsProcesses, IntegralCalculationTest) {
+TEST_P(GaseninLIntegralFunctionalTests, FunctionalTests) {
   ExecuteTest(GetParam());
 }
 
@@ -68,10 +63,9 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GaseninLMultIn
                                                kTestParams, PPC_SETTINGS_gasenin_l_mult_int_mstep_trapez));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kPerfTestName = GaseninLRunFuncTestsProcesses::PrintFuncTestName<GaseninLRunFuncTestsProcesses>;
+const auto kTestNameFormatter = GaseninLIntegralFunctionalTests::PrintFuncTestName<GaseninLIntegralFunctionalTests>;
 
-INSTANTIATE_TEST_SUITE_P(GaseninLIntegralTests, GaseninLRunFuncTestsProcesses, kGtestValues, kPerfTestName);
-
-}  // namespace
+INSTANTIATE_TEST_SUITE_P(GaseninLFunctionalTestSuite, GaseninLIntegralFunctionalTests, kGtestValues,
+                         kTestNameFormatter);
 
 }  // namespace gasenin_l_mult_int_mstep_trapez
