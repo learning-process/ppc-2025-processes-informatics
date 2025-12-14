@@ -24,32 +24,45 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
+    auto test_params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    int kernel_size = std::get<0>(test_params);
+    std::string test_name = std::get<1>(test_params);
 
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gasenin_l_image_smooth, "pic.jpg");
-    auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 1);
+    if (test_name == "small_image") {
+      input_data_.width = 10;
+      input_data_.height = 2;
+      input_data_.data.resize(static_cast<size_t>(input_data_.width) * static_cast<size_t>(input_data_.height));
 
-    if (data == nullptr) {
-      width = 64;
-      height = 64;
-      input_data_.width = width;
-      input_data_.height = height;
-      input_data_.data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
-      for (int i = 0; i < width * height; ++i) {
-        input_data_.data[i] = (i % 2) * 255;
+      for (size_t i = 0; i < input_data_.data.size(); ++i) {
+        input_data_.data[i] = static_cast<uint8_t>(i % 256);
       }
     } else {
-      input_data_.width = width;
-      input_data_.height = height;
-      input_data_.data =
-          std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width) * static_cast<ptrdiff_t>(height)));
-      stbi_image_free(data);
+      int width = -1;
+      int height = -1;
+      int channels = -1;
+
+      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_gasenin_l_image_smooth, "pic.jpg");
+      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, 1);
+
+      if (data == nullptr) {
+        width = 64;
+        height = 64;
+        input_data_.width = width;
+        input_data_.height = height;
+        input_data_.data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
+        for (int i = 0; i < width * height; ++i) {
+          input_data_.data[i] = (i % 2) * 255;
+        }
+      } else {
+        input_data_.width = width;
+        input_data_.height = height;
+        input_data_.data =
+            std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width) * static_cast<ptrdiff_t>(height)));
+        stbi_image_free(data);
+      }
     }
 
-    auto test_params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_.kernel_size = std::get<0>(test_params);
+    input_data_.kernel_size = kernel_size;
 
     ref_output_ = input_data_;
     ref_output_.data.assign(input_data_.data.size(), 0);
@@ -88,8 +101,8 @@ TEST_P(GaseninLRunFuncTestsProcesses, ImageSmoothing) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "kernel3"), std::make_tuple(5, "kernel5"),
-                                            std::make_tuple(7, "kernel7")};
+const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "kernel3"), std::make_tuple(5, "kernel5"),
+                                            std::make_tuple(7, "kernel7"), std::make_tuple(3, "small_image")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GaseninLImageSmoothMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth),
