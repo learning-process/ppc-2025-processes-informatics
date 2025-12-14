@@ -39,9 +39,9 @@ bool ShkrebkoMHypercubeSEQ::PreProcessingImpl() {
 }
 
 bool ShkrebkoMHypercubeSEQ::RunImpl() {
-  for (int i = 0; i < 10000; i++) {
+  for (int i = 0; i < 5000; i++) {
     volatile int dummy = 0;
-    for (int j = 0; j < 10000; j++) {
+    for (int j = 0; j < 5000; j++) {
       dummy += i * j;
     }
   }
