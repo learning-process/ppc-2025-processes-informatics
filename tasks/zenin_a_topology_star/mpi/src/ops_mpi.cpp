@@ -20,9 +20,9 @@ bool ZeninATopologyStarMPI::ValidationImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   const auto &in = GetInput();
-  size_t src = static_cast<int>(std::get<0>(in));
-  size_t dst = static_cast<int>(std::get<1>(in));
-  return src >= 0 && dst >= 0 && src <= world_size && dst < world_size;
+  const int src = static_cast<int>(std::get<0>(in));
+  const int dst = static_cast<int>(std::get<1>(in));
+  return src >= 0 && dst >= 0 && src < world_size && dst < world_size;
 }
 
 bool ZeninATopologyStarMPI::PreProcessingImpl() {
