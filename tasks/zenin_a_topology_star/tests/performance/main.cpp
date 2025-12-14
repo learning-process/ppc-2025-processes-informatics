@@ -15,15 +15,20 @@
 namespace zenin_a_topology_star {
 
 class ZeninATopologyStarPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  static constexpr int msg_size = 100000000;
   InType input_data_;
 
   void SetUp() override {
+    const auto &full_param = GetParam();
+    const std::string &test_name = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
+    if (test_name.find("seq_enabled") != std::string::npos) {
+      GTEST_SKIP() << "SEQ performance tests are skipped for topology tasks.";
+    }
     int world_size;
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     const int center = 0;
     const int src = center;
     const int dst = (world_size > 1) ? world_size - 1 : 0;
-    const size_t msg_size = 100000;
     std::vector<double> data(msg_size);
     for (size_t i = 0; i < msg_size; ++i) {
       data[i] = static_cast<double>(i);

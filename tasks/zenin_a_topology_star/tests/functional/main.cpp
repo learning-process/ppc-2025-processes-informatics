@@ -25,41 +25,57 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto &full_param = GetParam();
+    const std::string &task_name =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(full_param);
 
     const size_t msg_size = std::get<0>(params);
     const size_t pattern = std::get<1>(params);
 
-    int world_rank, world_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    const int center = 0;
-    int src = 0;
-    int dst = 0;
-    if (world_size == 1) {
-      src = dst = 0;
-    } else {
-      switch (pattern % 3) {
-        case 0:
-          src = center;
-          dst = world_size - 1;
-          break;
-        case 1:
-          src = world_size - 1;
-          dst = center;
-          break;
-        default:
-          if (world_size >= 3) {
-            src = 1;
-            dst = world_size - 1;
-          } else {
-            src = center;
-            dst = world_size - 1;
-          }
-          break;
-      }
+    const bool is_seq = (task_name.find("seq_enabled") != std::string::npos);
+    const bool is_mpi = (task_name.find("mpi_enabled") != std::string::npos);
+    int mpi_initialized = 0;
+    MPI_Initialized(&mpi_initialized);
+    if (is_mpi && mpi_initialized == 0) {
+      GTEST_SKIP() << "MPI is not initialized (test is running without mpiexec). Skipping MPI tests.";
     }
 
+    int src = 0;
+    int dst = 0;
+
+    if (is_seq) {
+      src = 0;
+      dst = 0;
+    } else {
+      int world_size = 1;
+
+      MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+      const int center = 0;
+      if (world_size == 1) {
+        src = dst = 0;
+      } else {
+        switch (pattern % 3) {
+          case 0:
+            src = center;
+            dst = world_size - 1;
+            break;
+          case 1:
+            src = world_size - 1;
+            dst = center;
+            break;
+          default:
+            if (world_size >= 3) {
+              src = 1;
+              dst = world_size - 1;
+            } else {
+              src = center;
+              dst = world_size - 1;
+            }
+            break;
+        }
+      }
+    }
     std::vector<double> data(msg_size);
     for (size_t i = 0; i < msg_size; ++i) {
       data[i] = static_cast<double>(i + pattern);
@@ -68,26 +84,33 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    const auto &full_param = GetParam();
+    const std::string &task_name =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
+    const bool is_seq = (task_name.find("seq_enabled") != std::string::npos);
+
     const auto &in = input_data_;
     const int dst = static_cast<int>(std::get<1>(in));
     const auto &data = std::get<2>(in);
-    if (world_rank == dst) {
-      if (output_data.size() != data.size()) {
-        return false;
-      }
-      for (size_t i = 0; i < data.size(); ++i) {
-        if (output_data[i] != data[i]) {
-          return false;
-        }
-      }
-    } else {
-      if (!output_data.empty()) {
-        return false;
-      }
+
+    if (is_seq) {
+      return output_data == data;
     }
-    return true;
+
+    int mpi_initialized = 0;
+    MPI_Initialized(&mpi_initialized);
+    if (mpi_initialized == 0) {
+      return true;
+    }
+
+    int world_rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+    if (world_rank == dst) {
+      return output_data == data;
+    } else {
+      return output_data.empty();
+    }
   }
 
   InType GetTestInputData() final {
