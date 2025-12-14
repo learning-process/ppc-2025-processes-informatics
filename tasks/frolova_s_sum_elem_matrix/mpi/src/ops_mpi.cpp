@@ -21,10 +21,6 @@ bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
   return true;
 }
 
-bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
-  return true;
-}
-
 bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
   return true;
 }
@@ -149,6 +145,10 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   // Синхронизируем все процессы перед выходом
   MPI_Barrier(MPI_COMM_WORLD);
 
+  return true;
+}
+
+bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
   return true;
 }
 
