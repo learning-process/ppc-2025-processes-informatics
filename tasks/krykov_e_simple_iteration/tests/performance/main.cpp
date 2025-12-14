@@ -17,18 +17,25 @@ class KrykovESimpleIterationPerfTests : public ppc::util::BaseRunPerfTests<InTyp
   OutType expected_output_;
 
   void SetUp() override {
-    constexpr size_t n = 100;
+    constexpr size_t n = 200;
 
     std::vector<double> A(n * n, 0.0);
     std::vector<double> b(n, 0.0);
     expected_output_.assign(n, 1.0);
 
     for (size_t i = 0; i < n; ++i) {
-      A[i * n + i] = 10.0;  // Диагональные элементы
-      b[i] = 10.0;
+      double row_sum = 0.0;
+      for (size_t j = 0; j < n; ++j) {
+        if (i != j) {
+          A[i * n + j] = 1.0;
+          row_sum += 1.0;
+        }
+      }
+      A[i * n + i] = row_sum + 5.0;  // строгая доминанта
+      b[i] = A[i * n + i] + row_sum;
     }
 
-    input_data_ = {n, A, b};
+    input_data_ = std::make_tuple(n, A, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

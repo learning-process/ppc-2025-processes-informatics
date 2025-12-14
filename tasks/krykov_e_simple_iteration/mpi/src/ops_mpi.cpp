@@ -29,64 +29,69 @@ bool KrykovESimpleIterationMPI::PreProcessingImpl() {
 }
 
 bool KrykovESimpleIterationMPI::RunImpl() {
-  int world_size, world_rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  int size, rank;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   const auto &[n, A, b] = GetInput();
 
+  int base = n / size;
+  int rem = n % size;
+  int start = rank * base + std::min(rank, rem);
+  int count = base + (rank < rem ? 1 : 0);
+
   std::vector<double> x(n, 0.0);
-  std::vector<double> x_new_local(n, 0.0);
   std::vector<double> x_new(n, 0.0);
+  std::vector<double> local_x_new(count, 0.0);
 
   constexpr double eps = 1e-5;
-  constexpr int max_iter = 100;
+  constexpr int max_iter = 10000;
 
-  int base = n / world_size;
-  int rem = n % world_size;
-
-  int start = world_rank * base + std::min<int>(world_rank, rem);
-  int count = base + (world_rank < rem ? 1 : 0);
-  int end = start + count;
+  std::vector<int> recv_counts(size), displs(size);
+  for (int i = 0; i < size; ++i) {
+    recv_counts[i] = base + (i < rem ? 1 : 0);
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + recv_counts[i - 1];
+  }
 
   for (int iter = 0; iter < max_iter; ++iter) {
-    std::fill(x_new_local.begin(), x_new_local.end(), 0.0);
-
-    // локальное вычисление
-    for (int i = start; i < end; ++i) {
+    for (int i = 0; i < count; ++i) {
+      int global_i = start + i;
       double sum = 0.0;
-      for (int j = 0; j < n; ++j) {
-        if (i != j) {
-          sum += A[i * n + j] * x[j];
+
+      for (size_t j = 0; j < n; ++j) {
+        if (j != static_cast<size_t>(global_i)) {
+          sum += A[global_i * n + j] * x[j];
         }
       }
-      x_new_local[i] = (b[i] - sum) / A[i * n + i];
+      local_x_new[i] = (b[global_i] - sum) / A[global_i * n + global_i];
     }
 
-    // сборка полного вектора
-    MPI_Allreduce(x_new_local.data(), x_new.data(), static_cast<int>(n), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), displs.data(), MPI_DOUBLE,
+                   MPI_COMM_WORLD);
 
-    // вычисление нормы
-    double local_diff = 0.0;
-    for (int i = start; i < end; ++i) {
-      local_diff = std::max(local_diff, std::abs(x_new[i] - x[i]));
+    double local_norm = 0.0;
+    for (int i = 0; i < count; ++i) {
+      int gi = start + i;
+      double diff = x_new[gi] - x[gi];
+      local_norm += diff * diff;
     }
 
-    double global_diff = 0.0;
-    MPI_Allreduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    double global_norm = 0.0;
+    MPI_Allreduce(&local_norm, &global_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     x = x_new;
-    if (global_diff < eps) {
+    if (std::sqrt(global_norm) < eps) {
       break;
     }
   }
 
   GetOutput() = x;
+
   return true;
 }
 
 bool KrykovESimpleIterationMPI::PostProcessingImpl() {
-  return !GetOutput().empty();
+  return true;
 }
 
 }  // namespace krykov_e_simple_iteration

@@ -55,28 +55,39 @@ class KrykovESimpleIterationFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
 namespace {
 
-// 1) Простая 1x1 система
-// x = 1
-const TestType test_1 = {{1, {1.0}, {1.0}}, {1.0}};
+// 1) 1x1 (тривиальный, обязателен)
+const TestType test_1 = {{1, {4.0}, {8.0}}, {2.0}};
 
-// 2) Диагональная система 2x2
-// 2x = 4
-// 3y = 6
-const TestType test_2 = {{2, {2.0, 0.0, 0.0, 3.0}, {4.0, 6.0}}, {2.0, 2.0}};
+// 2) 2x2, диагонально доминирующая
+// 4x +  y = 9
+//  x + 3y = 5
+// решение: (2, 1)
+const TestType test_2 = {{2, {4.0, 1.0, 1.0, 3.0}, {9.0, 5.0}}, {2.0, 1.0}};
 
-// 3) Простая 2x2 система
-// 4x + y = 9
-// x + 3y = 5
-const TestType test_3 = {{2, {4.0, 1.0, 1.0, 3.0}, {9.0, 5.0}}, {2.0, 1.0}};
+// 3) 2x2, плотная, но с запасом по доминированию
+// 10x + 2y = 12
+//  3x + 8y = 11
+// решение: (1, 1)
+const TestType test_3 = {{2, {10.0, 2.0, 3.0, 8.0}, {12.0, 11.0}}, {1.0, 1.0}};
 
-// 4) 3x3 диагонально доминирующая система
-const TestType test_4 = {{3, {10.0, 1.0, 1.0, 2.0, 10.0, 1.0, 2.0, 2.0, 10.0}, {12.0, 13.0, 14.0}}, {1.0, 1.0, 1.0}};
+// 4) 3x3, классический пример Якоби
+// 10x + y + z = 12
+// x + 10y + z = 12
+// x + y + 10z = 12
+// решение: (1,1,1)
+const TestType test_4 = {{3, {10.0, 1.0, 1.0, 1.0, 10.0, 1.0, 1.0, 1.0, 10.0}, {12.0, 12.0, 12.0}}, {1.0, 1.0, 1.0}};
+
+// 5) 4x4, НЕ симметричная, но диагонально доминирующая
+// решение: (1,1,1,1)
+const TestType test_5 = {
+    {4, {15.0, 2.0, 1.0, 1.0, 1.0, 14.0, 2.0, 1.0, 2.0, 1.0, 13.0, 1.0, 1.0, 1.0, 2.0, 12.0}, {19.0, 18.0, 17.0, 16.0}},
+    {1.0, 1.0, 1.0, 1.0}};
 
 TEST_P(KrykovESimpleIterationFuncTests, SimpleIterationTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {test_1, test_2, test_3, test_4};
+const std::array<TestType, 5> kTestParam = {test_1, test_2, test_3, test_4, test_5};
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KrykovESimpleIterationMPI, InType>(kTestParam, PPC_SETTINGS_krykov_e_simple_iteration),
     ppc::util::AddFuncTask<KrykovESimpleIterationSEQ, InType>(kTestParam, PPC_SETTINGS_krykov_e_simple_iteration));

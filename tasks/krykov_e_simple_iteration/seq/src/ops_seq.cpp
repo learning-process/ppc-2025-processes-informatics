@@ -31,26 +31,29 @@ bool KrykovESimpleIterationSEQ::RunImpl() {
   std::vector<double> x_new(n, 0.0);
 
   constexpr double eps = 1e-5;
-  constexpr int max_iter = 100;
+  constexpr int max_iter = 10000;
 
   for (int iter = 0; iter < max_iter; ++iter) {
     for (size_t i = 0; i < n; ++i) {
       double sum = 0.0;
       for (size_t j = 0; j < n; ++j) {
-        if (i != j) {
+        if (j != i) {
           sum += A[i * n + j] * x[j];
         }
       }
       x_new[i] = (b[i] - sum) / A[i * n + i];
     }
 
-    double diff = 0.0;
+    double norm = 0.0;
     for (size_t i = 0; i < n; ++i) {
-      diff = std::max(diff, std::abs(x_new[i] - x[i]));
+      double diff = x_new[i] - x[i];
+      norm += diff * diff;
     }
 
+    // ОБНОВЛЯЕМ x ПЕРЕД ПРОВЕРКОЙ
     x = x_new;
-    if (diff < eps) {
+
+    if (std::sqrt(norm) < eps) {
       break;
     }
   }
