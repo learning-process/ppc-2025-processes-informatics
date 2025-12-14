@@ -1,9 +1,12 @@
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"
-#include "gasenin_l_image_smooth/common/include/common.hpp"
-#include <cstdint>
+
 #include <mpi.h>
+
 #include <algorithm>
+#include <cstdint>
 #include <vector>
+
+#include "gasenin_l_image_smooth/common/include/common.hpp"
 
 namespace gasenin_l_image_smooth {
 
@@ -45,11 +48,10 @@ bool GaseninLImageSmoothMPI::PreProcessingImpl() {
   return true;
 }
 
-static void ProcessLocalRows(int start_row, int end_row, int width, int height,
-                             int kernel_size, const std::vector<uint8_t>& input,
-                             std::vector<uint8_t>& output) {
+static void ProcessLocalRows(int start_row, int end_row, int width, int height, int kernel_size,
+                             const std::vector<uint8_t> &input, std::vector<uint8_t> &output) {
   const int radius = kernel_size / 2;
-  
+
   for (int row_idx = start_row; row_idx < end_row; ++row_idx) {
     for (int col_idx = 0; col_idx < width; ++col_idx) {
       int sum = 0;
@@ -103,16 +105,14 @@ bool GaseninLImageSmoothMPI::RunImpl() {
 
   if (local_rows > 0) {
     std::vector<uint8_t> local_result(static_cast<size_t>(local_rows) * static_cast<size_t>(width));
-    ProcessLocalRows(start_row, end_row, width, height, kernel_size, 
-                     full_input_data, local_result);
+    ProcessLocalRows(start_row, end_row, width, height, kernel_size, full_input_data, local_result);
 
     MPI_Gatherv(local_result.data(), local_rows * width, MPI_UNSIGNED_CHAR,
-                (rank == 0 ? GetOutput().data.data() : nullptr),
-                recv_counts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+                (rank == 0 ? GetOutput().data.data() : nullptr), recv_counts.data(), displs.data(), MPI_UNSIGNED_CHAR,
+                0, MPI_COMM_WORLD);
   } else {
-    MPI_Gatherv(nullptr, 0, MPI_UNSIGNED_CHAR,
-                (rank == 0 ? GetOutput().data.data() : nullptr),
-                recv_counts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(nullptr, 0, MPI_UNSIGNED_CHAR, (rank == 0 ? GetOutput().data.data() : nullptr), recv_counts.data(),
+                displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
   }
 
   return true;

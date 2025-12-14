@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
+
 #include <algorithm>
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 #include "gasenin_l_image_smooth/common/include/common.hpp"
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"

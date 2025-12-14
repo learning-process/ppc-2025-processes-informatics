@@ -1,8 +1,10 @@
 #include "gasenin_l_image_smooth/seq/include/ops_seq.hpp"
-#include "gasenin_l_image_smooth/common/include/common.hpp"
-#include <cstdint>
+
 #include <cstddef>
+#include <cstdint>
 #include <vector>
+
+#include "gasenin_l_image_smooth/common/include/common.hpp"
 
 namespace gasenin_l_image_smooth {
 
