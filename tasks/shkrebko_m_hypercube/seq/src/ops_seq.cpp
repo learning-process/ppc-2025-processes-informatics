@@ -1,9 +1,8 @@
 #include "shkrebko_m_hypercube/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
-
-#include "shkrebko_m_hypercube/common/include/common.hpp"
 
 namespace shkrebko_m_hypercube {
 
@@ -23,7 +22,11 @@ bool ShkrebkoMHypercubeSEQ::ValidationImpl() {
   }
 
   int destination = GetInput()[1];
-  return destination >= 0;
+  if (destination < 0) {
+    return false;
+  }
+
+  return true;
 }
 
 bool ShkrebkoMHypercubeSEQ::PreProcessingImpl() {
