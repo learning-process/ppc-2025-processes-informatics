@@ -1,6 +1,8 @@
 #include "shkrebko_m_hypercube/seq/include/ops_seq.hpp"
 
-#include "shkrebko_m_hypercube/common/include/common.hpp"
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 namespace shkrebko_m_hypercube {
 

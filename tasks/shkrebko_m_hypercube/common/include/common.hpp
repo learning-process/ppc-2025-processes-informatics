@@ -9,12 +9,12 @@
 namespace shkrebko_m_hypercube {
 
 struct HypercubeData {
-  int value;
-  int destination;
+  int value{0};
+  int destination{0};
   std::vector<int> path;
-  bool finish;
+  bool finish{false};
 
-  HypercubeData() : value(0), destination(0), finish(false) {}
+  HypercubeData() = default;
 };
 
 using InType = std::vector<int>;

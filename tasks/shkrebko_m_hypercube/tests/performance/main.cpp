@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
+
+#include <tuple>
+#include <string>
 
 #include "shkrebko_m_hypercube/common/include/common.hpp"
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"
@@ -16,7 +18,7 @@ class ShkrebkoMHypercubePerfTests : public ppc::util::BaseRunPerfTests<InType, O
 
   bool CheckTestOutputData(OutType &output_data) final {
     bool value_ok = output_data.value == input_data_[0];
-    bool finish_ok = output_data.finish == true;
+    bool finish_ok = output_data.finish;
 
     return value_ok && finish_ok;
   }

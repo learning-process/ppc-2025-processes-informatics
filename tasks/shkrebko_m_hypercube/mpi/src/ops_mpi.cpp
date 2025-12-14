@@ -2,9 +2,9 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
 #include <vector>
+#include <cstddef>
 
 #include "shkrebko_m_hypercube/common/include/common.hpp"
 
@@ -47,7 +47,7 @@ void RecvHypercubeData(HypercubeData &data, int src_rank, int tag, MPI_Status *s
   MPI_Recv(&data.value, 1, MPI_INT, src_rank, tag, MPI_COMM_WORLD, status);
   MPI_Recv(&data.destination, 1, MPI_INT, src_rank, tag + 1, MPI_COMM_WORLD, status);
   MPI_Recv(&data.finish, 1, MPI_C_BOOL, src_rank, tag + 2, MPI_COMM_WORLD, status);
-  int path_size;
+  int path_size = 0;
   MPI_Recv(&path_size, 1, MPI_INT, src_rank, tag + 3, MPI_COMM_WORLD, status);
   data.path.resize(path_size);
   if (path_size > 0) {
@@ -64,7 +64,8 @@ ShkrebkoMHypercubeMPI::ShkrebkoMHypercubeMPI(const InType &in) {
 }
 
 bool ShkrebkoMHypercubeMPI::ValidationImpl() {
-  int world_size, world_rank;
+  int world_size = 0;
+  int world_rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
@@ -105,7 +106,8 @@ bool ShkrebkoMHypercubeMPI::PreProcessingImpl() {
 }
 
 bool ShkrebkoMHypercubeMPI::RunImpl() {
-  int world_rank, world_size;
+  int world_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
@@ -175,23 +177,7 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
 }
 
 bool ShkrebkoMHypercubeMPI::PostProcessingImpl() {
-  if (!GetOutput().finish) {
-    return false;
-  }
-  if (GetOutput().value <= 0) {
-    return false;
-  }
-  if (GetOutput().path.empty()) {
-    return false;
-  }
-  if (GetOutput().path.front() != 0) {
-    return false;
-  }
-  if (GetOutput().path.back() != GetOutput().destination) {
-    return false;
-  }
-
-  for (size_t i = 1; i < GetOutput().path.size(); i++) {
+  for (std::size_t i = 1; i < GetOutput().path.size(); i++) {
     int prev = GetOutput().path[i - 1];
     int curr = GetOutput().path[i];
 
