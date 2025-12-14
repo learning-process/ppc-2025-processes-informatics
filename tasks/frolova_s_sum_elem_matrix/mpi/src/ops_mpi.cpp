@@ -201,8 +201,5 @@ bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
   return true;
 }
 
-bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
-  return true;
-}
 
 }  // namespace frolova_s_sum_elem_matrix
