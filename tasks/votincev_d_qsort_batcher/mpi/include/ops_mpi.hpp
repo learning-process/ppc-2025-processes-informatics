@@ -23,13 +23,13 @@ class VotincevDQsortBatcherMPI : public BaseTask {
   // ==============================
   // мои дополнительные функции ===
   static int Partition(double *arr, int l, int h);
-  void QuickSort(double *arr, int left, int right);
+  static void QuickSort(double *arr, int left, int right);
 
   // функции для разбиения RunImpl
   static void ComputeDistribution(int proc_n, int total_size, std::vector<int> &sizes, std::vector<int> &offsets);
   void ScatterData(int rank, const std::vector<int> &sizes, const std::vector<int> &offsets,
                    std::vector<double> &local);
-  void BatcherMergeSort(int rank, int proc_n, const std::vector<int> &sizes, std::vector<double> &local);
+  static void BatcherMergeSort(int rank, int proc_n, const std::vector<int> &sizes, std::vector<double> &local);
 
   static int GetPartnerRank(int rank, int proc_n, int phase);
   static void PerformMergePhase(int rank, int partner, const std::vector<int> &sizes, std::vector<double> &local,

@@ -21,7 +21,7 @@ class VotincevDQsortBatcherSEQ : public BaseTask {
   // ==============================
   // мои дополнительные функции ===
   static int Partition(double *arr, int l, int h);
-  void QuickSort(double *arr, int left, int right);
+  static void QuickSort(double *arr, int left, int right);
 };
 
 }  // namespace votincev_d_qsort_batcher
