@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <vector>
+
 #include "telnov_strongin_algorithm/common/include/common.hpp"
 #include "telnov_strongin_algorithm/mpi/include/ops_mpi.hpp"
 #include "telnov_strongin_algorithm/seq/include/ops_seq.hpp"
@@ -14,7 +17,7 @@ class TelnovStronginAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InTy
     input_data_.a = 0.0;
     input_data_.b = 2.0;
 
-    static const std::array<double, 4> kEpsLevels = {1e-2, 1e-4, 1e-6, 1e-8};
+    static const std::vector<double> kEpsLevels = {1e-2, 1e-4, 1e-6, 1e-8};
 
     static std::size_t idx = 0;
     input_data_.eps = kEpsLevels[idx % kEpsLevels.size()];
