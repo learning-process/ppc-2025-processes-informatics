@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <string>
 #include <tuple>
 
 #include "shkrebko_m_hypercube/common/include/common.hpp"

@@ -11,6 +11,7 @@
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_hypercube/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/types.h"  // Добавляем заголовок для ppc::util::GTestParamIndex
 
 namespace shkrebko_m_hypercube {
 
@@ -26,9 +27,9 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     int value = std::get<0>(test_params);
 
     int world_size = 1;
-    int mpi_initialized;
+    int mpi_initialized = 0;  // Инициализируем переменную
     MPI_Initialized(&mpi_initialized);
-    if (mpi_initialized) {
+    if (mpi_initialized != 0) {  // Явное сравнение с 0 вместо неявного преобразования
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
 
