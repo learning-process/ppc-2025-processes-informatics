@@ -1,5 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstddef>
+#include <tuple>
+#include <vector>
+
 #include "kruglova_a_vertical_ribbon_matvec/common/include/common.hpp"
 #include "kruglova_a_vertical_ribbon_matvec/mpi/include/ops_mpi.hpp"
 #include "kruglova_a_vertical_ribbon_matvec/seq/include/ops_seq.hpp"
@@ -8,29 +13,26 @@
 namespace kruglova_a_vertical_ribbon_matvec {
 
 class KruglovaAVerticalRibMatPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kSizeN_ = 6000;
-  const int kSizeM_ = 6000;
-  InType input_data_{};
+  const int k_sizen_ = 6000;
+  const int k_sizem_ = 6000;
+  InType input_data_;
 
   void SetUp() override {
-    const int M = kSizeM_;
-    const int N = kSizeN_;
+    const int m = k_sizem_;
+    const int n = k_sizen_;
 
-    std::vector<double> A_matrix(static_cast<size_t>(M) * N);
-    std::vector<double> B_vector(N);
+    std::vector<double> A_matrix(static_cast<size_t>(m) * n);
+    std::vector<double> B_vector(n);
 
-    std::fill(A_matrix.begin(), A_matrix.end(), 1.0);
-    std::fill(B_vector.begin(), B_vector.end(), 1.0);
+    std::fill(A_matrix.begin(), A_matrix.end(), 1.0);  // NOLINT(modernize-use-ranges)
+    std::fill(B_vector.begin(), B_vector.end(), 1.0);  // NOLINT(modernize-use-ranges)
 
-    input_data_ = std::make_tuple(M, N, A_matrix, B_vector);
+    input_data_ = std::make_tuple(m, n, A_matrix, B_vector);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const int M = kSizeM_;
-    if (static_cast<int>(output_data.size()) != M) {
-      return false;
-    }
-    return true;
+    const int m = k_sizem_;
+    return static_cast<int>(output_data.size()) == m;
   }
 
   InType GetTestInputData() final {

@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
+#include <array>
 #include <cmath>
-#include <random>
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "kruglova_a_vertical_ribbon_matvec/common/include/common.hpp"
@@ -24,40 +25,32 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    // 1. Извлекаем параметры (размеры матрицы) из параметров теста GTest
-    // Исправлена синтаксическая ошибка в static_cast
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     const int rows = std::get<0>(params);
     const int cols = std::get<1>(params);
 
-    // 2. Выделяем память под матрицу и векторы
-    std::vector<double> matrix(rows * cols);
-    std::vector<double> vec(cols);
+    const std::size_t matrix_size = static_cast<std::size_t>(rows) * static_cast<std::size_t>(cols);
+    std::vector<double> matrix(matrix_size);
+    std::vector<double> vec(static_cast<std::size_t>(cols));
 
-    // 3. Линейное заполнение данных (1, 2, 3...)
-    // Это удобно для отладки, так как результат предсказуем
-    for (int i = 0; i < rows * cols; ++i) {
+    for (std::size_t i = 0; i < matrix_size; ++i) {
       matrix[i] = static_cast<double>(i + 1);
     }
-    for (int i = 0; i < cols; ++i) {
+    for (std::size_t i = 0; i < static_cast<std::size_t>(cols); ++i) {
       vec[i] = static_cast<double>(i + 1);
     }
 
-    // 4. Вычисляем эталонный результат (последовательное умножение)
-    // Это то, с чем будет сравниваться результат MPI
-    ref_output_.resize(rows);
+    ref_output_.resize(static_cast<std::size_t>(rows));
     for (int i = 0; i < rows; ++i) {
       double sum = 0.0;
       for (int j = 0; j < cols; ++j) {
-        // Доступ к элементу: row * width + col
-        sum += matrix[i * cols + j] * vec[j];
+        sum += matrix[static_cast<std::size_t>(i) * static_cast<std::size_t>(cols) + static_cast<std::size_t>(j)] *
+               vec[static_cast<std::size_t>(j)];
       }
-      ref_output_[i] = sum;
+      ref_output_[static_cast<std::size_t>(i)] = sum;
     }
 
-    // 5. Сохраняем входные данные для задачи
-    // Порядок в InType: <rows, cols, matrix, vector>
     input_data_ = std::make_tuple(rows, cols, std::move(matrix), std::move(vec));
   }
 
@@ -79,7 +72,7 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
     }
 
     const double kEpsilon = 1e-6;
-    for (size_t i = 0; i < output_data.size(); ++i) {
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
       if (std::abs(output_data[i] - ref_output_[i]) > kEpsilon) {
         return false;
       }

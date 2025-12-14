@@ -16,7 +16,7 @@ KruglovaAVerticalRibbMatMPI::KruglovaAVerticalRibbMatMPI(const InType &in) {
 }
 
 bool KruglovaAVerticalRibbMatMPI::ValidationImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (rank == 0) {
@@ -100,7 +100,7 @@ bool KruglovaAVerticalRibbMatMPI::RunImpl() {
 
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
-        transposed_matrix[j * rows + i] = matrix[i * cols + j];
+        transposed_matrix[(j * rows) + i] = matrix[(i * cols) + j];
       }
     }
   }
