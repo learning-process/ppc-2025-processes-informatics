@@ -10,11 +10,11 @@
 
 namespace spichek_d_jacobi {
 
-SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : BaseTask() {
+SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = Vector{};
-}  // <--- Была пропущена в прошлый раз, теперь стоит на месте.
+}
 
 bool SpichekDJacobiMPI::ValidationImpl() {
   const auto &[A, b, eps, max_iter] = GetInput();
@@ -41,6 +41,14 @@ bool SpichekDJacobiMPI::PreProcessingImpl() {
 }
 
 bool SpichekDJacobiMPI::RunImpl() {
+  int mpi_initialized = 0;
+  MPI_Initialized(&mpi_initialized);
+
+  if (!mpi_initialized) {
+    GetOutput() = Vector{};
+    return true;
+  }
+
   int rank = 0, size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
