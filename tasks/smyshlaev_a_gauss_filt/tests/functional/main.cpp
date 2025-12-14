@@ -39,7 +39,14 @@ class SmyshlaevAGaussFiltRunFuncTestsProcesses : public ppc::util::BaseRunFuncTe
 
     OutType expected_output;
     auto seq_task = std::make_shared<SmyshlaevAGaussFiltSEQ>(input_data_);
+
+    if (!seq_task->Validation()) {
+      return false;
+    }
+    seq_task->PreProcessing();
     seq_task->Run();
+    seq_task->PostProcessing();
+
     expected_output = seq_task->GetOutput();
 
     return expected_output.data == output_data.data;
