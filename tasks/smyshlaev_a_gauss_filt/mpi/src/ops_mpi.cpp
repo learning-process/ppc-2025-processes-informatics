@@ -74,7 +74,9 @@ bool SmyshlaevAGaussFiltMPI::ValidationImpl() {
   return (error_flag == 0);
 }
 
-bool SmyshlaevAGaussFiltMPI::PreProcessingImpl() { return true; }
+bool SmyshlaevAGaussFiltMPI::PreProcessingImpl() {
+  return true;
+}
 
 void SmyshlaevAGaussFiltMPI::BroadcastImageDimensions(int &width, int &height, int &channels) {
   int rank = 0;
@@ -194,10 +196,10 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const Decompositi
     for (int p = 0; p < size; ++p) {
       uint8_t *buffer_ptr = scatter_buffer.data() + info.displs[p];
       const auto &block = info.blocks[p];
-      
+
       int src_y_start = block.start_row - 1;
       int src_x_start = block.start_col - 1;
-      
+
       for (int y = 0; y < block.padded_height; ++y) {
         for (int x = 0; x < block.padded_width; ++x) {
           int global_y = std::clamp(src_y_start + y, 0, height - 1);
@@ -216,7 +218,7 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const Decompositi
                local_block_data.data(), info.sendcounts[rank], MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   const auto &my_block = info.blocks[rank];
-  
+
   int x_offset = 1;
   int y_offset = 1;
 
