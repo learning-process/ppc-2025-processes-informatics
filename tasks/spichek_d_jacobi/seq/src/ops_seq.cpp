@@ -1,8 +1,7 @@
 #include "spichek_d_jacobi/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
-#include <cstddef>
-#include <numeric>
 #include <vector>
 
 #include "spichek_d_jacobi/common/include/common.hpp"
@@ -25,12 +24,13 @@ bool SpichekDJacobiSEQ::ValidationImpl() {
   if (A[0].size() != n || b.size() != n) {
     return false;
   }
-  // Простая проверка диагонального преобладания для валидации
+
   for (size_t i = 0; i < n; ++i) {
     if (std::abs(A[i][i]) < 1e-12) {
       return false;
     }
   }
+
   return true;
 }
 
@@ -39,81 +39,62 @@ bool SpichekDJacobiSEQ::PreProcessingImpl() {
 }
 
 bool SpichekDJacobiSEQ::RunImpl() {
-  // // ВРЕМЕННЫЙ отладочный вывод
-  // std::cout << "[SEQ DEBUG] RunImpl() начал выполнение" << std::endl;
-
-  const auto &[A, b, eps_input, max_iter_input] = GetInput();
+  // 1. Setup
+  const auto &[A, b, eps, max_iter] = GetInput();
   size_t n = A.size();
 
-  // std::cout << "[SEQ DEBUG] Размер матрицы n = " << n << std::endl;
-  // std::cout << "[SEQ DEBUG] epsilon = " << eps_input << std::endl;
-  // std::cout << "[SEQ DEBUG] max_iter = " << max_iter_input << std::endl;
-
   if (n == 0) {
-    // std::cout << "[SEQ DEBUG] n == 0, возвращаем пустой вектор" << std::endl;
     GetOutput() = Vector{};
     return true;
   }
 
-  Vector x_k(n, 0.0);
-  Vector x_k_plus_1(n, 0.0);
+  Vector x(n, 0.0);
+  Vector x_new(n);
 
   int iter = 0;
-  double max_diff;
+  double max_diff = 0.0;
 
-  // std::cout << "[SEQ DEBUG] Начинаем итерации Якоби" << std::endl;
-
-  do {
+  // 2. Main Iteration Loop
+  while (iter < max_iter) {
     ++iter;
     max_diff = 0.0;
 
-    // if (iter % 10 == 0) {  // Выводим каждые 10 итераций
-    //   std::cout << "[SEQ DEBUG] Итерация " << iter << std::endl;
-    // }
-    if (iter > max_iter_input) {
-      //      std::cout << "[SEQ DEBUG] ПРЕВЫШЕН max_iter! iter = " << iter
-      //              << ", max_iter_input = " << max_iter_input << std::endl;
-      break;
-    }
-
+    // 3. Calculate x_new and check convergence in one pass
     for (size_t i = 0; i < n; ++i) {
       double sum = 0.0;
-      const auto &row = A[i];
 
+      // Calculate sum: S = sum(A[i][j] * x[j]) for j != i
       for (size_t j = 0; j < n; ++j) {
         if (j != i) {
-          sum += row[j] * x_k[j];
+          sum += A[i][j] * x[j];
         }
       }
 
-      x_k_plus_1[i] = (b[i] - sum) / row[i];
+      // Jacobi formula: x_i^{k+1} = (b_i - S) / A[i][i]
+      x_new[i] = (b[i] - sum) / A[i][i];
+
+      // Calculate and track the maximum difference |x_new[i] - x[i]|
+      double current_diff = std::abs(x_new[i] - x[i]);
+
+      // Replaced std::max with explicit if statement
+      if (current_diff > max_diff) {
+        max_diff = current_diff;
+      }
     }
 
-    for (size_t i = 0; i < n; ++i) {
-      max_diff = std::max(max_diff, std::abs(x_k_plus_1[i] - x_k[i]));
+    // 4. Check stop condition
+    if (max_diff <= eps) {
+      // Convergence achieved.
+      GetOutput() = x_new;
+      return true;
     }
 
-    // if (iter % 10 == 0) {  // Выводим каждые 10 итераций
-    //   std::cout << "[SEQ DEBUG] max_diff = " << max_diff
-    //             << ", eps_input = " << eps_input << std::endl;
-    // }
+    // 5. Update: x^{k} = x^{k+1}
+    x.swap(x_new);
+  }
 
-    x_k = x_k_plus_1;
-
-  } while (max_diff > eps_input && iter < max_iter_input);
-
-  // std::cout << "[SEQ DEBUG] Завершили итерации. Всего итераций: " << iter << std::endl;
-  // std::cout << "[SEQ DEBUG] Финальный max_diff = " << max_diff << std::endl;
-  // std::cout << "[SEQ DEBUG] Возвращаем результат размером " << x_k.size() << std::endl;
-
-  // // Проверим несколько первых элементов результата
-  // std::cout << "[SEQ DEBUG] Первые 5 элементов результата: ";
-  // for (int i = 0; i < std::min(5, (int)n); ++i) {
-  //   std::cout << x_k[i] << " ";
-  // }
-  // std::cout << std::endl;
-
-  GetOutput() = x_k;
+  // 6. Max iterations reached
+  GetOutput() = x;
   return true;
 }
 
