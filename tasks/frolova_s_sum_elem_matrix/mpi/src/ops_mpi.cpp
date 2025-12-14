@@ -13,10 +13,10 @@ namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wnull-dereference"
-    GetInput() = in; 
-    #pragma GCC diagnostic pop
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+  GetInput() = in;
+#pragma GCC diagnostic pop
   GetOutput() = 0;
 }
 
