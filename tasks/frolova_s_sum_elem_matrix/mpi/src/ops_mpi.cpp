@@ -92,13 +92,6 @@ FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
-
-  // Инициализируем MPI если еще не инициализирован
-  int mpi_initialized;
-  MPI_Initialized(&mpi_initialized);
-  if (!mpi_initialized) {
-    MPI_Init(NULL, NULL);
-  }
 }
 
 bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
