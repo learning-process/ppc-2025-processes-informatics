@@ -43,11 +43,11 @@ uint8_t ApplyGaussianFilter(const std::vector<uint8_t> &padded_data, int x, int 
       int curr_x = x + kx;
       int curr_y = y + ky;
       int pixel = padded_data[(((curr_y * padded_width) + curr_x) * channels) + channel];
-      int k_value = kernel[((ky + 1) * 3) + (kx + 1)];
+      int k_value = kErnel[((ky + 1) * 3) + (kx + 1)];
       sum += pixel * k_value;
     }
   }
-  return static_cast<uint8_t>(sum / kErnel_sum);
+  return static_cast<uint8_t>(sum / kErnelSum);
 }
 
 }  // namespace
