@@ -33,16 +33,25 @@ bool VotincevDQsortBatcherSEQ::RunImpl() {
 
 // итеративная qsort
 void VotincevDQsortBatcherSEQ::QuickSort(double *arr, int left, int right) {
-  std::vector<int> stack(right - left + 1);
-  int top = -1;
-  stack[++top] = left;
-  stack[++top] = right;
-  while (top >= 0) {
-    int h = stack[top--];
-    int l = stack[top--];
+  std::vector<int> stack;
+
+  stack.push_back(left);
+  stack.push_back(right);
+
+  while (!stack.empty()) {
+    int h = stack.back();
+    stack.pop_back();
+    int l = stack.back();
+    stack.pop_back();
+
+    if (l >= h) {
+      continue;
+    }
+
     int i = l;
     int j = h;
     double pivot = arr[(l + h) / 2];
+
     while (i <= j) {
       while (arr[i] < pivot) {
         i++;
@@ -50,20 +59,22 @@ void VotincevDQsortBatcherSEQ::QuickSort(double *arr, int left, int right) {
       while (arr[j] > pivot) {
         j--;
       }
+
       if (i <= j) {
         std::swap(arr[i], arr[j]);
         i++;
         j--;
       }
     }
-    int p = i;
+
     if (l < j) {
-      stack[++top] = l;
-      stack[++top] = j;
+      stack.push_back(l);
+      stack.push_back(j);
     }
-    if (p < h) {
-      stack[++top] = p;
-      stack[++top] = h;
+
+    if (i < h) {
+      stack.push_back(i);
+      stack.push_back(h);
     }
   }
 }
