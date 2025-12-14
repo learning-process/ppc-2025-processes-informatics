@@ -28,8 +28,8 @@ TEST_P(ChaschinVRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChaschinVBroadcastMPI<int>, ChaschinVBroadcastSEQ<int>>(PPC_SETTINGS_chaschin_v_broadcast);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVBroadcastMPI<int>, ChaschinVBroadcastSEQ<int>>(
+    PPC_SETTINGS_chaschin_v_broadcast);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

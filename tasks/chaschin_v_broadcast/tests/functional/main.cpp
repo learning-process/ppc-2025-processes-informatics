@@ -50,9 +50,9 @@ TEST_P(ChaschinVRunFuncTestsProcesses, MatmulFromPic) {
 
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ChaschinVBroadcastMPI<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast),
-                   ppc::util::AddFuncTask<ChaschinVBroadcastSEQ<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<ChaschinVBroadcastMPI<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast),
+    ppc::util::AddFuncTask<ChaschinVBroadcastSEQ<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
