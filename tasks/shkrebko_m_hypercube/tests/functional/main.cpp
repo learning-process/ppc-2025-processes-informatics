@@ -12,7 +12,6 @@
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_hypercube/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace shkrebko_m_hypercube {
 
