@@ -4,7 +4,20 @@
 
 #include <cmath>
 
+// Explicitly include common.hpp to satisfy clang-tidy misc-include-cleaner for InType/OutType
+#include "spichek_d_simpson_integral/common/include/common.hpp"
+
 namespace spichek_d_simpson_integral {
+
+namespace {
+// Helper to reduce cognitive complexity and avoid nested ternary operators
+int GetSimpsonWeight(int index, int n) {
+  if (index == 0 || index == n) {
+    return 1;
+  }
+  return (index % 2 == 0) ? 2 : 4;
+}
+}  // namespace
 
 SpichekDSimpsonIntegralMPI::SpichekDSimpsonIntegralMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -21,7 +34,6 @@ bool SpichekDSimpsonIntegralMPI::PreProcessingImpl() {
   return true;
 }
 
-// Интегрируем f(x,y) = x^2 + y^2 на [0,1] x [0,1]
 bool SpichekDSimpsonIntegralMPI::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -33,7 +45,6 @@ bool SpichekDSimpsonIntegralMPI::RunImpl() {
     n = GetInput();
   }
 
-  // как в dot_product — все должны знать n
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (n <= 0 || n % 2 != 0) {
@@ -44,26 +55,24 @@ bool SpichekDSimpsonIntegralMPI::RunImpl() {
   const double h = 1.0 / n;
   double local_sum = 0.0;
 
-  // распределяем i по процессам
+  // Distribute rows (i) among processes
   for (int i = rank; i <= n; i += size) {
     const double x = i * h;
-    const int wx = (i == 0 || i == n) ? 1 : (i % 2 == 0 ? 2 : 4);
+    const int wx = GetSimpsonWeight(i, n);
 
     for (int j = 0; j <= n; ++j) {
       const double y = j * h;
-      const int wy = (j == 0 || j == n) ? 1 : (j % 2 == 0 ? 2 : 4);
+      const int wy = GetSimpsonWeight(j, n);
 
       local_sum += wx * wy * (x * x + y * y);
     }
   }
 
-  // КЛЮЧЕВОЕ МЕСТО — как в скалярном произведении
   double global_sum = 0.0;
   MPI_Allreduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
   const double result = global_sum * h * h / 9.0;
 
-  // ВСЕ процессы получают одинаковый результат
   GetOutput() = static_cast<OutType>(std::round(result));
   return true;
 }

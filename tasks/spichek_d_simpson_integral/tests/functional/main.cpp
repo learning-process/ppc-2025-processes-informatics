@@ -1,13 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <numeric>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "spichek_d_simpson_integral/common/include/common.hpp"
 #include "spichek_d_simpson_integral/mpi/include/ops_mpi.hpp"
