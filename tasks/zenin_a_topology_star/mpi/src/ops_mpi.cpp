@@ -66,7 +66,7 @@ bool ZeninATopologyStarMPI::RunImpl() {
     }
     return true;
   }
-  
+
   // Leaf->leaf route via center requires >= 3 MPI ranks (src leaf, center, dst leaf).
   // CI coverage runs with 2 ranks, so this block is unreachable there.
   // LCOV_EXCL_START
