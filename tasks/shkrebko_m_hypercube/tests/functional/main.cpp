@@ -1,3 +1,8 @@
+#include <gtest/gtest.h>
+#include <mpi.h>
+
+#include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -17,13 +22,13 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    auto test_params = std::get<1>(GetParam());
+    auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int value = std::get<0>(test_params);
 
     int world_size = 1;
-    int mpi_initialized = 0;
+    int mpi_initialized;
     MPI_Initialized(&mpi_initialized);
-    if (mpi_initialized != 0) {
+    if (mpi_initialized) {
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
 
