@@ -70,7 +70,7 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GaseninLMultIn
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = GaseninLRunFuncTestsProcesses::PrintFuncTestName<GaseninLRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(IntegralTests, GaseninLRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaseninLIntegralTests, GaseninLRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
