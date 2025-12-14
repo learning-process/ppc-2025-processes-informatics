@@ -10,9 +10,11 @@ class ChaschinVBroadcastSEQ : public BaseTask<T> {
  public:
   using InType = std::vector<T>;
   using OutType = std::vector<T>;
+  // GCOVR_EXCL_START
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+  // GCOVR_EXCL_START
   explicit ChaschinVBroadcastSEQ(const InType &in);
 
  private:
