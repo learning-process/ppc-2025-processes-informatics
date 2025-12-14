@@ -56,7 +56,6 @@ bool KruglovaAVerticalRibbMatMPI::PreProcessingImpl() {
 
 namespace {
 
-// Вычисление sendcounts и displs для распределения столбцов
 std::vector<int> ComputeSendCountsAndDispls(int cols, int size, std::vector<int> &displs) {
   std::vector<int> sendcounts(size);
   const int base_cols = cols / size;
@@ -70,22 +69,20 @@ std::vector<int> ComputeSendCountsAndDispls(int cols, int size, std::vector<int>
   return sendcounts;
 }
 
-// Транспонирование матрицы
 void TransposeMatrix(const std::vector<double> &matrix, std::vector<double> &transposed, int rows, int cols) {
   for (int i = 0; i < rows; ++i) {
     for (int j = 0; j < cols; ++j) {
-      transposed[static_cast<size_t>(j) * rows + i] = matrix[static_cast<size_t>(i) * cols + j];
+      transposed[static_cast<size_t>(j) * rows + i] = matrix[(static_cast<size_t>(i) * cols) + j];
     }
   }
 }
 
-// Локальное умножение матрицы на вектор
 void LocalMatVecMul(const std::vector<double> &local_matrix, const std::vector<double> &local_b,
                     std::vector<double> &local_res, int rows, int local_cols) {
   for (int j = 0; j < local_cols; ++j) {
     const double b_val = local_b[j];
     for (int i = 0; i < rows; ++i) {
-      local_res[i] += local_matrix[static_cast<size_t>(j) * rows + i] * b_val;
+      local_res[i] += local_matrix[(static_cast<size_t>(j) * rows) + i] * b_val;
     }
   }
 }
