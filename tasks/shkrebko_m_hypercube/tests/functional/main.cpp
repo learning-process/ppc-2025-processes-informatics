@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
+#include <stb/stb_image.h>
 
 #include <array>
 #include <cstddef>
@@ -11,6 +12,7 @@
 #include "shkrebko_m_hypercube/mpi/include/ops_mpi.hpp"
 #include "shkrebko_m_hypercube/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace shkrebko_m_hypercube {
 
@@ -22,13 +24,13 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto test_params = std::get<1>(GetParam());
     int value = std::get<0>(test_params);
 
     int world_size = 1;
-    int mpi_initialized;
+    int mpi_initialized = 0;
     MPI_Initialized(&mpi_initialized);
-    if (mpi_initialized) {
+    if (mpi_initialized != 0) {
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
 
