@@ -15,8 +15,8 @@
 namespace smyshlaev_a_gauss_filt {
 
 namespace {
-const std::vector<int> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
-const int kErnel_sum = 16;
+const std::vector<int> kErnel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
+const int kErnelSum = 16;
 
 void FindOptimalGrid(int size, int &grid_rows, int &grid_cols) {
   int best_diff = size;
@@ -274,7 +274,7 @@ void SmyshlaevAGaussFiltMPI::CollectResult(const std::vector<uint8_t> &local_res
     output_image.width = width;
     output_image.height = height;
     output_image.channels = channels;
-    output_image.data.resize(width * height * channels);
+    output_image.data.resize(static_cast<size_t>(width) * height * channels);
     for (int pdx = 0; pdx < size; ++pdx) {
       const uint8_t *src_ptr = gathered_data.data() + recv_displs[pdx];
       const auto &block = info.blocks[pdx];
