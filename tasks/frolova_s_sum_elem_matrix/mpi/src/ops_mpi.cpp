@@ -81,8 +81,6 @@ void FrolovaSSumElemMatrixMPI::ComputeSendCounts(int rank, int size, const std::
   }
 }
 
-namespace frolova_s_sum_elem_matrix {
-
 FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
