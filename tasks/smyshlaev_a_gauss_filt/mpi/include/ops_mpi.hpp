@@ -22,7 +22,7 @@ class SmyshlaevAGaussFiltMPI : public BaseTask {
     int padded_width;
     int count;
   };
-  
+
   struct DecompositionInfo {
     int grid_rows = 0;
     int grid_cols = 0;
@@ -33,9 +33,10 @@ class SmyshlaevAGaussFiltMPI : public BaseTask {
 
   bool RunSequential();
   void BroadcastImageDimensions(int &width, int &height, int &channels);
-  void SetupDecompostion(DecompositionInfo & info, int width, int height, int channels);
-  std::vector<uint8_t> ProcessLocalBlock(const DecompositionInfo& info, int width, int height, int channels);
-  void CollectResult(const std::vector<uint8_t>& local_result, const DecompositionInfo& info, int width, int height, int channels);
+  void SetupDecompostion(DecompositionInfo &info, int width, int height, int channels);
+  std::vector<uint8_t> ProcessLocalBlock(const DecompositionInfo &info, int width, int height, int channels);
+  void CollectResult(const std::vector<uint8_t> &local_result, const DecompositionInfo &info, int width, int height,
+                     int channels);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

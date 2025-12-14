@@ -1,5 +1,4 @@
 #include "smyshlaev_a_gauss_filt/mpi/include/ops_mpi.hpp"
-#include "smyshlaev_a_gauss_filt/seq/include/ops_seq.hpp"
 
 #include <mpi.h>
 
@@ -9,6 +8,7 @@
 #include <vector>
 
 #include "smyshlaev_a_gauss_filt/common/include/common.hpp"
+#include "smyshlaev_a_gauss_filt/seq/include/ops_seq.hpp"
 #include "util/include/util.hpp"
 
 namespace smyshlaev_a_gauss_filt {
@@ -35,8 +35,8 @@ void FindOptimalGrid(int size, int &grid_rows, int &grid_cols) {
   }
 }
 
-uint8_t ApplyGaussianFilter(const std::vector<uint8_t> &padded_data, int x, int y, int padded_width,
-                            int channels, int channel) {
+uint8_t ApplyGaussianFilter(const std::vector<uint8_t> &padded_data, int x, int y, int padded_width, int channels,
+                            int channel) {
   int sum = 0;
   for (int ky = -1; ky <= 1; ++ky) {
     for (int kx = -1; kx <= 1; ++kx) {
@@ -182,7 +182,7 @@ void SmyshlaevAGaussFiltMPI::SetupDecomposition(DecompositionInfo &info, int wid
 }
 
 std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const DecompositionInfo &info, int width, int height,
-                                                              int channels) {
+                                                               int channels) {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -229,8 +229,8 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const Decompositi
   for (int y = 0; y < my_block.block_height; ++y) {
     for (int x = 0; x < my_block.block_width; ++x) {
       for (int ch = 0; ch < channels; ++ch) {
-        local_output_data[(y * my_block.block_width + x) * channels + ch] = ApplyGaussianFilter(
-            local_block_data, x + x_offset, y + y_offset, my_block.padded_width, channels, ch);
+        local_output_data[(y * my_block.block_width + x) * channels + ch] =
+            ApplyGaussianFilter(local_block_data, x + x_offset, y + y_offset, my_block.padded_width, channels, ch);
       }
     }
   }
@@ -238,7 +238,7 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const Decompositi
 }
 
 void SmyshlaevAGaussFiltMPI::CollectResult(const std::vector<uint8_t> &local_result, const DecompositionInfo &info,
-                                          int width, int height, int channels) {
+                                           int width, int height, int channels) {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
