@@ -37,7 +37,6 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  protected:
   void SetUp() override {
-
     int initialized = 0;
     MPI_Initialized(&initialized);
     if (!initialized) {

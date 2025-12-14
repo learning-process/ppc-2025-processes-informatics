@@ -17,7 +17,6 @@ class RomanovAScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
   InType input_data_;
 
   void SetUp() override {
-
     int initialized = 0;
     MPI_Initialized(&initialized);
     if (!initialized) {
