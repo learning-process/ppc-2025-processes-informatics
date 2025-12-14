@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "votincev_d_qsort_batcher/common/include/common.hpp"
+
 namespace votincev_d_qsort_batcher {
 
 VotincevDQsortBatcherSEQ::VotincevDQsortBatcherSEQ(const InType &in) {
@@ -31,6 +33,30 @@ bool VotincevDQsortBatcherSEQ::RunImpl() {
   return true;
 }
 
+// partition (для qsort)
+int VotincevDQsortBatcherSEQ::Partition(double *arr, int l, int h) {
+  int i = l;
+  int j = h;
+  double pivot = arr[(l + h) / 2];
+
+  while (i <= j) {
+    while (arr[i] < pivot) {
+      i++;
+    }
+    while (arr[j] > pivot) {
+      j--;
+    }
+
+    if (i <= j) {
+      std::swap(arr[i], arr[j]);
+      i++;
+      j--;
+    }
+  }
+  // i — это граница следующего правого подмассива
+  return i;
+}
+
 // итеративная qsort
 void VotincevDQsortBatcherSEQ::QuickSort(double *arr, int left, int right) {
   std::vector<int> stack;
@@ -48,32 +74,26 @@ void VotincevDQsortBatcherSEQ::QuickSort(double *arr, int left, int right) {
       continue;
     }
 
-    int i = l;
-    int j = h;
-    double pivot = arr[(l + h) / 2];
+    // вызываю Partition для разделения массива
+    int p = Partition(arr, l, h);
+    // p - это i после Partition. j находится на p-1 или p-2.
 
-    while (i <= j) {
-      while (arr[i] < pivot) {
-        i++;
-      }
-      while (arr[j] > pivot) {
-        j--;
-      }
+    // p - начало правого подмассива (i)
+    // j - конец левого подмассива (j после Partition)
 
-      if (i <= j) {
-        std::swap(arr[i], arr[j]);
-        i++;
-        j--;
-      }
-    }
+    // пересчитываю l и h для стека, используя внутренние границы Partition
+    int l_end = p - 1;  // конец левого подмассива
+    int r_start = p;    // начало правого подмассива
 
-    if (l < j) {
+    // если левый подмассив существует
+    if (l < l_end) {
       stack.push_back(l);
-      stack.push_back(j);
+      stack.push_back(l_end);
     }
 
-    if (i < h) {
-      stack.push_back(i);
+    // если правый подмассив существует
+    if (r_start < h) {
+      stack.push_back(r_start);
       stack.push_back(h);
     }
   }

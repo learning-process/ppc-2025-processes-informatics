@@ -3,8 +3,9 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <numeric>
 #include <vector>
+
+#include "votincev_d_qsort_batcher/common/include/common.hpp"
 
 namespace votincev_d_qsort_batcher {
 
@@ -113,9 +114,47 @@ void VotincevDQsortBatcherMPI::ScatterData(int rank, const std::vector<int> &siz
   }
 }
 
+int VotincevDQsortBatcherMPI::GetPartnerRank(int rank, int proc_n, int phase) {
+  int partner = -1;
+  // Определяем соседа для текущей фазы
+  if (phase % 2 == 0) {
+    // Чётная фаза: 0-1, 2-3, ...
+    partner = (rank % 2 == 0) ? rank + 1 : rank - 1;
+  } else {
+    // Нечётная фаза: 1-2, 3-4, ...
+    partner = (rank % 2 == 1) ? rank + 1 : rank - 1;
+  }
+
+  // Если соседа нет или он вне границ
+  if (partner < 0 || partner >= proc_n) {
+    return -1;
+  }
+  return partner;
+}
+
+void VotincevDQsortBatcherMPI::PerformMergePhase(int rank, int partner, const std::vector<int> &sizes,
+                                                 std::vector<double> &local, std::vector<double> &recv_buf,
+                                                 std::vector<double> &merge_buf) {
+  // Обмениваемся отсортированными блоками с соседом
+  MPI_Sendrecv(local.data(), sizes[rank], MPI_DOUBLE, partner, 0, recv_buf.data(), sizes[partner], MPI_DOUBLE, partner,
+               0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  // Сливаем два отсортированных массива в merge_buf
+  std::merge(local.begin(), local.end(), recv_buf.begin(), recv_buf.begin() + sizes[partner], merge_buf.begin());
+
+  // Распределение объединенного блока:
+  if (rank < partner) {
+    // Младший ранг оставляет меньшую часть
+    std::copy(merge_buf.begin(), merge_buf.begin() + sizes[rank], local.begin());
+  } else {
+    // Старший ранг оставляет большую часть
+    std::copy(merge_buf.begin() + sizes[partner], merge_buf.begin() + sizes[partner] + sizes[rank], local.begin());
+  }
+}
+
 void VotincevDQsortBatcherMPI::BatcherMergeSort(int rank, int proc_n, const std::vector<int> &sizes,
                                                 std::vector<double> &local) {
-  if (proc_n <= 1) {  // нечего сортировать
+  if (proc_n <= 1) {
     return;
   }
 
@@ -126,37 +165,14 @@ void VotincevDQsortBatcherMPI::BatcherMergeSort(int rank, int proc_n, const std:
 
   // чет-нечет слияние Бэтчера (P фаз)
   for (int phase = 0; phase < proc_n; phase++) {
-    int partner = -1;
+    int partner = GetPartnerRank(rank, proc_n, phase);
 
-    // опрределяем соседа для текущей фазы
-    if (phase % 2 == 0) {
-      // чётная фаза: 0-1, 2-3, ...
-      partner = (rank % 2 == 0) ? rank + 1 : rank - 1;
-    } else {
-      // нечётная фаза: 1-2, 3-4, ...
-      partner = (rank % 2 == 1) ? rank + 1 : rank - 1;
-    }
-
-    // если соседа нет или он вне границ — пропускаем фазу
-    if (partner < 0 || partner >= proc_n) {
+    // если соседа нет — пропускаем фазу
+    if (partner == -1) {
       continue;
     }
 
-    // обмениваемся отсортированными блоками с соседом
-    MPI_Sendrecv(local.data(), sizes[rank], MPI_DOUBLE, partner, 0, recv_buf.data(), sizes[partner], MPI_DOUBLE,
-                 partner, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    // сливаем два отсортированных массива в merge_buf
-    std::merge(local.begin(), local.end(), recv_buf.begin(), recv_buf.begin() + sizes[partner], merge_buf.begin());
-
-    // распределение объединенного блока:
-    if (rank < partner) {
-      // младший ранг (меньший индекс) оставляет меньшую часть (начало merge_buf)
-      std::copy(merge_buf.begin(), merge_buf.begin() + sizes[rank], local.begin());
-    } else {
-      // старший ранг (больший индекс) оставляет большую часть (конец merge_buf)
-      std::copy(merge_buf.begin() + sizes[partner], merge_buf.begin() + sizes[partner] + sizes[rank], local.begin());
-    }
+    PerformMergePhase(rank, partner, sizes, local, recv_buf, merge_buf);
   }
 }
 
@@ -177,6 +193,30 @@ void VotincevDQsortBatcherMPI::GatherResult(int rank, int total_size, const std:
   }
 }
 
+// partition (для qsort)
+int VotincevDQsortBatcherMPI::Partition(double *arr, int l, int h) {
+  int i = l;
+  int j = h;
+  double pivot = arr[(l + h) / 2];
+
+  while (i <= j) {
+    while (arr[i] < pivot) {
+      i++;
+    }
+    while (arr[j] > pivot) {
+      j--;
+    }
+
+    if (i <= j) {
+      std::swap(arr[i], arr[j]);
+      i++;
+      j--;
+    }
+  }
+  // i — это граница следующего правого подмассива
+  return i;
+}
+
 // итеративная qsort
 void VotincevDQsortBatcherMPI::QuickSort(double *arr, int left, int right) {
   std::vector<int> stack;
@@ -194,32 +234,26 @@ void VotincevDQsortBatcherMPI::QuickSort(double *arr, int left, int right) {
       continue;
     }
 
-    int i = l;
-    int j = h;
-    double pivot = arr[(l + h) / 2];
+    // вызываю Partition для разделения массива
+    int p = Partition(arr, l, h);
+    // p - это i после Partition. j находится на p-1 или p-2.
 
-    while (i <= j) {
-      while (arr[i] < pivot) {
-        i++;
-      }
-      while (arr[j] > pivot) {
-        j--;
-      }
+    // p - начало правого подмассива (i)
+    // j - конец левого подмассива (j после Partition)
 
-      if (i <= j) {
-        std::swap(arr[i], arr[j]);
-        i++;
-        j--;
-      }
-    }
+    // пересчитываю l и h для стека, используя внутренние границы Partition
+    int l_end = p - 1;  // конец левого подмассива
+    int r_start = p;    // начало правого подмассива
 
-    if (l < j) {
+    // если левый подмассив существует
+    if (l < l_end) {
       stack.push_back(l);
-      stack.push_back(j);
+      stack.push_back(l_end);
     }
 
-    if (i < h) {
-      stack.push_back(i);
+    // если правый подмассив существует
+    if (r_start < h) {
+      stack.push_back(r_start);
       stack.push_back(h);
     }
   }
