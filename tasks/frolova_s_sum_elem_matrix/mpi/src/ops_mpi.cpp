@@ -140,72 +140,54 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
     for (int i = 0; i < rows; i++) {
       total_elements += static_cast<int64_t>(row_sizes[i]);
     }
-    flat_data.resize(total_elements);
+    //  Шаг 4.5: Рассылка elem_counts
+    MPI_Bcast(elem_counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Fill flat_data
-    int idx = 0;
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < row_sizes[i]; j++) {
-        flat_data[idx++] = matrix[i][j];
-      }
+    // Шаг 4.6: Рассылка elem_displs
+    MPI_Bcast(elem_displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Step 5: Scatter element counts
+    int my_elem_count = elem_counts[rank];
+
+    // Шаг 6: Scatter matrix elements
+    std::vector<int> local_data;
+    if (my_elem_count > 0) {
+      local_data.resize(my_elem_count);
     }
 
-    // Calculate element counts and displacements
-    int current_elem_displ = 0;
-    for (int proc = 0; proc < size; proc++) {
-      elem_counts[proc] = 0;
-      for (int j = 0; j < row_counts[proc]; j++) {
-        int row_idx = row_displs[proc] + j;
-        elem_counts[proc] += row_sizes[row_idx];
-      }
-      elem_displs[proc] = current_elem_displ;
-      current_elem_displ += elem_counts[proc];
+    // Создаем локальный указатель на данные отправки
+    const int *send_data_ptr = nullptr;
+    if (rank == 0) {
+      send_data_ptr = flat_data.data();
     }
+
+    // Передаем этот указатель
+    MPI_Scatterv(const_cast<int *>(send_data_ptr), elem_counts.data(), elem_displs.data(), MPI_INT, local_data.data(),
+                 my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Step 7: Compute local sum
+    int64_t local_sum = 0;
+    for (int i = 0; i < my_elem_count; i++) {
+      local_sum += local_data[i];
+    }
+
+    // Step 8: Reduce to global sum
+    int64_t global_sum = 0;
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Step 9: Set output ONLY on rank 0
+    if (rank == 0) {
+      GetOutput() = static_cast<OutType>(global_sum);
+    }
+
+    // Синхронизируем все процессы перед выходом
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    return true;
   }
 
-  // Step 5: Scatter element counts
-  int my_elem_count = 0;
-  MPI_Scatter(elem_counts.data(), 1, MPI_INT, &my_elem_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  // Шаг 6: Scatter matrix elements
-  std::vector<int> local_data;
-  if (my_elem_count > 0) {
-    local_data.resize(my_elem_count);
+  bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
+    return true;
   }
-
-  // Создаем локальный указатель на данные отправки
-  const int *send_data_ptr = nullptr;
-  if (rank == 0) {
-    send_data_ptr = flat_data.data();
-  }
-
-  // Передаем этот указатель
-  MPI_Scatterv(const_cast<int *>(send_data_ptr), elem_counts.data(), elem_displs.data(), MPI_INT, local_data.data(),
-               my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
-
-  // Step 7: Compute local sum
-  int64_t local_sum = 0;
-  for (int i = 0; i < my_elem_count; i++) {
-    local_sum += local_data[i];
-  }
-
-  // Step 8: Reduce to global sum
-  int64_t global_sum = 0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  // Step 9: Set output ONLY on rank 0
-  if (rank == 0) {
-    GetOutput() = static_cast<OutType>(global_sum);
-  }
-
-  // Синхронизируем все процессы перед выходом
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  return true;
-}
-
-bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
-  return true;
-}
 
 }  // namespace frolova_s_sum_elem_matrix
