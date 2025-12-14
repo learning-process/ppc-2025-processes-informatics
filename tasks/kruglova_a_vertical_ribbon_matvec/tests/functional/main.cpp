@@ -62,11 +62,14 @@ class KruglovaAVerticalRibMatFuncTests : public ppc::util::BaseRunFuncTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int rank = 0;
+    int is_mpi_init = 0;
 
-    // ВАЖНО: Проверяем результат только на главном процессе!
-    // Остальные процессы возвращают true, чтобы не ломать тест.
+    MPI_Initialized(&is_mpi_init);
+    if (is_mpi_init) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
     if (rank != 0) {
       return true;
     }
