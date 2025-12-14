@@ -12,7 +12,7 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
