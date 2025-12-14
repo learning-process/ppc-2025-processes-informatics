@@ -177,8 +177,8 @@ std::vector<std::vector<int>> LeonovaAStarMPI::MultiplyMatricesMpi(const std::ve
   if (matrix_a.empty() || matrix_b.empty() || matrix_a[0].empty() || matrix_b[0].empty()) {
     if (rank == 0) {
       return {};
-    }       return std::vector<std::vector<int>>();
-   
+    }
+    return std::vector<std::vector<int>>();
   }
 
   size_t rows_a = matrix_a.size();
