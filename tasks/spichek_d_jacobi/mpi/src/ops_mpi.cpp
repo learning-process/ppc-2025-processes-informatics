@@ -14,7 +14,7 @@ SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = Vector{};
-}  // <--- ВОТ ПРОПУЩЕННАЯ ЗАКРЫВАЮЩАЯ СКОБКА
+}  // <--- Была пропущена в прошлый раз, теперь стоит на месте.
 
 bool SpichekDJacobiMPI::ValidationImpl() {
   const auto &[A, b, eps, max_iter] = GetInput();
@@ -153,4 +153,3 @@ bool SpichekDJacobiMPI::PostProcessingImpl() {
 }
 
 }  // namespace spichek_d_jacobi
-// ЛИШНЯЯ КОНСТРУКЦИЯ }; БЫЛА УДАЛЕНА ЗДЕСЬ

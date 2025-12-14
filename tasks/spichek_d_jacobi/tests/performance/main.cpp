@@ -63,7 +63,7 @@ class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<In
   InType GetTestInputData() final {
     return input_data_;
   }
-};  // <--- ИСПРАВЛЕНИЕ: ТОЧКА С ЗАПЯТОЙ ЗДЕСЬ БЫЛА ПРОПУЩЕНА (строка 84)
+};
 
 TEST_P(SpichekDJacobiRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
