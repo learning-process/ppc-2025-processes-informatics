@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <utility>
+#include <cstddef>
 #include <vector>
 
 #include "zenin_a_topology_star/common/include/common.hpp"
@@ -16,17 +16,13 @@ ZeninATopologyStarMPI::ZeninATopologyStarMPI(const InType &in) {
 }
 
 bool ZeninATopologyStarMPI::ValidationImpl() {
-  int world_size;
+  int world_size = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   const auto &in = GetInput();
-  size_t src = std::get<0>(in);
-  size_t dst = std::get<1>(in);
-
-  if (src >= static_cast<size_t>(world_size) || dst >= static_cast<size_t>(world_size)) {
-    return false;
-  }
-  return true;
+  size_t src = static_cast<int>(std::get<0>(in));
+  size_t dst = static_cast<int>(std::get<1>(in));
+  return src >= 0 && dst >= 0 && src <= world_size && dst < world_size;
 }
 
 bool ZeninATopologyStarMPI::PreProcessingImpl() {
@@ -34,7 +30,8 @@ bool ZeninATopologyStarMPI::PreProcessingImpl() {
 }
 
 bool ZeninATopologyStarMPI::RunImpl() {
-  int world_rank, world_size;
+  int world_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 

@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -108,9 +109,8 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
 
     if (world_rank == dst) {
       return output_data == data;
-    } else {
-      return output_data.empty();
     }
+    return output_data.empty();
   }
 
   InType GetTestInputData() final {

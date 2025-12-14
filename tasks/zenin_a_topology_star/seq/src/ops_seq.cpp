@@ -1,7 +1,6 @@
 #include "zenin_a_topology_star/seq/include/ops_seq.hpp"
 
 #include <cmath>
-#include <cstddef>
 #include <vector>
 
 #include "zenin_a_topology_star/common/include/common.hpp"

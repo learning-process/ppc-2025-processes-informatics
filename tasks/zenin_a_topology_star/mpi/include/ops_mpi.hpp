@@ -1,6 +1,4 @@
 #pragma once
-#include <cstddef>
-#include <vector>
 
 #include "task/include/task.hpp"
 #include "zenin_a_topology_star/common/include/common.hpp"
