@@ -55,6 +55,64 @@ void RecvHypercubeData(HypercubeData &data, int src_rank, int tag, MPI_Status *s
   }
 }
 
+void ArtificialDelay() {
+  for (int i = 0; i < 10000; i++) {
+    volatile int dummy = 0;
+    for (int j = 0; j < 10000; j++) {
+      dummy += i * j;
+    }
+  }
+}
+
+HypercubeData HandleSingleProcessCase(int rank, const HypercubeData &init_data) {
+  HypercubeData result = init_data;
+  result.path.push_back(rank);
+  result.finish = true;
+  return result;
+}
+
+HypercubeData HandleRootProcess(int rank, int world_size, const HypercubeData &init_data) {
+  HypercubeData local_data = init_data;
+  local_data.path.push_back(rank);
+  local_data.finish = false;
+
+  if (local_data.destination != rank) {
+    int next_rank = CalcNextRank(rank, local_data.destination, world_size);
+    SendHypercubeData(local_data, next_rank, 0);
+    RecvHypercubeData(local_data, MPI_ANY_SOURCE, 1);
+  } else {
+    local_data.finish = true;
+  }
+
+  for (int i = 1; i < world_size; i++) {
+    SendHypercubeData(local_data, i, 0);
+  }
+
+  return local_data;
+}
+
+HypercubeData HandleNonRootProcess(int rank, int world_size) {
+  HypercubeData local_data;
+  MPI_Status status;
+  RecvHypercubeData(local_data, MPI_ANY_SOURCE, 0, &status);
+
+  if (!local_data.finish) {
+    local_data.path.push_back(rank);
+
+    if (rank == local_data.destination) {
+      local_data.finish = true;
+      SendHypercubeData(local_data, 0, 1);
+      RecvHypercubeData(local_data, 0, 0, &status);
+    } else {
+      int next_rank = CalcNextRank(rank, local_data.destination, world_size);
+      SendHypercubeData(local_data, next_rank, 0);
+      RecvHypercubeData(local_data, 0, 0, &status);
+    }
+  }
+
+  return local_data;
+}
+
 }  // namespace
 
 ShkrebkoMHypercubeMPI::ShkrebkoMHypercubeMPI(const InType &in) {
@@ -111,67 +169,23 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  for (int i = 0; i < 10000; i++) {
-    volatile int dummy = 0;
-    for (int j = 0; j < 10000; j++) {
-      dummy += i * j;
-    }
-  }
-
-  HypercubeData local_data;
+  ArtificialDelay();
 
   if (world_size == 1) {
-    local_data.value = GetOutput().value;
-    local_data.destination = GetOutput().destination;
-    local_data.path.push_back(0);
-    local_data.finish = true;
-    GetOutput() = local_data;
+    GetOutput() = HandleSingleProcessCase(world_rank, GetOutput());
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
 
+  HypercubeData result;
+
   if (world_rank == 0) {
-    local_data.value = GetOutput().value;
-    local_data.destination = GetOutput().destination;
-    local_data.path.push_back(world_rank);
-    local_data.finish = false;
-
-    if (local_data.destination != 0) {
-      int next_rank = CalcNextRank(world_rank, local_data.destination, world_size);
-      SendHypercubeData(local_data, next_rank, 0);
-      RecvHypercubeData(local_data, MPI_ANY_SOURCE, 1);
-    } else {
-      local_data.finish = true;
-    }
-
-    for (int i = 1; i < world_size; i++) {
-      SendHypercubeData(local_data, i, 0);
-    }
-
-    GetOutput() = local_data;
+    result = HandleRootProcess(world_rank, world_size, GetOutput());
   } else {
-    MPI_Status status;
-    RecvHypercubeData(local_data, MPI_ANY_SOURCE, 0, &status);
-
-    if (!local_data.finish) {
-      local_data.path.push_back(world_rank);
-
-      if (world_rank == local_data.destination) {
-        local_data.finish = true;
-        SendHypercubeData(local_data, 0, 1);
-        RecvHypercubeData(local_data, 0, 0, &status);
-        GetOutput() = local_data;
-      } else {
-        int next_rank = CalcNextRank(world_rank, local_data.destination, world_size);
-        SendHypercubeData(local_data, next_rank, 0);
-        RecvHypercubeData(local_data, 0, 0, &status);
-        GetOutput() = local_data;
-      }
-    } else {
-      GetOutput() = local_data;
-    }
+    result = HandleNonRootProcess(world_rank, world_size);
   }
 
+  GetOutput() = result;
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
