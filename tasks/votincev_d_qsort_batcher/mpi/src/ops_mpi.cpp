@@ -54,7 +54,9 @@ bool VotincevDQsortBatcherMPI::RunImpl() {
       auto out = GetInput();
       QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
       GetOutput() = out;
+      return true;
     }
+    GetOutput() = std::vector<double>{};
     return true;
   }
 
