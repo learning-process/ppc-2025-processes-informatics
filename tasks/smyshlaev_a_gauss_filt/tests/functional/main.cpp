@@ -4,7 +4,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <numeric>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -29,8 +28,21 @@ class SmyshlaevAGaussFiltRunFuncTestsProcesses : public ppc::util::BaseRunFuncTe
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_.width == output_data.width && input_data_.height == output_data.height &&
-            input_data_.channels == output_data.channels && !output_data.data.empty());
+    if (input_data_.width != output_data.width || input_data_.height != output_data.height ||
+        input_data_.channels != output_data.channels || (input_data_.data.empty() && !output_data.data.empty()) ||
+        (!input_data_.data.empty() && output_data.data.empty())) {
+      return false;
+    }
+    if (input_data_.data.empty()) {
+      return true;
+    }
+
+    OutType expected_output;
+    auto seq_task = std::make_shared<SmyshlaevAGaussFiltSEQ>(input_data_);
+    seq_task->Run();
+    expected_output = seq_task->GetOutput();
+
+    return expected_output.data == output_data.data;
   }
 
   InType GetTestInputData() final {
@@ -41,29 +53,33 @@ class SmyshlaevAGaussFiltRunFuncTestsProcesses : public ppc::util::BaseRunFuncTe
   InType input_data_;
 };
 
-namespace {
-
-ImageType CreateTestImage(int size) {
-  ImageType img;
-  img.width = size;
-  img.height = size;
-  img.channels = 3;
-  img.data.resize(size * size * 3);
-
-  for (size_t i = 0; i < img.data.size(); ++i) {
-    img.data[i] = static_cast<uint8_t>(i % 256);
-  }
-
-  return img;
-}
-
 TEST_P(SmyshlaevAGaussFiltRunFuncTestsProcesses, GaussFiltTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(CreateTestImage(16), "16x16"),
-                                            std::make_tuple(CreateTestImage(32), "32x32"),
-                                            std::make_tuple(CreateTestImage(64), "64x64")};
+ImageType CreateTestImage(int width, int height, int channels) {
+  ImageType img;
+  img.width = width;
+  img.height = height;
+  img.channels = channels;
+  img.data.resize(static_cast<size_t>(width) * height * channels);
+
+  for (size_t i = 0; i < img.data.size(); ++i) {
+    img.data[i] = static_cast<uint8_t>(i % 256);
+  }
+  return img;
+}
+
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple(CreateTestImage(3, 3, 3), "3x3_RGB"),
+    std::make_tuple(CreateTestImage(32, 32, 3), "32x32_RGB"),
+    std::make_tuple(CreateTestImage(60, 20, 3), "60x20_RGB"),
+    std::make_tuple(CreateTestImage(20, 60, 3), "20x60_RGB"),
+    std::make_tuple(CreateTestImage(23, 31, 3), "23x31_RGB_PrimeDims"),
+    std::make_tuple(CreateTestImage(40, 40, 1), "40x40_Grayscale"),
+    std::make_tuple(CreateTestImage(24, 24, 4), "24x24_RGBA"),
+    std::make_tuple(CreateTestImage(2, 2, 3), "2x2_ForceSequential"),
+};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SmyshlaevAGaussFiltMPI, InType>(kTestParam, PPC_SETTINGS_smyshlaev_a_gauss_filt),
@@ -71,11 +87,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
+const auto kTestName =
     SmyshlaevAGaussFiltRunFuncTestsProcesses::PrintFuncTestName<SmyshlaevAGaussFiltRunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(GaussFiltTests, SmyshlaevAGaussFiltRunFuncTestsProcesses, kGtestValues, kPerfTestName);
-
-}  // namespace
+INSTANTIATE_TEST_SUITE_P(GaussFiltTests, SmyshlaevAGaussFiltRunFuncTestsProcesses, kGtestValues, kTestName);
 
 }  // namespace smyshlaev_a_gauss_filt

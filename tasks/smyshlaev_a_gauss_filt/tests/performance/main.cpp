@@ -11,11 +11,11 @@ class SmyshlaevAGaussFiltRunPerfTestsProcesses : public ppc::util::BaseRunPerfTe
   InType input_data_{};
 
   void SetUp() override {
-    int size = 512;
+    int size = 1024;
     input_data_.width = size;
     input_data_.height = size;
     input_data_.channels = 3;
-    input_data_.data.resize(size * size * 3);
+    input_data_.data.resize(static_cast<size_t>(size) * size * 3);
 
     for (size_t i = 0; i < input_data_.data.size(); ++i) {
       input_data_.data[i] = static_cast<uint8_t>(i % 256);
@@ -41,7 +41,7 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, SmyshlaevAGaussFi
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = SmyshlaevAGaussFiltRunPerfTestsProcesses ::CustomPerfTestName;
+const auto kPerfTestName = SmyshlaevAGaussFiltRunPerfTestsProcesses::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, SmyshlaevAGaussFiltRunPerfTestsProcesses, kGtestValues, kPerfTestName);
 
