@@ -4,6 +4,7 @@
 // #include <numeric>
 #include <cstring>
 #include <vector>
+// #include<iostream>
 
 #include "konstantinov_s_elem_vec_sign_change_count/common/include/common.hpp"
 // #include "util/include/util.hpp"
@@ -62,6 +63,11 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
     step = (elemcount + 1) / pcount;
     rem = elemcount - (step * (pcount - 1));
+
+    if (step < 2) {
+      step = 0;
+      rem = elemcount;
+    }
   }
   //
   MPI_Bcast(&step, 1, MPI_INT, 0, MPI_COMM_WORLD);  // корень отправляет, остальные получают
@@ -89,9 +95,19 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   // rank1+: recbuf
   MPI_Scatterv(sendbuf, sendcounts, displs, MPI_SHORT, recbuf, rank == 0 ? 0 : chunksz, MPI_SHORT, 0, MPI_COMM_WORLD);
 
-  // for(int i=0;i<elemcount;i++)
-  //     std::cout<<sendbuf[i]<<" ";
+  // if(rank!=0){
+  //   std::cout<<"RANK "<<rank<<" got: ";
+  //   for(int i=0;i<step;i++)
+  //   {
+  //     std::cout<<recbuf[i]<<" ";
+  //   }
   //   std::cout<<"\n\n";
+  // }else{
+  //     std::cout<<"INPUT: ";
+  //   for(int i=0;i<elemcount;i++)
+  //       std::cout<<sendbuf[i]<<" ";
+  //     std::cout<<"\n\n";
+  // }
 
   int local_res = 0;
 
@@ -99,20 +115,13 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     delete[] sendcounts;
     delete[] displs;
     if (rem > 1) {
-      // for (int i = elemcount - rem; i < elemcount - 1; i++) {
-      //   // std::cout<<sendbuf[i];
-      //   local_res += static_cast<int>((sendbuf[i] > 0) != (sendbuf[i + 1] > 0));
-      // }
       CountSignChange(local_res, sendbuf, elemcount - rem, elemcount - 1);
     }
 
   } else {
-    // for (int i = 0; i < step; i++) {
-    //   local_res += static_cast<int>((recbuf[i] > 0) != (recbuf[i + 1] > 0));
-    // }
-    // std::cout<<rank<<"# counted = "<<local_res<<"\n";
     CountSignChange(local_res, recbuf, 0, step);
   }
+  // std::cout<<"RANK "<<rank<<" counted "<<local_res<<std::endl;
 
   // rank0: sendbuf
   // rank1+: recbuf

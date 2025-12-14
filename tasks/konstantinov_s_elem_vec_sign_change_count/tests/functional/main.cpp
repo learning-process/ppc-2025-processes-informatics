@@ -60,11 +60,11 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
 
 namespace {
 
-TEST_P(KonstantinovSElemVecSignChangeTests, MatmulFromPic) {
+TEST_P(KonstantinovSElemVecSignChangeTests, SignChangeCount) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {1, 7, 15, 30, 33};
+const std::array<TestType, 7> kTestParam = {1, 2, 3, 7, 15, 30, 33};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KonstantinovSElemVecSignChangeMPI, InType>(
                                                kTestParam, PPC_SETTINGS_konstantinov_s_elem_vec_sign_change_count),
@@ -75,7 +75,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KonstantinovSElemVecSignChangeTests::PrintFuncTestName<KonstantinovSElemVecSignChangeTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KonstantinovSElemVecSignChangeTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SignChangeTests, KonstantinovSElemVecSignChangeTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
