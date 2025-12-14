@@ -58,9 +58,6 @@ bool GaseninLMultIntMstepTrapezSEQ::RunImpl() {
 
   GetOutput() = res * hxhy;
 
-  double correction = 0.5 * (f(data.x1, data.y1) + f(data.x2, data.y1) + f(data.x1, data.y2) + f(data.x2, data.y2));
-  GetOutput() -= correction * hxhy * 0.25;
-
   return true;
 }
 

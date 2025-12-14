@@ -55,11 +55,13 @@ bool GaseninLMultIntMstepTrapezMPI::RunImpl() {
   double global_sum = 0.0;
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+  double result = 0.0;
   if (rank == 0) {
-    GetOutput() = global_sum * hx * hy * 0.25;
-  } else {
-    GetOutput() = 0.0;
+    result = global_sum * hx * hy * 0.25;
   }
+
+  MPI_Bcast(&result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  GetOutput() = result;
 
   return true;
 }
