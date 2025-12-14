@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
@@ -17,34 +18,34 @@ class KrykovESimpleIterationPerfTests : public ppc::util::BaseRunPerfTests<InTyp
   OutType expected_output_;
 
   void SetUp() override {
-    constexpr size_t n = 200;
+    constexpr size_t kN = 200;
 
-    std::vector<double> A(n * n, 0.0);
-    std::vector<double> b(n, 0.0);
-    expected_output_.assign(n, 1.0);
+    std::vector<double> a(kN * kN, 0.0);
+    std::vector<double> b(kN, 0.0);
+    expected_output_.assign(kN, 1.0);
 
-    for (size_t i = 0; i < n; ++i) {
+    for (size_t i = 0; i < kN; ++i) {
       double row_sum = 0.0;
-      for (size_t j = 0; j < n; ++j) {
+      for (size_t j = 0; j < kN; ++j) {
         if (i != j) {
-          A[i * n + j] = 1.0;
+          a[(i * kN) + j] = 1.0;
           row_sum += 1.0;
         }
       }
-      A[i * n + i] = row_sum + 5.0;  // строгая доминанта
-      b[i] = A[i * n + i] + row_sum;
+      a[(i * kN) + i] = row_sum + 5.0;  
+      b[i] = a[(i * kN) + i] + row_sum;
     }
 
-    input_data_ = std::make_tuple(n, A, b);
+    input_data_ = std::make_tuple(kN, a, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    constexpr double eps = 1e-4;
+    constexpr double kEps = 1e-4;
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
     for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::abs(output_data[i] - expected_output_[i]) > eps) {
+      if (std::abs(output_data[i] - expected_output_[i]) > kEps) {
         return false;
       }
     }

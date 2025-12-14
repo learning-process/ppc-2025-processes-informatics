@@ -1,22 +1,25 @@
 #include "krykov_e_simple_iteration/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <ranges>
-#include <string>
+#include <vector>
 
 #include "krykov_e_simple_iteration/common/include/common.hpp"
 
 namespace krykov_e_simple_iteration {
-KrykovESimpleIterationSEQ::KrykovESimpleIterationSEQ(const InType &in) {
+
+constexpr double kEps = 1e-5;
+constexpr int kMaxIter = 10000;
+
+KrykovESimpleIterationSEQ::KrykovESimpleIterationSEQ(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool KrykovESimpleIterationSEQ::ValidationImpl() {
-  const auto &[n, A, b] = GetInput();
+  const auto& [n, A, b] = GetInput();
   return n > 0 && A.size() == n * n && b.size() == n;
 }
 
@@ -25,23 +28,20 @@ bool KrykovESimpleIterationSEQ::PreProcessingImpl() {
 }
 
 bool KrykovESimpleIterationSEQ::RunImpl() {
-  const auto &[n, A, b] = GetInput();
+  const auto& [n, A, b] = GetInput();
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
 
-  constexpr double eps = 1e-5;
-  constexpr int max_iter = 10000;
-
-  for (int iter = 0; iter < max_iter; ++iter) {
+  for (int iter = 0; iter < kMaxIter; ++iter) {
     for (size_t i = 0; i < n; ++i) {
       double sum = 0.0;
       for (size_t j = 0; j < n; ++j) {
         if (j != i) {
-          sum += A[i * n + j] * x[j];
+          sum += A[(i * n) + j] * x[j];
         }
       }
-      x_new[i] = (b[i] - sum) / A[i * n + i];
+      x_new[i] = (b[i] - sum) / A[(i * n) + i];
     }
 
     double norm = 0.0;
@@ -50,10 +50,10 @@ bool KrykovESimpleIterationSEQ::RunImpl() {
       norm += diff * diff;
     }
 
-    // ОБНОВЛЯЕМ x ПЕРЕД ПРОВЕРКОЙ
+
     x = x_new;
 
-    if (std::sqrt(norm) < eps) {
+    if (std::sqrt(norm) < kEps) {
       break;
     }
   }
