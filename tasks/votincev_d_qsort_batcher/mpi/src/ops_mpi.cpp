@@ -120,7 +120,7 @@ void VotincevDQsortBatcherMPI::BatcherMergeSort(int rank, int proc_n, const std:
   }
 
   // массивы для обмена и слияния. Их размер определяется максимальным блоком.
-  int max_block = *std::max_element(sizes.begin(), sizes.end());
+  int max_block = *std::ranges::max_element(sizes);
   std::vector<double> recv_buf(max_block);
   std::vector<double> merge_buf(sizes[rank] + max_block);
 

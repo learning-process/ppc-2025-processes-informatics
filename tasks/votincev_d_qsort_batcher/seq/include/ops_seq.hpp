@@ -18,6 +18,8 @@ class VotincevDQsortBatcherSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  // ==============================
+  // мои дополнительные функции ===
   void QuickSort(double *arr, int left, int right);
 };
 

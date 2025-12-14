@@ -24,7 +24,7 @@ class VotincevDQsortBatcherMPI : public BaseTask {
   // мои дополнительные функции ===
   void QuickSort(double *arr, int left, int right);
 
-  // Функции для разбиения RunImpl
+  // функции для разбиения RunImpl
   void ComputeDistribution(int proc_n, int total_size, std::vector<int> &sizes, std::vector<int> &offsets);
   void ScatterData(int rank, const std::vector<int> &sizes, const std::vector<int> &offsets,
                    std::vector<double> &local);

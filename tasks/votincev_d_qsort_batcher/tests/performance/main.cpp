@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <tuple>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "votincev_d_qsort_batcher/common/include/common.hpp"
@@ -32,7 +30,7 @@ class VotincevDQsortBatcherRunPerfTestsProcesses : public ppc::util::BaseRunPerf
     }
 
     expected_res = input_data;
-    std::sort(expected_res.begin(), expected_res.end());
+    std::ranges::sort(expected_res);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

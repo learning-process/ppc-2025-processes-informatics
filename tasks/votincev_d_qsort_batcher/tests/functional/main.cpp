@@ -44,16 +44,11 @@ class VotincevDQsortBatcherRunFuncTestsProcesses : public ppc::util::BaseRunFunc
       file >> v;
     }
 
-    // for( auto& el : vect_data) {
-    //   std::cout << el << ' ';
-    // }
-    // std::cout << "\n";
-
     input_data = vect_data;
 
     // получаю ожидаемый результат
     expected_res = vect_data;
-    std::sort(expected_res.begin(), expected_res.end());
+    std::ranges::sort(expected_res);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -61,11 +56,7 @@ class VotincevDQsortBatcherRunFuncTestsProcesses : public ppc::util::BaseRunFunc
     if (output_data.size() != expected_res.size()) {
       return true;
     }
-    // 0й процесс должен иметь корректную матрицу после умножения
-    // static int proc0_count = 0;
-    // proc0_count++;
-    // std::cout << proc0_count;
-
+    // 0й процесс должен иметь отсортированный массив
     return output_data == expected_res;
   }
 
@@ -79,8 +70,6 @@ namespace {
 TEST_P(VotincevDQsortBatcherRunFuncTestsProcesses, QsortBatcherTests) {
   ExecuteTest(GetParam());
 }
-
-// const std::array<TestType, 1> kTestParam = {"test1"};
 
 const std::array<TestType, 10> kTestParam = {"test1", "test2", "test3", "test4", "test5",
                                              "test6", "test7", "test8", "test9", "test10"};
