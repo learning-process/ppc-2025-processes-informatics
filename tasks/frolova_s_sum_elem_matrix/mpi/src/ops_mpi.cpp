@@ -136,9 +136,9 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
 
   if (rank == 0) {
     // Calculate total elements
-    int total_elements = 0;
+    int64_t total_elements = 0;
     for (int i = 0; i < rows; i++) {
-      total_elements += row_sizes[i];
+      total_elements += static_cast<int64_t>(row_sizes[i]);
     }
     flat_data.resize(total_elements);
 
