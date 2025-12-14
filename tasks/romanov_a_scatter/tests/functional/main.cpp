@@ -37,6 +37,13 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  protected:
   void SetUp() override {
+
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (!initialized) {
+      MPI_Init(nullptr, nullptr);
+    }
+
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     int root = std::get<2>(params);
