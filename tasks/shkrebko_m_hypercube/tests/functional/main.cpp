@@ -22,7 +22,7 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto test_params = std::get<0>(GetParam());
     int value = std::get<0>(test_params);
 
     int world_size = 1;
