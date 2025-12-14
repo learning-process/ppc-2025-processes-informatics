@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include "smyshlaev_a_gauss_filt/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -33,7 +36,8 @@ class SmyshlaevAGaussFiltMPI : public BaseTask {
 
   bool RunSequential();
   void BroadcastImageDimensions(int &width, int &height, int &channels);
-  void SetupDecomposition(DecompositionInfo &info, int width, int height, int channels);
+  static void SetupDecomposition(DecompositionInfo &info, int width, int height, int channels);
+  std::vector<uint8_t> PrepareScatterBuffer(const DecompositionInfo &info, int width, int height, int channels);
   std::vector<uint8_t> ProcessLocalBlock(const DecompositionInfo &info, int width, int height, int channels);
   void CollectResult(const std::vector<uint8_t> &local_result, const DecompositionInfo &info, int width, int height,
                      int channels);

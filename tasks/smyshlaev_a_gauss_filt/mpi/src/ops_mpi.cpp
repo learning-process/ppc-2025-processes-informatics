@@ -3,19 +3,20 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
-#include <numeric>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "smyshlaev_a_gauss_filt/common/include/common.hpp"
 #include "smyshlaev_a_gauss_filt/seq/include/ops_seq.hpp"
-#include "util/include/util.hpp"
 
 namespace smyshlaev_a_gauss_filt {
 
 namespace {
 const std::vector<int> kernel = {1, 2, 1, 2, 4, 2, 1, 2, 1};
-const int kernel_sum = 16;
+const int kErnel_sum = 16;
 
 void FindOptimalGrid(int size, int &grid_rows, int &grid_cols) {
   int best_diff = size;
@@ -41,8 +42,8 @@ uint8_t ApplyGaussianFilter(const std::vector<uint8_t> &padded_data, int x, int 
     for (int kx = -1; kx <= 1; ++kx) {
       int curr_x = x + kx;
       int curr_y = y + ky;
-      int pixel = padded_data[(curr_y * padded_width + curr_x) * channels + channel];
-      int k_value = kernel[(ky + 1) * 3 + (kx + 1)];
+      int pixel = padded_data[(((curr_y * padded_width) + curr_x) * channels) + channel];
+      int k_value = kernel[((ky + 1) * 3) + (kx + 1)];
       sum += pixel * k_value;
     }
   }
@@ -81,13 +82,14 @@ bool SmyshlaevAGaussFiltMPI::PreProcessingImpl() {
 void SmyshlaevAGaussFiltMPI::BroadcastImageDimensions(int &width, int &height, int &channels) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int dims[3] = {0, 0, 0};
+
+  std::array<int, 3> dims = {0, 0, 0};
   if (rank == 0) {
     dims[0] = GetInput().width;
     dims[1] = GetInput().height;
     dims[2] = GetInput().channels;
   }
-  MPI_Bcast(dims, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
   width = dims[0];
   height = dims[1];
   channels = dims[2];
@@ -128,9 +130,9 @@ void SmyshlaevAGaussFiltMPI::SetupDecomposition(DecompositionInfo &info, int wid
   if (rank == 0) {
     int block_height = (height + info.grid_rows - 1) / info.grid_rows;
     int block_width = (width + info.grid_cols - 1) / info.grid_cols;
-    for (int p = 0; p < size; ++p) {
-      int grid_row = p / info.grid_cols;
-      int grid_col = p % info.grid_cols;
+    for (int pdx = 0; pdx < size; ++pdx) {
+      int grid_row = pdx / info.grid_cols;
+      int grid_col = pdx % info.grid_cols;
       int start_row = grid_row * block_height;
       int start_col = grid_col * block_width;
       int actual_block_height = std::min(block_height, height - start_row);
@@ -141,45 +143,72 @@ void SmyshlaevAGaussFiltMPI::SetupDecomposition(DecompositionInfo &info, int wid
       int padded_left = 1;
       int padded_right = 1;
 
-      info.blocks[p].start_row = start_row;
-      info.blocks[p].start_col = start_col;
-      info.blocks[p].block_height = actual_block_height;
-      info.blocks[p].block_width = actual_block_width;
-      info.blocks[p].padded_height = actual_block_height + padded_top + padded_bottom;
-      info.blocks[p].padded_width = actual_block_width + padded_left + padded_right;
-      info.blocks[p].count = info.blocks[p].padded_height * info.blocks[p].padded_width * channels;
-      info.sendcounts[p] = info.blocks[p].count;
+      info.blocks[pdx].start_row = start_row;
+      info.blocks[pdx].start_col = start_col;
+      info.blocks[pdx].block_height = actual_block_height;
+      info.blocks[pdx].block_width = actual_block_width;
+      info.blocks[pdx].padded_height = actual_block_height + padded_top + padded_bottom;
+      info.blocks[pdx].padded_width = actual_block_width + padded_left + padded_right;
+      info.blocks[pdx].count = info.blocks[pdx].padded_height * info.blocks[pdx].padded_width * channels;
+      info.sendcounts[pdx] = info.blocks[pdx].count;
     }
     info.displs[0] = 0;
-    for (int p = 1; p < size; ++p) {
-      info.displs[p] = info.displs[p - 1] + info.sendcounts[p - 1];
+    for (int pdx = 1; pdx < size; ++pdx) {
+      info.displs[pdx] = info.displs[pdx - 1] + info.sendcounts[pdx - 1];
     }
   }
 
   MPI_Bcast(info.sendcounts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(info.displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> block_info_buffer(size * 6);
+  std::vector<int> block_info_buffer(static_cast<size_t>(size) * 6);
   if (rank == 0) {
-    for (int p = 0; p < size; ++p) {
-      block_info_buffer[p * 6 + 0] = info.blocks[p].start_row;
-      block_info_buffer[p * 6 + 1] = info.blocks[p].start_col;
-      block_info_buffer[p * 6 + 2] = info.blocks[p].block_height;
-      block_info_buffer[p * 6 + 3] = info.blocks[p].block_width;
-      block_info_buffer[p * 6 + 4] = info.blocks[p].padded_height;
-      block_info_buffer[p * 6 + 5] = info.blocks[p].padded_width;
+    for (int pdx = 0; pdx < size; ++pdx) {
+      block_info_buffer[(pdx * 6) + 0] = info.blocks[pdx].start_row;
+      block_info_buffer[(pdx * 6) + 1] = info.blocks[pdx].start_col;
+      block_info_buffer[(pdx * 6) + 2] = info.blocks[pdx].block_height;
+      block_info_buffer[(pdx * 6) + 3] = info.blocks[pdx].block_width;
+      block_info_buffer[(pdx * 6) + 4] = info.blocks[pdx].padded_height;
+      block_info_buffer[(pdx * 6) + 5] = info.blocks[pdx].padded_width;
     }
   }
   MPI_Bcast(block_info_buffer.data(), size * 6, MPI_INT, 0, MPI_COMM_WORLD);
 
-  for (int p = 0; p < size; ++p) {
-    info.blocks[p].start_row = block_info_buffer[p * 6 + 0];
-    info.blocks[p].start_col = block_info_buffer[p * 6 + 1];
-    info.blocks[p].block_height = block_info_buffer[p * 6 + 2];
-    info.blocks[p].block_width = block_info_buffer[p * 6 + 3];
-    info.blocks[p].padded_height = block_info_buffer[p * 6 + 4];
-    info.blocks[p].padded_width = block_info_buffer[p * 6 + 5];
+  for (int pdx = 0; pdx < size; ++pdx) {
+    info.blocks[pdx].start_row = block_info_buffer[(pdx * 6) + 0];
+    info.blocks[pdx].start_col = block_info_buffer[(pdx * 6) + 1];
+    info.blocks[pdx].block_height = block_info_buffer[(pdx * 6) + 2];
+    info.blocks[pdx].block_width = block_info_buffer[(pdx * 6) + 3];
+    info.blocks[pdx].padded_height = block_info_buffer[(pdx * 6) + 4];
+    info.blocks[pdx].padded_width = block_info_buffer[(pdx * 6) + 5];
   }
+}
+
+std::vector<uint8_t> SmyshlaevAGaussFiltMPI::PrepareScatterBuffer(const DecompositionInfo &info, int width, int height,
+                                                                  int channels) {
+  int size = static_cast<int>(info.sendcounts.size());
+  const auto &input_image = GetInput();
+
+  std::vector<uint8_t> scatter_buffer;
+  scatter_buffer.resize(info.displs[size - 1] + info.sendcounts[size - 1]);
+
+  for (int pdx = 0; pdx < size; ++pdx) {
+    uint8_t *buffer_ptr = scatter_buffer.data() + info.displs[p];
+    const auto &block = info.blocks[pdx];
+    int src_y_start = block.start_row - 1;
+    int src_x_start = block.start_col - 1;
+    for (int idy = 0; idy < block.padded_height; ++idy) {
+      for (int idx = 0; idx < block.padded_width; ++idx) {
+        int global_y = std::clamp(src_y_start + idy, 0, height - 1);
+        int global_x = std::clamp(src_x_start + idx, 0, width - 1);
+        for (int ch = 0; ch < channels; ++ch) {
+          buffer_ptr[(((idy * block.padded_width) + idx) * channels) + ch] =
+              input_image.data[(((global_y * width) + global_x) * channels) + ch];
+        }
+      }
+    }
+  }
+  return scatter_buffer;
 }
 
 std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const DecompositionInfo &info, int width, int height,
@@ -191,26 +220,7 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const Decompositi
 
   std::vector<uint8_t> scatter_buffer;
   if (rank == 0) {
-    const auto &input_image = GetInput();
-    scatter_buffer.resize(info.displs[size - 1] + info.sendcounts[size - 1]);
-    for (int p = 0; p < size; ++p) {
-      uint8_t *buffer_ptr = scatter_buffer.data() + info.displs[p];
-      const auto &block = info.blocks[p];
-
-      int src_y_start = block.start_row - 1;
-      int src_x_start = block.start_col - 1;
-
-      for (int y = 0; y < block.padded_height; ++y) {
-        for (int x = 0; x < block.padded_width; ++x) {
-          int global_y = std::clamp(src_y_start + y, 0, height - 1);
-          int global_x = std::clamp(src_x_start + x, 0, width - 1);
-          for (int ch = 0; ch < channels; ++ch) {
-            buffer_ptr[(y * block.padded_width + x) * channels + ch] =
-                input_image.data[(global_y * width + global_x) * channels + ch];
-          }
-        }
-      }
-    }
+    scatter_buffer = PrepareScatterBuffer(info, width, height, channels);
   }
 
   std::vector<uint8_t> local_block_data(info.sendcounts[rank]);
@@ -222,12 +232,12 @@ std::vector<uint8_t> SmyshlaevAGaussFiltMPI::ProcessLocalBlock(const Decompositi
   int x_offset = 1;
   int y_offset = 1;
 
-  std::vector<uint8_t> local_output_data(my_block.block_height * my_block.block_width * channels);
-  for (int y = 0; y < my_block.block_height; ++y) {
-    for (int x = 0; x < my_block.block_width; ++x) {
+  std::vector<uint8_t> local_output_data(static_cast<size_t>(my_block.block_height) * my_block.block_width * channels);
+  for (int idy = 0; idy < my_block.block_height; ++idy) {
+    for (int idx = 0; idx < my_block.block_width; ++idx) {
       for (int ch = 0; ch < channels; ++ch) {
-        local_output_data[(y * my_block.block_width + x) * channels + ch] =
-            ApplyGaussianFilter(local_block_data, x + x_offset, y + y_offset, my_block.padded_width, channels, ch);
+        local_output_data[((idy * my_block.block_width + idx) * channels) + ch] =
+            ApplyGaussianFilter(local_block_data, idx + x_offset, idy + y_offset, my_block.padded_width, channels, ch);
       }
     }
   }
@@ -246,14 +256,14 @@ void SmyshlaevAGaussFiltMPI::CollectResult(const std::vector<uint8_t> &local_res
   std::vector<uint8_t> gathered_data;
 
   if (rank == 0) {
-    for (int p = 0; p < size; ++p) {
-      recvcounts[p] = info.blocks[p].block_height * info.blocks[p].block_width * channels;
+    for (int pdx = 0; pdx < size; ++pdx) {
+      recvcounts[pdx] = info.blocks[pdx].block_height * info.blocks[pdx].block_width * channels;
     }
     recv_displs[0] = 0;
-    for (int p = 1; p < size; ++p) {
-      recv_displs[p] = recv_displs[p - 1] + recvcounts[p - 1];
+    for (int pdx = 1; pdx < size; ++pdx) {
+      recv_displs[pdx] = recv_displs[pdx - 1] + recvcounts[pdx - 1];
     }
-    gathered_data.resize(width * height * channels);
+    gathered_data.resize(static_cast<size_t>(width) * height * channels);
   }
 
   MPI_Gatherv(local_result.data(), static_cast<int>(local_result.size()), MPI_UNSIGNED_CHAR, gathered_data.data(),
@@ -265,13 +275,14 @@ void SmyshlaevAGaussFiltMPI::CollectResult(const std::vector<uint8_t> &local_res
     output_image.height = height;
     output_image.channels = channels;
     output_image.data.resize(width * height * channels);
-    for (int p = 0; p < size; ++p) {
-      const uint8_t *src_ptr = gathered_data.data() + recv_displs[p];
-      const auto &block = info.blocks[p];
-      for (int y = 0; y < block.block_height; ++y) {
-        int global_y = block.start_row + y;
-        uint8_t *dst_ptr = &output_image.data[(global_y * width + block.start_col) * channels];
-        std::copy_n(src_ptr + (y * block.block_width * channels), block.block_width * channels, dst_ptr);
+    for (int pdx = 0; pdx < size; ++pdx) {
+      const uint8_t *src_ptr = gathered_data.data() + recv_displs[pdx];
+      const auto &block = info.blocks[pdx];
+      for (int idy = 0; y < block.block_height; ++idy) {
+        int global_y = block.start_row + idy;
+        uint8_t *dst_ptr = &output_image.data[(static_cast<size_t>(global_y) * width + block.start_col) * channels];
+        std::copy_n(src_ptr + (static_cast<size_t>(idy) * block.block_width * channels), block.block_width * channels,
+                    dst_ptr);
       }
     }
   }
@@ -308,17 +319,17 @@ bool SmyshlaevAGaussFiltMPI::RunImpl() {
 }
 
 bool SmyshlaevAGaussFiltMPI::PostProcessingImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   auto &output = GetOutput();
-  int dims[3] = {0, 0, 0};
+  std::array<int, 3> dims = {0, 0, 0};
 
   if (rank == 0) {
     dims[0] = output.width;
     dims[1] = output.height;
     dims[2] = output.channels;
   }
-  MPI_Bcast(dims, 3, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(dims.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
     output.width = dims[0];
@@ -331,8 +342,8 @@ bool SmyshlaevAGaussFiltMPI::PostProcessingImpl() {
     }
   }
 
-  if (output.data.size() > 0) {
-    MPI_Bcast(output.data.data(), output.data.size(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
+  if (!output.data.empty()) {
+    MPI_Bcast(output.data.data(), static_cast<int>(output.data.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
   }
 
   return true;

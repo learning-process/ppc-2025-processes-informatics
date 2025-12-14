@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,7 +12,7 @@ struct ImageType {
   int width = 0;
   int height = 0;
   int channels = 0;
-  std::vector<uint8_t> data = {};
+  std::vector<uint8_t> data;
 };
 
 using InType = ImageType;

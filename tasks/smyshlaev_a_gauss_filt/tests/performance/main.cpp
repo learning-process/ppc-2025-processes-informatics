@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+
 #include "smyshlaev_a_gauss_filt/common/include/common.hpp"
 #include "smyshlaev_a_gauss_filt/mpi/include/ops_mpi.hpp"
 #include "smyshlaev_a_gauss_filt/seq/include/ops_seq.hpp"

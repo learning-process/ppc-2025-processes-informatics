@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -13,6 +12,7 @@
 #include "smyshlaev_a_gauss_filt/mpi/include/ops_mpi.hpp"
 #include "smyshlaev_a_gauss_filt/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace smyshlaev_a_gauss_filt {
 
