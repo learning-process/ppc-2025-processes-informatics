@@ -38,7 +38,7 @@ class VotincevDQsortBatcherRunPerfTestsProcesses : public ppc::util::BaseRunPerf
     if (output_data.size() != expected_res.size()) {
       return true;
     }
-    // 0й процесс должен иметь корректную матрицу после умножения
+    // 0й процесс должен иметь отсортированный массив
     return output_data == expected_res;
   }
 };
