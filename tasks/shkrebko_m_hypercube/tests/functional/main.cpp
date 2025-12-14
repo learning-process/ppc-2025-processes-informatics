@@ -1,9 +1,3 @@
-#include <gtest/gtest.h>
-#include <mpi.h>
-#include <stb/stb_image.h>
-
-#include <array>
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
