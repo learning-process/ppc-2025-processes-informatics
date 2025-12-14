@@ -1,10 +1,11 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 #include <stb/stb_image.h>
-
-#include <algorithm>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <cstddef>
+#include <array>
+#include <tuple>
 
 #include "gasenin_l_image_smooth/common/include/common.hpp"
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"
@@ -34,14 +35,14 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
       height = 64;
       input_data_.width = width;
       input_data_.height = height;
-      input_data_.data.resize(width * height);
+      input_data_.data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
       for (int i = 0; i < width * height; ++i) {
         input_data_.data[i] = (i % 2) * 255;
       }
     } else {
       input_data_.width = width;
       input_data_.height = height;
-      input_data_.data = std::vector<uint8_t>(data, data + (width * height));
+      input_data_.data = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width) * static_cast<ptrdiff_t>(height)));
       stbi_image_free(data);
     }
 

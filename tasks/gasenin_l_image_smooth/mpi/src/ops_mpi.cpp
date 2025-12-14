@@ -1,7 +1,7 @@
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"
-
+#include "gasenin_l_image_smooth/common/include/common.hpp"
+#include <cstdint>
 #include <mpi.h>
-
 #include <algorithm>
 #include <vector>
 
@@ -13,7 +13,7 @@ GaseninLImageSmoothMPI::GaseninLImageSmoothMPI(const InType &in) {
 }
 
 bool GaseninLImageSmoothMPI::ValidationImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   int width = GetInput().width;
@@ -26,7 +26,7 @@ bool GaseninLImageSmoothMPI::ValidationImpl() {
 }
 
 bool GaseninLImageSmoothMPI::PreProcessingImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (rank == 0) {
@@ -45,64 +45,74 @@ bool GaseninLImageSmoothMPI::PreProcessingImpl() {
   return true;
 }
 
+static void ProcessLocalRows(int start_row, int end_row, int width, int height,
+                             int kernel_size, const std::vector<uint8_t>& input,
+                             std::vector<uint8_t>& output) {
+  const int radius = kernel_size / 2;
+  
+  for (int row_idx = start_row; row_idx < end_row; ++row_idx) {
+    for (int col_idx = 0; col_idx < width; ++col_idx) {
+      int sum = 0;
+      int count = 0;
+      for (int kernel_y = -radius; kernel_y <= radius; ++kernel_y) {
+        for (int kernel_x = -radius; kernel_x <= radius; ++kernel_x) {
+          const int ny = Clamp(row_idx + kernel_y, 0, height - 1);
+          const int nx = Clamp(col_idx + kernel_x, 0, width - 1);
+          sum += input[(ny * width) + nx];
+          ++count;
+        }
+      }
+      output[((row_idx - start_row) * width) + col_idx] = static_cast<uint8_t>(sum / count);
+    }
+  }
+}
+
 bool GaseninLImageSmoothMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int w = GetOutput().width;
-  int h = GetOutput().height;
-  int k_size = GetOutput().kernel_size;
+  const int width = GetOutput().width;
+  const int height = GetOutput().height;
+  const int kernel_size = GetOutput().kernel_size;
 
   std::vector<uint8_t> full_input_data;
   if (rank == 0) {
     full_input_data = GetInput().data;
   } else {
-    full_input_data.resize(w * h);
+    full_input_data.resize(static_cast<size_t>(width) * static_cast<size_t>(height));
   }
 
-  MPI_Bcast(full_input_data.data(), w * h, MPI_UINT8_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(full_input_data.data(), width * height, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
-  int delta = h / size;
-  int rem = h % size;
-  int start_row = rank * delta + std::min(rank, rem);
-  int end_row = start_row + delta + (rank < rem ? 1 : 0);
-  int local_rows = end_row - start_row;
+  const int delta = height / size;
+  const int remainder = height % size;
+  const int start_row = (rank * delta) + std::min(rank, remainder);
+  const int end_row = start_row + delta + (rank < remainder ? 1 : 0);
+  const int local_rows = end_row - start_row;
 
   std::vector<int> recv_counts(size);
   std::vector<int> displs(size);
   for (int i = 0; i < size; ++i) {
-    int r_start = i * delta + std::min(i, rem);
-    int r_end = r_start + delta + (i < rem ? 1 : 0);
-    recv_counts[i] = (r_end - r_start) * w;
-    displs[i] = r_start * w;
+    const int r_start = (i * delta) + std::min(i, remainder);
+    const int r_end = r_start + delta + (i < remainder ? 1 : 0);
+    recv_counts[i] = (r_end - r_start) * width;
+    displs[i] = r_start * width;
   }
 
   if (local_rows > 0) {
-    std::vector<uint8_t> local_result(local_rows * w);
-    int radius = k_size / 2;
+    std::vector<uint8_t> local_result(static_cast<size_t>(local_rows) * static_cast<size_t>(width));
+    ProcessLocalRows(start_row, end_row, width, height, kernel_size, 
+                     full_input_data, local_result);
 
-    for (int y = start_row; y < end_row; ++y) {
-      for (int x = 0; x < w; ++x) {
-        int sum = 0;
-        int count = 0;
-        for (int ky = -radius; ky <= radius; ++ky) {
-          for (int kx = -radius; kx <= radius; ++kx) {
-            int ny = clamp(y + ky, 0, h - 1);
-            int nx = clamp(x + kx, 0, w - 1);
-            sum += full_input_data[ny * w + nx];
-            count++;
-          }
-        }
-        local_result[(y - start_row) * w + x] = static_cast<uint8_t>(sum / count);
-      }
-    }
-
-    MPI_Gatherv(local_result.data(), local_rows * w, MPI_UINT8_T, (rank == 0 ? GetOutput().data.data() : nullptr),
-                recv_counts.data(), displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(local_result.data(), local_rows * width, MPI_UNSIGNED_CHAR,
+                (rank == 0 ? GetOutput().data.data() : nullptr),
+                recv_counts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
   } else {
-    MPI_Gatherv(nullptr, 0, MPI_UINT8_T, (rank == 0 ? GetOutput().data.data() : nullptr), recv_counts.data(),
-                displs.data(), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(nullptr, 0, MPI_UNSIGNED_CHAR,
+                (rank == 0 ? GetOutput().data.data() : nullptr),
+                recv_counts.data(), displs.data(), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
   }
 
   return true;

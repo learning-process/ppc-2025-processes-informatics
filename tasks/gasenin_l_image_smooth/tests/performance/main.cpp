@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
-#include <mpi.h>  // Обязательный заголовок для MPI функций
-
 #include <algorithm>
 #include <vector>
+#include <cstddef>
 
 #include "gasenin_l_image_smooth/common/include/common.hpp"
 #include "gasenin_l_image_smooth/mpi/include/ops_mpi.hpp"
@@ -22,9 +21,9 @@ class GaseninLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, 
     input_data_.width = kWidth_;
     input_data_.height = kHeight_;
     input_data_.kernel_size = kKernelSize_;
-    input_data_.data.resize(kWidth_ * kHeight_);
+    input_data_.data.resize(static_cast<size_t>(kWidth_) * static_cast<size_t>(kHeight_));
 
-    std::fill(input_data_.data.begin(), input_data_.data.end(), 100);
+    std::ranges::fill(input_data_.data, 100);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

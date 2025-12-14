@@ -1,6 +1,7 @@
 #include "gasenin_l_image_smooth/seq/include/ops_seq.hpp"
-
-#include <algorithm>
+#include "gasenin_l_image_smooth/common/include/common.hpp"
+#include <cstdint>
+#include <cstddef>
 #include <vector>
 
 namespace gasenin_l_image_smooth {
@@ -12,7 +13,7 @@ GaseninLImageSmoothSEQ::GaseninLImageSmoothSEQ(const InType &in) {
 
 bool GaseninLImageSmoothSEQ::ValidationImpl() {
   return GetInput().width > 0 && GetInput().height > 0 &&
-         GetInput().data.size() == static_cast<size_t>(GetInput().width * GetInput().height);
+         GetInput().data.size() == static_cast<size_t>(GetInput().width) * static_cast<size_t>(GetInput().height);
 }
 
 bool GaseninLImageSmoothSEQ::PreProcessingImpl() {
@@ -25,29 +26,30 @@ bool GaseninLImageSmoothSEQ::RunImpl() {
   const auto &in = GetInput();
   auto &out = GetOutput();
 
-  int w = in.width;
-  int h = in.height;
-  int k_size = in.kernel_size;
-  int radius = k_size / 2;
+  const int width = in.width;
+  const int height = in.height;
+  const int kernel_size = in.kernel_size;
+  const int radius = kernel_size / 2;
 
   const uint8_t *src = in.data.data();
   uint8_t *dst = out.data.data();
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
+  for (int row_idx = 0; row_idx < height; ++row_idx) {
+    for (int col_idx = 0; col_idx < width; ++col_idx) {
       int sum = 0;
       int count = 0;
 
-      for (int ky = -radius; ky <= radius; ++ky) {
-        for (int kx = -radius; kx <= radius; ++kx) {
-          int ny = clamp(y + ky, 0, h - 1);
-          int nx = clamp(x + kx, 0, w - 1);
+      for (int kernel_y = -radius; kernel_y <= radius; ++kernel_y) {
+        for (int kernel_x = -radius; kernel_x <= radius; ++kernel_x) {
+          const int ny = Clamp(row_idx + kernel_y, 0, height - 1);
+          const int nx = Clamp(col_idx + kernel_x, 0, width - 1);
 
-          sum += src[ny * w + nx];
-          count++;
+          sum += src[(ny * width) + nx];
+          ++count;
         }
       }
-      dst[y * w + x] = static_cast<uint8_t>(sum / count);
+      // count всегда > 0, так как kernel_size >= 3 и radius >= 1
+      dst[(row_idx * width) + col_idx] = static_cast<uint8_t>(sum / count);
     }
   }
   return true;
