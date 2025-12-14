@@ -42,7 +42,9 @@ const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, GaseninLMultIntMstepTrapezMPI, GaseninLMultIntMstepTrapezSEQ>(
         PPC_SETTINGS_gasenin_l_mult_int_mstep_trapez);
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, GaseninLRunPerfTestProcesses, ppc::util::TupleToGTestValues(kAllPerfTasks),
-                         GaseninLRunPerfTestProcesses::CustomPerfTestName);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kPerfTestName = GaseninLRunPerfTestProcesses::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(GaseninLIntegralPerfTests, GaseninLRunPerfTestProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace gasenin_l_mult_int_mstep_trapez
