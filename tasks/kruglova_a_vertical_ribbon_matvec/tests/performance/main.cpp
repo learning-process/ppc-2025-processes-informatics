@@ -26,18 +26,10 @@ class KruglovaAVerticalRibMatPerfTests : public ppc::util::BaseRunPerfTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Для теста производительности нужно лишь убедиться, что MPI-результат
-    // совпадает с эталонным (последовательным).
-    // BaseRunPerfTests автоматически делает это, используя GetReferenceOutput().
-
-    // Дополнительно: Проверим размерность результата (для минимальной валидации)
     const int M = kSizeM_;
     if (static_cast<int>(output_data.size()) != M) {
-      // Если размеры не совпадают, это ошибка
       return false;
     }
-
-    // Возвращаем true, полагаясь на базовый класс для сравнения значений
     return true;
   }
 

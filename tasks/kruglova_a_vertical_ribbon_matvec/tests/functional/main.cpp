@@ -102,11 +102,9 @@ TEST_P(KruglovaAVerticalRibMatFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(10, 10),    // Малая квадратная
-                                            std::make_tuple(100, 100),  // Средняя квадратная
-                                            std::make_tuple(500, 100),  // Вертикальная (много строк)
-                                            std::make_tuple(100, 500),  // Горизонтальная (много столбцов)
-                                            std::make_tuple(50, 50)};   // Дополнительный тест;
+const std::array<TestType, 5> kTestParam = {std::make_tuple(10, 10), std::make_tuple(100, 100),
+                                            std::make_tuple(500, 100), std::make_tuple(100, 500),
+                                            std::make_tuple(50, 50)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KruglovaAVerticalRibbMatMPI, InType>(
                                                kTestParam, PPC_SETTINGS_kruglova_a_vertical_ribbon_matvec),

@@ -39,16 +39,17 @@ bool KruglovaAVerticalRibbMatMPI::ValidationImpl() {
 }
 
 bool KruglovaAVerticalRibbMatMPI::PreProcessingImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int rows = 0;
 
+  int rows = 0;
   if (rank == 0) {
     rows = std::get<0>(GetInput());
-    GetOutput().assign(rows, 0.0);
   }
 
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput().assign(rows, 0.0);
 
   return true;
 }
