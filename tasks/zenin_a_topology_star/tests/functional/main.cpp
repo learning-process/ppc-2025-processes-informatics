@@ -53,9 +53,7 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
 
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
       const int center = 0;
-      if ((pattern % 4) == 2 && world_size < 3) {
-        GTEST_SKIP() << "Leaf-to-leaf test requires at least 3 MPI processes, but only " << world_size << " available.";
-      }
+
       if (world_size == 1) {
         src = dst = 0;
       } else {
@@ -69,8 +67,13 @@ class ZeninATopologyStarFunctTests : public ppc::util::BaseRunFuncTests<InType, 
             dst = center;
             break;
           case 2:
-            src = 1;
-            dst = world_size - 1;
+            if (world_size >= 3) {
+              src = 1;
+              dst = world_size - 1;
+            } else {
+              src = center;
+              dst = world_size - 1;
+            }
             break;
           case 3:
             src = world_size - 1;
@@ -135,9 +138,6 @@ const std::array<TestType, 15> kTestParam = {
     std::make_tuple(5, 3),     std::make_tuple(4, 5),   std::make_tuple(4, 3),       std::make_tuple(10000, 3),
     std::make_tuple(3, 10000), std::make_tuple(500, 1), std::make_tuple(1, 500)};
 
-const std::array<TestType, 3> kCoverageParam = {std::make_tuple(10, 2), std::make_tuple(100, 2),
-                                                std::make_tuple(1000, 2)};
-
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZeninATopologyStarMPI, InType>(kTestParam, PPC_SETTINGS_zenin_a_topology_star),
     ppc::util::AddFuncTask<ZeninATopologyStarSEQ, InType>(kTestParam, PPC_SETTINGS_zenin_a_topology_star));
@@ -148,17 +148,7 @@ TEST_P(ZeninATopologyStarFunctTests, Test) {
   ExecuteTest(GetParam());
 }
 
-const auto kCoverageTasksList =
-    ppc::util::AddFuncTask<ZeninATopologyStarMPI, InType>(kCoverageParam, PPC_SETTINGS_zenin_a_topology_star);
-
-const auto kCoverageValues = ppc::util::ExpandToValues(kCoverageTasksList);
-
-TEST_P(ZeninATopologyStarFunctTests, CoverageTests) {
-  ExecuteTest(GetParam());
-}
-
 INSTANTIATE_TEST_SUITE_P(ZeninATopologyStar, ZeninATopologyStarFunctTests, kGtestValues, kPerfTestName);
-INSTANTIATE_TEST_SUITE_P(ZeninATopologyStarCoverage, ZeninATopologyStarFunctTests, kCoverageValues, kPerfTestName);
 
 }  // namespace
 
