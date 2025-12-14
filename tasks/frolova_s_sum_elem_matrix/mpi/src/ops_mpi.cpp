@@ -167,14 +167,20 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   int my_elem_count = 0;
   MPI_Scatter(elem_counts.data(), 1, MPI_INT, &my_elem_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Step 6: Scatter matrix elements
   std::vector<int> local_data;
   if (my_elem_count > 0) {
     local_data.resize(my_elem_count);
   }
 
-  MPI_Scatterv(rank == 0 ? flat_data.data() : nullptr, elem_counts.data(), elem_displs.data(), MPI_INT,
-               local_data.data(), my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
+  // Создаем локальный указатель на данные отправки
+  const int *send_data_ptr = nullptr;
+  if (rank == 0) {
+    send_data_ptr = flat_data.data();
+  }
+
+  // Передаем этот указатель
+  MPI_Scatterv(const_cast<int *>(send_data_ptr), elem_counts.data(), elem_displs.data(), MPI_INT, local_data.data(),
+               my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
 
   // Step 7: Compute local sum
   int64_t local_sum = 0;
