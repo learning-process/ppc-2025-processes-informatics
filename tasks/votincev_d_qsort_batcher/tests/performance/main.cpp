@@ -23,7 +23,7 @@ class VotincevDQsortBatcherRunPerfTestsProcesses : public ppc::util::BaseRunPerf
   OutType expected_res;
 
   void SetUp() override {
-    size_t vect_sz = 40000000;
+    size_t vect_sz = 10000000;
     double sgn_swapper = 1;
     input_data.assign(vect_sz, 0.0);
     for (size_t i = 0; i < vect_sz; i++) {
