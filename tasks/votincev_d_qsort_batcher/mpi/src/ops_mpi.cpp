@@ -50,13 +50,9 @@ bool VotincevDQsortBatcherMPI::RunImpl() {
 
   // если процесс 1 - то просто как в SEQ
   if (proc_n == 1) {
-    if (rank == 0) {
-      auto out = GetInput();
-      QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
-      GetOutput() = out;
-      return true;
-    }
-    GetOutput() = std::vector<double>{};
+    auto out = GetInput();
+    QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
+    GetOutput() = out;
     return true;
   }
 
