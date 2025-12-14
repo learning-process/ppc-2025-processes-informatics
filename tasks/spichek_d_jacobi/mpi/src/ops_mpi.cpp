@@ -10,9 +10,9 @@
 
 namespace spichek_d_jacobi {
 
-SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : BaseTask(in) {  // <-- Используем список инициализации
+SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
-  // GetInput() = in; // УДАЛИТЬ или ЗАКОММЕНТИРОВАТЬ
+  GetInput() = in;
   GetOutput() = Vector{};
 }
 

@@ -8,9 +8,9 @@
 
 namespace spichek_d_jacobi {
 
-SpichekDJacobiSEQ::SpichekDJacobiSEQ(const InType &in) : BaseTask(in) {  // <-- Используем список инициализации
+SpichekDJacobiSEQ::SpichekDJacobiSEQ(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
-  // GetInput() = in; // УДАЛИТЬ или ЗАКОММЕНТИРОВАТЬ
+  GetInput() = in;
   GetOutput() = Vector{};
 }
 
