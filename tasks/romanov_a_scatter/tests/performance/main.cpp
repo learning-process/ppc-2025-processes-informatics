@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 #include <functional>
 #include <tuple>
-
-#include <mpi.h>
 
 #include "romanov_a_scatter/common/include/common.hpp"
 #include "romanov_a_scatter/mpi/include/ops_mpi.hpp"
@@ -18,7 +17,6 @@ class RomanovAScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
   InType input_data_;
 
   void SetUp() override {
-
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -54,8 +52,7 @@ TEST_P(RomanovAScatterPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovAScatterMPI, RomanovAScatterSEQ>(
-        PPC_SETTINGS_romanov_a_scatter);
+    ppc::util::MakeAllPerfTasks<InType, RomanovAScatterMPI, RomanovAScatterSEQ>(PPC_SETTINGS_romanov_a_scatter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

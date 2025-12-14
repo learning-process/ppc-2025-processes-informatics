@@ -1,9 +1,9 @@
 #include "romanov_a_scatter/seq/include/ops_seq.hpp"
 
+#include <mpi.h>
+
 #include <cmath>
 #include <vector>
-
-#include <mpi.h>
 
 #include "romanov_a_scatter/common/include/common.hpp"
 
@@ -41,16 +41,7 @@ bool RomanovAScatterSEQ::RunImpl() {
 
   std::vector<int> recvbuf(sendcount);
 
-  MPI_Scatter(
-    sendbuf.data(),
-    sendcount,
-    MPI_INT,
-    recvbuf.data(),
-    sendcount,
-    MPI_INT,
-    root,
-    MPI_COMM_WORLD
-  );
+  MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
 
   GetOutput() = recvbuf;
 
