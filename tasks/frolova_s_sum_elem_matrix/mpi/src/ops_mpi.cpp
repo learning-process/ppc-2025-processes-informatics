@@ -95,7 +95,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
     matrix = GetInput();
     rows = static_cast<int>(matrix.size());
   }
-
+  // Вызывается всеми
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   // Handle empty matrix
@@ -113,9 +113,10 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
       row_sizes[i] = static_cast<int>(matrix[i].size());
     }
   }
+  // Вызывается всеми
   MPI_Bcast(row_sizes.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Step 3: Calculate row distribution
+  // Step 3: Calculate row distribution (Вычисляется всеми, так как зависит только от rows и size)
   std::vector<int> row_counts(size, 0);
   std::vector<int> row_displs(size, 0);
 
@@ -129,64 +130,86 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
     current_displ += row_counts[i];
   }
 
-  // Step 4: Prepare data for scattering
+  // Step 4: Prepare data for scattering and calculate parameters
   std::vector<int> flat_data;
+  // elem_counts и elem_displs должны быть известны всем процессам
   std::vector<int> elem_counts(size, 0);
   std::vector<int> elem_displs(size, 0);
 
   if (rank == 0) {
-    // Calculate total elements
+    // 4.1. Calculate total elements (safe int64_t)
     int64_t total_elements = 0;
     for (int i = 0; i < rows; i++) {
       total_elements += static_cast<int64_t>(row_sizes[i]);
     }
-    //  Шаг 4.5: Рассылка elem_counts
-    MPI_Bcast(elem_counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+    // 4.2. Resize flat_data (safe static_cast)
+    flat_data.resize(static_cast<size_t>(total_elements));
 
-    // Шаг 4.6: Рассылка elem_displs
-    MPI_Bcast(elem_displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
-
-    // Step 5: Scatter element counts
-    int my_elem_count = elem_counts[rank];
-
-    // Шаг 6: Scatter matrix elements
-    std::vector<int> local_data;
-    if (my_elem_count > 0) {
-      local_data.resize(my_elem_count);
+    // 4.3. Calculate correct elem_counts and elem_displs
+    int current_elem_displ = 0;
+    for (int proc = 0; proc < size; proc++) {
+      elem_counts[proc] = 0;
+      for (int j = 0; j < row_counts[proc]; j++) {
+        int row_idx = row_displs[proc] + j;
+        elem_counts[proc] += row_sizes[row_idx];
+      }
+      elem_displs[proc] = current_elem_displ;
+      current_elem_displ += elem_counts[proc];
     }
 
-    // Создаем локальный указатель на данные отправки
-    const int *send_data_ptr = nullptr;
-    if (rank == 0) {
-      send_data_ptr = flat_data.data();
+    // 4.4. Fill flat_data
+    int idx = 0;
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < row_sizes[i]; j++) {
+        flat_data[idx++] = matrix[i][j];
+      }
     }
+  }  // Конец блока rank == 0, где происходит подготовка данных
 
-    // Передаем этот указатель
-    MPI_Scatterv(const_cast<int *>(send_data_ptr), elem_counts.data(), elem_displs.data(), MPI_INT, local_data.data(),
-                 my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
+  // Шаг 4.5: Рассылка elem_counts
+  MPI_Bcast(elem_counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Step 7: Compute local sum
-    int64_t local_sum = 0;
-    for (int i = 0; i < my_elem_count; i++) {
-      local_sum += local_data[i];
-    }
+  // Шаг 4.6: Рассылка elem_displs
+  MPI_Bcast(elem_displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Step 8: Reduce to global sum
-    int64_t global_sum = 0;
-    MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  // Step 5: Get local element count
+  int my_elem_count = elem_counts[rank];
 
-    // Step 9: Set output ONLY on rank 0
-    if (rank == 0) {
-      GetOutput() = static_cast<OutType>(global_sum);
-    }
-
-    // Синхронизируем все процессы перед выходом
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    return true;
+  // Шаг 6: Scatter matrix elements
+  std::vector<int> local_data;
+  if (my_elem_count > 0) {
+    local_data.resize(my_elem_count);
   }
-}
 
+  // Создаем локальный указатель на данные отправки (только ранг 0 имеет flat_data)
+  const int *send_data_ptr = nullptr;
+  if (rank == 0) {
+    send_data_ptr = flat_data.data();
+  }
+  // Вызывается всеми, используя рассыланные elem_counts и elem_displs
+  MPI_Scatterv(const_cast<int *>(send_data_ptr), elem_counts.data(), elem_displs.data(), MPI_INT, local_data.data(),
+               my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
+
+  // Step 7: Compute local sum
+  int64_t local_sum = 0;
+  for (int i = 0; i < my_elem_count; i++) {
+    local_sum += local_data[i];
+  }
+
+  // Step 8: Reduce to global sum (Используем MPI_LONG_LONG для int64_t)
+  int64_t global_sum = 0;
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  // Step 9: Set output ONLY on rank 0
+  if (rank == 0) {
+    GetOutput() = static_cast<OutType>(global_sum);
+  }
+
+  // Синхронизируем все процессы перед выходом
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  return true;
+}
 bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
   return true;
 }
