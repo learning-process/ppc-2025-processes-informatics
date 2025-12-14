@@ -1,20 +1,20 @@
-#include "example_processes/mpi/include/ops_mpi.hpp"
+#include "chaschin_v_broadcast/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
 #include <numeric>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
+#include "chaschin_v_broadcast/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace chaschin_v_broadcast {
 
 template <typename T>
 ChaschinVBroadcastMPI<T>::ChaschinVBroadcastMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput().resize(0);
+  this->SetTypeOfTask(GetStaticTypeOfTask());
+  this->GetInput() = in;
+  this->GetOutput().resize(0);
 }
 
 template <typename T>
@@ -70,11 +70,14 @@ bool ChaschinVBroadcastMPI<T>::RunImpl() {
   this->GetOutput() = input;
   return true;
 }
-}
 
 template <typename T>
 bool ChaschinVBroadcastMPI<T>::PostProcessingImpl() {
   return true;
 }
+
+template class chaschin_v_broadcast::ChaschinVBroadcastMPI<int>;
+template class chaschin_v_broadcast::ChaschinVBroadcastMPI<float>;
+template class chaschin_v_broadcast::ChaschinVBroadcastMPI<double>;
 
 }  // namespace chaschin_v_broadcast

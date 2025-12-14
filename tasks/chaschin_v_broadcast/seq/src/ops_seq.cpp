@@ -1,18 +1,18 @@
-#include "example_processes/seq/include/ops_seq.hpp"
+#include "chaschin_v_broadcast/seq/include/ops_seq.hpp"
 
 #include <numeric>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
+#include "chaschin_v_broadcast/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace chaschin_v_broadcast {
 
 template <typename T>
 ChaschinVBroadcastSEQ<T>::ChaschinVBroadcastSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput().resize(0);
+  this->SetTypeOfTask(GetStaticTypeOfTask());
+  this->GetInput() = in;
+  this->GetOutput().resize(0);
 }
 
 template <typename T>

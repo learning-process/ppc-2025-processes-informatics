@@ -1,22 +1,15 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <cstdlib>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
-#include "example_processes/common/include/common.hpp"
-#include "example_processes/mpi/include/ops_mpi.hpp"
-#include "example_processes/seq/include/ops_seq.hpp"
+#include "chaschin_v_broadcast/common/include/common.hpp"
+#include "chaschin_v_broadcast/mpi/include/ops_mpi.hpp"
+#include "chaschin_v_broadcast/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace chaschin_v_broadcast {
 
@@ -32,7 +25,7 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     int size = std::get<0>(params);
 
     input_data_.resize(size);
-    for (int i = 0; i < array_size; ++i) {
+    for (int i = 0; i < size; ++i) {
       input_data_[i] = (i * 187345543) % 100;
     }
   }
@@ -58,8 +51,8 @@ TEST_P(ChaschinVRunFuncTestsProcesses, MatmulFromPic) {
 const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
 
 const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<ChaschinVBroadcastMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
-                   ppc::util::AddFuncTask<ChaschinVBroadcastSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+    std::tuple_cat(ppc::util::AddFuncTask<ChaschinVBroadcastMPI<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast),
+                   ppc::util::AddFuncTask<ChaschinVBroadcastSEQ<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

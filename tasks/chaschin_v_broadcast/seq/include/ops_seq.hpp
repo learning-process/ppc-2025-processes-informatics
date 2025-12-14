@@ -1,6 +1,6 @@
 #pragma once
 
-#include "example_processes/common/include/common.hpp"
+#include "chaschin_v_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace chaschin_v_broadcast {

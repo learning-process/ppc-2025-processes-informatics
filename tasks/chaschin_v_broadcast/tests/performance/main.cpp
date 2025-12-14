@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "example_processes/common/include/common.hpp"
-#include "example_processes/mpi/include/ops_mpi.hpp"
-#include "example_processes/seq/include/ops_seq.hpp"
+#include "chaschin_v_broadcast/common/include/common.hpp"
+#include "chaschin_v_broadcast/mpi/include/ops_mpi.hpp"
+#include "chaschin_v_broadcast/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
 namespace chaschin_v_broadcast {
@@ -29,7 +29,7 @@ TEST_P(ChaschinVRunPerfTestProcesses, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ChaschinVBroadcastMPI, ChaschinVBroadcastSEQ>(PPC_SETTINGS_example_processes);
+    ppc::util::MakeAllPerfTasks<InType, ChaschinVBroadcastMPI<int>, ChaschinVBroadcastSEQ<int>>(PPC_SETTINGS_chaschin_v_broadcast);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
