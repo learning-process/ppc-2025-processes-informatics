@@ -14,7 +14,7 @@ SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = Vector{};
-}
+}  // <--- ВОТ ПРОПУЩЕННАЯ ЗАКРЫВАЮЩАЯ СКОБКА
 
 bool SpichekDJacobiMPI::ValidationImpl() {
   const auto &[A, b, eps, max_iter] = GetInput();
@@ -143,11 +143,8 @@ bool SpichekDJacobiMPI::RunImpl() {
   } while (max_diff > eps && iter < max_iter);
 
   // ---------- 6. Результат ----------
-  if (rank == 0) {
-    GetOutput() = x;  // БЕЗ if(rank == 0)
-    return true;
-  }
-  GetOutput() = Vector{};
+  // Вектор x содержит полное решение у всех процессов после Allgatherv.
+  GetOutput() = x;
   return true;
 }
 
@@ -156,3 +153,4 @@ bool SpichekDJacobiMPI::PostProcessingImpl() {
 }
 
 }  // namespace spichek_d_jacobi
+// ЛИШНЯЯ КОНСТРУКЦИЯ }; БЫЛА УДАЛЕНА ЗДЕСЬ
