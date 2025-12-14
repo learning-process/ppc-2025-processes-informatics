@@ -109,12 +109,14 @@ bool ShkrebkoMHypercubeMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  for (int i = 0; i < 1000; i++) {
+
+  for (int i = 0; i < 100000; i++) {
     volatile int dummy = 0;
-    for (int j = 0; j < 1000; j++) {
+    for (int j = 0; j < 100000; j++) {
       dummy += i * j;
     }
   }
+  
 
   HypercubeData local_data;
 
