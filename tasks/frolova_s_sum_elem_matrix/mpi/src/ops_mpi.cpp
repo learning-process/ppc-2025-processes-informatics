@@ -10,21 +10,6 @@
 
 namespace frolova_s_sum_elem_matrix {
 
-FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
-}
-
-bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
-  return true;
-}
-
-bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
-  GetOutput() = 0;
-  return true;
-}
-
 void FrolovaSSumElemMatrixMPI::BroadcastMetadata(int &rows) {
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
