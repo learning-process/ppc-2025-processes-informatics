@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
-#include "frolova_s_sum_elem_matrix/mpi/include/ops_mpi.hpp
 
 namespace frolova_s_sum_elem_matrix {
 
