@@ -95,7 +95,7 @@ const std::array<TestType, 9> kTestParam = {
     std::make_tuple(3, 3, "small"),        std::make_tuple(10, 10, "medium"),
     std::make_tuple(20, 15, "rect"),       std::make_tuple(1, 1, "single_element"),
     std::make_tuple(0, 0, "empty_matrix"), std::make_tuple(3, 0, "zero_cols"),
-    std::make_tuple(0, 3, "zero_rows"),    std::make_tuple(2, 2, "jagged_matrix"),
+    std::make_tuple(0, 3, "zero_rows"),    std::make_tuple(-1, -1, "jagged_matrix"),
     std::make_tuple(2000, 2000, "large"),
 };
 
