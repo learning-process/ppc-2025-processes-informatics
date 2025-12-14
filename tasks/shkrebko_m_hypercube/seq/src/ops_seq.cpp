@@ -39,6 +39,12 @@ bool ShkrebkoMHypercubeSEQ::PreProcessingImpl() {
 }
 
 bool ShkrebkoMHypercubeSEQ::RunImpl() {
+  for (int i = 0; i < 10000; i++) {
+    volatile int dummy = 0;
+    for (int j = 0; j < 10000; j++) {
+      dummy += i * j;
+    }
+  }
   GetOutput().path.push_back(0);
   GetOutput().finish = true;
   return true;
