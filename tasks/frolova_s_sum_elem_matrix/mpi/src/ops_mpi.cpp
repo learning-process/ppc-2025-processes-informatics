@@ -28,7 +28,7 @@ bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
 }
 
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
-  std::cerr << "RunImpl called, rank = " << rank << "\n";
+  std::cerr << "RunImpl entered (before MPI init)\n";
 
   int rank = 0;
   int size = 1;
