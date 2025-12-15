@@ -28,4 +28,3 @@ class TestTaskMPI : public BaseTask {
 };
 
 }  // namespace egashin_k_iterative_simple
-

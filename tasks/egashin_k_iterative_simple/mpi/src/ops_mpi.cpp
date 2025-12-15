@@ -17,25 +17,25 @@ TestTaskMPI::TestTaskMPI(const InType &in) {
 bool TestTaskMPI::ValidationImpl() {
   const auto &input = GetInput();
   size_t n = input.A.size();
-  
+
   if (n == 0) {
     return false;
   }
-  
+
   for (size_t i = 0; i < n; ++i) {
     if (input.A[i].size() != n) {
       return false;
     }
   }
-  
+
   if (input.b.size() != n || input.x0.size() != n) {
     return false;
   }
-  
+
   if (input.tolerance <= 0 || input.max_iterations <= 0) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -55,7 +55,7 @@ void TestTaskMPI::CalculateDistribution(int size, int n, std::vector<int> &count
 double TestTaskMPI::CalculateTau(const std::vector<std::vector<double>> &A, int start_row, int end_row) {
   double local_max_row_sum = 0.0;
   size_t n = A[0].size();
-  
+
   for (int i = start_row; i < end_row; ++i) {
     double row_sum = 0.0;
     for (size_t j = 0; j < n; ++j) {
@@ -63,10 +63,10 @@ double TestTaskMPI::CalculateTau(const std::vector<std::vector<double>> &A, int 
     }
     local_max_row_sum = std::max(local_max_row_sum, row_sum);
   }
-  
+
   double global_max_row_sum = 0.0;
   MPI_Allreduce(&local_max_row_sum, &global_max_row_sum, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-  
+
   if (global_max_row_sum < 1e-10) {
     return 0.1;
   }
@@ -81,7 +81,8 @@ double TestTaskMPI::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tolerance) {
+bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new,
+                                   double tolerance) {
   double diff_norm = 0.0;
   for (size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
@@ -117,7 +118,7 @@ bool TestTaskMPI::RunImpl() {
   if (rank == 0) {
     A_local = input.A;
   }
-  
+
   for (int i = 0; i < n; ++i) {
     MPI_Bcast(A_local[i].data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
@@ -154,7 +155,8 @@ bool TestTaskMPI::RunImpl() {
       local_x_new[i] = x[global_i] + tau * (b[global_i] - Ax_i);
     }
 
-    MPI_Allgatherv(local_x_new.data(), local_rows, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE, MPI_COMM_WORLD);
+    MPI_Allgatherv(local_x_new.data(), local_rows, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,
+                   MPI_COMM_WORLD);
 
     bool converged = false;
     if (rank == 0) {
@@ -183,4 +185,3 @@ bool TestTaskMPI::PostProcessingImpl() {
 }
 
 }  // namespace egashin_k_iterative_simple
-

@@ -18,7 +18,9 @@ namespace egashin_k_iterative_simple {
 
 class EgashinKIterativeSimpleFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) { return std::get<2>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -49,7 +51,9 @@ class EgashinKIterativeSimpleFuncTest : public ppc::util::BaseRunFuncTests<InTyp
     return true;
   }
 
-  InType GetTestInputData() override { return input_; }
+  InType GetTestInputData() override {
+    return input_;
+  }
 
  private:
   InType input_;
@@ -70,7 +74,9 @@ TestType CreateTestCase(const std::vector<std::vector<double>> &A, const std::ve
   return std::make_tuple(input, expected, name);
 }
 
-TEST_P(EgashinKIterativeSimpleFuncTest, IterativeMethod) { ExecuteTest(GetParam()); }
+TEST_P(EgashinKIterativeSimpleFuncTest, IterativeMethod) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 5> kTestParam = {
     CreateTestCase({{2.0, 1.0}, {1.0, 2.0}}, {3.0, 3.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Basic"),

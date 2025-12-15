@@ -68,10 +68,14 @@ class EgashinKIterativeSimplePerfTest : public ppc::util::BaseRunPerfTests<InTyp
     return true;
   }
 
-  InType GetTestInputData() override { return input_; }
+  InType GetTestInputData() override {
+    return input_;
+  }
 };
 
-TEST_P(EgashinKIterativeSimplePerfTest, Performance) { ExecuteTest(GetParam()); }
+TEST_P(EgashinKIterativeSimplePerfTest, Performance) {
+  ExecuteTest(GetParam());
+}
 
 const auto kPerfParams =
     ppc::util::MakeAllPerfTasks<InType, TestTaskMPI, TestTaskSEQ>(PPC_SETTINGS_egashin_k_iterative_simple);
