@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace egashin_k_iterative_simple {
@@ -16,13 +17,13 @@ TestTaskMPI::TestTaskMPI(const InType &in) {
 
 bool TestTaskMPI::ValidationImpl() {
   const auto &input = GetInput();
-  size_t n = input.A.size();
+  std::size_t n = input.A.size();
 
   if (n == 0) {
     return false;
   }
 
-  for (size_t i = 0; i < n; ++i) {
+  for (std::size_t i = 0; i < n; ++i) {
     if (input.A[i].size() != n) {
       return false;
     }
@@ -52,14 +53,14 @@ void TestTaskMPI::CalculateDistribution(int size, int n, std::vector<int> &count
   }
 }
 
-double TestTaskMPI::CalculateTau(const std::vector<std::vector<double>> &A, int start_row, int end_row) {
+double TestTaskMPI::CalculateTau(const std::vector<std::vector<double>> &matrix, int start_row, int end_row) {
   double local_max_row_sum = 0.0;
-  size_t n = A[0].size();
+  std::size_t n = matrix[0].size();
 
   for (int i = start_row; i < end_row; ++i) {
     double row_sum = 0.0;
-    for (size_t j = 0; j < n; ++j) {
-      row_sum += std::abs(A[i][j]);
+    for (std::size_t j = 0; j < n; ++j) {
+      row_sum += std::abs(matrix[i][j]);
     }
     local_max_row_sum = std::max(local_max_row_sum, row_sum);
   }
@@ -81,16 +82,16 @@ double TestTaskMPI::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new,
-                                   double tolerance) {
+bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
   double diff_norm = 0.0;
-  for (size_t i = 0; i < x_old.size(); ++i) {
+  for (std::size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
     diff_norm += diff * diff;
   }
-  return std::sqrt(diff_norm) < tolerance;
+  return std::sqrt(diff_norm) < tol;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool TestTaskMPI::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -111,16 +112,15 @@ bool TestTaskMPI::RunImpl() {
   MPI_Bcast(displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
 
   int start_row = displs[rank];
-  int end_row = displs[rank] + counts[rank];
   int local_rows = counts[rank];
 
-  std::vector<std::vector<double>> A_local(n, std::vector<double>(n));
+  std::vector<std::vector<double>> a_local(n, std::vector<double>(n));
   if (rank == 0) {
-    A_local = input.A;
+    a_local = input.A;
   }
 
   for (int i = 0; i < n; ++i) {
-    MPI_Bcast(A_local[i].data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(a_local[i].data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 
   std::vector<double> b(n);
@@ -140,7 +140,7 @@ bool TestTaskMPI::RunImpl() {
   MPI_Bcast(&tolerance, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&max_iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  double tau = CalculateTau(A_local, start_row, end_row);
+  double tau = CalculateTau(a_local, start_row, start_row + local_rows);
 
   std::vector<double> x_new(n);
   std::vector<double> local_x_new(local_rows);
@@ -148,11 +148,11 @@ bool TestTaskMPI::RunImpl() {
   for (int iter = 0; iter < max_iterations; ++iter) {
     for (int i = 0; i < local_rows; ++i) {
       int global_i = start_row + i;
-      double Ax_i = 0.0;
+      double ax_i = 0.0;
       for (int j = 0; j < n; ++j) {
-        Ax_i += A_local[global_i][j] * x[j];
+        ax_i += a_local[global_i][j] * x[j];
       }
-      local_x_new[i] = x[global_i] + tau * (b[global_i] - Ax_i);
+      local_x_new[i] = x[global_i] + (tau * (b[global_i] - ax_i));
     }
 
     MPI_Allgatherv(local_x_new.data(), local_rows, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,

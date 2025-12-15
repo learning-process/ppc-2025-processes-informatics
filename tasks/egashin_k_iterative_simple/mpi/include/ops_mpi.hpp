@@ -22,9 +22,9 @@ class TestTaskMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void CalculateDistribution(int size, int n, std::vector<int> &counts, std::vector<int> &displs);
-  static double CalculateTau(const std::vector<std::vector<double>> &A, int start_row, int end_row);
+  static double CalculateTau(const std::vector<std::vector<double>> &matrix, int start_row, int end_row);
   static double CalculateNorm(const std::vector<double> &v);
-  static bool CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tolerance);
+  static bool CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol);
 };
 
 }  // namespace egashin_k_iterative_simple
