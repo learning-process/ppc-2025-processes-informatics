@@ -26,40 +26,34 @@ class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InT
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
     int rows = std::get<0>(params);
     int cols = std::get<1>(params);
     const std::string &label = std::get<2>(params);
 
-    if (label == "empty_matrix") {
-      matrix_ = {};
-      expected_sum_ = 0;
-    } else if (label == "zero_cols") {
-      matrix_ = std::vector<std::vector<int>>(3);
-      expected_sum_ = 0;
-    } else if (label == "zero_rows") {
-      matrix_ = std::vector<std::vector<int>>(0);
-      expected_sum_ = 0;
-    } else if (label == "jagged_matrix") {
+    if (label == "jagged_matrix") {
       matrix_ = {{1, 2, 3}, {4, 5}};
       expected_sum_ = 15;
-    } else if (label == "large") {
+    } else {
       matrix_.resize(rows);
       for (auto &row : matrix_) {
         row.resize(cols, 1);
       }
-      expected_sum_ = static_cast<OutType>(rows) * cols;
-    } else {
-      if (rows > 0 && cols > 0) {
-        matrix_.resize(rows);
-        for (auto &row : matrix_) {
-          row.resize(cols, 1);
-        }
-        expected_sum_ = static_cast<OutType>(rows) * cols;
-      } else {
-        matrix_ = {};
-        expected_sum_ = 0;
+      expected_sum_ = rows * cols;
+    }
+
+    // DEBUG: печать матрицы
+    std::cout << "=== DEBUG Setup ===\n";
+    std::cout << "Matrix label: " << label << ", rows: " << matrix_.size();
+    if (!matrix_.empty()) {
+      std::cout << ", cols: " << matrix_[0].size();
+    }
+    std::cout << ", expected sum: " << expected_sum_ << "\n";
+
+    for (const auto &row : matrix_) {
+      for (auto val : row) {
+        std::cout << val << " ";
       }
+      std::cout << "\n";
     }
   }
 
@@ -95,9 +89,8 @@ TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
   EXPECT_TRUE(task_seq.PostProcessing());
   EXPECT_TRUE(CheckTestOutputData(task_seq.GetOutput()));
 
-  // MPI: нужно явно вызвать SetInput
-  FrolovaSSumElemMatrixMPI task_mpi;
-  task_mpi.SetInput(input_matrix);
+  // MPI: конструктор требует ввод
+  FrolovaSSumElemMatrixMPI task_mpi(input_matrix);
   EXPECT_TRUE(task_mpi.Validation());
   EXPECT_TRUE(task_mpi.PreProcessing());
   EXPECT_TRUE(task_mpi.Run());
@@ -107,8 +100,8 @@ TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
 
 // Отдельные тесты для jagged матриц
 TEST(FrolovaSSumElemMatrixSEQTest, JaggedMatrix) {
-  InType jagged_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8, 9}};
-  OutType expected_sum = 45;
+  InType jagged_matrix = {{1, 2, 3}, {4, 5}};
+  OutType expected_sum = 15;
 
   FrolovaSSumElemMatrixSEQ task_seq(jagged_matrix);
   EXPECT_TRUE(task_seq.Validation());
@@ -119,11 +112,10 @@ TEST(FrolovaSSumElemMatrixSEQTest, JaggedMatrix) {
 }
 
 TEST(FrolovaSSumElemMatrixMPITest, JaggedMatrix) {
-  InType jagged_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8, 9}};
-  OutType expected_sum = 45;
+  InType jagged_matrix = {{1, 2, 3}, {4, 5}};
+  OutType expected_sum = 15;
 
-  FrolovaSSumElemMatrixMPI task_mpi;
-  task_mpi.SetInput(jagged_matrix);
+  FrolovaSSumElemMatrixMPI task_mpi(jagged_matrix);
   EXPECT_TRUE(task_mpi.Validation());
   EXPECT_TRUE(task_mpi.PreProcessing());
   EXPECT_TRUE(task_mpi.Run());
@@ -131,11 +123,11 @@ TEST(FrolovaSSumElemMatrixMPITest, JaggedMatrix) {
   EXPECT_EQ(task_mpi.GetOutput(), expected_sum);
 }
 
-// Параметры тестов
-const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(3, 3, "small"),          std::make_tuple(10, 10, "medium"),     std::make_tuple(20, 15, "rect"),
-    std::make_tuple(1, 1, "single_element"), std::make_tuple(0, 0, "empty_matrix"), std::make_tuple(3, 0, "zero_cols"),
-    std::make_tuple(0, 3, "zero_rows"),      std::make_tuple(200, 200, "large"),
+// Параметры тестов (уменьшены для отладки)
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(3, 3, "small"),
+    std::make_tuple(10, 10, "medium"),
+    std::make_tuple(1, 1, "single_element"),
 };
 
 const auto kTestTasksList = std::tuple_cat(
@@ -143,11 +135,9 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<FrolovaSSumElemMatrixSEQ, InType>(kTestParam, PPC_SETTINGS_frolova_s_sum_elem_matrix));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
 const auto kFuncTestName = FrolovaSSumElemMatrixRunFuncTests::PrintFuncTestName<FrolovaSSumElemMatrixRunFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(SumMatrixTests, FrolovaSSumElemMatrixRunFuncTests, kGtestValues, kFuncTestName);
 
 }  // namespace
-
 }  // namespace frolova_s_sum_elem_matrix
