@@ -93,7 +93,7 @@ class AshihminDRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   InType input_data_{};
   int test_count_ = 0;
   int test_root_ = -1;
-  std::string test_type_{};
+  std::string test_type_;
 };
 
 namespace {

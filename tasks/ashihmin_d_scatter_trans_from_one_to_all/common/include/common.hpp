@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <cstddef>  // для size_t
 #include <string>
 #include <tuple>
 #include <vector>

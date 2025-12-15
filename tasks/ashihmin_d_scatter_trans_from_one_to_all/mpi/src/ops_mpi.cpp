@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>  // для size_t
 #include <type_traits>
 #include <vector>
 
@@ -27,8 +26,11 @@ bool AshihminDScatterTransFromOneToAllMPI<T>::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+// Поместить функции в анонимное пространство имен
+
 template <typename T>
-static MPI_Datatype GetMPIDataType() {
+MPI_Datatype GetMPIDataType() {
   if (std::is_same_v<T, int>) {
     return MPI_INT;
   }
@@ -41,9 +43,11 @@ static MPI_Datatype GetMPIDataType() {
   return MPI_DATATYPE_NULL;
 }
 
-static int VirtualToRealRank(int virtual_rank, int root, int size) {
+int VirtualToRealRank(int virtual_rank, int root, int size) {
   return (virtual_rank + root) % size;
 }
+
+}  // namespace
 
 template <typename T>
 bool AshihminDScatterTransFromOneToAllMPI<T>::RunImpl() {
