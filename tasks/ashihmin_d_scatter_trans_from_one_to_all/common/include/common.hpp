@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include <cstddef>  // для size_t
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -11,9 +13,9 @@ namespace ashihmin_d_scatter_trans_from_one_to_all {
 
 struct ScatterParams {
   std::vector<int> data;
-  int elements_per_process;
-  int root;
-  MPI_Datatype datatype;
+  int elements_per_process = 0;
+  int root = -1;
+  MPI_Datatype datatype = MPI_DATATYPE_NULL;
 };
 
 using InType = ScatterParams;

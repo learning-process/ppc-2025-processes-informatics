@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>  // для size_t
 #include <type_traits>
 #include <vector>
 
@@ -27,25 +28,28 @@ bool AshihminDScatterTransFromOneToAllMPI<T>::PreProcessingImpl() {
 }
 
 template <typename T>
-MPI_Datatype GetMPIDataType() {
+static MPI_Datatype GetMPIDataType() {
   if (std::is_same_v<T, int>) {
     return MPI_INT;
-  } else if (std::is_same_v<T, float>) {
+  }
+  if (std::is_same_v<T, float>) {
     return MPI_FLOAT;
-  } else if (std::is_same_v<T, double>) {
+  }
+  if (std::is_same_v<T, double>) {
     return MPI_DOUBLE;
   }
   return MPI_DATATYPE_NULL;
 }
 
-int VirtualToRealRank(int virtual_rank, int root, int size) {
+static int VirtualToRealRank(int virtual_rank, int root, int size) {
   return (virtual_rank + root) % size;
 }
 
 template <typename T>
 bool AshihminDScatterTransFromOneToAllMPI<T>::RunImpl() {
   const auto &params = this->GetInput();
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 

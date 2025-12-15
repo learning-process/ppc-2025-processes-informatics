@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <array>
+#include <cstddef>  // для size_t
 #include <string>
 #include <tuple>
 #include <vector>
@@ -80,9 +80,9 @@ class AshihminDRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
         }
       }
       return true;
-    } else {
-      return output_data.size() == static_cast<size_t>(test_count_);
     }
+
+    return output_data.size() == static_cast<size_t>(test_count_);
   }
 
   InType GetTestInputData() final {
@@ -90,10 +90,10 @@ class AshihminDRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_;
-  int test_count_;
-  int test_root_;
-  std::string test_type_;
+  InType input_data_{};
+  int test_count_ = 0;
+  int test_root_ = -1;
+  std::string test_type_{};
 };
 
 namespace {

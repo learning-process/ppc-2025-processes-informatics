@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <vector>
 
 #include "ashihmin_d_scatter_trans_from_one_to_all/common/include/common.hpp"
@@ -38,7 +37,7 @@ class AshihminDRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType
   }
 
  private:
-  InType input_data_;
+  InType input_data_{};
 };
 
 TEST_P(AshihminDRunPerfTestsProcesses, RunPerfModes) {
