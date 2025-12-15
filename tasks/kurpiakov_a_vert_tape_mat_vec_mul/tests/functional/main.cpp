@@ -66,18 +66,16 @@ const std::array<TestType, 10> kTestParam = {
                      "test5_zero_matrix", std::vector<int64_t>{0LL, 0LL}),
      std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{1LL, 2LL, 3LL, 4LL}, std::vector<int64_t>{0LL, 0LL}),
                      "test6_zero_vector", std::vector<int64_t>{0LL, 0LL}),
-     std::make_tuple(
-         std::make_tuple(2LL, std::vector<int64_t>{1LL, -2LL, -3LL, 4LL}, std::vector<int64_t>{2LL, 1LL}),
-         "test7_negative_elements", std::vector<int64_t>{0LL, -2LL}),
+     std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{1LL, -2LL, -3LL, 4LL}, std::vector<int64_t>{2LL, 1LL}),
+                     "test7_negative_elements", std::vector<int64_t>{0LL, -2LL}),
      std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{1000000LL, 2000000LL, 3000000LL, 4000000LL},
                                      std::vector<int64_t>{500LL, 600LL}),
                      "test8_large_values", std::vector<int64_t>{1700000000LL, 3900000000LL}),
      std::make_tuple(std::make_tuple(3LL, std::vector<int64_t>{2LL, 1LL, 1LL, 1LL, 2LL, 1LL, 1LL, 1LL, 2LL},
                                      std::vector<int64_t>{1LL, 1LL, 1LL}),
                      "test9_symmetric_matrix", std::vector<int64_t>{4LL, 4LL, 4LL}),
-     std::make_tuple(
-         std::make_tuple(2LL, std::vector<int64_t>{10LL, 20LL, 30LL, 40LL}, std::vector<int64_t>{2LL, 4LL}),
-         "test10_different_values", std::vector<int64_t>{100LL, 220LL})}};
+     std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{10LL, 20LL, 30LL, 40LL}, std::vector<int64_t>{2LL, 4LL}),
+                     "test10_different_values", std::vector<int64_t>{100LL, 220LL})}};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KurpiakovAVretTapeMulMPI, InType>(
                                                kTestParam, PPC_SETTINGS_kurpiakov_a_vert_tape_mat_vec_mul),
