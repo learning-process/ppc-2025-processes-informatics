@@ -125,14 +125,8 @@ void PapulinaYGaussFilterMPI::DataDistribution() {
   }
 }
 void PapulinaYGaussFilterMPI::ClampCoordinates(int &global_i, int &global_j, int height, int width) {
-  global_i = std::max(global_i, 0);
-  if (global_i >= height) {
-    global_i = height - 1;
-  }
-  global_j = std::max(global_j, 0);
-  if (global_j >= width) {
-    global_j = width - 1;
-  }
+  global_i = std::max(0, std::min(height - 1, global_i));
+  global_j = std::max(0, std::min(width - 1, global_j));
 }
 void PapulinaYGaussFilterMPI::CalculateBlock(const Block &block, std::vector<unsigned char> &my_block) {
   for (int i = -overlap_; i < block.my_block_rows + overlap_; i++) {

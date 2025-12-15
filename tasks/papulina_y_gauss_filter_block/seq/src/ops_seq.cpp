@@ -45,14 +45,8 @@ bool PapulinaYGaussFilterSEQ::PostProcessingImpl() {
   return true;
 }
 void PapulinaYGaussFilterSEQ::ClampCoordinates(int &n_x, int &n_y) const {
-  n_x = std::max(n_x, 0);
-  if (n_x >= Pic_.width) {
-    n_x = Pic_.width - 1;
-  }
-  n_y = std::max(n_y, 0);
-  if (n_y >= Pic_.height) {
-    n_y = Pic_.height - 1;
-  }
+  n_x = std::max(0, std::min(Pic_.width - 1, n_x));
+  n_y = std::max(0, std::min(Pic_.height - 1, n_y));
 }
 std::vector<unsigned char> PapulinaYGaussFilterSEQ::NewPixel(const int &row, const int &col) {
   static constexpr std::array<float, 9> kErnel = {1.0F / 16, 2.0F / 16, 1.0F / 16, 2.0F / 16, 4.0F / 16,
