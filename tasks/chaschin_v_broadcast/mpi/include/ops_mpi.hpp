@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "chaschin_v_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
 

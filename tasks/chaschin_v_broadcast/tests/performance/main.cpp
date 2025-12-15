@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <algorithm>
 
 #include "chaschin_v_broadcast/common/include/common.hpp"
 #include "chaschin_v_broadcast/mpi/include/ops_mpi.hpp"
@@ -9,7 +10,7 @@ namespace chaschin_v_broadcast {
 
 class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 10000000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     input_data_.resize(kCount_, 7863453);
