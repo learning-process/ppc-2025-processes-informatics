@@ -88,7 +88,54 @@ class FrolovaSSumElemMatrixRunFuncTests : public ppc::util::BaseRunFuncTests<InT
 namespace {
 
 TEST_P(FrolovaSSumElemMatrixRunFuncTests, SumElementsInMatrix) {
-  ExecuteTest(GetParam());
+  auto param = GetParam();
+
+  // Создаем задачу MPI
+  FrolovaSSumElemMatrixMPI task_mpi;
+  task_mpi.SetInput(GetTestInputData());
+  EXPECT_TRUE(task_mpi.Validation());
+  EXPECT_TRUE(task_mpi.PreProcessing());
+  EXPECT_TRUE(task_mpi.Run());
+  EXPECT_TRUE(task_mpi.PostProcessing());
+  EXPECT_TRUE(CheckTestOutputData(task_mpi.GetOutput()));
+
+  // Создаем задачу SEQ
+  FrolovaSSumElemMatrixSEQ task_seq;
+  task_seq.SetInput(GetTestInputData());
+  EXPECT_TRUE(task_seq.Validation());
+  EXPECT_TRUE(task_seq.PreProcessing());
+  EXPECT_TRUE(task_seq.Run());
+  EXPECT_TRUE(task_seq.PostProcessing());
+  EXPECT_TRUE(CheckTestOutputData(task_seq.GetOutput()));
+}
+
+// Отдельные тесты для jagged матриц
+TEST(FrolovaSSumElemMatrixMPITest, JaggedMatrix) {
+  InType jagged_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8, 9}};
+  OutType expected_sum = 45;
+
+  FrolovaSSumElemMatrixMPI task;
+  task.SetInput(jagged_matrix);
+
+  EXPECT_TRUE(task.Validation());
+  EXPECT_TRUE(task.PreProcessing());
+  EXPECT_TRUE(task.Run());
+  EXPECT_TRUE(task.PostProcessing());
+  EXPECT_EQ(task.GetOutput(), expected_sum);
+}
+
+TEST(FrolovaSSumElemMatrixSEQTest, JaggedMatrix) {
+  InType jagged_matrix = {{1, 2, 3}, {4, 5}, {6, 7, 8, 9}};
+  OutType expected_sum = 45;
+
+  FrolovaSSumElemMatrixSEQ task;
+  task.SetInput(jagged_matrix);
+
+  EXPECT_TRUE(task.Validation());
+  EXPECT_TRUE(task.PreProcessing());
+  EXPECT_TRUE(task.Run());
+  EXPECT_TRUE(task.PostProcessing());
+  EXPECT_EQ(task.GetOutput(), expected_sum);
 }
 
 const std::array<TestType, 8> kTestParam = {
