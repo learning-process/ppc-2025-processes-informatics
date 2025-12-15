@@ -32,14 +32,15 @@ bool TelnovStronginAlgorithmSEQ::RunImpl() {
 
   auto f = [](double x) { return ((x - 1.0) * (x - 1.0)) + 1.0; };
 
-  std::vector<double> x_vals = {a, b};
-  std::vector<double> f_vals = {f(a), f(b)};
+  std::vector<double> x_vals{a, b};
+  std::vector<double> f_vals{f(a), f(b)};
 
-  const int kMaxIters = 100;
+  const int k_max_iters = 100;
   int iter = 0;
 
-  while ((x_vals.back() - x_vals.front()) > eps && iter < kMaxIters) {
+  while ((x_vals.back() - x_vals.front()) > eps && iter < k_max_iters) {
     ++iter;
+
     double m = 0.0;
     for (std::size_t i = 1; i < x_vals.size(); ++i) {
       m = std::max(m, std::abs(f_vals[i] - f_vals[i - 1]) / (x_vals[i] - x_vals[i - 1]));
@@ -64,8 +65,12 @@ bool TelnovStronginAlgorithmSEQ::RunImpl() {
       }
     }
 
-    const double new_x =
+    double new_x =
         (0.5 * (x_vals[best_idx] + x_vals[best_idx - 1])) - ((f_vals[best_idx] - f_vals[best_idx - 1]) / (2.0 * m));
+
+    if (new_x <= x_vals[best_idx - 1] || new_x >= x_vals[best_idx]) {
+      new_x = 0.5 * (x_vals[best_idx] + x_vals[best_idx - 1]);
+    }
 
     x_vals.insert(x_vals.begin() + static_cast<std::ptrdiff_t>(best_idx), new_x);
     f_vals.insert(f_vals.begin() + static_cast<std::ptrdiff_t>(best_idx), f(new_x));
