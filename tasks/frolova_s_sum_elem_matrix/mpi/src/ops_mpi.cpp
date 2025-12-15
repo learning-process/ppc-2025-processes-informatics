@@ -19,32 +19,13 @@ bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
   return true;
 }
 
-bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  bool valid = true;
+if (!ValidationImpl()) {
   if (rank == 0) {
-    const auto &matrix = GetInput();
-    if (matrix.empty()) {
-      std::cerr << "[Rank 0] Validation failed: matrix is empty\n";
-      valid = false;
-    } else {
-      for (size_t i = 0; i < matrix.size(); ++i) {
-        if (matrix[i].empty()) {
-          std::cerr << "[Rank 0] Validation failed: row " << i << " is empty\n";
-          valid = false;
-          break;
-        }
-      }
-    }
+    GetOutput() = static_cast<OutType>(0);
   }
-
-  // Рассылаем результат валидации всем процессам
-  MPI_Bcast(&valid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-  return valid;
+  std::cerr << "[Rank " << rank << "] Matrix is invalid, exiting\n";
+  return true;
 }
-
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
   int rank = 0, size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -58,7 +39,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
       GetOutput() = static_cast<OutType>(0);
     }
     std::cerr << "[Rank " << rank << "] Matrix is invalid, exiting\n";
-    return true;
+    return false;
   }
 
   const auto &matrix = GetInput();  // теперь на rank 0 точно есть данные
