@@ -2,6 +2,7 @@
 #include <stb/stb_image.h>
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -52,39 +53,31 @@ TEST_P(KurpiakovARunFuncTestsProcesses2, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 const std::array<TestType, 10> kTestParam = {
-    {// Пустая матрица и вектор
-     std::make_tuple(std::make_tuple(0LL, std::vector<long long>{}, std::vector<long long>{}), "test1_empty",
-                     std::vector<long long>{}),
-     // Матрица 1x1
-     std::make_tuple(std::make_tuple(1LL, std::vector<long long>{2}, std::vector<long long>{3}), "test2_1x1",
-                     std::vector<long long>{6}),
-     // Матрица 2x2
-     std::make_tuple(std::make_tuple(2LL, std::vector<long long>{1, 2, 3, 4}, std::vector<long long>{5, 6}),
-                     "test3_2x2", std::vector<long long>{17, 39}),
-     // Матрица 3x3 (единичная)
+    {std::make_tuple(std::make_tuple(0LL, std::vector<int64_t>{}, std::vector<int64_t>{}), "test1_empty",
+                     std::vector<int64_t>{}),
+     std::make_tuple(std::make_tuple(1LL, std::vector<int64_t>{2LL}, std::vector<int64_t>{3LL}), "test2_1x1",
+                     std::vector<int64_t>{6LL}),
+     std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{1LL, 2LL, 3LL, 4LL}, std::vector<int64_t>{5LL, 6LL}),
+                     "test3_2x2", std::vector<int64_t>{17LL, 39LL}),
+     std::make_tuple(std::make_tuple(3LL, std::vector<int64_t>{1LL, 0LL, 0LL, 0LL, 1LL, 0LL, 0LL, 0LL, 1LL},
+                                     std::vector<int64_t>{2LL, 3LL, 4LL}),
+                     "test4_identity_3x3", std::vector<int64_t>{2LL, 3LL, 4LL}),
+     std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{0LL, 0LL, 0LL, 0LL}, std::vector<int64_t>{1LL, 2LL}),
+                     "test5_zero_matrix", std::vector<int64_t>{0LL, 0LL}),
+     std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{1LL, 2LL, 3LL, 4LL}, std::vector<int64_t>{0LL, 0LL}),
+                     "test6_zero_vector", std::vector<int64_t>{0LL, 0LL}),
      std::make_tuple(
-         std::make_tuple(3LL, std::vector<long long>{1, 0, 0, 0, 1, 0, 0, 0, 1}, std::vector<long long>{2, 3, 4}),
-         "test4_identity_3x3", std::vector<long long>{2, 3, 4}),
-     // Нулевая матрица
-     std::make_tuple(std::make_tuple(2LL, std::vector<long long>{0, 0, 0, 0}, std::vector<long long>{1, 2}),
-                     "test5_zero_matrix", std::vector<long long>{0, 0}),
-     // Нулевой вектор
-     std::make_tuple(std::make_tuple(2LL, std::vector<long long>{1, 2, 3, 4}, std::vector<long long>{0, 0}),
-                     "test6_zero_vector", std::vector<long long>{0, 0}),
-     // Матрица с отрицательными элементами
-     std::make_tuple(std::make_tuple(2LL, std::vector<long long>{1, -2, -3, 4}, std::vector<long long>{2, 1}),
-                     "test7_negative_elements", std::vector<long long>{0, -2}),
-     // Большие значения
-     std::make_tuple(std::make_tuple(2LL, std::vector<long long>{1000000, 2000000, 3000000, 4000000},
-                                     std::vector<long long>{500, 600}),
-                     "test8_large_values", std::vector<long long>{1700000000, 3900000000}),
-     // Симметричная матрица
+         std::make_tuple(2LL, std::vector<int64_t>{1LL, -2LL, -3LL, 4LL}, std::vector<int64_t>{2LL, 1LL}),
+         "test7_negative_elements", std::vector<int64_t>{0LL, -2LL}),
+     std::make_tuple(std::make_tuple(2LL, std::vector<int64_t>{1000000LL, 2000000LL, 3000000LL, 4000000LL},
+                                     std::vector<int64_t>{500LL, 600LL}),
+                     "test8_large_values", std::vector<int64_t>{1700000000LL, 3900000000LL}),
+     std::make_tuple(std::make_tuple(3LL, std::vector<int64_t>{2LL, 1LL, 1LL, 1LL, 2LL, 1LL, 1LL, 1LL, 2LL},
+                                     std::vector<int64_t>{1LL, 1LL, 1LL}),
+                     "test9_symmetric_matrix", std::vector<int64_t>{4LL, 4LL, 4LL}),
      std::make_tuple(
-         std::make_tuple(3LL, std::vector<long long>{2, 1, 1, 1, 2, 1, 1, 1, 2}, std::vector<long long>{1, 1, 1}),
-         "test9_symmetric_matrix", std::vector<long long>{4, 4, 4}),
-     // Матрица с разными значениями
-     std::make_tuple(std::make_tuple(2LL, std::vector<long long>{10, 20, 30, 40}, std::vector<long long>{2, 4}),
-                     "test10_different_values", std::vector<long long>{100, 220})}};
+         std::make_tuple(2LL, std::vector<int64_t>{10LL, 20LL, 30LL, 40LL}, std::vector<int64_t>{2LL, 4LL}),
+         "test10_different_values", std::vector<int64_t>{100LL, 220LL})}};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KurpiakovAVretTapeMulMPI, InType>(
                                                kTestParam, PPC_SETTINGS_kurpiakov_a_vert_tape_mat_vec_mul),

@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
@@ -10,24 +13,28 @@
 
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
-class KurpiakovARunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_{};
   OutType expected_data_{};
 
   void SetUp() override {
-    std::vector<long long> matrix(5000 * 5000);
-    std::vector<long long> vector(5000);
+    const int64_t size = 8500;
 
-    for (int i = 0; i < 5000; ++i) {
-      matrix[i * 5000 + i] = i;
-      expected_data_.push_back(matrix[i * 5000 + i]);
+    std::vector<int64_t> matrix(static_cast<size_t>(size * size));
+    std::vector<int64_t> vector(static_cast<size_t>(size));
+
+    for (int64_t i = 0; i < size; ++i) {
+      for (int64_t j = 0; j < size; ++j) {
+        matrix[static_cast<size_t>(i * size + j)] = (i == j) ? (i + 1) : 0;
+      }
+      expected_data_.push_back(i + 1);
     }
 
-    for (int i = 0; i < 5000; ++i) {
-      vector[i] = 1;
+    for (int64_t i = 0; i < size; ++i) {
+      vector[i] = 1LL;
     }
 
-    input_data_ = std::make_tuple(5000, matrix, vector);
+    input_data_ = std::make_tuple(size, matrix, vector);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -45,7 +52,7 @@ class KurpiakovARunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InTyp
   }
 };
 
-TEST_P(KurpiakovARunPerfTestProcesses2, RunPerfModes) {
+TEST_P(KurpiakovAVertTapeMatVecMulPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -54,9 +61,8 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KurpiakovAVretTap
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = KurpiakovARunPerfTestProcesses2::CustomPerfTestName;
-
+const auto kPerfTestName = KurpiakovAVertTapeMatVecMulPerfTests::CustomPerfTestName;
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(MatVecMulTestsPerf, KurpiakovARunPerfTestProcesses2, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KurpiakovAVertTapeMatVecMulPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace kurpiakov_a_vert_tape_mat_vec_mul

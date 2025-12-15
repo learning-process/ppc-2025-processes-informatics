@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
 #include <tuple>
 #include <vector>
 
@@ -8,8 +9,8 @@
 
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
-using InType = std::tuple<long long, std::vector<long long>, std::vector<long long>>;
-using OutType = std::vector<long long>;
+using InType = std::tuple<int64_t, std::vector<int64_t>, std::vector<int64_t>>;
+using OutType = std::vector<int64_t>;
 using TestType = std::tuple<InType, std::string, OutType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

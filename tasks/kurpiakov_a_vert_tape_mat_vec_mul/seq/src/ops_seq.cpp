@@ -15,11 +15,26 @@ KurpiakovAVretTapeMulSEQ::KurpiakovAVretTapeMulSEQ(const InType &in) {
 }
 
 bool KurpiakovAVretTapeMulSEQ::ValidationImpl() {
-  // int size_of_vec = std::get<2>(GetInput()).size();
-  // int size_of_mat = std::get<1>(GetInput()).size();
-  int size_of_input = std::get<0>(GetInput());
-  // bool res = std::cmp_equal(size_of_vec / size_of_input, size_of_mat / (size_of_input * size_of_input));
-  return (size_of_input >= 0);
+  const auto &[size, matrix, vector] = GetInput();
+
+  if (size < 0) {
+    return false;
+  }
+
+  if (size == 0) {
+    return matrix.empty() && vector.empty();
+  }
+
+  auto expected_matrix_size = static_cast<size_t>(size) * static_cast<size_t>(size);
+  if (matrix.size() != expected_matrix_size) {
+    return false;
+  }
+
+  if (vector.size() != static_cast<size_t>(size)) {
+    return false;
+  }
+
+  return true;
 }
 
 bool KurpiakovAVretTapeMulSEQ::PreProcessingImpl() {
