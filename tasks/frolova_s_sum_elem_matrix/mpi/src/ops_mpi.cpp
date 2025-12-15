@@ -31,6 +31,12 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   std::cerr << "[Rank " << rank << "] RunImpl started\n";
 
   const auto &matrix = GetInput();
+
+  if (matrix.empty()) {
+    std::cerr << "[Rank " << rank << "] ERROR: GetInput() is empty. Did the test set it?\n";
+    return false;
+  }
+
   int rows = (rank == 0) ? static_cast<int>(matrix.size()) : 0;
 
   std::cerr << "[Rank " << rank << "] Before Bcast, rows=" << rows << "\n";
