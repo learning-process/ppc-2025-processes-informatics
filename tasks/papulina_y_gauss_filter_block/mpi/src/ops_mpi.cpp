@@ -15,7 +15,7 @@ namespace papulina_y_gauss_filter_block {
 PapulinaYGaussFilterMPI::PapulinaYGaussFilterMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = Picture{};
+  GetOutput() = Picture();
 }
 
 bool PapulinaYGaussFilterMPI::ValidationImpl() {
@@ -77,14 +77,14 @@ bool PapulinaYGaussFilterMPI::RunImpl() {
   int my_block_cols = block_cols_ + (col < extra_cols_ ? 1 : 0);
 
   // рассширенный блок с учетом всех соседей
-  int expanded_rows = my_block_rows + 2 * overlap_;
-  int expanded_cols = my_block_cols + 2 * overlap_;
+  int expanded_rows = my_block_rows + (2 * overlap_);
+  int expanded_cols = my_block_cols + (2 * overlap_);
 
   // координаты начала блока конкретного процесса в сетке
-  int start_row = row * block_rows_ + std::min(row, extra_rows_);
-  int start_col = col * block_cols_ + std::min(col, extra_cols_);
+  int start_row = (row * block_rows_) + std::min(row, extra_rows_);
+  int start_col = (col * block_cols_) + std::min(col, extra_cols_);
 
-  Block block{my_block_rows, my_block_cols, expanded_rows, expanded_cols, start_row, start_col};
+  Block block(my_block_rows, my_block_cols, expanded_rows, expanded_cols, start_row, start_col);
 
   std::vector<unsigned char> my_block(static_cast<size_t>(expanded_rows * expanded_cols * channels_), 0);
   if (rank == 0) {
@@ -93,9 +93,8 @@ bool PapulinaYGaussFilterMPI::RunImpl() {
   } else {
     MPI_Recv(my_block.data(), static_cast<int>(my_block.size()), MPI_UNSIGNED_CHAR, 0, 0, MPI_COMM_WORLD,
              MPI_STATUS_IGNORE);
-    // std::cout << rank << ": Successfully received " << my_block.size() << " bytes" << std::endl;
   }
-  // std::cout << rank << ": before editing\n";
+
   std::vector<unsigned char> filtered_block(static_cast<size_t>(expanded_rows * expanded_cols * channels_), 0);
   NewBlock(block, my_block, filtered_block);
   GetResult(rank, block, filtered_block);
@@ -112,32 +111,25 @@ void PapulinaYGaussFilterMPI::DataDistribution() {
     int p_block_rows = block_rows_ + (p_row < extra_rows_ ? 1 : 0);
     int p_block_cols = block_cols_ + (p_col < extra_cols_ ? 1 : 0);
 
-    int p_start_row = p_row * block_rows_ + std::min(p_row, extra_rows_);
-    int p_start_col = p_col * block_cols_ + std::min(p_col, extra_cols_);
+    int p_start_row = (p_row * block_rows_) + std::min(p_row, extra_rows_);
+    int p_start_col = (p_col * block_cols_) + std::min(p_col, extra_cols_);
 
-    int p_expanded_rows = p_block_rows + 2 * overlap_;
-    int p_expanded_cols = p_block_cols + 2 * overlap_;
-    Block block{p_block_rows, p_block_cols, p_expanded_rows, p_expanded_cols, p_start_row, p_start_col};
+    int p_expanded_rows = p_block_rows + (2 * overlap_);
+    int p_expanded_cols = p_block_cols + (2 * overlap_);
+    Block block(p_block_rows, p_block_cols, p_expanded_rows, p_expanded_cols, p_start_row, p_start_col);
     std::vector<unsigned char> p_block(static_cast<size_t>(p_expanded_rows * p_expanded_cols * channels_), 0);
-    // std::cout << rank << ": Block size for process " << pr << " = " << p_expanded_rows * p_expanded_cols * channels_
-    // << std::endl;
+
     CalculateBlock(block, p_block);
-    // std::cout << rank << ": Sending " << p_block.size() << " bytes to process " << pr << std::endl;
+
     MPI_Send(p_block.data(), static_cast<int>(p_block.size()), MPI_UNSIGNED_CHAR, pr, 0, MPI_COMM_WORLD);
   }
-  // std::cout << "Finished distribution\n";
 }
 void PapulinaYGaussFilterMPI::ClampCoordinates(int &global_i, int &global_j, int height, int width) {
-  if (global_i < 0) {
-    global_i = 0;
-  }
+  global_i = std::max(global_i, 0);
   if (global_i >= height) {
     global_i = height - 1;
   }
-
-  if (global_j < 0) {
-    global_j = 0;
-  }
+  global_j = std::max(global_j, 0);
   if (global_j >= width) {
     global_j = width - 1;
   }
@@ -151,8 +143,8 @@ void PapulinaYGaussFilterMPI::CalculateBlock(const Block &block, std::vector<uns
       ClampCoordinates(global_i, global_j, height_, width_);
 
       for (int ch = 0; ch < channels_; ch++) {
-        int local_idx = ((i + overlap_) * block.expanded_cols + (j + overlap_)) * channels_ + ch;
-        int global_idx = (global_i * width_ + global_j) * channels_ + ch;
+        int local_idx = (((i + overlap_) * block.expanded_cols + (j + overlap_)) * channels_) + ch;
+        int global_idx = ((global_i * width_ + global_j) * channels_) + ch;
         my_block[local_idx] = Pic_.pixels[global_idx];
       }
     }
@@ -174,14 +166,14 @@ void PapulinaYGaussFilterMPI::NewBlock(const Block &block, const std::vector<uns
 
         for (int ki = -1; ki <= 1; ++ki) {
           for (int kj = -1; kj <= 1; ++kj) {
-            const int idx = ((i + ki) * expanded_cols + (j + kj)) * channels_ + ch;
+            const int idx = (((i + ki) * expanded_cols + (j + kj)) * channels_) + ch;
             sum += static_cast<float>(my_block[idx]) * (*kernel_ptr);
             ++kernel_ptr;
           }
         }
 
         sum = std::max(0.0F, std::min(255.0F, sum));
-        const int dst_idx = (i * expanded_cols + j) * channels_ + ch;
+        const int dst_idx = ((i * expanded_cols + j) * channels_) + ch;
         filtered_block[dst_idx] = static_cast<unsigned char>(std::lround(sum));
       }
     }
@@ -190,7 +182,7 @@ void PapulinaYGaussFilterMPI::NewBlock(const Block &block, const std::vector<uns
 void PapulinaYGaussFilterMPI::GetResult(const int &rank, const Block &block,
                                         const std::vector<unsigned char> &filtered_block) {
   std::vector<unsigned char> my_result(static_cast<size_t>(block.my_block_rows * block.my_block_cols * channels_));
-  ExtractBlock(block, filtered_block, my_result);  // получаем резульаты без соседей
+  ExtractBlock(block, filtered_block, my_result);
   std::vector<unsigned char> final_image(static_cast<size_t>(height_ * width_ * channels_), 0);
   if (rank == 0) {
     FillImage(block, my_result, final_image);
@@ -201,39 +193,31 @@ void PapulinaYGaussFilterMPI::GetResult(const int &rank, const Block &block,
       int src_block_rows = block_rows_ + (src_row < extra_rows_ ? 1 : 0);
       int src_block_cols = block_cols_ + (src_col < extra_cols_ ? 1 : 0);
 
-      int src_start_row = src_row * block_rows_ + std::min(src_row, extra_rows_);
-      int src_start_col = src_col * block_cols_ + std::min(src_col, extra_cols_);
+      int src_start_row = (src_row * block_rows_) + std::min(src_row, extra_rows_);
+      int src_start_col = (src_col * block_cols_) + std::min(src_col, extra_cols_);
 
-      Block src_block{src_block_rows, src_block_cols, src_block_rows, src_block_cols, src_start_row, src_start_col};
+      Block src_block(src_block_rows, src_block_cols, src_block_rows, src_block_cols, src_start_row, src_start_col);
 
       std::vector<unsigned char> src_result(static_cast<size_t>(src_block_rows * src_block_cols * channels_));
 
       MPI_Recv(src_result.data(), src_block_rows * src_block_cols * channels_, MPI_UNSIGNED_CHAR, src, 0,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      // std::cout << "2: process 0 get data of the size " <<  src_result.size() << std::endl;
       FillImage(src_block, src_result, final_image);
     }
   } else {
     MPI_Send(my_result.data(), block.my_block_rows * block.my_block_cols * channels_, MPI_UNSIGNED_CHAR, 0, 0,
              MPI_COMM_WORLD);
-    // std::cout << "2: process " << rank << " sent data of the size " << my_result.size() << std::endl;
   }
   MPI_Bcast(final_image.data(), height_ * width_ * channels_, MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
-  GetOutput() = Picture{height_, width_, channels_, final_image};
-  /*std::cout << rank << ": Result: ";
-    for(int i=0; i<GetOutput().pixels.size(); i++){
-      std::cout << (int)GetOutput().pixels[i] << " ";
-    }
-  std::cout << std::endl;
-  */
+  GetOutput() = Picture(height_, width_, channels_, final_image);
 }
 void PapulinaYGaussFilterMPI::ExtractBlock(const Block &block, const std::vector<unsigned char> &filtered_block,
                                            std::vector<unsigned char> &my_result) const {
   for (int i = 0; i < block.my_block_rows; i++) {
     for (int j = 0; j < block.my_block_cols; j++) {
       for (int ch = 0; ch < channels_; ch++) {
-        int src_idx = ((i + overlap_) * block.expanded_cols + (j + overlap_)) * channels_ + ch;
-        int dst_idx = (i * block.my_block_cols + j) * channels_ + ch;
+        int src_idx = (((i + overlap_) * block.expanded_cols + (j + overlap_)) * channels_) + ch;
+        int dst_idx = (((i * block.my_block_cols) + j) * channels_) + ch;
         my_result[dst_idx] = filtered_block[src_idx];
       }
     }
@@ -247,8 +231,8 @@ void PapulinaYGaussFilterMPI::FillImage(const Block &block, const std::vector<un
       int global_j = block.start_col + j;
 
       for (int ch = 0; ch < channels_; ch++) {
-        int src_idx = (i * block.my_block_cols + j) * channels_ + ch;
-        int dst_idx = (global_i * width_ + global_j) * channels_ + ch;
+        int src_idx = ((i * block.my_block_cols + j) * channels_) + ch;
+        int dst_idx = ((global_i * width_ + global_j) * channels_) + ch;
         final_image[dst_idx] = my_result[src_idx];
       }
     }

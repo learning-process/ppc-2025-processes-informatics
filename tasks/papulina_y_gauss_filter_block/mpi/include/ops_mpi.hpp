@@ -13,6 +13,13 @@ struct Block {
   int expanded_cols = 0;
   int start_row = 0;
   int start_col = 0;
+  Block(int mb_rows, int mb_cols, int exp_rows, int exp_cols, int s_row, int s_col)
+      : my_block_rows(mb_rows),
+        my_block_cols(mb_cols),
+        expanded_rows(exp_rows),
+        expanded_cols(exp_cols),
+        start_row(s_row),
+        start_col(s_col) {}
 };
 
 class PapulinaYGaussFilterMPI : public BaseTask {

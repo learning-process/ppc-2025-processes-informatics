@@ -13,7 +13,7 @@ namespace papulina_y_gauss_filter_block {
 PapulinaYGaussFilterSEQ::PapulinaYGaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = Picture{};
+  GetOutput() = Picture();
 }
 
 bool PapulinaYGaussFilterSEQ::ValidationImpl() {
@@ -27,8 +27,8 @@ bool PapulinaYGaussFilterSEQ::PreProcessingImpl() {
 
 bool PapulinaYGaussFilterSEQ::RunImpl() {
   int k = Pic_.channels;
-  Picture result{Pic_.width, Pic_.height, Pic_.channels,
-                 std::vector<unsigned char>(static_cast<size_t>(Pic_.width * Pic_.height * k), 0)};
+  Picture result(Pic_.width, Pic_.height, Pic_.channels,
+                 std::vector<unsigned char>(static_cast<size_t>(Pic_.width * Pic_.height * k), 0));
   for (int col = 0; col < Pic_.width; col++) {
     for (int row = 0; row < Pic_.height; row++) {
       int index = (row * Pic_.width + col) * k;
@@ -45,16 +45,11 @@ bool PapulinaYGaussFilterSEQ::PostProcessingImpl() {
   return true;
 }
 void PapulinaYGaussFilterSEQ::ClampCoordinates(int &n_x, int &n_y) const {
-  if (n_x < 0) {
-    n_x = 0;
-  }
+  n_x = std::max(n_x, 0);
   if (n_x >= Pic_.width) {
     n_x = Pic_.width - 1;
   }
-
-  if (n_y < 0) {
-    n_y = 0;
-  }
+  n_y = std::max(n_y, 0);
   if (n_y >= Pic_.height) {
     n_y = Pic_.height - 1;
   }

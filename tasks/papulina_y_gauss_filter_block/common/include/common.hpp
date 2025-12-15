@@ -3,6 +3,8 @@
 
 #include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 #include "task/include/task.hpp"
 
@@ -16,6 +18,9 @@ struct Picture {
   bool operator==(const Picture &other) const {
     return (other.width == width && other.height == height && other.channels == channels && other.pixels == pixels);
   }
+  Picture() = default;
+
+  Picture(int w, int h, int c, std::vector<unsigned char> p) : width(w), height(h), channels(c), pixels(std::move(p)) {}
 };
 
 using InType = Picture;

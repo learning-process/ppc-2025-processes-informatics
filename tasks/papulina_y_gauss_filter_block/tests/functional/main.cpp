@@ -39,8 +39,7 @@ class PapulinaYFuncTestsGaussFilter : public ppc::util::BaseRunFuncTests<InType,
       pixels[i] = static_cast<unsigned char>(dist(gen));
     }
 
-    input_data_ = Picture{width, height, channels, pixels};
-
+    input_data_ = Picture(width, height, channels, pixels);
     PapulinaYGaussFilterSEQ seq_filter(input_data_);
     seq_filter.Validation();
     seq_filter.PreProcessing();
@@ -50,11 +49,6 @@ class PapulinaYFuncTestsGaussFilter : public ppc::util::BaseRunFuncTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    /*std::cout << "Output: ";
-    for(int i=0; i<output_data.pixels.size(); i++){
-      std::cout << (int)output_data.pixels[i] << " ";
-    }
-    std::cout << std::endl;*/
     return (output_data.pixels == expected_result_);
   }
 
@@ -73,12 +67,25 @@ TEST_P(PapulinaYFuncTestsGaussFilter, GaussFilterFuncTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 9> kTestParam = {
-    std::make_tuple("Random3x3BW", 3, 3, 1),     std::make_tuple("Random4x4BW", 4, 4, 1),
-    std::make_tuple("Random5x5BW", 5, 5, 1),     std::make_tuple("Random6x6BW", 6, 6, 1),
-    std::make_tuple("Random3x3RGB", 3, 3, 3),    std::make_tuple("Random4x4RGB", 4, 4, 3),
-    std::make_tuple("Random5x5RGB", 5, 5, 3),    std::make_tuple("Random10x10BW", 10, 10, 1),
-    std::make_tuple("Random15x15RGB", 15, 15, 3)};
+const std::array<TestType, 23> kTestParam = {
+    std::make_tuple("Random3x3BW", 3, 3, 1), std::make_tuple("Random4x4BW", 4, 4, 1),
+    std::make_tuple("Random5x5BW", 5, 5, 1), std::make_tuple("Random6x6BW", 6, 6, 1),
+    std::make_tuple("Random3x3RGB", 3, 3, 3), std::make_tuple("Random4x4RGB", 4, 4, 3),
+    std::make_tuple("Random5x5RGB", 5, 5, 3), std::make_tuple("Random10x10BW", 10, 10, 1),
+    std::make_tuple("Random15x15RGB", 15, 15, 3),
+
+    //  для ClampCoordinates - граничные случаи
+    std::make_tuple("SinglePixelBW", 1, 1, 1), std::make_tuple("SinglePixelRGB", 1, 1, 3),
+    std::make_tuple("OneRow3ColsBW", 3, 1, 1), std::make_tuple("OneCol3RowsBW", 1, 3, 1),
+    std::make_tuple("WideImageBW", 50, 3, 1), std::make_tuple("TallImageBW", 3, 50, 1),
+
+    // для проверки разбиения на блоки в MPI
+    std::make_tuple("Size7x7BW", 7, 7, 1), std::make_tuple("Size11x11BW", 11, 11, 1),
+    std::make_tuple("Size13x13RGB", 13, 13, 3), std::make_tuple("Size17x17BW", 17, 17, 1),
+
+    //  для проверки разных соотношений сторон
+    std::make_tuple("Rect3x7BW", 3, 7, 1), std::make_tuple("Rect7x3BW", 7, 3, 1),
+    std::make_tuple("Rect5x8RGB", 5, 8, 3), std::make_tuple("Rect8x5RGB", 8, 5, 3)};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PapulinaYGaussFilterMPI, InType>(kTestParam, PPC_SETTINGS_papulina_y_gauss_filter_block),

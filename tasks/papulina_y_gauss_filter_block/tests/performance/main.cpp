@@ -12,15 +12,14 @@
 namespace papulina_y_gauss_filter_block {
 
 class PapulinaYPerfTestsGaussFilter : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int width_ = 800;
-  const int height_ = 840;
+  const int width_ = 1200;
+  const int height_ = 1200;
   const int channels_ = 3;
   InType input_data_;
   std::vector<unsigned char> expected_result_;
 
   void SetUp() override {
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(height_);
     std::uniform_int_distribution<> dist(0, 255);
 
     std::vector<unsigned char> pixels(static_cast<size_t>(width_ * height_ * channels_));
@@ -28,7 +27,7 @@ class PapulinaYPerfTestsGaussFilter : public ppc::util::BaseRunPerfTests<InType,
       pixels[i] = static_cast<unsigned char>(dist(gen));
     }
 
-    input_data_ = Picture{width_, height_, channels_, pixels};
+    input_data_ = Picture(width_, height_, channels_, pixels);
 
     PapulinaYGaussFilterSEQ seq_filter(input_data_);
     seq_filter.Validation();
