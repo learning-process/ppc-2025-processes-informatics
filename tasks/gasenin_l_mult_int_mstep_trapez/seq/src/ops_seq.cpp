@@ -27,10 +27,8 @@ bool GaseninLMultIntMstepTrapezSEQ::RunImpl() {
   double hx = (data.x2 - data.x1) / data.n_steps;
   double hy = (data.y2 - data.y1) / data.n_steps;
 
-  // Метод трапеций для двойного интеграла
   double sum = 0.0;
 
-  // Внутренние точки (вес 1)
   for (int i = 1; i < data.n_steps; i++) {
     double x = data.x1 + i * hx;
     for (int j = 1; j < data.n_steps; j++) {
@@ -39,22 +37,18 @@ bool GaseninLMultIntMstepTrapezSEQ::RunImpl() {
     }
   }
 
-  // Граничные точки (вес 0.5)
-  // Верхняя и нижняя границы (исключая углы)
   for (int i = 1; i < data.n_steps; i++) {
     double x = data.x1 + i * hx;
     sum += 0.5 * f(x, data.y1);
     sum += 0.5 * f(x, data.y2);
   }
 
-  // Левая и правая границы (исключая углы)
   for (int j = 1; j < data.n_steps; j++) {
     double y = data.y1 + j * hy;
     sum += 0.5 * f(data.x1, y);
     sum += 0.5 * f(data.x2, y);
   }
 
-  // Угловые точки (вес 0.25)
   sum += 0.25 * f(data.x1, data.y1);
   sum += 0.25 * f(data.x2, data.y1);
   sum += 0.25 * f(data.x1, data.y2);
