@@ -24,42 +24,25 @@ bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
 }
 
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
-  std::cerr << "RunImpl entered (before MPI init)\n";
-
   int rank = 0, size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Входящая матрица доступна только на rank 0
-  const int *data = nullptr;
-  int rows = 0, cols = 0;
+  std::cerr << "[Rank " << rank << "] RunImpl started\n";
 
-  if (rank == 0) {
-    data = reinterpret_cast<const int *>(taskData->inputs[0]);
-    rows = *reinterpret_cast<const int *>(taskData->inputs[1]);
-    cols = *reinterpret_cast<const int *>(taskData->inputs[2]);
-  }
+  const auto &matrix = GetInput();
+  int rows = (rank == 0) ? static_cast<int>(matrix.size()) : 0;
 
-  // Рассылаем количество строк всем процессам
+  std::cerr << "[Rank " << rank << "] Before Bcast, rows=" << rows << "\n";
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  std::cerr << "[Rank " << rank << "] After Bcast, rows=" << rows << "\n";
 
   if (rows == 0) {
     if (rank == 0) {
-      *reinterpret_cast<OutType *>(taskData->outputs[0]) = static_cast<OutType>(0);
+      GetOutput() = static_cast<OutType>(0);
     }
+    std::cerr << "[Rank " << rank << "] Matrix is empty, exiting\n";
     return true;
-  }
-
-  // Создаём локальную рваную матрицу на rank 0
-  std::vector<std::vector<int>> matrix;
-  if (rank == 0) {
-    matrix.resize(rows);
-    for (int i = 0; i < rows; ++i) {
-      matrix[i].resize(cols);
-      for (int j = 0; j < cols; ++j) {
-        matrix[i][j] = data[i * cols + j];
-      }
-    }
   }
 
   // Размеры строк
@@ -70,74 +53,66 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
     }
   }
   MPI_Bcast(row_sizes.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
+  std::cerr << "[Rank " << rank << "] Row sizes broadcasted\n";
 
-  // Распределение строк по процессам
+  // Распределение строк
   std::vector<int> row_counts(size, 0), row_displs(size, 0);
-  int base_rows = rows / size;
-  int remainder = rows % size;
-  int current_displ = 0;
+  int base = rows / size, rem = rows % size, offset = 0;
   for (int i = 0; i < size; ++i) {
-    row_counts[i] = base_rows + (i < remainder ? 1 : 0);
-    row_displs[i] = current_displ;
-    current_displ += row_counts[i];
+    row_counts[i] = base + (i < rem ? 1 : 0);
+    row_displs[i] = offset;
+    offset += row_counts[i];
   }
+  std::cerr << "[Rank " << rank << "] Row distribution: start=" << row_displs[rank] << ", count=" << row_counts[rank]
+            << "\n";
 
-  // Подготовка сглаженной матрицы для Scatterv
-  std::vector<int> flat_data;
-  std::vector<int> elem_counts(size, 0), elem_displs(size, 0);
+  int my_start = row_displs[rank];
+  int my_rows = row_counts[rank];
+
+  int64_t local_sum = 0;
 
   if (rank == 0) {
-    int64_t total_elements = 0;
-    for (int i = 0; i < rows; ++i) {
-      total_elements += static_cast<int64_t>(row_sizes[i]);
-    }
-    flat_data.resize(static_cast<size_t>(total_elements));
-
-    int current_elem_displ = 0;
-    for (int proc = 0; proc < size; ++proc) {
-      elem_counts[proc] = 0;
-      for (int j = 0; j < row_counts[proc]; ++j) {
-        int row_idx = row_displs[proc] + j;
-        elem_counts[proc] += row_sizes[row_idx];
+    std::cerr << "[Rank 0] Calculating sum for own rows\n";
+    for (int i = my_start; i < my_start + my_rows; ++i) {
+      for (int val : matrix[i]) {
+        local_sum += val;
       }
-      elem_displs[proc] = current_elem_displ;
-      current_elem_displ += elem_counts[proc];
     }
 
-    // Сглаживаем матрицу
-    int idx = 0;
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < row_sizes[i]; ++j) {
-        flat_data[idx++] = matrix[i][j];
+    // Отправляем строки остальным процессам
+    for (int p = 1; p < size; ++p) {
+      int start = row_displs[p];
+      int count = row_counts[p];
+      for (int i = 0; i < count; ++i) {
+        MPI_Send(matrix[start + i].data(), row_sizes[start + i], MPI_INT, p, 0, MPI_COMM_WORLD);
+        std::cerr << "[Rank 0] Sent row " << start + i << " to rank " << p << "\n";
+      }
+    }
+  } else {
+    std::cerr << "[Rank " << rank << "] Receiving rows\n";
+    for (int i = 0; i < my_rows; ++i) {
+      std::vector<int> row(row_sizes[my_start + i]);
+      MPI_Recv(row.data(), row.size(), MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      std::cerr << "[Rank " << rank << "] Received row " << my_start + i << "\n";
+      for (int val : row) {
+        local_sum += val;
       }
     }
   }
 
-  // Рассылаем параметры Scatterv всем процессам
-  MPI_Bcast(elem_counts.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(elem_displs.data(), size, MPI_INT, 0, MPI_COMM_WORLD);
+  std::cerr << "[Rank " << rank << "] Local sum = " << local_sum << "\n";
 
-  int my_elem_count = elem_counts[rank];
-  std::vector<int> local_data(my_elem_count);
-
-  MPI_Scatterv(rank == 0 ? flat_data.data() : nullptr, elem_counts.data(), elem_displs.data(), MPI_INT,
-               local_data.data(), my_elem_count, MPI_INT, 0, MPI_COMM_WORLD);
-
-  // Вычисляем локальную сумму
-  int64_t local_sum = 0;
-  for (int i = 0; i < my_elem_count; ++i) {
-    local_sum += local_data[i];
-  }
-
-  // Сводим локальные суммы в глобальную
   int64_t global_sum = 0;
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    *reinterpret_cast<OutType *>(taskData->outputs[0]) = static_cast<OutType>(global_sum);
+    GetOutput() = static_cast<OutType>(global_sum);
+    std::cerr << "[Rank 0] Global sum = " << global_sum << "\n";
   }
 
   MPI_Barrier(MPI_COMM_WORLD);
+  std::cerr << "[Rank " << rank << "] RunImpl finished\n";
+
   return true;
 }
 
