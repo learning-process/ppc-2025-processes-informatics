@@ -1,0 +1,114 @@
+#include "egashin_k_iterative_simple/seq/include/ops_seq.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
+namespace egashin_k_iterative_simple {
+
+TestTaskSEQ::TestTaskSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = std::vector<double>(in.A.size(), 0.0);
+}
+
+bool TestTaskSEQ::ValidationImpl() {
+  const auto &input = GetInput();
+  size_t n = input.A.size();
+  
+  if (n == 0) {
+    return false;
+  }
+  
+  for (size_t i = 0; i < n; ++i) {
+    if (input.A[i].size() != n) {
+      return false;
+    }
+  }
+  
+  if (input.b.size() != n || input.x0.size() != n) {
+    return false;
+  }
+  
+  if (input.tolerance <= 0 || input.max_iterations <= 0) {
+    return false;
+  }
+  
+  return true;
+}
+
+bool TestTaskSEQ::PreProcessingImpl() {
+  return true;
+}
+
+double TestTaskSEQ::CalculateTau(const std::vector<std::vector<double>> &A) {
+  double max_row_sum = 0.0;
+  size_t n = A.size();
+  
+  for (size_t i = 0; i < n; ++i) {
+    double row_sum = 0.0;
+    for (size_t j = 0; j < n; ++j) {
+      row_sum += std::abs(A[i][j]);
+    }
+    max_row_sum = std::max(max_row_sum, row_sum);
+  }
+  
+  if (max_row_sum < 1e-10) {
+    return 0.1;
+  }
+  return 1.0 / (max_row_sum + 1.0);
+}
+
+double TestTaskSEQ::CalculateNorm(const std::vector<double> &v) {
+  double norm = 0.0;
+  for (double val : v) {
+    norm += val * val;
+  }
+  return std::sqrt(norm);
+}
+
+bool TestTaskSEQ::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tolerance) {
+  double diff_norm = 0.0;
+  for (size_t i = 0; i < x_old.size(); ++i) {
+    double diff = x_new[i] - x_old[i];
+    diff_norm += diff * diff;
+  }
+  return std::sqrt(diff_norm) < tolerance;
+}
+
+bool TestTaskSEQ::RunImpl() {
+  const auto &input = GetInput();
+  size_t n = input.A.size();
+  
+  double tau = CalculateTau(input.A);
+  
+  std::vector<double> x = input.x0;
+  std::vector<double> x_new(n);
+  
+  for (int iter = 0; iter < input.max_iterations; ++iter) {
+    for (size_t i = 0; i < n; ++i) {
+      double Ax_i = 0.0;
+      for (size_t j = 0; j < n; ++j) {
+        Ax_i += input.A[i][j] * x[j];
+      }
+      x_new[i] = x[i] + tau * (input.b[i] - Ax_i);
+    }
+    
+    if (CheckConvergence(x, x_new, input.tolerance)) {
+      GetOutput() = x_new;
+      return true;
+    }
+    
+    x = x_new;
+  }
+  
+  GetOutput() = x_new;
+  return true;
+}
+
+bool TestTaskSEQ::PostProcessingImpl() {
+  return true;
+}
+
+}  // namespace egashin_k_iterative_simple
+
