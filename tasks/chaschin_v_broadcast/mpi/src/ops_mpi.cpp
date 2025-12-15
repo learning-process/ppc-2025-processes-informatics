@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-#include "util/include/util.hpp"
-
 namespace chaschin_v_broadcast {
 
 template <typename T>
