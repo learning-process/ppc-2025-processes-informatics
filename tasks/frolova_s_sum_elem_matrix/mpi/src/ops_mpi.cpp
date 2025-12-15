@@ -20,7 +20,29 @@ bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
 }
 
 bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
-  return true;
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  bool valid = true;
+  if (rank == 0) {
+    const auto &matrix = GetInput();
+    if (matrix.empty()) {
+      std::cerr << "[Rank 0] Validation failed: matrix is empty\n";
+      valid = false;
+    } else {
+      for (size_t i = 0; i < matrix.size(); ++i) {
+        if (matrix[i].empty()) {
+          std::cerr << "[Rank 0] Validation failed: row " << i << " is empty\n";
+          valid = false;
+          break;
+        }
+      }
+    }
+  }
+
+  // Рассылаем результат валидации всем процессам
+  MPI_Bcast(&valid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+  return valid;
 }
 
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
@@ -30,29 +52,24 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
 
   std::cerr << "[Rank " << rank << "] RunImpl started\n";
 
-  // Указатель на матрицу только для rank 0
-  const std::vector<std::vector<int>> *matrix_ptr = nullptr;
-  if (rank == 0) {
-    matrix_ptr = &GetInput();
-    if (matrix_ptr->empty()) {
-      std::cerr << "[Rank 0] ERROR: Input matrix is empty\n";
+  // Проверяем валидацию
+  if (!ValidationImpl()) {
+    if (rank == 0) {
       GetOutput() = static_cast<OutType>(0);
-      return true;
     }
+    std::cerr << "[Rank " << rank << "] Matrix is invalid, exiting\n";
+    return true;
   }
 
-  // Получаем количество строк
-  int rows = 0;
-  if (rank == 0) {
-    rows = static_cast<int>(matrix_ptr->size());
-  }
+  const auto &matrix = GetInput();  // теперь на rank 0 точно есть данные
+
+  int rows = (rank == 0) ? static_cast<int>(matrix.size()) : 0;
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Создаём вектор размеров строк
   std::vector<int> row_sizes(rows, 0);
   if (rank == 0) {
     for (int i = 0; i < rows; ++i) {
-      row_sizes[i] = static_cast<int>((*matrix_ptr)[i].size());
+      row_sizes[i] = static_cast<int>(matrix[i].size());
     }
   }
   MPI_Bcast(row_sizes.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
@@ -74,7 +91,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
   if (rank == 0) {
     // Считаем сумму своих строк
     for (int i = my_start; i < my_start + my_rows; ++i) {
-      for (int val : (*matrix_ptr)[i]) {
+      for (int val : matrix[i]) {
         local_sum += val;
       }
     }
@@ -84,7 +101,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
       int start = row_displs[p];
       int count = row_counts[p];
       for (int i = 0; i < count; ++i) {
-        MPI_Send((*matrix_ptr)[start + i].data(), row_sizes[start + i], MPI_INT, p, 0, MPI_COMM_WORLD);
+        MPI_Send(matrix[start + i].data(), row_sizes[start + i], MPI_INT, p, 0, MPI_COMM_WORLD);
       }
     }
   } else {
