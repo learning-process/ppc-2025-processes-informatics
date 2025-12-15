@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "egashin_k_iterative_simple/common/include/common.hpp"
+
 namespace egashin_k_iterative_simple {
 
 TestTaskMPI::TestTaskMPI(const InType &in) {

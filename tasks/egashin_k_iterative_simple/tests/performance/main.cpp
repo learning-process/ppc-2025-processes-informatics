@@ -85,6 +85,8 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfParams);
 
 const auto kPerfTestName = EgashinKIterativeSimplePerfTest::CustomPerfTestName;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace,
+// modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimplePerf, EgashinKIterativeSimplePerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace egashin_k_iterative_simple

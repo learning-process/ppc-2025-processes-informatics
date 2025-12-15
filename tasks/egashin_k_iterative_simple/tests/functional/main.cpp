@@ -94,6 +94,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTaskParams);
 
 const auto kFuncTestName = EgashinKIterativeSimpleFuncTest::PrintFuncTestName<EgashinKIterativeSimpleFuncTest>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimpleFunc, EgashinKIterativeSimpleFuncTest, kGtestValues, kFuncTestName);
 
 }  // namespace
