@@ -8,6 +8,7 @@
 
 namespace guseva_a_hypercube {
 
+namespace {
 class GusevaAHypercubePerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1e8;
   InType input_data_;
@@ -40,5 +41,5 @@ const auto kPerfTestName = GusevaAHypercubePerfTestProcesses::CustomPerfTestName
 
 // NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(GusevaAHypercubePerf, GusevaAHypercubePerfTestProcesses, kGtestValues, kPerfTestName);
-
+}  // namespace
 }  // namespace guseva_a_hypercube

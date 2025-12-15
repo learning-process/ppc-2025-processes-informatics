@@ -43,7 +43,7 @@ class GusevaARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-TEST_P(GusevaARunFuncTestsProcesses, Hypercube) {
+TEST_P(GusevaARunFuncTestsProcesses, GusevaAHypercubeFunc) {
   ExecuteTest(GetParam());
 }
 
@@ -94,10 +94,10 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<guseva_a_hyper
 inline const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 inline const auto kPerfTestName = GusevaARunFuncTestsProcesses::PrintFuncTestName<GusevaARunFuncTestsProcesses>;
-
+namespace {
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(GusevaAHypercube, GusevaARunFuncTestsProcesses, kGtestValues, kPerfTestName);
-
+INSTANTIATE_TEST_SUITE_P(GusevaAHypercubeFunc, GusevaARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+}  // namespace
 }  // namespace
 
 }  // namespace guseva_a_hypercube
