@@ -35,6 +35,14 @@ bool VotincevDQsortBatcherMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+  // если процесс 1 - то просто как в SEQ
+  if (proc_n == 1) {
+    auto out = GetInput();
+    QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
+    GetOutput() = out;
+    return true;
+  }
+
   // размер массива знает только 0-й процесс
   int total_size = 0;
   if (rank == 0) {
@@ -45,14 +53,6 @@ bool VotincevDQsortBatcherMPI::RunImpl() {
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (total_size == 0) {
-    return true;
-  }
-
-  // если процесс 1 - то просто как в SEQ
-  if (proc_n == 1) {
-    auto out = GetInput();
-    QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
-    GetOutput() = out;
     return true;
   }
 
@@ -188,6 +188,7 @@ void VotincevDQsortBatcherMPI::GatherResult(int rank, int total_size, const std:
   } else {
     // остальные процессы отправляют свои данные 0-му
     MPI_Gatherv(local.data(), sizes[rank], MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    GetOutput() = std::vector<double>{};
   }
 }
 
