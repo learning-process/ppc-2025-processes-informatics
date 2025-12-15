@@ -14,9 +14,9 @@ namespace matrix_band_multiplication {
 class MatrixBandMultiplicationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    constexpr std::size_t kRowsA = 300;
-    constexpr std::size_t kColsA = 200;
-    constexpr std::size_t kColsB = 250;
+    constexpr std::size_t kRowsA = 640;
+    constexpr std::size_t kColsA = 640;
+    constexpr std::size_t kColsB = 640;
 
     input_.a.rows = kRowsA;
     input_.a.cols = kColsA;
