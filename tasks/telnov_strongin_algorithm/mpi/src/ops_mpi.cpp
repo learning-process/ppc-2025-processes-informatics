@@ -33,14 +33,12 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const auto &in = GetInput();
-  const double a = in.a;
-  const double b = in.b;
   const double eps = in.eps;
 
   auto f = [](double x) { return ((x - 1.0) * (x - 1.0)) + 1.0; };
 
-  std::vector<double> x_vals{a, b};
-  std::vector<double> f_vals{f(a), f(b)};
+  std::vector<double> x_vals{in.a, in.b};
+  std::vector<double> f_vals{f(in.a), f(in.b)};
 
   const double r = 2.0;
   const int k_max_iters = 100;
@@ -51,39 +49,41 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
 
     double m = 0.0;
     for (std::size_t i = 1; i < x_vals.size(); ++i) {
-      m = std::max(m, std::abs(f_vals[i] - f_vals[i - 1]) / (x_vals[i] - x_vals[i - 1]));
+      const double dx = x_vals[i] - x_vals[i - 1];
+      const double df = std::abs(f_vals[i] - f_vals[i - 1]);
+      m = std::max(m, df / dx);
     }
-
     if (m == 0.0) {
       m = 1.0;
     }
 
-    double local_max_r = -1e9;
-    int local_idx = 1;
-
-    for (std::size_t i = static_cast<std::size_t>(rank) + 1; i < x_vals.size(); i += static_cast<std::size_t>(size)) {
-      const double dx = x_vals[i] - x_vals[i - 1];
-      const double df = f_vals[i] - f_vals[i - 1];
-      const double r_val = (r * dx) + ((df * df) / (r * dx)) - (2.0 * (f_vals[i] + f_vals[i - 1]));
-
-      if (r_val > local_max_r) {
-        local_max_r = r_val;
-        local_idx = static_cast<int>(i);
-      }
-    }
-
-    struct max_data {
+    struct MaxData {
       double value{};
       int index{};
     };
 
-    max_data local_data{.value = local_max_r, .index = local_idx};
-    max_data global_data{};
+    MaxData local_data;
+    local_data.value = -1e9;
+    local_data.index = 1;
 
+    for (std::size_t i = static_cast<std::size_t>(rank) + 1; i < x_vals.size(); i += static_cast<std::size_t>(size)) {
+      const double dx = x_vals[i] - x_vals[i - 1];
+      const double df = f_vals[i] - f_vals[i - 1];
+
+      const double r_val = (r * dx) + ((df * df) / (r * dx)) - (2.0 * (f_vals[i] + f_vals[i - 1]));
+
+      if (r_val > local_data.value) {
+        local_data.value = r_val;
+        local_data.index = static_cast<int>(i);
+      }
+    }
+
+    MaxData global_data{};
     MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
     if (rank == 0) {
       const int idx = global_data.index;
+
       double new_x = (0.5 * (x_vals[idx] + x_vals[idx - 1])) - ((f_vals[idx] - f_vals[idx - 1]) / (2.0 * m));
 
       if (new_x <= x_vals[idx - 1] || new_x >= x_vals[idx]) {
