@@ -23,11 +23,7 @@ bool ShkrebkoMHypercubeSEQ::ValidationImpl() {
   }
 
   int destination = GetInput()[1];
-  if (destination < 0) {
-    return false;
-  }
-
-  return true;
+  return destination >= 0;
 }
 
 bool ShkrebkoMHypercubeSEQ::PreProcessingImpl() {

@@ -2,7 +2,6 @@
 #include <mpi.h>
 
 #include <array>
-#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
