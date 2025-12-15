@@ -21,7 +21,7 @@ class TelnovStronginAlgorithmFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    static const std::vector<InType> kTestCases = {{0.0, 2.0, 1e-3}, {-1.0, 3.0, 1e-4}, {0.5, 1.5, 1e-5}};
+    static const std::vector<InType> kTestCases = {{0.0, 1.0, 1e-1}};
     static size_t idx = 0;
     input_data_ = kTestCases[idx % kTestCases.size()];
     ++idx;

@@ -42,21 +42,27 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
   std::vector<double> x_vals = {a, b};
   std::vector<double> f_vals = {f(a), f(b)};
 
-  while ((x_vals.back() - x_vals.front()) > eps) {
+  const double r = 2.0;
+  const int kMaxIters = 100;
+  int iter = 0;
+
+  while ((x_vals.back() - x_vals.front()) > eps && iter < kMaxIters) {
+    ++iter;
+
+    // Вычисляем m
     double m = 0.0;
     for (std::size_t i = 1; i < x_vals.size(); ++i) {
       m = std::max(m, std::abs(f_vals[i] - f_vals[i - 1]) / (x_vals[i] - x_vals[i - 1]));
     }
-
     if (m == 0.0) {
       m = 1.0;
     }
 
-    const double r = 2.0;
+    // Локальный максимум r_val
     double local_max_r = -1e9;
     int local_idx = 1;
 
-    for (auto i = static_cast<std::size_t>(rank) + 1; i < x_vals.size(); i += static_cast<std::size_t>(size)) {
+    for (std::size_t i = static_cast<std::size_t>(rank) + 1; i < x_vals.size(); i += static_cast<std::size_t>(size)) {
       const double dx = x_vals[i] - x_vals[i - 1];
       const double df = f_vals[i] - f_vals[i - 1];
       const double r_val = (r * dx) + ((df * df) / (r * dx)) - (2.0 * (f_vals[i] + f_vals[i - 1]));
@@ -67,27 +73,28 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
       }
     }
 
-    struct MaxData {
-      double value{};
-      int index{};
-    };
-
-    MaxData local_data{.value = local_max_r, .index = local_idx};
-    MaxData global_data{};
+    // Используем массив для MPI_MAXLOC
+    struct {
+      double value;
+      int index;
+    } local_data = {local_max_r, local_idx}, global_data;
 
     MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
     if (rank == 0) {
       const int idx = global_data.index;
-      const double new_x = (0.5 * (x_vals[idx] + x_vals[idx - 1])) - ((f_vals[idx] - f_vals[idx - 1]) / (2.0 * m));
-
+      const double new_x = 0.5 * (x_vals[idx] + x_vals[idx - 1]) - (f_vals[idx] - f_vals[idx - 1]) / (2.0 * m);
       x_vals.insert(x_vals.begin() + idx, new_x);
       f_vals.insert(f_vals.begin() + idx, f(new_x));
+
+      // Логируем прогресс
+      std::cout << "Iter " << iter << ", new_x = " << new_x << ", interval = [" << x_vals.front() << ", "
+                << x_vals.back() << "]\n";
     }
 
+    // Синхронизация
     int n = static_cast<int>(x_vals.size());
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
     x_vals.resize(static_cast<std::size_t>(n));
     f_vals.resize(static_cast<std::size_t>(n));
 

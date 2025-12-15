@@ -35,7 +35,11 @@ bool TelnovStronginAlgorithmSEQ::RunImpl() {
   std::vector<double> x_vals = {a, b};
   std::vector<double> f_vals = {f(a), f(b)};
 
-  while ((x_vals.back() - x_vals.front()) > eps) {
+  const int kMaxIters = 100;
+  int iter = 0;
+
+  while ((x_vals.back() - x_vals.front()) > eps && iter < kMaxIters) {
+    ++iter;
     double m = 0.0;
     for (std::size_t i = 1; i < x_vals.size(); ++i) {
       m = std::max(m, std::abs(f_vals[i] - f_vals[i - 1]) / (x_vals[i] - x_vals[i - 1]));
