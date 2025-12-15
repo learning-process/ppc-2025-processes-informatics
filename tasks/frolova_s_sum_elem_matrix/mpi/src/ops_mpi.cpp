@@ -11,15 +11,11 @@
 
 namespace frolova_s_sum_elem_matrix {
 
-FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
+FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &) {
   SetTypeOfTask(GetStaticTypeOfTask());
-
-  GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
-  GetOutput() = 0;
   return true;
 }
 
