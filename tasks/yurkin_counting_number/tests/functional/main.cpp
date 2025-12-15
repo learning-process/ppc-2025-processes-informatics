@@ -35,8 +35,15 @@ class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    int expected = 0;
+    for (char c : input_data_) {
+      if (std::isdigit(static_cast<unsigned char>(c))) {
+        expected++;
+      }
+    }
+    return output_data == expected;
   }
+
   InType GetTestInputData() final {
     return input_data_;
   }
