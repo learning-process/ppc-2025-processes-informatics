@@ -38,7 +38,9 @@ bool VotincevDQsortBatcherMPI::RunImpl() {
   // если процесс 1 - то просто как в SEQ
   if (proc_n == 1) {
     auto out = GetInput();
-    QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
+    if (!out.empty()) {
+      QuickSort(out.data(), 0, static_cast<int>(out.size()) - 1);
+    }
     GetOutput() = out;
     return true;
   }
@@ -188,7 +190,6 @@ void VotincevDQsortBatcherMPI::GatherResult(int rank, int total_size, const std:
   } else {
     // остальные процессы отправляют свои данные 0-му
     MPI_Gatherv(local.data(), sizes[rank], MPI_DOUBLE, nullptr, nullptr, nullptr, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    GetOutput() = std::vector<double>{};
   }
 }
 
