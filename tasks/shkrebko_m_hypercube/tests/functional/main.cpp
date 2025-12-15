@@ -24,7 +24,7 @@ class ShkrebkoMHypercubeFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   void SetUp() override {
     TestType test_params = std::get<2>(GetParam());
     int value = std::get<0>(test_params);
-    
+
     int world_size = 1;
     int mpi_initialized = 0;
     MPI_Initialized(&mpi_initialized);
