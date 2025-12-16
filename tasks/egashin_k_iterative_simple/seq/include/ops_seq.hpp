@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "egashin_k_iterative_simple/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,9 +20,9 @@ class TestTaskSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double CalculateTau(const std::vector<std::vector<double>> &A);
-  double CalculateNorm(const std::vector<double> &v);
-  bool CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tolerance);
+  static double CalculateTau(const std::vector<std::vector<double>> &matrix);
+  static double CalculateNorm(const std::vector<double> &v);
+  static bool CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol);
 };
 
 }  // namespace egashin_k_iterative_simple

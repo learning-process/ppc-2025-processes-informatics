@@ -9,6 +9,7 @@
 #include "egashin_k_iterative_simple/mpi/include/ops_mpi.hpp"
 #include "egashin_k_iterative_simple/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace egashin_k_iterative_simple {
 
@@ -18,16 +19,16 @@ class EgashinKIterativeSimplePerfTest : public ppc::util::BaseRunPerfTests<InTyp
   OutType expected_;
 
   void SetUp() override {
-    std::vector<std::vector<double>> A(kN_, std::vector<double>(kN_, 0.0));
+    std::vector<std::vector<double>> matrix(kN_, std::vector<double>(kN_, 0.0));
     std::vector<double> x0(kN_, 0.0);
 
     for (int i = 0; i < kN_; ++i) {
-      A[i][i] = 4.0;
+      matrix[i][i] = 4.0;
       if (i > 0) {
-        A[i][i - 1] = -1.0;
+        matrix[i][i - 1] = -1.0;
       }
       if (i < kN_ - 1) {
-        A[i][i + 1] = -1.0;
+        matrix[i][i + 1] = -1.0;
       }
     }
 
@@ -37,7 +38,7 @@ class EgashinKIterativeSimplePerfTest : public ppc::util::BaseRunPerfTests<InTyp
       b[static_cast<std::size_t>(kN_ - 1)] = 3.0;
     }
 
-    input_.A = A;
+    input_.A = matrix;
     input_.b = b;
     input_.x0 = x0;
     input_.tolerance = 1e-6;
@@ -84,6 +85,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfParams);
 
 const auto kPerfTestName = EgashinKIterativeSimplePerfTest::CustomPerfTestName;
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimplePerf, EgashinKIterativeSimplePerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace egashin_k_iterative_simple

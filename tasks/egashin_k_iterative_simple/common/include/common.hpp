@@ -2,7 +2,6 @@
 
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -13,8 +12,8 @@ struct InputData {
   std::vector<std::vector<double>> A;
   std::vector<double> b;
   std::vector<double> x0;
-  double tolerance;
-  int max_iterations;
+  double tolerance{};
+  int max_iterations{};
 };
 
 using InType = InputData;
