@@ -69,7 +69,7 @@ void CalculateRowDistribution(int rank, int size, int height, int &start_row, in
   const int base_rows = height / size;
   const int extra_rows = height % size;
 
-  start_row = rank * base_rows + std::min(rank, extra_rows);
+  start_row = (rank * base_rows) + std::min(rank, extra_rows);
   end_row = start_row + base_rows + (rank < extra_rows ? 1 : 0);
   local_rows = end_row - start_row;
 }
@@ -80,7 +80,7 @@ void PrepareScatterParameters(int rank, int size, int width, int height, int ker
     sendcounts.resize(size);
     displs.resize(size);
     for (int process_idx = 0; process_idx < size; ++process_idx) {
-      const int row_start = process_idx * base_rows + std::min(process_idx, extra_rows);
+      const int row_start = (process_idx * base_rows) + std::min(process_idx, extra_rows);
       const int row_end = row_start + base_rows + (process_idx < extra_rows ? 1 : 0);
 
       if (row_end > row_start) {
@@ -101,7 +101,7 @@ void ProcessInteriorPixel(int buffer_y, int col, int width, int kernel_size, con
   const int kernel_sq = kernel_size * kernel_size;
   const int radius = kernel_size / 2;
 
-  const auto *row_ptr = local_data.data() + static_cast<ptrdiff_t>(buffer_y - radius) * width + (col - radius);
+  const auto *row_ptr = local_data.data() + (static_cast<ptrdiff_t>(buffer_y - radius) * width) + (col - radius);
   int sum = 0;
 
   for (int kernel_y = 0; kernel_y < kernel_size; ++kernel_y) {
@@ -110,7 +110,7 @@ void ProcessInteriorPixel(int buffer_y, int col, int width, int kernel_size, con
     }
     row_ptr += width;
   }
-  local_result[local_row_idx * width + col] = static_cast<uint8_t>(sum / kernel_sq);
+  local_result[(local_row_idx * width) + col] = static_cast<uint8_t>(sum / kernel_sq);
 }
 
 void ProcessBorderPixel(int global_y, int col, int width, int height, int kernel_radius, int actual_start,
@@ -125,12 +125,12 @@ void ProcessBorderPixel(int global_y, int col, int width, int height, int kernel
 
     for (int kernel_x = -kernel_radius; kernel_x <= kernel_radius; ++kernel_x) {
       const int global_x_offset = Clamp(col + kernel_x, 0, width - 1);
-      sum += local_data[buffer_y * width + global_x_offset];
+      sum += local_data[(buffer_y * width) + global_x_offset];
       ++count;
     }
   }
 
-  const int index = local_row_idx * width + col;
+  const int index = (local_row_idx * width) + col;
   local_result[index] = (count > 0) ? static_cast<uint8_t>(sum / count) : 0;
 }
 
@@ -166,7 +166,7 @@ void PrepareGatherParameters(int rank, int size, int width, int height, std::vec
     const int extra_rows = height % size;
 
     for (int process_idx = 0; process_idx < size; ++process_idx) {
-      const int row_start = process_idx * base_rows + std::min(process_idx, extra_rows);
+      const int row_start = (process_idx * base_rows) + std::min(process_idx, extra_rows);
       const int row_end = row_start + base_rows + (process_idx < extra_rows ? 1 : 0);
       sendcounts[process_idx] = (row_end - row_start) * width;
       displs[process_idx] = row_start * width;

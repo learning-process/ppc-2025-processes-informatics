@@ -29,7 +29,7 @@ void ProcessInteriorPixelSeq(int row, int col, int width, int kernel_size, const
   const int kernel_sq = kernel_size * kernel_size;
   const int radius = kernel_size / 2;
 
-  const auto *row_ptr = src + static_cast<ptrdiff_t>(row - radius) * width + (col - radius);
+  const auto *row_ptr = src + (static_cast<ptrdiff_t>(row - radius) * width) + (col - radius);
   int sum = 0;
 
   for (int kernel_y = 0; kernel_y < kernel_size; ++kernel_y) {
@@ -38,7 +38,7 @@ void ProcessInteriorPixelSeq(int row, int col, int width, int kernel_size, const
     }
     row_ptr += width;
   }
-  dst[row * width + col] = static_cast<uint8_t>(sum / kernel_sq);
+  dst[(row * width) + col] = static_cast<uint8_t>(sum / kernel_sq);
 }
 
 void ProcessBorderPixelSeq(int row, int col, int width, int height, int kernel_radius, const uint8_t *src,
@@ -57,7 +57,7 @@ void ProcessBorderPixelSeq(int row, int col, int width, int height, int kernel_r
     }
   }
 
-  const int index = row * width + col;
+  const int index = (row * width) + col;
   if (count > 0) {
     dst[index] = static_cast<uint8_t>(sum / count);
   } else {
