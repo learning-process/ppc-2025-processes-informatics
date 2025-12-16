@@ -11,6 +11,7 @@
 #include "gasenin_l_mult_int_mstep_trapez/mpi/include/ops_mpi.hpp"
 #include "gasenin_l_mult_int_mstep_trapez/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace gasenin_l_mult_int_mstep_trapez {
 
