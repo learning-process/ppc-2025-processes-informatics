@@ -49,16 +49,16 @@ void SannikovIHorizontalBandGaussMPI::BuildRowPartition(int size, int n, std::ve
   const int rem = n % size;
 
   int disp = 0;
-  for (int r = 0; r < size; ++r) {
-    (*counts)[r] = base + ((r < rem) ? 1 : 0);
-    (*displs)[r] = disp;
-    disp += (*counts)[r];
+  for (int res = 0; res < size; ++res) {
+    (*counts)[res] = base + ((res < rem) ? 1 : 0);
+    (*displs)[res] = disp;
+    disp += (*counts)[res];
   }
 }
 
 bool SannikovIHorizontalBandGaussMPI::RunImpl() {
   const auto &input = GetInput();
-  const auto &A_in = std::get<0>(input);
+  const auto &a_in = std::get<0>(input);
   const auto &b_in = std::get<1>(input);
   const std::size_t band_in = std::get<2>(input);
 
@@ -70,27 +70,31 @@ bool SannikovIHorizontalBandGaussMPI::RunImpl() {
   int n = 0;
   int band_eff = 0;
   if (rank == 0) {
-    n = static_cast<int>(A_in.size());
+    n = static_cast<int>(a_in.size());
     band_eff = static_cast<int>(band_in);
   }
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&band_eff, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  int w = 2 * band_eff + 1;
+  int w = 0;
+  w = (2 * band_eff) + 1;
 
   std::vector<int> row_cnts;
   std::vector<int> row_disp;
   BuildRowPartition(size, n, &row_cnts, &row_disp);
-  int loc_rows = row_cnts[rank];
-  int row_begin = row_disp[rank];
+  int loc_rows = 0;
+  int row_begin = 0;
+  loc_rows = row_cnts[rank];
+  row_begin = row_disp[rank];
 
   std::vector<int> owner_of_row(static_cast<std::size_t>(n), 0);
-  for (int r = 0; r < size; ++r) {
-    int begin = row_disp[r];
-    int end = begin + row_cnts[r];
+  for (int res = 0; res < size; ++res) {
+    int begin = 0;
+    int end = 0;
+    begin = row_disp[res];
+    end = begin + row_cnts[res];
     for (int i = begin; i < end; ++i) {
-      owner_of_row[static_cast<std::size_t>(i)] = r;
+      owner_of_row[static_cast<std::size_t>(i)] = res;
     }
   }
 
@@ -100,14 +104,17 @@ bool SannikovIHorizontalBandGaussMPI::RunImpl() {
   if (rank == 0) {
     sendA.assign(static_cast<std::size_t>(n) * static_cast<std::size_t>(w), 0.0);
     sendb.resize(static_cast<std::size_t>(n));
+    int j_start = 0;
+    int j_end = 0;
+    int off = 0;
     for (int i = 0; i < n; ++i) {
-      int j_start = std::max(0, i - band_eff);
-      int j_end = std::min(n - 1, i + band_eff);
+      j_start = std::max(0, i - band_eff);
+      j_end = std::min(n - 1, i + band_eff);
 
       for (int j = j_start; j <= j_end; ++j) {
-        int off = j - (i - band_eff);
+        off = j - (i - band_eff);
         sendA[static_cast<std::size_t>(i) * static_cast<std::size_t>(w) + static_cast<std::size_t>(off)] =
-            A_in[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+            a_in[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
       }
 
       sendb[static_cast<std::size_t>(i)] = b_in[static_cast<std::size_t>(i)];
@@ -115,9 +122,9 @@ bool SannikovIHorizontalBandGaussMPI::RunImpl() {
   }
   std::vector<int> countsA(size);
   std::vector<int> displsA(size);
-  for (int r = 0; r < size; ++r) {
-    countsA[r] = row_cnts[r] * w;
-    displsA[r] = row_disp[r] * w;
+  for (int res = 0; res < size; ++res) {
+    countsA[res] = row_cnts[res] * w;
+    displsA[res] = row_disp[res] * w;
   }
 
   std::vector<double> A_loc(static_cast<std::size_t>(loc_rows * static_cast<std::size_t>(w)), 0.0);
@@ -131,21 +138,25 @@ bool SannikovIHorizontalBandGaussMPI::RunImpl() {
 
   std::vector<double> pivotSeg;
   pivotSeg.reserve(static_cast<std::size_t>(band_eff + 1));
-
+  int ow = 0;
+  int j_end = 0;
+  int len = 0;
   for (int k = 0; k < n; ++k) {
-    int ow = owner_of_row[static_cast<std::size_t>(k)];
-    int j_end = std::min(n - 1, k + band_eff);
-    int len = j_end - k + 1;
+    ow = owner_of_row[static_cast<std::size_t>(k)];
+    j_end = std::min(n - 1, k + band_eff);
+    len = j_end - k + 1;
 
     pivotSeg.assign(static_cast<std::size_t>(len), 0.0);
     double pivot_b = 0.0;
 
     if (rank == ow) {
-      int loc_k = k - row_begin;
-      double *rowk = &A_loc[static_cast<std::size_t>(loc_k) * static_cast<std::size_t>(w)];
-
+      int loc_k = 0;
+      double *rowk = nullptr;
+      loc_k = k - row_begin;
+      rowk = &A_loc[static_cast<std::size_t>(loc_k) * static_cast<std::size_t>(w)];
+      int band_off = 0;
       for (int j = k; j <= j_end; ++j) {
-        int band_off = j - (k - band_eff);
+        band_off = j - (k - band_eff);
         pivotSeg[static_cast<std::size_t>(j - k)] = rowk[static_cast<std::size_t>(band_off)];
       }
 
@@ -154,29 +165,33 @@ bool SannikovIHorizontalBandGaussMPI::RunImpl() {
 
     MPI_Bcast(pivotSeg.data(), len, MPI_DOUBLE, ow, MPI_COMM_WORLD);
     MPI_Bcast(&pivot_b, 1, MPI_DOUBLE, ow, MPI_COMM_WORLD);
-
-    double pivot = pivotSeg[0];
+    double pivot = 0;
+    pivot = pivotSeg[0];
     if (pivot == 0.0) {
       return false;
     }
-
-    int i_start = std::max(row_begin, k + 1);
-    int i_end = std::min(row_begin + loc_rows - 1, k + band_eff);
+    int i_start = 0;
+    int i_end = 0;
+    int loc_i = 0;
+    int off_ik = 0;
+    double *rowi = nullptr;
+    i_start = std::max(row_begin, k + 1);
+    i_end = std::min(row_begin + loc_rows - 1, k + band_eff);
 
     for (int i = i_start; i <= i_end; ++i) {
-      int loc_i = i - row_begin;
-      double *rowi = &A_loc[static_cast<std::size_t>(loc_i) * static_cast<std::size_t>(w)];
+      loc_i = i - row_begin;
+      rowi = &A_loc[static_cast<std::size_t>(loc_i) * static_cast<std::size_t>(w)];
 
-      int off_ik = k - (i - band_eff);
+      off_ik = k - (i - band_eff);
       if (off_ik < 0 || off_ik >= w) {
         continue;
       }
-
-      double mn = rowi[static_cast<std::size_t>(off_ik)] / pivot;
+      double mn = 0.0;
+      mn = rowi[static_cast<std::size_t>(off_ik)] / pivot;
       rowi[static_cast<std::size_t>(off_ik)] = 0.0;
-
+      int off_ij = 0;
       for (int j = k + 1; j <= j_end; ++j) {
-        int off_ij = j - (i - band_eff);
+        off_ij = j - (i - band_eff);
         if (off_ij >= 0 && off_ij < w) {
           rowi[static_cast<std::size_t>(off_ij)] -= mn * pivotSeg[static_cast<std::size_t>(j - k)];
         }
@@ -187,27 +202,29 @@ bool SannikovIHorizontalBandGaussMPI::RunImpl() {
   }
 
   std::vector<double> x(static_cast<std::size_t>(n), 0.0);
-
   for (int k = n - 1; k >= 0; --k) {
-    int ow = owner_of_row[static_cast<std::size_t>(k)];
+    ow = owner_of_row[static_cast<std::size_t>(k)];
     double xk = 0.0;
 
-    int j_end = std::min(n - 1, k + band_eff);
+    j_end = std::min(n - 1, k + band_eff);
 
     if (rank == ow) {
       int loc_i = k - row_begin;
-      double *rowk = &A_loc[static_cast<std::size_t>(loc_i) * static_cast<std::size_t>(w)];
+      double *rowk = nullptr;
+      rowk = &A_loc[static_cast<std::size_t>(loc_i) * static_cast<std::size_t>(w)];
 
       double s = 0.0;
+      int band_off = 0;
       for (int j = k + 1; j <= j_end; ++j) {
-        int band_off = j - (k - band_eff);
+        band_off = j - (k - band_eff);
         if (band_off >= 0 && band_off < w) {
           s += rowk[static_cast<std::size_t>(band_off)] * x[static_cast<std::size_t>(j)];
         }
       }
-
-      int off_kk = k - (k - band_eff);
-      double diag = rowk[static_cast<std::size_t>(off_kk)];
+      int off_kk = 0;
+      double diag = 0.0;
+      off_kk = k - (k - band_eff);
+      diag = rowk[static_cast<std::size_t>(off_kk)];
       if (diag == 0.0) {
         return false;
       }
