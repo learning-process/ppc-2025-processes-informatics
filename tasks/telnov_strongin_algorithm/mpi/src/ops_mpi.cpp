@@ -11,6 +11,11 @@
 
 namespace telnov_strongin_algorithm {
 
+struct MaxData {
+  double value{};
+  int index{};
+};
+
 TelnovStronginAlgorithmMPI::TelnovStronginAlgorithmMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -53,14 +58,7 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
       const double df = std::abs(f_vals[i] - f_vals[i - 1]);
       m = std::max(m, df / dx);
     }
-    if (m == 0.0) {
-      m = 1.0;
-    }
-
-    struct MaxData {
-      double value{};
-      int index{};
-    };
+    m = (m == 0.0) ? 1.0 : m;
 
     MaxData local_data;
     local_data.value = -1e9;
@@ -81,25 +79,26 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
     MaxData global_data{};
     MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
-    if (rank == 0) {
-      const int idx = global_data.index;
-
-      double new_x = (0.5 * (x_vals[idx] + x_vals[idx - 1])) - ((f_vals[idx] - f_vals[idx - 1]) / (2.0 * m));
-
-      if (new_x <= x_vals[idx - 1] || new_x >= x_vals[idx]) {
-        new_x = 0.5 * (x_vals[idx] + x_vals[idx - 1]);
-      }
-
-      x_vals.insert(x_vals.begin() + idx, new_x);
-      f_vals.insert(f_vals.begin() + idx, f(new_x));
+    if (rank != 0) {
+      int n = 0;
+      MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+      x_vals.resize(static_cast<std::size_t>(n));
+      f_vals.resize(static_cast<std::size_t>(n));
+      MPI_Bcast(x_vals.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      MPI_Bcast(f_vals.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      continue;
     }
+
+    const int idx = global_data.index;
+    double new_x = (0.5 * (x_vals[idx] + x_vals[idx - 1])) - ((f_vals[idx] - f_vals[idx - 1]) / (2.0 * m));
+
+    new_x = (new_x <= x_vals[idx - 1] || new_x >= x_vals[idx]) ? (0.5 * (x_vals[idx] + x_vals[idx - 1])) : new_x;
+
+    x_vals.insert(x_vals.begin() + idx, new_x);
+    f_vals.insert(f_vals.begin() + idx, f(new_x));
 
     int n = static_cast<int>(x_vals.size());
     MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    x_vals.resize(static_cast<std::size_t>(n));
-    f_vals.resize(static_cast<std::size_t>(n));
-
     MPI_Bcast(x_vals.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(f_vals.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
