@@ -6,6 +6,8 @@
 #include <type_traits>
 #include <vector>
 
+#include "ashihmin_d_scatter_trans_from_one_to_all/common/include/common.hpp"
+
 namespace ashihmin_d_scatter_trans_from_one_to_all {
 
 template <typename T>
@@ -75,7 +77,7 @@ bool AshihminDScatterTransFromOneToAllMPI<T>::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const MPI_Datatype mpi_type = GetMPIDataType<T>();
+  MPI_Datatype mpi_type = GetMPIDataType<T>();
   const int elements_per_proc = params.elements_per_process;
   const int root = params.root % size;
 
