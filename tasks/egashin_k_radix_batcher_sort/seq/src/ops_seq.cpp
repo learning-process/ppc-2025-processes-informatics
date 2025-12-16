@@ -16,11 +16,17 @@ TestTaskSEQ::TestTaskSEQ(const InType &in) {
   GetOutput() = {};
 }
 
-bool TestTaskSEQ::ValidationImpl() { return true; }
+bool TestTaskSEQ::ValidationImpl() {
+  return true;
+}
 
-bool TestTaskSEQ::PreProcessingImpl() { return true; }
+bool TestTaskSEQ::PreProcessingImpl() {
+  return true;
+}
 
-bool TestTaskSEQ::PostProcessingImpl() { return true; }
+bool TestTaskSEQ::PostProcessingImpl() {
+  return true;
+}
 
 uint64_t TestTaskSEQ::DoubleToSortable(double value) {
   uint64_t bits = 0;
@@ -52,9 +58,9 @@ void TestTaskSEQ::RadixSort(std::vector<double> &arr) {
     return;
   }
 
-  const int kBitsPerPass = 8;
-  const int kNumBuckets = 256;
-  const int kNumPasses = sizeof(uint64_t) * 8 / kBitsPerPass;
+  const int bits_per_pass = 8;
+  const int num_buckets = 256;
+  const int num_passes = static_cast<int>(sizeof(uint64_t) * 8 / bits_per_pass);
 
   std::size_t n = arr.size();
   std::vector<uint64_t> keys(n);
@@ -67,18 +73,18 @@ void TestTaskSEQ::RadixSort(std::vector<double> &arr) {
   }
 
   // LSD radix sort
-  for (int pass = 0; pass < kNumPasses; ++pass) {
-    int shift = pass * kBitsPerPass;
+  for (int pass = 0; pass < num_passes; ++pass) {
+    int shift = pass * bits_per_pass;
 
     // Count occurrences
-    std::vector<std::size_t> count(kNumBuckets + 1, 0);
+    std::vector<std::size_t> count(num_buckets + 1, 0);
     for (std::size_t i = 0; i < n; ++i) {
       std::size_t digit = (keys[i] >> shift) & 0xFF;
       count[digit + 1]++;
     }
 
     // Compute prefix sums
-    for (int i = 0; i < kNumBuckets; ++i) {
+    for (int i = 0; i < num_buckets; ++i) {
       count[i + 1] += count[i];
     }
 
@@ -108,4 +114,3 @@ bool TestTaskSEQ::RunImpl() {
 }
 
 }  // namespace egashin_k_radix_batcher_sort
-

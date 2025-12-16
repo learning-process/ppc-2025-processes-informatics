@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "egashin_k_radix_batcher_sort/common/include/common.hpp"
@@ -9,7 +11,9 @@ namespace egashin_k_radix_batcher_sort {
 
 class TestTaskMPI : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kMPI; }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
 
   explicit TestTaskMPI(const InType &in);
 
@@ -21,7 +25,7 @@ class TestTaskMPI : public BaseTask {
 
   static void RadixSort(std::vector<double> &arr);
   static uint64_t DoubleToSortable(double value);
-  static double SortableToDouble(uint64_t value);
+  static double SortableToDouble(uint64_t bits);
   static void BatcherOddEvenMerge(std::vector<double> &arr, int lo, int n, int r);
   static void BatcherOddEvenMergeSort(std::vector<double> &arr, int lo, int n);
   static void CompareExchange(std::vector<double> &arr, int i, int j);
@@ -30,4 +34,3 @@ class TestTaskMPI : public BaseTask {
 };
 
 }  // namespace egashin_k_radix_batcher_sort
-

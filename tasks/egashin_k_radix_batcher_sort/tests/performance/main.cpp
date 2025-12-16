@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
-#include <vector>
 
 #include "egashin_k_radix_batcher_sort/common/include/common.hpp"
 #include "egashin_k_radix_batcher_sort/mpi/include/ops_mpi.hpp"
@@ -18,7 +17,7 @@ class EgashinKRadixBatcherSortPerfTest : public ppc::util::BaseRunPerfTests<InTy
  protected:
   void SetUp() override {
     std::size_t arr_size = 1000000;
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_real_distribution<double> dist(-1e6, 1e6);
 
     input_.resize(arr_size);
@@ -27,7 +26,7 @@ class EgashinKRadixBatcherSortPerfTest : public ppc::util::BaseRunPerfTests<InTy
     }
 
     expected_ = input_;
-    std::sort(expected_.begin(), expected_.end());
+    std::ranges::sort(expected_);
   }
 
   bool CheckTestOutputData(OutType &output) override {
@@ -49,14 +48,18 @@ class EgashinKRadixBatcherSortPerfTest : public ppc::util::BaseRunPerfTests<InTy
     return true;
   }
 
-  InType GetTestInputData() override { return input_; }
+  InType GetTestInputData() override {
+    return input_;
+  }
 
  private:
   InType input_;
   OutType expected_;
 };
 
-TEST_P(EgashinKRadixBatcherSortPerfTest, Performance) { ExecuteTest(GetParam()); }
+TEST_P(EgashinKRadixBatcherSortPerfTest, Performance) {
+  ExecuteTest(GetParam());
+}
 
 const auto kPerfParams =
     ppc::util::MakeAllPerfTasks<InType, TestTaskMPI, TestTaskSEQ>(PPC_SETTINGS_egashin_k_radix_batcher_sort);
@@ -65,7 +68,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfParams);
 
 const auto kPerfTestName = EgashinKRadixBatcherSortPerfTest::CustomPerfTestName;
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortPerf, EgashinKRadixBatcherSortPerfTest, kGtestValues, kPerfTestName);
 
 }  // namespace egashin_k_radix_batcher_sort
-

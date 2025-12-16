@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include "egashin_k_radix_batcher_sort/common/include/common.hpp"
@@ -9,7 +10,9 @@ namespace egashin_k_radix_batcher_sort {
 
 class TestTaskSEQ : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() { return ppc::task::TypeOfTask::kSEQ; }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
   explicit TestTaskSEQ(const InType &in);
 
  private:
@@ -20,8 +23,7 @@ class TestTaskSEQ : public BaseTask {
 
   static void RadixSort(std::vector<double> &arr);
   static uint64_t DoubleToSortable(double value);
-  static double SortableToDouble(uint64_t value);
+  static double SortableToDouble(uint64_t bits);
 };
 
 }  // namespace egashin_k_radix_batcher_sort
-

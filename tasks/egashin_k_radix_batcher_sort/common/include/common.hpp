@@ -15,4 +15,3 @@ using TestType = std::tuple<InType, OutType, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace egashin_k_radix_batcher_sort
-

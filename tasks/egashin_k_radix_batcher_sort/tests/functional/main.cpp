@@ -4,11 +4,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <random>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "egashin_k_radix_batcher_sort/common/include/common.hpp"
 #include "egashin_k_radix_batcher_sort/mpi/include/ops_mpi.hpp"
@@ -20,7 +17,9 @@ namespace egashin_k_radix_batcher_sort {
 
 class EgashinKRadixBatcherSortFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) { return std::get<2>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
 
  protected:
   void SetUp() override {
@@ -48,7 +47,9 @@ class EgashinKRadixBatcherSortFuncTest : public ppc::util::BaseRunFuncTests<InTy
     return true;
   }
 
-  InType GetTestInputData() override { return input_; }
+  InType GetTestInputData() override {
+    return input_;
+  }
 
  private:
   InType input_;
@@ -60,7 +61,7 @@ namespace {
 // Helper function to generate sorted output from input
 inline OutType SortedOutput(const InType &input) {
   OutType result = input;
-  std::sort(result.begin(), result.end());
+  std::ranges::sort(result);
   return result;
 }
 
@@ -74,8 +75,7 @@ const std::array<TestType, 15> kTestParam = {
     std::make_tuple(InType{-1.0, -5.0, -2.0, -8.0, -3.0}, OutType{-8.0, -5.0, -3.0, -2.0, -1.0}, "MultipleNegative"),
     std::make_tuple(InType{3.0, -1.0, 4.0, -5.0, 2.0, -3.0}, OutType{-5.0, -3.0, -1.0, 2.0, 3.0, 4.0}, "MixedSigns"),
     std::make_tuple(InType{0.0, -0.0, 1.0, -1.0}, SortedOutput({0.0, -0.0, 1.0, -1.0}), "WithZeros"),
-    std::make_tuple(InType{3.14159, 2.71828, 1.41421, 1.61803}, OutType{1.41421, 1.61803, 2.71828, 3.14159},
-                    "DecimalNumbers"),
+    std::make_tuple(InType{3.14, 2.72, 1.41, 1.62}, OutType{1.41, 1.62, 2.72, 3.14}, "DecimalNumbers"),
     std::make_tuple(InType{1e10, 1e5, 1e15, 1e1, 1e8}, OutType{1e1, 1e5, 1e8, 1e10, 1e15}, "LargeNumbers"),
     std::make_tuple(InType{1e-10, 1e-5, 1e-15, 1e-1, 1e-8}, OutType{1e-15, 1e-10, 1e-8, 1e-5, 1e-1}, "SmallNumbers"),
     std::make_tuple(InType{5.0, 2.0, 5.0, 2.0, 5.0}, OutType{2.0, 2.0, 5.0, 5.0, 5.0}, "Duplicates"),
@@ -84,7 +84,9 @@ const std::array<TestType, 15> kTestParam = {
     std::make_tuple(InType{8.0, 4.0, 2.0, 6.0, 1.0, 5.0, 7.0, 3.0}, OutType{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0},
                     "PowerOf2Size")};
 
-TEST_P(EgashinKRadixBatcherSortFuncTest, RadixBatcherSort) { ExecuteTest(GetParam()); }
+TEST_P(EgashinKRadixBatcherSortFuncTest, RadixBatcherSort) {
+  ExecuteTest(GetParam());
+}
 
 const auto kTaskParams =
     std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort),
@@ -94,6 +96,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTaskParams);
 
 const auto kFuncTestName = EgashinKRadixBatcherSortFuncTest::PrintFuncTestName<EgashinKRadixBatcherSortFuncTest>;
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortFunc, EgashinKRadixBatcherSortFuncTest, kGtestValues, kFuncTestName);
 
 }  // namespace

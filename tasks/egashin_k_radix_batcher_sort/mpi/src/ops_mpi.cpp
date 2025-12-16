@@ -19,11 +19,17 @@ TestTaskMPI::TestTaskMPI(const InType &in) {
   GetOutput() = {};
 }
 
-bool TestTaskMPI::ValidationImpl() { return true; }
+bool TestTaskMPI::ValidationImpl() {
+  return true;
+}
 
-bool TestTaskMPI::PreProcessingImpl() { return true; }
+bool TestTaskMPI::PreProcessingImpl() {
+  return true;
+}
 
-bool TestTaskMPI::PostProcessingImpl() { return true; }
+bool TestTaskMPI::PostProcessingImpl() {
+  return true;
+}
 
 uint64_t TestTaskMPI::DoubleToSortable(double value) {
   uint64_t bits = 0;
@@ -52,9 +58,9 @@ void TestTaskMPI::RadixSort(std::vector<double> &arr) {
     return;
   }
 
-  const int kBitsPerPass = 8;
-  const int kNumBuckets = 256;
-  const int kNumPasses = sizeof(uint64_t) * 8 / kBitsPerPass;
+  const int bits_per_pass = 8;
+  const int num_buckets = 256;
+  const int num_passes = static_cast<int>(sizeof(uint64_t) * 8 / bits_per_pass);
 
   std::size_t n = arr.size();
   std::vector<uint64_t> keys(n);
@@ -65,16 +71,16 @@ void TestTaskMPI::RadixSort(std::vector<double> &arr) {
     keys[i] = DoubleToSortable(arr[i]);
   }
 
-  for (int pass = 0; pass < kNumPasses; ++pass) {
-    int shift = pass * kBitsPerPass;
+  for (int pass = 0; pass < num_passes; ++pass) {
+    int shift = pass * bits_per_pass;
 
-    std::vector<std::size_t> count(kNumBuckets + 1, 0);
+    std::vector<std::size_t> count(num_buckets + 1, 0);
     for (std::size_t i = 0; i < n; ++i) {
       std::size_t digit = (keys[i] >> shift) & 0xFF;
       count[digit + 1]++;
     }
 
-    for (int i = 0; i < kNumBuckets; ++i) {
+    for (int i = 0; i < num_buckets; ++i) {
       count[i + 1] += count[i];
     }
 
@@ -95,11 +101,13 @@ void TestTaskMPI::RadixSort(std::vector<double> &arr) {
 }
 
 void TestTaskMPI::CompareExchange(std::vector<double> &arr, int i, int j) {
-  if (j < static_cast<int>(arr.size()) && i < static_cast<int>(arr.size()) && arr[i] > arr[j]) {
+  auto sz = static_cast<int>(arr.size());
+  if (j < sz && i < sz && arr[i] > arr[j]) {
     std::swap(arr[i], arr[j]);
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void TestTaskMPI::BatcherOddEvenMerge(std::vector<double> &arr, int lo, int n, int r) {
   int m = r * 2;
   if (m < n) {
@@ -113,6 +121,7 @@ void TestTaskMPI::BatcherOddEvenMerge(std::vector<double> &arr, int lo, int n, i
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void TestTaskMPI::BatcherOddEvenMergeSort(std::vector<double> &arr, int lo, int n) {
   if (n > 1) {
     int m = n / 2;
@@ -170,7 +179,7 @@ void TestTaskMPI::MergeWithPartner(std::vector<double> &local_data, int partner_
 
   // Merge and keep appropriate half
   std::vector<double> merged;
-  merged.reserve(static_cast<std::size_t>(local_size + partner_size));
+  merged.reserve(static_cast<std::size_t>(local_size) + static_cast<std::size_t>(partner_size));
 
   std::size_t i = 0;
   std::size_t j = 0;
@@ -196,11 +205,12 @@ void TestTaskMPI::MergeWithPartner(std::vector<double> &local_data, int partner_
   }
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 bool TestTaskMPI::RunImpl() {
   int rank = 0;
-  int size = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   int total_size = 0;
   std::vector<double> data;
@@ -220,14 +230,14 @@ bool TestTaskMPI::RunImpl() {
   }
 
   // Calculate distribution
-  std::vector<int> counts(size);
-  std::vector<int> displs(size);
-  int base_count = total_size / size;
-  int remainder = total_size % size;
+  std::vector<int> counts(world_size);
+  std::vector<int> displs(world_size);
+  int base_count = total_size / world_size;
+  int remainder = total_size % world_size;
 
-  for (int i = 0; i < size; ++i) {
-    counts[i] = base_count + (i < remainder ? 1 : 0);
-    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
+  for (int i = 0; i < world_size; ++i) {
+    counts[i] = base_count + ((i < remainder) ? 1 : 0);
+    displs[i] = (i == 0) ? 0 : (displs[i - 1] + counts[i - 1]);
   }
 
   // Scatter data to all processes
@@ -239,14 +249,13 @@ bool TestTaskMPI::RunImpl() {
   RadixSort(local_data);
 
   // Batcher odd-even merge across processes
-  // Generate comparator network for process indices
-  auto comparators = GenerateBatcherNetwork(size);
+  auto comparators = GenerateBatcherNetwork(world_size);
 
   for (const auto &[proc1, proc2] : comparators) {
     if (rank == proc1) {
-      MergeWithPartner(local_data, proc2, rank, true);  // Keep lower half
+      MergeWithPartner(local_data, proc2, rank, true);
     } else if (rank == proc2) {
-      MergeWithPartner(local_data, proc1, rank, false);  // Keep upper half
+      MergeWithPartner(local_data, proc1, rank, false);
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -257,15 +266,15 @@ bool TestTaskMPI::RunImpl() {
     sorted_data.resize(total_size);
   }
 
-  // Recalculate counts after merging (they might have changed)
+  // Recalculate counts after merging
   int new_local_size = static_cast<int>(local_data.size());
-  std::vector<int> new_counts(size);
+  std::vector<int> new_counts(world_size);
   MPI_Gather(&new_local_size, 1, MPI_INT, new_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> new_displs(size);
+  std::vector<int> new_displs(world_size);
   if (rank == 0) {
     new_displs[0] = 0;
-    for (int i = 1; i < size; ++i) {
+    for (int i = 1; i < world_size; ++i) {
       new_displs[i] = new_displs[i - 1] + new_counts[i - 1];
     }
   }
@@ -281,4 +290,3 @@ bool TestTaskMPI::RunImpl() {
 }
 
 }  // namespace egashin_k_radix_batcher_sort
-
