@@ -23,6 +23,50 @@ bool GaseninLImageSmoothSEQ::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+
+void ProcessInteriorPixelSeq(int row, int col, int width, int kernel_size, const uint8_t *src, uint8_t *dst) {
+  const int kernel_sq = kernel_size * kernel_size;
+  const int radius = kernel_size / 2;
+
+  const auto *row_ptr = src + static_cast<ptrdiff_t>(row - radius) * width + (col - radius);
+  int sum = 0;
+
+  for (int kernel_y = 0; kernel_y < kernel_size; ++kernel_y) {
+    for (int kernel_x = 0; kernel_x < kernel_size; ++kernel_x) {
+      sum += row_ptr[kernel_x];
+    }
+    row_ptr += width;
+  }
+  dst[row * width + col] = static_cast<uint8_t>(sum / kernel_sq);
+}
+
+void ProcessBorderPixelSeq(int row, int col, int width, int height, int kernel_radius, const uint8_t *src,
+                           uint8_t *dst) {
+  int sum = 0;
+  int count = 0;
+
+  for (int kernel_y = -kernel_radius; kernel_y <= kernel_radius; ++kernel_y) {
+    const int neighbor_row = Clamp(row + kernel_y, 0, height - 1);
+    const int row_offset = neighbor_row * width;
+
+    for (int kernel_x = -kernel_radius; kernel_x <= kernel_radius; ++kernel_x) {
+      const int neighbor_col = Clamp(col + kernel_x, 0, width - 1);
+      sum += src[row_offset + neighbor_col];
+      ++count;
+    }
+  }
+
+  const int index = row * width + col;
+  if (count > 0) {
+    dst[index] = static_cast<uint8_t>(sum / count);
+  } else {
+    dst[index] = 0;
+  }
+}
+
+}  // namespace
+
 bool GaseninLImageSmoothSEQ::RunImpl() {
   const auto &in = GetInput();
   auto &out = GetOutput();
@@ -35,44 +79,20 @@ bool GaseninLImageSmoothSEQ::RunImpl() {
     return false;
   }
 
-  const int radius = kernel_size / 2;
-  const int k_sq = kernel_size * kernel_size;
+  const int kernel_radius = kernel_size / 2;
   const uint8_t *src = in.data.data();
   uint8_t *dst = out.data.data();
 
-  for (int y = 0; y < height; ++y) {
-    bool is_border_y = (y < radius) || (y >= height - radius);
+  for (int row = 0; row < height; ++row) {
+    const bool is_border_row = (row < kernel_radius) || (row >= height - kernel_radius);
 
-    for (int x = 0; x < width; ++x) {
-      bool is_border_x = (x < radius) || (x >= width - radius);
-      int sum = 0;
+    for (int col = 0; col < width; ++col) {
+      const bool is_border_col = (col < kernel_radius) || (col >= width - kernel_radius);
 
-      if (!is_border_y && !is_border_x) {
-        const uint8_t *row_ptr = src + (y - radius) * width + (x - radius);
-        for (int ky = 0; ky < kernel_size; ++ky) {
-          for (int kx = 0; kx < kernel_size; ++kx) {
-            sum += row_ptr[kx];
-          }
-          row_ptr += width;
-        }
-        dst[y * width + x] = static_cast<uint8_t>(sum / k_sq);
-
+      if (!is_border_row && !is_border_col) {
+        ProcessInteriorPixelSeq(row, col, width, kernel_size, src, dst);
       } else {
-        int count = 0;
-        for (int ky = -radius; ky <= radius; ++ky) {
-          int ny = Clamp(y + ky, 0, height - 1);
-          int ny_offset = ny * width;
-          for (int kx = -radius; kx <= radius; ++kx) {
-            int nx = Clamp(x + kx, 0, width - 1);
-            sum += src[ny_offset + nx];
-            ++count;
-          }
-        }
-        if (count > 0) {
-          dst[y * width + x] = static_cast<uint8_t>(sum / count);
-        } else {
-          dst[y * width + x] = 0;
-        }
+        ProcessBorderPixelSeq(row, col, width, height, kernel_radius, src, dst);
       }
     }
   }
