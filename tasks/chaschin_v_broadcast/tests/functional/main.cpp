@@ -14,7 +14,7 @@
 
 namespace chaschin_v_broadcast {
 
-class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ChaschinVRunFuncTestsProcessesBR : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -45,7 +45,7 @@ class ChaschinVRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(ChaschinVRunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(ChaschinVRunFuncTestsProcessesBR, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -57,9 +57,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ChaschinVRunFuncTestsProcesses::PrintFuncTestName<ChaschinVRunFuncTestsProcesses>;
+const auto kPerfTestName = ChaschinVRunFuncTestsProcessesBR::PrintFuncTestName<ChaschinVRunFuncTestsProcessesBR>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ChaschinVRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ChaschinVRunFuncTestsProcessesBR, kGtestValues, kPerfTestName);
 
 }  // namespace
 

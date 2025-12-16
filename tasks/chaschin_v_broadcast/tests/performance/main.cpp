@@ -9,7 +9,7 @@
 
 namespace chaschin_v_broadcast {
 
-class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ChaschinVRunPerfTestProcessesBR : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 10000000;
   InType input_data_;
 
@@ -26,7 +26,7 @@ class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(ChaschinVRunPerfTestProcesses, RunPerfModes) {
+TEST_P(ChaschinVRunPerfTestProcessesBR, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -35,8 +35,8 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVBroadcas
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ChaschinVRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = ChaschinVRunPerfTestProcessesBR::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcessesBR, kGtestValues, kPerfTestName);
 
 }  // namespace chaschin_v_broadcast
