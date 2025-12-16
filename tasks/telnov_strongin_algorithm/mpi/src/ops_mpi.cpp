@@ -58,7 +58,7 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
       const double df = std::abs(f_vals[i] - f_vals[i - 1]);
       m = std::max(m, df / dx);
     }
-    m = (m == 0.0) ? 1.0 : m;
+    m = std::max(m, 1.0);
 
     MaxData local_data;
     local_data.value = -1e9;
@@ -90,9 +90,11 @@ bool TelnovStronginAlgorithmMPI::RunImpl() {
     }
 
     const int idx = global_data.index;
-    double new_x = (0.5 * (x_vals[idx] + x_vals[idx - 1])) - ((f_vals[idx] - f_vals[idx - 1]) / (2.0 * m));
+    const double mid = 0.5 * (x_vals[idx] + x_vals[idx - 1]);
 
-    new_x = (new_x <= x_vals[idx - 1] || new_x >= x_vals[idx]) ? (0.5 * (x_vals[idx] + x_vals[idx - 1])) : new_x;
+    double new_x = mid - ((f_vals[idx] - f_vals[idx - 1]) / (2.0 * m));
+
+    new_x = std::clamp(new_x, x_vals[idx - 1], x_vals[idx]);
 
     x_vals.insert(x_vals.begin() + idx, new_x);
     f_vals.insert(f_vals.begin() + idx, f(new_x));
