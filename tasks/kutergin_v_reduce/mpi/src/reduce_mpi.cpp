@@ -23,6 +23,11 @@ int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_O
   int type_size = 0;
   MPI_Type_size(datatype, &type_size);
 
+  if (root < 0 || root >= process_count)  // root-процесс не существует
+  {
+    return MPI_ERR_ROOT;  // возвращение стандартного кода ошибки MPI
+  }
+
   // Древовидный сбор
   for (int mask = 1; mask < process_count;
        mask <<= 1)  // удвоение битовой маски на каждой итерации посредством битового сдвига
