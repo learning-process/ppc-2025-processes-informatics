@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <functional>
+#include <string>
 #include <tuple>
 
 #include "task/include/task.hpp"

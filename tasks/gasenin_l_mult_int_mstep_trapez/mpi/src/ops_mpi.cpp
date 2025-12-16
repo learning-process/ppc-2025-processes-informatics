@@ -4,7 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <vector>
+
+#include "gasenin_l_mult_int_mstep_trapez/common/include/common.hpp"
 
 namespace gasenin_l_mult_int_mstep_trapez {
 
