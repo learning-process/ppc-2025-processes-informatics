@@ -2,9 +2,7 @@
 
 #include <cmath>
 #include <functional>
-#include <string>
 #include <tuple>
-#include <vector>
 
 #include "task/include/task.hpp"
 
@@ -32,13 +30,13 @@ inline std::function<double(double, double)> GetFunction(int id) {
     case 0:
       return [](double x, double y) { return x + y; };
     case 1:
-      return [](double x, double y) { return x * x + y * y; };
+      return [](double x, double y) { return (x * x) + (y * y); };
     case 2:
       return [](double x, double y) { return std::sin(x) * std::cos(y); };
     case 3:
       return [](double x, double y) { return std::exp(x + y); };
     case 4:
-      return [](double x, double y) { return std::sqrt(x * x + y * y); };
+      return [](double x, double y) { return std::sqrt((x * x) + (y * y)); };
     default:
       return [](double x, double y) {
         (void)x;
@@ -51,11 +49,11 @@ inline std::function<double(double, double)> GetFunction(int id) {
 inline double GetExactIntegral(const TaskData &data) {
   switch (data.func_id) {
     case 0:
-      return 0.5 * (data.x2 * data.x2 - data.x1 * data.x1) * (data.y2 - data.y1) +
-             0.5 * (data.y2 * data.y2 - data.y1 * data.y1) * (data.x2 - data.x1);
+      return (0.5 * ((data.x2 * data.x2) - (data.x1 * data.x1)) * (data.y2 - data.y1)) +
+             (0.5 * ((data.y2 * data.y2) - (data.y1 * data.y1)) * (data.x2 - data.x1));
     case 1:
-      return (1.0 / 3.0) * (data.x2 * data.x2 * data.x2 - data.x1 * data.x1 * data.x1) * (data.y2 - data.y1) +
-             (1.0 / 3.0) * (data.y2 * data.y2 * data.y2 - data.y1 * data.y1 * data.y1) * (data.x2 - data.x1);
+      return ((1.0 / 3.0) * ((data.x2 * data.x2 * data.x2) - (data.x1 * data.x1 * data.x1)) * (data.y2 - data.y1)) +
+             ((1.0 / 3.0) * ((data.y2 * data.y2 * data.y2) - (data.y1 * data.y1 * data.y1)) * (data.x2 - data.x1));
     case 2:
       return (std::cos(data.x1) - std::cos(data.x2)) * (std::sin(data.y2) - std::sin(data.y1));
     case 3: {

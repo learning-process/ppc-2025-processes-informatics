@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <vector>
 
 namespace gasenin_l_mult_int_mstep_trapez {
@@ -23,8 +22,9 @@ bool GaseninLMultIntMstepTrapezMPI::PreProcessingImpl() {
   return true;
 }
 
+namespace {
 template <typename Func>
-double RunKernel(const TaskData &data, int rank, int size, Func &&f) {
+double RunKernel(const TaskData &data, int rank, int size, const Func &f) {
   double hx = (data.x2 - data.x1) / data.n_steps;
   double hy = (data.y2 - data.y1) / data.n_steps;
 
@@ -33,17 +33,17 @@ double RunKernel(const TaskData &data, int rank, int size, Func &&f) {
   int count = total_nodes_x / size;
   int remainder = total_nodes_x % size;
 
-  int start_i = rank * count + std::min(rank, remainder);
+  int start_i = (rank * count) + std::min(rank, remainder);
   int end_i = start_i + count + (rank < remainder ? 1 : 0);
 
   double local_sum = 0.0;
 
   for (int i = start_i; i < end_i; ++i) {
-    double x = data.x1 + i * hx;
+    double x = data.x1 + (i * hx);
     double weight_x = (i == 0 || i == data.n_steps) ? 0.5 : 1.0;
 
     for (int j = 0; j <= data.n_steps; ++j) {
-      double y = data.y1 + j * hy;
+      double y = data.y1 + (j * hy);
       double weight_y = (j == 0 || j == data.n_steps) ? 0.5 : 1.0;
 
       local_sum += f(x, y) * weight_x * weight_y;
@@ -52,13 +52,15 @@ double RunKernel(const TaskData &data, int rank, int size, Func &&f) {
 
   return local_sum * hx * hy;
 }
+}  // namespace
 
 bool GaseninLMultIntMstepTrapezMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  TaskData data;
+  TaskData data{};
   if (rank == 0) {
     data = GetInput();
   }
@@ -77,7 +79,7 @@ bool GaseninLMultIntMstepTrapezMPI::RunImpl() {
       local_result = RunKernel(data, rank, size, [](double x, double y) { return x + y; });
       break;
     case 1:
-      local_result = RunKernel(data, rank, size, [](double x, double y) { return x * x + y * y; });
+      local_result = RunKernel(data, rank, size, [](double x, double y) { return (x * x) + (y * y); });
       break;
     case 2:
       local_result = RunKernel(data, rank, size, [](double x, double y) { return std::sin(x) * std::cos(y); });
@@ -86,7 +88,7 @@ bool GaseninLMultIntMstepTrapezMPI::RunImpl() {
       local_result = RunKernel(data, rank, size, [](double x, double y) { return std::exp(x + y); });
       break;
     case 4:
-      local_result = RunKernel(data, rank, size, [](double x, double y) { return std::sqrt(x * x + y * y); });
+      local_result = RunKernel(data, rank, size, [](double x, double y) { return std::sqrt((x * x) + (y * y)); });
       break;
     default:
       local_result = RunKernel(data, rank, size, [](double x, double y) {
@@ -109,30 +111,6 @@ bool GaseninLMultIntMstepTrapezMPI::RunImpl() {
 
 bool GaseninLMultIntMstepTrapezMPI::PostProcessingImpl() {
   return true;
-}
-
-TaskData GaseninLMultIntMstepTrapezMPI::ReadInputData(const std::string &filename, bool use_manual) {
-  TaskData data;
-  if (!use_manual && !filename.empty()) {
-    std::ifstream file(filename);
-    if (file.is_open()) {
-      file >> data.n_steps >> data.func_id >> data.x1 >> data.x2 >> data.y1 >> data.y2;
-      file.close();
-      if (data.n_steps <= 0 || data.x2 <= data.x1 || data.y2 <= data.y1) {
-        throw std::invalid_argument("Invalid file data");
-      }
-      return data;
-    }
-  }
-  if (use_manual) {
-    std::cout << "Enter n_steps func_id x1 x2 y1 y2: ";
-    std::cin >> data.n_steps >> data.func_id >> data.x1 >> data.x2 >> data.y1 >> data.y2;
-    if (data.n_steps <= 0 || data.x2 <= data.x1 || data.y2 <= data.y1) {
-      throw std::invalid_argument("Invalid input");
-    }
-    return data;
-  }
-  throw std::invalid_argument("No input source");
 }
 
 }  // namespace gasenin_l_mult_int_mstep_trapez

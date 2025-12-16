@@ -11,7 +11,6 @@ class GaseninLMultIntMstepTrapezSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
   explicit GaseninLMultIntMstepTrapezSEQ(const InType &in);
-  static TaskData ReadInputData(const std::string &filename, bool use_manual);
 
  private:
   bool ValidationImpl() override;

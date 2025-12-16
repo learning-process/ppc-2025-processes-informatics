@@ -11,7 +11,6 @@ class GaseninLMultIntMstepTrapezMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit GaseninLMultIntMstepTrapezMPI(const InType &in);
-  static TaskData ReadInputData(const std::string &filename, bool use_manual);
 
  private:
   bool ValidationImpl() override;
