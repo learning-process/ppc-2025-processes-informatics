@@ -60,9 +60,10 @@ class LuzanEMatrixHorisRibMultShemeFuncTests : public ppc::util::BaseRunFuncTest
       prod[row] += tmp_sum;
     }
 
-
-    for (int i =0; i < height; i++) {
-      if (height > 10) break;
+    for (int i = 0; i < height; i++) {
+      if (height > 10) {
+        break;
+      }
     }
     return (output_data == prod);
   }
@@ -82,17 +83,19 @@ TEST_P(LuzanEMatrixHorisRibMultShemeFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 9> kTestParam = {
-    std::make_tuple(3, 3),    std::make_tuple(2, 5),    std::make_tuple(10, 70),
-    std::make_tuple(2000, 5), std::make_tuple(5, 2), std::make_tuple(1, 1),
-    std::make_tuple(1, 100),  std::make_tuple(100, 1),  std::make_tuple(1000, 1000)};
+    std::make_tuple(3, 3),    std::make_tuple(2, 5),   std::make_tuple(10, 70),
+    std::make_tuple(2000, 5), std::make_tuple(5, 2),   std::make_tuple(1, 1),
+    std::make_tuple(1, 100),  std::make_tuple(100, 1), std::make_tuple(1000, 1000)};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<LuzanEMatrixHorisRibMultShemeMPI, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme),
-    ppc::util::AddFuncTask<LuzanEMatrixHorisRibMultShemeSEQ, InType>(kTestParam, PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuzanEMatrixHorisRibMultShemeMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme),
+                                           ppc::util::AddFuncTask<LuzanEMatrixHorisRibMultShemeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = LuzanEMatrixHorisRibMultShemeFuncTests::PrintFuncTestName<LuzanEMatrixHorisRibMultShemeFuncTests>;
+const auto kPerfTestName =
+    LuzanEMatrixHorisRibMultShemeFuncTests::PrintFuncTestName<LuzanEMatrixHorisRibMultShemeFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, LuzanEMatrixHorisRibMultShemeFuncTests, kGtestValues, kPerfTestName);
 

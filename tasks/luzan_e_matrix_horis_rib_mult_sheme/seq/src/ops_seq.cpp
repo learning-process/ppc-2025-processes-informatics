@@ -21,15 +21,15 @@ bool LuzanEMatrixHorisRibMultShemeSEQ::ValidationImpl() {
   int vec_height = std::get<4>(GetInput());
 
   // matrix check
-  res = std::get<0>(GetInput()).size() == static_cast<size_t>(height) * static_cast<size_t>(width) 
-  && height > 0 && width > 0;
+  res = std::get<0>(GetInput()).size() == static_cast<size_t>(height) * static_cast<size_t>(width) && height > 0 &&
+        width > 0;
 
   // vec check
   res = res && std::get<3>(GetInput()).size() == static_cast<size_t>(vec_height);
 
   // matrix & vec sizes cmp.
   res = res && (width == vec_height);
-  
+
   return res;
 }
 

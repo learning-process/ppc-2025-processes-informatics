@@ -20,7 +20,7 @@ class LuzanEMatrixHorisRibMultShemepERFTests : public ppc::util::BaseRunPerfTest
   void SetUp() override {
     std::tuple_element_t<0, InType> mat(static_cast<size_t>(height_) * static_cast<size_t>(width_));
     std::tuple_element_t<3, InType> vec(static_cast<size_t>(width_));
-    
+
     for (int elem = 0; elem < height_ * width_; elem++) {
       mat[elem] = elem % 42000;
     }
@@ -49,7 +49,7 @@ class LuzanEMatrixHorisRibMultShemepERFTests : public ppc::util::BaseRunPerfTest
       }
       prod[row] += tmp_sum;
     }
-    
+
     return (output_data == prod);
   }
 
@@ -62,8 +62,9 @@ TEST_P(LuzanEMatrixHorisRibMultShemepERFTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LuzanEMatrixHorisRibMultShemeMPI, LuzanEMatrixHorisRibMultShemeSEQ>(
-    PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, LuzanEMatrixHorisRibMultShemeMPI, LuzanEMatrixHorisRibMultShemeSEQ>(
+        PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

@@ -26,7 +26,6 @@ LuzanEMatrixHorisRibMultShemeMPI::LuzanEMatrixHorisRibMultShemeMPI(const InType 
 }
 
 bool LuzanEMatrixHorisRibMultShemeMPI::ValidationImpl() {
-   
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank != 0) {
@@ -38,8 +37,8 @@ bool LuzanEMatrixHorisRibMultShemeMPI::ValidationImpl() {
   int vec_height = std::get<4>(GetInput());
 
   // matrix check
-  res = std::get<0>(GetInput()).size() == static_cast<size_t>(height) * static_cast<size_t>(width) 
-  && height > 0 && width > 0;
+  res = std::get<0>(GetInput()).size() == static_cast<size_t>(height) * static_cast<size_t>(width) && height > 0 &&
+        width > 0;
 
   // vec check
   res = res && std::get<3>(GetInput()).size() == static_cast<size_t>(vec_height);
@@ -97,7 +96,7 @@ bool LuzanEMatrixHorisRibMultShemeMPI::RunImpl() {
   // calculating shifts & rows_per_proc (only about rows rigth now)
   int rest = height % size;
   std::vector<int> shift(size);
-  std::vector<int> per_proc(size, height / size); // rows per proc  
+  std::vector<int> per_proc(size, height / size);  // rows per proc
 
   shift[0] = 0;
   int accumulator = 0;
@@ -114,15 +113,15 @@ bool LuzanEMatrixHorisRibMultShemeMPI::RunImpl() {
   std::vector<int> recv(static_cast<size_t>(per_proc[rank] * width));
 
   for (int i = 0; i < size; i++) {
-    per_proc[i] *= width; // now it's about elements
+    per_proc[i] *= width;  // now it's about elements
     shift[i] *= width;
   }
 
   MPI_Scatterv(mat.data(), per_proc.data(), shift.data(), MPI_INT, recv.data(), per_proc[rank], MPI_INT, 0,
-    MPI_COMM_WORLD);
-  mat.clear(); // no need anymore
+               MPI_COMM_WORLD);
+  mat.clear();  // no need anymore
 
-  std::vector<int> prod(static_cast<size_t>(per_proc[rank] / width), 0); // sums 
+  std::vector<int> prod(static_cast<size_t>(per_proc[rank] / width), 0);  // sums
   int rows_to_calc = static_cast<int>(per_proc[rank] / width);
   for (int row = 0; row < rows_to_calc; row++) {
     for (int col = 0; col < width; col++) {
@@ -130,19 +129,16 @@ bool LuzanEMatrixHorisRibMultShemeMPI::RunImpl() {
     }
   }
 
-
   std::vector<int> fin_prod(height);
 
   for (int i = 0; i < size; i++) {
-    per_proc[i] /= width; // now it's about elements
+    per_proc[i] /= width;  // now it's about elements
     shift[i] /= width;
   }
 
-  MPI_Gatherv(prod.data(), rows_to_calc, MPI_INT, fin_prod.data(), per_proc.data(), shift.data(), MPI_INT,
-    0, MPI_COMM_WORLD);
+  MPI_Gatherv(prod.data(), rows_to_calc, MPI_INT, fin_prod.data(), per_proc.data(), shift.data(), MPI_INT, 0,
+              MPI_COMM_WORLD);
   MPI_Bcast(fin_prod.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
-
-
 
   // // mpi things
   // int height = 0;
@@ -209,9 +205,7 @@ bool LuzanEMatrixHorisRibMultShemeMPI::RunImpl() {
   // MPI_Gatherv(rows_sum.data(), rows_to_calc, MPI_INT, fin_sum.data(), per_proc.data(), shift.data(), MPI_INT, 0,
   //             MPI_COMM_WORLD);
 
-
-
-  //MPI_Bcast(fin_prod.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
+  // MPI_Bcast(fin_prod.data(), height, MPI_INT, 0, MPI_COMM_WORLD);
   GetOutput() = fin_prod;
   return true;
 }
