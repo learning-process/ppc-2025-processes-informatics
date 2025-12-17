@@ -36,6 +36,14 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
       for (size_t i = 0; i < input_data_.data.size(); ++i) {
         input_data_.data[i] = static_cast<uint8_t>(i % 256);
       }
+    } else if (test_name == "mpi_coverage_zero_rows") {
+      input_data_.width = 5;
+      input_data_.height = 1;
+      input_data_.data.assign(5, 255);
+    } else if (test_name == "kernel1") {
+      input_data_.width = 4;
+      input_data_.height = 4;
+      input_data_.data.assign(16, 100);
     } else {
       int width = -1;
       int height = -1;
@@ -101,8 +109,12 @@ TEST_P(GaseninLRunFuncTestsProcesses, ImageSmoothing) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "kernel3"), std::make_tuple(5, "kernel5"),
-                                            std::make_tuple(7, "kernel7"), std::make_tuple(3, "small_image")};
+const std::array<TestType, 6> kTestParam = {std::make_tuple(3, "kernel3"),
+                                            std::make_tuple(5, "kernel5"),
+                                            std::make_tuple(7, "kernel7"),
+                                            std::make_tuple(3, "small_image"),
+                                            std::make_tuple(3, "mpi_coverage_zero_rows"),
+                                            std::make_tuple(1, "kernel1")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GaseninLImageSmoothMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth),
