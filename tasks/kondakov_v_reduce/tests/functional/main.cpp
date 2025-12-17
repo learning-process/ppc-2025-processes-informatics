@@ -44,10 +44,15 @@ class KondakovVReduceRunFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output) override {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank != 0) {
-      return true;
+    int mpi_initialized = 0;
+    MPI_Initialized(&mpi_initialized);
+
+    if (mpi_initialized != 0) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if (rank != 0) {
+        return true;
+      }
     }
 
     if (values_.empty()) {
