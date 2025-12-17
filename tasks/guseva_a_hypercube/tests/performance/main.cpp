@@ -41,5 +41,7 @@ const auto kPerfTestName = GusevaAHypercubePerfTestProcesses::CustomPerfTestName
 
 // NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(GusevaAHypercubePerf, GusevaAHypercubePerfTestProcesses, kGtestValues, kPerfTestName);
+
 }  // namespace
+
 }  // namespace guseva_a_hypercube

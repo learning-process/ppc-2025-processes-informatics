@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <array>
 #include <cmath>
@@ -14,7 +13,7 @@
 
 namespace guseva_a_hypercube {
 
-class GusevaARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class GusevaAHypercubeRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<3>(std::get<0>(test_param));
@@ -43,7 +42,7 @@ class GusevaARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, 
 
 namespace {
 
-TEST_P(GusevaARunFuncTestsProcesses, GusevaAHypercubeFunc) {
+TEST_P(GusevaAHypercubeRunFuncTestsProcesses, GusevaAHypercubeFunc) {
   ExecuteTest(GetParam());
 }
 
@@ -93,11 +92,12 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<guseva_a_hyper
     kTestParam, PPC_SETTINGS_guseva_a_hypercube));
 inline const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-inline const auto kPerfTestName = GusevaARunFuncTestsProcesses::PrintFuncTestName<GusevaARunFuncTestsProcesses>;
-namespace {
+inline const auto kPerfTestName =
+    GusevaAHypercubeRunFuncTestsProcesses::PrintFuncTestName<GusevaAHypercubeRunFuncTestsProcesses>;
+
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(GusevaAHypercubeFunc, GusevaARunFuncTestsProcesses, kGtestValues, kPerfTestName);
-}  // namespace
+INSTANTIATE_TEST_SUITE_P(GusevaAHypercubeFunc, GusevaAHypercubeRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+
 }  // namespace
 
 }  // namespace guseva_a_hypercube
