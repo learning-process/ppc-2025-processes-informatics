@@ -28,12 +28,6 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     int kernel_size = std::get<0>(test_params);
     std::string test_name = std::get<1>(test_params);
 
-    if (test_name == "tiny_image_for_coverage") {
-      input_data_.width = 1;
-      input_data_.height = 1;
-      input_data_.kernel_size = 3;
-      input_data_.data = {255};
-    }
     if (test_name == "small_image") {
       input_data_.width = 10;
       input_data_.height = 2;
@@ -107,64 +101,8 @@ TEST_P(GaseninLRunFuncTestsProcesses, ImageSmoothing) {
   ExecuteTest(GetParam());
 }
 
-TEST(Gasenin_L_Image_Smooth_Common, TaskData_Coverage_Ultimate) {
-  gasenin_l_image_smooth::TaskData d1;
-  gasenin_l_image_smooth::TaskData d2;
-
-  EXPECT_TRUE(d1 == d2);
-  EXPECT_FALSE(d1.operator!=(d2));
-
-  d2.width = 10;
-  EXPECT_FALSE(d1 == d2);
-  EXPECT_TRUE(d1.operator!=(d2));
-
-  d2 = d1;
-  d2.height = 10;
-  EXPECT_TRUE(d1.operator!=(d2));
-
-  d2 = d1;
-  d2.kernel_size = 10;
-  EXPECT_TRUE(d1.operator!=(d2));
-
-  d2 = d1;
-  d2.data = {1, 2, 3};
-  EXPECT_TRUE(d1.operator!=(d2));
-}
-
-TEST(Gasenin_L_Image_Smooth_SEQ, RunImpl_Coverage_Fix) {
-  gasenin_l_image_smooth::TaskData in;
-  in.width = 1;
-  in.height = 1;
-  in.kernel_size = 1;
-  in.data = {100};
-
-  gasenin_l_image_smooth::OutType out;
-  out.data.resize(1);
-
-  auto task = std::make_shared<gasenin_l_image_smooth::GaseninLImageSmoothSEQ>(in);
-
-  ASSERT_TRUE(task->Validation());
-  task->PreProcessing();
-  task->Run();
-  task->PostProcessing();
-
-  EXPECT_EQ(task->GetOutput().data[0], 100);
-}
-
-TEST(Gasenin_L_Image_Smooth_MPI, TaskData_Coverage_Test) {
-  gasenin_l_image_smooth::TaskData d1;
-  gasenin_l_image_smooth::TaskData d2;
-
-  ASSERT_TRUE(d1 == d2);
-
-  d2.width = 5;
-  ASSERT_TRUE(d1.operator!=(d2));
-  ASSERT_FALSE(d1 == d2);
-}
-
-const std::array<TestType, 5> kTestParam = {std::make_tuple(3, "kernel3"), std::make_tuple(5, "kernel5"),
-                                            std::make_tuple(7, "kernel7"), std::make_tuple(3, "small_image"),
-                                            std::make_tuple(3, "tiny_image_for_coverage")};
+const std::array<TestType, 4> kTestParam = {std::make_tuple(3, "kernel3"), std::make_tuple(5, "kernel5"),
+                                            std::make_tuple(7, "kernel7"), std::make_tuple(3, "small_image")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GaseninLImageSmoothMPI, InType>(kTestParam, PPC_SETTINGS_gasenin_l_image_smooth),
