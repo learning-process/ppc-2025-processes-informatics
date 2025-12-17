@@ -66,6 +66,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
       }
       data.insert(data.end(), row.begin(), row.end());
     }
+
     if (size_mismatch) {
       rows = 0;
       cols = 0;
@@ -80,11 +81,10 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   const int total = rows * cols;
   std::vector<int> counts(size);
   std::vector<int> displs(size);
-  int base = total / size;
-  int remainder = total % size;
-  int offset = 0;
-  for (int i = 0; i < size; ++i) {
-    int extra = (i < remainder) ? 1 : 0;
+  const int base = total / size;
+  const int remainder = total % size;
+  for (int i = 0, offset = 0; i < size; ++i) {
+    const int extra = (i < remainder) ? 1 : 0;
     counts[i] = base + extra;
     displs[i] = offset;
     offset += counts[i];
@@ -97,13 +97,10 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   }
   int local_max = std::numeric_limits<int>::min();
   for (int value : local) {
-    if (value > local_max) {
-      local_max = value;
-    }
+    local_max = std::max(local_max, value);
   }
   int global_max = 0;
   MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
   GetOutput() = global_max;
   return true;
 }
