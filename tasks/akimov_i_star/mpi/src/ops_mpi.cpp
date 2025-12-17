@@ -20,10 +20,6 @@ std::string ToString(const InType &buf) {
   return std::string(buf.begin(), buf.end());
 }
 
-void FromString(const std::string &s, InType &out) {
-  out.assign(s.begin(), s.end());
-}
-
 static void Trim(std::string &s) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
   s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
