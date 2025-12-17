@@ -12,14 +12,14 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
   InType input_data_{};
 
   void SetUp() override {
-    
+    input_data_ = kCount_;
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType &output_data) override {
     return input_data_ == output_data;
   }
 
-  InType GetTestInputData() final {
+  InType GetTestInputData() override {
     return input_data_;
   }
 };
@@ -29,7 +29,8 @@ TEST_P(PylaevaSSimpleIterationMethodPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PylaevaSSimpleIterationMethodMPI, PylaevaSSimpleIterationMethodSEQ>(PPC_SETTINGS_pylaeva_s_simple_iteration_method);
+    ppc::util::MakeAllPerfTasks<InType, PylaevaSSimpleIterationMethodMPI, PylaevaSSimpleIterationMethodSEQ>(
+        PPC_SETTINGS_pylaeva_s_simple_iteration_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
