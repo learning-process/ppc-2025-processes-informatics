@@ -5,6 +5,8 @@
 #include <limits>
 #include <optional>
 
+#include "global_search_strongin/common/include/common.hpp"
+
 namespace global_search_strongin {
 namespace {
 
