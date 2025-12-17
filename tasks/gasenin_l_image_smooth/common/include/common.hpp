@@ -10,6 +10,8 @@
 namespace gasenin_l_image_smooth {
 
 struct TaskData {
+  TaskData() = default;
+
   std::vector<uint8_t> data;
   int width = 0;
   int height = 0;

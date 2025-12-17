@@ -193,9 +193,6 @@ bool GaseninLImageSmoothMPI::RunImpl() {
   CalculateRowDistribution(rank, size, height, start_row, end_row, local_rows);
 
   if (local_rows <= 0) {
-    if (rank == 0) {
-      GetOutput().data.resize(static_cast<size_t>(width) * height);
-    }
     return true;
   }
 

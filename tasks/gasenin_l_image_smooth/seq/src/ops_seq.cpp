@@ -58,11 +58,7 @@ void ProcessBorderPixelSeq(int row, int col, int width, int height, int kernel_r
   }
 
   const int index = (row * width) + col;
-  if (count > 0) {
-    dst[index] = static_cast<uint8_t>(sum / count);
-  } else {
-    dst[index] = 0;
-  }
+  dst[index] = static_cast<uint8_t>(sum / count);
 }
 
 }  // namespace
@@ -74,11 +70,6 @@ bool GaseninLImageSmoothSEQ::RunImpl() {
   const int width = in.width;
   const int height = in.height;
   const int kernel_size = in.kernel_size;
-
-  if (kernel_size <= 0) {
-    return false;
-  }
-
   const int kernel_radius = kernel_size / 2;
   const uint8_t *src = in.data.data();
   uint8_t *dst = out.data.data();
