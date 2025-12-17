@@ -51,7 +51,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   int cols = static_cast<int>(mat[0].size());
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (rows == 0 || cols == 0) {
+  if (rows <= 0 || cols <= 0) {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
@@ -60,8 +60,19 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   if (rank == 0) {
     data.reserve(total);
     for (const auto &row : mat) {
+      if (row.size() != static_cast<size_t>(cols)) {
+        rows = 0;
+        cols = 0;
+        break;
+      }
       data.insert(data.end(), row.begin(), row.end());
     }
+  }
+  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (rows == 0 || cols == 0) {
+    GetOutput() = std::numeric_limits<int>::min();
+    return true;
   }
   std::vector<int> counts(size);
   std::vector<int> displs(size);
