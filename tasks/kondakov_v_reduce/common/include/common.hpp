@@ -6,7 +6,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
-  
+
 #include "task/include/task.hpp"
 
 namespace kondakov_v_reduce {
