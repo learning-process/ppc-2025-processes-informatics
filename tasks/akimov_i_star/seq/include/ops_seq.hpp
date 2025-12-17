@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "akimov_i_star/common/include/common.hpp"
 #include "task/include/task.hpp"
 

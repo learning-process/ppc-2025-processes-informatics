@@ -49,7 +49,7 @@ class AkimovIStarFromFileFuncTests : public ppc::util::BaseRunFuncTests<InType, 
       std::string line;
       while (std::getline(ss, line)) {
         const std::string prefix = "send:";
-        if (line.rfind(prefix, 0) != 0) {
+        if (!line.starts_with(prefix)) {
           continue;
         }
         std::string rest = line.substr(prefix.size());

@@ -1,6 +1,7 @@
 #include "akimov_i_star/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -12,8 +13,14 @@ namespace akimov_i_star {
 namespace {
 
 inline void Trim(std::string &s) {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
-  s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
+  const char *ws = " \t\n\r\f\v";
+  auto first = s.find_first_not_of(ws);
+  if (first == std::string::npos) {
+    s.clear();
+    return;
+  }
+  auto last = s.find_last_not_of(ws);
+  s = s.substr(first, last - first + 1);
 }
 
 std::vector<AkimovIStarSEQ::Op> ParseOpsFromString(const std::string &s) {
@@ -26,7 +33,7 @@ std::vector<AkimovIStarSEQ::Op> ParseOpsFromString(const std::string &s) {
       continue;
     }
     const std::string prefix = "send:";
-    if (line.rfind(prefix, 0) != 0) {
+    if (!line.starts_with(prefix)) {
       continue;
     }
     std::string rest = line.substr(prefix.size());
@@ -47,7 +54,7 @@ std::vector<AkimovIStarSEQ::Op> ParseOpsFromString(const std::string &s) {
     try {
       int src = std::stoi(srcs);
       int dst = std::stoi(dsts);
-      res.push_back(AkimovIStarSEQ::Op{src, dst, msg});
+      res.push_back(AkimovIStarSEQ::Op{.src = src, .dst = dst, .msg = msg});
     } catch (...) {
       continue;
     }
