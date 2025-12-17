@@ -1,7 +1,7 @@
 #include "akimov_i_star/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <sstream>
 #include <string>
 #include <vector>

@@ -5,8 +5,8 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
-#include <iterator>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -71,6 +71,91 @@ std::vector<AkimovIStarMPI::Op> ParseOpsFromString(const std::string &s) {
   return res;
 }
 
+int CountDstZero(const std::vector<AkimovIStarMPI::Op> &ops) {
+  int cnt = 0;
+  for (const auto &op : ops) {
+    if (op.dst == 0) {
+      ++cnt;
+    }
+  }
+  return cnt;
+}
+
+void SendOutgoingToCenter(int myrank, const std::vector<AkimovIStarMPI::Op> &ops) {
+  const int center = 0;
+  for (const auto &op : ops) {
+    if (op.src != myrank) {
+      continue;
+    }
+    std::array<int, 2> header{op.dst, static_cast<int>(op.msg.size())};
+    MPI_Send(header.data(), static_cast<int>(header.size()), MPI_INT, center, 0, MPI_COMM_WORLD);
+    if (header[1] > 0) {
+      MPI_Send(op.msg.data(), header[1], MPI_CHAR, center, 0, MPI_COMM_WORLD);
+    }
+  }
+}
+
+int ReceiveForwardedFromCenter(int expected) {
+  int recvd = 0;
+  const int center = 0;
+  for (int i = 0; i < expected; ++i) {
+    std::array<int, 2> header{0, 0};
+    MPI_Recv(header.data(), static_cast<int>(header.size()), MPI_INT, center, MPI_ANY_TAG, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    int payload_len = header[1];
+    std::string payload;
+    payload.resize(payload_len);
+    if (payload_len > 0) {
+      MPI_Recv(payload.data(), payload_len, MPI_CHAR, center, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+    ++recvd;
+  }
+  return recvd;
+}
+
+void CenterProcessLocalOutgoing(const std::vector<AkimovIStarMPI::Op> &ops, int &received_count) {
+  const int center = 0;
+  for (const auto &op : ops) {
+    if (op.src != center) {
+      continue;
+    }
+    if (op.dst == center) {
+      ++received_count;
+    } else {
+      std::array<int, 2> header{op.src, static_cast<int>(op.msg.size())};
+      MPI_Send(header.data(), static_cast<int>(header.size()), MPI_INT, op.dst, 0, MPI_COMM_WORLD);
+      if (header[1] > 0) {
+        MPI_Send(op.msg.data(), header[1], MPI_CHAR, op.dst, 0, MPI_COMM_WORLD);
+      }
+    }
+  }
+}
+
+void CenterReceiveAndForward(int recv_from_others, int &received_count) {
+  const int center = 0;
+  for (int i = 0; i < recv_from_others; ++i) {
+    std::array<int, 2> header{0, 0};
+    MPI_Recv(header.data(), static_cast<int>(header.size()), MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    int dst = header[0];
+    int payload_len = header[1];
+    std::string payload;
+    payload.resize(payload_len);
+    if (payload_len > 0) {
+      MPI_Recv(payload.data(), payload_len, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+    if (dst == center) {
+      ++received_count;
+    } else {
+      std::array<int, 2> fwd_header{0, payload_len};
+      MPI_Send(fwd_header.data(), static_cast<int>(fwd_header.size()), MPI_INT, dst, 0, MPI_COMM_WORLD);
+      if (payload_len > 0) {
+        MPI_Send(payload.data(), payload_len, MPI_CHAR, dst, 0, MPI_COMM_WORLD);
+      }
+    }
+  }
+}
+
 }  // namespace
 
 AkimovIStarMPI::AkimovIStarMPI(const InType &in) {
@@ -133,13 +218,7 @@ bool AkimovIStarMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   if (size == 1) {
-    int cnt = 0;
-    for (const auto &op : ops_) {
-      if (op.dst == 0) {
-        ++cnt;
-      }
-    }
-    received_count_ = cnt;
+    received_count_ = CountDstZero(ops_);
     GetOutput() = received_count_;
     return true;
   }
@@ -160,56 +239,11 @@ bool AkimovIStarMPI::RunImpl() {
 
   const int center = 0;
 
-  auto send_outgoing_to_center = [&](int myrank) {
-    for (const auto &op : ops_) {
-      if (op.src != myrank) {
-        continue;
-      }
-      std::array<int, 2> header{op.dst, static_cast<int>(op.msg.size())};
-      MPI_Send(header.data(), static_cast<int>(header.size()), MPI_INT, center, 0, MPI_COMM_WORLD);
-      if (header[1] > 0) {
-        MPI_Send(op.msg.data(), header[1], MPI_CHAR, center, 0, MPI_COMM_WORLD);
-      }
-    }
-  };
-
-  auto receive_forwarded_from_center = [&](int expected) -> int {
-    int recvd = 0;
-    for (int i = 0; i < expected; ++i) {
-      std::array<int, 2> header{0, 0};
-      MPI_Recv(header.data(), static_cast<int>(header.size()), MPI_INT, center, MPI_ANY_TAG, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      int payload_len = header[1];
-      std::string payload;
-      payload.resize(payload_len);
-      if (payload_len > 0) {
-        MPI_Recv(payload.data(), payload_len, MPI_CHAR, center, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      }
-      ++recvd;
-    }
-    return recvd;
-  };
-
   if (rank != center) {
-    send_outgoing_to_center(rank);
-    int recvd = receive_forwarded_from_center(local_expected_recv);
-    received_count_ = recvd;
+    SendOutgoingToCenter(rank, ops_);
+    received_count_ = ReceiveForwardedFromCenter(local_expected_recv);
   } else {
-    for (const auto &op : ops_) {
-      if (op.src != center) {
-        continue;
-      }
-      if (op.dst == center) {
-        ++received_count_;
-      } else {
-        std::array<int, 2> header{op.src, static_cast<int>(op.msg.size())};
-        MPI_Send(header.data(), static_cast<int>(header.size()), MPI_INT, op.dst, 0, MPI_COMM_WORLD);
-        if (header[1] > 0) {
-          MPI_Send(op.msg.data(), header[1], MPI_CHAR, op.dst, 0, MPI_COMM_WORLD);
-        }
-      }
-    }
-
+    CenterProcessLocalOutgoing(ops_, received_count_);
     int center_local_sends = 0;
     for (const auto &op : ops_) {
       if (op.src == center) {
@@ -217,28 +251,7 @@ bool AkimovIStarMPI::RunImpl() {
       }
     }
     int recv_from_others = total_sends - center_local_sends;
-
-    for (int i = 0; i < recv_from_others; ++i) {
-      std::array<int, 2> header{0, 0};
-      MPI_Recv(header.data(), static_cast<int>(header.size()), MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-      int dst = header[0];
-      int payload_len = header[1];
-      std::string payload;
-      payload.resize(payload_len);
-      if (payload_len > 0) {
-        MPI_Recv(payload.data(), payload_len, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      }
-      if (dst == center) {
-        ++received_count_;
-      } else {
-        std::array<int, 2> fwd_header{0, payload_len};
-        MPI_Send(fwd_header.data(), static_cast<int>(fwd_header.size()), MPI_INT, dst, 0, MPI_COMM_WORLD);
-        if (payload_len > 0) {
-          MPI_Send(payload.data(), payload_len, MPI_CHAR, dst, 0, MPI_COMM_WORLD);
-        }
-      }
-    }
+    CenterReceiveAndForward(recv_from_others, received_count_);
   }
 
   GetOutput() = received_count_;
