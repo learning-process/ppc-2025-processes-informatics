@@ -58,7 +58,11 @@ void ProcessBorderPixelSeq(int row, int col, int width, int height, int kernel_r
   }
 
   const int index = (row * width) + col;
-  dst[index] = static_cast<uint8_t>(sum / count);
+  if (count > 0) {
+    dst[index] = static_cast<uint8_t>(sum / count);
+  } else {
+    dst[index] = src[index];
+  }
 }
 
 }  // namespace
