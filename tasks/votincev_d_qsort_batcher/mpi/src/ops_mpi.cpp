@@ -116,16 +116,23 @@ void VotincevDQsortBatcherMPI::ScatterData(int rank, const std::vector<int> &siz
 
 int VotincevDQsortBatcherMPI::GetPartnerRank(int rank, int proc_n, int phase) {
   int partner = -1;
-  // Определяем соседа для текущей фазы
+  // Классическая схема Odd-Even Transposition (Batcher-like для P процессов)
   if (phase % 2 == 0) {
-    // Чётная фаза: 0-1, 2-3, ...
-    partner = (rank % 2 == 0) ? rank + 1 : rank - 1;
+    // Чётная фаза: (0,1), (2,3), (4,5)...
+    if (rank % 2 == 0) {
+      partner = rank + 1;
+    } else {
+      partner = rank - 1;
+    }
   } else {
-    // Нечётная фаза: 1-2, 3-4, ...
-    partner = (rank % 2 == 1) ? rank + 1 : rank - 1;
+    // Нечётная фаза: (1,2), (3,4), (5,6)...
+    if (rank % 2 == 1) {
+      partner = rank + 1;
+    } else {
+      partner = rank - 1;
+    }
   }
 
-  // Если соседа нет или он вне границ
   if (partner < 0 || partner >= proc_n) {
     return -1;
   }
@@ -135,19 +142,17 @@ int VotincevDQsortBatcherMPI::GetPartnerRank(int rank, int proc_n, int phase) {
 void VotincevDQsortBatcherMPI::PerformMergePhase(int rank, int partner, const std::vector<int> &sizes,
                                                  std::vector<double> &local, std::vector<double> &recv_buf,
                                                  std::vector<double> &merge_buf) {
-  // Обмениваемся отсортированными блоками с соседом
   MPI_Sendrecv(local.data(), sizes[rank], MPI_DOUBLE, partner, 0, recv_buf.data(), sizes[partner], MPI_DOUBLE, partner,
                0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  // Сливаем два отсортированных массива в merge_buf
   std::merge(local.begin(), local.end(), recv_buf.begin(), recv_buf.begin() + sizes[partner], merge_buf.begin());
 
-  // Распределение объединенного блока:
+  // малые влево, большие вправо
   if (rank < partner) {
-    // Младший ранг оставляет меньшую часть
+    // младший процесс забирает начало (наименьшие элементы)
     std::copy(merge_buf.begin(), merge_buf.begin() + sizes[rank], local.begin());
   } else {
-    // Старший ранг оставляет большую часть
+    // старший процесс забирает конец (наибольшие элементы)
     std::copy(merge_buf.begin() + sizes[partner], merge_buf.begin() + sizes[partner] + sizes[rank], local.begin());
   }
 }
@@ -158,21 +163,17 @@ void VotincevDQsortBatcherMPI::BatcherMergeSort(int rank, int proc_n, const std:
     return;
   }
 
-  // массивы для обмена и слияния. Их размер определяется максимальным блоком.
   int max_block = *std::ranges::max_element(sizes);
   std::vector<double> recv_buf(max_block);
   std::vector<double> merge_buf(sizes[rank] + max_block);
 
-  // чет-нечет слияние Бэтчера (P фаз)
+  // для полной сортировки в схеме Odd-Even требуется P фаз
   for (int phase = 0; phase < proc_n; phase++) {
     int partner = GetPartnerRank(rank, proc_n, phase);
 
-    // если соседа нет — пропускаем фазу
-    if (partner == -1) {
-      continue;
+    if (partner != -1) {
+      PerformMergePhase(rank, partner, sizes, local, recv_buf, merge_buf);
     }
-
-    PerformMergePhase(rank, partner, sizes, local, recv_buf, merge_buf);
   }
 }
 
