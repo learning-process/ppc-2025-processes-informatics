@@ -56,7 +56,6 @@ bool ChaschinVBroadcastMPI<T>::RunImpl() {
       int src = virtual_rank & (~mask);
       int real_src = (src + root) % size;
       MPI_Recv(data_ptr, count, mpi_type, real_src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      break;
     }
     mask <<= 1;
   }
