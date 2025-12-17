@@ -2,9 +2,9 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -50,17 +50,17 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   }
   int rows = static_cast<int>(mat.size());
   int cols = static_cast<int>(mat[0].size());
-  bool invalid_dims = rows <= 0 || cols <= 0;
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (invalid_dims || rows <= 0 || cols <= 0) {
+
+  if (rows <= 0 || cols <= 0) {
     GetOutput() = std::numeric_limits<int>::min();
     return true;
   }
   std::vector<int> data;
+  bool size_mismatch = false;
   if (rank == 0) {
-    data.reserve(rows * cols);
-    bool size_mismatch = false;
+    data.reserve(static_cast<size_t>(rows) * static_cast<size_t>(cols));
     for (const auto &row : mat) {
       if (static_cast<int>(row.size()) != cols) {
         size_mismatch = true;
@@ -91,19 +91,19 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
     displs[i] = offset;
     offset += counts[i];
   }
+
   const int local_size = counts[rank];
   std::vector<int> local(local_size);
+
   if (total > 0) {
     void *sendbuf = (rank == 0) ? data.data() : nullptr;
     MPI_Scatterv(sendbuf, counts.data(), displs.data(), MPI_INT, local.data(), local_size, MPI_INT, 0, MPI_COMM_WORLD);
   }
   int local_max = std::numeric_limits<int>::min();
   for (int value : local) {
-    if (value > local_max) {
-      local_max = value;
-    }
+    local_max = std::max(local_max, value);
   }
-  int global_max;
+  int global_max = 0;
   MPI_Allreduce(&local_max, &global_max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
   GetOutput() = global_max;
