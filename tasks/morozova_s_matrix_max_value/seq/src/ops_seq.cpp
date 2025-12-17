@@ -20,12 +20,11 @@ bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
   if (matrix.empty()) {
     return false;
   }
-  if (matrix[0].empty()) {
-    return false;
-  }
-  int cols = static_cast<int>(matrix[0].size());
-  for (size_t i = 1; i < matrix.size(); ++i) {
-    if (matrix[i].size() != static_cast<size_t>(cols)) {
+  for (size_t i = 0; i < matrix.size(); ++i) {
+    if (matrix[i].empty()) {
+      return false;
+    }
+    if (i > 0 && matrix[i].size() != matrix[0].size()) {
       return false;
     }
   }
