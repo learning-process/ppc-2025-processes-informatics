@@ -12,9 +12,9 @@
 namespace luzan_e_matrix_horis_rib_mult_sheme {
 
 class LuzanEMatrixHorisRibMultShemepERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int height_ = 12500;
-  const int width_ = 12500;
-  const int vec_len_ = 12500;
+  const int height_ = 15000;
+  const int width_ = 15000;
+  const int vec_len_ = 15000;
   InType input_data_;
 
   void SetUp() override {

@@ -83,9 +83,9 @@ TEST_P(LuzanEMatrixHorisRibMultShemeFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 9> kTestParam = {
-    std::make_tuple(3, 3),    std::make_tuple(2, 5),   std::make_tuple(10, 70),
-    std::make_tuple(2000, 5), std::make_tuple(5, 2),   std::make_tuple(1, 1),
-    std::make_tuple(1, 100),  std::make_tuple(100, 1), std::make_tuple(1000, 1000)};
+    std::make_tuple(3, 3),    std::make_tuple(2, 5),    std::make_tuple(10, 70),
+    std::make_tuple(2000, 5), std::make_tuple(5, 2000), std::make_tuple(1, 1),
+    std::make_tuple(1, 100),  std::make_tuple(100, 1),  std::make_tuple(1000, 1000)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuzanEMatrixHorisRibMultShemeMPI, InType>(
                                                kTestParam, PPC_SETTINGS_luzan_e_matrix_horis_rib_mult_sheme),
