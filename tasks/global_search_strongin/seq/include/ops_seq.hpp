@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "global_search_strongin/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace global_search_strongin {
 
