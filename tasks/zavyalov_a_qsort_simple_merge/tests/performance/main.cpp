@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -14,47 +15,25 @@
 namespace zavyalov_a_qsort_simple_merge {
 
 class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const uint64_t kCount_ = 20000000ULL;
+  const uint64_t kCount_ = 10000000ULL;
   InType input_data_;
-  std::shared_ptr<void> data_;
 
   void SetUp() override {
-    int *raw_data = new int[kCount_];
-    data_ = std::shared_ptr<void>(raw_data, [](void *p) { delete[] static_cast<int *>(p); });
-
-    int *int_data = static_cast<int *>(data_.get());
-    for (uint64_t i = 0; i < kCount_; i++) {
-      int_data[i] = 1;
+    input_data_.resize(kCount_);
+    for (size_t i = 0; i < kCount_; i++) {
+      input_data_[i] = i * 8U - 518390U;
     }
-
-    input_data_ = std::make_tuple(MPI_SUM, MPI_INT, kCount_, data_, 0);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (std::get<1>(output_data)) {
-      return true;
+    std::vector<double> res = input_data_;
+    std::sort(res.begin(), res.end());
+    for (size_t i = 0; i < kCount_; i++) {
+      if (res[i] != output_data[i]) {
+        return false;
+      }
     }
-
-    int is_mpi_initialized = 0;
-    MPI_Initialized(&is_mpi_initialized);
-    if (is_mpi_initialized == 0) {
-      return true;
-    }
-
-    int world_size = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-    std::shared_ptr<void> result_ptr = std::get<0>(output_data);
-    if (!result_ptr) {
-      return false;
-    }
-
-    int *result_data = static_cast<int *>(result_ptr.get());
-    bool ok = true;
-    for (uint64_t i = 0; i < kCount_; i++) {
-      ok &= (result_data[i] == world_size);
-    }
-    return ok;
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -66,8 +45,8 @@ TEST_P(ZavyalovAReducePerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZavyalovAQsortMPI, ZavyalovAQsortSEQ>(PPC_SETTINGS_zavyalov_a_qsort_simple_merge);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAQsortMPI, ZavyalovAQsortSEQ>(
+    PPC_SETTINGS_zavyalov_a_qsort_simple_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

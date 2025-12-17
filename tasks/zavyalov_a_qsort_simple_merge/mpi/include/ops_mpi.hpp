@@ -15,18 +15,6 @@ class ZavyalovAQsortMPI : public BaseTask {
   explicit ZavyalovAQsortMPI(const InType &in);
 
  private:
-  static void ReduceSumInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
-  static void ReduceSumFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
-  static void ReduceSumDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
-
-  static void ReduceMinInt(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
-  static void ReduceMinFloat(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
-  static void ReduceMinDouble(const void *sendbuf, void *recvbuf, int count, int root, MPI_Comm comm);
-
-  void ReduceSum(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation, int root,
-                 MPI_Comm comm);
-  static void MyReduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype type, MPI_Op operation, int root,
-                       MPI_Comm comm);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
