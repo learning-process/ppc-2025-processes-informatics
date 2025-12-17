@@ -31,7 +31,8 @@ class GaseninLRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
     if (test_name == "tiny_image_for_coverage") {
       input_data_.width = 1;
       input_data_.height = 1;
-      input_data_.data = {100};
+      input_data_.kernel_size = 3;
+      input_data_.data = {255};
     }
     if (test_name == "small_image") {
       input_data_.width = 10;
@@ -106,14 +107,48 @@ TEST_P(GaseninLRunFuncTestsProcesses, ImageSmoothing) {
   ExecuteTest(GetParam());
 }
 
-TEST(Gasenin_L_Image_Smooth_Common, TaskData_Coverage) {
+TEST(Gasenin_L_Image_Smooth_Common, TaskData_Coverage_Ultimate) {
   gasenin_l_image_smooth::TaskData d1;
   gasenin_l_image_smooth::TaskData d2;
+
   EXPECT_TRUE(d1 == d2);
 
   d2.width = 10;
+  EXPECT_TRUE(d1 != d2);
+
+  d2 = d1;
+  d2.height = 10;
+  EXPECT_FALSE(d1 == d2);
+
+  d2 = d1;
+  d2.kernel_size = 10;
+  EXPECT_FALSE(d1 == d2);
+
+  d2 = d1;
+  d2.data = {1};
   EXPECT_FALSE(d1 == d2);
 }
+
+TEST(Gasenin_L_Image_Smooth_SEQ, RunImpl_Coverage_Fix) {
+  gasenin_l_image_smooth::TaskData in;
+  in.width = 1;
+  in.height = 1;
+  in.kernel_size = 1;
+  in.data = {100};
+
+  gasenin_l_image_smooth::OutType out;
+  out.data.resize(1);
+
+  auto task = std::make_shared<gasenin_l_image_smooth::GaseninLImageSmoothSEQ>(in);
+
+  ASSERT_TRUE(task->Validation());
+  task->PreProcessing();
+  task->Run();
+  task->PostProcessing();
+
+  EXPECT_EQ(task->GetOutput().data[0], 100);
+}
+
 TEST(Gasenin_L_Image_Smooth_MPI, TaskData_Coverage_Test) {
   gasenin_l_image_smooth::TaskData d1;
   gasenin_l_image_smooth::TaskData d2;
