@@ -6,6 +6,8 @@
 #include <tuple>
 #include <vector>
 
+#include "sannikov_i_horizontal_band_gauss/common/include/common.hpp"
+
 namespace sannikov_i_horizontal_band_gauss {
 
 SannikovIHorizontalBandGaussSEQ::SannikovIHorizontalBandGaussSEQ(const InType &in) {

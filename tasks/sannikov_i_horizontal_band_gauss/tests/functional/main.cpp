@@ -3,13 +3,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "sannikov_i_horizontal_band_gauss/common/include/common.hpp"
@@ -33,14 +30,14 @@ class SannikovIHorizontalBandGaussFuncTests : public ppc::util::BaseRunFuncTests
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &A = std::get<0>(input_data_);
+    const auto &a = std::get<0>(input_data_);
     const auto &b = std::get<1>(input_data_);
 
-    if (A.empty() || b.empty()) {
+    if (a.empty() || b.empty()) {
       return false;
     }
 
-    const std::size_t n = A.size();
+    const std::size_t n = a.size();
     if (output_data.size() != n) {
       return false;
     }
@@ -49,12 +46,10 @@ class SannikovIHorizontalBandGaussFuncTests : public ppc::util::BaseRunFuncTests
     for (std::size_t i = 0; i < n; ++i) {
       double s = 0.0;
       for (std::size_t j = 0; j < n; ++j) {
-        s += A[i][j] * output_data[j];
+        s += a[i][j] * output_data[j];
       }
-      const double r = abs(s - b[i]);
-      if (r > max_abs_residual) {
-        max_abs_residual = r;
-      }
+      const double r = std::abs(s - b[i]);
+      max_abs_residual = std::max(max_abs_residual, r);
     }
 
     return max_abs_residual < 1e-7;
@@ -65,23 +60,23 @@ class SannikovIHorizontalBandGaussFuncTests : public ppc::util::BaseRunFuncTests
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {
 
-static std::vector<std::vector<double>> MakeTridiagonal(std::size_t n, double a, double b, double c) {
-  std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+std::vector<std::vector<double>> MakeTridiagonal(std::size_t n, double sub, double diag, double sup) {
+  std::vector<std::vector<double>> mat(n, std::vector<double>(n, 0.0));
   for (std::size_t i = 0; i < n; ++i) {
-    A[i][i] = b;
+    mat[i][i] = diag;
     if (i > 0) {
-      A[i][i - 1] = a;
+      mat[i][i - 1] = sub;
     }
     if (i + 1 < n) {
-      A[i][i + 1] = c;
+      mat[i][i + 1] = sup;
     }
   }
-  return A;
+  return mat;
 }
 
 TEST_P(SannikovIHorizontalBandGaussFuncTests, SolveFromParams) {

@@ -17,8 +17,6 @@ class SannikovIHorizontalBandGaussMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  void BuildRowPartition(int size, int n, std::vector<int> *counts, std::vector<int> *displs);
 };
 
 }  // namespace sannikov_i_horizontal_band_gauss
