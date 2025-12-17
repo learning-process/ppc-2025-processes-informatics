@@ -16,7 +16,7 @@ class GaseninLRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, 
   const int kHeight_ = 3840;
   const int kKernelSize_ = 5;
 
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     input_data_.width = kWidth_;
