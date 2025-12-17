@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <mpi.h>
 
 #include <cstddef>
@@ -8,8 +9,6 @@
 #include "kondakov_v_reduce/mpi/include/ops_mpi.hpp"
 #include "kondakov_v_reduce/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-
-#include "gtest/gtest.h"
 
 namespace kondakov_v_reduce {
 

@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <mpi.h>
 
 #include <array>
@@ -11,8 +12,6 @@
 #include "kondakov_v_reduce/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
-
-#include "gtest/gtest.h"
 
 namespace kondakov_v_reduce {
 
