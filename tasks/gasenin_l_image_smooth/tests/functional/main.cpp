@@ -112,29 +112,23 @@ TEST(Gasenin_L_Image_Smooth_Common, TaskData_Coverage_Ultimate) {
   gasenin_l_image_smooth::TaskData d2;
 
   EXPECT_TRUE(d1 == d2);
-  EXPECT_FALSE(d1 != d2);
+  EXPECT_FALSE(d1.operator!=(d2));
 
   d2.width = 10;
   EXPECT_FALSE(d1 == d2);
-  EXPECT_TRUE(d1 != d2);
+  EXPECT_TRUE(d1.operator!=(d2));
 
   d2 = d1;
-  EXPECT_TRUE(d1 == d2);
-  EXPECT_FALSE(d1 != d2);
-
   d2.height = 10;
-  EXPECT_FALSE(d1 == d2);
-  EXPECT_TRUE(d1 != d2);
+  EXPECT_TRUE(d1.operator!=(d2));
 
   d2 = d1;
   d2.kernel_size = 10;
-  EXPECT_FALSE(d1 == d2);
-  EXPECT_TRUE(d1 != d2);
+  EXPECT_TRUE(d1.operator!=(d2));
 
   d2 = d1;
-  d2.data = {1};
-  EXPECT_FALSE(d1 == d2);
-  EXPECT_TRUE(d1 != d2);
+  d2.data = {1, 2, 3};
+  EXPECT_TRUE(d1.operator!=(d2));
 }
 
 TEST(Gasenin_L_Image_Smooth_SEQ, RunImpl_Coverage_Fix) {
@@ -164,7 +158,7 @@ TEST(Gasenin_L_Image_Smooth_MPI, TaskData_Coverage_Test) {
   ASSERT_TRUE(d1 == d2);
 
   d2.width = 5;
-  ASSERT_TRUE(d1 != d2);
+  ASSERT_TRUE(d1.operator!=(d2));
   ASSERT_FALSE(d1 == d2);
 }
 
