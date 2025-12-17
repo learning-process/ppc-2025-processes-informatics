@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
-#include <tuple>
 
 #include "global_search_strongin/common/include/common.hpp"
 #include "global_search_strongin/mpi/include/ops_mpi.hpp"
@@ -16,17 +16,15 @@ OutType SampleReference(const InType &input, double step) {
   OutType result{};
   result.best_point = input.left;
   result.best_value = input.objective(input.left);
-  for (double x = input.left; x <= input.right; x += step) {
-    const double value = input.objective(x);
+  const double span = input.right - input.left;
+  const int steps = span <= 0.0 ? 0 : static_cast<int>(std::ceil(span / step));
+  for (int sample_index = 1; sample_index <= steps; ++sample_index) {
+    const double current_point = std::min(input.right, input.left + (static_cast<double>(sample_index) * step));
+    const double value = input.objective(current_point);
     if (value < result.best_value) {
       result.best_value = value;
-      result.best_point = x;
+      result.best_point = current_point;
     }
-  }
-  const double value_right = input.objective(input.right);
-  if (value_right < result.best_value) {
-    result.best_value = value_right;
-    result.best_point = input.right;
   }
   return result;
 }
@@ -41,7 +39,9 @@ class StronginPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     input_.reliability = 2.5;
     input_.epsilon = 1e-3;
     input_.max_iterations = 600;
-    input_.objective = [](double x) { return std::sin(x) + std::cos(2.0 * x) * 0.25 + 0.02 * (x - 1.0) * (x - 1.0); };
+    input_.objective = [](double x_value) {
+      return std::sin(x_value) + (std::cos(2.0 * x_value) * 0.25) + (0.02 * (x_value - 1.0) * (x_value - 1.0));
+    };
     reference_ = SampleReference(input_, 5e-4);
   }
 
@@ -68,7 +68,9 @@ const auto kPerfTasks =
 
 const auto kGTestValues = ppc::util::TupleToGTestValues(kPerfTasks);
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(StronginPerf, StronginPerfTests, kGTestValues, StronginPerfTests::CustomPerfTestName);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 
 TEST_P(StronginPerfTests, Runs) {
   ExecuteTest(GetParam());

@@ -1,16 +1,18 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "global_search_strongin/common/include/common.hpp"
 #include "global_search_strongin/mpi/include/ops_mpi.hpp"
 #include "global_search_strongin/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace global_search_strongin {
 
@@ -32,17 +34,16 @@ OutType SampleReference(const StronginCase &test_case) {
   OutType result{};
   result.best_point = test_case.left;
   result.best_value = test_case.function(test_case.left);
-  for (double x = test_case.left; x <= test_case.right; x += test_case.sample_step) {
-    const double value = test_case.function(x);
+  const double span = test_case.right - test_case.left;
+  const int steps = span <= 0.0 ? 0 : static_cast<int>(std::ceil(span / test_case.sample_step));
+  for (int sample_index = 1; sample_index <= steps; ++sample_index) {
+    const double current_point =
+        std::min(test_case.right, test_case.left + (static_cast<double>(sample_index) * test_case.sample_step));
+    const double value = test_case.function(current_point);
     if (value < result.best_value) {
       result.best_value = value;
-      result.best_point = x;
+      result.best_point = current_point;
     }
-  }
-  const double value_right = test_case.function(test_case.right);
-  if (value_right < result.best_value) {
-    result.best_value = value_right;
-    result.best_point = test_case.right;
   }
   return result;
 }
@@ -92,13 +93,13 @@ class StronginFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Te
 namespace {
 
 const std::array<TestType, 3> kTestCases = {
-    TestType{0.0, 3.0, 2.0, 1e-3, 200, [](double x) { return (x - 1.3) * (x - 1.3); }, 1e-4},
-    TestType{-2.0, 2.0, 3.0, 5e-3, 250, [](double x) { return std::sin(x) + 0.2 * x; }, 1e-3},
-    TestType{0.0, 6.0, 2.5, 5e-3, 300, [](double x) {
-  if (x < 2.0) {
-    return std::cos(x) + 0.1 * x;
+    TestType{0.0, 3.0, 2.0, 1e-3, 200, [](double x_value) { return (x_value - 1.3) * (x_value - 1.3); }, 1e-4},
+    TestType{-2.0, 2.0, 3.0, 5e-3, 250, [](double x_value) { return std::sin(x_value) + (0.2 * x_value); }, 1e-3},
+    TestType{0.0, 6.0, 2.5, 5e-3, 300, [](double x_value) {
+  if (x_value < 2.0) {
+    return std::cos(x_value) + (0.1 * x_value);
   }
-  return std::sin(1.5 * x) + 0.05 * (x - 2.0);
+  return std::sin(1.5 * x_value) + (0.05 * (x_value - 2.0));
 }, 1e-3}};
 
 const auto kTaskList =
@@ -107,8 +108,10 @@ const auto kTaskList =
 
 const auto kGTestValues = ppc::util::ExpandToValues(kTaskList);
 
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(StronginSearch, StronginFuncTests, kGTestValues,
                          StronginFuncTests::PrintFuncTestName<StronginFuncTests>);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 
 TEST_P(StronginFuncTests, Runs) {
   ExecuteTest(GetParam());

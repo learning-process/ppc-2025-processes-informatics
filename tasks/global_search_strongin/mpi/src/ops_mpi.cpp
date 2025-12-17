@@ -7,7 +7,9 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
-#include <ranges>
+#include <utility>
+
+#include "global_search_strongin/common/include/common.hpp"
 
 namespace global_search_strongin {
 namespace {
@@ -68,47 +70,9 @@ bool StronginSearchMpi::RunImpl() {
   const int max_iterations = input.max_iterations;
 
   while (iterations_done_ < max_iterations) {
-    if (points_.size() < 2) {
+    if (!ProcessIteration(input, reliability, epsilon)) {
       break;
     }
-    const int intervals = static_cast<int>(points_.size()) - 1;
-
-    const double global_max_slope = ComputeGlobalSlope();
-    const double m = global_max_slope > 0.0 ? reliability * global_max_slope : 1.0;
-
-    const auto [start, end] = IntervalRange(intervals);
-    const auto interval_selection = EvaluateIntervals(start, end, m);
-    const int best_index = interval_selection.second;
-    if (best_index < 0 || best_index >= intervals) {
-      break;
-    }
-
-    int insert_index = 0;
-    double new_point = 0.0;
-    double new_value = 0.0;
-    int continue_flag = 0;
-    if (rank_ == 0) {
-      continue_flag = TryInsertPoint(input, best_index, epsilon, m, insert_index, new_point, new_value) ? 1 : 0;
-    }
-
-    BroadcastInsertionData(continue_flag, insert_index, new_point, new_value);
-    if (continue_flag == 0) {
-      break;
-    }
-
-    if (rank_ != 0) {
-      points_.insert(points_.begin() + insert_index, SamplePoint{.x = new_point, .value = new_value});
-      if (new_value < best_value_) {
-        best_value_ = new_value;
-        best_x_ = new_point;
-      }
-    }
-
-    std::array<double, 2> best_data{best_x_, best_value_};
-    MPI_Bcast(best_data.data(), static_cast<int>(best_data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    best_x_ = best_data[0];
-    best_value_ = best_data[1];
-
     ++iterations_done_;
   }
 
@@ -189,7 +153,7 @@ std::pair<double, int> StronginSearchMpi::EvaluateIntervals(int start, int end, 
   struct {
     double value;
     int index;
-  } local_pair{local_best_value, local_best_index}, global_pair{};
+  } local_pair{.value = local_best_value, .index = local_best_index}, global_pair{};
 
   MPI_Allreduce(&local_pair, &global_pair, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
   return {global_pair.value, global_pair.index};
@@ -234,6 +198,48 @@ void StronginSearchMpi::BroadcastInsertionData(int &continue_flag, int &insert_i
   MPI_Bcast(&insert_index, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&new_point, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&new_value, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
+
+bool StronginSearchMpi::ProcessIteration(const InType &input, double reliability, double epsilon) {
+  if (points_.size() < 2) {
+    return false;
+  }
+  const int intervals = static_cast<int>(points_.size()) - 1;
+  const double global_max_slope = ComputeGlobalSlope();
+  const double m = global_max_slope > 0.0 ? reliability * global_max_slope : 1.0;
+  const auto [start, end] = IntervalRange(intervals);
+  const auto interval_selection = EvaluateIntervals(start, end, m);
+  const int best_index = interval_selection.second;
+  if (best_index < 0 || best_index >= intervals) {
+    return false;
+  }
+
+  int insert_index = 0;
+  double new_point = 0.0;
+  double new_value = 0.0;
+  int continue_flag = 0;
+  if (rank_ == 0) {
+    continue_flag = TryInsertPoint(input, best_index, epsilon, m, insert_index, new_point, new_value) ? 1 : 0;
+  }
+
+  BroadcastInsertionData(continue_flag, insert_index, new_point, new_value);
+  if (continue_flag == 0) {
+    return false;
+  }
+
+  if (rank_ != 0) {
+    points_.insert(points_.begin() + insert_index, SamplePoint{.x = new_point, .value = new_value});
+    if (new_value < best_value_) {
+      best_value_ = new_value;
+      best_x_ = new_point;
+    }
+  }
+
+  std::array<double, 2> best_data{best_x_, best_value_};
+  MPI_Bcast(best_data.data(), static_cast<int>(best_data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  best_x_ = best_data[0];
+  best_value_ = best_data[1];
+  return true;
 }
 
 }  // namespace global_search_strongin

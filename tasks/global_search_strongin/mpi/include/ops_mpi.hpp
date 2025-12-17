@@ -21,12 +21,13 @@ class StronginSearchMpi : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  double ComputeGlobalSlope() const;
-  std::pair<int, int> IntervalRange(int intervals) const;
-  std::pair<double, int> EvaluateIntervals(int start, int end, double m) const;
+  [[nodiscard]] double ComputeGlobalSlope() const;
+  [[nodiscard]] std::pair<int, int> IntervalRange(int intervals) const;
+  [[nodiscard]] std::pair<double, int> EvaluateIntervals(int start, int end, double m) const;
+  bool ProcessIteration(const InType &input, double reliability, double epsilon);
   bool TryInsertPoint(const InType &input, int best_index, double epsilon, double m, int &insert_index,
                       double &new_point, double &new_value);
-  void BroadcastInsertionData(int &continue_flag, int &insert_index, double &new_point, double &new_value);
+  static void BroadcastInsertionData(int &continue_flag, int &insert_index, double &new_point, double &new_value);
 
   int rank_ = 0;
   int world_size_ = 1;
