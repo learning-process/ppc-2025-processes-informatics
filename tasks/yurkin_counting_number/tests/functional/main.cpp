@@ -1,15 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -20,16 +13,9 @@
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
-  }
-
  protected:
   void SetUp() override {
-    const auto &param = GetParam();
-    TestType test = std::get<2>(param);
-
+    TestType test = std::get<2>(GetParam());
     const std::string &s = std::get<1>(test);
     input_data_.assign(s.begin(), s.end());
   }
@@ -37,7 +23,7 @@ class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   bool CheckTestOutputData(OutType &output_data) final {
     int expected = 0;
     for (char c : input_data_) {
-      if (std::isdigit(static_cast<unsigned char>(c))) {
+      if (std::isalpha(static_cast<unsigned char>(c))) {
         expected++;
       }
     }
@@ -49,15 +35,17 @@ class YurkinCountingNumberFuncTest : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {
-TEST_P(YurkinCountingNumberFuncTest, MatmulFromPic) {
+
+TEST_P(YurkinCountingNumberFuncTest, CountLetters) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "abc123"), std::make_tuple(5, "a1b2c"),
+                                            std::make_tuple(7, "ABCDEFG")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
@@ -66,7 +54,8 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = YurkinCountingNumberFuncTest::PrintFuncTestName<YurkinCountingNumberFuncTest>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, YurkinCountingNumberFuncTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(CountLettersTests, YurkinCountingNumberFuncTest, kGtestValues, kPerfTestName);
+
 }  // namespace
 
 }  // namespace yurkin_counting_number

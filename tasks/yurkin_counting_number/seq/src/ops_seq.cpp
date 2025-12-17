@@ -1,10 +1,6 @@
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
 #include <cctype>
-#include <mutex>
-#include <string>
-#include <unordered_map>
-#include <vector>
 
 #include "yurkin_counting_number/common/include/common.hpp"
 
@@ -17,7 +13,7 @@ YurkinCountingNumberSEQ::YurkinCountingNumberSEQ(const InType &in) {
 }
 
 bool YurkinCountingNumberSEQ::ValidationImpl() {
-  return (GetInput() >= 0) && (GetOutput() == 0);
+  return !GetInput().empty() && GetOutput() == 0;
 }
 
 bool YurkinCountingNumberSEQ::PreProcessingImpl() {
@@ -26,8 +22,13 @@ bool YurkinCountingNumberSEQ::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberSEQ::RunImpl() {
-  int input = GetInput();
-  int count = input;
+  const InType &data = GetInput();
+  int count = 0;
+  for (char c : data) {
+    if (std::isalpha(static_cast<unsigned char>(c))) {
+      count++;
+    }
+  }
   GetOutput() = count;
   return true;
 }
