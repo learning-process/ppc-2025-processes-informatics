@@ -14,7 +14,7 @@
 
 namespace zavyalov_a_qsort_simple_merge {
 
-class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ZavyalovAQsortPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const uint64_t kCount_ = 10000000ULL;
   InType input_data_;
 
@@ -73,7 +73,7 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
   }
 };
 
-TEST_P(ZavyalovAReducePerfTestProcesses, RunPerfModes) {
+TEST_P(ZavyalovAQsortPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -82,8 +82,8 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZavyalovAQsortMPI
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ZavyalovAReducePerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = ZavyalovAQsortPerfTestProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ZavyalovAReducePerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ZavyalovAQsortPerfTestProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace zavyalov_a_qsort_simple_merge

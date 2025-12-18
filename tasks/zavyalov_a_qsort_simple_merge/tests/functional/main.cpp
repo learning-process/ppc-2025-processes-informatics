@@ -19,7 +19,7 @@
 
 namespace zavyalov_a_qsort_simple_merge {
 
-class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ZavyalovAQsortFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(test_param);
@@ -84,7 +84,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
 namespace {
 
-TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
+TEST_P(ZavyalovAQsortFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
@@ -96,9 +96,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ZavyalovAReduceFuncTests::PrintFuncTestName<ZavyalovAReduceFuncTests>;
+const auto kPerfTestName = ZavyalovAQsortFuncTests::PrintFuncTestName<ZavyalovAQsortFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZavyalovAReduceFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, ZavyalovAQsortFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
