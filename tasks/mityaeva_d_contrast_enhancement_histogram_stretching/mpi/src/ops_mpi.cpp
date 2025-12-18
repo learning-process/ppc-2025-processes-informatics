@@ -20,7 +20,7 @@ std::pair<uint8_t, uint8_t> FindGlobalMinMax(const std::vector<uint8_t> &local_p
   unsigned char local_max = 0;
 
   for (uint8_t p : local_pixels) {
-    unsigned char v = static_cast<unsigned char>(p);
+    auto v = static_cast<unsigned char>(p);
     local_min = std::min(local_min, v);
     local_max = std::max(local_max, v);
   }
@@ -144,9 +144,8 @@ bool ContrastEnhancementMPI::RunImpl() {
     auto [global_min, global_max] = FindGlobalMinMax(local_pixels);
     std::vector<uint8_t> local_result = ProcessLocalPixels(local_pixels, global_min, global_max);
 
-    std::vector<uint8_t> final_output;
+    std::vector<uint8_t> final_output(static_cast<size_t>(total_pixels_) + 2);
     if (rank == 0) {
-      final_output.resize(static_cast<size_t>(total_pixels_) + 2);
       final_output[0] = static_cast<uint8_t>(width_);
       final_output[1] = static_cast<uint8_t>(height_);
     }
