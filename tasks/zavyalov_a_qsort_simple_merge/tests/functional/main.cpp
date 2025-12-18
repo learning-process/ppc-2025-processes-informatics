@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 #include <stb/stb_image.h>
 
 #include <algorithm>
@@ -7,11 +6,8 @@
 #include <cmath>
 #include <cstddef>
 #include <ctime>
-#include <memory>
-#include <random>
 #include <string>
 #include <tuple>
-#include <type_traits>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -35,10 +31,14 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
     std::srand(std::time({}));
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(0, 99);
+
     std::vector<double> vec(vec_size);
     double mult = 1;
     for (size_t i = 0U; i < vec_size; i++) {
-      vec[i] = (static_cast<double>(std::rand()) / static_cast<double>(RAND_MAX)) * 100.0 * mult;
+      vec[i] = distrib(gen) * mult;
       mult *= -1.0;
     }
 
@@ -47,7 +47,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
   bool CheckTestOutputData(OutType &output_data) final {
     auto vec = input_data_;
-    std::sort(vec.begin(), vec.end());
+    std::ranges::sort(vec);
     for (size_t i = 0; i < vec.size(); i++) {
       if (vec[i] != output_data[i]) {
         return false;

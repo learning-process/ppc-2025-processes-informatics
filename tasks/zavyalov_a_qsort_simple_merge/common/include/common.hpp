@@ -1,13 +1,9 @@
 #pragma once
 
-#include <mpi.h>
-
-#include <algorithm>  // TODO убрать
+#include <algorithm>
 #include <cstring>
-#include <iostream>
-#include <memory>
 #include <random>
-#include <tuple>
+#include <vector>
 
 #include "task/include/task.hpp"
 
@@ -21,8 +17,13 @@ inline void MyQsort(double *mem, int left, int right) {
   if (left >= right || mem == nullptr) {
     return;
   }
-  int l = left, r = right;
-  int pivot_ind = left + rand() % (right - left + 1);
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> distrib(0, 99);
+
+  int l = left;
+  int r = right;
+  int pivot_ind = left + distrib(gen);
   double piv = mem[pivot_ind];
   while (l <= r) {
     while (mem[l] < piv) {

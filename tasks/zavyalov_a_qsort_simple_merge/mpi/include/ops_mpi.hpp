@@ -1,7 +1,5 @@
 #pragma once
 
-#include <mpi.h>
-
 #include "task/include/task.hpp"
 #include "zavyalov_a_qsort_simple_merge/common/include/common.hpp"
 

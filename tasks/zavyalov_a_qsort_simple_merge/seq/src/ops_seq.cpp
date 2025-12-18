@@ -1,6 +1,7 @@
 #include "zavyalov_a_qsort_simple_merge/seq/include/ops_seq.hpp"
 
 #include <cstdlib>
+#include <vector>
 
 #include "zavyalov_a_qsort_simple_merge/common/include/common.hpp"
 
