@@ -55,17 +55,19 @@ bool ZavyalovAQsortMPI::RunImpl() {
 
   MyQsort(local_vector.data(), 0, elements_count - 1);
 
-  std::vector<double> res(rank == 0 ? vec_size : 0);
-
-  MPI_Gatherv(local_vector.data(), elements_count, MPI_DOUBLE, rank == 0 ? res.data() : nullptr, sendcounts.data(),
-              displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
   if (rank == 0) {
+    std::vector<double> res(vec_size);
+    MPI_Gatherv(local_vector.data(), elements_count, MPI_DOUBLE, res.data(), sendcounts.data(), displs.data(),
+                MPI_DOUBLE, 0, MPI_COMM_WORLD);
     for (int i = 1; i < world_size; i++) {
       std::inplace_merge(res.data(), res.data() + displs[i], res.data() + displs[i] + sendcounts[i]);
     }
     if (res.size() != 0) {
       GetOutput() = res;
     }
+  } else {
+    MPI_Gatherv(local_vector.data(), elements_count, MPI_DOUBLE, nullptr, sendcounts.data(), displs.data(), MPI_DOUBLE,
+                0, MPI_COMM_WORLD);
   }
 
   return true;
