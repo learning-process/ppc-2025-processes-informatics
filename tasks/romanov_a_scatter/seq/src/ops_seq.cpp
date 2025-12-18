@@ -24,26 +24,37 @@ bool RomanovAScatterSEQ::PreProcessingImpl() {
 }
 
 bool RomanovAScatterSEQ::RunImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  int num_processes = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
-
-  int root = std::get<2>(GetInput());
-  int sendcount = std::get<1>(GetInput());
-
-  std::vector<int> sendbuf;
-  if (rank == root) {
-    sendbuf = std::get<0>(GetInput());
-    sendbuf.resize(num_processes * sendcount);
-  }
+  const auto &[sendbuf, sendcount, root] = GetInput();
 
   std::vector<int> recvbuf(sendcount);
 
-  MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+  for (int i = 0; (i < sendcount) && (i < static_cast<int>(sendbuf.size())); ++i) {
+    recvbuf[i] = sendbuf[i];
+  }
 
   GetOutput() = recvbuf;
+
+  // Код для сравнения с MPI-версией
+  // int rank = 0;
+  // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // int num_processes = 0;
+  // MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+
+  // int root = std::get<2>(GetInput());
+  // int sendcount = std::get<1>(GetInput());
+
+  // std::vector<int> sendbuf;
+  // if (rank == root) {
+  //   sendbuf = std::get<0>(GetInput());
+  //   sendbuf.resize(num_processes * sendcount);
+  // }
+
+  // std::vector<int> recvbuf(sendcount);
+
+  // MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+
+  // GetOutput() = recvbuf;
 
   return true;
 }

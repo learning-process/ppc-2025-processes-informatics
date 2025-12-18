@@ -36,23 +36,29 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
   }
 
  protected:
-  void SetUp() override {
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (!initialized) {
-      MPI_Init(nullptr, nullptr);
+  bool static IsSeqTest() {
+    const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+    if (!test_info) {
+      return false;
     }
+    return std::string(test_info->name()).find("seq") != std::string::npos;
+  }
 
+  void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     int root = std::get<2>(params);
     int sendcount = std::get<1>(params);
 
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int num_processes = 1;
 
-    int num_processes = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+    bool is_seq_test = IsSeqTest();
+
+    if (!is_seq_test) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
+    }
 
     std::vector<int> sendbuf;
     if (rank == root) {
@@ -63,7 +69,13 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     input_data_ = std::make_tuple(sendbuf, sendcount, root);
 
     std::vector<int> recvbuf(sendcount);
-    MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+    if (!is_seq_test) {
+      MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+    } else {
+      for (int i = 0; i < sendcount; ++i) {
+        recvbuf[i] = sendbuf[i];
+      }
+    }
 
     expected_ = recvbuf;
   }
