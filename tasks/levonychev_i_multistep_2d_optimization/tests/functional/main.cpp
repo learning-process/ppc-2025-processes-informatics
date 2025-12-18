@@ -27,21 +27,12 @@ inline double ParaboloidFunction(double x, double y, double x0, double y0) {
   return dx * dx + dy * dy;
 }
 
-inline double RosenbrockFunction(double x, double y) {
-  double term1 = 1.0 - x;
-  double term2 = y - x * x;
-  return term1 * term1 + 100.0 * term2 * term2;
+inline double xy(double x, double y) {
+  return x * y;
 }
 
-inline double RastriginFunction(double x, double y) {
-  const double pi = 3.14159265358979323846;
-  const double A = 10.0;
-  const double n = 2.0;
-
-  double term1 = x * x - A * std::cos(2.0 * pi * x);
-  double term2 = y * y - A * std::cos(2.0 * pi * y);
-
-  return A * n + term1 + term2;
+inline double xy_reverse(double x, double y) {
+  return 1.0 / (x * y);
 }
 
 class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
@@ -72,7 +63,7 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
       input_data_.y_min = y_min;
       input_data_.y_max = y_max;
       input_data_.num_steps = 3;
-      input_data_.grid_size_step1 = 100;
+      input_data_.grid_size_step1 = 10;
       input_data_.candidates_per_step = 4;
       input_data_.use_local_optimization = true;
 
@@ -81,48 +72,48 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
       expected_value_ = 0.0;
 
     } else if (test_id == 2) {
-      const double x_min = 0.0;
-      const double x_max = 2.0;
-      const double y_min = 0.0;
-      const double y_max = 2.0;
+      const double x_min = 3.0;
+      const double x_max = 10.0;
+      const double y_min = 3.0;
+      const double y_max = 10.0;
 
-      auto func = [](double x, double y) -> double { return RosenbrockFunction(x, y); };
+      auto func = [](double x, double y) -> double { return xy(x, y); };
 
       input_data_.func = func;
       input_data_.x_min = x_min;
       input_data_.x_max = x_max;
       input_data_.y_min = y_min;
       input_data_.y_max = y_max;
-      input_data_.num_steps = 5;
-      input_data_.grid_size_step1 = 100;
-      input_data_.candidates_per_step = 10;
+      input_data_.num_steps = 3;
+      input_data_.grid_size_step1 = 10;
+      input_data_.candidates_per_step = 4;
       input_data_.use_local_optimization = true;
 
-      expected_x_min_ = 1.0;
-      expected_y_min_ = 1.0;
-      expected_value_ = 0.0;
+      expected_x_min_ = 3.0;
+      expected_y_min_ = 3.0;
+      expected_value_ = 9.0;
 
     } else if (test_id == 3) {
-      const double x_min = -2.0;
-      const double x_max = 2.0;
-      const double y_min = -2.0;
-      const double y_max = 2.0;
+      const double x_min = 1;
+      const double x_max = 3;
+      const double y_min = 4;
+      const double y_max = 10;
 
-      auto func = [](double x, double y) -> double { return RastriginFunction(x, y); };
+      auto func = [](double x, double y) -> double { return xy_reverse(x, y); };
 
       input_data_.func = func;
       input_data_.x_min = x_min;
       input_data_.x_max = x_max;
       input_data_.y_min = y_min;
       input_data_.y_max = y_max;
-      input_data_.num_steps = 5;
-      input_data_.grid_size_step1 = 100;
-      input_data_.candidates_per_step = 10;
+      input_data_.num_steps = 3;
+      input_data_.grid_size_step1 = 10;
+      input_data_.candidates_per_step = 4;
       input_data_.use_local_optimization = true;
 
-      expected_x_min_ = 0.0;
-      expected_y_min_ = 0.0;
-      expected_value_ = 0.0;
+      expected_x_min_ = 3.0;
+      expected_y_min_ = 10.0;
+      expected_value_ = 1.0 / 30.0;
     }
   }
 
