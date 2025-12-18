@@ -2,7 +2,7 @@
 
 - Student: Завьялов Алексей Алексеевич, group 3823Б1ФИ3
 - Technology: SEQ | MPI
-- Variant: 2
+- Variant: 2 
 
 ## 1. Introduction
 
