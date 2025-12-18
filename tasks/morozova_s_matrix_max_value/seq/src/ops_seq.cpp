@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <limits>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -17,14 +16,17 @@ MorozovaSMatrixMaxValueSEQ::MorozovaSMatrixMaxValueSEQ(const InType &in) : BaseT
 
 bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
   const auto &matrix = GetInput();
+
   if (matrix.empty()) {
     return false;
   }
-  for (size_t i = 0; i < matrix.size(); ++i) {
-    if (matrix[i].empty()) {
-      return false;
-    }
-    if (i > 0 && matrix[i].size() != matrix[0].size()) {
+  if (matrix[0].empty()) {
+    return false;
+  }
+
+  const size_t cols = matrix[0].size();
+  for (const auto &row : matrix) {
+    if (row.size() != cols) {
       return false;
     }
   }
@@ -37,12 +39,14 @@ bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {
 
 bool MorozovaSMatrixMaxValueSEQ::RunImpl() {
   const auto &matrix = GetInput();
-  int max_value = std::numeric_limits<int>::min();
+
+  int max_value = matrix[0][0];
   for (const auto &row : matrix) {
     for (int value : row) {
       max_value = std::max(max_value, value);
     }
   }
+
   GetOutput() = max_value;
   return true;
 }
