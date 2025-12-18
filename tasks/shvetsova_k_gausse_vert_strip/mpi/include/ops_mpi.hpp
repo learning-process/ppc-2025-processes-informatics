@@ -1,0 +1,27 @@
+#pragma once
+
+#include <array>
+#include <vector>
+
+#include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
+#include "task/include/task.hpp"
+
+namespace shvetsova_k_gausse_vert_strip {
+
+class ShvetsovaKGaussVertStripMPI : public BaseTask {
+ public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+  explicit ShvetsovaKGaussVertStripMPI(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+
+  // Доп функции
+};
+
+}  // namespace shvetsova_k_gausse_vert_strip
