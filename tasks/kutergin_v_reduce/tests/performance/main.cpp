@@ -62,10 +62,10 @@ class ReducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
         int expected_sum = 0;
-        for (int rank = 0; rank < world_size; ++rank) {
-          std::mt19937 gen(rank);
+        for (int rank_i = 0; rank_i < world_size; ++rank_i) {
+          std::mt19937 gen(rank_i);
           std::uniform_int_distribution<> dis(1, 10);
-          if (!input.data.empty()) {
+          for (size_t i = 0; i < input.data.size(); ++i) {
             expected_sum += dis(gen);
           }
         }

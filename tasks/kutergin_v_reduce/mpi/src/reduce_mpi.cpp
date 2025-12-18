@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <numeric>
 
 #include "../../common/include/common.hpp"
 
@@ -96,15 +97,21 @@ bool ReduceMPI::RunImpl() {
   int root_process = input.root;
   const auto &input_vec = input.data;
 
+  /*
   int send_data = input_vec.empty() ? 0 : input_vec[0];  // у каждого процесса - свое число
   int recv_data = 0;                                     // буфер для результат
+  */
+
+  int local_sum =
+      std::accumulate(input_vec.begin(), input_vec.end(), 0);  // вычисление локальной суммы всего входного вектора
+  int global_sum = 0;
 
   // Вызов своей реализации Reduce()
-  Reduce(&send_data, &recv_data, 1, MPI_INT, MPI_SUM, root_process, MPI_COMM_WORLD);
+  Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, root_process, MPI_COMM_WORLD);
 
   // Только корневой процесс записывает результат в Output
   if (rank == root_process) {
-    GetOutput() = recv_data;
+    GetOutput() = global_sum;
   }
 
   return true;
