@@ -11,7 +11,7 @@
 namespace agafonov_i_sentence_count {
 
 class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kTextLength_ = 100000;
+  const int kTextLength_ = 5000000;
   InType input_data_{};
 
   void SetUp() override {
@@ -30,27 +30,28 @@ class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType
   std::string GenerateLongText(int length) {
     std::string text;
     text.reserve(length);
-    
-    const std::vector<std::string> words = {"Hello", "world", "this", "is", "a", "test", "sentence", "for", "performance"};
+
+    const std::vector<std::string> words = {"Hello", "world",    "this", "is",         "a",
+                                            "test",  "sentence", "for",  "performance"};
     const std::vector<std::string> endings = {".", "!", "?"};
-    
+
     size_t word_index = 0;
     size_t end_index = 0;
-    
+
     while (text.length() < static_cast<size_t>(length)) {
       text += words[word_index] + " ";
       word_index = (word_index + 1) % words.size();
-      
+
       if (word_index % 7 == 0 && text.length() < static_cast<size_t>(length) - 2) {
         text += endings[end_index] + " ";
         end_index = (end_index + 1) % endings.size();
       }
     }
-    
+
     if (text.back() != '.' && text.back() != '!' && text.back() != '?') {
       text += ".";
     }
-    
+
     return text;
   }
 };
@@ -68,4 +69,4 @@ const auto kPerfTestName = SentenceCountPerfTest::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(SentenceCountPerfTests, SentenceCountPerfTest, kGtestValues, kPerfTestName);
 
-} // namespace agafonov_i_sentence_count
+}  // namespace agafonov_i_sentence_count
