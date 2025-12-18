@@ -15,9 +15,9 @@ struct OptimizationParams {
   double x_max = 1.0;
   double y_min = 0.0;
   double y_max = 1.0;
-  
+
   int num_steps = 3;
-  
+
   int grid_size_step1 = 10;
 
   int candidates_per_step = 4;
@@ -29,7 +29,7 @@ struct OptimizationResult {
   double x_min = 0.0;
   double y_min = 0.0;
   double value = 0.0;
-  
+
   int iterations = 0;
 };
 
