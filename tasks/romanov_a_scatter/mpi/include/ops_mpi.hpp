@@ -21,7 +21,7 @@ class RomanovAScatterMPI : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-int MyMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                  MPI_Datatype recvtype, int root, MPI_Comm comm);
+int MyMPIScatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
+                 MPI_Datatype recvtype, int root, MPI_Comm comm);
 
 }  // namespace romanov_a_scatter

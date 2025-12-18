@@ -3,21 +3,22 @@
 #include <mpi.h>
 
 #include <cstring>
+#include <vector>
 
 #include "romanov_a_scatter/common/include/common.hpp"
 
 namespace romanov_a_scatter {
 
-static inline int GetVirtualRank(int rank, int num_processes, int root) {
+inline int GetVirtualRank(int rank, int num_processes, int root) {
   return (rank - root + num_processes) % num_processes;
 }
 
-static inline int GetRealRank(int vrank, int num_processes, int root) {
+inline int GetRealRank(int vrank, int num_processes, int root) {
   return (vrank + root) % num_processes;
 }
 
-int MyMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
-                  MPI_Datatype recvtype, int root, MPI_Comm comm) {
+int MyMPIScatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount,
+                 MPI_Datatype recvtype, int root, MPI_Comm comm) {
   int sendtype_size = 0;
   MPI_Type_size(sendtype, &sendtype_size);
 
@@ -36,11 +37,12 @@ int MyMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *rec
 
   int vrank = GetVirtualRank(rank, num_processes, root);
 
-  char *data = nullptr;
+  std::vector<char> data;
   int blocks_in_subtree = 0;
 
   if (rank == root) {
-    data = static_cast<char *>(sendbuf);
+    data.assign(static_cast<char *>(sendbuf),
+                static_cast<char *>(sendbuf) + (num_processes * sendcount * sendtype_size));
     blocks_in_subtree = num_processes;
   } else {
     int parent_vrank = vrank & (vrank - 1);
@@ -50,18 +52,18 @@ int MyMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *rec
     if (blocks_in_subtree == 1) {
       MPI_Recv(recvbuf, blocks_in_subtree * recvcount, recvtype, parent_rank, 1, comm, MPI_STATUS_IGNORE);
     } else {
-      data = static_cast<char *>(malloc(blocks_in_subtree * recvcount * recvtype_size));
-      MPI_Recv(data, blocks_in_subtree * recvcount, recvtype, parent_rank, 1, comm, MPI_STATUS_IGNORE);
+      data.resize(static_cast<size_t>(blocks_in_subtree) * recvcount * recvtype_size);
+      MPI_Recv(data.data(), blocks_in_subtree * recvcount, recvtype, parent_rank, 1, comm, MPI_STATUS_IGNORE);
     }
   }
 
   // Есть блоки данных для дальшейшей передачи
   if (blocks_in_subtree > 1) {
-    std::memcpy(recvbuf, data, recvcount * recvtype_size);
+    std::memcpy(recvbuf, data.data(), recvcount * recvtype_size);
 
     int mask = 1;
     int vrank_copy = vrank;
-    while (!(vrank_copy & 1) && mask < blocks_in_subtree) {
+    while (((vrank_copy & 1) == 0) && (mask < blocks_in_subtree)) {
       mask <<= 1;
       vrank_copy >>= 1;
     }
@@ -73,14 +75,11 @@ int MyMPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *rec
         int child_rank = GetRealRank(child_vrank, num_processes, root);
         int send_blocks = blocks_in_subtree - mask;
         MPI_Send(&send_blocks, 1, MPI_INT, child_rank, 0, comm);
-        MPI_Send(data + mask * recvcount * recvtype_size, send_blocks * recvcount, recvtype, child_rank, 1, comm);
+        MPI_Send(data.data() + (mask * recvcount * recvtype_size), send_blocks * recvcount, recvtype, child_rank, 1,
+                 comm);
         blocks_in_subtree = mask;
       }
       mask >>= 1;
-    }
-
-    if (rank != root) {
-      free(data);
     }
   }
 
@@ -120,7 +119,7 @@ bool RomanovAScatterMPI::RunImpl() {
 
   std::vector<int> recvbuf(sendcount);
 
-  MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+  MyMPIScatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
 
   GetOutput() = recvbuf;
 
