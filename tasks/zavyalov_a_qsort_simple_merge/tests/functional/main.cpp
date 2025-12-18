@@ -49,7 +49,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
       if (rank != 0) {
         return true;
-      } else {
+      }
         auto vec = input_data_;
         std::ranges::sort(vec);
 
@@ -60,7 +60,7 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
         }
 
         return true;
-      }
+      
     }
 
     auto vec = input_data_;

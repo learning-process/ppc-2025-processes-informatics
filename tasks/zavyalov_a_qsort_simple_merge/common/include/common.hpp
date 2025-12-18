@@ -32,8 +32,6 @@ inline void MyQsort(double *mem, int left, int right) {
     return;
   }
 
-  static std::mt19937 gen(time({}));
-
   std::vector<std::pair<int, int>> stack;
   stack.emplace_back(left, right);
 
