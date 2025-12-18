@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -25,12 +26,7 @@ bool MorozovaSMatrixMaxValueSEQ::ValidationImpl() {
   }
 
   const size_t cols = matrix[0].size();
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-  return true;
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool MorozovaSMatrixMaxValueSEQ::PreProcessingImpl() {

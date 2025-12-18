@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -27,12 +28,7 @@ bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
   }
 
   const size_t cols = matrix[0].size();
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-  return true;
+  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
 }
 
 bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
@@ -46,7 +42,6 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const auto &matrix = GetInput();
-
   const int rows = static_cast<int>(matrix.size());
   const int cols = static_cast<int>(matrix[0].size());
   const int total = rows * cols;
@@ -71,11 +66,10 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
     offset += counts[i];
   }
 
-  const int local_size = counts[rank];
-  std::vector<int> local(local_size);
+  std::vector<int> local(counts[rank]);
 
-  MPI_Scatterv(rank == 0 ? flat.data() : nullptr, counts.data(), displs.data(), MPI_INT, local.data(), local_size,
-               MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? flat.data() : nullptr, counts.data(), displs.data(), MPI_INT, local.data(),
+               static_cast<int>(local.size()), MPI_INT, 0, MPI_COMM_WORLD);
 
   int local_max = local[0];
   for (int v : local) {
