@@ -92,7 +92,7 @@ TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {10U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 1U, 100U, 1000U};
+const std::array<TestType, 12> kTestParam = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U, 100U, 1000U};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZavyalovAQsortMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_qsort_simple_merge),
