@@ -24,7 +24,7 @@ bool ZavyalovAQsortSEQ::RunImpl() {
   std::vector<double> input_copy = GetInput();
   if (input_copy.data() != nullptr) {
     MyQsort(input_copy.data(), 0, static_cast<int>(input_copy.size()) - 1);
-    if (input_copy.size() != 0) {
+    if (!input_copy.empty()) {
       GetOutput() = input_copy;
     }
   }

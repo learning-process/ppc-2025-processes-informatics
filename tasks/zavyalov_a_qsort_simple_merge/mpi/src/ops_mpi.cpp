@@ -62,7 +62,7 @@ bool ZavyalovAQsortMPI::RunImpl() {
     for (int i = 1; i < world_size; i++) {
       std::inplace_merge(res.data(), res.data() + displs[i], res.data() + displs[i] + sendcounts[i]);
     }
-    if (res.size() != 0) {
+    if (!res.empty()) {
       GetOutput() = res;
     }
   } else {

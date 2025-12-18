@@ -19,9 +19,9 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
   InType input_data_;
 
   void SetUp() override {
-    int is_initialized;
+    int is_initialized = 0;
     MPI_Initialized(&is_initialized);
-    if (!is_initialized) {
+    if (is_initialized == 0) {
       input_data_.resize(kCount_);
       for (size_t i = 0; i < kCount_; i++) {
         input_data_[i] = static_cast<double>((i * 8U) - 518390U);
@@ -40,9 +40,9 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int is_initialized;
+    int is_initialized = 0;
     MPI_Initialized(&is_initialized);
-    if (is_initialized) {
+    if (is_initialized != 0) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -58,7 +58,7 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
         }
         return true;
       }
-    } else {
+    }
       std::vector<double> res = input_data_;
       std::ranges::sort(res);
       for (size_t i = 0; i < kCount_; i++) {
@@ -67,7 +67,7 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
         }
       }
       return true;
-    }
+    
   }
 
   InType GetTestInputData() final {

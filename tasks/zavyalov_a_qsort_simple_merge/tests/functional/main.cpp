@@ -30,13 +30,10 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     size_t vec_size = params;
 
-    std::mt19937 gen(55);
-    std::uniform_real_distribution<> distrib(0.0, 99.0);
-
     std::vector<double> vec(vec_size);
     double mult = 1;
     for (size_t i = 0U; i < vec_size; i++) {
-      vec[i] = static_cast<double>(distrib(gen)) * mult;
+      vec[i] = static_cast<double>(((i + 843U) * 30U + 17U) % 133) * mult;
       mult *= -1.0;
     }
 
@@ -44,9 +41,9 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int is_initialized;
+    int is_initialized = 0;
     MPI_Initialized(&is_initialized);
-    if (is_initialized) {
+    if (is_initialized != 0) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -64,7 +61,8 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
         return true;
       }
-    } else {
+    } 
+
       auto vec = input_data_;
       std::ranges::sort(vec);
 
@@ -75,7 +73,6 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       }
 
       return true;
-    }
   }
 
   InType GetTestInputData() final {

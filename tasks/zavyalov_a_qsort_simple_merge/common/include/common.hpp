@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <ctime>
 #include <random>
-#include <stack>
 #include <utility>
 #include <vector>
 
@@ -15,12 +15,24 @@ using OutType = std::vector<double>;  // результат сортировки
 using TestType = size_t;              // размер массива
 using BaseTask = ppc::task::Task<InType, OutType>;
 
+inline void InnerCycle(double* mem, int& l, int& r, double piv) {
+    while (mem[l] < piv) {
+      ++l;
+    }
+    while (mem[r] > piv) {
+      --r;
+    }
+    if (l <= r) {
+      std::swap(mem[l++], mem[r--]);
+    }
+}
+
 inline void MyQsort(double *mem, int left, int right) {
   if (mem == nullptr || left >= right) {
     return;
   }
 
-  static std::mt19937 gen(123);
+  static std::mt19937 gen(time({}));
 
   std::vector<std::pair<int, int>> stack;
   stack.emplace_back(left, right);
@@ -37,15 +49,7 @@ inline void MyQsort(double *mem, int left, int right) {
     double piv = mem[pivot_ind];
 
     while (l <= r) {
-      while (mem[l] < piv) {
-        ++l;
-      }
-      while (mem[r] > piv) {
-        --r;
-      }
-      if (l <= r) {
-        std::swap(mem[l++], mem[r--]);
-      }
+      InnerCycle(mem, l, r, piv);
     }
 
     if (cur_l < r) {
