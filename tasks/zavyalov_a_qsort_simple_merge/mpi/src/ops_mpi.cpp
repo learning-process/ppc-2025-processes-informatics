@@ -57,8 +57,8 @@ bool ZavyalovAQsortMPI::RunImpl() {
 
   std::vector<double> res(rank == 0 ? vec_size : 0);
 
-  MPI_Gatherv(local_vector.data(), elements_count, MPI_DOUBLE, rank == 0 ? res.data() : nullptr, sendcounts.data(), displs.data(), MPI_DOUBLE,
-              0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_vector.data(), elements_count, MPI_DOUBLE, rank == 0 ? res.data() : nullptr, sendcounts.data(),
+              displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
   if (rank == 0) {
     for (int i = 1; i < world_size; i++) {
       std::inplace_merge(res.data(), res.data() + displs[i], res.data() + displs[i] + sendcounts[i]);
