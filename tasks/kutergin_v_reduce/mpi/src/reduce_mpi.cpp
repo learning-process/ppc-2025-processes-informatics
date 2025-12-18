@@ -2,11 +2,25 @@
 
 #include <mpi.h>
 
+#include <cstdint>
 #include <cstring>
 
 #include "../../common/include/common.hpp"
 
 namespace kutergin_v_reduce {
+
+namespace {
+
+// вспомогательная функция для применения операции op к двум буферам a и b
+void ApplyOp(void *a, const void *b, int count, MPI_Datatype datatype, MPI_Op op) {
+  if (op == MPI_SUM && datatype == MPI_INT) {
+    for (int i = 0; i < count; ++i) {
+      reinterpret_cast<int *>(a)[i] += reinterpret_cast<const int *>(b)[i];
+    }
+  }
+}
+
+}  // namespace
 
 ReduceMPI::ReduceMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());  // установка типа задачи
@@ -20,13 +34,13 @@ int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_O
   MPI_Comm_rank(comm, &process_rank);
   MPI_Comm_size(comm, &process_count);
 
-  int type_size = 0;
-  MPI_Type_size(datatype, &type_size);
-
   if (root < 0 || root >= process_count)  // root-процесс не существует
   {
     return MPI_ERR_ROOT;  // возвращение стандартного кода ошибки MPI
   }
+
+  int type_size = 0;
+  MPI_Type_size(datatype, &type_size);
 
   // Древовидный сбор
   for (int mask = 1; mask < process_count;
@@ -36,17 +50,14 @@ int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_O
     {
       MPI_Send(sendbuf, count, datatype, process_rank - mask, 0, comm);
       break;
-    } else if (process_rank + mask < process_count)  // процессы-получатели
+    }
+
+    if (process_rank + mask < process_count)  // процессы-получатели
     {
-      auto *recv_temp = new uint8_t[count * type_size];
+      auto *recv_temp = new uint8_t[static_cast<size_t>(count) * type_size];
       MPI_Recv(recv_temp, count, datatype, process_rank + mask, 0, comm, MPI_STATUS_IGNORE);
 
-      if (op == MPI_SUM && datatype == MPI_INT)  // выполнение MPI_SUM для int
-      {
-        for (int i = 0; i < count; ++i) {
-          reinterpret_cast<int *>(sendbuf)[i] += reinterpret_cast<int *>(recv_temp)[i];
-        }
-      }
+      ApplyOp(sendbuf, recv_temp, count, datatype, op);  // выполнение op (MPI_SUM) для datatype (MPI_INT)
 
       delete[] recv_temp;
     }
@@ -60,7 +71,7 @@ int Reduce(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_O
   // Корневой процесс 'root' получает финальный результат
   if (process_rank == root) {
     if (root == 0) {
-      std::memcpy(recvbuf, sendbuf, count * type_size);
+      std::memcpy(recvbuf, sendbuf, static_cast<size_t>(count) * type_size);
     } else {
       MPI_Recv(recvbuf, count, datatype, 0, 0, comm, MPI_STATUS_IGNORE);
     }

@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
+#include <cstddef>
 #include <numeric>
 #include <random>
 #include <string>
@@ -33,7 +35,7 @@ class ReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Test
     // получение параметров теста
     const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int vec_size = std::get<0>(params);
-    int root_proc_ = std::get<1>(params);
+    int root_proc = std::get<1>(params);
 
     // генерация входных данных
     std::mt19937 gen(rank);  // rank выступает как seed для воспроизводимости
@@ -43,7 +45,7 @@ class ReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Test
       local_vec[i] = dis(gen);
     }
 
-    input_data_ = InType{local_vec, root_proc_};
+    input_data_ = InType{local_vec, root_proc};
   }
 
   // проверка результата после выполнения задачи
@@ -70,12 +72,12 @@ class ReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Test
       // корневой процесс возвращает результат проверки
       if (rank == input.root) {
         // построение буфера для сбора
-        int world_size;
+        int world_size = 0;
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
         int expected_sum = 0;
-        for (int r = 0; r < world_size; ++r) {
-          std::mt19937 gen(r);
+        for (int rank = 0; rank < world_size; ++rank) {
+          std::mt19937 gen(rank);
           std::uniform_int_distribution<> dis(1, 10);
           if (!input.data.empty()) {
             expected_sum += dis(gen);
@@ -123,6 +125,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = ReduceFuncTests::PrintFuncTestName<ReduceFuncTests>;
 
+// NOLINTNEXTLINE(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables)
 INSTANTIATE_TEST_SUITE_P(Reduce, ReduceFuncTests, kGtestValues, kTestName);
 }  // namespace
 

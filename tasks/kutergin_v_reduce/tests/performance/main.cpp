@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <cstddef>
 #include <numeric>
 #include <random>
+#include <string>
 #include <vector>
 
 #include "../../common/include/common.hpp"
@@ -25,8 +27,8 @@ class ReducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     std::mt19937 gen(rank);  // rank выступает как seed для воспроизводимости
     std::uniform_int_distribution<> dis(1, 10);
     std::vector<int> local_vec(2000000);
-    for (size_t i = 0; i < local_vec.size(); ++i) {
-      local_vec[i] = dis(gen);
+    for (int &val : local_vec) {
+      val = dis(gen);
     }
 
     input_data_ = InType{local_vec, 0};
@@ -56,12 +58,12 @@ class ReducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
       // корневой процесс возвращает результат проверки
       if (rank == input.root) {
         // построение буфера для сбора
-        int world_size;
+        int world_size = 0;
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
         int expected_sum = 0;
-        for (int r = 0; r < world_size; ++r) {
-          std::mt19937 gen(r);
+        for (int rank = 0; rank < world_size; ++rank) {
+          std::mt19937 gen(rank);
           std::uniform_int_distribution<> dis(1, 10);
           if (!input.data.empty()) {
             expected_sum += dis(gen);
@@ -100,6 +102,7 @@ TEST_P(ReducePerfTests, PerfTest) {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ReduceMPI, ReduceSequential>(PPC_SETTINGS_kutergin_v_reduce);
 
+// NOLINTNEXTLINE(modernize-type-traits, cppcoreguidelines-avoid-non-const-global-variables)
 INSTANTIATE_TEST_SUITE_P(ReducePerf, ReducePerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
                          ReducePerfTests::CustomPerfTestName);
 
