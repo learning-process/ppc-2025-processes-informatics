@@ -68,7 +68,6 @@ class MorozovaSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
     }
     return output_data == expected_max;
   }
-
   InType GetTestInputData() final {
     return input_data_;
   }
@@ -78,23 +77,22 @@ class MorozovaSRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 };
 
 namespace {
-
 TEST_P(MorozovaSRunFuncTestsProcesses, MatrixMaxValue) {
   ExecuteTest(GetParam());
 }
+const std::array<TestType, 3> kTestParamMPI = {std::make_tuple(1, "small"), std::make_tuple(2, "medium"),
+                                               std::make_tuple(3, "large")};
 
-const std::array<TestType, 6> kTestParam = {std::make_tuple(1, "small"),   std::make_tuple(2, "medium"),
-                                            std::make_tuple(3, "large"),   std::make_tuple(4, "empty"),
-                                            std::make_tuple(5, "invalid"), std::make_tuple(6, "zero_cols")};
-
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<MorozovaSMatrixMaxValueMPI, InType>(kTestParam, PPC_SETTINGS_morozova_s_matrix_max_value),
-    ppc::util::AddFuncTask<MorozovaSMatrixMaxValueSEQ, InType>(kTestParam, PPC_SETTINGS_morozova_s_matrix_max_value));
-
+const std::array<TestType, 6> kTestParamSEQ = {std::make_tuple(1, "small"),   std::make_tuple(2, "medium"),
+                                               std::make_tuple(3, "large"),   std::make_tuple(4, "empty"),
+                                               std::make_tuple(5, "invalid"), std::make_tuple(6, "zero_cols")};
+const auto kTestTasksMPI =
+    ppc::util::AddFuncTask<MorozovaSMatrixMaxValueMPI, InType>(kTestParamMPI, PPC_SETTINGS_morozova_s_matrix_max_value);
+const auto kTestTasksSEQ =
+    ppc::util::AddFuncTask<MorozovaSMatrixMaxValueSEQ, InType>(kTestParamSEQ, PPC_SETTINGS_morozova_s_matrix_max_value);
+const auto kTestTasksList = std::tuple_cat(kTestTasksMPI, kTestTasksSEQ);
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
 const auto kPerfTestName = MorozovaSRunFuncTestsProcesses::PrintFuncTestName<MorozovaSRunFuncTestsProcesses>;
-
 INSTANTIATE_TEST_SUITE_P(MatrixMaxValueTests, MorozovaSRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
