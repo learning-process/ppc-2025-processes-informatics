@@ -219,42 +219,87 @@ bool AkimovIStarMPI::RunImpl() {
 
   if (size == 1) {
     received_count_ = CountDstZero(ops_);
-    GetOutput() = received_count_;
-    return true;
-  }
-
-  int local_send_count = 0;
-  int local_expected_recv = 0;
-  for (const auto &op : ops_) {
-    if (op.src == rank) {
-      ++local_send_count;
-    }
-    if (op.dst == rank) {
-      ++local_expected_recv;
-    }
-  }
-
-  int total_sends = 0;
-  MPI_Allreduce(&local_send_count, &total_sends, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-  const int center = 0;
-
-  if (rank != center) {
-    SendOutgoingToCenter(rank, ops_);
-    received_count_ = ReceiveForwardedFromCenter(local_expected_recv);
   } else {
-    CenterProcessLocalOutgoing(ops_, received_count_);
-    int center_local_sends = 0;
+    int local_send_count = 0;
+    int local_expected_recv = 0;
     for (const auto &op : ops_) {
-      if (op.src == center) {
-        ++center_local_sends;
+      if (op.src == rank) {
+        ++local_send_count;
+      }
+      if (op.dst == rank) {
+        ++local_expected_recv;
       }
     }
-    int recv_from_others = total_sends - center_local_sends;
-    CenterReceiveAndForward(recv_from_others, received_count_);
+
+    int total_sends = 0;
+    MPI_Allreduce(&local_send_count, &total_sends, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    const int center = 0;
+
+    if (rank != center) {
+      SendOutgoingToCenter(rank, ops_);
+      received_count_ = ReceiveForwardedFromCenter(local_expected_recv);
+    } else {
+      CenterProcessLocalOutgoing(ops_, received_count_);
+      int center_local_sends = 0;
+      for (const auto &op : ops_) {
+        if (op.src == center) {
+          ++center_local_sends;
+        }
+      }
+      int recv_from_others = total_sends - center_local_sends;
+      CenterReceiveAndForward(recv_from_others, received_count_);
+    }
   }
 
-  GetOutput() = received_count_;
+  int total_expected_for_center = 0;
+  if (rank == 0) {
+    const InType &root_input = GetInput();
+    std::string s(root_input.begin(), root_input.end());
+    std::istringstream ss(s);
+    std::string line;
+    const std::string prefix = "send:";
+    while (std::getline(ss, line)) {
+      size_t start = line.find_first_not_of(" \t\r\n");
+      if (start == std::string::npos) {
+        continue;
+      }
+      size_t end = line.find_last_not_of(" \t\r\n");
+      std::string t = line.substr(start, end - start + 1);
+      if (!t.starts_with(prefix)) {
+        continue;
+      }
+      std::string rest = t.substr(prefix.size());
+      size_t p1 = rest.find(':');
+      if (p1 == std::string::npos) {
+        continue;
+      }
+      size_t p2 = rest.find(':', p1 + 1);
+      if (p2 == std::string::npos) {
+        continue;
+      }
+      std::string dsts = rest.substr(p1 + 1, p2 - (p1 + 1));
+      size_t sd = dsts.find_first_not_of(" \t\r\n");
+      if (sd == std::string::npos) {
+        continue;
+      }
+      size_t ed = dsts.find_last_not_of(" \t\r\n");
+      std::string dsttrim = dsts.substr(sd, ed - sd + 1);
+      try {
+        int dst = std::stoi(dsttrim);
+        if (dst == 0) {
+          ++total_expected_for_center;
+        }
+      } catch (...) {
+        continue;
+      }
+    }
+  }
+
+  MPI_Bcast(&total_expected_for_center, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput() = total_expected_for_center;
+
   return true;
 }
 
