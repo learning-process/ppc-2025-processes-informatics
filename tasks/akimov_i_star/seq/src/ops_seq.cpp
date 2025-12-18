@@ -2,7 +2,7 @@
 
 #include <cctype>
 #include <cstddef>
-#include <string>
+#include <string_view>
 #include <vector>
 
 #include "akimov_i_star/common/include/common.hpp"
