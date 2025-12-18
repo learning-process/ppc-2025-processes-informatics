@@ -15,9 +15,13 @@ class YurkinCountingNumberPerfTest : public ppc::util::BaseRunPerfTests<InType, 
   void SetUp() override {
     input_data_.clear();
     input_data_.reserve(kCount * 100000);
+
     for (int i = 0; i < kCount * 100000; ++i) {
       input_data_.push_back((i % 3 == 0) ? 'A' : '1');
     }
+
+    GlobalData::g_data_string.clear();
+    GlobalData::g_data_string = input_data_;
   }
 
   InType GetTestInputData() override {
