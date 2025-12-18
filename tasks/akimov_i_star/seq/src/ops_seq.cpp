@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "akimov_i_star/common/include/common.hpp"
@@ -11,18 +12,13 @@ namespace akimov_i_star {
 namespace {
 
 constexpr std::size_t kPrefixLen = 5;
-constexpr char kPrefix[] = "send:";
+constexpr std::string_view kPrefix = "send:";
 
 bool CheckPrefix(const char *data, std::size_t n, std::size_t i) {
   if (i + kPrefixLen > n) {
     return false;
   }
-  for (std::size_t k = 0; k < kPrefixLen; ++k) {
-    if (data[i + k] != kPrefix[k]) {
-      return false;
-    }
-  }
-  return true;
+  return std::string_view(data + i, kPrefixLen) == kPrefix;
 }
 
 std::size_t SkipWhitespace(const char *data, std::size_t n, std::size_t pos) {
@@ -64,6 +60,15 @@ bool ProcessLineForZeroDst(const char *data, std::size_t n, std::size_t &i) {
   return after < n && data[after] == ':';
 }
 
+void SkipToNextLine(const char *data, std::size_t n, std::size_t &i) {
+  while (i < n && data[i] != '\n') {
+    ++i;
+  }
+  if (i < n && data[i] == '\n') {
+    ++i;
+  }
+}
+
 int CountDstZeroFromBuffer(const InType &buf) {
   const char *data = buf.empty() ? nullptr : buf.data();
   std::size_t n = buf.size();
@@ -75,31 +80,21 @@ int CountDstZeroFromBuffer(const InType &buf) {
   std::size_t i = 0;
 
   while (i < n) {
-    if (data[i] != 's') {
-      if (data[i] == '\n') {
-        ++i;
-      } else {
-        while (i < n && data[i] != '\n') {
-          ++i;
-        }
-        if (i < n && data[i] == '\n') {
-          ++i;
-        }
+    if (data[i] == 's') {
+      std::size_t current_pos = i;
+      if (ProcessLineForZeroDst(data, n, current_pos)) {
+        ++count;
       }
+      SkipToNextLine(data, n, i);
       continue;
     }
 
-    std::size_t current_pos = i;
-    if (ProcessLineForZeroDst(data, n, current_pos)) {
-      ++count;
+    if (data[i] == '\n') {
+      ++i;
+      continue;
     }
 
-    while (i < n && data[i] != '\n') {
-      ++i;
-    }
-    if (i < n && data[i] == '\n') {
-      ++i;
-    }
+    SkipToNextLine(data, n, i);
   }
 
   return count;
