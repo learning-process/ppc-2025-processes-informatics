@@ -202,6 +202,40 @@ int CountMessagesForCenterFromInput(const InType &input) {
   return total_expected_for_center;
 }
 
+void ProcessMultiProcMode(int rank, const std::vector<AkimovIStarMPI::Op> &ops, int &received_count) {
+  int local_send_count = 0;
+  int local_expected_recv = 0;
+
+  for (const auto &op : ops) {
+    if (op.src == rank) {
+      ++local_send_count;
+    }
+    if (op.dst == rank) {
+      ++local_expected_recv;
+    }
+  }
+
+  int total_sends = 0;
+  MPI_Allreduce(&local_send_count, &total_sends, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  const int center = 0;
+
+  if (rank != center) {
+    SendOutgoingToCenter(rank, ops);
+    received_count = ReceiveForwardedFromCenter(local_expected_recv);
+  } else {
+    CenterProcessLocalOutgoing(ops, received_count);
+    int center_local_sends = 0;
+    for (const auto &op : ops) {
+      if (op.src == center) {
+        ++center_local_sends;
+      }
+    }
+    int recv_from_others = total_sends - center_local_sends;
+    CenterReceiveAndForward(recv_from_others, received_count);
+  }
+}
+
 }  // namespace
 
 AkimovIStarMPI::AkimovIStarMPI(const InType &in) {
@@ -266,36 +300,7 @@ bool AkimovIStarMPI::RunImpl() {
   if (size == 1) {
     received_count_ = CountDstZero(ops_);
   } else {
-    int local_send_count = 0;
-    int local_expected_recv = 0;
-    for (const auto &op : ops_) {
-      if (op.src == rank) {
-        ++local_send_count;
-      }
-      if (op.dst == rank) {
-        ++local_expected_recv;
-      }
-    }
-
-    int total_sends = 0;
-    MPI_Allreduce(&local_send_count, &total_sends, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-    const int center = 0;
-
-    if (rank != center) {
-      SendOutgoingToCenter(rank, ops_);
-      received_count_ = ReceiveForwardedFromCenter(local_expected_recv);
-    } else {
-      CenterProcessLocalOutgoing(ops_, received_count_);
-      int center_local_sends = 0;
-      for (const auto &op : ops_) {
-        if (op.src == center) {
-          ++center_local_sends;
-        }
-      }
-      int recv_from_others = total_sends - center_local_sends;
-      CenterReceiveAndForward(recv_from_others, received_count_);
-    }
+    ProcessMultiProcMode(rank, ops_, received_count_);
   }
 
   int total_expected_for_center = 0;

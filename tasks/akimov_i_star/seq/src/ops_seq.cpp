@@ -2,7 +2,6 @@
 
 #include <cctype>
 #include <cstddef>
-#include <string>
 #include <vector>
 
 #include "akimov_i_star/common/include/common.hpp"
@@ -11,12 +10,15 @@ namespace akimov_i_star {
 
 namespace {
 
-bool CheckPrefix(const char *data, std::size_t n, std::size_t i, const char *prefix, std::size_t prefix_len) {
-  if (i + prefix_len > n) {
+constexpr std::size_t kPrefixLen = 5;
+constexpr char kPrefix[] = "send:";
+
+bool CheckPrefix(const char *data, std::size_t n, std::size_t i) {
+  if (i + kPrefixLen > n) {
     return false;
   }
-  for (std::size_t k = 0; k < prefix_len; ++k) {
-    if (data[i + k] != prefix[k]) {
+  for (std::size_t k = 0; k < kPrefixLen; ++k) {
+    if (data[i + k] != kPrefix[k]) {
       return false;
     }
   }
@@ -31,14 +33,11 @@ std::size_t SkipWhitespace(const char *data, std::size_t n, std::size_t pos) {
 }
 
 bool ProcessLineForZeroDst(const char *data, std::size_t n, std::size_t &i) {
-  const char prefix[] = "send:";
-  const std::size_t prefix_len = 5;
-
-  if (!CheckPrefix(data, n, i, prefix, prefix_len)) {
+  if (!CheckPrefix(data, n, i)) {
     return false;
   }
 
-  std::size_t j = i + prefix_len;
+  std::size_t j = i + kPrefixLen;
 
   while (j < n && data[j] != '\n' && data[j] != ':') {
     ++j;
@@ -62,11 +61,7 @@ bool ProcessLineForZeroDst(const char *data, std::size_t n, std::size_t &i) {
   std::size_t after = dst_start + 1;
   after = SkipWhitespace(data, n, after);
 
-  if (after < n && data[after] == ':') {
-    return true;
-  }
-
-  return false;
+  return after < n && data[after] == ':';
 }
 
 int CountDstZeroFromBuffer(const InType &buf) {
@@ -80,27 +75,30 @@ int CountDstZeroFromBuffer(const InType &buf) {
   std::size_t i = 0;
 
   while (i < n) {
-    if (data[i] == 's') {
-      std::size_t current_pos = i;
-      if (ProcessLineForZeroDst(data, n, current_pos)) {
-        ++count;
+    if (data[i] != 's') {
+      if (data[i] == '\n') {
+        ++i;
+      } else {
+        while (i < n && data[i] != '\n') {
+          ++i;
+        }
+        if (i < n && data[i] == '\n') {
+          ++i;
+        }
       }
+      continue;
+    }
 
-      while (i < n && data[i] != '\n') {
-        ++i;
-      }
-      if (i < n && data[i] == '\n') {
-        ++i;
-      }
-    } else if (data[i] == '\n') {
+    std::size_t current_pos = i;
+    if (ProcessLineForZeroDst(data, n, current_pos)) {
+      ++count;
+    }
+
+    while (i < n && data[i] != '\n') {
       ++i;
-    } else {
-      while (i < n && data[i] != '\n') {
-        ++i;
-      }
-      if (i < n && data[i] == '\n') {
-        ++i;
-      }
+    }
+    if (i < n && data[i] == '\n') {
+      ++i;
     }
   }
 
