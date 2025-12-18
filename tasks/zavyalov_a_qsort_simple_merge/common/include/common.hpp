@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstring>
 #include <ctime>
-#include <random>
 #include <utility>
 #include <vector>
 
@@ -42,8 +41,7 @@ inline void MyQsort(double *mem, int left, int right) {
     int l = cur_l;
     int r = cur_r;
 
-    std::uniform_int_distribution<int> distrib(l, r);
-    int pivot_ind = distrib(gen);
+    int pivot_ind = (l + r) / 2;
     double piv = mem[pivot_ind];
 
     while (l <= r) {
