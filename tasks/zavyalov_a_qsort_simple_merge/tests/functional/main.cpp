@@ -50,17 +50,16 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       if (rank != 0) {
         return true;
       }
-        auto vec = input_data_;
-        std::ranges::sort(vec);
+      auto vec = input_data_;
+      std::ranges::sort(vec);
 
-        for (size_t i = 0; i < vec.size(); i++) {
-          if (vec[i] != output_data[i]) {
-            return false;
-          }
+      for (size_t i = 0; i < vec.size(); i++) {
+        if (vec[i] != output_data[i]) {
+          return false;
         }
+      }
 
-        return true;
-      
+      return true;
     }
 
     auto vec = input_data_;
