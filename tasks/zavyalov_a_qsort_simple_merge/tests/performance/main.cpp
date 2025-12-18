@@ -24,7 +24,7 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
     if (is_initialized == 0) {
       input_data_.resize(kCount_);
       for (size_t i = 0; i < kCount_; i++) {
-        input_data_[i] = static_cast<double>((i * 8U) - 518390U);
+        input_data_[i] = static_cast<double>(((i * 8U) - 518390U) % 126659U);
       }
     } else {
       int rank = 0;
@@ -33,7 +33,7 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
       if (rank == 0) {
         input_data_.resize(kCount_);
         for (size_t i = 0; i < kCount_; i++) {
-          input_data_[i] = static_cast<double>((i * 8U) - 518390U);
+          input_data_[i] = static_cast<double>(((i * 8U) - 518390U) % 126659U);
         }
       }
     }
