@@ -7,32 +7,22 @@
 
 namespace yurkin_counting_number {
 
-class YurkinCountingNumberFuncTest : public ppc::util::BaseFunctionalTest<InType, OutType> {
+class YurkinCountingNumberFuncTest : public ppc::util::TaskFunctionalTest<InType, OutType> {
  public:
-  InType input_data_{};
-
   void SetUp() override {
-    // формируем тестовую строку
-    GlobalData::g_data_string = "Abc123!!!deF#45";
-
-    // input_data_ не влияет, но должен существовать
-    input_data_ = 0;
+    test_input_ = {'A', 'b', 'c', '1', '2', '3', '!', '!', '!', 'd', 'e', 'F', '#', '4', '5'};
   }
 
-  InType GetTestInputData() override {
-    return input_data_;
-  }
-
-  bool CheckTestOutputData(OutType &output_data) override {
+  bool CheckTestOutputData(const OutType &output) override {
     int cnt = 0;
 
-    for (unsigned char c : GlobalData::g_data_string) {
-      if (std::isalpha(c)) {
+    for (char c : test_input_) {
+      if (std::isalpha(static_cast<unsigned char>(c))) {
         cnt++;
       }
     }
 
-    return output_data == cnt;
+    return output == cnt;
   }
 };
 
@@ -40,16 +30,8 @@ TEST_P(YurkinCountingNumberFuncTest, FunctionalRun) {
   Run();
 }
 
-const auto kAllTasks = ppc::util::MakeAllTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSEQ>(
-    PPC_SETTINGS_yurkin_counting_number);
-
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllTasks);
-
-const char kFuncTestName[] = "FuncTest";
-
-INSTANTIATE_TEST_SUITE_P(FunctionalTest, YurkinCountingNumberFuncTest, kGtestValues,
-                         [](const testing::TestParamInfo<YurkinCountingNumberFuncTest::ParamType> &info) {
-                           return std::string(kFuncTestName) + "_" + info.param.name;
-                         });
+INSTANTIATE_TEST_SUITE_P(FunctionalTest, YurkinCountingNumberFuncTest,
+                         ppc::util::CreateTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSeq>(
+                             PPC_SETTINGS_yurkin_counting_number));
 
 }  // namespace yurkin_counting_number
