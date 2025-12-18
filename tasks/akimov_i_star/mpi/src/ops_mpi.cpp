@@ -156,6 +156,52 @@ void CenterReceiveAndForward(int recv_from_others, int &received_count) {
   }
 }
 
+int CountMessagesForCenterFromInput(const InType &input) {
+  int total_expected_for_center = 0;
+  std::string s(input.begin(), input.end());
+  std::istringstream ss(s);
+  std::string line;
+  const std::string prefix = "send:";
+
+  while (std::getline(ss, line)) {
+    size_t start = line.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) {
+      continue;
+    }
+    size_t end = line.find_last_not_of(" \t\r\n");
+    std::string t = line.substr(start, end - start + 1);
+    if (!t.starts_with(prefix)) {
+      continue;
+    }
+    std::string rest = t.substr(prefix.size());
+    size_t p1 = rest.find(':');
+    if (p1 == std::string::npos) {
+      continue;
+    }
+    size_t p2 = rest.find(':', p1 + 1);
+    if (p2 == std::string::npos) {
+      continue;
+    }
+    std::string dsts = rest.substr(p1 + 1, p2 - (p1 + 1));
+    size_t sd = dsts.find_first_not_of(" \t\r\n");
+    if (sd == std::string::npos) {
+      continue;
+    }
+    size_t ed = dsts.find_last_not_of(" \t\r\n");
+    std::string dsttrim = dsts.substr(sd, ed - sd + 1);
+    try {
+      int dst = std::stoi(dsttrim);
+      if (dst == 0) {
+        ++total_expected_for_center;
+      }
+    } catch (...) {
+      continue;
+    }
+  }
+
+  return total_expected_for_center;
+}
+
 }  // namespace
 
 AkimovIStarMPI::AkimovIStarMPI(const InType &in) {
@@ -254,46 +300,7 @@ bool AkimovIStarMPI::RunImpl() {
 
   int total_expected_for_center = 0;
   if (rank == 0) {
-    const InType &root_input = GetInput();
-    std::string s(root_input.begin(), root_input.end());
-    std::istringstream ss(s);
-    std::string line;
-    const std::string prefix = "send:";
-    while (std::getline(ss, line)) {
-      size_t start = line.find_first_not_of(" \t\r\n");
-      if (start == std::string::npos) {
-        continue;
-      }
-      size_t end = line.find_last_not_of(" \t\r\n");
-      std::string t = line.substr(start, end - start + 1);
-      if (!t.starts_with(prefix)) {
-        continue;
-      }
-      std::string rest = t.substr(prefix.size());
-      size_t p1 = rest.find(':');
-      if (p1 == std::string::npos) {
-        continue;
-      }
-      size_t p2 = rest.find(':', p1 + 1);
-      if (p2 == std::string::npos) {
-        continue;
-      }
-      std::string dsts = rest.substr(p1 + 1, p2 - (p1 + 1));
-      size_t sd = dsts.find_first_not_of(" \t\r\n");
-      if (sd == std::string::npos) {
-        continue;
-      }
-      size_t ed = dsts.find_last_not_of(" \t\r\n");
-      std::string dsttrim = dsts.substr(sd, ed - sd + 1);
-      try {
-        int dst = std::stoi(dsttrim);
-        if (dst == 0) {
-          ++total_expected_for_center;
-        }
-      } catch (...) {
-        continue;
-      }
-    }
+    total_expected_for_center = CountMessagesForCenterFromInput(GetInput());
   }
 
   MPI_Bcast(&total_expected_for_center, 1, MPI_INT, 0, MPI_COMM_WORLD);

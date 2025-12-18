@@ -11,6 +11,64 @@ namespace akimov_i_star {
 
 namespace {
 
+bool CheckPrefix(const char *data, std::size_t n, std::size_t i, const char *prefix, std::size_t prefix_len) {
+  if (i + prefix_len > n) {
+    return false;
+  }
+  for (std::size_t k = 0; k < prefix_len; ++k) {
+    if (data[i + k] != prefix[k]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::size_t SkipWhitespace(const char *data, std::size_t n, std::size_t pos) {
+  while (pos < n && (data[pos] == ' ' || data[pos] == '\t' || data[pos] == '\r')) {
+    ++pos;
+  }
+  return pos;
+}
+
+bool ProcessLineForZeroDst(const char *data, std::size_t n, std::size_t &i) {
+  const char prefix[] = "send:";
+  const std::size_t prefix_len = 5;
+
+  if (!CheckPrefix(data, n, i, prefix, prefix_len)) {
+    return false;
+  }
+
+  std::size_t j = i + prefix_len;
+
+  while (j < n && data[j] != '\n' && data[j] != ':') {
+    ++j;
+  }
+
+  if (j >= n || data[j] != ':') {
+    return false;
+  }
+
+  std::size_t dst_start = j + 1;
+  dst_start = SkipWhitespace(data, n, dst_start);
+
+  if (dst_start >= n) {
+    return false;
+  }
+
+  if (data[dst_start] != '0') {
+    return false;
+  }
+
+  std::size_t after = dst_start + 1;
+  after = SkipWhitespace(data, n, after);
+
+  if (after < n && data[after] == ':') {
+    return true;
+  }
+
+  return false;
+}
+
 int CountDstZeroFromBuffer(const InType &buf) {
   const char *data = buf.empty() ? nullptr : buf.data();
   std::size_t n = buf.size();
@@ -18,54 +76,14 @@ int CountDstZeroFromBuffer(const InType &buf) {
     return 0;
   }
 
-  const char prefix[] = "send:";
-  const std::size_t prefix_len = 5;
-
   int count = 0;
   std::size_t i = 0;
 
-  while (i + prefix_len <= n) {
+  while (i < n) {
     if (data[i] == 's') {
-      bool is_prefix = true;
-      for (std::size_t k = 0; k < prefix_len; ++k) {
-        if (i + k >= n || data[i + k] != prefix[k]) {
-          is_prefix = false;
-          break;
-        }
-      }
-      if (!is_prefix) {
-        ++i;
-        continue;
-      }
-      std::size_t j = i + prefix_len;
-      while (j < n && data[j] != '\n' && data[j] != ':') {
-        ++j;
-      }
-      if (j >= n || data[j] != ':') {
-        while (i < n && data[i] != '\n') {
-          ++i;
-        }
-        if (i < n && data[i] == '\n') {
-          ++i;
-        }
-        continue;
-      }
-      std::size_t dst_start = j + 1;
-      while (dst_start < n && (data[dst_start] == ' ' || data[dst_start] == '\t' || data[dst_start] == '\r')) {
-        ++dst_start;
-      }
-      if (dst_start >= n) {
-        break;
-      }
-
-      if (data[dst_start] == '0') {
-        std::size_t after = dst_start + 1;
-        while (after < n && (data[after] == ' ' || data[after] == '\t' || data[after] == '\r')) {
-          ++after;
-        }
-        if (after < n && data[after] == ':') {
-          ++count;
-        }
+      std::size_t current_pos = i;
+      if (ProcessLineForZeroDst(data, n, current_pos)) {
+        ++count;
       }
 
       while (i < n && data[i] != '\n') {
@@ -74,8 +92,15 @@ int CountDstZeroFromBuffer(const InType &buf) {
       if (i < n && data[i] == '\n') {
         ++i;
       }
-    } else {
+    } else if (data[i] == '\n') {
       ++i;
+    } else {
+      while (i < n && data[i] != '\n') {
+        ++i;
+      }
+      if (i < n && data[i] == '\n') {
+        ++i;
+      }
     }
   }
 
