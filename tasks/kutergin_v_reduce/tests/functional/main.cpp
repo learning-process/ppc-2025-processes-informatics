@@ -17,6 +17,14 @@
 
 namespace kutergin_v_reduce {
 
+TEST(KuterginReduceValidation, SeqHandlesEmptyVector) {
+  InType empty_input{{}, 0};
+  ReduceSequential task_empty(empty_input);
+  ASSERT_TRUE(task_empty.Validation());
+  ASSERT_TRUE(task_empty.Run());
+  ASSERT_EQ(task_empty.GetOutput(), 0);
+}
+
 class ReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param)  // вывод имен тестов
