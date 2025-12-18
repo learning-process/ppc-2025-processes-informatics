@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 #include <random>
+#include <stack>
+#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -14,36 +16,44 @@ using TestType = size_t;              // размер массива
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 inline void MyQsort(double *mem, int left, int right) {
-  if (left >= right || mem == nullptr) {
+  if (mem == nullptr || left >= right) {
     return;
   }
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<> distrib(0, 99);
 
-  int l = left;
-  int r = right;
-  int pivot_ind = left + distrib(gen);
-  double piv = mem[pivot_ind];
-  while (l <= r) {
-    while (mem[l] < piv) {
-      l++;
+  static std::mt19937 gen(123);
+
+  std::vector<std::pair<int, int>> stack;
+  stack.emplace_back(left, right);
+
+  while (!stack.empty()) {
+    auto [cur_l, cur_r] = stack.back();
+    stack.pop_back();
+
+    int l = cur_l;
+    int r = cur_r;
+
+    std::uniform_int_distribution<int> distrib(l, r);
+    int pivot_ind = distrib(gen);
+    double piv = mem[pivot_ind];
+
+    while (l <= r) {
+      while (mem[l] < piv) {
+        ++l;
+      }
+      while (mem[r] > piv) {
+        --r;
+      }
+      if (l <= r) {
+        std::swap(mem[l++], mem[r--]);
+      }
     }
 
-    while (mem[r] > piv) {
-      r--;
+    if (cur_l < r) {
+      stack.emplace_back(cur_l, r);
     }
-
-    if (l <= r) {
-      std::swap(mem[l++], mem[r--]);
+    if (l < cur_r) {
+      stack.emplace_back(l, cur_r);
     }
-  }
-  if (left < r) {
-    MyQsort(mem, left, r);
-  }
-
-  if (right > l) {
-    MyQsort(mem, l, right);
   }
 }
 

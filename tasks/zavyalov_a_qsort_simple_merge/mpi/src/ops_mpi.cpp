@@ -55,7 +55,7 @@ bool ZavyalovAQsortMPI::RunImpl() {
 
   MyQsort(local_vector.data(), 0, elements_count - 1);
 
-  std::vector<double> res(vec_size);
+  std::vector<double> res(rank == 0 ? vec_size : 0);
 
   MPI_Gatherv(local_vector.data(), elements_count, MPI_DOUBLE, res.data(), sendcounts.data(), displs.data(), MPI_DOUBLE,
               0, MPI_COMM_WORLD);
@@ -65,7 +65,7 @@ bool ZavyalovAQsortMPI::RunImpl() {
     }
   }
 
-  MPI_Bcast(res.data(), vec_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  // MPI_Bcast(res.data(), vec_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   GetOutput() = res;
   return true;
 }

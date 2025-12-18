@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 #include <stb/stb_image.h>
 
 #include <algorithm>
@@ -29,16 +30,13 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     size_t vec_size = params;
 
-    std::srand(std::time({}));
-
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distrib(0, 99);
+    std::mt19937 gen(55);
+    std::uniform_real_distribution<> distrib(0.0, 99.0);
 
     std::vector<double> vec(vec_size);
     double mult = 1;
     for (size_t i = 0U; i < vec_size; i++) {
-      vec[i] = distrib(gen) * mult;
+      vec[i] = static_cast<double>(distrib(gen)) * mult;
       mult *= -1.0;
     }
 
@@ -46,15 +44,38 @@ class ZavyalovAReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    auto vec = input_data_;
-    std::ranges::sort(vec);
-    for (size_t i = 0; i < vec.size(); i++) {
-      if (vec[i] != output_data[i]) {
-        return false;
-      }
-    }
+    int is_initialized;
+    MPI_Initialized(&is_initialized);
+    if (is_initialized) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    return true;
+      if (rank != 0) {
+        return true;
+      } else {
+        auto vec = input_data_;
+        std::ranges::sort(vec);
+
+        for (size_t i = 0; i < vec.size(); i++) {
+          if (vec[i] != output_data[i]) {
+            return false;
+          }
+        }
+
+        return true;
+      }
+    } else {
+      auto vec = input_data_;
+      std::ranges::sort(vec);
+
+      for (size_t i = 0; i < vec.size(); i++) {
+        if (vec[i] != output_data[i]) {
+          return false;
+        }
+      }
+
+      return true;
+    }
   }
 
   InType GetTestInputData() final {
@@ -71,7 +92,7 @@ TEST_P(ZavyalovAReduceFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {1U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 10U, 100U, 1000U};
+const std::array<TestType, 12> kTestParam = {10U, 2U, 3U, 4U, 5U, 6U, 7U, 8U, 9U, 1U, 100U, 1000U};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ZavyalovAQsortMPI, InType>(kTestParam, PPC_SETTINGS_zavyalov_a_qsort_simple_merge),

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <cmath>
@@ -18,21 +19,55 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
   InType input_data_;
 
   void SetUp() override {
-    input_data_.resize(kCount_);
-    for (size_t i = 0; i < kCount_; i++) {
-      input_data_[i] = static_cast<double>((i * 8U) - 518390U);
+    int is_initialized;
+    MPI_Initialized(&is_initialized);
+    if (!is_initialized) {
+      input_data_.resize(kCount_);
+      for (size_t i = 0; i < kCount_; i++) {
+        input_data_[i] = static_cast<double>((i * 8U) - 518390U);
+      }
+    } else {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+      if (rank == 0) {
+        input_data_.resize(kCount_);
+        for (size_t i = 0; i < kCount_; i++) {
+          input_data_[i] = static_cast<double>((i * 8U) - 518390U);
+        }
+      }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::vector<double> res = input_data_;
-    std::ranges::sort(res);
-    for (size_t i = 0; i < kCount_; i++) {
-      if (res[i] != output_data[i]) {
-        return false;
+    int is_initialized;
+    MPI_Initialized(&is_initialized);
+    if (is_initialized) {
+      int rank = 0;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+      if (rank != 0) {
+        return true;
+      } else {
+        std::vector<double> res = input_data_;
+        std::ranges::sort(res);
+        for (size_t i = 0; i < kCount_; i++) {
+          if (res[i] != output_data[i]) {
+            return false;
+          }
+        }
+        return true;
       }
+    } else {
+      std::vector<double> res = input_data_;
+      std::ranges::sort(res);
+      for (size_t i = 0; i < kCount_; i++) {
+        if (res[i] != output_data[i]) {
+          return false;
+        }
+      }
+      return true;
     }
-    return true;
   }
 
   InType GetTestInputData() final {
