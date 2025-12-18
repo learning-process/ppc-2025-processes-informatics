@@ -15,16 +15,16 @@ using OutType = std::vector<double>;  // результат сортировки
 using TestType = size_t;              // размер массива
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-inline void InnerCycle(double* mem, int& l, int& r, double piv) {
-    while (mem[l] < piv) {
-      ++l;
-    }
-    while (mem[r] > piv) {
-      --r;
-    }
-    if (l <= r) {
-      std::swap(mem[l++], mem[r--]);
-    }
+inline void InnerCycle(double *mem, int &l, int &r, double piv) {
+  while (mem[l] < piv) {
+    ++l;
+  }
+  while (mem[r] > piv) {
+    --r;
+  }
+  if (l <= r) {
+    std::swap(mem[l++], mem[r--]);
+  }
 }
 
 inline void MyQsort(double *mem, int left, int right) {

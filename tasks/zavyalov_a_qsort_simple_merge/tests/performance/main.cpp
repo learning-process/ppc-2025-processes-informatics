@@ -59,15 +59,14 @@ class ZavyalovAReducePerfTestProcesses : public ppc::util::BaseRunPerfTests<InTy
         return true;
       }
     }
-      std::vector<double> res = input_data_;
-      std::ranges::sort(res);
-      for (size_t i = 0; i < kCount_; i++) {
-        if (res[i] != output_data[i]) {
-          return false;
-        }
+    std::vector<double> res = input_data_;
+    std::ranges::sort(res);
+    for (size_t i = 0; i < kCount_; i++) {
+      if (res[i] != output_data[i]) {
+        return false;
       }
-      return true;
-    
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
