@@ -44,24 +44,24 @@ bool RozenbergARadixSimpleMergeSEQ::RunImpl() {
       uint64_t u = 0;
       std::memcpy(&u, &val, sizeof(double));
 
-      u = (u >> 63 != 0u) ? ~u : (u ^ 0x8000000000000000);
+      u = (u >> 63 != 0U) ? ~u : (u ^ 0x8000000000000000);
 
       auto byte = static_cast<uint8_t>((u >> shift) & 0xFF);
-      count[byte]++;
+      count.at(byte)++;
     }
 
     for (int i = 1; i < 256; ++i) {
-      count[i] += count[i - 1];
+      count.at(i) += count.at(i - 1);
     }
 
     for (int i = static_cast<int>(n) - 1; i >= 0; --i) {
       uint64_t u = 0;
       std::memcpy(&u, &data[i], 8);
 
-      u = (u >> 63 != 0u) ? ~u : (u ^ 0x8000000000000000);
+      u = (u >> 63 != 0U) ? ~u : (u ^ 0x8000000000000000);
 
       auto byte = static_cast<uint8_t>((u >> shift) & 0xFF);
-      buffer[--count[byte]] = data[i];
+      buffer[--count.at(byte)] = data[i];
     }
     data = buffer;
   }
