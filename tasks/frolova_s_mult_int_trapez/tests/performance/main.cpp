@@ -11,10 +11,16 @@
 
 using namespace frolova_s_mult_int_trapez;
 
-double function1(std::vector<double> input) {
+// Объявления функций (прототипы)
+static double function1(std::vector<double> input);
+static double function2(std::vector<double> input);
+
+// Определения функций
+static double function1(std::vector<double> input) {
   return pow(input[0], 3) + pow(input[1], 3);
 }
-double function2(std::vector<double> input) {
+
+static double function2(std::vector<double> input) {
   return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2;
 }
 

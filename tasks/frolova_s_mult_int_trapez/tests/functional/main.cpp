@@ -11,7 +11,18 @@
 
 using namespace frolova_s_mult_int_trapez;
 
-std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
+// Объявления функций (прототипы)
+static std::pair<double, double> GetRandomLimit(double min_value, double max_value);
+static unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value);
+static double function1(std::vector<double> input);
+static double function2(std::vector<double> input);
+static double function3(std::vector<double> input);
+static double function4(std::vector<double> input);
+static double function5(std::vector<double> input);
+static double function6(std::vector<double> input);
+
+// Определения функций
+static std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
   std::random_device dev;
   std::mt19937 gen(dev());
   std::pair<double, double> result;
@@ -24,28 +35,33 @@ std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
   return result;
 }
 
-unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value) {
+static unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value) {
   std::random_device dev;
   std::mt19937 gen(dev());
   return gen() % (max_value - min_value) + min_value;
 }
 
-double function1(std::vector<double> input) {
+static double function1(std::vector<double> input) {
   return pow(input[0], 3) + pow(input[1], 3);
 }
-double function2(std::vector<double> input) {
+
+static double function2(std::vector<double> input) {
   return sin(input[0]) + sin(input[1]) + sin(input[2]);
 }
-double function3(std::vector<double> input) {
+
+static double function3(std::vector<double> input) {
   return 8 * input[0] * input[1] * input[2];
 }
-double function4(std::vector<double> input) {
+
+static double function4(std::vector<double> input) {
   return -1.0 / sqrt(1 - pow(input[0], 2));
 }
-double function5(std::vector<double> input) {
+
+static double function5(std::vector<double> input) {
   return -(sin(input[0]) * cos(input[1]));
 }
-double function6(std::vector<double> input) {
+
+static double function6(std::vector<double> input) {
   return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2;
 }
 
