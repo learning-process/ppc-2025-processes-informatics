@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -20,7 +19,7 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (!initialized) {
+  if (initialized == 0) {
     return false;
   }
   const auto &matrix = GetInput();
