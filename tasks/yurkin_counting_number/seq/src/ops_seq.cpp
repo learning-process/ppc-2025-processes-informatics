@@ -25,7 +25,7 @@ bool YurkinCountingNumberSEQ::RunImpl() {
   const InType &data = GetInput();
   int count = 0;
   for (char c : data) {
-    if (std::isalpha(static_cast<unsigned char>(c))) {
+    if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
       count++;
     }
   }

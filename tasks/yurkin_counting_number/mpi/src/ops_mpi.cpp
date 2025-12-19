@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cctype>
 
 #include "yurkin_counting_number/common/include/common.hpp"
@@ -24,7 +25,9 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberMPI::RunImpl() {
-  int world_size, world_rank;
+  int world_size = 0;
+  int world_rank = 0;
+
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
@@ -33,12 +36,13 @@ bool YurkinCountingNumberMPI::RunImpl() {
 
   int chunk = total_size / world_size;
   int rem = total_size % world_size;
-  int start = world_rank * chunk + std::min(world_rank, rem);
+
+  int start = (world_rank * chunk) + std::min(world_rank, rem);
   int size = chunk + (world_rank < rem ? 1 : 0);
 
   int local_count = 0;
   for (int i = start; i < start + size; ++i) {
-    if (std::isalpha(static_cast<unsigned char>(input[i]))) {
+    if (std::isalpha(static_cast<unsigned char>(input[i])) != 0) {
       local_count++;
     }
   }
