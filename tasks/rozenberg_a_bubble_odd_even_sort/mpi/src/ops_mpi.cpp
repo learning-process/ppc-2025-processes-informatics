@@ -29,8 +29,7 @@ void RozenbergABubbleOddEvenSortMPI::ExchangeAndMerge(InType &local_buf, int nei
   MPI_Sendrecv(local_buf.data(), chunk, MPI_INT, neighbor, 0, neighbor_data.data(), neighbor_n, MPI_INT, neighbor, 0,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  std::merge(local_buf.begin(), local_buf.end(), neighbor_data.begin(), neighbor_data.end(),
-             merged.begin());  // NOLINT(modernize-use-ranges)
+  std::ranges::merge(local_buf, neighbor_data, merged.begin());
 
   if (rank < neighbor) {
     std::copy(merged.begin(), merged.begin() + chunk, local_buf.begin());
