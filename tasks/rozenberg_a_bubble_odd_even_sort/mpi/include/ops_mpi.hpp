@@ -17,6 +17,8 @@ class RozenbergABubbleOddEvenSortMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  void LocalBubbleSort(InType &local_buf);
+  void ExchangeAndMerge(InType &local_buf, int neighbor, int chunk, int neighbor_n, int rank);
 };
 
 }  // namespace rozenberg_a_bubble_odd_even_sort
