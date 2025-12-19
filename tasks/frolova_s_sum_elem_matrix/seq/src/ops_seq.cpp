@@ -1,7 +1,6 @@
 #include "frolova_s_sum_elem_matrix/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-#include <numeric>
 #include <tuple>
 #include <vector>
 

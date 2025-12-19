@@ -2,9 +2,7 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <limits>
-#include <numeric>
 #include <tuple>
 #include <vector>
 
