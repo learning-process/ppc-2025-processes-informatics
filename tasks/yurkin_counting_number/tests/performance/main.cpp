@@ -1,4 +1,6 @@
+#include <array>
 #include <string>
+#include <tuple>
 
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
@@ -8,28 +10,29 @@
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
- public:
+  const int kCount_ = 5'000'000;
   InType input_data_;
 
-  void PrepareInput(std::size_t n) override {
-    input_data_.clear();
-    input_data_.reserve(n);
-    for (std::size_t i = 0; i < n; ++i) {
-      input_data_.push_back('A');
-    }
+  void SetUp() override {
+    input_data_.assign(kCount_, 'a');
   }
 
-  InType &GetInput() override {
+  bool CheckTestOutputData(const OutType &output_data) final {
+    return kCount_ == output_data;
+  }
+
+  InType GetTestInputData() final {
     return input_data_;
   }
 };
 
-const auto kTasks = std::make_tuple(ppc::util::PerfTask<InType, OutType, YurkinCountingNumberPerfTests,
-                                                        yurkin_counting_number::YurkinCountingNumberSEQ>(),
-                                    ppc::util::PerfTask<InType, OutType, YurkinCountingNumberPerfTests,
-                                                        yurkin_counting_number::YurkinCountingNumberMPI>());
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSEQ>(
+    PPC_SETTINGS_yurkin_counting_number);
 
-INSTANTIATE_TEST_SUITE_P(YurkinCountingNumberPerf, ppc::util::ParametrizedPerformanceTest,
-                         ::testing::Combine(::testing::ValuesIn(kTasks), ::testing::Values(100000)));
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = YurkinCountingNumberPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinCountingNumberPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace yurkin_counting_number
