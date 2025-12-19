@@ -1,4 +1,6 @@
-#include <gtest/gtest.h>
+#include <algorithm>
+#include <cstddef>
+#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
@@ -7,22 +9,23 @@
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kCount = 5'000'000;  // исправлено имя
-  InType input_data_;
+ protected:
+  static constexpr int kCount = 5'000'000;
+  InType input_data;
 
   void SetUp() override {
-    input_data_.assign(kCount, '5');
+    input_data.assign(kCount, '5');
     for (int i = 1; i < kCount; i += 2) {
-      input_data_[i] = 'a';
+      input_data[i] = 'a';
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == kCount / 2;  // заменено имя
+    return output_data == kCount / 2;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
