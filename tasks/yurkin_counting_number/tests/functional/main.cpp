@@ -18,10 +18,11 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    input_data_ = std::get<0>(params);
+    const std::string &str_input = std::get<1>(params);
+    input_data_.assign(str_input.begin(), str_input.end());
 
-    GlobalData::g_data_string.clear();
-    GlobalData::g_data_string = input_data_;
+    yurkin_counting_number::GlobalData::g_data_string.clear();
+    yurkin_counting_number::GlobalData::g_data_string = input_data_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
