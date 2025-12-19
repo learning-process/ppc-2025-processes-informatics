@@ -3,7 +3,11 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <utility>
 #include <vector>
 
 #include "rozenberg_a_radix_simple_merge/common/include/common.hpp"
@@ -18,15 +22,15 @@ void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType &data) {
   InType buffer(n);
 
   for (int shift = 0; shift < 64; shift += 8) {
-    size_t count[256] = {0};
+    std::array<size_t, 256> count = {0};
 
     for (double val : data) {
-      uint64_t u;
+      uint64_t u = 0;
       std::memcpy(&u, &val, sizeof(double));
 
-      u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
+      u = (u >> 63 != 0u) ? ~u : (u ^ 0x8000000000000000);
 
-      uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
+      auto byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       count[byte]++;
     }
 
@@ -35,12 +39,12 @@ void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType &data) {
     }
 
     for (int i = static_cast<int>(n) - 1; i >= 0; --i) {
-      uint64_t u;
+      uint64_t u = 0;
       std::memcpy(&u, &data[i], 8);
 
-      u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
+      u = (u >> 63 != 0u) ? ~u : (u ^ 0x8000000000000000);
 
-      uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
+      auto byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       buffer[--count[byte]] = data[i];
     }
     data = buffer;
@@ -52,7 +56,7 @@ void RozenbergARadixSimpleMergeMPI::ExchangeAndMerge(InType &local_buf, int rank
     if (rank % (2 * step) == 0) {
       int neighbor = rank + step;
       if (neighbor < size) {
-        int neighbor_size;
+        int neighbor_size = 0;
         MPI_Recv(&neighbor_size, 1, MPI_INT, neighbor, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         std::vector<double> neighbor_data(neighbor_size);
@@ -64,7 +68,7 @@ void RozenbergARadixSimpleMergeMPI::ExchangeAndMerge(InType &local_buf, int rank
       }
     } else {
       int target = rank - step;
-      int my_size = local_buf.size();
+      int my_size = static_cast<int>(local_buf.size());
       MPI_Send(&my_size, 1, MPI_INT, target, 0, MPI_COMM_WORLD);
       MPI_Send(local_buf.data(), my_size, MPI_DOUBLE, target, 0, MPI_COMM_WORLD);
       local_buf.clear();

@@ -6,7 +6,6 @@
 #include <fstream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "rozenberg_a_radix_simple_merge/common/include/common.hpp"
 #include "rozenberg_a_radix_simple_merge/mpi/include/ops_mpi.hpp"

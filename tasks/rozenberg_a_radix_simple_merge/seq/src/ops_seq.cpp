@@ -1,8 +1,9 @@
 #include "rozenberg_a_radix_simple_merge/seq/include/ops_seq.hpp"
 
-#include <algorithm>
+#include <array>
 #include <cstddef>
-#include <iostream>
+#include <cstdint>
+#include <cstring>
 #include <vector>
 
 #include "rozenberg_a_radix_simple_merge/common/include/common.hpp"
@@ -37,15 +38,15 @@ bool RozenbergARadixSimpleMergeSEQ::RunImpl() {
   InType buffer(n);
 
   for (int shift = 0; shift < 64; shift += 8) {
-    size_t count[256] = {0};
+    std::array<size_t, 256> count = {0};
 
     for (double val : data) {
-      uint64_t u;
+      uint64_t u = 0;
       std::memcpy(&u, &val, sizeof(double));
 
-      u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
+      u = (u >> 63 != 0u) ? ~u : (u ^ 0x8000000000000000);
 
-      uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
+      auto byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       count[byte]++;
     }
 
@@ -54,12 +55,12 @@ bool RozenbergARadixSimpleMergeSEQ::RunImpl() {
     }
 
     for (int i = static_cast<int>(n) - 1; i >= 0; --i) {
-      uint64_t u;
+      uint64_t u = 0;
       std::memcpy(&u, &data[i], 8);
 
-      u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
+      u = (u >> 63 != 0u) ? ~u : (u ^ 0x8000000000000000);
 
-      uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
+      auto byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       buffer[--count[byte]] = data[i];
     }
     data = buffer;
