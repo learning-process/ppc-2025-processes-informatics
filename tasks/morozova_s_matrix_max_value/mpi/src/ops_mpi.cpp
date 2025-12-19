@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
