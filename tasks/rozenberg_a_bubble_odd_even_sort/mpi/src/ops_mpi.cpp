@@ -10,7 +10,7 @@
 
 namespace rozenberg_a_bubble_odd_even_sort {
 
-void LocalBubbleSort(InType& local_buf) {
+void LocalBubbleSort(InType &local_buf) {
   int chunk = local_buf.size();
   for (int i = 0; i < chunk; i++) {
     for (int j = 0; j < chunk - 1; j++) {
@@ -21,13 +21,13 @@ void LocalBubbleSort(InType& local_buf) {
   }
 }
 
-void ExchangeAndMerge(InType& local_buf, int neighbor, int chunk, int neighbor_n, int rank) {
+void ExchangeAndMerge(InType &local_buf, int neighbor, int chunk, int neighbor_n, int rank) {
   std::vector<int> neighbor_data(static_cast<size_t>(neighbor_n));
   std::vector<int> merged(static_cast<size_t>(chunk + neighbor_n));
 
-  MPI_Sendrecv(local_buf.data(), chunk, MPI_INT, neighbor, 0, neighbor_data.data(), neighbor_n, MPI_INT, neighbor,
-                0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                
+  MPI_Sendrecv(local_buf.data(), chunk, MPI_INT, neighbor, 0, neighbor_data.data(), neighbor_n, MPI_INT, neighbor, 0,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
   std::merge(local_buf.begin(), local_buf.end(), neighbor_data.begin(), neighbor_data.end(), merged.begin());
 
   if (rank < neighbor) {
@@ -106,7 +106,7 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
 
     if (neighbor >= 0 && neighbor < size) {
       InType init_data = local_buf;
-      
+
       int neighbor_n = sendcounts[neighbor];
       ExchangeAndMerge(local_buf, neighbor, chunk, neighbor_n, rank);
 
@@ -117,12 +117,14 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
 
     bool any_changed = false;
     MPI_Allreduce(&local_changed, &any_changed, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
-    if (!any_changed) break;
+    if (!any_changed) {
+      break;
+    }
   }
 
   MPI_Gatherv(local_buf.data(), chunk, MPI_INT, GetOutput().data(), sendcounts.data(), displs.data(), MPI_INT, 0,
               MPI_COMM_WORLD);
-  
+
   return true;
 }
 
