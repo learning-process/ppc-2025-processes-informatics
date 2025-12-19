@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <fstream>
 #include <string>
-#include <vector>
 
 #include "rozenberg_a_bubble_odd_even_sort/common/include/common.hpp"
 #include "rozenberg_a_bubble_odd_even_sort/mpi/include/ops_mpi.hpp"
