@@ -1,66 +1,42 @@
 #include "frolova_s_sum_elem_matrix/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-#include <cstdint>
-#include <iostream>
 #include <numeric>
+#include <tuple>
+#include <vector>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
-
-#ifdef __GNUC__
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wnull-dereference"
-#endif
 
 namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixSEQ::FrolovaSSumElemMatrixSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = 0.0;
 }
 
 bool FrolovaSSumElemMatrixSEQ::ValidationImpl() {
-  return true;
+  const auto &in = GetInput();
+  const auto &my_matrix = std::get<0>(in);
+  int param_dim1 = std::get<1>(in);
+  int param_dim2 = std::get<2>(in);
+
+  return (param_dim1 > 0 && param_dim2 > 0 && static_cast<int>(my_matrix.size()) == (param_dim1 * param_dim2));
 }
 
 bool FrolovaSSumElemMatrixSEQ::PreProcessingImpl() {
-  GetOutput() = 0;
   return true;
 }
 
 bool FrolovaSSumElemMatrixSEQ::RunImpl() {
-  const auto &matrix = GetInput();
+  const std::vector<double> &vect_data = std::get<0>(GetInput());
 
-  // Отладка для больших матриц
-  std::cerr << "=== RUN IMPL DEBUG START ===\n";
-  std::cerr << "matrix.size = " << matrix.size() << "\n";
-
-  // Для больших матриц не печатаем все элементы
-  if (matrix.size() > 10) {
-    std::cerr << "Large matrix, checking first few rows...\n";
-    if (!matrix.empty()) {
-      std::cerr << "First row size: " << matrix[0].size() << "\n";
-      if (!matrix[0].empty()) {
-        std::cerr << "First element: " << matrix[0][0] << "\n";
-      }
-    }
-  } else {
-    // Для маленьких матриц печатаем все
-    for (size_t row = 0; row < matrix.size(); ++row) {
-      std::cerr << "ROW[" << row << "] size=" << matrix[row].size() << "\n";
-    }
+  double all_sum = 0;
+  for (double val : vect_data) {
+    all_sum += val;
   }
 
-  int64_t sum = 0;
-  for (const auto &row : matrix) {
-    sum += std::accumulate(row.begin(), row.end(), 0LL);
-  }
-
-  GetOutput() = sum;
-  std::cerr << "computed sum = " << sum << "\n";
-  std::cerr << "=== RUN IMPL DEBUG END ===\n";
-
+  GetOutput() = all_sum;
   return true;
 }
 

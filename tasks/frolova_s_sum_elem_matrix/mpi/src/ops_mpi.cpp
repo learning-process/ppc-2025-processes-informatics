@@ -3,8 +3,9 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
+#include <limits>
+#include <numeric>
+#include <tuple>
 #include <vector>
 
 #include "frolova_s_sum_elem_matrix/common/include/common.hpp"
@@ -13,113 +14,115 @@ namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  input_ = in;
-  output_ = 0;
+  GetInput() = in;
+  GetOutput() = 0.0;
 }
 
 bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
-  const auto &matrix = input_;
+  const auto &in = GetInput();
 
-  if (matrix.empty()) {
-    return false;
-  }
+  const auto &my_matrix = std::get<0>(in);
+  int param_dim1 = std::get<1>(in);
+  int param_dim2 = std::get<2>(in);
 
-  const std::size_t cols = matrix.front().size();
-  if (cols == 0) {
-    return false;
-  }
-
-  for (const auto &row : matrix) {
-    if (row.size() != cols) {
-      return false;
-    }
-  }
-
-  return true;
+  return (param_dim1 > 0 && param_dim2 > 0 && static_cast<int>(my_matrix.size()) == (param_dim1 * param_dim2));
 }
 
 bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
-  output_ = 0;
   return true;
-};
+}
 
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
-  // for commit
-  int rank = 0, size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int process_n = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &process_n);
 
-  const auto &matrix = input_;
+  int proc_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
-  int rows = (rank == 0) ? static_cast<int>(matrix.size()) : 0;
-  MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  int total_size = 0;
+  std::vector<double> vect_data;
 
-  std::vector<int> row_sizes(rows, 0);
-  if (rank == 0) {
-    for (int i = 0; i < rows; ++i) {
-      row_sizes[i] = static_cast<int>(matrix[i].size());
+  if (proc_rank == 0) {
+    vect_data = std::get<0>(GetInput());
+    total_size = static_cast<int>(vect_data.size());
+
+    if (process_n > total_size && total_size > 0) {
+      process_n = total_size;
     }
   }
-  MPI_Bcast(row_sizes.data(), rows, MPI_INT, 0, MPI_COMM_WORLD);
 
-  // Распределение строк между процессами
-  std::vector<int> row_counts(size, 0), row_displs(size, 0);
-  int base = rows / size, rem = rows % size, offset = 0;
-  for (int i = 0; i < size; ++i) {
-    row_counts[i] = base + (i < rem ? 1 : 0);
-    row_displs[i] = offset;
-    offset += row_counts[i];
+  MPI_Bcast(&process_n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (total_size == 0) {
+    if (proc_rank == 0) {
+      GetOutput() = 0.0;
+    }
+    return true;
   }
 
-  int my_start = row_displs[rank];
-  int my_rows = row_counts[rank];
-
-  int64_t local_sum = 0;
-
-  if (rank == 0) {
-    // Считаем сумму своих строк
-    for (int i = my_start; i < my_start + my_rows; ++i) {
-      for (int val : matrix[i]) {
-        local_sum += val;
-      }
-    }
-
-    // Рассылаем строки остальным процессам
-    for (int p = 1; p < size; ++p) {
-      int start = row_displs[p];
-      int count = row_counts[p];
-      for (int i = 0; i < count; ++i) {
-        MPI_Send(matrix[start + i].data(), row_sizes[start + i], MPI_INT, p, 0, MPI_COMM_WORLD);
-      }
-    }
+  if (proc_rank == 0) {
+    GetOutput() = ProcessMaster(process_n, vect_data);
+  } else if (proc_rank < process_n) {
+    ProcessWorker();
+    GetOutput() = std::numeric_limits<double>::max();
   } else {
-    // Ранги >0 принимают свои строки и считают локальную сумму
-    for (int i = 0; i < my_rows; ++i) {
-      std::vector<int> row(row_sizes[my_start + i]);
-      MPI_Recv(row.data(), static_cast<int>(row.size()), MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      for (int val : row) {
-        local_sum += val;
-      }
-    }
+    GetOutput() = std::numeric_limits<double>::max();
   }
-
-  // Сбор глобальной суммы
-  int64_t global_sum = 0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    GetOutput() = static_cast<OutType>(global_sum);
-    std::cerr << "[Rank 0] Global sum = " << global_sum << "\n";
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  std::cerr << "[Rank " << rank << "] RunImpl finished\n";
 
   return true;
 }
 
 bool FrolovaSSumElemMatrixMPI::PostProcessingImpl() {
   return true;
+}
+
+double FrolovaSSumElemMatrixMPI::ProcessMaster(int process_n, const std::vector<double> &vect_data) {
+  const int n = static_cast<int>(vect_data.size());
+  const int base = n / process_n;
+  int remain = n % process_n;
+
+  int start_id = 0;
+
+  for (int worker = 1; worker < process_n; worker++) {
+    int part_size = base + (remain > 0 ? 1 : 0);
+    if (remain > 0) {
+      remain--;
+    }
+
+    MPI_Send(&part_size, 1, MPI_INT, worker, 0, MPI_COMM_WORLD);
+    MPI_Send(vect_data.data() + start_id, part_size, MPI_DOUBLE, worker, 0, MPI_COMM_WORLD);
+
+    start_id += part_size;
+  }
+
+  double total_sum = 0.0;
+  for (int i = start_id; i < n; ++i) {
+    total_sum += vect_data[i];
+  }
+
+  for (int worker = 1; worker < process_n; worker++) {
+    double worker_sum = 0.0;
+    MPI_Recv(&worker_sum, 1, MPI_DOUBLE, worker, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    total_sum += worker_sum;
+  }
+
+  return total_sum;
+}
+
+void FrolovaSSumElemMatrixMPI::ProcessWorker() {
+  int part_size = 0;
+  MPI_Recv(&part_size, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  std::vector<double> local_data(part_size);
+  MPI_Recv(local_data.data(), part_size, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  double local_sum = 0.0;
+  for (double val : local_data) {
+    local_sum += val;
+  }
+
+  MPI_Send(&local_sum, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
 }
 
 }  // namespace frolova_s_sum_elem_matrix
