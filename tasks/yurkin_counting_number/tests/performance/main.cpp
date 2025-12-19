@@ -1,44 +1,35 @@
-#include <gtest/gtest.h>
+#include <string>
 
 #include "util/include/perf_test_util.hpp"
+#include "yurkin_counting_number/common/include/common.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 5'000'000;
-  InType input_data_{};
+ public:
+  InType input_data_;
 
-  void SetUp() override {
+  void PrepareInput(std::size_t n) override {
     input_data_.clear();
-    input_data_.resize(kCount_);
-
-    for (int i = 0; i < kCount_; ++i) {
-      input_data_[i] = (i % 2 == 0) ? '5' : 'a';
+    input_data_.reserve(n);
+    for (std::size_t i = 0; i < n; ++i) {
+      input_data_.push_back('A');
     }
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == kCount_ / 2;
-  }
-
-  InType GetTestInputData() final {
+  InType &GetInput() override {
     return input_data_;
   }
 };
 
-TEST_P(YurkinCountingNumberPerfTests, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
+const auto kTasks = std::make_tuple(ppc::util::PerfTask<InType, OutType, YurkinCountingNumberPerfTests,
+                                                        yurkin_counting_number::YurkinCountingNumberSequential>(),
+                                    ppc::util::PerfTask<InType, OutType, YurkinCountingNumberPerfTests,
+                                                        yurkin_counting_number::YurkinCountingNumberParallel>());
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSEQ>(
-    PPC_SETTINGS_yurkin_counting_number);
-
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
-const auto kPerfTestName = YurkinCountingNumberPerfTests::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinCountingNumberPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(YurkinCountingNumberPerf, ppc::util::ParametrizedPerformanceTest,
+                         ::testing::Combine(::testing::ValuesIn(kTasks), ::testing::Values(100000)));
 
 }  // namespace yurkin_counting_number
