@@ -13,12 +13,12 @@ namespace frolova_s_sum_elem_matrix {
 
 FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
+  input_ = in;
+  output_ = 0;
 }
 
 bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
-  const auto &matrix = GetInput();
+  const auto &matrix = input_;
 
   if (matrix.empty()) {
     return false;
@@ -39,7 +39,7 @@ bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
 }
 
 bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
-  GetOutput() = 0;
+  output_ = 0;
   return true;
 };
 
@@ -50,7 +50,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
 
   std::cerr << "[Rank " << rank << "] RunImpl started\n";
 
-  const auto &matrix = GetInput();
+  const auto &matrix = input_;
 
   int rows = (rank == 0) ? static_cast<int>(matrix.size()) : 0;
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
