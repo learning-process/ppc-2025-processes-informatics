@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <array>
-#include <cctype>
-#include <string>
-#include <tuple>
+#include <cstddef>  // добавлено для std::size_t
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -16,7 +13,7 @@ namespace yurkin_counting_number {
 class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<1>(test_param);
   }
 
  protected:
@@ -30,7 +27,7 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   bool CheckTestOutputData(OutType &output_data) final {
     int expected = 0;
     for (char c : input_data_) {
-      if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
+      if (std::isalpha(static_cast<unsigned char>(c))) {
         expected++;
       }
     }
@@ -42,7 +39,7 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {
