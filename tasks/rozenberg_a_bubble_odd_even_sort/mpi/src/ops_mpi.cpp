@@ -21,7 +21,8 @@ void RozenbergABubbleOddEvenSortMPI::LocalBubbleSort(InType &local_buf) {
   }
 }
 
-void RozenbergABubbleOddEvenSortMPI::ExchangeAndMerge(InType &local_buf, int neighbor, int chunk, int neighbor_n, int rank) {
+void RozenbergABubbleOddEvenSortMPI::ExchangeAndMerge(InType &local_buf, int neighbor, int chunk, int neighbor_n,
+                                                      int rank) {
   std::vector<int> neighbor_data(static_cast<size_t>(neighbor_n));
   std::vector<int> merged(static_cast<size_t>(chunk + neighbor_n));
 
