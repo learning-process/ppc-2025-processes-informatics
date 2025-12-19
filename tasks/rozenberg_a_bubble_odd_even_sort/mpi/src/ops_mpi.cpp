@@ -68,8 +68,8 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
   MPI_Scatterv(GetInput().data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), chunk, MPI_INT, 0,
                MPI_COMM_WORLD);
 
-  for (size_t i = 0; i < chunk; i++) {
-    for (size_t j = 0; j < chunk - 1; j++) {
+  for (int i = 0; i < chunk; i++) {
+    for (int j = 0; j < chunk - 1; j++) {
       if (local_buf[j] > local_buf[j + 1]) {
         std::swap(local_buf[j], local_buf[j + 1]);
       }
