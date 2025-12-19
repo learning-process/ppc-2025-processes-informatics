@@ -44,13 +44,9 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(YurkinCountingNumberFuncTests, MainTest) {
-  ExecuteTest(GetParam());
-}
-
-const std::array<TestType, 3> kTestParam{std::make_tuple(std::string("AbC123"), "simple"),
-                                         std::make_tuple(std::string("!!!!abcd"), "letters"),
-                                         std::make_tuple(std::string("123"), "zero")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(0, std::string("AbC123")),
+                                            std::make_tuple(1, std::string("!!!!abcd")),
+                                            std::make_tuple(2, std::string("123"))};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
@@ -59,6 +55,10 @@ const auto kTasks = std::tuple_cat(
 const auto kValues = ppc::util::ExpandToValues(kTasks);
 
 const auto kName = YurkinCountingNumberFuncTests::PrintFuncTestName<YurkinCountingNumberFuncTests>;
+
+TEST_P(YurkinCountingNumberFuncTests, MainTest) {
+  ExecuteTest(GetParam());
+}
 
 INSTANTIATE_TEST_SUITE_P(YurkinTests, YurkinCountingNumberFuncTests, kValues, kName);
 
