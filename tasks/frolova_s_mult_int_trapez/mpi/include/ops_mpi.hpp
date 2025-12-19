@@ -19,15 +19,15 @@ class FrolovaSMultIntTrapezMPI : public BaseTask {
   }
   explicit FrolovaSMultIntTrapezMPI(const InType &in);
 
- private:
-  unsigned int CalculationOfCoefficient(const std::vector<double> &point);
-  void Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider, unsigned int variable);
-  std::vector<double> GetPointFromNumber(unsigned int number);
-
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+ private:
+  unsigned int CalculationOfCoefficient(const std::vector<double> &point);
+  void Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider, unsigned int variable);
+  std::vector<double> GetPointFromNumber(unsigned int number);
 
   std::vector<std::pair<double, double>> limits;
   std::vector<unsigned int> number_of_intervals;
