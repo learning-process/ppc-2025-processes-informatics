@@ -18,9 +18,11 @@ class YurkinCountingNumberPerfTests : public ppc::util::BasePerfTest<InType, Out
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    const std::string &str_input = std::get<1>(params);
+    const std::string &str = std::get<1>(params);
 
-    input_data_.assign(str_input.begin(), str_input.end());
+    input_data_.clear();
+    input_data_.reserve(str.size());
+    input_data_.insert(input_data_.end(), str.begin(), str.end());
   }
 
   InType GetPerfInputData() final {
@@ -33,9 +35,9 @@ class YurkinCountingNumberPerfTests : public ppc::util::BasePerfTest<InType, Out
 
 namespace {
 
-const std::array<TestType, 3> kPerfParam = {std::make_tuple(0, std::string(2000000, 'A')),
-                                            std::make_tuple(1, std::string(3000000, 'b')),
-                                            std::make_tuple(2, std::string(4000000, '1'))};
+const std::array<TestType, 3> kPerfParam = {std::make_tuple(0, std::string(2'000'000, 'A')),
+                                            std::make_tuple(1, std::string(3'000'000, 'B')),
+                                            std::make_tuple(2, std::string(4'000'000, 'C'))};
 
 const auto kTasksPerf = std::tuple_cat(
     ppc::util::AddPerfTask<YurkinCountingNumberMPI, InType>(kPerfParam, PPC_SETTINGS_yurkin_counting_number),
