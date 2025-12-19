@@ -119,7 +119,7 @@ bool RomanovAScatterMPI::RunImpl() {
 
   std::vector<int> recvbuf(sendcount);
 
-  MPIScatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+  MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
 
   GetOutput() = recvbuf;
 
