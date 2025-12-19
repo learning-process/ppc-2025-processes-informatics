@@ -21,8 +21,8 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
     const std::string &str_input = std::get<1>(params);
     input_data_.assign(str_input.begin(), str_input.end());
 
-    yurkin_counting_number::GlobalData::g_data_string.clear();
-    yurkin_counting_number::GlobalData::g_data_string = input_data_;
+    ::GlobalData::g_data_string.clear();
+    ::GlobalData::g_data_string = input_data_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
