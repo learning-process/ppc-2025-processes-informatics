@@ -10,7 +10,7 @@
 
 namespace rozenberg_a_bubble_odd_even_sort {
 
-void LocalBubbleSort(InType &local_buf) {
+void RozenbergABubbleOddEvenSortMPI::LocalBubbleSort(InType &local_buf) {
   int chunk = local_buf.size();
   for (int i = 0; i < chunk; i++) {
     for (int j = 0; j < chunk - 1; j++) {
@@ -21,7 +21,7 @@ void LocalBubbleSort(InType &local_buf) {
   }
 }
 
-void ExchangeAndMerge(InType &local_buf, int neighbor, int chunk, int neighbor_n, int rank) {
+void RozenbergABubbleOddEvenSortMPI::ExchangeAndMerge(InType &local_buf, int neighbor, int chunk, int neighbor_n, int rank) {
   std::vector<int> neighbor_data(static_cast<size_t>(neighbor_n));
   std::vector<int> merged(static_cast<size_t>(chunk + neighbor_n));
 
