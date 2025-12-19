@@ -57,7 +57,7 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   const int base = total / size;
   const int rest = total % size;
   for (int i = 0, off = 0; i < size; ++i) {
-    counts[i] = base + (i < rest);
+    counts[i] = base + static_cast<int>(i < rest);
     displs[i] = off;
     off += counts[i];
   }
