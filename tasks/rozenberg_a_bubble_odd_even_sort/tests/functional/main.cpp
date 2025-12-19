@@ -80,7 +80,9 @@ TEST_P(RozenbergABubbleOddEvenSortFuncTests, BubbleOddEvenSort) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 8> kTestParam = {"basic_test", "duplicate_values_test", "inorder_test", "random_data_test", "random_data_test_2", "reverse_order_test", "same_value_test", "single_element_test"};
+const std::array<TestType, 8> kTestParam = {"basic_test",       "duplicate_values_test", "inorder_test",
+                                            "random_data_test", "random_data_test_2",    "reverse_order_test",
+                                            "same_value_test",  "single_element_test"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergABubbleOddEvenSortMPI, InType>(
                                                kTestParam, PPC_SETTINGS_rozenberg_a_bubble_odd_even_sort),
@@ -89,7 +91,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergABubb
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = RozenbergABubbleOddEvenSortFuncTests::PrintFuncTestName<RozenbergABubbleOddEvenSortFuncTests>;
+const auto kPerfTestName =
+    RozenbergABubbleOddEvenSortFuncTests::PrintFuncTestName<RozenbergABubbleOddEvenSortFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(BubbleOddEvenSortTests, RozenbergABubbleOddEvenSortFuncTests, kGtestValues, kPerfTestName);
 

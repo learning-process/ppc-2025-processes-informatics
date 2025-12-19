@@ -41,8 +41,7 @@ bool RozenbergABubbleOddEvenSortSEQ::RunImpl() {
           std::swap(GetOutput()[j + 1], GetOutput()[j]);
         }
       }
-    }
-    else {
+    } else {
       for (size_t j = 1; j < n - 1; j += 2) {
         if (GetOutput()[j] > GetOutput()[j + 1]) {
           std::swap(GetOutput()[j + 1], GetOutput()[j]);

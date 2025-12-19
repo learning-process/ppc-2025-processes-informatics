@@ -35,7 +35,7 @@ bool RozenbergABubbleOddEvenSortMPI::ValidationImpl() {
 bool RozenbergABubbleOddEvenSortMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-   if (rank == 0) {
+  if (rank == 0) {
     GetOutput().resize(GetInput().size());
   }
   return true;
@@ -65,7 +65,8 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
 
   int chunk = sendcounts[rank];
   InType local_buf(static_cast<size_t>(chunk));
-  MPI_Scatterv(GetInput().data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), chunk, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(GetInput().data(), sendcounts.data(), displs.data(), MPI_INT, local_buf.data(), chunk, MPI_INT, 0,
+               MPI_COMM_WORLD);
 
   for (size_t i = 0; i < chunk; i++) {
     for (size_t j = 0; j < chunk - 1; j++) {
@@ -78,11 +79,17 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
   for (int i = 0; i <= size; i++) {
     int neighbor = -1;
     if (i % 2 == 0) {
-      if (rank % 2 == 0) neighbor = rank + 1;
-      else neighbor = rank - 1;
+      if (rank % 2 == 0) {
+        neighbor = rank + 1;
+      } else {
+        neighbor = rank - 1;
+      }
     } else {
-        if (rank % 2 == 0) neighbor = rank - 1;
-        else neighbor = rank + 1;
+      if (rank % 2 == 0) {
+        neighbor = rank - 1;
+      } else {
+        neighbor = rank + 1;
+      }
     }
 
     if (neighbor >= 0 && neighbor < size) {
@@ -90,13 +97,10 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
       std::vector<int> neighbor_data(static_cast<size_t>(neighbor_n));
       std::vector<int> merged(static_cast<size_t>(chunk + neighbor_n));
 
-      MPI_Sendrecv(local_buf.data(), chunk, MPI_INT, neighbor, 0,
-                    neighbor_data.data(), neighbor_n, MPI_INT, neighbor, 0,
-                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(local_buf.data(), chunk, MPI_INT, neighbor, 0, neighbor_data.data(), neighbor_n, MPI_INT, neighbor,
+                   0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      std::merge(local_buf.begin(), local_buf.end(),
-                  neighbor_data.begin(), neighbor_data.end(),
-                  merged.begin());
+      std::merge(local_buf.begin(), local_buf.end(), neighbor_data.begin(), neighbor_data.end(), merged.begin());
 
       if (rank < neighbor) {
         std::copy(merged.begin(), merged.begin() + chunk, local_buf.begin());
@@ -106,8 +110,8 @@ bool RozenbergABubbleOddEvenSortMPI::RunImpl() {
     }
   }
 
-  MPI_Gatherv(local_buf.data(), chunk, MPI_INT,
-                GetOutput().data(), sendcounts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_buf.data(), chunk, MPI_INT, GetOutput().data(), sendcounts.data(), displs.data(), MPI_INT, 0,
+              MPI_COMM_WORLD);
 
   return true;
 }
