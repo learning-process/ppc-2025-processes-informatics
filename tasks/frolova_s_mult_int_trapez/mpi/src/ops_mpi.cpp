@@ -96,15 +96,19 @@ bool FrolovaSMultIntTrapezMPI::RunImpl() {
     for (unsigned int i = 0; i < number_of_intervals.size(); i++) {
       delta *= (number_of_intervals[i] + 1);
     }
-    unsigned int remainder = delta % size;
-    delta /= size;
-    for (int i = 0; i < size - remainder; i++) {
+
+    unsigned int u_size = static_cast<unsigned int>(size);
+    unsigned int remainder = delta % u_size;
+    delta /= u_size;
+
+    for (unsigned int i = 0; i < u_size - remainder; i++) {
       count_of_points[i] = delta;
       first_point_numbers[i] = current_number;
       current_number += delta;
     }
+
     delta++;
-    for (int i = size - remainder; i < size; i++) {
+    for (unsigned int i = u_size - remainder; i < u_size; i++) {
       count_of_points[i] = delta;
       first_point_numbers[i] = current_number;
       current_number += delta;
