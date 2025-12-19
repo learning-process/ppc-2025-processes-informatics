@@ -44,11 +44,10 @@ bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
 };
 
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
+  // for commit
   int rank = 0, size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  std::cerr << "[Rank " << rank << "] RunImpl started\n";
 
   const auto &matrix = input_;
 
