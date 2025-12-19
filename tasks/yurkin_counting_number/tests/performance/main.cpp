@@ -25,9 +25,9 @@ class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType,
 };
 
 const auto kTasks = std::make_tuple(ppc::util::PerfTask<InType, OutType, YurkinCountingNumberPerfTests,
-                                                        yurkin_counting_number::YurkinCountingNumberSequential>(),
+                                                        yurkin_counting_number::YurkinCountingNumberSEQ>(),
                                     ppc::util::PerfTask<InType, OutType, YurkinCountingNumberPerfTests,
-                                                        yurkin_counting_number::YurkinCountingNumberParallel>());
+                                                        yurkin_counting_number::YurkinCountingNumberMPI>());
 
 INSTANTIATE_TEST_SUITE_P(YurkinCountingNumberPerf, ppc::util::ParametrizedPerformanceTest,
                          ::testing::Combine(::testing::ValuesIn(kTasks), ::testing::Values(100000)));

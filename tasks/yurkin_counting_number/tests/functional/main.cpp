@@ -45,11 +45,10 @@ const std::array<TestType, 3> kTestParam = {std::make_tuple(3, std::string("AbC1
                                             std::make_tuple(2, std::string("1a2B3")),
                                             std::make_tuple(4, std::string("AaBb123"))};
 
-const auto kTasks =
-    std::tuple_cat(ppc::util::FunctionalTasks<InType, OutType, YurkinCountingNumberFuncTests,
-                                              yurkin_counting_number::YurkinCountingNumberSequential>::kValue,
-                   ppc::util::FunctionalTasks<InType, OutType, YurkinCountingNumberFuncTests,
-                                              yurkin_counting_number::YurkinCountingNumberParallel>::kValue);
+const auto kTasks = std::tuple_cat(ppc::util::FunctionalTasks<InType, OutType, YurkinCountingNumberFuncTests,
+                                                              yurkin_counting_number::YurkinCountingNumberSEQ>::kValue,
+                                   ppc::util::FunctionalTasks<InType, OutType, YurkinCountingNumberFuncTests,
+                                                              yurkin_counting_number::YurkinCountingNumberMPI>::kValue);
 
 INSTANTIATE_TEST_SUITE_P(YurkinCountingNumberFunc, ppc::util::ParametrizedFunctionalTest,
                          ::testing::Combine(::testing::ValuesIn(kTasks), ::testing::ValuesIn(kTestParam)),
