@@ -80,8 +80,10 @@ TEST_P(RozenbergARadixSimpleMergeFuncTests, RadixSimpleMerge) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {"basic_test", "duplicate_test", "inorder_test", "mixed_sign_test", "negative_values_test", "powers_of_2_test", 
-  "random_data_test_2", "random_data_test", "reverse_order_test", "single_element_test", "small_large_values_test", "zero_sign_test"};
+const std::array<TestType, 12> kTestParam = {"basic_test",          "duplicate_test",          "inorder_test",
+                                             "mixed_sign_test",     "negative_values_test",    "powers_of_2_test",
+                                             "random_data_test_2",  "random_data_test",        "reverse_order_test",
+                                             "single_element_test", "small_large_values_test", "zero_sign_test"};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergARadixSimpleMergeMPI, InType>(
                                                kTestParam, PPC_SETTINGS_rozenberg_a_radix_simple_merge),
@@ -90,8 +92,7 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RozenbergARadi
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    RozenbergARadixSimpleMergeFuncTests::PrintFuncTestName<RozenbergARadixSimpleMergeFuncTests>;
+const auto kPerfTestName = RozenbergARadixSimpleMergeFuncTests::PrintFuncTestName<RozenbergARadixSimpleMergeFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(RadixSimpleMergeTests, RozenbergARadixSimpleMergeFuncTests, kGtestValues, kPerfTestName);
 

@@ -10,8 +10,10 @@
 
 namespace rozenberg_a_radix_simple_merge {
 
-void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType& data) {
-  if (data.empty()) return;
+void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType &data) {
+  if (data.empty()) {
+    return;
+  }
   size_t n = data.size();
   InType buffer(n);
 
@@ -21,9 +23,9 @@ void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType& data) {
     for (double val : data) {
       uint64_t u;
       std::memcpy(&u, &val, sizeof(double));
-      
+
       u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
-      
+
       uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       count[byte]++;
     }
@@ -37,7 +39,7 @@ void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType& data) {
       std::memcpy(&u, &data[i], 8);
 
       u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
-      
+
       uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       buffer[--count[byte]] = data[i];
     }
@@ -45,21 +47,19 @@ void RozenbergARadixSimpleMergeMPI::LocalRadixSort(InType& data) {
   }
 }
 
-void RozenbergARadixSimpleMergeMPI::ExchangeAndMerge(InType& local_buf, int rank, int size) {
+void RozenbergARadixSimpleMergeMPI::ExchangeAndMerge(InType &local_buf, int rank, int size) {
   for (int step = 1; step < size; step *= 2) {
     if (rank % (2 * step) == 0) {
       int neighbor = rank + step;
       if (neighbor < size) {
         int neighbor_size;
         MPI_Recv(&neighbor_size, 1, MPI_INT, neighbor, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        
+
         std::vector<double> neighbor_data(neighbor_size);
         MPI_Recv(neighbor_data.data(), neighbor_size, MPI_DOUBLE, neighbor, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         InType merged(local_buf.size() + neighbor_size);
-        std::ranges::merge(local_buf,
-                    neighbor_data,
-                    merged.begin());
+        std::ranges::merge(local_buf, neighbor_data, merged.begin());
         local_buf = std::move(merged);
       }
     } else {
@@ -67,8 +67,8 @@ void RozenbergARadixSimpleMergeMPI::ExchangeAndMerge(InType& local_buf, int rank
       int my_size = local_buf.size();
       MPI_Send(&my_size, 1, MPI_INT, target, 0, MPI_COMM_WORLD);
       MPI_Send(local_buf.data(), my_size, MPI_DOUBLE, target, 0, MPI_COMM_WORLD);
-      local_buf.clear(); 
-      break; 
+      local_buf.clear();
+      break;
     }
   }
 }

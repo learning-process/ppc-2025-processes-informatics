@@ -17,8 +17,8 @@ class RozenbergARadixSimpleMergeMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static void LocalRadixSort(InType& data);
-  static void ExchangeAndMerge(InType& local_buf, int rank, int size);
+  static void LocalRadixSort(InType &data);
+  static void ExchangeAndMerge(InType &local_buf, int rank, int size);
 };
 
 }  // namespace rozenberg_a_radix_simple_merge

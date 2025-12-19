@@ -42,9 +42,9 @@ bool RozenbergARadixSimpleMergeSEQ::RunImpl() {
     for (double val : data) {
       uint64_t u;
       std::memcpy(&u, &val, sizeof(double));
-      
+
       u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
-      
+
       uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       count[byte]++;
     }
@@ -58,7 +58,7 @@ bool RozenbergARadixSimpleMergeSEQ::RunImpl() {
       std::memcpy(&u, &data[i], 8);
 
       u = (u >> 63) ? ~u : (u ^ 0x8000000000000000);
-      
+
       uint8_t byte = static_cast<uint8_t>((u >> shift) & 0xFF);
       buffer[--count[byte]] = data[i];
     }
@@ -66,7 +66,7 @@ bool RozenbergARadixSimpleMergeSEQ::RunImpl() {
   }
 
   GetOutput() = data;
-  
+
   return true;
 }
 
