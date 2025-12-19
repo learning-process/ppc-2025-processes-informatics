@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <ranges>
 #include <vector>
 
 #include "morozova_s_matrix_max_value/common/include/common.hpp"
@@ -17,17 +18,21 @@ MorozovaSMatrixMaxValueMPI::MorozovaSMatrixMaxValueMPI(const InType &in) : BaseT
 }
 
 bool MorozovaSMatrixMaxValueMPI::ValidationImpl() {
+  int initialized = 0;
+  MPI_Initialized(&initialized);
+  if (!initialized) {
+    return false;
+  }
   const auto &matrix = GetInput();
-
-  if (matrix.empty()) {
-    return false;
+  if (matrix.empty() || matrix[0].empty()) {
+    return true;
   }
-  if (matrix[0].empty()) {
-    return false;
-  }
-
   const size_t cols = matrix[0].size();
-  return std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
+  bool all_equal = std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; });
+  if (!all_equal) {
+    return true;
+  }
+  return true;
 }
 
 bool MorozovaSMatrixMaxValueMPI::PreProcessingImpl() {
@@ -41,9 +46,20 @@ bool MorozovaSMatrixMaxValueMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const auto &matrix = GetInput();
+
+  if (matrix.empty() || matrix[0].empty()) {
+    GetOutput() = 0;
+    return true;
+  }
+
+  const size_t cols = matrix[0].size();
+  if (!std::ranges::all_of(matrix, [cols](const auto &row) { return row.size() == cols; })) {
+    GetOutput() = 0;
+    return true;
+  }
+
   const int rows = static_cast<int>(matrix.size());
-  const int cols = static_cast<int>(matrix[0].size());
-  const int total = rows * cols;
+  const int total = rows * static_cast<int>(cols);
 
   std::vector<int> flat;
   if (rank == 0) {
