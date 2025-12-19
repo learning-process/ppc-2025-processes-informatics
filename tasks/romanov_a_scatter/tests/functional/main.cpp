@@ -58,17 +58,19 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
       MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
     }
 
-    std::vector<int> sendbuf;
+    std::vector<int> sendbuf;  // .data() of empty vector may be not nullptr
+    int *sendbuf_ptr = nullptr;
     if (rank == root) {
       sendbuf = std::get<0>(params);
-      sendbuf.resize(num_processes * sendcount);
+      sendbuf.resize(num_processes * sendcount, 0);
+      sendbuf_ptr = sendbuf.data();
     }
 
     input_data_ = std::make_tuple(sendbuf, sendcount, root);
 
     std::vector<int> recvbuf(sendcount);
     if (!is_seq_test) {
-      MPI_Scatter(sendbuf.data(), sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
+      MPI_Scatter(sendbuf_ptr, sendcount, MPI_INT, recvbuf.data(), sendcount, MPI_INT, root, MPI_COMM_WORLD);
     } else {
       for (int i = 0; i < sendcount; ++i) {
         recvbuf[i] = sendbuf[i];
