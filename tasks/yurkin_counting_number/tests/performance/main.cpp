@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "util/include/perf_test_util.hpp"
-#include "yurkin_counting_number/common/include/common.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
@@ -12,29 +11,16 @@ class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType,
   InType input_data_{};
 
   void SetUp() override {
-    // глобальная строка из kCount_ символов
-    GlobalData::g_data_string.clear();
-    GlobalData::g_data_string.resize(kCount_);
+    input_data_.clear();
+    input_data_.resize(kCount_);
 
-    // заполняем её шаблоном: буквы + цифры + спецсимволы
-    for (int i = 0; i < kCount_; i++) {
-      if (i % 3 == 0) {
-        GlobalData::g_data_string[i] = 'A';  // буква
-      } else if (i % 3 == 1) {
-        GlobalData::g_data_string[i] = '1';  // не буква
-      } else {
-        GlobalData::g_data_string[i] = '!';  // не буква
-      }
+    for (int i = 0; i < kCount_; ++i) {
+      input_data_[i] = (i % 2 == 0) ? '5' : 'a';
     }
-
-    // input_data_ — невнятно? понятно:
-    // это просто количество букв в строке
-    // правильно: kCount_ / 3
-    input_data_ = kCount_ / 3;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data == kCount_ / 2;
   }
 
   InType GetTestInputData() final {
