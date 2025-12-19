@@ -11,21 +11,38 @@
 
 namespace frolova_s_sum_elem_matrix {
 
-FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &) {
+FrolovaSSumElemMatrixMPI::FrolovaSSumElemMatrixMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = 0;
+}
+
+bool FrolovaSSumElemMatrixMPI::ValidationImpl() {
+  const auto &matrix = GetInput();
+
+  if (matrix.empty()) {
+    return false;
+  }
+
+  const std::size_t cols = matrix.front().size();
+  if (cols == 0) {
+    return false;
+  }
+
+  for (const auto &row : matrix) {
+    if (row.size() != cols) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 bool FrolovaSSumElemMatrixMPI::PreProcessingImpl() {
+  GetOutput() = 0;
   return true;
-}
+};
 
-if (!ValidationImpl()) {
-  if (rank == 0) {
-    GetOutput() = static_cast<OutType>(0);
-  }
-  std::cerr << "[Rank " << rank << "] Matrix is invalid, exiting\n";
-  return true;
-}
 bool FrolovaSSumElemMatrixMPI::RunImpl() {
   int rank = 0, size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -33,16 +50,7 @@ bool FrolovaSSumElemMatrixMPI::RunImpl() {
 
   std::cerr << "[Rank " << rank << "] RunImpl started\n";
 
-  // Проверяем валидацию
-  if (!ValidationImpl()) {
-    if (rank == 0) {
-      GetOutput() = static_cast<OutType>(0);
-    }
-    std::cerr << "[Rank " << rank << "] Matrix is invalid, exiting\n";
-    return false;
-  }
-
-  const auto &matrix = GetInput();  // теперь на rank 0 точно есть данные
+  const auto &matrix = GetInput();
 
   int rows = (rank == 0) ? static_cast<int>(matrix.size()) : 0;
   MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
