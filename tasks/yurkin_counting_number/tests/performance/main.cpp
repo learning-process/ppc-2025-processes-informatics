@@ -1,58 +1,58 @@
 #include <gtest/gtest.h>
 
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
 namespace yurkin_counting_number {
 
-class YurkinCountingNumberPerfTests : public ppc::util::BasePerfTest<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<1>(test_param);
-  }
+class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kCount_ = 5'000'000;
+  InType input_data_{};
 
- protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    // глобальная строка из kCount_ символов
+    GlobalData::g_data_string.clear();
+    GlobalData::g_data_string.resize(kCount_);
 
-    const std::string &str = std::get<1>(params);
+    // заполняем её шаблоном: буквы + цифры + спецсимволы
+    for (int i = 0; i < kCount_; i++) {
+      if (i % 3 == 0) {
+        GlobalData::g_data_string[i] = 'A';  // буква
+      } else if (i % 3 == 1) {
+        GlobalData::g_data_string[i] = '1';  // не буква
+      } else {
+        GlobalData::g_data_string[i] = '!';  // не буква
+      }
+    }
 
-    input_data_.clear();
-    input_data_.reserve(str.size());
-    input_data_.insert(input_data_.end(), str.begin(), str.end());
+    // input_data_ — невнятно? понятно:
+    // это просто количество букв в строке
+    // правильно: kCount_ / 3
+    input_data_ = kCount_ / 3;
   }
 
-  InType GetPerfInputData() final {
+  bool CheckTestOutputData(OutType &output_data) final {
+    return input_data_ == output_data;
+  }
+
+  InType GetTestInputData() final {
     return input_data_;
   }
-
- private:
-  InType input_data_;
 };
 
-namespace {
-
-const std::array<TestType, 3> kPerfParam = {std::make_tuple(0, std::string(2'000'000, 'A')),
-                                            std::make_tuple(1, std::string(3'000'000, 'B')),
-                                            std::make_tuple(2, std::string(4'000'000, 'C'))};
-
-const auto kTasksPerf = std::tuple_cat(
-    ppc::util::AddPerfTask<YurkinCountingNumberMPI, InType>(kPerfParam, PPC_SETTINGS_yurkin_counting_number),
-    ppc::util::AddPerfTask<YurkinCountingNumberSEQ, InType>(kPerfParam, PPC_SETTINGS_yurkin_counting_number));
-
-const auto kPerfValues = ppc::util::ExpandToValues(kTasksPerf);
-
-const auto kPerfName = YurkinCountingNumberPerfTests::PrintPerfTestName<YurkinCountingNumberPerfTests>;
-
-TEST_P(YurkinCountingNumberPerfTests, PerfTest) {
-  ExecutePerfTest(GetParam());
+TEST_P(YurkinCountingNumberPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(YurkinPerfTests, YurkinCountingNumberPerfTests, kPerfValues, kPerfName);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSEQ>(
+    PPC_SETTINGS_yurkin_counting_number);
 
-}  // namespace
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = YurkinCountingNumberPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinCountingNumberPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace yurkin_counting_number
