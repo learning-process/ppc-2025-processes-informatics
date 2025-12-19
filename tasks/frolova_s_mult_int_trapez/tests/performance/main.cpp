@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <vector>
 
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"

@@ -2,6 +2,7 @@
 #include <mpi.h>
 
 #include <cmath>
+#include <cstdlib>
 #include <random>
 #include <vector>
 
@@ -11,7 +12,6 @@
 
 using namespace frolova_s_mult_int_trapez;
 
-// Объявления функций (прототипы)
 static std::pair<double, double> GetRandomLimit(double min_value, double max_value);
 static unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value);
 static double function1(std::vector<double> input);
@@ -21,7 +21,6 @@ static double function4(std::vector<double> input);
 static double function5(std::vector<double> input);
 static double function6(std::vector<double> input);
 
-// Определения функций
 static std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
   std::random_device dev;
   std::mt19937 gen(dev());
