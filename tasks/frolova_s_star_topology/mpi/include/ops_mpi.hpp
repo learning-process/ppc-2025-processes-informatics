@@ -14,7 +14,6 @@ class FrolovaSStarTopologyMPI : public BaseTask {
   }
   explicit FrolovaSStarTopologyMPI(const InType &in);
 
- public:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
