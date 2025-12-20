@@ -1,5 +1,8 @@
+#include <gtest/gtest.h>
+
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <tuple>
 
@@ -11,44 +14,59 @@
 
 namespace yurkin_counting_number {
 
-using ::testing::TestWithParam;
+class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<1>(test_param);
+  }
 
-class YurkinCountingNumberFuncTests : public TestWithParam<std::tuple<InType, std::string, int>> {};
+ protected:
+  void SetUp() override {
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    const std::string &str_input = std::get<1>(params);
+    input_data_.assign(str_input.begin(), str_input.end());
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    int expected = 0;
+
+    for (char c : input_data_) {
+      if (std::isalpha(static_cast<unsigned char>(c))) {
+        expected++;
+      }
+    }
+
+    return expected == output_data;
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_{};
+};
+
+namespace {
+
+constexpr std::array<TestType, 3> kTestParam = {std::make_tuple(0, std::string("AbC123")),
+                                                std::make_tuple(1, std::string("!!!!abcd")),
+                                                std::make_tuple(2, std::string("123"))};
+
+const auto kTasks = std::tuple_cat(
+    ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
+    ppc::util::AddFuncTask<YurkinCountingNumberSEQ, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number));
+
+const auto kValues = ppc::util::ExpandToValues(kTasks);
+
+const auto kName = YurkinCountingNumberFuncTests::PrintFuncTestName<YurkinCountingNumberFuncTests>;
 
 TEST_P(YurkinCountingNumberFuncTests, MainTest) {
-  auto params = GetParam();
-  const auto &input = std::get<0>(params);
-  const auto &str = std::get<1>(params);
-  const int expected = std::get<2>(params);
-
-  InType modified = input;
-  modified.insert(modified.end(), str.begin(), str.end());
-
-  // Sequential
-  YurkinCountingNumberSEQ seq_task(modified);
-  seq_task.Validation();
-  seq_task.PreProcessing();
-  seq_task.Run();
-  seq_task.PostProcessing();
-  OutType seq_res = seq_task.GetOutput();
-
-  // MPI
-  YurkinCountingNumberMPI mpi_task(modified);
-  mpi_task.Validation();
-  mpi_task.PreProcessing();
-  mpi_task.Run();
-  mpi_task.PostProcessing();
-  OutType mpi_res = mpi_task.GetOutput();
-
-  EXPECT_EQ(seq_res, expected);
-  EXPECT_EQ(mpi_res, expected);
+  ExecuteTest(GetParam());
 }
 
-static const std::array<std::tuple<InType, std::string, int>, 3> kValues = {
-    std::make_tuple(InType{}, std::string("AbC123"), 3), std::make_tuple(InType{}, std::string("aaaa"), 4),
-    std::make_tuple(InType{'1', '2', '3'}, std::string("ABC"), 3)};
+INSTANTIATE_TEST_SUITE_P(YurkinTests, YurkinCountingNumberFuncTests, kValues, kName);
 
-INSTANTIATE_TEST_SUITE_P(YurkinCountingTests, YurkinCountingNumberFuncTests, ::testing::ValuesIn(kValues),
-                         ::testing::PrintToStringParamName());
-
+}  // namespace
 }  // namespace yurkin_counting_number
