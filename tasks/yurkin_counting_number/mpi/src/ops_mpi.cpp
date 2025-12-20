@@ -42,9 +42,6 @@ bool YurkinCountingNumberMPI::RunImpl() {
   std::uint64_t total_size = static_cast<std::uint64_t>(input.size());
 
   std::uint64_t n = total_size;
-  if (world_rank == 0) {
-    n = total_size;
-  }
   if (MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
     return false;
   }
