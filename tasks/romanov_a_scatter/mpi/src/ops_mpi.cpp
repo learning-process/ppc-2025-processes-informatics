@@ -27,47 +27,57 @@ int MyMPIScatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
   int num_processes = 0;
   MPI_Comm_size(comm, &num_processes);
 
-  if (rank == root) {
-    int total_blocks = num_processes;
-    MPI_Send(&total_blocks, 1, MPI_INT, 0, 0, comm);
-    MPI_Send(sendbuf, total_blocks * recvcount * recvtype_size, MPI_BYTE, 0, 1, comm);
-  }
-
-  int parent_rank = rank & (rank - 1);
+  int bytes_per_block = recvcount * recvtype_size;
 
   int blocks_in_subtree = 0;
-  MPI_Recv(&blocks_in_subtree, 1, MPI_INT, parent_rank, 0, comm, MPI_STATUS_IGNORE);
+  std::vector<char> data;
 
-  if (blocks_in_subtree == 1) {
-    MPI_Recv(recvbuf, recvcount * recvtype_size, MPI_BYTE, parent_rank, 1, comm, MPI_STATUS_IGNORE);
+  if (rank == root) {
+    if (rank == 0) {
+      blocks_in_subtree = num_processes;
+      data.assign(static_cast<char *>(sendbuf), static_cast<char *>(sendbuf) + blocks_in_subtree * bytes_per_block);
+    } else {
+      int total_blocks = num_processes;
+      MPI_Send(&total_blocks, 1, MPI_INT, 0, 0, comm);
+      MPI_Send(sendbuf, total_blocks * bytes_per_block, MPI_BYTE, 0, 1, comm);
+    }
+  }
+
+  if (rank == 0) {
+    if (data.empty()) {
+      MPI_Recv(&blocks_in_subtree, 1, MPI_INT, root, 0, comm, MPI_STATUS_IGNORE);
+      data.resize(static_cast<size_t>(blocks_in_subtree) * bytes_per_block);
+      MPI_Recv(data.data(), blocks_in_subtree * bytes_per_block, MPI_BYTE, root, 1, comm, MPI_STATUS_IGNORE);
+    }
   } else {
-    std::vector<char> data(static_cast<size_t>(blocks_in_subtree) * recvcount * recvtype_size);
-    MPI_Recv(data.data(), blocks_in_subtree * recvcount * recvtype_size, MPI_BYTE, parent_rank, 1, comm,
-             MPI_STATUS_IGNORE);
+    int parent_rank = rank & (rank - 1);
+    MPI_Recv(&blocks_in_subtree, 1, MPI_INT, parent_rank, 0, comm, MPI_STATUS_IGNORE);
+    data.resize(static_cast<size_t>(blocks_in_subtree) * bytes_per_block);
+    MPI_Recv(data.data(), blocks_in_subtree * bytes_per_block, MPI_BYTE, parent_rank, 1, comm, MPI_STATUS_IGNORE);
+  }
 
-    std::memcpy(recvbuf, data.data(), recvcount * recvtype_size);
+  std::memcpy(recvbuf, data.data(), bytes_per_block);
 
-    int mask = 1;
-    int rank_copy = rank;
-    while (((rank_copy & 1) == 0) && (mask < blocks_in_subtree)) {
-      mask <<= 1;
-      rank_copy >>= 1;
+  int mask = 1;
+  int rank_copy = rank;
+  while (((rank_copy & 1) == 0) && (mask < blocks_in_subtree)) {
+    mask <<= 1;
+    rank_copy >>= 1;
+  }
+  mask >>= 1;
+
+  // mask содержит такой наибольший бит, что все биты правее него (включая его) равны нулю
+
+  while (mask > 0) {
+    int child_rank = rank | mask;
+    if (child_rank < num_processes) {
+      int send_blocks = blocks_in_subtree - mask;
+      MPI_Send(&send_blocks, 1, MPI_INT, child_rank, 0, comm);
+      MPI_Send(data.data() + (mask * recvcount * recvtype_size), send_blocks * recvcount * recvtype_size, MPI_BYTE,
+               child_rank, 1, comm);
+      blocks_in_subtree = mask;
     }
     mask >>= 1;
-
-    // mask содержит такой наибольший бит, что все биты правее него (включая его) равны нулю
-
-    while (mask > 0) {
-      int child_rank = rank | mask;
-      if (child_rank < num_processes) {
-        int send_blocks = blocks_in_subtree - mask;
-        MPI_Send(&send_blocks, 1, MPI_INT, child_rank, 0, comm);
-        MPI_Send(data.data() + (mask * recvcount * recvtype_size), send_blocks * recvcount, recvtype, child_rank, 1,
-                 comm);
-        blocks_in_subtree = mask;
-      }
-      mask >>= 1;
-    }
   }
 
   return MPI_SUCCESS;
