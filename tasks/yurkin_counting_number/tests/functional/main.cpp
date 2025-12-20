@@ -1,5 +1,8 @@
+#include <gtest/gtest.h>
+
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <tuple>
 
@@ -19,33 +22,37 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     const std::string &str_input = std::get<1>(params);
-    input_data.assign(str_input.begin(), str_input.end());
+    input_data_.assign(str_input.begin(), str_input.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     int expected = 0;
-    for (char c : input_data) {
-      expected += static_cast<int>(std::isalpha(static_cast<unsigned char>(c)));
+
+    for (char c : input_data_) {
+      if (std::isalpha(static_cast<unsigned char>(c))) {
+        expected++;
+      }
     }
+
     return expected == output_data;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data;
+  InType input_data_{};
 };
 
 namespace {
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(0, std::string("AbC123")),
-                                            std::make_tuple(1, std::string("!!!!abcd")),
-                                            std::make_tuple(2, std::string("123"))};
+constexpr std::array<TestType, 3> kTestParam = {std::make_tuple(0, std::string("AbC123")),
+                                                std::make_tuple(1, std::string("!!!!abcd")),
+                                                std::make_tuple(2, std::string("123"))};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
@@ -62,5 +69,4 @@ TEST_P(YurkinCountingNumberFuncTests, MainTest) {
 INSTANTIATE_TEST_SUITE_P(YurkinTests, YurkinCountingNumberFuncTests, kValues, kName);
 
 }  // namespace
-
 }  // namespace yurkin_counting_number
