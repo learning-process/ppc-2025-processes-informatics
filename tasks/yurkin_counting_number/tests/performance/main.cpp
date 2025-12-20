@@ -19,6 +19,7 @@ class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    (void)output_data;
     return true;
   }
 
