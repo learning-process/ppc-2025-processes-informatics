@@ -39,7 +39,7 @@ class ChyokotovASeidelMethodPerfTest : public ppc::util::BaseRunPerfTests<InType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < output_data.size(); ++i) {
+    for (size_t i = 0; i < output_data.size(); ++i) {
       if (std::abs(output_data[i] - expected_output_[i]) > 0.0001) {
         return false;
       }
