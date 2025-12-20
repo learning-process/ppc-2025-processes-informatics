@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <cstddef>
 #include <cstring>
 #include <vector>
 
@@ -112,7 +113,7 @@ bool RomanovAScatterMPI::RunImpl() {
   std::vector<int> sendbuf;
   if (rank == root) {
     sendbuf = std::get<0>(GetInput());
-    sendbuf.resize(static_cast<size_t>(num_processes * sendcount));
+    sendbuf.resize(static_cast<size_t>(num_processes) * static_cast<size_t>(sendcount));
   }
 
   std::vector<int> recvbuf(sendcount);

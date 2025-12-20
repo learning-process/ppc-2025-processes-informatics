@@ -62,7 +62,7 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     int *sendbuf_ptr = nullptr;
     if (rank == root) {
       sendbuf = std::get<0>(params);
-      sendbuf.resize(static_cast<size_t>(num_processes * sendcount), 0);
+      sendbuf.resize(static_cast<size_t>(num_processes) * static_cast<size_t>(sendcount), 0);
       sendbuf_ptr = sendbuf.data();
     }
 

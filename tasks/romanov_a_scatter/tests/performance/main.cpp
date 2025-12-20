@@ -18,7 +18,7 @@ class RomanovAScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutT
 
   bool static IsSeqTest() {
     const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-    if (!test_info) {
+    if (test_info == nullptr) {
       return false;
     }
     return std::string(test_info->name()).find("seq") != std::string::npos;
