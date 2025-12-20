@@ -41,7 +41,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
   const InType &input = GetInput();
   std::uint64_t total_size = static_cast<std::uint64_t>(input.size());
 
-  std::uint64_t n = total_size;
+  std::uint64_t n = (world_rank == 0) ? total_size : 0;
   if (MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
     return false;
   }
@@ -49,7 +49,6 @@ bool YurkinCountingNumberMPI::RunImpl() {
   if (n > static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
     return false;
   }
-
   int n_int = static_cast<int>(n);
 
   if (world_rank != 0) {
@@ -63,8 +62,10 @@ bool YurkinCountingNumberMPI::RunImpl() {
   }
 
   char *buf = GlobalData::g_data_string.empty() ? nullptr : &GlobalData::g_data_string[0];
-  if (MPI_Bcast(buf, n_int, MPI_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
-    return false;
+  if (n_int > 0) {
+    if (MPI_Bcast(buf, n_int, MPI_CHAR, 0, MPI_COMM_WORLD) != MPI_SUCCESS) {
+      return false;
+    }
   }
 
   const std::string &s = GlobalData::g_data_string;
