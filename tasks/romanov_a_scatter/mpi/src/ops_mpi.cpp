@@ -35,7 +35,8 @@ int MyMPIScatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
   if (rank == root) {
     if (rank == 0) {
       blocks_in_subtree = num_processes;
-      data.assign(static_cast<char *>(sendbuf), static_cast<char *>(sendbuf) + blocks_in_subtree * bytes_per_block);
+      data.assign(static_cast<char *>(sendbuf),
+                  static_cast<char *>(sendbuf) + static_cast<ptrdiff_t>(blocks_in_subtree * bytes_per_block));
     } else {
       int total_blocks = num_processes;
       MPI_Send(&total_blocks, 1, MPI_INT, 0, 0, comm);
@@ -73,8 +74,8 @@ int MyMPIScatter(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
     if (child_rank < num_processes) {
       int send_blocks = blocks_in_subtree - mask;
       MPI_Send(&send_blocks, 1, MPI_INT, child_rank, 0, comm);
-      MPI_Send(data.data() + (mask * recvcount * recvtype_size), send_blocks * recvcount * recvtype_size, MPI_BYTE,
-               child_rank, 1, comm);
+      MPI_Send(data.data() + static_cast<ptrdiff_t>(mask * recvcount * recvtype_size),
+               send_blocks * recvcount * recvtype_size, MPI_BYTE, child_rank, 1, comm);
       blocks_in_subtree = mask;
     }
     mask >>= 1;
@@ -111,7 +112,7 @@ bool RomanovAScatterMPI::RunImpl() {
   std::vector<int> sendbuf;
   if (rank == root) {
     sendbuf = std::get<0>(GetInput());
-    sendbuf.resize(num_processes * sendcount);
+    sendbuf.resize(static_cast<size_t>(num_processes * sendcount));
   }
 
   std::vector<int> recvbuf(sendcount);

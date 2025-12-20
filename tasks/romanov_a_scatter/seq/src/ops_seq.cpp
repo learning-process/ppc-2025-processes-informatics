@@ -1,6 +1,6 @@
 #include "romanov_a_scatter/seq/include/ops_seq.hpp"
 
-#include <mpi.h>
+// #include <mpi.h>
 
 #include <cmath>
 #include <vector>
@@ -28,7 +28,7 @@ bool RomanovAScatterSEQ::RunImpl() {
 
   std::vector<int> recvbuf(sendcount);
 
-  for (int i = 0; (i < sendcount) && (i < static_cast<int>(sendbuf.size())); ++i) {
+  for (int i = 0; (i < sendcount) && std::cmp_less(i, static_cast<int>(sendbuf.size())); ++i) {
     recvbuf[i] = sendbuf[i];
   }
 

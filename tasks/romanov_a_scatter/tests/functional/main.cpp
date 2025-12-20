@@ -36,7 +36,7 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
  protected:
   bool static IsSeqTest() {
     const auto *test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-    if (!test_info) {
+    if (test_info == nullptr) {
       return false;
     }
     return std::string(test_info->name()).find("seq") != std::string::npos;
@@ -62,7 +62,7 @@ class RomanovAScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, OutT
     int *sendbuf_ptr = nullptr;
     if (rank == root) {
       sendbuf = std::get<0>(params);
-      sendbuf.resize(num_processes * sendcount, 0);
+      sendbuf.resize(static_cast<size_t>(num_processes * sendcount), 0);
       sendbuf_ptr = sendbuf.data();
     }
 
