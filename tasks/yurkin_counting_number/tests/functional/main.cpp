@@ -19,7 +19,7 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   static std::string PrintTestParam(const TestType &test_param) {
     std::string name = std::get<1>(test_param);
     for (auto &c : name) {
-      if (!std::isalnum(static_cast<unsigned char>(c))) {
+      if (std::isalnum(static_cast<unsigned char>(c)) == 0) {
         c = '_';
       }
     }
@@ -36,7 +36,7 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   bool CheckTestOutputData(OutType &output_data) final {
     int expected = 0;
     for (char c : input_data_) {
-      if (std::isalpha(static_cast<unsigned char>(c))) {
+      if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
         expected++;
       }
     }
@@ -48,7 +48,7 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
 };
 
 namespace {
