@@ -1,4 +1,5 @@
-первый #include<gtest / gtest.h>
+#include <gtest / gtest.h>
+
 #include <array>
 
 #include "util/include/perf_test_util.hpp"
@@ -7,36 +8,37 @@
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
-    namespace yurkin_counting_number {
+namespace yurkin_counting_number {
 
-  class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-    const int kCount_ = 100;
-    InType input_data_{};
+class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kCount_ = 100;
+  InType input_data_{};
 
-    void SetUp() override {
-      input_data_ = InType(kCount_, 'a');
-    }
-
-    bool CheckTestOutputData(OutType &output_data) final {
-      return true;
-    }
-
-    InType GetTestInputData() final {
-      return input_data_;
-    }
-  };
-
-  TEST_P(YurkinCountingNumberPerfTests, RunPerfModes) {
-    ExecuteTest(GetParam());
+  void SetUp() override {
+    input_data_ = InType(kCount_, 'a');
   }
 
-  const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSEQ>(
-      PPC_SETTINGS_yurkin_counting_number);
+  bool CheckTestOutputData(OutType &output_data) final {
+    (void)output_data;
+    return true;
+  }
 
-  const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+};
 
-  const auto kPerfTestName = YurkinCountingNumberPerfTests::CustomPerfTestName;
+TEST_P(YurkinCountingNumberPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
-  INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinCountingNumberPerfTests, kGtestValues, kPerfTestName);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinCountingNumberMPI, YurkinCountingNumberSEQ>(
+    PPC_SETTINGS_yurkin_counting_number);
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = YurkinCountingNumberPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinCountingNumberPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace yurkin_counting_number
