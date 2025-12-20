@@ -2,7 +2,6 @@
 #include <cctype>
 #include <string>
 #include <tuple>
-#include <utility>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -23,19 +22,19 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     const std::string &str_input = std::get<1>(params);
-    input_data_.assign(str_input.begin(), str_input.end());
+    input_data.assign(str_input.begin(), str_input.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     int expected = 0;
-    for (char c : input_data_) {
-      expected += static_cast<int>(std::isalpha(static_cast<unsigned char>(c)));  // явно int
+    for (char c : input_data) {
+      expected += static_cast<int>(std::isalpha(static_cast<unsigned char>(c)));
     }
     return expected == output_data;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 
  private:
@@ -63,4 +62,5 @@ TEST_P(YurkinCountingNumberFuncTests, MainTest) {
 INSTANTIATE_TEST_SUITE_P(YurkinTests, YurkinCountingNumberFuncTests, kValues, kName);
 
 }  // namespace
+
 }  // namespace yurkin_counting_number
