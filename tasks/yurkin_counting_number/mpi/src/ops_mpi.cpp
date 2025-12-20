@@ -25,6 +25,8 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberMPI::RunImpl() {
+  (void)GetOutput();
+
   int world_size = 0;
   int world_rank = 0;
 
