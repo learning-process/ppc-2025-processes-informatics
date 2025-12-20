@@ -36,9 +36,9 @@ bool ChyokotovASeidelMethodSEQ::ValidationImpl() {
     }
   }
 
-  for (int i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i) {
     double sum = 0.0;
-    for (int j = 0; j < n; j++) {
+    for (size_t j = 0; j < n; j++) {
       if (i != j) {
         sum += std::abs(matrix[i][j]);
       }
