@@ -10,11 +10,12 @@
 namespace liulin_y_vert_strip_diag_matrix_vect_mult {
 
 LiulinYVertStripDiagMatrixVectMultSEQ::LiulinYVertStripDiagMatrixVectMultSEQ(const InType &in) {
-  const auto &[matrix, vect] = in;
+  auto temp_matrix = std::get<0>(in);
+  auto temp_vect = std::get<1>(in);
 
   auto &input = GetInput();
-  std::get<0>(input) = matrix;
-  std::get<1>(input) = vect;
+  std::get<0>(input).swap(temp_matrix);
+  std::get<1>(input).swap(temp_vect);
 
   GetOutput().clear();
 }
