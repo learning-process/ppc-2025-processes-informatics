@@ -41,10 +41,10 @@ bool YurkinCountingNumberMPI::RunImpl() {
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   InType local_input;
-  local_input.resize(total_size);
+  local_input.assign(total_size, '\0');
 
   if (world_rank == 0) {
-    std::ranges::copy(input, local_input.begin());
+    std::copy(input.begin(), input.end(), local_input.begin());
   }
 
   if (total_size > 0) {
