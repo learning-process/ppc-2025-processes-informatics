@@ -6,18 +6,18 @@
 
 namespace spichek_d_jacobi {
 
-SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) {
+SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : input_(in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
 }
 
 bool SpichekDJacobiMPI::ValidationImpl() {
-  const auto &[A, b, eps, max_iter] = GetInput();
-  return !A.empty() && A.size() == b.size();
+  const auto &[A, b, eps, max_iter] = input_;
+  return !A.empty() && A.size() == b.size() && eps > 0 && max_iter > 0;
 }
 
 bool SpichekDJacobiMPI::PreProcessingImpl() {
-  GetOutput().assign(std::get<1>(GetInput()).size(), 0.0);
+  GetInput() = input_;
+  GetOutput().assign(std::get<1>(input_).size(), 0.0);
   return true;
 }
 

@@ -13,6 +13,7 @@ class SpichekDJacobiMPI : public BaseTask {
   explicit SpichekDJacobiMPI(const InType &in);
 
  private:
+  InType input_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

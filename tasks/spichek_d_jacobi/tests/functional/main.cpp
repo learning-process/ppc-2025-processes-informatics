@@ -54,9 +54,9 @@ TEST_P(SpichekDJacobiRunFuncTestsProcesses, JacobiTest) {
 }
 
 const std::array<TestType, 2> kTestParam = {
-    std::make_tuple(InType{{{10.0, -1.0}, {-1.0, 10.0}}, {9.0, 9.0}, 1e-6, 100}, "simple_2x2"),
+    std::make_tuple(InType{{{10.0, -1.0}, {-1.0, 10.0}}, {9.0, 9.0}, 1e-6, 50}, "simple_2x2"),
 
-    std::make_tuple(InType{{{4.0, 1.0, 1.0}, {1.0, 4.0, 1.0}, {1.0, 1.0, 4.0}}, {6.0, 6.0, 6.0}, 1e-6, 500},
+    std::make_tuple(InType{{{4.0, 1.0, 1.0}, {1.0, 4.0, 1.0}, {1.0, 1.0, 4.0}}, {6.0, 6.0, 6.0}, 1e-6, 100},
                     "simple_3x3")};
 
 const auto kTestTasksList =

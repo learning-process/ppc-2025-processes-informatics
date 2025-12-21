@@ -13,6 +13,7 @@ class SpichekDJacobiSEQ : public BaseTask {
   explicit SpichekDJacobiSEQ(const InType &in);
 
  private:
+  InType input_;
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
