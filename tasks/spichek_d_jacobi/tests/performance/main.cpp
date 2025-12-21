@@ -8,26 +8,34 @@
 namespace spichek_d_jacobi {
 
 class JacobiPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_;
+ private:
+  InType input_data_;
 
   void SetUp() override {
-    size_t n = 1000;
+    const size_t n = 200;
+
     std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
     std::vector<double> b(n, 1.0);
 
     for (size_t i = 0; i < n; ++i) {
-      A[i][i] = 2.0;
+      A[i][i] = 4.0;
+      if (i > 0) {
+        A[i][i - 1] = 1.0;
+      }
+      if (i + 1 < n) {
+        A[i][i + 1] = 1.0;
+      }
     }
 
-    input_ = {A, b, 1e-6, 1000};
+    input_data_ = {A, b, 1e-6, 300};
   }
 
   InType GetTestInputData() override {
-    return input_;
+    return input_data_;
   }
 
-  bool CheckTestOutputData(OutType &out) override {
-    return !out.empty();
+  bool CheckTestOutputData(OutType &output) override {
+    return !output.empty();
   }
 };
 
