@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <ranges>
 
 #include "yurkin_counting_number/common/include/common.hpp"
 
