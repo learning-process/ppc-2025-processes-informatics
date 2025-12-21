@@ -51,6 +51,10 @@ bool YurkinCountingNumberMPI::RunImpl() {
     MPI_Bcast(local_input.data(), total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
   }
 
+  if (world_rank != 0) {
+    GetInput() = local_input;
+  }
+
   int chunk = total_size / world_size;
   int rem = total_size % world_size;
 
