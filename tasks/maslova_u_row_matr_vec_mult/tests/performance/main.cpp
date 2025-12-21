@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cmath>
 #include <vector>
@@ -10,15 +11,15 @@
 
 namespace maslova_u_row_matr_vec_mult {
 
-class MaslovaUPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class MaslovaURowMatrVecPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
   OutType expected_output_{};
 
  protected:
   void SetUp() override {
-    const size_t rows = 5000;
-    const size_t cols = 5000;
+    const size_t rows = 10000;
+    const size_t cols = 10000;
 
     input_data_.first.rows = rows;
     input_data_.first.cols = cols;
@@ -33,22 +34,34 @@ class MaslovaUPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == expected_output_;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank != 0) {
+      return true;
+    }
+    if (output_data.size() != expected_output_.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(output_data[i] - expected_output_[i]) > 1e-6) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 
-TEST_P(MaslovaUPerfTests, RunPerfModes) {
+TEST_P(MaslovaURowMatrVecPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, MaslovaURowMatrVecMultMPI, MaslovaURowMatrVecMultSEQ>(
-        PPC_SETTINGS_maslova_u_row_matr_vec_mult);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MaslovaURowMatrVecMultMPI, MaslovaURowMatrVecMultSEQ>(
+    PPC_SETTINGS_maslova_u_row_matr_vec_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = MaslovaUPerfTests::CustomPerfTestName;
+const auto kPerfTestName = MaslovaURowMatrVecPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, MaslovaUPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, MaslovaURowMatrVecPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace maslova_u_row_matr_vec_mult

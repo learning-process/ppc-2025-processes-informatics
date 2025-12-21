@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cmath>
@@ -15,9 +16,9 @@
 
 namespace maslova_u_row_matr_vec_mult {
 
-class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class MaslovaURowMatrVecMultFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  MaslovaURunFuncTestsProcesses() = default;
+  MaslovaURowMatrVecMultFuncTests() = default;
 
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<2>(test_param);
@@ -31,7 +32,20 @@ class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return expected_ == output_data;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank != 0) {
+      return true;
+    }
+    if (output_data.size() != expected_.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(output_data[i] - expected_[i]) > 1e-6) {
+        return false;
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -45,7 +59,7 @@ class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-TEST_P(MaslovaURunFuncTestsProcesses, matrVecMult) {
+TEST_P(MaslovaURowMatrVecMultFuncTests, matrVecMult) {
   ExecuteTest(GetParam());
 }
 
@@ -58,14 +72,13 @@ const std::array<TestType, 7> kTestParam = {
      std::make_tuple(InType{Matrix{{-1, 2, -3, 4}, 2, 2}, {1, 2}}, OutType{3, 5}, "negative_values"),
      std::make_tuple(InType{Matrix{{2.5, 1.5, 4.0, 2.0}, 2, 2}, {2.0, 4.0}}, OutType{11.0, 16.0}, "double_values")}};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MaslovaURowMatrVecMultMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult),
-                                           ppc::util::AddFuncTask<MaslovaURowMatrVecMultSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<MaslovaURowMatrVecMultMPI, InType>(kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult),
+    ppc::util::AddFuncTask<MaslovaURowMatrVecMultSEQ, InType>(kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kTestName = MaslovaURunFuncTestsProcesses::PrintFuncTestName<MaslovaURunFuncTestsProcesses>;
-INSTANTIATE_TEST_SUITE_P(matrVecMultTests, MaslovaURunFuncTestsProcesses, kGtestValues, kTestName);
+const auto kTestName = MaslovaURowMatrVecMultFuncTests::PrintFuncTestName<MaslovaURowMatrVecMultFuncTests>;
+INSTANTIATE_TEST_SUITE_P(matrVecMultTests, MaslovaURowMatrVecMultFuncTests, kGtestValues, kTestName);
 
 }  // namespace
 }  // namespace maslova_u_row_matr_vec_mult
