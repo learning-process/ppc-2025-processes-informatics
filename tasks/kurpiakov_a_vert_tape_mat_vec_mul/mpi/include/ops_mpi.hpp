@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
 #include "task/include/task.hpp"
