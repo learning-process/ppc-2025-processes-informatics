@@ -26,7 +26,6 @@ bool GusevaAJarvisMPI::ValidationImpl() {
   const int width = std::get<0>(input_tuple);
   const int height = std::get<1>(input_tuple);
   const std::vector<int> &image = std::get<2>(input_tuple);
-
   int validation_result = 0;
 
   if (rank_ == 0) {
