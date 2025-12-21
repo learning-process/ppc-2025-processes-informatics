@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstddef>
+#include <utility>
+#include <vector>
+
 #include "guseva_a_jarvis/common/include/common.hpp"
 #include "task/include/task.hpp"
 
