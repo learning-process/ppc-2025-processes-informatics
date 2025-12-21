@@ -27,7 +27,6 @@ class GusevaAJarvisMPI : public BaseTask {
 
   int rank_ = 0;
   int size_ = 1;
-  MPI_Datatype point_type_;
 
   std::vector<std::pair<int, int>> points_;
   std::vector<std::pair<int, int>> hull_;

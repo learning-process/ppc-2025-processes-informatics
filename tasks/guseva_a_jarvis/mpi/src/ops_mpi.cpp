@@ -1,10 +1,8 @@
 #include "guseva_a_jarvis/mpi/include/ops_mpi.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <vector>
 
 #include "guseva_a_jarvis/common/include/common.hpp"
@@ -56,10 +54,10 @@ bool GusevaAJarvisMPI::PreProcessingImpl() {
 
   points_.clear();
 
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      if (image[(y * width) + x] == 1) {
-        points_.emplace_back(x, y);
+  for (int yy = 0; yy < height; ++yy) {
+    for (int xx = 0; xx < width; ++xx) {
+      if (image[(yy * width) + xx] == 1) {
+        points_.emplace_back(xx, yy);
       }
     }
   }
@@ -70,15 +68,16 @@ bool GusevaAJarvisMPI::PreProcessingImpl() {
 namespace {
 
 int CrossProduct(const std::pair<int, int> &a, const std::pair<int, int> &b, const std::pair<int, int> &c) {
-  return (b.first - a.first) * (c.second - a.second) - (b.second - a.second) * (c.first - a.first);
+  return ((b.first - a.first) * (c.second - a.second)) - ((b.second - a.second) * (c.first - a.first));
 }
 
 int DistanceSquared(const std::pair<int, int> &a, const std::pair<int, int> &b) {
   int dx = b.first - a.first;
   int dy = b.second - a.second;
-  return dx * dx + dy * dy;
+  return (dx * dx) + (dy * dy);
 }
 
+// NOLINTNEXTLINE
 std::vector<std::pair<int, int>> BuildConvexHull(const std::vector<std::pair<int, int>> &points) {
   if (points.size() <= 3) {
     return points;
@@ -96,6 +95,7 @@ std::vector<std::pair<int, int>> BuildConvexHull(const std::vector<std::pair<int
 
   size_t current = start_idx;
 
+  // NOLINTNEXTLINE
   do {
     hull.push_back(points[current]);
     size_t next = (current + 1) % points.size();
@@ -129,27 +129,27 @@ std::vector<std::pair<int, int>> BuildConvexHull(const std::vector<std::pair<int
 bool GusevaAJarvisMPI::RunImpl() {
   std::vector<std::pair<int, int>> local_hull = BuildConvexHull(points_);
 
-  int local_hull_size = static_cast<int>(local_hull.size());
+  int64_t local_hull_size = static_cast<int>(local_hull.size());
   std::vector<int> all_hull_sizes(size_, 0);
 
   MPI_Gather(&local_hull_size, 1, MPI_INT, all_hull_sizes.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<int> displacements(size_, 0);
   std::vector<int> recv_counts(size_, 0);
-  int total_points = 0;
+  int64_t total_points = 0;
 
   if (rank_ == 0) {
     for (int i = 0; i < size_; ++i) {
       recv_counts[i] = all_hull_sizes[i] * 2;
-      displacements[i] = total_points * 2;
+      displacements[i] = static_cast<int>(total_points) * 2;
       total_points += all_hull_sizes[i];
     }
   }
 
   std::vector<int> local_data(local_hull_size * 2);
-  for (int i = 0; i < local_hull_size; ++i) {
+  for (int64_t i = 0; i < local_hull_size; ++i) {
     local_data[i * 2] = local_hull[i].first;
-    local_data[i * 2 + 1] = local_hull[i].second;
+    local_data[(i * 2) + 1] = local_hull[i].second;
   }
 
   std::vector<int> all_data;
@@ -157,13 +157,14 @@ bool GusevaAJarvisMPI::RunImpl() {
     all_data.resize(total_points * 2, 0);
   }
 
-  MPI_Gatherv(local_data.data(), local_hull_size * 2, MPI_INT, all_data.data(), recv_counts.data(),
+  MPI_Gatherv(local_data.data(), static_cast<int>(local_hull_size * 2), MPI_INT, all_data.data(), recv_counts.data(),
               displacements.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank_ == 0) {
     std::vector<std::pair<int, int>> all_points;
-    for (int i = 0; i < total_points; ++i) {
-      all_points.emplace_back(all_data[i * 2], all_data[i * 2 + 1]);
+    all_points.reserve(total_points);
+    for (int64_t i = 0; i < total_points; ++i) {
+      all_points.emplace_back(all_data[i * 2], all_data[(i * 2) + 1]);
     }
 
     hull_ = BuildConvexHull(all_points);
@@ -177,7 +178,7 @@ bool GusevaAJarvisMPI::PostProcessingImpl() {
   const int width = std::get<0>(input_tuple);
   const int height = std::get<1>(input_tuple);
 
-  int hull_size = 0;
+  int64_t hull_size = 0;
   if (rank_ == 0) {
     hull_size = static_cast<int>(hull_.size());
   }
@@ -187,25 +188,25 @@ bool GusevaAJarvisMPI::PostProcessingImpl() {
   std::vector<int> hull_data;
   if (rank_ == 0) {
     hull_data.resize(hull_size * 2, 0);
-    for (int i = 0; i < hull_size; ++i) {
+    for (int64_t i = 0; i < hull_size; ++i) {
       hull_data[i * 2] = hull_[i].first;
-      hull_data[i * 2 + 1] = hull_[i].second;
+      hull_data[(i * 2) + 1] = hull_[i].second;
     }
   } else {
     hull_data.resize(hull_size * 2, 0);
   }
 
-  MPI_Bcast(hull_data.data(), hull_size * 2, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(hull_data.data(), static_cast<int>(hull_size) * 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank_ != 0) {
     hull_.clear();
     hull_.reserve(hull_size);
-    for (int i = 0; i < hull_size; ++i) {
-      hull_.emplace_back(hull_data[i * 2], hull_data[i * 2 + 1]);
+    for (int64_t i = 0; i < hull_size; ++i) {
+      hull_.emplace_back(hull_data[i * 2], hull_data[(i * 2) + 1]);
     }
   }
 
-  std::vector<int> output_vector(width * height, 0);
+  std::vector<int> output_vector(static_cast<int64_t>(width) * height, 0);
 
   for (const auto &point : hull_) {
     const int x = point.first;

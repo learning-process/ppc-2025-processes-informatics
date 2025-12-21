@@ -57,12 +57,12 @@ class GusevaAJarvisFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
 
 namespace {
 
-TEST_P(GusevaAJarvisFuncTests, JarvisMarch) {
+TEST_P(GusevaAJarvisFuncTests, Func) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 11> kTestParam = {"perf_test", "test_1", "test_2", "test_3", "test_4", "test_5",
-                                             "test_6",    "test_7", "test_8", "test_9", "test_10"};
+const std::array<TestType, 11> kTestParam = {"test_0", "test_1", "test_2", "test_3", "test_4", "test_5",
+                                             "test_6", "test_7", "test_8", "test_9", "test_10"};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GusevaAJarvisMPI, InType>(kTestParam, PPC_SETTINGS_guseva_a_jarvis),
@@ -72,7 +72,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = GusevaAJarvisFuncTests::PrintFuncTestName<GusevaAJarvisFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(GusevaAJarvisMarch, GusevaAJarvisFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GusevaAJarvis, GusevaAJarvisFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
