@@ -15,7 +15,7 @@ class NikitinABubleSortMPI : public BaseTask {
  private:
   std::vector<double> data;
   int n;
-  
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

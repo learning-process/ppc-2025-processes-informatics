@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <vector>
 #include <random>
+#include <vector>
 
 #include "nikitin_a_buble_sort/common/include/common.hpp"
 #include "nikitin_a_buble_sort/mpi/include/ops_mpi.hpp"
@@ -18,15 +18,15 @@ class NikitinABubleSortRandomPerfTests : public ppc::util::BaseRunPerfTests<InTy
   void SetUp() override {
     const std::size_t n = 10000;
     std::vector<double> data(n);
-    
+
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dist(-10000.0, 10000.0);
-    
+
     for (std::size_t i = 0; i < n; ++i) {
       data[i] = dist(gen);
     }
-    
+
     input_data_ = data;
   }
 
@@ -39,7 +39,7 @@ class NikitinABubleSortRandomPerfTests : public ppc::util::BaseRunPerfTests<InTy
     if (output_data.empty()) {
       return false;
     }
-    
+
     for (size_t i = 1; i < output_data.size(); ++i) {
       if (output_data[i - 1] > output_data[i]) {
         return false;
@@ -58,11 +58,11 @@ class NikitinABubleSortAscendingPerfTests : public ppc::util::BaseRunPerfTests<I
   void SetUp() override {
     const std::size_t n = 10000;
     std::vector<double> data(n);
-    
+
     for (std::size_t i = 0; i < n; ++i) {
       data[i] = static_cast<double>(i + 1);
     }
-    
+
     input_data_ = data;
   }
 
@@ -75,7 +75,7 @@ class NikitinABubleSortAscendingPerfTests : public ppc::util::BaseRunPerfTests<I
     if (output_data.empty()) {
       return false;
     }
-    
+
     for (size_t i = 1; i < output_data.size(); ++i) {
       if (output_data[i - 1] > output_data[i]) {
         return false;
@@ -94,11 +94,11 @@ class NikitinABubleSortDescendingPerfTests : public ppc::util::BaseRunPerfTests<
   void SetUp() override {
     const std::size_t n = 10000;
     std::vector<double> data(n);
-    
+
     for (std::size_t i = 0; i < n; ++i) {
       data[i] = static_cast<double>(n - i);
     }
-    
+
     input_data_ = data;
   }
 
@@ -111,7 +111,7 @@ class NikitinABubleSortDescendingPerfTests : public ppc::util::BaseRunPerfTests<
     if (output_data.empty()) {
       return false;
     }
-    
+
     for (size_t i = 1; i < output_data.size(); ++i) {
       if (output_data[i - 1] > output_data[i]) {
         return false;
@@ -132,8 +132,7 @@ TEST_P(NikitinABubleSortRandomPerfTests, RunPerfModesRandom) {
 }
 
 const auto kRandomPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NikitinABubleSortMPI, NikitinABubleSortSEQ>(
-        PPC_SETTINGS_nikitin_a_buble_sort);
+    ppc::util::MakeAllPerfTasks<InType, NikitinABubleSortMPI, NikitinABubleSortSEQ>(PPC_SETTINGS_nikitin_a_buble_sort);
 
 const auto kRandomGtestValues = ppc::util::TupleToGTestValues(kRandomPerfTasks);
 
@@ -147,14 +146,14 @@ TEST_P(NikitinABubleSortAscendingPerfTests, RunPerfModesAscending) {
 }
 
 const auto kAscendingPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NikitinABubleSortMPI, NikitinABubleSortSEQ>(
-        PPC_SETTINGS_nikitin_a_buble_sort);
+    ppc::util::MakeAllPerfTasks<InType, NikitinABubleSortMPI, NikitinABubleSortSEQ>(PPC_SETTINGS_nikitin_a_buble_sort);
 
 const auto kAscendingGtestValues = ppc::util::TupleToGTestValues(kAscendingPerfTasks);
 
 const auto kAscendingPerfTestName = NikitinABubleSortAscendingPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunPerfAscending, NikitinABubleSortAscendingPerfTests, kAscendingGtestValues, kAscendingPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerfAscending, NikitinABubleSortAscendingPerfTests, kAscendingGtestValues,
+                         kAscendingPerfTestName);
 
 // Тесты с данными по убыванию
 TEST_P(NikitinABubleSortDescendingPerfTests, RunPerfModesDescending) {
@@ -162,14 +161,14 @@ TEST_P(NikitinABubleSortDescendingPerfTests, RunPerfModesDescending) {
 }
 
 const auto kDescendingPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NikitinABubleSortMPI, NikitinABubleSortSEQ>(
-        PPC_SETTINGS_nikitin_a_buble_sort);
+    ppc::util::MakeAllPerfTasks<InType, NikitinABubleSortMPI, NikitinABubleSortSEQ>(PPC_SETTINGS_nikitin_a_buble_sort);
 
 const auto kDescendingGtestValues = ppc::util::TupleToGTestValues(kDescendingPerfTasks);
 
 const auto kDescendingPerfTestName = NikitinABubleSortDescendingPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunPerfDescending, NikitinABubleSortDescendingPerfTests, kDescendingGtestValues, kDescendingPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunPerfDescending, NikitinABubleSortDescendingPerfTests, kDescendingGtestValues,
+                         kDescendingPerfTestName);
 
 }  // namespace
 

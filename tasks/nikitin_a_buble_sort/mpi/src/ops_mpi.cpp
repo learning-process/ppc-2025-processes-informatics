@@ -37,15 +37,15 @@ bool NikitinABubleSortMPI::RunImpl() {
   if (n <= 1) {
     std::vector<double> result;
     if (n == 1) {
-        result.resize(1);
-        if (rank == 0) {
-            result[0] = data[0];
-        }
-        MPI_Bcast(result.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+      result.resize(1);
+      if (rank == 0) {
+        result[0] = data[0];
+      }
+      MPI_Bcast(result.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
     GetOutput() = std::move(result);
     return true;
-}
+  }
 
   const int base = n / comm_size;
   const int rem = n % comm_size;
@@ -62,16 +62,9 @@ bool NikitinABubleSortMPI::RunImpl() {
   }
 
   std::vector<double> local(count);
-  MPI_Scatterv(rank == 0 ? data.data() : nullptr, 
-              counts.data(), 
-              displs.data(), 
-              MPI_DOUBLE, 
-              local.data(), 
-              count, 
-              MPI_DOUBLE, 
-              0, 
-              MPI_COMM_WORLD);
-  
+  MPI_Scatterv(rank == 0 ? data.data() : nullptr, counts.data(), displs.data(), MPI_DOUBLE, local.data(), count,
+               MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
   for (int phase = 0; phase < n; ++phase) {
     const int parity = phase & 1;
     const int tag = phase;
@@ -82,14 +75,13 @@ bool NikitinABubleSortMPI::RunImpl() {
   }
 
   std::vector<double> result(n);
-  MPI_Allgatherv(local.data(), count, MPI_DOUBLE, 
-                result.data(), counts.data(), displs.data(), MPI_DOUBLE,
-                MPI_COMM_WORLD);
+  MPI_Allgatherv(local.data(), count, MPI_DOUBLE, result.data(), counts.data(), displs.data(), MPI_DOUBLE,
+                 MPI_COMM_WORLD);
 
   GetOutput() = std::move(result);
   return true;
 }
-  
+
 bool NikitinABubleSortMPI::PostProcessingImpl() {
   return true;
 }
@@ -102,15 +94,15 @@ void NikitinABubleSortMPI::LocalSort(std::vector<double> &local, int global_offs
 
   int start = ((global_offset & 1) == phase_parity) ? 0 : 1;
   for (int i = start; i + 1 < local_n; i += 2) {
-      if (local[i] > local[i + 1]) {
-          std::swap(local[i], local[i + 1]);
-      }   
+    if (local[i] > local[i + 1]) {
+      std::swap(local[i], local[i + 1]);
+    }
   }
 }
 
-void NikitinABubleSortMPI::ExchangeRight(std::vector<double> &local, const std::vector<int> &counts, 
-                                        const std::vector<int> &displs, int rank, int comm_size, 
-                                        int phase_parity, int tag) {
+void NikitinABubleSortMPI::ExchangeRight(std::vector<double> &local, const std::vector<int> &counts,
+                                         const std::vector<int> &displs, int rank, int comm_size, int phase_parity,
+                                         int tag) {
   if (local.empty()) {
     return;
   }
@@ -123,7 +115,7 @@ void NikitinABubleSortMPI::ExchangeRight(std::vector<double> &local, const std::
   if ((last_global & 1) != phase_parity) {
     return;
   }
-  
+
   double send_val = local.back();
   double recv_val = 0;
 
@@ -133,8 +125,8 @@ void NikitinABubleSortMPI::ExchangeRight(std::vector<double> &local, const std::
   local.back() = std::min(send_val, recv_val);
 }
 
-void NikitinABubleSortMPI::ExchangeLeft(std::vector<double> &local, const std::vector<int> &counts, 
-                                       const std::vector<int> &displs, int rank, int phase_parity, int tag) {
+void NikitinABubleSortMPI::ExchangeLeft(std::vector<double> &local, const std::vector<int> &counts,
+                                        const std::vector<int> &displs, int rank, int phase_parity, int tag) {
   if (local.empty()) {
     return;
   }

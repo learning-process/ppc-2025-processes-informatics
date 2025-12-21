@@ -1,16 +1,16 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <algorithm>
-#include <random>
 
 #include "nikitin_a_buble_sort/common/include/common.hpp"
 #include "nikitin_a_buble_sort/mpi/include/ops_mpi.hpp"
@@ -91,20 +91,10 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
         break;
 
       case 11:  // Граничные значения double
-        input_data_ = {
-            std::numeric_limits<double>::min(),
-            std::numeric_limits<double>::max(),
-            -std::numeric_limits<double>::max(),
-            -std::numeric_limits<double>::min(),
-            0.0
-        };
-        expected_output_ = {
-            -std::numeric_limits<double>::max(),
-            -std::numeric_limits<double>::min(),
-            0.0,
-            std::numeric_limits<double>::min(),
-            std::numeric_limits<double>::max()
-        };
+        input_data_ = {std::numeric_limits<double>::min(), std::numeric_limits<double>::max(),
+                       -std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), 0.0};
+        expected_output_ = {-std::numeric_limits<double>::max(), -std::numeric_limits<double>::min(), 0.0,
+                            std::numeric_limits<double>::min(), std::numeric_limits<double>::max()};
         break;
 
       case 12:  // Дробные числа с высокой точностью
@@ -138,20 +128,10 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
         break;
 
       case 18:  // Массив с бесконечностями
-        input_data_ = {
-            std::numeric_limits<double>::infinity(),
-            -std::numeric_limits<double>::infinity(),
-            1.0,
-            0.0,
-            -1.0
-        };
-        expected_output_ = {
-            -std::numeric_limits<double>::infinity(),
-            -1.0,
-            0.0,
-            1.0,
-            std::numeric_limits<double>::infinity()
-        };
+        input_data_ = {std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), 1.0, 0.0,
+                       -1.0};
+        expected_output_ = {-std::numeric_limits<double>::infinity(), -1.0, 0.0, 1.0,
+                            std::numeric_limits<double>::infinity()};
         break;
 
       case 19:  // Алгоритмически сложный случай для пузырьковой сортировки
@@ -216,11 +196,11 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     std::vector<double> result(size);
     std::mt19937 gen(seed);
     std::uniform_real_distribution<double> dist(-1000.0, 1000.0);
-    
+
     for (size_t i = 0; i < size; ++i) {
       result[i] = dist(gen);
     }
-    
+
     return result;
   }
 };
@@ -233,30 +213,30 @@ TEST_P(NikitinABubleSortFuncTests, BubbleSortTest) {
 
 // Определяем тестовые случаи
 const std::array<TestType, 20> kTestParam = {
-    std::make_tuple(1, "already_sorted"),              // Уже отсортированный
-    std::make_tuple(2, "reverse_order"),               // Обратный порядок
-    std::make_tuple(3, "random_numbers"),              // Случайные числа
-    std::make_tuple(4, "duplicates"),                  // Дубликаты
-    std::make_tuple(5, "single_element"),              // Один элемент
-    std::make_tuple(6, "two_elements"),                // Два элемента
-    std::make_tuple(7, "negative_only"),               // Только отрицательные
-    std::make_tuple(8, "mixed_signs"),                 // Смешанные знаки
-    std::make_tuple(9, "medium_array"),                // Средний массив
-    std::make_tuple(10, "large_array"),                // Большой массив
-    std::make_tuple(11, "boundary_values"),            // Граничные значения
-    std::make_tuple(12, "high_precision"),             // Высокая точность
-    std::make_tuple(13, "almost_sorted"),              // Почти отсортированный
-    std::make_tuple(14, "all_equal"),                  // Все одинаковые
-    std::make_tuple(15, "wide_range"),                 // Широкий диапазон
-    std::make_tuple(16, "empty_array"),                // Пустой массив
-    std::make_tuple(18, "infinity_values"),            // Бесконечности
-    std::make_tuple(19, "worst_case"),                 // Худший случай для пузырька
-    std::make_tuple(20, "performance_test")            // Тест производительности
+    std::make_tuple(1, "already_sorted"),    // Уже отсортированный
+    std::make_tuple(2, "reverse_order"),     // Обратный порядок
+    std::make_tuple(3, "random_numbers"),    // Случайные числа
+    std::make_tuple(4, "duplicates"),        // Дубликаты
+    std::make_tuple(5, "single_element"),    // Один элемент
+    std::make_tuple(6, "two_elements"),      // Два элемента
+    std::make_tuple(7, "negative_only"),     // Только отрицательные
+    std::make_tuple(8, "mixed_signs"),       // Смешанные знаки
+    std::make_tuple(9, "medium_array"),      // Средний массив
+    std::make_tuple(10, "large_array"),      // Большой массив
+    std::make_tuple(11, "boundary_values"),  // Граничные значения
+    std::make_tuple(12, "high_precision"),   // Высокая точность
+    std::make_tuple(13, "almost_sorted"),    // Почти отсортированный
+    std::make_tuple(14, "all_equal"),        // Все одинаковые
+    std::make_tuple(15, "wide_range"),       // Широкий диапазон
+    std::make_tuple(16, "empty_array"),      // Пустой массив
+    std::make_tuple(18, "infinity_values"),  // Бесконечности
+    std::make_tuple(19, "worst_case"),       // Худший случай для пузырька
+    std::make_tuple(20, "performance_test")  // Тест производительности
 };
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<NikitinABubleSortMPI, InType>(kTestParam, PPC_SETTINGS_nikitin_a_buble_sort),
-    ppc::util::AddFuncTask<NikitinABubleSortSEQ, InType>(kTestParam, PPC_SETTINGS_nikitin_a_buble_sort));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<NikitinABubleSortMPI, InType>(kTestParam, PPC_SETTINGS_nikitin_a_buble_sort),
+                   ppc::util::AddFuncTask<NikitinABubleSortSEQ, InType>(kTestParam, PPC_SETTINGS_nikitin_a_buble_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
