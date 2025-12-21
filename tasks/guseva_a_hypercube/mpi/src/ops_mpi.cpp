@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <guseva_a_hypercube/mpi/include/hypercube.hpp>
 
 #include "guseva_a_hypercube/common/include/common.hpp"
