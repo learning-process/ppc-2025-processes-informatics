@@ -17,12 +17,11 @@ MaslovaURowMatrVecMultMPI::MaslovaURowMatrVecMultMPI(const InType &in) {
 }
 
 bool MaslovaURowMatrVecMultMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool MaslovaURowMatrVecMultMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool MaslovaURowMatrVecMultMPI::RunImpl() {

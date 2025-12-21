@@ -15,46 +15,28 @@ MaslovaURowMatrVecMultSEQ::MaslovaURowMatrVecMultSEQ(const InType &in) {
 }
 
 bool MaslovaURowMatrVecMultSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  rreturn (GetInput().first.cols == GetInput().second.size()) && (!GetInput().first.data.empty());
 }
 
 bool MaslovaURowMatrVecMultSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool MaslovaURowMatrVecMultSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  const Matrix& matrix = GetInput().first;
+  const std::vector<double>& vector = GetInput().second;
+  GetOutput() = std::vector<double>(matrix.rows, 0.0);
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for (size_t i = 0; i < matrix.rows; ++i) {
+    for (size_t j = 0; j < matrix.cols; ++j) {
+      GetOutput()[i] += matrix.data[i * matrix.cols + j] * vector[j];
     }
   }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool MaslovaURowMatrVecMultSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace maslova_u_row_matr_vec_mult
