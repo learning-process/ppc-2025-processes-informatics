@@ -22,6 +22,7 @@ bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
   int i = 0;
   while (firstRow[i] != 0) {
     sizeOfRib++;
+    i++;
   }
   return true;
 }

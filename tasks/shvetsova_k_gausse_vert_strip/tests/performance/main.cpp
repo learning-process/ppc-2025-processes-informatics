@@ -18,7 +18,7 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
   void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return true;
+    return !output_data.empty();
   }
 
   InType GetTestInputData() final {
