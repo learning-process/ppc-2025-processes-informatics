@@ -20,7 +20,7 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
 
     // Полуширина ленты
 
-    const int sizeOfRib = 1000;
+    const int sizeOfRib = 600;
 
     std::vector<std::vector<double>> matrix(sz, std::vector<double>(sz, 0.0));
 
