@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <utility>
 
 #include "yurkin_counting_number/common/include/common.hpp"
 
@@ -12,7 +11,7 @@ namespace yurkin_counting_number {
 
 namespace {
 
-int BroadcastTotalSize(int total_size, int world_rank) {
+int BroadcastTotalSize(int total_size) {
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
   return total_size;
 }
@@ -75,7 +74,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
     total_size = static_cast<int>(GetInput().size());
   }
 
-  total_size = BroadcastTotalSize(total_size, world_rank);
+  total_size = BroadcastTotalSize(total_size);
 
   InType local_input;
   BroadcastInputBuffer(local_input, total_size, world_rank, GetInput());
