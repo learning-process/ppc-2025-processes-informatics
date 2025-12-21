@@ -32,11 +32,11 @@ class LuzanEMatrixHorisRibMultShemeFuncTests : public ppc::util::BaseRunFuncTest
     std::tuple_element_t<3, InType> vec(static_cast<size_t>(vec_len));
 
     for (int elem = 0; elem < height * width; elem++) {
-      mat[elem] = (elem * 2) - 42;
+      mat[elem] = (elem % 42001) * (elem % 421);
     }
 
     for (int elem = 0; elem < vec_len; elem++) {
-      vec[elem] = (elem) + 42;
+      vec[elem] = (elem % 4201) * (elem % 421);
     }
 
     input_data_ = std::make_tuple(mat, height, width, vec, vec_len);

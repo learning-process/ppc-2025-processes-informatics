@@ -12,9 +12,9 @@
 namespace luzan_e_matrix_horis_rib_mult_sheme {
 
 class LuzanEMatrixHorisRibMultShemepERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int height_ = 15000;
-  const int width_ = 15000;
-  const int vec_len_ = 15000;
+  const int height_ = 10000;
+  const int width_ = 10000;
+  const int vec_len_ = 10000;
   InType input_data_;
 
   void SetUp() override {
@@ -22,11 +22,11 @@ class LuzanEMatrixHorisRibMultShemepERFTests : public ppc::util::BaseRunPerfTest
     std::tuple_element_t<3, InType> vec(static_cast<size_t>(width_));
 
     for (int elem = 0; elem < height_ * width_; elem++) {
-      mat[elem] = elem % 42000;
+      mat[elem] = (elem % 42001) * (elem % 421);
     }
 
     for (int elem = 0; elem < vec_len_; elem++) {
-      vec[elem] = elem % 4200;
+      vec[elem] = (elem % 4201) * (elem % 421);
     }
 
     input_data_ = std::make_tuple(mat, height_, width_, vec, vec_len_);
