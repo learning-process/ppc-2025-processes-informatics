@@ -14,13 +14,13 @@ namespace shvetsova_k_gausse_vert_strip {
 class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    // Размер матрицы для замера производительности (например, 1000x1000)
+    // Размер матрицы для замера производительности (1000x1000)
 
-    const int sz = 200;
+    const int sz = 1000;
 
-    // Полуширина ленты (размер риба)
+    // Полуширина ленты
 
-    const int sizeOfRib = 10;
+    const int sizeOfRib = 50;
 
     std::vector<std::vector<double>> matrix(sz, std::vector<double>(sz, 0.0));
 
@@ -44,9 +44,6 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
       matrix[i][i] = row_sum + 10.0;  // Диагональное преобладание
 
       // Задаем правую часть так, чтобы ответом был вектор из единиц (x[i] = 1.0)
-
-      // Это упрощает проверку, если она понадобится
-
       double b_val = 0.0;
 
       for (int j = 0; j < sz; ++j) {
@@ -60,8 +57,6 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // В перф-тестах достаточно проверить, что результат получен и имеет верный размер
-
     return !output_data.empty() && output_data.size() == input_data_.second.size();
   }
 

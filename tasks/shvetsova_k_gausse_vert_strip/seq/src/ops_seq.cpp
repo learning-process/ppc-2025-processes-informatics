@@ -9,7 +9,7 @@ namespace shvetsova_k_gausse_vert_strip {
 
 ShvetsovaKGaussVertStripSEQ::ShvetsovaKGaussVertStripSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput() = InType(in);
   sizeOfRib = 1;  // инициализация ширины ленты
 }
 
@@ -50,7 +50,7 @@ bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
     return true;
   }
 
-  // Храним ленту: band[i] содержит элементы с i - sizeOfRib + 1 до i + sizeOfRib - 1
+  // band[i] содержит элементы с i - sizeOfRib + 1 до i + sizeOfRib - 1
   std::vector<std::vector<double>> band(N);
   std::vector<int> offsets(N);
   for (int i = 0; i < N; ++i) {
@@ -124,7 +124,7 @@ bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
     }
   }
 
-  GetOutput() = x;
+  GetOutput().assign(x.begin(), x.end());
   return true;
 }
 

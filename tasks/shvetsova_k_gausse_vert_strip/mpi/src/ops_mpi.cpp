@@ -10,7 +10,7 @@ namespace shvetsova_k_gausse_vert_strip {
 
 ShvetsovaKGaussVertStripMPI::ShvetsovaKGaussVertStripMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput() = InType(in);
 }
 
 bool ShvetsovaKGaussVertStripMPI::ValidationImpl() {
@@ -131,8 +131,8 @@ bool ShvetsovaKGaussVertStripMPI::RunImpl() {
     }
   }
 
-  // Все процессы должны иметь результат для корректной работы CheckTestOutputData
-  GetOutput() = x;
+  // Все процессы должны иметь результат
+  GetOutput().assign(x.begin(), x.end());
   return true;
 }
 
