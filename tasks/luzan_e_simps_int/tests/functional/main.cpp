@@ -28,12 +28,12 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
     auto ab = std::get<1>(params);
     auto cd = std::get<2>(params);
     int fn = std::get<3>(params);
-    
+
     input_data_ = std::make_tuple(n, ab, cd, fn);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    double a = 0.0; 
+    double a = 0.0;
     double b = 0.0;
     double c = 0.0;
     double d = 0.0;
@@ -48,7 +48,7 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
     d = std::get<1>(std::get<2>(input_data_));
     func_num = std::get<3>(input_data_);
 
-    double (*fp) (double, double) = GetFunc(func_num);
+    double (*fp)(double, double) = GetFunc(func_num);
     double hx = (b - a) / n;
     double hy = (d - c) / n;
 
@@ -64,7 +64,7 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
 
       for (int j = 0; j <= n; j++) {
         y = c + (hy * j);
-        wy = GetWeight(j, n);      
+        wy = GetWeight(j, n);
         sum += wy * wx * fp(x, y);
       }
     }
@@ -91,8 +91,7 @@ const std::array<TestType, 5> kTestParam = {std::make_tuple(4, std::make_tuple(3
                                             std::make_tuple(10, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),
                                             std::make_tuple(20, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),
                                             std::make_tuple(30, std::make_tuple(-20, 5), std::make_tuple(2, 25), 4),
-                                            std::make_tuple(120, std::make_tuple(0, 5), std::make_tuple(-1, 5), 5)
-                                          };
+                                            std::make_tuple(120, std::make_tuple(0, 5), std::make_tuple(-1, 5), 5)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LuzanESimpsIntMPI, InType>(kTestParam, PPC_SETTINGS_luzan_e_simps_int),

@@ -57,7 +57,7 @@ bool LuzanESimpsIntMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  double a = 0.0; 
+  double a = 0.0;
   double b = 0.0;
   double c = 0.0;
   double d = 0.0;
@@ -92,7 +92,7 @@ bool LuzanESimpsIntMPI::RunImpl() {
   int i_end = i_start + per_proc + (rest > rank ? 1 : 0);
 
   // calculations
-  double (*fp) (double, double) = GetFunc(func_num);
+  double (*fp)(double, double) = GetFunc(func_num);
   double hx = (b - a) / n;
   double hy = (d - c) / n;
 
@@ -107,7 +107,7 @@ bool LuzanESimpsIntMPI::RunImpl() {
   for (int i = i_start; i < i_end; i++) {
     x = a + (hx * i);
     wx = GetWeight(i, n);
-    
+
     for (int j = 0; j < n + 1; j++) {
       y = c + (hy * j);
       wy = GetWeight(j, n);

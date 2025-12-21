@@ -30,7 +30,7 @@ bool LuzanESimpsIntSEQ::PreProcessingImpl() {
 }
 
 bool LuzanESimpsIntSEQ::RunImpl() {
-  double a = 0.0; 
+  double a = 0.0;
   double b = 0.0;
   double c = 0.0, d = 0.0;
   int n = 0;  // кол-во отрезков
@@ -43,8 +43,8 @@ bool LuzanESimpsIntSEQ::RunImpl() {
   c = std::get<0>(std::get<2>(GetInput()));
   d = std::get<1>(std::get<2>(GetInput()));
   func_num = std::get<3>(GetInput());
-  
-  double (*fp) (double, double) = GetFunc(func_num);
+
+  double (*fp)(double, double) = GetFunc(func_num);
   double hx = (b - a) / n;
   double hy = (d - c) / n;
 
@@ -60,7 +60,7 @@ bool LuzanESimpsIntSEQ::RunImpl() {
 
     for (int j = 0; j <= n; j++) {
       y = c + (hy * j);
-      wy = GetWeight(j, n);      
+      wy = GetWeight(j, n);
       sum += wy * wx * fp(x, y);
     }
   }

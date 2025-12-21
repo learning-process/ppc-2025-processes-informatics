@@ -24,8 +24,8 @@ class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutTy
     input_data_ = std::make_tuple(n_, std::make_tuple(a_, b_), std::make_tuple(c_, d_), func_num_);
   }
 
- bool CheckTestOutputData(OutType &output_data) final {
-    double a = 0.0; 
+  bool CheckTestOutputData(OutType &output_data) final {
+    double a = 0.0;
     double b = 0.0;
     double c = 0.0;
     double d = 0.0;
@@ -40,7 +40,7 @@ class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutTy
     d = std::get<1>(std::get<2>(input_data_));
     func_num = std::get<3>(input_data_);
 
-    double (*fp) (double, double) = GetFunc(func_num);
+    double (*fp)(double, double) = GetFunc(func_num);
     double hx = (b - a) / n;
     double hy = (d - c) / n;
 
@@ -56,7 +56,7 @@ class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutTy
 
       for (int j = 0; j <= n; j++) {
         y = c + (hy * j);
-        wy = GetWeight(j, n);      
+        wy = GetWeight(j, n);
         sum += wy * wx * fp(x, y);
       }
     }
