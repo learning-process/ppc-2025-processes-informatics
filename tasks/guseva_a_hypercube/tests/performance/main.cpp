@@ -39,7 +39,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = GusevaAHypercubePerfTestProcesses::CustomPerfTestName;
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE // To avoid "Variable <...> is non-cost and globally accessible, consider making it const"
 INSTANTIATE_TEST_SUITE_P(GusevaAHypercubePerf, GusevaAHypercubePerfTestProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace

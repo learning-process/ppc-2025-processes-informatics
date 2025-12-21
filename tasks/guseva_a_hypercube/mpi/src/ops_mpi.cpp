@@ -1,5 +1,5 @@
 #include "guseva_a_hypercube/mpi/include/ops_mpi.hpp"
-// NOLINTBEGIN
+
 #include <mpi.h>
 
 #include <guseva_a_hypercube/mpi/include/hypercube.hpp>
@@ -41,8 +41,8 @@ bool GusevaAHypercubeMine::RunImpl() {
 
     double local_result = 0;
 
-    for (int x = local_start; x < local_end; x++) {
-      local_result += func(x);
+    for (int xx = local_start; xx < local_end; xx++) {
+      local_result += func(xx);
     }
 
     double result = 0;
@@ -59,5 +59,3 @@ bool GusevaAHypercubeMine::PostProcessingImpl() {
 }
 
 }  // namespace guseva_a_hypercube
-
-// NOLINTEND

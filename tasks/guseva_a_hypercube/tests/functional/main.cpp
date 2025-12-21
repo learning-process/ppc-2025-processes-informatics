@@ -46,44 +46,44 @@ TEST_P(GusevaAHypercubeRunFuncTestsProcesses, GusevaAHypercubeFunc) {
   ExecuteTest(GetParam());
 }
 
-// NOLINTBEGIN
-const int rangeEnd = 1e3;
+const int kRangeEnd = 1e3;
+
+// NOLINTNEXTLINE // to avoid "Prefer 'std::number::e' to this literal" which is not possible for AppleClang 17
 const double expConst = 2.7182818284590452353602874713527;
-// NOLINTEND
 
 // clang-format off
 const std::array<TestType, 8> kTestParam = {
   TestType(
-    InType(1, rangeEnd, [](int x) { return static_cast<double>(x); }, "x_1e3"),
-    (std::pow(rangeEnd, 2) + rangeEnd) / 2
+    InType(1, kRangeEnd, [](int x) { return static_cast<double>(x); }, "x_1e3"),
+    (std::pow(kRangeEnd, 2) + kRangeEnd) / 2
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::pow(x, 2); }, "squared_1e3"),
-    ((2 * std::pow(rangeEnd, 3)) + (3 * std::pow(rangeEnd, 2)) + rangeEnd) / 6L
+    InType(1, kRangeEnd, [](int x) { return std::pow(x, 2); }, "squared_1e3"),
+    ((2 * std::pow(kRangeEnd, 3)) + (3 * std::pow(kRangeEnd, 2)) + kRangeEnd) / 6L
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::log2(x); }, "log2_1e3"), 
+    InType(1, kRangeEnd, [](int x) { return std::log2(x); }, "log2_1e3"), 
     8529.398004204
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::exp(x); }, "exp_1e3"),
-    (std::exp(rangeEnd + 1) - expConst) / (expConst - 1)
+    InType(1, kRangeEnd, [](int x) { return std::exp(x); }, "exp_1e3"),
+    (std::exp(kRangeEnd + 1) - expConst) / (expConst - 1)
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::sqrt(x); }, "sqrt_1e3"), 
+    InType(1, kRangeEnd, [](int x) { return std::sqrt(x); }, "sqrt_1e3"), 
     21097.4558874807
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::sin(x); }, "sin_1e3"),
-    (std::sin(rangeEnd) - std::cos(rangeEnd) / std::tan(1. / 2) + 1. / std::tan(1. / 2)) / 2
+    InType(1, kRangeEnd, [](int x) { return std::sin(x); }, "sin_1e3"),
+    (std::sin(kRangeEnd) - std::cos(kRangeEnd) / std::tan(1. / 2) + 1. / std::tan(1. / 2)) / 2
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::cos(x); }, "cos_1e3"),
-    (std::cos(rangeEnd) + std::sin(rangeEnd) / std::tan(1. / 2) - 1) / 2
+    InType(1, kRangeEnd, [](int x) { return std::cos(x); }, "cos_1e3"),
+    (std::cos(kRangeEnd) + std::sin(kRangeEnd) / std::tan(1. / 2) - 1) / 2
   ),
   TestType(
-    InType(1, rangeEnd, [](int x) { return std::pow(x, 3); }, "cubed_1e3"),
-    (std::pow(rangeEnd * (rangeEnd + 1), 2)) / 4
+    InType(1, kRangeEnd, [](int x) { return std::pow(x, 3); }, "cubed_1e3"),
+    (std::pow(kRangeEnd * (kRangeEnd + 1), 2)) / 4
   )
 };
 // clang-format on
@@ -95,7 +95,7 @@ inline const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 inline const auto kPerfTestName =
     GusevaAHypercubeRunFuncTestsProcesses::PrintFuncTestName<GusevaAHypercubeRunFuncTestsProcesses>;
 
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE // To avoid "Variable <...> is non-cost and globally accessible, consider making it const"
 INSTANTIATE_TEST_SUITE_P(GusevaAHypercubeFunc, GusevaAHypercubeRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
