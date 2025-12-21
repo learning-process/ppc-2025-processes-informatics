@@ -54,13 +54,6 @@ bool KurpiakovAVretTapeMulMPI::PreProcessingImpl() {
     const auto &size = std::get<0>(input);
     const auto &matrix = std::get<1>(input);
     const auto &vector = std::get<2>(input);
-  }
-  return true;
-}
-
-bool KurpiakovAVretTapeMulMPI::PreProcessingImpl() {
-  if (rank_ == 0) {
-    auto &[size, matrix, vector] = GetInput();
     matrix_size_ = size;
     matrix_data_ = matrix;
     vector_data_ = vector;
