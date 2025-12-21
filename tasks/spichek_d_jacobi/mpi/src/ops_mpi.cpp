@@ -23,7 +23,9 @@ bool SpichekDJacobiMPI::ValidationImpl() {
   if (n == 0) {
     return true;
   }
-  if (A[0].size() != n || b.size() != n) {
+
+  // Добавлена проверка на пустоту вложенного вектора, чтобы избежать segfault при A[0]
+  if (A.empty() || A[0].size() != n || b.size() != n) {
     return false;
   }
 
@@ -41,15 +43,8 @@ bool SpichekDJacobiMPI::PreProcessingImpl() {
 }
 
 bool SpichekDJacobiMPI::RunImpl() {
-  int mpi_initialized = 0;
-  MPI_Initialized(&mpi_initialized);
-
-  if (!mpi_initialized) {
-    GetOutput() = Vector{};
-    return true;
-  }
-
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -68,7 +63,8 @@ bool SpichekDJacobiMPI::RunImpl() {
   }
 
   // ---------- 2. Разбиение ----------
-  std::vector<int> counts(size), displs(size);
+  std::vector<int> counts(size);
+  std::vector<int> displs(size);
 
   int base = n / size;
   int rem = n % size;
@@ -90,6 +86,10 @@ bool SpichekDJacobiMPI::RunImpl() {
   // ---------- 4. Рассылка ----------
   if (rank == 0) {
     for (int p = 0; p < size; ++p) {
+      if (counts[p] == 0) {
+        continue;  // Защита от пустых процессов
+      }
+
       for (int i = 0; i < counts[p]; ++i) {
         int gi = displs[p] + i;
 
@@ -97,17 +97,16 @@ bool SpichekDJacobiMPI::RunImpl() {
           std::copy(A_global[gi].begin(), A_global[gi].end(), local_A.begin() + i * n);
           local_b[i] = b_global[gi];
         } else {
-          MPI_Send(A_global[gi].data(), n, MPI_DOUBLE, p, gi, MPI_COMM_WORLD);
-          MPI_Send(&b_global[gi], 1, MPI_DOUBLE, p, gi + n, MPI_COMM_WORLD);
+          MPI_Send(A_global[gi].data(), n, MPI_DOUBLE, p, 0, MPI_COMM_WORLD);  // Тег упрощен до 0
+          MPI_Send(&b_global[gi], 1, MPI_DOUBLE, p, 1, MPI_COMM_WORLD);        // Тег упрощен до 1
         }
       }
     }
   } else {
     for (int i = 0; i < local_n; ++i) {
-      int gi = displs[rank] + i;
       MPI_Status st;
-      MPI_Recv(local_A.data() + i * n, n, MPI_DOUBLE, 0, gi, MPI_COMM_WORLD, &st);
-      MPI_Recv(&local_b[i], 1, MPI_DOUBLE, 0, gi + n, MPI_COMM_WORLD, &st);
+      MPI_Recv(local_A.data() + i * n, n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &st);
+      MPI_Recv(&local_b[i], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &st);
     }
   }
 
@@ -115,12 +114,15 @@ bool SpichekDJacobiMPI::RunImpl() {
   double max_diff = 0.0;
   int iter = 0;
 
+  // Вектор для локальной части x_new
+  std::vector<double> local_x_new(local_n);
+
   do {
     ++iter;
-    std::vector<double> local_x_new(local_n);
 
+    // Вычисления только если есть локальные строки
     for (int i = 0; i < local_n; ++i) {
-      int gi = displs[rank] + i;
+      int gi = displs[rank] + i;  // Глобальный индекс строки
       const double *row = local_A.data() + i * n;
 
       double sum = 0.0;
@@ -133,11 +135,11 @@ bool SpichekDJacobiMPI::RunImpl() {
       local_x_new[i] = (local_b[i] - sum) / row[gi];
     }
 
-    std::fill(x_new.begin(), x_new.end(), 0.0);
-
+    // Сбор всей x_new на всех процессах для следующей итерации
     MPI_Allgatherv(local_x_new.data(), local_n, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
 
+    // Проверка сходимости
     double local_max = 0.0;
     for (int i = 0; i < local_n; ++i) {
       int gi = displs[rank] + i;
@@ -146,13 +148,21 @@ bool SpichekDJacobiMPI::RunImpl() {
 
     MPI_Allreduce(&local_max, &max_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
-    x.swap(x_new);
+    x = x_new;  // Просто копируем
 
   } while (max_diff > eps && iter < max_iter);
 
-  // ---------- 6. Результат ----------
-  // Вектор x содержит полное решение у всех процессов после Allgatherv.
-  GetOutput() = x;
+  // ---------- 6. Результат и СИНХРОНИЗАЦИЯ ----------
+  if (rank == 0) {
+    GetOutput() = x;
+  } else {
+    GetOutput() = Vector{};
+  }
+
+  // ОБЯЗАТЕЛЬНО: Ждем, пока все процессы закончат,
+  // иначе таймеры следующего теста (SEQ) сломаются.
+  MPI_Barrier(MPI_COMM_WORLD);
+
   return true;
 }
 
