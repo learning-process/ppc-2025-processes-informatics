@@ -40,7 +40,6 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
     int cols = 0;
     file >> rows >> cols;
 
-    // Читаем матрицу A (rows x cols)
     std::vector<std::vector<int>> matrix(rows, std::vector<int>(cols));
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
@@ -48,7 +47,6 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
       }
     }
 
-    // Читаем вектор x (cols элементов)
     std::vector<int> vect(cols);
     for (int j = 0; j < cols; ++j) {
       file >> vect[j];
@@ -56,7 +54,6 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
 
     input_data_ = std::make_tuple(matrix, vect);
 
-    // Вычисляем ожидаемый результат: res[i] = sum_j A[i][j] * x[j]
     exp_output_.assign(rows, 0);
     for (int i = 0; i < rows; ++i) {
       for (int j = 0; j < cols; ++j) {
@@ -86,11 +83,6 @@ TEST_P(LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile, MatrixVectorMultFrom
   ExecuteTest(GetParam());
 }
 
-// Примеры тестовых файлов: tiny.txt, simple.txt, square.txt, rectTall.txt и т.д.
-// Формат файла:
-// первая строка: rows cols
-// следующие rows*cols чисел — матрица по строкам
-// затем cols чисел — вектор x
 const std::array<TestType, 10> kTestParam = {std::make_tuple(0, "tiny"),      std::make_tuple(1, "simple"),
                                              std::make_tuple(2, "square"),    std::make_tuple(3, "rectTall"),
                                              std::make_tuple(4, "rectWide"),  std::make_tuple(5, "singleElement"),
