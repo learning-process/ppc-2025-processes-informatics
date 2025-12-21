@@ -44,7 +44,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
   local_input.assign(total_size, '\0');
 
   if (world_rank == 0) {
-    std::copy(input.begin(), input.end(), local_input.begin());
+    std::ranges::copy(input, local_input.begin());
   }
 
   if (total_size > 0) {
