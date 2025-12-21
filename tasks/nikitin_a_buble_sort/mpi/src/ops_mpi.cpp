@@ -9,110 +9,6 @@
 
 namespace nikitin_a_buble_sort {
 
-namespace {
-
-// Вычисление распределения данных между процессами
-void CalculateDistribution(int total_elements, int num_processes, 
-                          std::vector<int>& counts, std::vector<int>& displacements) {
-  int base_count = total_elements / num_processes;
-  int remainder = total_elements % num_processes;
-  
-  int offset = 0;
-  for (int i = 0; i < num_processes; ++i) {
-    counts[i] = base_count + (i < remainder ? 1 : 0);
-    displacements[i] = offset;
-    offset += counts[i];
-  }
-}
-
-// Локальная сортировка для четных или нечетных индексов
-void LocalOddEvenSort(std::vector<double>& local_data, int global_start_index, int parity) {
-  int local_size = static_cast<int>(local_data.size());
-  
-  for (int i = 0; i < local_size - 1; ++i) {
-    int global_index = global_start_index + i;
-    
-    // Сортируем только элементы с заданной четностью
-    if ((global_index % 2) == parity) {
-      if (local_data[i] > local_data[i + 1]) {
-        std::swap(local_data[i], local_data[i + 1]);
-      }
-    }
-  }
-}
-
-// Обмен граничными элементами между соседними процессами
-void ExchangeBoundaryValues(std::vector<double>& local_data, const std::vector<int>& counts, 
-                           int current_rank, int neighbor_rank) {
-  int local_size = static_cast<int>(local_data.size());
-  int neighbor_size = counts[neighbor_rank];
-  
-  if (local_size == 0 || neighbor_size == 0) {
-    return;
-  }
-  
-  bool is_left_process = (current_rank < neighbor_rank);
-  double value_to_send = is_left_process ? local_data[local_size - 1] : local_data[0];
-  double received_value = 0.0;
-  
-  // Обмен граничными значениями
-  MPI_Sendrecv(&value_to_send, 1, MPI_DOUBLE, neighbor_rank, 0,
-               &received_value, 1, MPI_DOUBLE, neighbor_rank, 0,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  
-  // Корректировка граничных значений
-  if (is_left_process) {
-    // Левый процесс оставляет минимальное из двух значений
-    if (local_data[local_size - 1] > received_value) {
-      local_data[local_size - 1] = received_value;
-    }
-  } else {
-    // Правый процесс оставляет максимальное из двух значений
-    if (local_data[0] < received_value) {
-      local_data[0] = received_value;
-    }
-  }
-}
-
-// Одна фаза четно-нечетной перестановки
-void PerformOddEvenPhase(std::vector<double>& local_data, 
-                        const std::vector<int>& counts,
-                        const std::vector<int>& displacements,
-                        int current_rank,
-                        int total_processes,
-                        int phase_number) {
-  if (local_data.empty()) {
-    return;
-  }
-  
-  // Определяем четность фазы (0 - четная, 1 - нечетная)
-  int parity = phase_number % 2;
-  int global_start = displacements[current_rank];
-  
-  // Выполняем локальную сортировку
-  LocalOddEvenSort(local_data, global_start, parity);
-  
-  // Определяем соседа для обмена
-  int neighbor = -1;
-  bool is_even_phase = (phase_number % 2 == 0);
-  bool is_even_rank = (current_rank % 2 == 0);
-  
-  if (is_even_phase == is_even_rank) {
-    // Для четной фазы и четного ранга (или нечетной и нечетного) обмен с правым соседом
-    neighbor = current_rank + 1;
-  } else {
-    // Для четной фазы и нечетного ранга (или нечетной и четного) обмен с левым соседом
-    neighbor = current_rank - 1;
-  }
-  
-  // Выполняем обмен с соседом, если он существует
-  if (neighbor >= 0 && neighbor < total_processes) {
-    ExchangeBoundaryValues(local_data, counts, current_rank, neighbor);
-  }
-}
-
-}  // namespace
-
 NikitinABubleSortMPI::NikitinABubleSortMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -120,104 +16,145 @@ NikitinABubleSortMPI::NikitinABubleSortMPI(const InType &in) {
 }
 
 bool NikitinABubleSortMPI::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
-  // Только процесс 0 проверяет входные данные
-  if (rank == 0) {
-    return true;  // Разрешаем любой массив, включая пустой
-  }
   return true;
 }
 
 bool NikitinABubleSortMPI::PreProcessingImpl() {
-  // Копируем входные данные
-  GetOutput() = GetInput();
+  data = GetInput();
   return true;
 }
 
 bool NikitinABubleSortMPI::RunImpl() {
-  int rank, size;
+  int rank, comm_size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
-  // Получаем размер массива
-  int total_elements = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+
   if (rank == 0) {
-    total_elements = static_cast<int>(GetOutput().size());
+    n = static_cast<int>(data.size());
   }
-  
-  // Рассылаем размер массива всем процессам
-  MPI_Bcast(&total_elements, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  
-  // Обработка особых случаев
-  if (total_elements <= 1) {
-    if (rank == 0) {
-      // Ничего не делаем - массив уже отсортирован
-      return true;
-    } else {
-      GetOutput().clear();
-      return true;
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (n <= 1) {
+    std::vector<double> result;
+    if (n == 1) {
+        result.resize(1);
+        if (rank == 0) {
+            result[0] = data[0];
+        }
+        MPI_Bcast(result.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
+    GetOutput() = std::move(result);
+    return true;
+}
+
+  const int base = n / comm_size;
+  const int rem = n % comm_size;
+  const int count = base + (rank < rem ? 1 : 0);
+  const int offset = rank * base + std::min(rank, rem);
+
+  std::vector<int> counts(comm_size);
+  std::vector<int> displs(comm_size);
+  int current_offset = 0;
+  for (int i = 0; i < comm_size; ++i) {
+    counts[i] = base + (i < rem ? 1 : 0);
+    displs[i] = current_offset;
+    current_offset += counts[i];
   }
+
+  std::vector<double> local(count);
+  MPI_Scatterv(rank == 0 ? data.data() : nullptr, 
+              counts.data(), 
+              displs.data(), 
+              MPI_DOUBLE, 
+              local.data(), 
+              count, 
+              MPI_DOUBLE, 
+              0, 
+              MPI_COMM_WORLD);
   
-  // Вычисляем распределение данных
-  std::vector<int> counts(size);
-  std::vector<int> displacements(size);
-  CalculateDistribution(total_elements, size, counts, displacements);
-  
-  // Получаем локальный размер
-  int local_size = counts[rank];
-  std::vector<double> local_data(local_size);
-  
-  // Разделяем данные между процессами
-  double* global_data_ptr = (rank == 0) ? GetOutput().data() : nullptr;
-  MPI_Scatterv(global_data_ptr, counts.data(), displacements.data(), MPI_DOUBLE,
-               local_data.data(), local_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  
-  // Выполняем четно-нечетную сортировку
-  // Максимальное количество фаз = количеству элементов
-  for (int phase = 0; phase < total_elements; ++phase) {
-    PerformOddEvenPhase(local_data, counts, displacements, rank, size, phase);
+  for (int phase = 0; phase < n; ++phase) {
+    const int parity = phase & 1;
+    const int tag = phase;
+
+    LocalSort(local, offset, parity);
+    ExchangeRight(local, counts, displs, rank, comm_size, parity, tag);
+    ExchangeLeft(local, counts, displs, rank, parity, tag);
   }
+
+  std::vector<double> result(n);
+  MPI_Allgatherv(local.data(), count, MPI_DOUBLE, 
+                result.data(), counts.data(), displs.data(), MPI_DOUBLE,
+                MPI_COMM_WORLD);
+
+  GetOutput() = std::move(result);
+  return true;
+}
   
-  // Собираем результаты на процессе 0
-  std::vector<double> sorted_result;
-  if (rank == 0) {
-    sorted_result.resize(total_elements);
-  }
-  
-  MPI_Gatherv(local_data.data(), local_size, MPI_DOUBLE,
-              sorted_result.data(), counts.data(), displacements.data(), MPI_DOUBLE,
-              0, MPI_COMM_WORLD);
-  
-  // Рассылаем отсортированный результат всем процессам
-  if (rank == 0) {
-    GetOutput() = sorted_result;
-  } else {
-    GetOutput().resize(total_elements);
-  }
-  
-  MPI_Bcast(GetOutput().data(), total_elements, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  
+bool NikitinABubleSortMPI::PostProcessingImpl() {
   return true;
 }
 
-bool NikitinABubleSortMPI::PostProcessingImpl() {
-  // Проверяем корректность сортировки
-  const std::vector<double>& result = GetOutput();
-  
-  if (result.empty()) {
-    return true;
+void NikitinABubleSortMPI::LocalSort(std::vector<double> &local, int global_offset, int phase_parity) {
+  const int local_n = static_cast<int>(local.size());
+  if (local_n < 2) {
+    return;
+  }
+
+  int start = ((global_offset & 1) == phase_parity) ? 0 : 1;
+  for (int i = start; i + 1 < local_n; i += 2) {
+      if (local[i] > local[i + 1]) {
+          std::swap(local[i], local[i + 1]);
+      }   
+  }
+}
+
+void NikitinABubleSortMPI::ExchangeRight(std::vector<double> &local, const std::vector<int> &counts, 
+                                        const std::vector<int> &displs, int rank, int comm_size, 
+                                        int phase_parity, int tag) {
+  if (local.empty()) {
+    return;
+  }
+
+  if (rank + 1 >= comm_size || counts[rank + 1] == 0) {
+    return;
+  }
+
+  const int last_global = displs[rank] + static_cast<int>(local.size()) - 1;
+  if ((last_global & 1) != phase_parity) {
+    return;
   }
   
-  for (size_t i = 1; i < result.size(); ++i) {
-    if (result[i - 1] > result[i]) {
-      return false;
-    }
+  double send_val = local.back();
+  double recv_val = 0;
+
+  MPI_Sendrecv(&send_val, 1, MPI_DOUBLE, rank + 1, tag, &recv_val, 1, MPI_DOUBLE, rank + 1, tag, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+
+  local.back() = std::min(send_val, recv_val);
+}
+
+void NikitinABubleSortMPI::ExchangeLeft(std::vector<double> &local, const std::vector<int> &counts, 
+                                       const std::vector<int> &displs, int rank, int phase_parity, int tag) {
+  if (local.empty()) {
+    return;
   }
-  
-  return true;
+  if (rank - 1 < 0 || counts[rank - 1] == 0) {
+    return;
+  }
+
+  const int first_global = displs[rank];
+  const int boundary_left_global = first_global - 1;
+  if ((boundary_left_global & 1) != phase_parity) {
+    return;
+  }
+
+  double send_val = local.front();
+  double recv_val = 0;
+
+  MPI_Sendrecv(&send_val, 1, MPI_DOUBLE, rank - 1, tag, &recv_val, 1, MPI_DOUBLE, rank - 1, tag, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+
+  local.front() = std::max(send_val, recv_val);
 }
 
 }  // namespace nikitin_a_buble_sort
