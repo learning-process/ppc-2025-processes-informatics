@@ -20,10 +20,11 @@ int BroadcastTotalSize(int total_size) {
 
 void BroadcastInputBuffer(InType &local_input, int total_size, int world_rank, const InType &input) {
   local_input.assign(static_cast<std::size_t>(total_size), '\0');
-  if (world_rank == 0) {
-    std::ranges::copy(input, local_input.begin());
+  if (world_rank == 0 && total_size > 0) {
+    std::copy(input.begin(), input.end(), local_input.begin());
   }
   MPI_Bcast(total_size > 0 ? local_input.data() : nullptr, total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 std::pair<std::size_t, std::size_t> ComputeRange(int total_size, int world_size, int world_rank) {
@@ -42,7 +43,14 @@ std::pair<std::size_t, std::size_t> ComputeRange(int total_size, int world_size,
 int CountRange(const InType &data, std::size_t start, std::size_t size) {
   int count = 0;
   std::size_t n = data.size();
-  for (std::size_t idx = start; idx < start + size && idx < n; ++idx) {
+  std::size_t end = start + size;
+  if (start >= n) {
+    return 0;
+  }
+  if (end > n) {
+    end = n;
+  }
+  for (std::size_t idx = start; idx < end; ++idx) {
     if (std::isalpha(static_cast<unsigned char>(data[idx])) != 0) {
       ++count;
     }
