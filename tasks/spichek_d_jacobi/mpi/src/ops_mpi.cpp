@@ -2,7 +2,9 @@
 
 #include <mpi.h>
 
-#include <cmath>
+#include <algorithm>  // min, max
+#include <cmath>      // abs
+#include <cstddef>    // size_t
 
 namespace spichek_d_jacobi {
 
@@ -23,7 +25,8 @@ bool SpichekDJacobiMPI::PreProcessingImpl() {
 
 bool SpichekDJacobiMPI::RunImpl() {
   const auto &[A, b, eps, max_iter] = GetInput();
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -49,7 +52,7 @@ bool SpichekDJacobiMPI::RunImpl() {
       local_diff = std::max(local_diff, std::abs(x_new[i] - x[i]));
     }
 
-    MPI_Allreduce(MPI_IN_PLACE, x_new.data(), n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, x_new.data(), static_cast<int>(n), MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     double global_diff = 0.0;
     MPI_Allreduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);

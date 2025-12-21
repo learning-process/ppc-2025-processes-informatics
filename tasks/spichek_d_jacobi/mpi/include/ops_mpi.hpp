@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spichek_d_jacobi/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace spichek_d_jacobi {
 

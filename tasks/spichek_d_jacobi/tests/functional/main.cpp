@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
+#include <cstddef>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -31,11 +34,8 @@ class SpichekDJacobiRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<I
       return false;
     }
 
-    for (double v : output_data) {
-      if (!std::isfinite(v)) {
-        return false;
-      }
-    }
+    EXPECT_TRUE(std::ranges::all_of(output_data, [](double v) { return std::isfinite(v); }));
+
     return true;
   }
 

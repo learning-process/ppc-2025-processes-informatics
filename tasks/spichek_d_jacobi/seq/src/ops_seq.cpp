@@ -1,6 +1,9 @@
 #include "spichek_d_jacobi/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <vector>
 
 namespace spichek_d_jacobi {
 

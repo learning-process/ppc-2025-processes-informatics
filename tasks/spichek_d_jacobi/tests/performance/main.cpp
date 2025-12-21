@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <vector>
+
 #include "spichek_d_jacobi/common/include/common.hpp"
 #include "spichek_d_jacobi/mpi/include/ops_mpi.hpp"
 #include "spichek_d_jacobi/seq/include/ops_seq.hpp"
@@ -14,20 +17,20 @@ class JacobiPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     const size_t n = 200;
 
-    std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+    std::vector<std::vector<double>> a(n, std::vector<double>(n, 0.0));
     std::vector<double> b(n, 1.0);
 
     for (size_t i = 0; i < n; ++i) {
-      A[i][i] = 4.0;
+      a[i][i] = 4.0;
       if (i > 0) {
-        A[i][i - 1] = 1.0;
+        a[i][i - 1] = 1.0;
       }
       if (i + 1 < n) {
-        A[i][i + 1] = 1.0;
+        a[i][i + 1] = 1.0;
       }
     }
 
-    input_data_ = {A, b, 1e-6, 300};
+    input_data_ = {a, b, 1e-6, 300};
   }
 
   InType GetTestInputData() override {
