@@ -19,9 +19,9 @@ namespace shvetsova_k_gausse_vert_strip {
 static std::pair<std::vector<std::vector<double>>, std::vector<double>> GenerateTestInput(int sz, int sizeOfRib);
 class ShvetsovaKGaussVertStripRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static  std::string PrintTestParam(const TestType &test_param) {
+  static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
-    }
+  }
 
  protected:
   void SetUp() override {

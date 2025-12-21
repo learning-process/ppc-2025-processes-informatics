@@ -20,7 +20,7 @@ class ShvetsovaKGaussVertStripMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
+    int sizeOfRib = 0;
   // Доп функции
 };
 
