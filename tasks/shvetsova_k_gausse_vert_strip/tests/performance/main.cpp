@@ -16,11 +16,11 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
   void SetUp() override {
     // Размер матрицы для замера производительности (1000x1000)
 
-    const int sz = 1000;
+    const int sz = 7000;
 
     // Полуширина ленты
 
-    const int sizeOfRib = 200;
+    const int sizeOfRib = 6000;
 
     std::vector<std::vector<double>> matrix(sz, std::vector<double>(sz, 0.0));
 
