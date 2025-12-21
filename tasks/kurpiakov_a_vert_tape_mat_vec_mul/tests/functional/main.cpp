@@ -11,6 +11,7 @@
 #include "kurpiakov_a_vert_tape_mat_vec_mul/mpi/include/ops_mpi.hpp"
 #include "kurpiakov_a_vert_tape_mat_vec_mul/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
