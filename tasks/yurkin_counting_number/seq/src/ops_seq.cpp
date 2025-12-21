@@ -22,14 +22,17 @@ bool YurkinCountingNumberSEQ::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberSEQ::RunImpl() {
-  const InType &data = GetInput();
-  int count = 0;
-  for (char c : data) {
-    if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
-      count++;
+  const InType &input = GetInput();
+  int total_size = static_cast<int>(input.size());
+
+  int local_count = 0;
+  for (int i = 0; i < total_size; ++i) {
+    if (std::isalpha(static_cast<unsigned char>(input[i])) != 0) {
+      local_count++;
     }
   }
-  GetOutput() = count;
+
+  GetOutput() = local_count;
   return true;
 }
 
