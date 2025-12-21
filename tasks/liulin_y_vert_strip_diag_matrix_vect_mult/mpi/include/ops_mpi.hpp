@@ -13,7 +13,6 @@ class LiulinYVertStripDiagMatrixVectMultMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit LiulinYVertStripDiagMatrixVectMultMPI(const InType &in);
-  static int TournamentMax(const std::vector<int> &column);
 
  private:
   bool ValidationImpl() override;

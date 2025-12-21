@@ -12,75 +12,54 @@ namespace liulin_y_vert_strip_diag_matrix_vect_mult {
 LiulinYVertStripDiagMatrixVectMultSEQ::LiulinYVertStripDiagMatrixVectMultSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 
-  GetInput().clear();
-  GetInput().reserve(in.size());
-  for (const auto &row : in) {
-    GetInput().push_back(row);
-  }
+  GetInput() = in;
 
   GetOutput().clear();
 }
 
 bool LiulinYVertStripDiagMatrixVectMultSEQ::ValidationImpl() {
-  const auto &in = GetInput();
+  const auto &input = GetInput();
+  const auto &matrix = std::get<0>(input);
+  const auto &vect = std::get<1>(input);
 
-  if (in.empty() || in[0].empty()) {
+  if (matrix.empty() && vect.empty()) {
     return true;
   }
 
-  const std::size_t cols = in[0].size();
-
-  for (const auto &row : in) {
-    if (row.size() != cols) {
-      return true;
-    }
-  }
-
-  return GetOutput().empty();
+  return true;
 }
 
 bool LiulinYVertStripDiagMatrixVectMultSEQ::PreProcessingImpl() {
-  const auto &in = GetInput();
+  const auto &input = GetInput();
+  const auto &matrix = std::get<0>(input);
 
-  if (in.empty() || in[0].empty()) {
+  if (matrix.empty() || matrix[0].empty()) {
     GetOutput().clear();
     return true;
   }
 
-  const std::size_t cols = in[0].size();
-  GetOutput().assign(cols, std::numeric_limits<int>::min());
+  const std::size_t rows = matrix.size();
+  GetOutput().assign(rows, 0);
   return true;
 }
 
 bool LiulinYVertStripDiagMatrixVectMultSEQ::RunImpl() {
-  const auto &matrix = GetInput();
+  const auto &input = GetInput();
+  const auto &matrix = std::get<0>(input);
+  const auto &vect = std::get<1>(input);
   auto &out = GetOutput();
 
   if (matrix.empty() || matrix[0].empty()) {
     return true;
   }
+
   const int rows = static_cast<int>(matrix.size());
   const int cols = static_cast<int>(matrix[0].size());
 
-  for (int col_idx = 0; col_idx < cols; ++col_idx) {
-    std::vector<int> column(rows);
-    for (int row = 0; row < rows; ++row) {
-      column[row] = matrix[row][col_idx];
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      out[i] += matrix[i][j] * vect[j];
     }
-
-    int size = rows;
-    std::vector<int> temp = column;
-
-    while (size > 1) {
-      int new_size = 0;
-      for (int i = 0; i < size; i += 2) {
-        temp[new_size] = (i + 1 < size) ? std::max(temp[i], temp[i + 1]) : temp[i];
-        ++new_size;
-      }
-      size = new_size;
-    }
-
-    out[col_idx] = temp[0];
   }
 
   return true;

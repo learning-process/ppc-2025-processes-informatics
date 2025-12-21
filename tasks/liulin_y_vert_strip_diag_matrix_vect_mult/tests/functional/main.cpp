@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <fstream>
@@ -18,7 +17,8 @@
 
 namespace liulin_y_vert_strip_diag_matrix_vect_mult {
 
-class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
+    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
     return std::get<1>(p);
@@ -29,7 +29,6 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile : public ppc::util::Ba
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     std::string filename = std::get<1>(params);
-
     std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_liulin_y_vert_strip_diag_matrix_vect_mult, filename);
 
     std::ifstream file(abs_path + ".txt");
@@ -41,18 +40,27 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile : public ppc::util::Ba
     int cols = 0;
     file >> rows >> cols;
 
-    input_data_ = InType(rows, std::vector<int>(cols));
-
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        file >> input_data_[i][j];
+    // Читаем матрицу A (rows x cols)
+    std::vector<std::vector<int>> matrix(rows, std::vector<int>(cols));
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        file >> matrix[i][j];
       }
     }
 
-    exp_output_ = OutType(cols, std::numeric_limits<int>::min());
-    for (int ct = 0; ct < cols; ct++) {
-      for (int rt = 0; rt < rows; rt++) {
-        exp_output_[ct] = std::max(exp_output_[ct], input_data_[rt][ct]);
+    // Читаем вектор x (cols элементов)
+    std::vector<int> vect(cols);
+    for (int j = 0; j < cols; ++j) {
+      file >> vect[j];
+    }
+
+    input_data_ = std::make_tuple(matrix, vect);
+
+    // Вычисляем ожидаемый результат: res[i] = sum_j A[i][j] * x[j]
+    exp_output_.assign(rows, 0);
+    for (int i = 0; i < rows; ++i) {
+      for (int j = 0; j < cols; ++j) {
+        exp_output_[i] += matrix[i][j] * vect[j];
       }
     }
 
@@ -74,31 +82,32 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile : public ppc::util::Ba
 
 namespace {
 
-TEST_P(LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile, MaxByColumnsFromFile) {
+TEST_P(LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile, MatrixVectorMultFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 12> kTestParam = {
-    std::make_tuple(0, "tinyMatrix"),      std::make_tuple(1, "simpleMatrix"), std::make_tuple(2, "randomMatrix"),
-    std::make_tuple(3, "bigMatrix"),       std::make_tuple(4, "emptyMatrix"),  std::make_tuple(5, "singleElement"),
-    std::make_tuple(6, "singleRow"),       std::make_tuple(7, "singleColumn"), std::make_tuple(8, "zeroColumns"),
-    std::make_tuple(9, "negativeNumbers"), std::make_tuple(10, "allSame"),     std::make_tuple(11, "invalidMatrix")};
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<LiulinYVertStripDiagMatrixVectMultMPI, InType>(kTestParam, PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult),
-    ppc::util::AddFuncTask<LiulinYVertStripDiagMatrixVectMultSEQ, InType>(kTestParam, PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult));
+// Примеры тестовых файлов: tiny.txt, simple.txt, square.txt, rectTall.txt и т.д.
+// Формат файла:
+// первая строка: rows cols
+// следующие rows*cols чисел — матрица по строкам
+// затем cols чисел — вектор x
+const std::array<TestType, 10> kTestParam = {std::make_tuple(0, "tiny"),      std::make_tuple(1, "simple"),
+                                             std::make_tuple(2, "square"),    std::make_tuple(3, "rectTall"),
+                                             std::make_tuple(4, "rectWide"),  std::make_tuple(5, "singleElement"),
+                                             std::make_tuple(6, "singleRow"), std::make_tuple(7, "singleColumn"),
+                                             std::make_tuple(8, "negative"),  std::make_tuple(9, "zeroVector")};
+
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LiulinYVertStripDiagMatrixVectMultMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult),
+                                           ppc::util::AddFuncTask<LiulinYVertStripDiagMatrixVectMultSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName =
-    LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile::PrintFuncTestName<LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile>;
+const auto kFuncTestName = LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile::PrintFuncTestName<
+    LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile>;
 
 INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile, kGtestValues, kFuncTestName);
-
-TEST(TournamentTestMPI, EmptyColumn) {
-  std::vector<int> col;
-  int res = LiulinYVertStripDiagMatrixVectMultMPI::TournamentMax(col);
-  ASSERT_EQ(res, std::numeric_limits<int>::min());
-}
 
 }  // namespace
 }  // namespace liulin_y_vert_strip_diag_matrix_vect_mult

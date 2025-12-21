@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <limits>
 #include <string>
 #include <vector>
 
@@ -47,16 +46,16 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
       return {.rows = 1000, .cols = 1000, .name = "medium"};
     }
     if (test_name.find("large") != std::string::npos) {
-      return {.rows = 10000, .cols = 10000, .name = "large"};
+      return {.rows = 5000, .cols = 5000, .name = "large"};
     }
     if (test_name.find("xlarge") != std::string::npos) {
-      return {.rows = 20000, .cols = 20000, .name = "xlarge"};
+      return {.rows = 10000, .cols = 10000, .name = "xlarge"};
     }
     if (test_name.find("tall") != std::string::npos) {
-      return {.rows = 100, .cols = 5000, .name = "tall"};
+      return {.rows = 10000, .cols = 1000, .name = "tall"};
     }
     if (test_name.find("wide") != std::string::npos) {
-      return {.rows = 5000, .cols = 100, .name = "wide"};
+      return {.rows = 1000, .cols = 10000, .name = "wide"};
     }
     return {.rows = 100, .cols = 100, .name = "small"};
   }
@@ -74,26 +73,30 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
 
   static int GenerateCellValue(int row, int col) {
     constexpr int kMod = 2001;
-    const int raw_value = (row * 131 + col * 17 + kMod) % kMod;
+    const int raw_value = (row * 131 + col * 17) % kMod;
     return raw_value - 1000;
   }
 
   void GenerateTestData() {
-    input_data_.resize(rows_);
-    for (auto &row : input_data_) {
-      row.assign(cols_, 0);
-    }
-
-    for (int i = 0; i < rows_; i++) {
-      for (int j = 0; j < cols_; j++) {
-        input_data_[i][j] = GenerateCellValue(i, j);
+    std::vector<std::vector<int>> matrix(rows_, std::vector<int>(cols_));
+    for (int i = 0; i < rows_; ++i) {
+      for (int j = 0; j < cols_; ++j) {
+        matrix[i][j] = GenerateCellValue(i, j);
       }
     }
 
-    expected_output_.assign(cols_, std::numeric_limits<int>::min());
-    for (int col = 0; col < cols_; col++) {
-      for (int row = 0; row < rows_; row++) {
-        expected_output_[col] = std::max(expected_output_[col], input_data_[row][col]);
+    std::vector<int> vect(cols_);
+    for (int j = 0; j < cols_; ++j) {
+      vect[j] = GenerateCellValue(0, j + 100);
+    }
+
+    input_data_ = std::make_tuple(matrix, vect);
+
+    // Ожидаемый результат
+    expected_output_.assign(rows_, 0);
+    for (int i = 0; i < rows_; ++i) {
+      for (int j = 0; j < cols_; ++j) {
+        expected_output_[i] += matrix[i][j] * vect[j];
       }
     }
   }
@@ -102,7 +105,6 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
-
     for (std::size_t i = 0; i < output_data.size(); ++i) {
       if (output_data[i] != expected_output_[i]) {
         return false;
@@ -126,8 +128,9 @@ TEST_P(LiulinYVertStripDiagMatrixVectMultPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LiulinYVertStripDiagMatrixVectMultMPI, LiulinYVertStripDiagMatrixVectMultSEQ>(
-    PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, LiulinYVertStripDiagMatrixVectMultMPI, LiulinYVertStripDiagMatrixVectMultSEQ>(
+        PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

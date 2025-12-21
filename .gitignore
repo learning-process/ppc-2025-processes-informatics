@@ -18,3 +18,4 @@ CMakeSettings.json
 install
 *.pyc
 *.sh
+*.log
