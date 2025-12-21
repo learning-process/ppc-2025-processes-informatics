@@ -88,7 +88,7 @@ bool KurpiakovAVretTapeMulMPI::RunImpl() {
 
     for (int row = 0; row < n; ++row) {
       local_result_[row] +=
-          matrix_data_[static_cast<size_t>(row) * static_cast<size_t>(n) + static_cast<size_t>(global_col)] * vec_val;
+          matrix_data_[(static_cast<size_t>(row) * static_cast<size_t>(n)) + static_cast<size_t>(global_col)] * vec_val;
     }
   }
 

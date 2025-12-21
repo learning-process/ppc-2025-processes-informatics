@@ -1,10 +1,10 @@
 #include "kurpiakov_a_vert_tape_mat_vec_mul/seq/include/ops_seq.hpp"
 
-#include <tuple>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
@@ -43,15 +43,15 @@ bool KurpiakovAVretTapeMulSEQ::PreProcessingImpl() {
 }
 
 bool KurpiakovAVretTapeMulSEQ::RunImpl() {
-  const int total_size = std::get<0>(GetInput());
+  const auto total_size = std::get<0>(GetInput());
 
   if (total_size == 0) {
-    GetOutput() = {0};
+    GetOutput() = {};
     return true;
   }
 
-  OutType in_vec = std::get<2>(GetInput());
-  OutType in_mat = std::get<1>(GetInput());
+  const auto &in_vec = std::get<2>(GetInput());
+  const auto &in_mat = std::get<1>(GetInput());
 
   OutType res_vec(total_size, 0);
   for (int j = 0; j < total_size; j++) {
