@@ -31,11 +31,9 @@ bool YurkinCountingNumberMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  const InType &input = GetInput();
   int total_size = 0;
-
   if (world_rank == 0) {
-    total_size = static_cast<int>(input.size());
+    total_size = static_cast<int>(GetInput().size());
   }
 
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -44,7 +42,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
   local_input.assign(total_size, '\0');
 
   if (world_rank == 0) {
-    std::ranges::copy(input, local_input.begin());
+    std::ranges::copy(GetInput(), local_input.begin());
   }
 
   MPI_Bcast(total_size > 0 ? local_input.data() : nullptr, total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -53,16 +51,24 @@ bool YurkinCountingNumberMPI::RunImpl() {
     GetInput() = local_input;
   }
 
-  int chunk = total_size / world_size;
-  int rem = total_size % world_size;
+  const InType &shared_input = GetInput();
+
+  int chunk = 0;
+  int rem = 0;
+  if (world_size > 0) {
+    chunk = (world_size > 0) ? (total_size / world_size) : 0;
+    rem = (world_size > 0) ? (total_size % world_size) : 0;
+  }
 
   int start = (world_rank * chunk) + std::min(world_rank, rem);
   int size = chunk + (world_rank < rem ? 1 : 0);
 
   int local_count = 0;
   for (int i = start; i < start + size; ++i) {
-    if (std::isalpha(static_cast<unsigned char>(local_input[i])) != 0) {
-      local_count++;
+    if (i >= 0 && i < static_cast<int>(shared_input.size())) {
+      if (std::isalpha(static_cast<unsigned char>(shared_input[i])) != 0) {
+        local_count++;
+      }
     }
   }
 
