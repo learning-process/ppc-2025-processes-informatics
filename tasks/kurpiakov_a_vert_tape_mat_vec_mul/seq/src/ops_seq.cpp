@@ -1,10 +1,9 @@
 #include "kurpiakov_a_vert_tape_mat_vec_mul/seq/include/ops_seq.hpp"
 
-#include <tuple>
+#include <cstddef>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
@@ -43,20 +42,21 @@ bool KurpiakovAVretTapeMulSEQ::PreProcessingImpl() {
 }
 
 bool KurpiakovAVretTapeMulSEQ::RunImpl() {
-  const int total_size = std::get<0>(GetInput());
+  const auto total_size = std::get<0>(GetInput());
 
   if (total_size == 0) {
-    GetOutput() = {0};
+    GetOutput() = {};
     return true;
   }
 
-  OutType in_vec = std::get<2>(GetInput());
-  OutType in_mat = std::get<1>(GetInput());
+  const auto &in_vec = std::get<2>(GetInput());
+  const auto &in_mat = std::get<1>(GetInput());
 
-  OutType res_vec(total_size, 0);
-  for (int j = 0; j < total_size; j++) {
-    for (int i = 0; i < total_size; i++) {
-      res_vec[i] += in_mat[i * total_size + j] * in_vec[j];
+  OutType res_vec(static_cast<size_t>(total_size), 0);
+  for (int64_t j = 0; j < total_size; j++) {
+    for (int64_t i = 0; i < total_size; i++) {
+      res_vec[static_cast<size_t>(i)] +=
+          in_mat[static_cast<size_t>((i * total_size) + j)] * in_vec[static_cast<size_t>(j)];
     }
   }
 

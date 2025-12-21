@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -11,7 +11,6 @@
 #include "kurpiakov_a_vert_tape_mat_vec_mul/mpi/include/ops_mpi.hpp"
 #include "kurpiakov_a_vert_tape_mat_vec_mul/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
@@ -23,13 +22,13 @@ class KurpiakovARunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType param = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<0>(param);
     expected_data_ = std::get<2>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < static_cast<int>(expected_data_.size()); ++i) {
+    for (size_t i = 0; i < expected_data_.size(); ++i) {
       if (expected_data_[i] != output_data[i]) {
         return false;
       }
@@ -43,8 +42,8 @@ class KurpiakovARunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InTy
   }
 
  private:
-  InType input_data_{};
-  OutType expected_data_{};
+  InType input_data_;
+  OutType expected_data_;
 };
 
 namespace {

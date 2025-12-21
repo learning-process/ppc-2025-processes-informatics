@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
@@ -14,8 +13,8 @@
 namespace kurpiakov_a_vert_tape_mat_vec_mul {
 
 class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
-  OutType expected_data_{};
+  InType input_data_;
+  OutType expected_data_;
 
   void SetUp() override {
     const int64_t size = 8500;
@@ -25,7 +24,7 @@ class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<
 
     for (int64_t i = 0; i < size; ++i) {
       for (int64_t j = 0; j < size; ++j) {
-        matrix[static_cast<size_t>(i * size + j)] = (i == j) ? (i + 1) : 0;
+        matrix[static_cast<size_t>((i * size) + j)] = (i == j) ? (i + 1) : 0;
       }
       expected_data_.push_back(i + 1);
     }
@@ -38,7 +37,7 @@ class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    for (int i = 0; i < static_cast<int>(expected_data_.size()); ++i) {
+    for (size_t i = 0; i < expected_data_.size(); ++i) {
       if (expected_data_[i] != output_data[i]) {
         return false;
       }

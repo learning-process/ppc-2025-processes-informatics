@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
@@ -56,7 +55,8 @@ bool KurpiakovAVretTapeMulMPI::PreProcessingImpl() {
 }
 
 bool KurpiakovAVretTapeMulMPI::RunImpl() {
-  MPI_Bcast(&matrix_size_, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+  MPI_Bcast(&matrix_size_, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
 
   if (matrix_size_ == 0) {
     GetOutput() = {};
@@ -66,10 +66,10 @@ bool KurpiakovAVretTapeMulMPI::RunImpl() {
   const int n = static_cast<int>(matrix_size_);
 
   vector_data_.resize(static_cast<size_t>(n));
-  MPI_Bcast(vector_data_.data(), n, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(vector_data_.data(), n, MPI_INT64_T, 0, MPI_COMM_WORLD);
 
   matrix_data_.resize(static_cast<size_t>(n) * static_cast<size_t>(n));
-  MPI_Bcast(matrix_data_.data(), n * n, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(matrix_data_.data(), n * n, MPI_INT64_T, 0, MPI_COMM_WORLD);
 
   const int base_cols = n / world_size_;
   const int extra_cols = n % world_size_;
@@ -88,14 +88,15 @@ bool KurpiakovAVretTapeMulMPI::RunImpl() {
 
     for (int row = 0; row < n; ++row) {
       local_result_[row] +=
-          matrix_data_[static_cast<size_t>(row) * static_cast<size_t>(n) + static_cast<size_t>(global_col)] * vec_val;
+          matrix_data_[(static_cast<size_t>(row) * static_cast<size_t>(n)) + static_cast<size_t>(global_col)] * vec_val;
     }
   }
 
   result_.resize(static_cast<size_t>(n));
-  MPI_Reduce(local_result_.data(), result_.data(), n, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(local_result_.data(), result_.data(), n, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(result_.data(), n, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(result_.data(), n, MPI_INT64_T, 0, MPI_COMM_WORLD);
+  // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
 
   GetOutput() = result_;
   MPI_Barrier(MPI_COMM_WORLD);
