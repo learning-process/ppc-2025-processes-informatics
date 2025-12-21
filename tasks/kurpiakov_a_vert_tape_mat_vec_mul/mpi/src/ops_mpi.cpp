@@ -47,7 +47,7 @@ bool KurpiakovAVretTapeMulMPI::ValidationImpl() {
 
 bool KurpiakovAVretTapeMulMPI::PreProcessingImpl() {
   if (rank_ == 0) {
-    const auto &[size, matrix, vector] = GetInput();
+    auto &[size, matrix, vector] = GetInput();
     matrix_size_ = size;
     matrix_data_ = matrix;
     vector_data_ = vector;
