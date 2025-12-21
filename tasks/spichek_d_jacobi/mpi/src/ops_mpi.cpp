@@ -2,167 +2,65 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
-#include <vector>
-
-#include "spichek_d_jacobi/common/include/common.hpp"
 
 namespace spichek_d_jacobi {
 
 SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = Vector{};
 }
 
 bool SpichekDJacobiMPI::ValidationImpl() {
   const auto &[A, b, eps, max_iter] = GetInput();
-  size_t n = A.size();
-
-  if (n == 0) {
-    return true;
-  }
-
-  // Добавлена проверка на пустоту вложенного вектора, чтобы избежать segfault при A[0]
-  if (A.empty() || A[0].size() != n || b.size() != n) {
-    return false;
-  }
-
-  for (size_t i = 0; i < n; ++i) {
-    if (std::abs(A[i][i]) < 1e-12) {
-      return false;
-    }
-  }
-
-  return true;
+  return !A.empty() && A.size() == b.size();
 }
 
 bool SpichekDJacobiMPI::PreProcessingImpl() {
+  GetOutput().assign(std::get<1>(GetInput()).size(), 0.0);
   return true;
 }
 
 bool SpichekDJacobiMPI::RunImpl() {
-  int rank = 0;
-  int size = 0;
+  const auto &[A, b, eps, max_iter] = GetInput();
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const auto &[A_global, b_global, eps, max_iter] = GetInput();
+  size_t n = b.size();
+  std::vector<double> x(n, 0.0);
+  std::vector<double> x_new(n, 0.0);
 
-  // ---------- 1. Размер задачи ----------
-  int n = 0;
-  if (rank == 0) {
-    n = static_cast<int>(A_global.size());
-  }
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  size_t chunk = (n + size - 1) / size;
+  size_t begin = rank * chunk;
+  size_t end = std::min(begin + chunk, n);
 
-  if (n == 0) {
-    GetOutput() = Vector{};
-    return true;
-  }
+  for (int iter = 0; iter < max_iter; ++iter) {
+    double local_diff = 0.0;
 
-  // ---------- 2. Разбиение ----------
-  std::vector<int> counts(size);
-  std::vector<int> displs(size);
-
-  int base = n / size;
-  int rem = n % size;
-
-  for (int i = 0; i < size; ++i) {
-    counts[i] = base + (i < rem ? 1 : 0);
-    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
-  }
-
-  int local_n = counts[rank];
-
-  // ---------- 3. Локальные данные ----------
-  std::vector<double> local_A(local_n * n);
-  Vector local_b(local_n);
-
-  Vector x(n, 0.0);
-  Vector x_new(n, 0.0);
-
-  // ---------- 4. Рассылка ----------
-  if (rank == 0) {
-    for (int p = 0; p < size; ++p) {
-      if (counts[p] == 0) {
-        continue;  // Защита от пустых процессов
-      }
-
-      for (int i = 0; i < counts[p]; ++i) {
-        int gi = displs[p] + i;
-
-        if (p == 0) {
-          std::copy(A_global[gi].begin(), A_global[gi].end(), local_A.begin() + i * n);
-          local_b[i] = b_global[gi];
-        } else {
-          MPI_Send(A_global[gi].data(), n, MPI_DOUBLE, p, 0, MPI_COMM_WORLD);  // Тег упрощен до 0
-          MPI_Send(&b_global[gi], 1, MPI_DOUBLE, p, 1, MPI_COMM_WORLD);        // Тег упрощен до 1
-        }
-      }
-    }
-  } else {
-    for (int i = 0; i < local_n; ++i) {
-      MPI_Status st;
-      MPI_Recv(local_A.data() + i * n, n, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &st);
-      MPI_Recv(&local_b[i], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &st);
-    }
-  }
-
-  // ---------- 5. Итерации Якоби ----------
-  double max_diff = 0.0;
-  int iter = 0;
-
-  // Вектор для локальной части x_new
-  std::vector<double> local_x_new(local_n);
-
-  do {
-    ++iter;
-
-    // Вычисления только если есть локальные строки
-    for (int i = 0; i < local_n; ++i) {
-      int gi = displs[rank] + i;  // Глобальный индекс строки
-      const double *row = local_A.data() + i * n;
-
+    for (size_t i = begin; i < end; ++i) {
       double sum = 0.0;
-      for (int j = 0; j < n; ++j) {
-        if (j != gi) {
-          sum += row[j] * x[j];
+      for (size_t j = 0; j < n; ++j) {
+        if (j != i) {
+          sum += A[i][j] * x[j];
         }
       }
-
-      local_x_new[i] = (local_b[i] - sum) / row[gi];
+      x_new[i] = (b[i] - sum) / A[i][i];
+      local_diff = std::max(local_diff, std::abs(x_new[i] - x[i]));
     }
 
-    // Сбор всей x_new на всех процессах для следующей итерации
-    MPI_Allgatherv(local_x_new.data(), local_n, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,
-                   MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, x_new.data(), n, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    // Проверка сходимости
-    double local_max = 0.0;
-    for (int i = 0; i < local_n; ++i) {
-      int gi = displs[rank] + i;
-      local_max = std::max(local_max, std::abs(x_new[gi] - x[gi]));
+    double global_diff = 0.0;
+    MPI_Allreduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+    x = x_new;
+    if (global_diff < eps) {
+      break;
     }
-
-    MPI_Allreduce(&local_max, &max_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-
-    x = x_new;  // Просто копируем
-
-  } while (max_diff > eps && iter < max_iter);
-
-  // ---------- 6. Результат и СИНХРОНИЗАЦИЯ ----------
-  if (rank == 0) {
-    GetOutput() = x;
-  } else {
-    GetOutput() = Vector{};
   }
 
-  // ОБЯЗАТЕЛЬНО: Ждем, пока все процессы закончат,
-  // иначе таймеры следующего теста (SEQ) сломаются.
-  MPI_Barrier(MPI_COMM_WORLD);
-
+  GetOutput() = x;
   return true;
 }
 

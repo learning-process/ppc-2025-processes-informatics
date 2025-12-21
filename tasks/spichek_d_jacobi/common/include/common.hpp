@@ -1,23 +1,21 @@
 #pragma once
 
-#include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
 
 namespace spichek_d_jacobi {
 
-using Matrix = std::vector<std::vector<double>>;
+// A * x = b
+// A — матрица, b — вектор, eps — точность, max_iter — максимум итераций
+using InType = std::tuple<std::vector<std::vector<double>>, std::vector<double>, double, int>;
 
-using Vector = std::vector<double>;
+using OutType = std::vector<double>;
 
-using InType = std::tuple<Matrix, Vector, double, int>;
-
-using OutType = Vector;
-
+// (input, description)
 using TestType = std::tuple<InType, std::string>;
+
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace spichek_d_jacobi

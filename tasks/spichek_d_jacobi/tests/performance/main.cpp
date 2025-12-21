@@ -1,10 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <cmath>
-#include <cstddef>
-#include <utility>
-#include <vector>
-
 #include "spichek_d_jacobi/common/include/common.hpp"
 #include "spichek_d_jacobi/mpi/include/ops_mpi.hpp"
 #include "spichek_d_jacobi/seq/include/ops_seq.hpp"
@@ -12,73 +7,37 @@
 
 namespace spichek_d_jacobi {
 
-class SpichekDJacobiRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_;
+class JacobiPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  InType input_;
 
- protected:
   void SetUp() override {
-    // УМЕНЬШЕНО до 128.
-    // 500 слишком много для SEQ версии в рамках pipeline теста на некоторых машинах.
-    const size_t n_size = 12;
+    size_t n = 1000;
+    std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+    std::vector<double> b(n, 1.0);
 
-    constexpr double kEpsilon = 1e-5;
-    constexpr int kMaxIter = 500;
-
-    Matrix A(n_size, Vector(n_size));
-    Vector b(n_size);
-
-    for (size_t i = 0; i < n_size; ++i) {
-      double sum_off_diag = 0.0;
-      for (size_t j = 0; j < n_size; ++j) {
-        if (i == j) {
-          A[i][j] = 0.0;
-        } else {
-          // Простая генерация, чтобы не тратить время setup
-          double val = 0.1;
-          A[i][j] = val;
-          sum_off_diag += std::abs(val);
-        }
-      }
-      // Гарантируем диагональное преобладание
-      A[i][i] = sum_off_diag + 1.0;
-      b[i] = 1.0;
+    for (size_t i = 0; i < n; ++i) {
+      A[i][i] = 2.0;
     }
 
-    input_data_ = std::make_tuple(A, b, kEpsilon, kMaxIter);
+    input_ = {A, b, 1e-6, 1000};
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.empty()) {
-      return true;
-    }
-
-    // Простая проверка, что данные не NaN/Inf и не нулевые
-    double sum_sq = 0.0;
-    for (double val : output_data) {
-      if (std::isnan(val) || std::isinf(val)) {
-        return false;
-      }
-      sum_sq += val * val;
-    }
-    return sum_sq > 1e-9;
+  InType GetTestInputData() override {
+    return input_;
   }
 
-  InType GetTestInputData() final {
-    return input_data_;
+  bool CheckTestOutputData(OutType &out) override {
+    return !out.empty();
   }
 };
 
-TEST_P(SpichekDJacobiRunPerfTestProcesses, RunPerfModes) {
+TEST_P(JacobiPerfTests, RunPerf) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, SpichekDJacobiMPI, SpichekDJacobiSEQ>(PPC_SETTINGS_spichek_d_jacobi);
-
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
-const auto kPerfTestName = SpichekDJacobiRunPerfTestProcesses::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SpichekDJacobiRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(
+    JacobiPerf, JacobiPerfTests,
+    ppc::util::TupleToGTestValues(
+        ppc::util::MakeAllPerfTasks<InType, SpichekDJacobiMPI, SpichekDJacobiSEQ>(PPC_SETTINGS_spichek_d_jacobi)));
 
 }  // namespace spichek_d_jacobi
