@@ -1,40 +1,54 @@
 #include <gtest/gtest.h>
 
-#include "example_processes_2/common/include/common.hpp"
-#include "example_processes_2/mpi/include/ops_mpi.hpp"
-#include "example_processes_2/seq/include/ops_seq.hpp"
+#include <cmath>
+#include <vector>
+
+#include "maslova_u_row_matr_vec_mult/common/include/common.hpp"
+#include "maslova_u_row_matr_vec_mult/mpi/include/ops_mpi.hpp"
+#include "maslova_u_row_matr_vec_mult/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace nesterov_a_test_task_processes_2 {
+namespace maslova_u_row_matr_vec_mult {
 
-class ExampleRunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+class MaslovaUPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ private:
+  InType input_data_;
+  OutType expected_output_{};
 
+ protected:
   void SetUp() override {
-    input_data_ = kCount_;
-  }
+    const size_t rows = 5000;
+    const size_t cols = 5000;
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    input_data_.first.rows = rows;
+    input_data_.first.cols = cols;
+    input_data_.first.data.assign(rows * cols, 1.0);
+    input_data_.second.assign(cols, 1.0);
+
+    expected_output_.assign(rows, static_cast<double>(cols));
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return output_data == expected_output_;
+  }
 };
 
-TEST_P(ExampleRunPerfTestProcesses2, RunPerfModes) {
+TEST_P(MaslovaUPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskMPI, NesterovATestTaskSEQ>(PPC_SETTINGS_example_processes_2);
+    ppc::util::MakeAllPerfTasks<InType, MaslovaURowMatrVecMultMPI, MaslovaURowMatrVecMultSEQ>(
+        PPC_SETTINGS_maslova_u_row_matr_vec_mult);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses2::CustomPerfTestName;
+const auto kPerfTestName = MaslovaUPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses2, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, MaslovaUPerfTests, kGtestValues, kPerfTestName);
 
-}  // namespace nesterov_a_test_task_processes_2
+}  // namespace maslova_u_row_matr_vec_mult

@@ -1,58 +1,37 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
-#include "example_processes_2/common/include/common.hpp"
-#include "example_processes_2/mpi/include/ops_mpi.hpp"
-#include "example_processes_2/seq/include/ops_seq.hpp"
+#include "maslova_u_row_matr_vec_mult/common/include/common.hpp"
+#include "maslova_u_row_matr_vec_mult/mpi/include/ops_mpi.hpp"
+#include "maslova_u_row_matr_vec_mult/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_processes_2 {
+namespace maslova_u_row_matr_vec_mult {
 
-class NesterovARunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  MaslovaURunFuncTestsProcesses() = default;
+
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<2>(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_example_processes_2, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
+    expected_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return expected_ == output_data;
   }
 
   InType GetTestInputData() final {
@@ -60,27 +39,33 @@ class NesterovARunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InTyp
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_ = 0;
 };
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses2, MatmulFromPic) {
+TEST_P(MaslovaURunFuncTestsProcesses, charFrequencyCount) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 7> kTestParam = {
+    {std::make_tuple(InType{Matrix{{1, 2, 3, 4}, 2, 2}, {1, 1}}, OutType{3, 7}, "square_2x2"),
+     std::make_tuple(InType{Matrix{{1, 0, 0, 1}, 2, 2}, {5, 3}}, OutType{5, 3}, "identity_2x2"),
+     std::make_tuple(InType{Matrix{{1, 2, 3, 4, 5, 6}, 2, 3}, {1, 1, 1}}, OutType{6, 15}, "horizontal_2x3"),
+     std::make_tuple(InType{Matrix{{1, 2, 3, 4, 5, 6}, 3, 2}, {1, 0}}, OutType{1, 3, 5}, "vertical_3x2"),
+     std::make_tuple(InType{Matrix{{0, 0, 0, 0}, 2, 2}, {1, 2}}, OutType{0, 0}, "zero_matrix"),
+     std::make_tuple(InType{Matrix{{-1, 2, -3, 4}, 2, 2}, {1, 2}}, OutType{3, 5}, "negative_values"),
+     std::make_tuple(InType{Matrix{{2.5, 1.5, 4.0, 2.0}, 2, 2}, {2.0, 4.0}}, OutType{11.0, 16.0}, "double_values")}};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskMPI, InType>(kTestParam, PPC_SETTINGS_example_processes_2),
-                   ppc::util::AddFuncTask<NesterovATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes_2));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MaslovaURowMatrVecMultMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult),
+                                           ppc::util::AddFuncTask<MaslovaURowMatrVecMultSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
-const auto kPerfTestName = NesterovARunFuncTestsProcesses2::PrintFuncTestName<NesterovARunFuncTestsProcesses2>;
-
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses2, kGtestValues, kPerfTestName);
+const auto kTestName = MaslovaURunFuncTestsProcesses::PrintFuncTestName<MaslovaURunFuncTestsProcesses>;
+INSTANTIATE_TEST_SUITE_P(charFreqTests, MaslovaURunFuncTestsProcesses, kGtestValues, kTestName);
 
 }  // namespace
-
-}  // namespace nesterov_a_test_task_processes_2
+}  // namespace maslova_u_row_matr_vec_mult
