@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <ranges>
 
 #include "yurkin_counting_number/common/include/common.hpp"
 
@@ -44,7 +45,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
   local_input.resize(total_size);
 
   if (world_rank == 0) {
-    std::copy(input.begin(), input.end(), local_input.begin());
+    std::ranges::copy(input, local_input.begin());
   }
 
   if (total_size > 0) {
@@ -54,7 +55,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
   int chunk = total_size / world_size;
   int rem = total_size % world_size;
 
-  int start = world_rank * chunk + std::min(world_rank, rem);
+  int start = (world_rank * chunk) + std::min(world_rank, rem);
   int size = chunk + (world_rank < rem ? 1 : 0);
 
   int local_count = 0;
