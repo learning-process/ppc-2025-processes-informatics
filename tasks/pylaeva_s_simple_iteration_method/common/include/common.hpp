@@ -1,15 +1,16 @@
 #pragma once
 
-#include <string>
+#include <cstddef>
 #include <tuple>
+#include <vector>
 
 #include "task/include/task.hpp"
 
 namespace pylaeva_s_simple_iteration_method {
 
-using InType = int;
-using OutType = int;
-using TestType = std::tuple<int, std::string>;
+using InType = std::tuple<size_t, std::vector<double>, std::vector<double>>; // matrix_size, A, b
+using OutType = std::vector<double>; // result vector
+using TestType = std::string; // filename with test data
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace pylaeva_s_simple_iteration_method

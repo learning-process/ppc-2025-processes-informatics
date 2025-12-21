@@ -2,207 +2,157 @@
 
 #include <mpi.h>
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <ranges>
+#include <utility>
 #include <vector>
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 
 namespace pylaeva_s_simple_iteration_method {
 
-namespace {
-
-void ComputeRowDistribution(int n, int size, std::vector<int> &row_counts, std::vector<int> &row_displs,
-                            std::vector<int> &matrix_counts, std::vector<int> &matrix_displs) {
-  int row_offset = 0;
-  int matrix_offset = 0;
-  for (int proc = 0; proc < size; proc++) {
-    int base_rows = n / size;
-    int extra = (proc < (n % size)) ? 1 : 0;
-    int proc_rows = base_rows + extra;
-
-    row_counts[proc] = proc_rows;
-    row_displs[proc] = row_offset;
-    matrix_counts[proc] = proc_rows * n;
-    matrix_displs[proc] = matrix_offset;
-
-    row_offset += proc_rows;
-    matrix_offset += proc_rows * n;
-  }
-}
-
-int ComputeFinalResult(const std::vector<double> &x, int n) {
-  double sum = 0.0;
-  for (int i = 0; i < n; i++) {
-    sum += x[i];
-  }
-  return static_cast<int>(std::round(sum));
-}
-
-void InitializeMatrixAndVector(std::vector<double> &flat_matrix, std::vector<double> &b, int n) {
-  flat_matrix.resize(static_cast<std::size_t>(n) * n, 0.0);
-  for (int i = 0; i < n; i++) {
-    flat_matrix[(static_cast<std::size_t>(i) * n) + i] = 1.0;
-  }
-  b.resize(n, 1.0);
-}
-
-void ComputeLocalProduct(const std::vector<double> &local_matrix, const std::vector<double> &x,
-                         const std::vector<double> &local_b, std::vector<double> &local_x_new, int local_rows,
-                         int start_row, int n, double tau) {
-  for (int i = 0; i < local_rows; i++) {
-    double ax_i = 0.0;
-    for (int j = 0; j < n; j++) {
-      ax_i += local_matrix[(static_cast<std::size_t>(i) * n) + j] * x[j];
-    }
-    local_x_new[i] = x[start_row + i] - (tau * (ax_i - local_b[i]));
-  }
-}
-
-void GatherResults(const std::vector<double> &local_x_new, std::vector<double> &x_new,
-                   const std::vector<int> &row_counts, const std::vector<int> &row_displs, int rank, int size,
-                   int local_rows, int start_row) {
-  if (rank == 0) {
-    for (int i = 0; i < local_rows; i++) {
-      x_new[start_row + i] = local_x_new[i];
-    }
-    for (int proc = 1; proc < size; proc++) {
-      MPI_Recv(x_new.data() + row_displs[proc], row_counts[proc], MPI_DOUBLE, proc, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-    }
-  } else {
-    MPI_Send(local_x_new.data(), local_rows, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
-  }
-}
-
-double ComputeLocalDiff(const std::vector<double> &x_new, const std::vector<double> &x, int local_rows, int start_row) {
-  double local_diff = 0.0;
-  for (int i = 0; i < local_rows; i++) {
-    double d = x_new[start_row + i] - x[start_row + i];
-    local_diff += d * d;
-  }
-  return local_diff;
-}
-
-int CheckConvergence(double local_diff, double epsilon, int rank) {
-  double global_diff = 0.0;
-  MPI_Reduce(&local_diff, &global_diff, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  int converged = 0;
-  if (rank == 0) {
-    global_diff = std::sqrt(global_diff);
-    converged = (global_diff < epsilon) ? 1 : 0;
-  }
-  MPI_Bcast(&converged, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  return converged;
-}
-
-}  // namespace
-
 PylaevaSSimpleIterationMethodMPI::PylaevaSSimpleIterationMethodMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool PylaevaSSimpleIterationMethodMPI::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  int is_valid = 0;
-  if (rank == 0) {
-    is_valid = ((GetInput() > 0) && (GetOutput() == 0)) ? 1 : 0;
-  }
-  MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  return is_valid != 0;
+  const auto& n = std::get<0>(GetInput());
+  const auto& A = std::get<1>(GetInput());
+  const auto& b = std::get<2>(GetInput());
+  return ((n>0) && (A.size()==n*n) && (b.size()==n) && (NotNullDeterm(A, n)) && (DiagonalDominance(A, n)));
 }
 
 bool PylaevaSSimpleIterationMethodMPI::PreProcessingImpl() {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  if (size < 1) {
-    return false;
-  }
-
-  GetOutput() = 0;
-
-  MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
 
 bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
-  int n = GetInput();
-  if (n <= 0) {
-    return false;
-  }
+  int proc_num = 0;
+  int proc_rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
-  int rank = 0;
-  int size = 1;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  const auto& n = std::get<0>(GetInput());
+  const auto& A = std::get<1>(GetInput());
+  const auto& b = std::get<2>(GetInput());
 
-  std::vector<int> row_counts(size);
-  std::vector<int> row_displs(size);
-  std::vector<int> matrix_counts(size);
-  std::vector<int> matrix_displs(size);
-  ComputeRowDistribution(n, size, row_counts, row_displs, matrix_counts, matrix_displs);
+  int base = static_cast<int>(n) / proc_num;
+  int rem = static_cast<int>(n) % proc_num;
+  int start = (proc_rank * base) + std::min(proc_rank, rem);
+  int count = base + (proc_rank < rem ? 1 : 0);
 
-  int local_rows = row_counts[rank];
-  int start_row = row_displs[rank];
-
-  std::vector<double> flat_matrix;
-  std::vector<double> b;
   std::vector<double> x(n, 0.0);
+  std::vector<double> x_new(n, 0.0);
+  std::vector<double> local_x_new(count, 0.0);
 
-  if (rank == 0) {
-    InitializeMatrixAndVector(flat_matrix, b, n);
+  std::vector<int> recv_counts(proc_num, 0);
+  std::vector<int> displs(proc_num, 0);
+  recv_counts[0] = base + (0 < rem ? 1 : 0);
+  for (int i = 1; i < proc_num; ++i) {
+    recv_counts[i] = base + (i < rem ? 1 : 0);
+    displs[i] = displs[i - 1] + recv_counts[i - 1];
   }
 
-  std::vector<double> local_matrix(static_cast<std::size_t>(local_rows) * n, 0.0);
-  MPI_Scatterv(flat_matrix.data(), matrix_counts.data(), matrix_displs.data(), MPI_DOUBLE, local_matrix.data(),
-               local_rows * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  for (int iter = 0; iter < MaxIterations; ++iter) {
 
-  std::vector<double> local_b(local_rows, 0.0);
-  MPI_Scatterv(b.data(), row_counts.data(), row_displs.data(), MPI_DOUBLE, local_b.data(), local_rows, MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
+    for (int i = 0; i < count; ++i) {
+      int global_i = start + i;
+      double sum = 0.0;
+      for (size_t j = 0; j < n; ++j) {
+        if (std::cmp_not_equal(j, global_i)) {
+          sum += A[(global_i * n) + j] * x[j];
+        }
+      }
+      local_x_new[i] = (b[global_i] - sum) / A[(global_i * n) + global_i];
+    }
 
-  const double tau = 0.5;
-  const double epsilon = 1e-6;
-  const int max_iterations = 1000;
+    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), displs.data(), MPI_DOUBLE,
+                   MPI_COMM_WORLD);
 
-  std::vector<double> local_x_new(local_rows, 0.0);
-  std::vector<double> x_new(n, 0.0);
+    double local_norm = 0.0;
+    for (int i = 0; i < count; ++i) {
+      int gi = start + i;
+      double diff = x_new[gi] - x[gi];
+      local_norm += diff * diff;
+    }
 
-  for (int iteration = 0; iteration < max_iterations; iteration++) {
-    ComputeLocalProduct(local_matrix, x, local_b, local_x_new, local_rows, start_row, n, tau);
-    GatherResults(local_x_new, x_new, row_counts, row_displs, rank, size, local_rows, start_row);
-    MPI_Bcast(x_new.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    double local_diff = ComputeLocalDiff(x_new, x, local_rows, start_row);
-    int converged = CheckConvergence(local_diff, epsilon, rank);
+    double global_norm = 0.0;
+    MPI_Allreduce(&local_norm, &global_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     x = x_new;
-
-    if (converged != 0) {
+    if (std::sqrt(global_norm) < EPS) {
       break;
     }
   }
 
-  if (rank == 0) {
-    GetOutput() = ComputeFinalResult(x, n);
-  }
-
-  MPI_Bcast(&GetOutput(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+  GetOutput() = x;
   return true;
 }
 
 bool PylaevaSSimpleIterationMethodMPI::PostProcessingImpl() {
-  return GetOutput() > 0;
+  return true;
+}
+
+bool PylaevaSSimpleIterationMethodMPI::NotNullDeterm(const std::vector<double> &a, size_t n) {
+  std::vector<double> tmp = a;
+    
+  for (size_t i = 0; i < n; i++) {
+      // Поиск строки с ненулевым элементом в i-м столбце
+      if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
+          // Текущий диагональный элемент близок к нулю
+          // Ищем строку ниже с ненулевым элементом в этом столбце
+          bool found = false;
+          for (size_t j = i + 1; j < n; j++) {
+              if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
+                  // Меняем строки местами
+                  for (size_t k = i; k < n; k++) {
+                      std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
+                  }
+                  found = true;
+                  break;
+              }
+          }
+          // Если не нашли подходящую строку для замены, определитель = 0
+          if (!found) return false;
+      }
+      
+      // Зануляем элементы ниже диагонали
+      double pivot = tmp[(i * n) + i];
+      for (size_t j = i + 1; j < n; j++) {
+          double factor = tmp[(j * n) + i] / pivot;
+          for (size_t k = i; k < n; k++) {
+              tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
+          }
+      }
+  }
+  
+  // Проверяем, что все диагональные элементы не равны нулю
+  for (size_t i = 0; i < n; i++) {
+      if (std::fabs(tmp[(i * n) + i]) < 1e-10) return false;
+  }
+
+  return true;
+}
+
+bool PylaevaSSimpleIterationMethodMPI::DiagonalDominance(const std::vector<double> &a, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
+        double row_sum = 0.0;  // Сумма модулей недиагональных элементов строки
+        
+        for (size_t j = 0; j < n; j++) {
+            if (j != i) {
+                row_sum += std::fabs(a[(i * n) + j]);
+            }
+        }
+        // Проверка строгого диагонального преобладания:
+        // Диагональный элемент должен быть БОЛЬШЕ суммы остальных элементов строки
+        if (diag <= row_sum) return false;
+    }
+    return true;
 }
 
 }  // namespace pylaeva_s_simple_iteration_method

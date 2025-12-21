@@ -1,6 +1,9 @@
 #include "pylaeva_s_simple_iteration_method/seq/include/ops_seq.hpp"
 
+#include <cctype>
 #include <cmath>
+#include <cstddef>
+#include <ranges>
 #include <vector>
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
@@ -10,72 +13,115 @@ namespace pylaeva_s_simple_iteration_method {
 PylaevaSSimpleIterationMethodSEQ::PylaevaSSimpleIterationMethodSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  const auto& n = std::get<0>(GetInput());
+  const auto& A = std::get<1>(GetInput());
+  const auto& b = std::get<2>(GetInput());
+  return ((n>0) && (A.size()==n*n) && (b.size()==n) && (NotNullDeterm(A, n)) && (DiagonalDominance(A, n)));
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::PreProcessingImpl() {
-  GetOutput() = 0;
   return true;
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::RunImpl() {
-  int n = GetInput();
-  if (n <= 0) {
-    return false;
-  }
+  const auto& n = std::get<0>(GetInput());
+  const auto& A = std::get<1>(GetInput());
+  const auto& b = std::get<2>(GetInput());
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
-  std::vector<double> b(n, 1.0);
-  std::vector<std::vector<double>> a(n, std::vector<double>(n, 0.0));
 
-  for (int i = 0; i < n; i++) {
-    a[i][i] = 1.0;
-  }
-
-  const double tau = 0.5;
-  const double epsilon = 1e-6;
-  const int max_iterations = 1000;
-  int iteration = 0;
-
-  for (; iteration < max_iterations; iteration++) {
-    for (int i = 0; i < n; i++) {
-      double ax_i = 0.0;
-      for (int j = 0; j < n; j++) {
-        ax_i += a[i][j] * x[j];
+  for (int iter = 0; iter < MaxIterations; ++iter) {
+    for (size_t i = 0; i < n; ++i) {
+      double sum = 0.0;
+      for (size_t j = 0; j < n; ++j) {
+        if (j != i) {
+          sum += A[(i * n) + j] * x[j];
+        }
       }
-      x_new[i] = x[i] - (tau * (ax_i - b[i]));
+      x_new[i] = (b[i] - sum) / A[(i * n) + i];
     }
 
-    double diff = 0.0;
-    for (int i = 0; i < n; i++) {
-      double d = x_new[i] - x[i];
-      diff += d * d;
+    double norm = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+      double diff = x_new[i] - x[i];
+      norm += diff * diff;
     }
-    diff = std::sqrt(diff);
 
     x = x_new;
 
-    if (diff < epsilon) {
+    if (std::sqrt(norm) < EPS) {
       break;
     }
   }
 
-  double sum = 0.0;
-  for (int i = 0; i < n; i++) {
-    sum += x[i];
-  }
-
-  GetOutput() = static_cast<int>(std::round(sum));
+  GetOutput() = x;
   return true;
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::PostProcessingImpl() {
-  return GetOutput() > 0;
+  return !GetOutput().empty();
+}
+
+bool PylaevaSSimpleIterationMethodSEQ::NotNullDeterm(const std::vector<double> &a, size_t n) {
+  std::vector<double> tmp = a;
+    
+  for (size_t i = 0; i < n; i++) {
+      // Поиск строки с ненулевым элементом в i-м столбце
+      if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
+          // Текущий диагональный элемент близок к нулю
+          // Ищем строку ниже с ненулевым элементом в этом столбце
+          bool found = false;
+          for (size_t j = i + 1; j < n; j++) {
+              if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
+                  // Меняем строки местами
+                  for (size_t k = i; k < n; k++) {
+                      std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
+                  }
+                  found = true;
+                  break;
+              }
+          }
+          // Если не нашли подходящую строку для замены, определитель = 0
+          if (!found) return false;
+      }
+      
+      // Зануляем элементы ниже диагонали
+      double pivot = tmp[(i * n) + i];
+      for (size_t j = i + 1; j < n; j++) {
+          double factor = tmp[(j * n) + i] / pivot;
+          for (size_t k = i; k < n; k++) {
+              tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
+          }
+      }
+  }
+  
+  // Проверяем, что все диагональные элементы не равны нулю
+  for (size_t i = 0; i < n; i++) {
+      if (std::fabs(tmp[(i * n) + i]) < 1e-10) return false;
+  }
+
+  return true;
+}
+
+bool PylaevaSSimpleIterationMethodSEQ::DiagonalDominance(const std::vector<double> &a, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
+        double row_sum = 0.0;  // Сумма модулей недиагональных элементов строки
+        
+        for (size_t j = 0; j < n; j++) {
+            if (j != i) {
+                row_sum += std::fabs(a[(i * n) + j]);
+            }
+        }
+        // Проверка строгого диагонального преобладания:
+        // Диагональный элемент должен быть БОЛЬШЕ суммы остальных элементов строки
+        if (diag <= row_sum) return false;
+    }
+    return true;
 }
 
 }  // namespace pylaeva_s_simple_iteration_method

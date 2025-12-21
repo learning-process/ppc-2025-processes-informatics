@@ -1,9 +1,12 @@
 #include <gtest/gtest.h>
+#include <stb/stb_image.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 #include "pylaeva_s_simple_iteration_method/mpi/include/ops_mpi.hpp"
@@ -15,130 +18,93 @@ namespace pylaeva_s_simple_iteration_method {
 
 class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  PylaevaSSimpleIterationMethodFuncTests() = default;
+
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return test_param;
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);
+    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string filename = ppc::util::GetAbsoluteTaskPath(PPC_ID_pylaeva_s_simple_iteration_method, param + ".txt");
+
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+      throw std::runtime_error("Cannot open file: " + filename);
+    }
+    
+    size_t n = 0;
+
+    file >> n;
+
+    std::vector<double> matrix_a(n * n);
+    std::vector<double> vector_b(n);
+    std::vector<double> expected_result(n);
+
+    // Читаем матрицу A
+    for (size_t i = 0; i < n * n; ++i) {
+      if (!(file >> matrix_a[i])) {
+        throw std::runtime_error("Failed to read matrix A element " + std::to_string(i));
+      }
+    }
+    
+    // Читаем вектор b
+    for (size_t i = 0; i < n; ++i) {
+      if (!(file >> vector_b[i])) {
+        throw std::runtime_error("Failed to read vector b element " + std::to_string(i));
+      }
+    }
+    
+    // Читаем ожидаемый результат
+    for (size_t i = 0; i < n; ++i) {
+      if (!(file >> expected_result[i])) {
+        throw std::runtime_error("Failed to read expected result element " + std::to_string(i));
+      }
+    }
+
+    input_data_ = std::make_tuple(n, matrix_a, vector_b);
+    expected_data_ = expected_result;
+
+    file.close();
   }
 
-  bool CheckTestOutputData(OutType &output_data) override {
-    return (input_data_ == output_data);
+  bool CheckTestOutputData(OutType &output_data) final {
+
+    if (expected_data_.size() != output_data.size()) return false;
+
+    for (size_t i = 0; i < output_data.size(); i++) {
+      if (std::fabs(expected_data_[i] - output_data[i]) > EPS) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
-  InType GetTestInputData() override {
+  InType GetTestInputData() final {
     return input_data_;
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_data_{};
+  const double EPS = 1e-6;
 };
 
-namespace {
-
-TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationTest) {
+TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationsTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {std::make_tuple(1, "size_1"),   std::make_tuple(2, "size_2"),
-                                             std::make_tuple(3, "size_3"),   std::make_tuple(5, "size_5"),
-                                             std::make_tuple(7, "size_7"),   std::make_tuple(10, "size_10"),
-                                             std::make_tuple(15, "size_15"), std::make_tuple(20, "size_20"),
-                                             std::make_tuple(30, "size_30"), std::make_tuple(50, "size_50")};
-
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method),
-                                           ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method));
+const std::array<TestType, 4> kTestParam = {"Simple_1x1", "Identity_matrix_2x2", "Identity_matrix_10x10", "DiagDominanceRandom3x3"};
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method),
+    ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodSEQ, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName =
-    PylaevaSSimpleIterationMethodFuncTests::PrintFuncTestName<PylaevaSSimpleIterationMethodFuncTests>;
+const auto kPerfTestName = PylaevaSSimpleIterationMethodFuncTests::PrintFuncTestName<PylaevaSSimpleIterationMethodFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(BasicTests, PylaevaSSimpleIterationMethodFuncTests, kGtestValues, kFuncTestName);
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, InvalidInputZeroSEQ) {
-  PylaevaSSimpleIterationMethodSEQ task(0);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, InvalidInputNegativeSEQ) {
-  PylaevaSSimpleIterationMethodSEQ task(-5);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, ValidInputPositiveSEQ) {
-  PylaevaSSimpleIterationMethodSEQ task(5);
-  EXPECT_TRUE(task.Validation());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, PreProcessingSEQ) {
-  PylaevaSSimpleIterationMethodSEQ task(5);
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, FullExecutionSEQ) {
-  PylaevaSSimpleIterationMethodSEQ task(5);
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_TRUE(task.Run());
-  EXPECT_TRUE(task.PostProcessing());
-  EXPECT_EQ(task.GetOutput(), 5);
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, MinimalSizeSEQ) {
-  PylaevaSSimpleIterationMethodSEQ task(1);
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_TRUE(task.Run());
-  EXPECT_TRUE(task.PostProcessing());
-  EXPECT_EQ(task.GetOutput(), 1);
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, InvalidInputZeroMPI) {
-  PylaevaSSimpleIterationMethodMPI task(0);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, InvalidInputNegativeMPI) {
-  PylaevaSSimpleIterationMethodMPI task(-5);
-  EXPECT_FALSE(task.Validation());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, ValidInputPositiveMPI) {
-  PylaevaSSimpleIterationMethodMPI task(5);
-  EXPECT_TRUE(task.Validation());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, PreProcessingMPI) {
-  PylaevaSSimpleIterationMethodMPI task(5);
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, FullExecutionMPI) {
-  PylaevaSSimpleIterationMethodMPI task(5);
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_TRUE(task.Run());
-  EXPECT_TRUE(task.PostProcessing());
-  EXPECT_EQ(task.GetOutput(), 5);
-}
-
-TEST(PylaevaSSimpleIterationMethodEdgeCases, MinimalSizeMPI) {
-  PylaevaSSimpleIterationMethodMPI task(1);
-  EXPECT_TRUE(task.Validation());
-  EXPECT_TRUE(task.PreProcessing());
-  EXPECT_TRUE(task.Run());
-  EXPECT_TRUE(task.PostProcessing());
-  EXPECT_EQ(task.GetOutput(), 1);
-}
-
-}  // namespace
+INSTANTIATE_TEST_SUITE_P(SimpleIterationMethodTests, PylaevaSSimpleIterationMethodFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace pylaeva_s_simple_iteration_method
