@@ -67,9 +67,6 @@ bool ZeninATopologyStarMPI::RunImpl() {
     return true;
   }
 
-  // Leaf->leaf route via center requires >= 3 MPI ranks (src leaf, center, dst leaf).
-  // CI coverage runs with 2 ranks, so this block is unreachable there.
-  // LCOV_EXCL_START
   if (world_rank == src_rank) {
     MPI_Send(data.data(), static_cast<int>(data.size()), MPI_DOUBLE, center_rank, tag, MPI_COMM_WORLD);
   } else if (world_rank == center_rank) {
@@ -81,7 +78,6 @@ bool ZeninATopologyStarMPI::RunImpl() {
     out.resize(data.size());
     MPI_Recv(out.data(), static_cast<int>(out.size()), MPI_DOUBLE, center_rank, tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
-  // LCOV_EXCL_STOP
 
   return true;
 }
