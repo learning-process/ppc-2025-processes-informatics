@@ -15,16 +15,20 @@ class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutTy
   const double a_ = 1.0, b_ = 5.0;
   const double c_ = 1.0, d_ = 5.0;
   const int n_ = 10;
+  const int func_num_ = 1;
   InType input_data_;
 
   void SetUp() override {
-    input_data_ = std::make_tuple(n_, std::make_tuple(a_, b_), std::make_tuple(c_, d_));
+    input_data_ = std::make_tuple(n_, std::make_tuple(a_, b_), std::make_tuple(c_, d_), func_num_);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    double a = 0.0, b = 0.0;
-    double c = 0.0, d = 0.0;
-    int n = 0;
+ bool CheckTestOutputData(OutType &output_data) final {
+    double a = 0.0; 
+    double b = 0.0;
+    double c = 0.0;
+    double d = 0.0;
+    int n = 0;  // кол-во отрезков
+    int func_num = 0;
 
     // getting data
     n = std::get<0>(input_data_);
@@ -32,42 +36,31 @@ class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutTy
     b = std::get<1>(std::get<1>(input_data_));
     c = std::get<0>(std::get<2>(input_data_));
     d = std::get<1>(std::get<2>(input_data_));
+    func_num = std::get<3>(input_data_);
 
+    double (*fp) (double, double) = GetFunc(func_num);
     double hx = (b - a) / n;
     double hy = (d - c) / n;
 
     double sum = 0;
-    double wx = 1.0, wy = 1.0;
-    double x = 0.0, y = 0.0;
+    double wx = 1.0;
+    double wy = 1.0;
+    double x = 0.0;
+    double y = 0.0;
 
     for (int i = 0; i <= n; i++) {
-      x = a + hx * i;
-      wx = 1.0;
-      if (i != 0 && i != n) {
-        if (i % 2 == 1) {
-          wx = 4.0;
-        } else {
-          wx = 2.0;
-        }
-      }
+      x = a + (hx * i);
+      wx = GetWeight(i, n);
 
       for (int j = 0; j <= n; j++) {
-        wy = 1.0;
-        y = c + hy * j;
-
-        if (j != 0 && j != n) {
-          if (j % 2 == 1) {
-            wy = 4.0;
-          } else {
-            wy = 2.0;
-          }
-        }
-        sum += wy * wx * f(x, y);
+        y = c + (hy * j);
+        wy = GetWeight(j, n);      
+        sum += wy * wx * fp(x, y);
       }
     }
     sum = sum * hx * hy / (3 * 3);
 
-    return (abs(output_data - sum) < EPSILON);
+    return (abs(output_data - sum) < kEpsilon);
   }
 
   InType GetTestInputData() final {

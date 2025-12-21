@@ -1,8 +1,6 @@
 #include "luzan_e_simps_int/seq/include/ops_seq.hpp"
 
-#include <cstddef>
 #include <tuple>
-#include <vector>
 
 #include "luzan_e_simps_int/common/include/common.hpp"
 
@@ -20,8 +18,9 @@ bool LuzanESimpsIntSEQ::ValidationImpl() {
   double b = std::get<1>(std::get<1>(GetInput()));
   double c = std::get<0>(std::get<2>(GetInput()));
   double d = std::get<1>(std::get<2>(GetInput()));
+  int func_num = std::get<3>(GetInput());
 
-  bool flag = (a < b) && (c < d) && (n % 2 == 0) && (n > 0);
+  bool flag = (a < b) && (c < d) && (n % 2 == 0) && (n > 0) && (func_num > 0);
   return flag;
 }
 
@@ -31,9 +30,11 @@ bool LuzanESimpsIntSEQ::PreProcessingImpl() {
 }
 
 bool LuzanESimpsIntSEQ::RunImpl() {
-  double a = 0.0, b = 0.0;
+  double a = 0.0; 
+  double b = 0.0;
   double c = 0.0, d = 0.0;
   int n = 0;  // кол-во отрезков
+  int func_num = 0;
 
   // getting data
   n = std::get<0>(GetInput());
@@ -41,37 +42,26 @@ bool LuzanESimpsIntSEQ::RunImpl() {
   b = std::get<1>(std::get<1>(GetInput()));
   c = std::get<0>(std::get<2>(GetInput()));
   d = std::get<1>(std::get<2>(GetInput()));
-
+  func_num = std::get<3>(GetInput());
+  
+  double (*fp) (double, double) = GetFunc(func_num);
   double hx = (b - a) / n;
   double hy = (d - c) / n;
 
   double sum = 0;
-  double wx = 1.0, wy = 1.0;
-  double x = 0.0, y = 0.0;
+  double wx = 1.0;
+  double wy = 1.0;
+  double x = 0.0;
+  double y = 0.0;
 
   for (int i = 0; i <= n; i++) {
-    x = a + hx * i;
-    wx = 1.0;
-    if (i != 0 && i != n) {
-      if (i % 2 == 1) {
-        wx = 4.0;
-      } else {
-        wx = 2.0;
-      }
-    }
+    x = a + (hx * i);
+    wx = GetWeight(i, n);
 
     for (int j = 0; j <= n; j++) {
-      wy = 1.0;
-      y = c + hy * j;
-
-      if (j != 0 && j != n) {
-        if (j % 2 == 1) {
-          wy = 4.0;
-        } else {
-          wy = 2.0;
-        }
-      }
-      sum += wy * wx * f(x, y);
+      y = c + (hy * j);
+      wy = GetWeight(j, n);      
+      sum += wy * wx * fp(x, y);
     }
   }
   sum = sum * hx * hy / (3 * 3);
