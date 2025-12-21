@@ -17,7 +17,7 @@ class Hypercube {
   explicit Hypercube(MPI_Comm comm) : comm_(comm) {
     MPI_Comm_rank(comm_, &rank_);
     MPI_Comm_size(comm_, &size_);
-    // NOLINTNEXTLNE // to supress "ndims_ should be initialized in a member initializer of the constructor"
+    // NOLINTNEXTLINE // to supress "ndims_ should be initialized in a member initializer of the constructor"
     ndims_ = floor(log2(size_));
   }
 
