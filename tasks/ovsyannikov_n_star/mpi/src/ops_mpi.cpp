@@ -4,6 +4,8 @@
 
 #include <vector>
 
+#include "ovsyannikov_n_star/common/include/common.hpp"
+
 namespace ovsyannikov_n_star {
 
 OvsyannikovNStarMPI::OvsyannikovNStarMPI(const InType &in) {
@@ -13,7 +15,7 @@ OvsyannikovNStarMPI::OvsyannikovNStarMPI(const InType &in) {
 }
 
 bool OvsyannikovNStarMPI::ValidationImpl() {
-  int size;
+  int size = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   const auto &in = GetInput();
   return in.size() == 3 && in[0] >= 0 && in[0] < size && in[1] >= 0 && in[1] < size;
@@ -25,8 +27,10 @@ bool OvsyannikovNStarMPI::PreProcessingImpl() {
 }
 
 bool OvsyannikovNStarMPI::RunImpl() {
-  int rank;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const int src = GetInput()[0];
   const int dst = GetInput()[1];
@@ -45,11 +49,10 @@ bool OvsyannikovNStarMPI::RunImpl() {
       MPI_Recv(&res, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   } else {
-    // Маршрут через центр: src -> 0 -> dst
     if (rank == src) {
       MPI_Send(&val, 1, MPI_INT, center, 0, MPI_COMM_WORLD);
     } else if (rank == center) {
-      int buf;
+      int buf = 0;
       MPI_Recv(&buf, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       MPI_Send(&buf, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
     } else if (rank == dst) {

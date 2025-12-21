@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
-#include <vector>
+#include <string>
+#include <tuple>
 
 #include "ovsyannikov_n_star/common/include/common.hpp"
 #include "ovsyannikov_n_star/mpi/include/ops_mpi.hpp"

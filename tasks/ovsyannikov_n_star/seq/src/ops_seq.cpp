@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "ovsyannikov_n_star/common/include/common.hpp"
+
 namespace ovsyannikov_n_star {
 
 OvsyannikovNStarSEQ::OvsyannikovNStarSEQ(const InType &in) {
