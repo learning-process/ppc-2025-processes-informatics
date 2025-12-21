@@ -33,7 +33,7 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
     if (!file.is_open()) {
       throw std::runtime_error("Cannot open file: " + filename);
     }
-    
+
     size_t n = 0;
 
     file >> n;
@@ -48,14 +48,14 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
         throw std::runtime_error("Failed to read matrix A element " + std::to_string(i));
       }
     }
-    
+
     // Читаем вектор b
     for (size_t i = 0; i < n; ++i) {
       if (!(file >> vector_b[i])) {
         throw std::runtime_error("Failed to read vector b element " + std::to_string(i));
       }
     }
-    
+
     // Читаем ожидаемый результат
     for (size_t i = 0; i < n; ++i) {
       if (!(file >> expected_result[i])) {
@@ -70,8 +70,9 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-
-    if (expected_data_.size() != output_data.size()) return false;
+    if (expected_data_.size() != output_data.size()) {
+      return false;
+    }
 
     for (size_t i = 0; i < output_data.size(); i++) {
       if (std::fabs(expected_data_[i] - output_data[i]) > EPS) {
@@ -96,15 +97,19 @@ TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationsTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 4> kTestParam = {"Simple_1x1", "Identity_matrix_2x2", "Identity_matrix_10x10", "DiagDominanceRandom3x3"};
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method),
-    ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodSEQ, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method));
+const std::array<TestType, 4> kTestParam = {"Simple_1x1", "Identity_matrix_2x2", "Identity_matrix_10x10",
+                                            "DiagDominanceRandom3x3"};
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method),
+                                           ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = PylaevaSSimpleIterationMethodFuncTests::PrintFuncTestName<PylaevaSSimpleIterationMethodFuncTests>;
+const auto kPerfTestName =
+    PylaevaSSimpleIterationMethodFuncTests::PrintFuncTestName<PylaevaSSimpleIterationMethodFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(SimpleIterationMethodTests, PylaevaSSimpleIterationMethodFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SimpleIterationMethodTests, PylaevaSSimpleIterationMethodFuncTests, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace pylaeva_s_simple_iteration_method

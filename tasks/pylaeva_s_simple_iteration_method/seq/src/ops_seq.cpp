@@ -16,10 +16,10 @@ PylaevaSSimpleIterationMethodSEQ::PylaevaSSimpleIterationMethodSEQ(const InType 
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::ValidationImpl() {
-  const auto& n = std::get<0>(GetInput());
-  const auto& A = std::get<1>(GetInput());
-  const auto& b = std::get<2>(GetInput());
-  return ((n>0) && (A.size()==n*n) && (b.size()==n) && (NotNullDeterm(A, n)) && (DiagonalDominance(A, n)));
+  const auto &n = std::get<0>(GetInput());
+  const auto &A = std::get<1>(GetInput());
+  const auto &b = std::get<2>(GetInput());
+  return ((n > 0) && (A.size() == n * n) && (b.size() == n) && (NotNullDeterm(A, n)) && (DiagonalDominance(A, n)));
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::PreProcessingImpl() {
@@ -27,9 +27,9 @@ bool PylaevaSSimpleIterationMethodSEQ::PreProcessingImpl() {
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::RunImpl() {
-  const auto& n = std::get<0>(GetInput());
-  const auto& A = std::get<1>(GetInput());
-  const auto& b = std::get<2>(GetInput());
+  const auto &n = std::get<0>(GetInput());
+  const auto &A = std::get<1>(GetInput());
+  const auto &b = std::get<2>(GetInput());
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
@@ -68,60 +68,66 @@ bool PylaevaSSimpleIterationMethodSEQ::PostProcessingImpl() {
 
 bool PylaevaSSimpleIterationMethodSEQ::NotNullDeterm(const std::vector<double> &a, size_t n) {
   std::vector<double> tmp = a;
-    
+
   for (size_t i = 0; i < n; i++) {
-      // Поиск строки с ненулевым элементом в i-м столбце
-      if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
-          // Текущий диагональный элемент близок к нулю
-          // Ищем строку ниже с ненулевым элементом в этом столбце
-          bool found = false;
-          for (size_t j = i + 1; j < n; j++) {
-              if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
-                  // Меняем строки местами
-                  for (size_t k = i; k < n; k++) {
-                      std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
-                  }
-                  found = true;
-                  break;
-              }
-          }
-          // Если не нашли подходящую строку для замены, определитель = 0
-          if (!found) return false;
-      }
-      
-      // Зануляем элементы ниже диагонали
-      double pivot = tmp[(i * n) + i];
+    // Поиск строки с ненулевым элементом в i-м столбце
+    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
+      // Текущий диагональный элемент близок к нулю
+      // Ищем строку ниже с ненулевым элементом в этом столбце
+      bool found = false;
       for (size_t j = i + 1; j < n; j++) {
-          double factor = tmp[(j * n) + i] / pivot;
+        if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
+          // Меняем строки местами
           for (size_t k = i; k < n; k++) {
-              tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
+            std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
           }
+          found = true;
+          break;
+        }
       }
+      // Если не нашли подходящую строку для замены, определитель = 0
+      if (!found) {
+        return false;
+      }
+    }
+
+    // Зануляем элементы ниже диагонали
+    double pivot = tmp[(i * n) + i];
+    for (size_t j = i + 1; j < n; j++) {
+      double factor = tmp[(j * n) + i] / pivot;
+      for (size_t k = i; k < n; k++) {
+        tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
+      }
+    }
   }
-  
+
   // Проверяем, что все диагональные элементы не равны нулю
   for (size_t i = 0; i < n; i++) {
-      if (std::fabs(tmp[(i * n) + i]) < 1e-10) return false;
+    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
+      return false;
+    }
   }
 
   return true;
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::DiagonalDominance(const std::vector<double> &a, size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
-        double row_sum = 0.0;  // Сумма модулей недиагональных элементов строки
-        
-        for (size_t j = 0; j < n; j++) {
-            if (j != i) {
-                row_sum += std::fabs(a[(i * n) + j]);
-            }
-        }
-        // Проверка строгого диагонального преобладания:
-        // Диагональный элемент должен быть БОЛЬШЕ суммы остальных элементов строки
-        if (diag <= row_sum) return false;
+  for (size_t i = 0; i < n; i++) {
+    double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
+    double row_sum = 0.0;                     // Сумма модулей недиагональных элементов строки
+
+    for (size_t j = 0; j < n; j++) {
+      if (j != i) {
+        row_sum += std::fabs(a[(i * n) + j]);
+      }
     }
-    return true;
+    // Проверка строгого диагонального преобладания:
+    // Диагональный элемент должен быть БОЛЬШЕ суммы остальных элементов строки
+    if (diag <= row_sum) {
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace pylaeva_s_simple_iteration_method

@@ -19,7 +19,6 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
   const size_t N = 300;
 
   void SetUp() override {
-
     std::vector<double> A(N * N, 1.0);
     std::vector<double> b(N, 0.0);
     expected_data_.assign(N, 1.0);
@@ -57,8 +56,9 @@ TEST_P(PylaevaSSimpleIterationMethodPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PylaevaSSimpleIterationMethodMPI, PylaevaSSimpleIterationMethodSEQ>(
-    PPC_SETTINGS_pylaeva_s_simple_iteration_method);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, PylaevaSSimpleIterationMethodMPI, PylaevaSSimpleIterationMethodSEQ>(
+        PPC_SETTINGS_pylaeva_s_simple_iteration_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
