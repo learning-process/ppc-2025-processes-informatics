@@ -12,10 +12,12 @@
 namespace luzan_e_simps_int {
 
 class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const double a_ = 1.0, b_ = 5.0;
-  const double c_ = 1.0, d_ = 5.0;
-  const int n_ = 10;
-  const int func_num_ = 1;
+  const double a_ = -100.0;
+  const double b_ = 100.0;
+  const double c_ = -200.0;
+  const double d_ = 200.0;
+  const int n_ = 400;
+  const int func_num_ = 5;
   InType input_data_;
 
   void SetUp() override {

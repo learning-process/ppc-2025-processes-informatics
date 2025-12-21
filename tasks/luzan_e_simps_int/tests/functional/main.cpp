@@ -87,7 +87,12 @@ TEST_P(LuzanESimpsIntFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {std::make_tuple(10, std::make_tuple(3, 5), std::make_tuple(3, 5), 2)};
+const std::array<TestType, 5> kTestParam = {std::make_tuple(4, std::make_tuple(3, 5), std::make_tuple(3, 5), 1),
+                                            std::make_tuple(10, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),
+                                            std::make_tuple(20, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),
+                                            std::make_tuple(30, std::make_tuple(-20, 5), std::make_tuple(2, 25), 4),
+                                            std::make_tuple(120, std::make_tuple(0, 5), std::make_tuple(-1, 5), 5)
+                                          };
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<LuzanESimpsIntMPI, InType>(kTestParam, PPC_SETTINGS_luzan_e_simps_int),
