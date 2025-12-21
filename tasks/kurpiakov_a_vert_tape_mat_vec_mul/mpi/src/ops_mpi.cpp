@@ -23,7 +23,10 @@ bool KurpiakovAVretTapeMulMPI::ValidationImpl() {
     return true;
   }
 
-  const auto &[size, matrix, vector] = GetInput();
+  const auto &input = GetInput();
+  const auto &size = std::get<0>(input);
+  const auto &matrix = std:: get<1>(input);
+  const auto &vector = std::get<2>(input);
 
   if (size < 0) {
     return false;
@@ -42,6 +45,16 @@ bool KurpiakovAVretTapeMulMPI::ValidationImpl() {
     return false;
   }
 
+  return true;
+}
+
+bool KurpiakovAVretTapeMulMPI:: PreProcessingImpl() {
+  if (rank_ == 0) {
+    const auto &input = GetInput();
+    const auto &size = std::get<0>(input);
+    const auto &matrix = std:: get<1>(input);
+    const auto &vector = std::get<2>(input);
+  }
   return true;
 }
 
