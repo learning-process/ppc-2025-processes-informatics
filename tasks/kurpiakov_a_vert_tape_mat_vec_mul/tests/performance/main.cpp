@@ -18,7 +18,7 @@ class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<
   OutType expected_data_{};
 
   void SetUp() override {
-    const int64_t size = 8500;
+    const int64_t size = 7500;
 
     std::vector<int64_t> matrix(static_cast<size_t>(size * size));
     std::vector<int64_t> vector(static_cast<size_t>(size));

@@ -54,9 +54,8 @@ bool KurpiakovAVretTapeMulSEQ::RunImpl() {
   OutType in_mat = std::get<1>(GetInput());
 
   OutType res_vec(total_size, 0);
-
-  for (int i = 0; i < total_size; i++) {
-    for (int j = 0; j < total_size; j++) {
+  for (int j = 0; j < total_size; j++) {
+    for (int i = 0; i < total_size; i++) {
       res_vec[i] += in_mat[i * total_size + j] * in_vec[j];
     }
   }
