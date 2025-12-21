@@ -11,7 +11,7 @@ namespace maslova_u_row_matr_vec_mult {
 MaslovaURowMatrVecMultSEQ::MaslovaURowMatrVecMultSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool MaslovaURowMatrVecMultSEQ::ValidationImpl() {

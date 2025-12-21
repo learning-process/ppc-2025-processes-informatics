@@ -40,12 +40,12 @@ class MaslovaURunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType,
 
  private:
   InType input_data_;
-  OutType expected_ = 0;
+  OutType expected_;
 };
 
 namespace {
 
-TEST_P(MaslovaURunFuncTestsProcesses, charFrequencyCount) {
+TEST_P(MaslovaURunFuncTestsProcesses, matrVecMult) {
   ExecuteTest(GetParam());
 }
 
@@ -65,7 +65,7 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<MaslovaURowMat
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kTestName = MaslovaURunFuncTestsProcesses::PrintFuncTestName<MaslovaURunFuncTestsProcesses>;
-INSTANTIATE_TEST_SUITE_P(charFreqTests, MaslovaURunFuncTestsProcesses, kGtestValues, kTestName);
+INSTANTIATE_TEST_SUITE_P(matrVecMultTests, MaslovaURunFuncTestsProcesses, kGtestValues, kTestName);
 
 }  // namespace
 }  // namespace maslova_u_row_matr_vec_mult

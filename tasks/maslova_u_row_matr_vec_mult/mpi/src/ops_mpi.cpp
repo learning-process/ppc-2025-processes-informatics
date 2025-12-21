@@ -13,7 +13,6 @@ namespace maslova_u_row_matr_vec_mult {
 MaslovaURowMatrVecMultMPI::MaslovaURowMatrVecMultMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool MaslovaURowMatrVecMultMPI::ValidationImpl() {
@@ -71,7 +70,7 @@ bool MaslovaURowMatrVecMultMPI::RunImpl() {
   std::vector<double> local_matrix(local_rows * cols);
   
   MPI_Scatterv(rank == 0 ? GetInput().first.data.data() : nullptr, 
-               row_counts.data(), row_start.data(), row_type, 
+               row_cnt.data(), row_start.data(), row_type, 
                local_matrix.data(), static_cast<int>(local_rows * cols), MPI_DOUBLE, 
                0, MPI_COMM_WORLD); //рассылаем строки матрицы
 
