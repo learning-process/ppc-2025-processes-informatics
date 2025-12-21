@@ -15,7 +15,7 @@ MaslovaURowMatrVecMultSEQ::MaslovaURowMatrVecMultSEQ(const InType &in) {
 }
 
 bool MaslovaURowMatrVecMultSEQ::ValidationImpl() {
-  rreturn (GetInput().first.cols == GetInput().second.size()) && (!GetInput().first.data.empty());
+  return (GetInput().first.cols == GetInput().second.size()) && (!GetInput().first.data.empty());
 }
 
 bool MaslovaURowMatrVecMultSEQ::PreProcessingImpl() {
