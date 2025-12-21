@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstddef>
@@ -26,10 +25,10 @@ void CalculateLocalXNew(int start, int count, size_t n, const std::vector<double
     double sum = 0.0;
     for (size_t j = 0; j < n; ++j) {
       if (std::cmp_not_equal(j, global_i)) {
-        sum += local_a[i * n + j] * x[j];
+        sum += local_a[(i * n) + j] * x[j];
       }
     }
-    local_x_new[i] = (local_b[i] - sum) / local_a[i * n + global_i];
+    local_x_new[i] = (local_b[i] - sum) / local_a[(i * n) + global_i];
   }
 }
 
@@ -44,6 +43,9 @@ double CalculateLocalNorm(int start, int count, const std::vector<double> &x_new
 }
 
 void CalculateChunkSizesAndDispls(int size, int n, std::vector<int> &chunk_sizes, std::vector<int> &displs) {
+  if (displs.empty()) {
+    return;
+  }
   int base = n / size;
   int rem = n % size;
 
@@ -58,6 +60,9 @@ void CalculateChunkSizesAndDispls(int size, int n, std::vector<int> &chunk_sizes
 
 void CalculateMatrixChunkSizesAndDispls(int size, int n, std::vector<int> &matrix_chunk_sizes,
                                         std::vector<int> &matrix_displs) {
+  if (matrix_displs.empty()) {
+    return;
+  }
   int base = n / size;
   int rem = n % size;
 
