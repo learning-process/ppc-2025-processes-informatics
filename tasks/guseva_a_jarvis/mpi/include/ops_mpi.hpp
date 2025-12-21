@@ -1,7 +1,7 @@
-// ops_mpi.hpp
 #pragma once
 
-#include <mpi.h>
+#include <utility>
+#include <vector>
 
 #include "guseva_a_jarvis/common/include/common.hpp"
 #include "task/include/task.hpp"

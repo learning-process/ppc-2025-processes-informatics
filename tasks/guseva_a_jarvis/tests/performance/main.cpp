@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <string>
+#include <tuple>
+
 #include "guseva_a_jarvis/common/include/common.hpp"
 #include "guseva_a_jarvis/mpi/include/ops_mpi.hpp"
 #include "guseva_a_jarvis/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace guseva_a_jarvis {
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "guseva_a_jarvis/common/include/common.hpp"
@@ -37,9 +38,9 @@ bool GusevaAJarvisSEQ::PreProcessingImpl() {
   return true;
 }
 
-size_t GusevaAJarvisSEQ::FindFirst() const {
-  size_t start_idx = 0;
-  for (size_t i = 0; i < points_.size(); i++) {
+std::size_t GusevaAJarvisSEQ::FindFirst() const {
+  std::size_t start_idx = 0;
+  for (std::size_t i = 0; i < points_.size(); i++) {
     if (points_[i].first < points_[start_idx].first ||
         (points_[i].first == points_[start_idx].first && points_[i].second < points_[start_idx].second)) {
       start_idx = i;
@@ -54,14 +55,14 @@ bool GusevaAJarvisSEQ::RunImpl() {
     return true;
   }
 
-  size_t start_idx = FindFirst();
-  size_t current = start_idx;
+  std::size_t start_idx = FindFirst();
+  std::size_t current = start_idx;
 
   // NOLINTNEXTLINE
   do {
     hull_.push_back(points_[current]);
-    size_t next = (current + 1) % points_.size();
-    for (size_t i = 0; i < points_.size(); ++i) {
+    std::size_t next = (current + 1) % points_.size();
+    for (std::size_t i = 0; i < points_.size(); ++i) {
       if (i == current || i == next) {
         continue;
       }

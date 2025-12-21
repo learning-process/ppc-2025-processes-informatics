@@ -1,8 +1,11 @@
 #include "guseva_a_jarvis/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "guseva_a_jarvis/common/include/common.hpp"
@@ -129,7 +132,7 @@ std::vector<std::pair<int, int>> BuildConvexHull(const std::vector<std::pair<int
 bool GusevaAJarvisMPI::RunImpl() {
   std::vector<std::pair<int, int>> local_hull = BuildConvexHull(points_);
 
-  int64_t local_hull_size = static_cast<int>(local_hull.size());
+  int local_hull_size = static_cast<int>(local_hull.size());
   std::vector<int> all_hull_sizes(size_, 0);
 
   MPI_Gather(&local_hull_size, 1, MPI_INT, all_hull_sizes.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -146,7 +149,7 @@ bool GusevaAJarvisMPI::RunImpl() {
     }
   }
 
-  std::vector<int> local_data(local_hull_size * 2);
+  std::vector<int> local_data(static_cast<int64_t>(local_hull_size) * 2);
   for (int64_t i = 0; i < local_hull_size; ++i) {
     local_data[i * 2] = local_hull[i].first;
     local_data[(i * 2) + 1] = local_hull[i].second;
@@ -157,7 +160,7 @@ bool GusevaAJarvisMPI::RunImpl() {
     all_data.resize(total_points * 2, 0);
   }
 
-  MPI_Gatherv(local_data.data(), static_cast<int>(local_hull_size * 2), MPI_INT, all_data.data(), recv_counts.data(),
+  MPI_Gatherv(local_data.data(), local_hull_size * 2, MPI_INT, all_data.data(), recv_counts.data(),
               displacements.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank_ == 0) {
@@ -178,7 +181,7 @@ bool GusevaAJarvisMPI::PostProcessingImpl() {
   const int width = std::get<0>(input_tuple);
   const int height = std::get<1>(input_tuple);
 
-  int64_t hull_size = 0;
+  int hull_size = 0;
   if (rank_ == 0) {
     hull_size = static_cast<int>(hull_.size());
   }
@@ -187,16 +190,16 @@ bool GusevaAJarvisMPI::PostProcessingImpl() {
 
   std::vector<int> hull_data;
   if (rank_ == 0) {
-    hull_data.resize(hull_size * 2, 0);
+    hull_data.resize(static_cast<int64_t>(hull_size) * 2, 0);
     for (int64_t i = 0; i < hull_size; ++i) {
       hull_data[i * 2] = hull_[i].first;
       hull_data[(i * 2) + 1] = hull_[i].second;
     }
   } else {
-    hull_data.resize(hull_size * 2, 0);
+    hull_data.resize(static_cast<int64_t>(hull_size) * 2, 0);
   }
 
-  MPI_Bcast(hull_data.data(), static_cast<int>(hull_size) * 2, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(hull_data.data(), hull_size * 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank_ != 0) {
     hull_.clear();

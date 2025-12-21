@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "guseva_a_jarvis/common/include/common.hpp"
 #include "guseva_a_jarvis/mpi/include/ops_mpi.hpp"
@@ -28,18 +27,6 @@ class GusevaAJarvisFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
     const auto &[width, height, image, expected] = ReadTestDataFromFile(path);
     input_data_ = std::make_tuple(width, height, image);
     output_data_ = expected;
-  }
-
-  static void PrintArray(int width, const std::vector<int> &image) {
-    int c = 0;
-    std::cout << '\n';
-    for (const auto &elem : image) {
-      std::cout << elem << " ";
-      c++;
-      if (c % width == 0) {
-        std::cout << '\n';
-      }
-    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
