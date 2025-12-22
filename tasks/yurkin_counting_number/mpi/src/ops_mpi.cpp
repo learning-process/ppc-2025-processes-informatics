@@ -58,7 +58,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
   std::size_t chunk = (world_size > 0) ? (n / static_cast<std::size_t>(world_size)) : 0U;
   std::size_t rem = (world_size > 0) ? (n % static_cast<std::size_t>(world_size)) : 0U;
 
-  std::size_t wrank = static_cast<std::size_t>(world_rank);
+  auto wrank = static_cast<std::size_t>(world_rank);
   std::size_t start = (wrank * chunk) + std::min(wrank, rem);
   std::size_t end = start + chunk + (wrank < rem ? 1U : 0U);
 
