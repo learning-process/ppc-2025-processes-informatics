@@ -70,7 +70,7 @@ bool YurkinCountingNumberMPI::RunImpl() {
 
   int local_count = 0;
   for (std::size_t i = start; i < end; ++i) {
-    unsigned char uc = static_cast<unsigned char>(input[i]);
+    auto uc = static_cast<unsigned char>(input[i]);
 
     if ((uc >= 'A' && uc <= 'Z') || (uc >= 'a' && uc <= 'z')) {
       ++local_count;
