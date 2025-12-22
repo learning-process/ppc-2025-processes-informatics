@@ -76,8 +76,8 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
   MPI_Scatterv(proc_rank == 0 ? A.data() : nullptr, mat_block_sizes.data(), mat_block_offsets.data(), MPI_DOUBLE,
                local_a.data(), local_matrix_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  MPI_Scatterv(proc_rank == 0 ? b.data() : nullptr, row_counts_per_rank.data(), row_offsets_per_rank.data(), MPI_DOUBLE, local_b.data(),
-               local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(proc_rank == 0 ? b.data() : nullptr, row_counts_per_rank.data(), row_offsets_per_rank.data(), MPI_DOUBLE,
+               local_b.data(), local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   int start = row_offsets_per_rank[proc_rank];
   int count = local_rows;
@@ -194,7 +194,9 @@ bool PylaevaSSimpleIterationMethodMPI::DiagonalDominance(const std::vector<doubl
   return true;
 }
 
-void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, int n, std::vector<int> &row_counts_per_rank, std::vector<int> &row_offsets_per_rank) {
+void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, int n,
+                                                                 std::vector<int> &row_counts_per_rank,
+                                                                 std::vector<int> &row_offsets_per_rank) {
   if (row_offsets_per_rank.empty()) {
     return;
   }
