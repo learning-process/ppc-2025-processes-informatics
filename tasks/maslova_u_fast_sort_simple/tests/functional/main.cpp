@@ -1,86 +1,48 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
-
 #include <algorithm>
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
-#include <string>
-#include <tuple>
-#include <utility>
 #include <vector>
-
-#include "example_processes_3/common/include/common.hpp"
-#include "example_processes_3/mpi/include/ops_mpi.hpp"
-#include "example_processes_3/seq/include/ops_seq.hpp"
+#include "maslova_u_fast_sort_simple/common/include/common.hpp"
+#include "maslova_u_fast_sort_simple/mpi/include/ops_mpi.hpp"
+#include "maslova_u_fast_sort_simple/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_processes_3 {
+namespace maslova_u_fast_sort_simple {
 
-class NesterovARunFuncTestsProcesses3 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class MaslovaUFastSortFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<2>(test_param);
   }
-
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_example_processes_3, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = std::get<0>(params);
+    expected_ = std::get<1>(params);
   }
-
-  bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
-  }
-
-  InType GetTestInputData() final {
-    return input_data_;
-  }
-
+  bool CheckTestOutputData(OutType &output_data) final { return expected_ == output_data; }
+  InType GetTestInputData() final { return input_data_; }
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_;
 };
 
-namespace {
+TEST_P(MaslovaUFastSortFuncTests, fastSortSimple) { ExecuteTest(GetParam()); }
 
-TEST_P(NesterovARunFuncTestsProcesses3, MatmulFromPic) {
-  ExecuteTest(GetParam());
-}
+const std::array<TestType, 6> kTestParam = {{
+    std::make_tuple(InType{}, OutType{}, "empty_array"),
+    std::make_tuple(InType{42}, OutType{42}, "single_element"),
+    std::make_tuple(InType{5, 2, 9, 1, 5}, OutType{1, 2, 5, 5, 9}, "random_with_duplicates"),
+    std::make_tuple(InType{10, 9, 8, 7, 6}, OutType{6, 7, 8, 9, 10}, "reverse_sorted"),
+    std::make_tuple(InType{-1, -5, 0, 10, -2}, OutType{-5, -2, -1, 0, 10}, "with_negatives"),
+    std::make_tuple(InType(100, 1), InType(100, 1), "large_identical")
+}};
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<MaslovaUFastSortSimpleMPI, InType>(kTestParam, PPC_SETTINGS_maslova_u_fast_sort_simple),
+    ppc::util::AddFuncTask<MaslovaUFastSortSimpleSEQ, InType>(kTestParam, PPC_SETTINGS_maslova_u_fast_sort_simple));
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskMPI, InType>(kTestParam, PPC_SETTINGS_example_processes_3),
-                   ppc::util::AddFuncTask<NesterovATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes_3));
+INSTANTIATE_TEST_SUITE_P(fastSortTests, MaslovaUFastSortFuncTests, 
+                         ppc::util::ExpandToValues(kTestTasksList), 
+                         MaslovaUFastSortFuncTests::PrintFuncTestName<MaslovaUFastSortFuncTests>);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
-const auto kPerfTestName = NesterovARunFuncTestsProcesses3::PrintFuncTestName<NesterovARunFuncTestsProcesses3>;
-
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses3, kGtestValues, kPerfTestName);
-
-}  // namespace
-
-}  // namespace nesterov_a_test_task_processes_3
+}  // namespace maslova_u_fast_sort_simple
