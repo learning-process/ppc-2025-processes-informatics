@@ -1,0 +1,7 @@
+{
+  "tasks_type": "threads",
+  "tasks": {
+    "seq": "disabled",
+    "mpi": "disabled"
+  }
+}
