@@ -3,13 +3,14 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "nikitin_a_buble_sort/common/include/common.hpp"
 
 namespace nikitin_a_buble_sort {
 
-NikitinABubleSortMPI::NikitinABubleSortMPI(const InType &in) {
+NikitinABubleSortMPI::NikitinABubleSortMPI(const InType &in) : n_(0) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput().clear();
@@ -20,26 +21,27 @@ bool NikitinABubleSortMPI::ValidationImpl() {
 }
 
 bool NikitinABubleSortMPI::PreProcessingImpl() {
-  data = GetInput();
+  data_ = GetInput();
   return true;
 }
 
 bool NikitinABubleSortMPI::RunImpl() {
-  int rank, comm_size;
+  int rank = 0;
+  int comm_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
 
   if (rank == 0) {
-    n = static_cast<int>(data.size());
+    n_ = static_cast<int>(data_.size());
   }
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n_, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (n <= 1) {
+  if (n_ <= 1) {
     std::vector<double> result;
-    if (n == 1) {
+    if (n_ == 1) {
       result.resize(1);
       if (rank == 0) {
-        result[0] = data[0];
+        result[0] = data_[0];
       }
       MPI_Bcast(result.data(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     }
@@ -47,10 +49,10 @@ bool NikitinABubleSortMPI::RunImpl() {
     return true;
   }
 
-  const int base = n / comm_size;
-  const int rem = n % comm_size;
+  const int base = n_ / comm_size;
+  const int rem = n_ % comm_size;
   const int count = base + (rank < rem ? 1 : 0);
-  const int offset = rank * base + std::min(rank, rem);
+  const int offset = (rank * base) + std::min(rank, rem);
 
   std::vector<int> counts(comm_size);
   std::vector<int> displs(comm_size);
@@ -62,10 +64,10 @@ bool NikitinABubleSortMPI::RunImpl() {
   }
 
   std::vector<double> local(count);
-  MPI_Scatterv(rank == 0 ? data.data() : nullptr, counts.data(), displs.data(), MPI_DOUBLE, local.data(), count,
+  MPI_Scatterv(rank == 0 ? data_.data() : nullptr, counts.data(), displs.data(), MPI_DOUBLE, local.data(), count,
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  for (int phase = 0; phase < n; ++phase) {
+  for (int phase = 0; phase < n_; ++phase) {
     const int parity = phase & 1;
     const int tag = phase;
 
@@ -74,7 +76,7 @@ bool NikitinABubleSortMPI::RunImpl() {
     ExchangeLeft(local, counts, displs, rank, parity, tag);
   }
 
-  std::vector<double> result(n);
+  std::vector<double> result(n_);
   MPI_Allgatherv(local.data(), count, MPI_DOUBLE, result.data(), counts.data(), displs.data(), MPI_DOUBLE,
                  MPI_COMM_WORLD);
 

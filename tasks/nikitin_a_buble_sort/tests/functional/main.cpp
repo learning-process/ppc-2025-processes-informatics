@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -81,13 +80,13 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
       case 9:  // Большой массив (100 элементов)
         input_data_ = GenerateRandomVector(100, 12345);
         expected_output_ = input_data_;
-        std::sort(expected_output_.begin(), expected_output_.end());
+        std::ranges::sort(expected_output_.begin(), expected_output_.end());
         break;
 
       case 10:  // Очень большой массив (1000 элементов)
         input_data_ = GenerateRandomVector(1000, 54321);
         expected_output_ = input_data_;
-        std::sort(expected_output_.begin(), expected_output_.end());
+        std::ranges::sort(expected_output_.begin(), expected_output_.end());
         break;
 
       case 11:  // Граничные значения double
@@ -108,7 +107,7 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
         break;
 
       case 14:  // Все одинаковые элементы
-        input_data_ = std::vector<double>(10, 3.14159);
+        input_data_ = std::vector<double>(10, 10);
         expected_output_ = input_data_;
         break;
 
@@ -122,27 +121,27 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
         expected_output_ = {};
         break;
 
-      case 17:  // Массив с NaN (должен вызвать ошибку валидации)
-        input_data_ = {1.0, std::numeric_limits<double>::quiet_NaN(), 2.0};
-        expected_output_ = {};
-        break;
-
-      case 18:  // Массив с бесконечностями
+      case 17:  // Массив с бесконечностями
         input_data_ = {std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), 1.0, 0.0,
                        -1.0};
         expected_output_ = {-std::numeric_limits<double>::infinity(), -1.0, 0.0, 1.0,
                             std::numeric_limits<double>::infinity()};
         break;
 
-      case 19:  // Алгоритмически сложный случай для пузырьковой сортировки
+      case 18:  // Алгоритмически сложный случай для пузырьковой сортировки
         input_data_ = {9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0, 0.0};
         expected_output_ = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
         break;
 
-      case 20:  // Большой случай для тестирования производительности и стабильности
+      case 19:  // Большой случай для тестирования производительности и стабильности
         input_data_ = GenerateRandomVector(500, 99999);
         expected_output_ = input_data_;
-        std::sort(expected_output_.begin(), expected_output_.end());
+        std::ranges::sort(expected_output_.begin(), expected_output_.end());
+        break;
+
+      case 20:  // Уже отсортированный массив
+        input_data_ = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
+        expected_output_ = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
         break;
 
       default:
@@ -213,25 +212,27 @@ TEST_P(NikitinABubleSortFuncTests, BubbleSortTest) {
 
 // Определяем тестовые случаи
 const std::array<TestType, 20> kTestParam = {
-    std::make_tuple(1, "already_sorted"),    // Уже отсортированный
-    std::make_tuple(2, "reverse_order"),     // Обратный порядок
-    std::make_tuple(3, "random_numbers"),    // Случайные числа
-    std::make_tuple(4, "duplicates"),        // Дубликаты
-    std::make_tuple(5, "single_element"),    // Один элемент
-    std::make_tuple(6, "two_elements"),      // Два элемента
-    std::make_tuple(7, "negative_only"),     // Только отрицательные
-    std::make_tuple(8, "mixed_signs"),       // Смешанные знаки
-    std::make_tuple(9, "medium_array"),      // Средний массив
-    std::make_tuple(10, "large_array"),      // Большой массив
-    std::make_tuple(11, "boundary_values"),  // Граничные значения
-    std::make_tuple(12, "high_precision"),   // Высокая точность
-    std::make_tuple(13, "almost_sorted"),    // Почти отсортированный
-    std::make_tuple(14, "all_equal"),        // Все одинаковые
-    std::make_tuple(15, "wide_range"),       // Широкий диапазон
-    std::make_tuple(16, "empty_array"),      // Пустой массив
-    std::make_tuple(18, "infinity_values"),  // Бесконечности
-    std::make_tuple(19, "worst_case"),       // Худший случай для пузырька
-    std::make_tuple(20, "performance_test")  // Тест производительности
+    std::make_tuple(1, "already_sorted"),     // Уже отсортированный
+    std::make_tuple(2, "reverse_order"),      // Обратный порядок
+    std::make_tuple(3, "random_numbers"),     // Случайные числа
+    std::make_tuple(4, "duplicates"),         // Дубликаты
+    std::make_tuple(5, "single_element"),     // Один элемент
+    std::make_tuple(6, "two_elements"),       // Два элемента
+    std::make_tuple(7, "negative_only"),      // Только отрицательные
+    std::make_tuple(8, "mixed_signs"),        // Смешанные знаки
+    std::make_tuple(9, "medium_array"),       // Средний массив
+    std::make_tuple(10, "large_array"),       // Большой массив
+    std::make_tuple(11, "boundary_values"),   // Граничные значения
+    std::make_tuple(12, "high_precision"),    // Высокая точность
+    std::make_tuple(13, "almost_sorted"),     // Почти отсортированный
+    std::make_tuple(14, "all_equal"),         // Все одинаковые
+    std::make_tuple(15, "wide_range"),        // Широкий диапазон
+    std::make_tuple(16, "empty_array"),       // Пустой массив
+    std::make_tuple(17, "infinity_values"),   // Бесконечности
+    std::make_tuple(18, "worst_case"),        // Худший случай для пузырька
+    std::make_tuple(19, "performance_test"),  // Тест производительности
+    std::make_tuple(20, "sorted_array")       // Уже отсортированный массив
+
 };
 
 const auto kTestTasksList =

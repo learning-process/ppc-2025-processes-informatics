@@ -1,10 +1,10 @@
 #include "nikitin_a_buble_sort/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "nikitin_a_buble_sort/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace nikitin_a_buble_sort {
 
