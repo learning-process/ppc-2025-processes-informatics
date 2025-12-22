@@ -13,8 +13,19 @@ LiulinYVertStripDiagMatrixVectMultSEQ::LiulinYVertStripDiagMatrixVectMultSEQ(con
   auto &matrix = std::get<0>(GetInput());
   auto &vect = std::get<1>(GetInput());
 
-  matrix = std::get<0>(in);
-  vect = std::get<1>(in);
+  const auto &input_matrix = std::get<0>(in);
+  const auto &input_vect = std::get<1>(in);
+
+  matrix.clear();
+  vect.clear();
+
+  if (!input_matrix.empty()) {
+    matrix = input_matrix;
+  }
+
+  if (!input_vect.empty()) {
+    vect = input_vect;
+  }
 
   GetOutput().clear();
 }
