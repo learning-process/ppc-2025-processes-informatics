@@ -106,7 +106,7 @@ Each process in the hypercube:
 ### File structure
 ```
 └── tasks/
-    └── guseva_a_matrix_sums/
+    └── guseva_a_hypercube/
         ├── common/                                 
         |   └── common.hpp  . . . . . . . . . . . . Common type definitions 
         |
