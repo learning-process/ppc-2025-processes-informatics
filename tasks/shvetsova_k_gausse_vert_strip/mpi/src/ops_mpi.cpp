@@ -90,7 +90,7 @@ void ShvetsovaKGaussVertStripMPI::ForwardStep(int k, int n, int local_cols, int 
 }
 
 void ShvetsovaKGaussVertStripMPI::BackwardStep(int k, int n, int col_start, std::vector<std::vector<double>> &a_local,
-                                               std::vector<double> &b, std::vector<double> &x) const{
+                                               std::vector<double> &b, std::vector<double> &x) const {
   int size = 0;
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
