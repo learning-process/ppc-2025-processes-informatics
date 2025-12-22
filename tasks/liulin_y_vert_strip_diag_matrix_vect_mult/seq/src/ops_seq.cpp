@@ -10,8 +10,13 @@
 namespace liulin_y_vert_strip_diag_matrix_vect_mult {
 
 LiulinYVertStripDiagMatrixVectMultSEQ::LiulinYVertStripDiagMatrixVectMultSEQ(const InType &in) {
-  GetInput() = in;
-  GetOutput() = {};
+  auto &matrix = std::get<0>(GetInput());
+  auto &vect = std::get<1>(GetInput());
+
+  matrix = std::get<0>(in);
+  vect = std::get<1>(in);
+
+  GetOutput().clear();
 }
 
 bool LiulinYVertStripDiagMatrixVectMultSEQ::ValidationImpl() {
