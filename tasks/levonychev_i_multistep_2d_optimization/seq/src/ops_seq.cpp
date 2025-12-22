@@ -66,10 +66,6 @@ void LevonychevIMultistep2dOptimizationSEQ::UpdateSearchRegionFromCandidates(con
                                                                              double &y_min, double &y_max) {
   const auto &params = GetInput();
 
-  if (candidates.empty()) {
-    return;
-  }
-
   double min_x = candidates[0].x;
   double max_x = candidates[0].x;
   double min_y = candidates[0].y;
@@ -89,15 +85,6 @@ void LevonychevIMultistep2dOptimizationSEQ::UpdateSearchRegionFromCandidates(con
   x_max = std::min(params.x_max, max_x + margin_x);
   y_min = std::max(params.y_min, min_y - margin_y);
   y_max = std::min(params.y_max, max_y + margin_y);
-
-  if (x_min >= x_max) {
-    x_min = params.x_min;
-    x_max = params.x_max;
-  }
-  if (y_min >= y_max) {
-    y_min = params.y_min;
-    y_max = params.y_max;
-  }
 }
 
 Point LevonychevIMultistep2dOptimizationSEQ::ApplyLocalOptimizationToCandidates(const std::vector<Point> &candidates) {
@@ -107,33 +94,18 @@ Point LevonychevIMultistep2dOptimizationSEQ::ApplyLocalOptimizationToCandidates(
   for (const auto &cand : candidates) {
     Point optimized =
         LocalOptimization(params.func, cand.x, cand.y, params.x_min, params.x_max, params.y_min, params.y_max);
-
-    if (optimized.value < best_point.value) {
-      best_point = optimized;
-    }
   }
 
   return best_point;
 }
 
 void LevonychevIMultistep2dOptimizationSEQ::SetFinalResult(const std::vector<Point> &candidates) {
-  const auto &params = GetInput();
   auto &result = GetOutput();
 
-  if (params.use_local_optimization && !candidates.empty()) {
-    Point best_point = ApplyLocalOptimizationToCandidates(candidates);
-    result.x_min = best_point.x;
-    result.y_min = best_point.y;
-    result.value = best_point.value;
-  } else if (!candidates.empty()) {
-    result.x_min = candidates[0].x;
-    result.y_min = candidates[0].y;
-    result.value = candidates[0].value;
-  } else {
-    result.x_min = (params.x_min + params.x_max) / 2.0;
-    result.y_min = (params.y_min + params.y_max) / 2.0;
-    result.value = params.func(result.x_min, result.y_min);
-  }
+  Point best_point = ApplyLocalOptimizationToCandidates(candidates);
+  result.x_min = best_point.x;
+  result.y_min = best_point.y;
+  result.value = best_point.value;
 }
 
 bool LevonychevIMultistep2dOptimizationSEQ::RunImpl() {

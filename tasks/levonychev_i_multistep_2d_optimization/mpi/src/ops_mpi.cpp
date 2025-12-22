@@ -54,46 +54,16 @@ void LevonychevIMultistep2dOptimizationMPI::InitializeRegions(int rank, int size
               MPI_COMM_WORLD);
 }
 
-void LevonychevIMultistep2dOptimizationMPI::GatherAndSelectCandidates(int rank,
-                                                                      const std::vector<Point> &local_candidates,
-                                                                      std::vector<Point> &all_candidates) {
-  std::vector<Point> recv_buffer;
-  if (rank == 0) {
-    recv_buffer.resize(all_candidates.size());
-  }
-
-  MPI_Gather(local_candidates.data(), static_cast<int>(local_candidates.size() * sizeof(Point)), MPI_BYTE,
-             recv_buffer.data(), static_cast<int>(local_candidates.size() * sizeof(Point)), MPI_BYTE, 0,
-             MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    std::vector<Point> valid_candidates;
-    for (const auto &point : recv_buffer) {
-      if (point.value < std::numeric_limits<double>::max()) {
-        valid_candidates.push_back(point);
-      }
-    }
-    std::ranges::sort(valid_candidates, [](const Point &a, const Point &b) { return a.value < b.value; });
-
-    int num_global = std::min(static_cast<int>(local_candidates.size()), static_cast<int>(valid_candidates.size()));
-    all_candidates.assign(valid_candidates.begin(), valid_candidates.begin() + num_global);
-  }
-}
-
 void LevonychevIMultistep2dOptimizationMPI::BuildNewRegions(const OptimizationParams &params,
                                                             const std::vector<Point> &all_candidates, int step,
                                                             std::vector<SearchRegion> &new_regions) {
-  if (!all_candidates.empty()) {
-    for (const auto &cand : all_candidates) {
-      double margin_x = (params.x_max - params.x_min) * 0.05 / (1 << step);
-      double margin_y = (params.y_max - params.y_min) * 0.05 / (1 << step);
+  for (const auto &cand : all_candidates) {
+    double margin_x = (params.x_max - params.x_min) * 0.05 / (1 << step);
+    double margin_y = (params.y_max - params.y_min) * 0.05 / (1 << step);
 
-      SearchRegion new_region(std::max(params.x_min, cand.x - margin_x), std::min(params.x_max, cand.x + margin_x),
-                              std::max(params.y_min, cand.y - margin_y), std::min(params.y_max, cand.y + margin_y));
-      new_regions.push_back(new_region);
-    }
-  } else {
-    new_regions.emplace_back(params.x_min, params.x_max, params.y_min, params.y_max);
+    SearchRegion new_region(std::max(params.x_min, cand.x - margin_x), std::min(params.x_max, cand.x + margin_x),
+                            std::max(params.y_min, cand.y - margin_y), std::min(params.y_max, cand.y + margin_y));
+    new_regions.push_back(new_region);
   }
 }
 
@@ -105,26 +75,7 @@ void LevonychevIMultistep2dOptimizationMPI::DistributeRegionsToProcesses(int ran
 
   if (rank == 0) {
     for (int proc = 0; proc < size; ++proc) {
-      if (new_regions.empty()) {
-        regions_to_scatter[proc] = SearchRegion(params.x_min, params.x_max, params.y_min, params.y_max);
-      } else if (new_regions.size() >= static_cast<size_t>(size)) {
-        regions_to_scatter[proc] = new_regions[proc];
-      } else {
-        int regions_count = static_cast<int>(new_regions.size());
-        int region_idx = proc % regions_count;
-        const auto &base_region = new_regions[region_idx];
-        int processes_per_region = (size + regions_count - 1) / regions_count;
-        int local_idx = proc / regions_count;
-
-        double region_width = base_region.x_max - base_region.x_min;
-        double width_per_process = region_width / processes_per_region;
-        double x_min_proc = base_region.x_min + (local_idx * width_per_process);
-        double x_max_proc = (local_idx == processes_per_region - 1)
-                                ? base_region.x_max
-                                : base_region.x_min + ((local_idx + 1) * width_per_process);
-
-        regions_to_scatter[proc] = SearchRegion(x_min_proc, x_max_proc, base_region.y_min, base_region.y_max);
-      }
+      regions_to_scatter[proc] = new_regions[proc];
     }
   }
 
