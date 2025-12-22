@@ -24,9 +24,6 @@ GusevaAJarvisMPI::GusevaAJarvisMPI(const InType &in) {
 
 bool GusevaAJarvisMPI::ValidationImpl() {
   const auto &[width, height, image] = GetInput();
-  // const int width = std::get<0>(input_tuple);
-  // const int height = std::get<1>(input_tuple);
-  // const std::vector<int> &image = std::get<2>(input_tuple);
 
   if (rank_ == 0) {
     const bool is_size_match = static_cast<int>(image.size()) == width * height;
@@ -67,67 +64,6 @@ bool GusevaAJarvisMPI::PreProcessingImpl() {
 
   return true;
 }
-
-namespace {
-
-int CrossProduct(const std::pair<int, int> &a, const std::pair<int, int> &b, const std::pair<int, int> &c) {
-  return ((b.first - a.first) * (c.second - a.second)) - ((b.second - a.second) * (c.first - a.first));
-}
-
-int DistanceSquared(const std::pair<int, int> &a, const std::pair<int, int> &b) {
-  int dx = b.first - a.first;
-  int dy = b.second - a.second;
-  return (dx * dx) + (dy * dy);
-}
-
-// NOLINTNEXTLINE
-std::vector<std::pair<int, int>> BuildConvexHull(const std::vector<std::pair<int, int>> &points) {
-  if (points.size() <= 3) {
-    return points;
-  }
-
-  std::vector<std::pair<int, int>> hull;
-
-  size_t start_idx = 0;
-  for (size_t i = 1; i < points.size(); ++i) {
-    if (points[i].first < points[start_idx].first ||
-        (points[i].first == points[start_idx].first && points[i].second < points[start_idx].second)) {
-      start_idx = i;
-    }
-  }
-
-  size_t current = start_idx;
-
-  // NOLINTNEXTLINE
-  do {
-    hull.push_back(points[current]);
-    size_t next = (current + 1) % points.size();
-
-    for (size_t i = 0; i < points.size(); ++i) {
-      if (i == current) {
-        continue;
-      }
-
-      int cross = CrossProduct(points[current], points[next], points[i]);
-
-      if (cross < 0) {
-        next = i;
-      } else if (cross == 0) {
-        int dist1 = DistanceSquared(points[current], points[next]);
-        int dist2 = DistanceSquared(points[current], points[i]);
-        if (dist2 > dist1) {
-          next = i;
-        }
-      }
-    }
-
-    current = next;
-
-  } while (current != start_idx);
-
-  return hull;
-}
-}  // namespace
 
 bool GusevaAJarvisMPI::RunImpl() {
   std::vector<std::pair<int, int>> local_hull = BuildConvexHull(points_);
