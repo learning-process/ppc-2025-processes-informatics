@@ -101,9 +101,9 @@ bool KurpiakovAVretTapeMulMPI::RunImpl() {
   }
 
   result_.resize(static_cast<size_t>(n));
-  MPI_Reduce(local_result_.data(), result_.data(), n, MPI_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(local_result_.data(), result_.data(), n, MPI_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(result_.data(), n, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(result_.data(), n, MPI_LONG, 0, MPI_COMM_WORLD);
 
   GetOutput() = result_;
   MPI_Barrier(MPI_COMM_WORLD);
