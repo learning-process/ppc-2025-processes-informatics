@@ -61,7 +61,7 @@ The parallel implementation follows a divide-and-conquer approach:
 ### File structure
 ```
 └── tasks/
-    └── guseva_a_matrix_sums/
+    └── guseva_a_jarvis/
         ├── common/                                 
         |   └── common.hpp  . . . . . . . . . . . . Common type definitions 
         |
