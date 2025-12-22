@@ -31,11 +31,12 @@ bool RomanovaVJacobiMethodSEQ::ValidationImpl() {
 }
 
 bool RomanovaVJacobiMethodSEQ::PreProcessingImpl() {
-  x_ = std::get<0>(GetInput());
-  A_ = std::get<1>(GetInput());
-  b_ = std::get<2>(GetInput());
-  eps_ = std::get<3>(GetInput());
-  maxIterations_ = std::get<4>(GetInput());
+  std::tie(x_, A_, b_, eps_, maxIterations_) = GetInput();
+  // x_ = std::get<0>(GetInput());
+  // A_ = std::get<1>(GetInput());
+  // b_ = std::get<2>(GetInput());
+  // eps_ = std::get<3>(GetInput());
+  // maxIterations_ = std::get<4>(GetInput());
   size_ = x_.size();
   return true;
 }
