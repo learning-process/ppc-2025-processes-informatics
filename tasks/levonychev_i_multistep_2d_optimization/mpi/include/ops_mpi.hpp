@@ -20,16 +20,16 @@ class LevonychevIMultistep2dOptimizationMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   void InitializeRegions(int rank, int size, const OptimizationParams &params, SearchRegion &my_region);
-  
-  void ExecuteOptimizationSteps(int rank, int size, const OptimizationParams &params, SearchRegion &my_region, 
-                                 OptimizationResult &result);
-  
+
+  void ExecuteOptimizationSteps(int rank, int size, const OptimizationParams &params, SearchRegion &my_region,
+                                OptimizationResult &result);
+
   void GatherAndSelectCandidates(int rank, const std::vector<Point> &local_candidates,
-                                  std::vector<Point> &all_candidates);
-  
-  void ScatterNewRegions(int rank, int size, const OptimizationParams &params,
-                         const std::vector<Point> &all_candidates, int step, SearchRegion &my_region);
-  
+                                 std::vector<Point> &all_candidates);
+
+  void ScatterNewRegions(int rank, int size, const OptimizationParams &params, const std::vector<Point> &all_candidates,
+                         int step, SearchRegion &my_region);
+
   Point FindGlobalBest(int rank, int size, const OptimizationParams &params, const SearchRegion &my_region);
 };
 
