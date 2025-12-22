@@ -4,7 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
 #include <string>
 #include <tuple>
 
@@ -139,8 +138,6 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
       tolerance_coord = 3;
       tolerance_value = 5;
     }
-    std::cout << test_id << " x_min: " << output_data.x_min << " y_min: " << output_data.y_min
-              << " value: " << output_data.value << '\n';
     bool x_ok = std::abs(output_data.x_min - expected_x_min_) < tolerance_coord;
     bool y_ok = std::abs(output_data.y_min - expected_y_min_) < tolerance_coord;
     bool value_ok = std::abs(output_data.value - expected_value_) < tolerance_value;

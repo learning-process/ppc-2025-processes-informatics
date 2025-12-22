@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <iostream>
 
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/mpi/include/ops_mpi.hpp"
@@ -56,8 +55,6 @@ class LevonychevIMultistep2dOptimizationPerfTests : public ppc::util::BaseRunPer
 
     const double tolerance_coord = 0.5;
     const double tolerance_value = 2.0;
-    std::cout << " x_min: " << output_data.x_min << " y_min: " << output_data.y_min << " value: " << output_data.value
-              << '\n';
     bool x_ok = std::abs(output_data.x_min - expected_x_min_) < tolerance_coord;
     bool y_ok = std::abs(output_data.y_min - expected_y_min_) < tolerance_coord;
     bool value_ok = std::abs(output_data.value - expected_value_min_) < tolerance_value;

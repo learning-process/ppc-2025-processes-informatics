@@ -58,7 +58,7 @@ std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::SelectTopCandidates(co
   std::ranges::sort(sorted_points, [](const Point &a, const Point &b) { return a.value < b.value; });
 
   int num_to_select = std::min(num_candidates, static_cast<int>(sorted_points.size()));
-  return std::vector<Point>(sorted_points.begin(), sorted_points.begin() + num_to_select);
+  return {sorted_points.begin(), sorted_points.begin() + num_to_select};
 }
 
 void LevonychevIMultistep2dOptimizationSEQ::UpdateSearchRegionFromCandidates(const std::vector<Point> &candidates,

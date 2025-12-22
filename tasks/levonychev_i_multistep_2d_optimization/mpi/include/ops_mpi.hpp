@@ -22,8 +22,8 @@ class LevonychevIMultistep2dOptimizationMPI : public BaseTask {
 
   static void InitializeRegions(int rank, int size, const OptimizationParams &params, SearchRegion &my_region);
 
-  void ExecuteOptimizationSteps(int rank, int size, const OptimizationParams &params, SearchRegion &my_region,
-                                OptimizationResult &result);
+  static void ExecuteOptimizationSteps(int rank, int size, const OptimizationParams &params, SearchRegion &my_region,
+                                       OptimizationResult &result);
 
   static void GatherAndSelectCandidates(int rank, const std::vector<Point> &local_candidates,
                                         std::vector<Point> &all_candidates);
