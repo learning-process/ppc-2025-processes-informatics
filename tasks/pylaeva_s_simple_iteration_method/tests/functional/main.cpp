@@ -97,8 +97,17 @@ TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationsTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {"Simple_1x1", "Identity_matrix_2x2", "Identity_matrix_10x10",
-                                            "DiagDominanceRandom2x2", "DiagDominanceRandom3x3"};
+const std::array<TestType, 11> kTestParam = {"Simple_1x1",
+                                             "Identity_matrix_2x2",
+                                             "Identity_matrix_5x5",
+                                             "Identity_matrix_3x13",
+                                             "DiagDominanceRandom_2x2",
+                                             "DiagDominanceRandom_3x3",
+                                             "DiagDominanceRandom_5x5",
+                                             "Negative_1x1",
+                                             "Negative_2x2",
+                                             "Negative_3x3",
+                                             "Negative_5x5"};
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodMPI, InType>(
                                                kTestParam, PPC_SETTINGS_pylaeva_s_simple_iteration_method),
                                            ppc::util::AddFuncTask<PylaevaSSimpleIterationMethodSEQ, InType>(
