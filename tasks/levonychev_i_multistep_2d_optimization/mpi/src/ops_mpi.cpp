@@ -61,7 +61,7 @@ void LevonychevIMultistep2dOptimizationMPI::GatherAndSelectCandidates(int rank,
     recv_buffer.resize(all_candidates.size());
   }
 
-  MPI_Gather(const_cast<Point *>(local_candidates.data()), static_cast<int>(local_candidates.size() * sizeof(Point)),
+  MPI_Gather(local_candidates.data(), static_cast<int>(local_candidates.size() * sizeof(Point)),
              MPI_BYTE, recv_buffer.data(), static_cast<int>(local_candidates.size() * sizeof(Point)), MPI_BYTE, 0,
              MPI_COMM_WORLD);
 
@@ -222,7 +222,7 @@ Point LevonychevIMultistep2dOptimizationMPI::FindGlobalBest(int rank, int size, 
     }
 
     if (!valid_points.empty()) {
-      std::sort(valid_points.begin(), valid_points.end());
+      std::ranges::sort(valid_points, [](const Point &a, const Point &b) { return a.value < b.value; });
       global_best = valid_points[0];
     } else {
       global_best = Point((params.x_min + params.x_max) / 2.0, (params.y_min + params.y_max) / 2.0,
@@ -267,12 +267,8 @@ bool LevonychevIMultistep2dOptimizationMPI::PostProcessingImpl() {
   const auto &params = GetInput();
   auto &result = GetOutput();
 
-  if (result.x_min < params.x_min || result.x_min > params.x_max || result.y_min < params.y_min ||
-      result.y_min > params.y_max) {
-    return false;
-  }
-
-  return true;
+  return result.x_min >= params.x_min && result.x_min <= params.x_max && result.y_min >= params.y_min &&
+           result.y_min <= params.y_max;
 }
 
 }  // namespace levonychev_i_multistep_2d_optimization

@@ -53,7 +53,7 @@ std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::GenerateGridPoints(dou
 }
 
 std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::SelectTopCandidates(const std::vector<Point> &points,
-                                                                              int num_candidates) const {
+                                                                              int num_candidates){
   std::vector<Point> sorted_points = points;
   std::ranges::sort(sorted_points, [](const Point &a, const Point &b) { return a.value < b.value; });
 
@@ -169,8 +169,8 @@ bool LevonychevIMultistep2dOptimizationSEQ::PostProcessingImpl() {
   const auto &params = GetInput();
   auto &result = GetOutput();
 
-  return !(result.x_min < params.x_min || result.x_min > params.x_max || result.y_min < params.y_min ||
-           result.y_min > params.y_max);
+  return result.x_min >= params.x_min && result.x_min <= params.x_max && result.y_min >= params.y_min &&
+           result.y_min <= params.y_max;
 }
 
 }  // namespace levonychev_i_multistep_2d_optimization
