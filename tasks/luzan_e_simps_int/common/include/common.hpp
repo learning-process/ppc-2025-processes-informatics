@@ -8,10 +8,10 @@
 namespace luzan_e_simps_int {
 
 // n, a-b, c-d, func_num
-using InType = std::tuple<int, std::tuple<int, int>, std::tuple<int, int>, int>;
+using InType = std::tuple<int, std::tuple<double, double>, std::tuple<double, double>, int>;
 using OutType = double;
 // n, a-b, c-d, func_num
-using TestType = std::tuple<int, std::tuple<int, int>, std::tuple<int, int>, int>;
+using TestType = std::tuple<int, std::tuple<double, double>, std::tuple<double, double>, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 const double kEpsilon = 0.001;

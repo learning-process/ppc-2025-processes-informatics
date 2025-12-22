@@ -106,7 +106,7 @@ const std::array<TestType, 15> kTestParam = {
     std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(-50, -15), 4),  // negative square
     std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(15, 25), 4),    // half negative square
     std::make_tuple(70, std::make_tuple(5, 10), std::make_tuple(-25, -5), 4),     // half negative square 2
-    std::make_tuple(10, std::make_tuple(-50, 50), std::make_tuple(-50, 50), 1),   // big square, small n
+    std::make_tuple(10, std::make_tuple(-60, 60), std::make_tuple(-60, 60), 1),   // big square, small n
     std::make_tuple(200, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),     // small square, big n
     std::make_tuple(30, std::make_tuple(-20, 5), std::make_tuple(2, 25), 4),      // std
     std::make_tuple(300, std::make_tuple(0, 1), std::make_tuple(0, 1), 4),        // small square, big n
