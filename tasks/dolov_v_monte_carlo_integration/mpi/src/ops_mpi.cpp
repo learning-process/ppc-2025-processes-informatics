@@ -113,8 +113,6 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     }
   }
 
-
-  
   double global_sum_of_f = 0.0;
   // Собираем все локальные суммы на корневой процесс 0
   MPI_Reduce(&local_sum_of_f, &global_sum_of_f, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);

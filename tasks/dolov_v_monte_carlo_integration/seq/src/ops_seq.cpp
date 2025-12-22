@@ -58,7 +58,7 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
         is_in_domain = false;
       }
     }
-    
+
     if (is_in_domain) {
       sum += in.func(point);
     }
