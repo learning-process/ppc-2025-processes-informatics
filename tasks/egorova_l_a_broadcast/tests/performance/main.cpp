@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <cstddef>
 
 #include "egorova_l_a_broadcast/common/include/common.hpp"
@@ -22,12 +23,18 @@ class EgorovaLRunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType,
     return output_data.size() == static_cast<size_t>(kCount_) * sizeof(int);
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(EgorovaLRunPerfTestProcesses2, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(EgorovaLRunPerfTestProcesses2, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, EgorovaLBroadcastMPI, EgorovaLBroadcastSEQ>(PPC_SETTINGS_egorova_l_a_broadcast);
-INSTANTIATE_TEST_SUITE_P(RunModeTests, EgorovaLRunPerfTestProcesses2, ppc::util::TupleToGTestValues(kAllPerfTasks), EgorovaLRunPerfTestProcesses2::CustomPerfTestName);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, EgorovaLBroadcastMPI, EgorovaLBroadcastSEQ>(PPC_SETTINGS_egorova_l_a_broadcast);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, EgorovaLRunPerfTestProcesses2, ppc::util::TupleToGTestValues(kAllPerfTasks),
+                         EgorovaLRunPerfTestProcesses2::CustomPerfTestName);
 
 }  // namespace egorova_l_a_broadcast

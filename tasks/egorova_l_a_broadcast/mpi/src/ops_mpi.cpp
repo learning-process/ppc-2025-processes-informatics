@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <vector>
+
 #include "egorova_l_a_broadcast/common/include/common.hpp"
 
 namespace egorova_l_a_broadcast {
@@ -13,10 +14,14 @@ EgorovaLBroadcastMPI::EgorovaLBroadcastMPI(const InType &in) {
   GetInput() = in;
 }
 
-bool EgorovaLBroadcastMPI::ValidationImpl() { return true; }
-bool EgorovaLBroadcastMPI::PreProcessingImpl() { return true; }
+bool EgorovaLBroadcastMPI::ValidationImpl() {
+  return true;
+}
+bool EgorovaLBroadcastMPI::PreProcessingImpl() {
+  return true;
+}
 
-void EgorovaLBroadcastMPI::TreeBroadcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
+void EgorovaLBroadcastMPI::TreeBroadcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(comm, &rank);
@@ -42,7 +47,7 @@ void EgorovaLBroadcastMPI::TreeBroadcast(void* buffer, int count, MPI_Datatype d
 bool EgorovaLBroadcastMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  auto& in = GetInput();
+  auto &in = GetInput();
   int count = 0;
   MPI_Datatype type = MPI_DATATYPE_NULL;
 
@@ -73,6 +78,8 @@ bool EgorovaLBroadcastMPI::RunImpl() {
   return true;
 }
 
-bool EgorovaLBroadcastMPI::PostProcessingImpl() { return true; }
+bool EgorovaLBroadcastMPI::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace egorova_l_a_broadcast

@@ -1,6 +1,8 @@
 #include "egorova_l_a_broadcast/seq/include/ops_seq.hpp"
-#include "egorova_l_a_broadcast/common/include/common.hpp"
+
 #include <cstring>
+
+#include "egorova_l_a_broadcast/common/include/common.hpp"
 
 namespace egorova_l_a_broadcast {
 
@@ -18,9 +20,9 @@ bool EgorovaLBroadcastSEQ::PreProcessingImpl() {
 }
 
 bool EgorovaLBroadcastSEQ::RunImpl() {
-  auto& in = GetInput();
-  auto& out = GetOutput();
-  
+  auto &in = GetInput();
+  auto &out = GetOutput();
+
   if (in.type_indicator == 0) {
     out.resize(in.data_int.size() * sizeof(int));
     std::memcpy(out.data(), in.data_int.data(), out.size());
