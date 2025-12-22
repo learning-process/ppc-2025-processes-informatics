@@ -6,7 +6,8 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-
+#include <utility>
+#include <cstddef>
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/common/include/optimization_common.hpp"
 
@@ -163,8 +164,12 @@ bool LevonychevIMultistep2dOptimizationMPI::RunImpl() {
   Point my_best;
 
   if (my_region.x_min < my_region.x_max && my_region.y_min < my_region.y_max) {
+    int power_of_2 = 1;
+    for (int i = 0; i < params.num_steps - 1; ++i) {
+      power_of_2 *= 2;
+    }
     std::vector<Point> local_points =
-        SearchInRegion(params.func, my_region, params.grid_size_step1 * (1U << (params.num_steps - 1)));
+        SearchInRegion(params.func, my_region, params.grid_size_step1 * power_of_2);
 
     if (!local_points.empty()) {
       my_best = local_points[0];
