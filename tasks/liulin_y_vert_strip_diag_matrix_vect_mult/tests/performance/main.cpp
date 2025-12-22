@@ -46,16 +46,16 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
       return {.rows = 1000, .cols = 1000, .name = "medium"};
     }
     if (test_name.find("large") != std::string::npos) {
-      return {.rows = 2000, .cols = 2000, .name = "large"};
+      return {.rows = 5000, .cols = 5000, .name = "large"};
     }
     if (test_name.find("xlarge") != std::string::npos) {
-      return {.rows = 5000, .cols = 5000, .name = "xlarge"};
+      return {.rows = 10000, .cols = 10000, .name = "xlarge"};
     }
     if (test_name.find("tall") != std::string::npos) {
-      return {.rows = 5000, .cols = 1000, .name = "tall"};
+      return {.rows = 10000, .cols = 1000, .name = "tall"};
     }
     if (test_name.find("wide") != std::string::npos) {
-      return {.rows = 1000, .cols = 5000, .name = "wide"};
+      return {.rows = 1000, .cols = 10000, .name = "wide"};
     }
     return {.rows = 100, .cols = 100, .name = "small"};
   }
