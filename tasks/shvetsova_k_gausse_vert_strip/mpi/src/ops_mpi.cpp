@@ -11,7 +11,7 @@
 namespace shvetsova_k_gausse_vert_strip {
 
 // Вспомогательная функция для определения ранга-владельца колонки k
-int GetOwner(int k, int n, int size) {
+int ShvetsovaKGaussVertStripMPI::GetOwnerOfColumn(int k, int n, int size) {
   int base_cols = n / size;
   int remainder = n % size;
   int threshold = remainder * (base_cols + 1);
@@ -22,7 +22,7 @@ int GetOwner(int k, int n, int size) {
 }
 
 // Вспомогательная функция для определения начального индекса колонки для ранга
-int GetColStart(int rank, int n, int size) {
+int ShvetsovaKGaussVertStripMPI::GetColumnStartIndex(int rank, int n, int size) {
   int base_cols = n / size;
   int remainder = n % size;
   if (rank < remainder) {
@@ -62,7 +62,7 @@ void ShvetsovaKGaussVertStripMPI::ForwardStep(int k, int n, int local_cols, int 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int owner = GetOwner(k, n, size);
+  int owner = GetOwnerOfColumn(k, n, size);
   double pivot_val = 0.0;
   if (rank == owner) {
     pivot_val = a_local[k][k - col_start];
@@ -96,7 +96,7 @@ void ShvetsovaKGaussVertStripMPI::BackwardStep(int k, int n, int col_start, std:
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int owner = GetOwner(k, n, size);
+  int owner = GetOwnerOfColumn(k, n, size);
   if (rank == owner) {
     x[k] = b[k];
   }
@@ -122,8 +122,8 @@ bool ShvetsovaKGaussVertStripMPI::RunImpl() {
   const auto &a_global = GetInput().first;
   int n = static_cast<int>(a_global.size());
 
-  int col_start = GetColStart(rank, n, size);
-  int next_col_start = GetColStart(rank + 1, n, size);
+  int col_start = GetColumnStartIndex(rank, n, size);
+  int next_col_start = GetColumnStartIndex(rank + 1, n, size);
   int local_cols = next_col_start - col_start;
 
   std::vector<std::vector<double>> a_local(n, std::vector<double>(local_cols));
