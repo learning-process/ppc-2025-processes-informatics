@@ -53,8 +53,11 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-constexpr std::array<TestType, 3> kTestParam = {std::make_tuple(0, "AbC123"), std::make_tuple(1, "!!!!abcd"),
-                                                std::make_tuple(2, "123")};
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(0, "AbC123"),
+    std::make_tuple(1, "!!!!abcd"),
+    std::make_tuple(2, "123"),
+};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
