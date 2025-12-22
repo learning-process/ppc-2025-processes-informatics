@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <cstdint>
 #include <tuple>
 #include <vector>
 
@@ -24,7 +23,7 @@ class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<
 
     for (int i = 0; i < size; ++i) {
       for (int j = 0; j < size; ++j) {
-        matrix[static_cast<size_t>((i * size) + j)] = (i == j) ? (i + 1) : 0;
+        matrix[(static_cast<size_t>(i) * static_cast<size_t>(size)) + static_cast<size_t>(j)] = (i == j) ? (i + 1) : 0;
       }
       expected_data_.push_back(i + 1);
     }
