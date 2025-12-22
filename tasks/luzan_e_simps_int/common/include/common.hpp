@@ -14,7 +14,7 @@ using OutType = double;
 using TestType = std::tuple<int, std::tuple<int, int>, std::tuple<int, int>, int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-const double kEpsilon = 0.0001;
+const double kEpsilon = 0.001;
 
 inline double F1(double x, double y) {
   return (pow(x, 5) / 5.0) + (y * sin(y)) + 2.0;

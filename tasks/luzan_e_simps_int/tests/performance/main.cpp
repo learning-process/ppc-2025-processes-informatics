@@ -62,7 +62,7 @@ class LuzanESimpsIntpERFTests : public ppc::util::BaseRunPerfTests<InType, OutTy
     }
     sum = sum * hx * hy / (3 * 3);
 
-    return (abs(output_data - sum) < kEpsilon);
+    return (fabs(output_data - sum) < kEpsilon);
   }
 
   InType GetTestInputData() final {

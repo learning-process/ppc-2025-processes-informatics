@@ -24,7 +24,7 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
   void SetUp() override {
     TestType params = std::get<static_cast<int>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    double n = std::get<0>(params);
+    int n = std::get<0>(params);
     auto ab = std::get<1>(params);
     auto cd = std::get<2>(params);
     int fn = std::get<3>(params);
@@ -69,8 +69,7 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
       }
     }
     sum = sum * hx * hy / (3 * 3);
-
-    return (abs(output_data - sum) < kEpsilon);
+    return (fabs(output_data - sum) < kEpsilon);
   }
 
   InType GetTestInputData() final {
@@ -87,9 +86,14 @@ TEST_P(LuzanESimpsIntFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {std::make_tuple(4, std::make_tuple(3, 5), std::make_tuple(3, 5), 1),
-                                            std::make_tuple(10, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),
-                                            std::make_tuple(20, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),
+const std::array<TestType, 9> kTestParam = {std::make_tuple(4, std::make_tuple(3, 5), std::make_tuple(3, 5), 1),
+                                            std::make_tuple(2, std::make_tuple(0, 1), std::make_tuple(0, 1), 1),
+                                            std::make_tuple(10, std::make_tuple(0.5, 1), std::make_tuple(0.5, 1), 2),
+                                            std::make_tuple(34, std::make_tuple(-50, 50), std::make_tuple(-50, 50), 1),
+                                            std::make_tuple(42, std::make_tuple(-100, 0), std::make_tuple(0, 10), 1),
+                                            std::make_tuple(22, std::make_tuple(-10, 0), std::make_tuple(0, 100), 1),
+                                            std::make_tuple(6, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),
+                                            std::make_tuple(24, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),
                                             std::make_tuple(30, std::make_tuple(-20, 5), std::make_tuple(2, 25), 4)};
 
 const auto kTestTasksList =
