@@ -2,9 +2,7 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
-#include <limits>
 #include <vector>
 
 #include "liulin_y_vert_strip_diag_matrix_vect_mult/common/include/common.hpp"
