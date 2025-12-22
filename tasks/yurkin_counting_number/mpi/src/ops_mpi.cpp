@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cctype>
 #include <cstddef>
 #include <vector>
 
@@ -46,7 +45,11 @@ bool YurkinCountingNumberMPI::RunImpl() {
     std::copy(GetInput().begin(), GetInput().end(), buffer.begin());
   }
 
-  MPI_Bcast(total_size > 0 ? buffer.data() : nullptr, total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  if (total_size > 0) {
+    MPI_Bcast(buffer.data(), total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+  } else {
+    MPI_Bcast(nullptr, 0, MPI_CHAR, 0, MPI_COMM_WORLD);
+  }
 
   if (world_rank != 0) {
     GetInput().assign(buffer.begin(), buffer.end());
@@ -67,17 +70,18 @@ bool YurkinCountingNumberMPI::RunImpl() {
 
   int local_count = 0;
   for (std::size_t i = start; i < end; ++i) {
-    if (std::isalpha(static_cast<unsigned char>(input[i])) != 0) {
+    unsigned char uc = static_cast<unsigned char>(input[i]);
+
+    if ((uc >= 'A' && uc <= 'Z') || (uc >= 'a' && uc <= 'z')) {
       ++local_count;
     }
   }
 
   int global_count = 0;
-  MPI_Reduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (world_rank == 0) {
-    GetOutput() = global_count;
-  }
+  MPI_Allreduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  GetOutput() = global_count;
 
   return true;
 }
