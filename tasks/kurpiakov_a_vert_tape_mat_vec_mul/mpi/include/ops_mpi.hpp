@@ -22,11 +22,11 @@ class KurpiakovAVretTapeMulMPI : public ppc::task::Task<InType, OutType> {
 
  private:
   int matrix_size_{0};
-  OutType matrix_data_;
-  OutType vector_data_;
-  OutType result_;
+  std::vector<int> matrix_data_;
+  std::vector<int> vector_data_;
+  std::vector<int> result_;
 
-  OutType local_result_;
+  std::vector<int> local_result_;
   int local_cols_{0};
 
   int rank_{-1};

@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <cstddef>
-#include <cstdint>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
@@ -94,16 +93,14 @@ bool KurpiakovAVretTapeMulMPI::RunImpl() {
 
     for (int row = 0; row < n; ++row) {
       local_result_[row] +=
-          static_cast<int64_t>(
-              matrix_data_[(static_cast<size_t>(row) * static_cast<size_t>(n)) + static_cast<size_t>(global_col)]) *
-          vec_val;
+          matrix_data_[(static_cast<size_t>(row) * static_cast<size_t>(n)) + static_cast<size_t>(global_col)] * vec_val;
     }
   }
 
   result_.resize(static_cast<size_t>(n));
-  MPI_Reduce(local_result_.data(), result_.data(), n, MPI_INT64_T, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(local_result_.data(), result_.data(), n, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(result_.data(), n, MPI_INT64_T, 0, MPI_COMM_WORLD);
+  MPI_Bcast(result_.data(), n, MPI_INT, 0, MPI_COMM_WORLD);
 
   GetOutput() = result_;
   MPI_Barrier(MPI_COMM_WORLD);
