@@ -30,7 +30,20 @@ class LevonychevIMultistep2dOptimizationMPI : public BaseTask {
   static void ScatterNewRegions(int rank, int size, const OptimizationParams &params, const std::vector<Point> &all_candidates,
                          int step, SearchRegion &my_region);
 
+  static void BuildNewRegions(const OptimizationParams &params, const std::vector<Point> &all_candidates, int step,
+                              std::vector<SearchRegion> &new_regions);
+
+  static void DistributeRegionsToProcesses(int rank, int size, const OptimizationParams &params,
+                                           const std::vector<SearchRegion> &new_regions, SearchRegion &my_region);
+
   static Point FindGlobalBest(int rank, int size, const OptimizationParams &params, const SearchRegion &my_region);
+
+  static void GatherFinalPoints(int rank, int size, const Point &my_best, std::vector<Point> &all_final_points);
+
+  static Point SelectGlobalBest(int rank, const OptimizationParams &params, const std::vector<Point> &all_final_points);
+
+  static void ProcessLocalCandidates(const OptimizationParams &params, const std::vector<Point> &local_points,
+                                     std::vector<Point> &local_candidates);
 };
 
 }  // namespace levonychev_i_multistep_2d_optimization
