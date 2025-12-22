@@ -55,18 +55,15 @@ bool YurkinCountingNumberMPI::RunImpl() {
   const InType &input = GetInput();
   std::size_t n = input.size();
 
-  std::size_t chunk = (world_size > 0) ? (n / static_cast<std::size_t>(world_size)) : 0;
-  std::size_t rem = (world_size > 0) ? (n % static_cast<std::size_t>(world_size)) : 0;
+  std::size_t chunk = (world_size > 0) ? (n / static_cast<std::size_t>(world_size)) : 0U;
+  std::size_t rem = (world_size > 0) ? (n % static_cast<std::size_t>(world_size)) : 0U;
 
-  std::size_t start =
-      static_cast<std::size_t>(world_rank) * chunk + std::min<std::size_t>(static_cast<std::size_t>(world_rank), rem);
-  std::size_t end = start + chunk + (static_cast<std::size_t>(world_rank) < rem ? 1u : 0u);
-  if (start > n) {
-    start = n;
-  }
-  if (end > n) {
-    end = n;
-  }
+  std::size_t wrank = static_cast<std::size_t>(world_rank);
+  std::size_t start = (wrank * chunk) + std::min(wrank, rem);
+  std::size_t end = start + chunk + (wrank < rem ? 1U : 0U);
+
+  start = std::min(start, n);
+  end = std::min(end, n);
 
   int local_count = 0;
   for (std::size_t i = start; i < end; ++i) {
