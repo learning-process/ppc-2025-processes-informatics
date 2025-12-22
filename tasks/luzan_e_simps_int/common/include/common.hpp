@@ -66,7 +66,6 @@ inline auto GetFunc(int num) {
     default:
       return &F1;
   }
-  return &F1;
 }
 
 }  // namespace luzan_e_simps_int
