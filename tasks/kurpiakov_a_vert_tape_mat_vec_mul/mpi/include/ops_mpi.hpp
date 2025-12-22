@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -21,13 +22,11 @@ class KurpiakovAVretTapeMulMPI : public ppc::task::Task<InType, OutType> {
   bool PostProcessingImpl() override;
 
  private:
-  int64_t matrix_size_{0};
-  OutType matrix_data_;
-  OutType vector_data_;
+  int matrix_size_{0};
+  std::vector<int> matrix_data_;
+  std::vector<int> vector_data_;
   OutType result_;
 
-  OutType local_vector_;
-  OutType local_matrix_;
   OutType local_result_;
   int local_cols_{0};
 

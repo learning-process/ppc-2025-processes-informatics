@@ -17,20 +17,20 @@ class KurpiakovAVertTapeMatVecMulPerfTests : public ppc::util::BaseRunPerfTests<
   OutType expected_data_;
 
   void SetUp() override {
-    const int64_t size = 7500;
+    const int size = 7500;
 
-    std::vector<int64_t> matrix(static_cast<size_t>(size * size));
-    std::vector<int64_t> vector(static_cast<size_t>(size));
+    std::vector<int> matrix(static_cast<size_t>(size) * static_cast<size_t>(size));
+    std::vector<int> vector(static_cast<size_t>(size));
 
-    for (int64_t i = 0; i < size; ++i) {
-      for (int64_t j = 0; j < size; ++j) {
+    for (int i = 0; i < size; ++i) {
+      for (int j = 0; j < size; ++j) {
         matrix[static_cast<size_t>((i * size) + j)] = (i == j) ? (i + 1) : 0;
       }
       expected_data_.push_back(i + 1);
     }
 
-    for (int64_t i = 0; i < size; ++i) {
-      vector[i] = 1LL;
+    for (int i = 0; i < size; ++i) {
+      vector[i] = 1;
     }
 
     input_data_ = std::make_tuple(size, matrix, vector);

@@ -1,6 +1,7 @@
 #include "kurpiakov_a_vert_tape_mat_vec_mul/seq/include/ops_seq.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "kurpiakov_a_vert_tape_mat_vec_mul/common/include/common.hpp"
@@ -52,10 +53,10 @@ bool KurpiakovAVretTapeMulSEQ::RunImpl() {
   const auto &in_vec = std::get<2>(GetInput());
   const auto &in_mat = std::get<1>(GetInput());
 
-  OutType res_vec(total_size, 0);
+  OutType res_vec(static_cast<size_t>(total_size), 0);
   for (int j = 0; j < total_size; j++) {
     for (int i = 0; i < total_size; i++) {
-      res_vec[i] += in_mat[(i * total_size) + j] * in_vec[j];
+      res_vec[i] += static_cast<int64_t>(in_mat[(i * total_size) + j]) * in_vec[j];
     }
   }
 
