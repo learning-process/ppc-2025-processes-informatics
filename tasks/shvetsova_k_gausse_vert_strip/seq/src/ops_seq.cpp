@@ -41,7 +41,7 @@ bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
 }
 
 void ShvetsovaKGaussVertStripSEQ::FindPivotAndSwap(int target_row, int n, std::vector<std::vector<double>> &band,
-                                                   std::vector<int> &offsets, std::vector<double> &vec) {
+                                                   std::vector<int> &offsets, std::vector<double> &vec) const {
   int pivot_row = target_row;
   double max_val = std::abs(band[target_row][target_row - offsets[target_row]]);
 
@@ -61,7 +61,7 @@ void ShvetsovaKGaussVertStripSEQ::FindPivotAndSwap(int target_row, int n, std::v
 }
 
 void ShvetsovaKGaussVertStripSEQ::EliminateBelow(int target_row, int n, std::vector<std::vector<double>> &band,
-                                                 const std::vector<int> &offsets, std::vector<double> &vec) {
+                                                 const std::vector<int> &offsets, std::vector<double> &vec) const {
   const double eps = std::numeric_limits<double>::epsilon() * 100.0;
   int offset_i = offsets[target_row];
 
