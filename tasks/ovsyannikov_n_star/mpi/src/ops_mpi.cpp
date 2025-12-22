@@ -34,9 +34,7 @@ bool OvsyannikovNStarMPI::RunImpl() {
   int val = GetInput()[2];
 
   if (size <= 1 || src >= size || dst >= size) {
-    if (rank == 0) {
-      GetOutput() = val;
-    }
+    GetOutput() = val;
     return true;
   }
 
