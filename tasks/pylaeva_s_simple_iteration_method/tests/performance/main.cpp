@@ -24,8 +24,8 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
     expected_data_.assign(N, 1.0);
 
     for (size_t i = 0; i < N; ++i) {
-      A[(i * N) + i] = N + 3.0;
-      b[i] = (2 * N) + 2.0;
+      A[(i * N) + i] = N;
+      b[i] = (2 * N) - 1.0;
     }
 
     input_data_ = std::make_tuple(N, A, b);

@@ -100,7 +100,7 @@ TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationsTests) {
 const std::array<TestType, 11> kTestParam = {"Simple_1x1",
                                              "Identity_matrix_2x2",
                                              "Identity_matrix_5x5",
-                                             "Identity_matrix_3x13",
+                                             "Identity_matrix_3x3",
                                              "DiagDominanceRandom_2x2",
                                              "DiagDominanceRandom_3x3",
                                              "DiagDominanceRandom_5x5",

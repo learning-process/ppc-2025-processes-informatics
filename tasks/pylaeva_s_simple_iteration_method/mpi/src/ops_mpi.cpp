@@ -41,10 +41,9 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
   std::vector<double> b;
 
   if (proc_rank == 0) {
-    const auto &input = GetInput();
-    n = std::get<0>(input);
-    A = std::get<1>(input);
-    b = std::get<2>(input);
+    n = std::get<0>(GetInput());
+    A = std::get<1>(GetInput());
+    b = std::get<2>(GetInput());
   }
 
   MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
