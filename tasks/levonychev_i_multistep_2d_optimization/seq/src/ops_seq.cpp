@@ -1,7 +1,7 @@
 #include "levonychev_i_multistep_2d_optimization/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-
+#include <vector>
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/common/include/optimization_common.hpp"
 

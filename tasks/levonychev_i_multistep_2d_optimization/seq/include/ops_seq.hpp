@@ -22,7 +22,7 @@ class LevonychevIMultistep2dOptimizationSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   std::vector<Point> GenerateGridPoints(double x_min, double x_max, double y_min, double y_max, int grid_size);
-  std::vector<Point> SelectTopCandidates(const std::vector<Point> &points, int num_candidates) const;
+  [[nodiscard]] std::vector<Point> SelectTopCandidates(const std::vector<Point> &points, int num_candidates) const;
   void UpdateSearchRegionFromCandidates(const std::vector<Point> &candidates, double &x_min, double &x_max,
                                         double &y_min, double &y_max);
   Point ApplyLocalOptimizationToCandidates(const std::vector<Point> &candidates);

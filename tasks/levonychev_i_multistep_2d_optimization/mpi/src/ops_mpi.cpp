@@ -198,7 +198,7 @@ bool LevonychevIMultistep2dOptimizationMPI::RunImpl() {
     }
 
     if (!valid_points.empty()) {
-      std::sort(valid_points.begin(), valid_points.end());
+      std::ranges::sort(valid_points, [](const Point &a, const Point &b) { return a.value < b.value; });
       global_best = valid_points[0];
     } else {
       global_best = Point((params.x_min + params.x_max) / 2.0, (params.y_min + params.y_max) / 2.0,
