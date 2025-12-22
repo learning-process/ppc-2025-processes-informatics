@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <vector>
 
 #include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
@@ -20,8 +19,14 @@ class ShvetsovaKGaussVertStripMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  int sizeOfRib = 0;
+  int size_of_rib_ = 0;
   // Доп функции
+  static int GetOwnerOfColumn(int k, int N, int size);
+  static int GetColumnStartIndex(int rank, int N, int size);
+  void ForwardStep(int k, int N, int local_cols, int col_start, std::vector<std::vector<double>> &A_local,
+                   std::vector<double> &b);
+  void BackwardStep(int k, int N, int col_start, std::vector<std::vector<double>> &A_local, std::vector<double> &b,
+                    std::vector<double> &x);
 };
 
 }  // namespace shvetsova_k_gausse_vert_strip

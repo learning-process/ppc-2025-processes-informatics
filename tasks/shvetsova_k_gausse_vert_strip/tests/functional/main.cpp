@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <fstream>
-#include <iostream>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
@@ -16,7 +16,7 @@
 #include "util/include/util.hpp"
 
 namespace shvetsova_k_gausse_vert_strip {
-static std::pair<std::vector<std::vector<double>>, std::vector<double>> GenerateTestInput(int sz, int sizeOfRib);
+static std::pair<std::vector<std::vector<double>>, std::vector<double>> GenerateTestInput(int sz, int size_of_rib);
 class ShvetsovaKGaussVertStripRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -26,11 +26,9 @@ class ShvetsovaKGaussVertStripRunFuncTestsProcesses : public ppc::util::BaseRunF
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    const int sz = 5;         // размер матрицы
-    const int sizeOfRib = 2;  // полу-ширина + 1 (k = 1)
-    input_data_ = GenerateTestInput(sz, sizeOfRib);
-
-    return;
+    const int sz = 5;           // размер матрицы
+    const int size_of_rib = 2;  // полу-ширина + 1 (k = 1)
+    input_data_ = GenerateTestInput(sz, size_of_rib);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -38,7 +36,7 @@ class ShvetsovaKGaussVertStripRunFuncTestsProcesses : public ppc::util::BaseRunF
 
     const auto &matrix = input_data_.first;
     const auto &b = input_data_.second;
-    int n = matrix.size();
+    int n = static_cast<int>(matrix.size());
 
     for (int i = 0; i < n; ++i) {
       double sum = 0.0;
@@ -60,11 +58,11 @@ class ShvetsovaKGaussVertStripRunFuncTestsProcesses : public ppc::util::BaseRunF
   OutType expect_res_;
 };
 
-static std::pair<std::vector<std::vector<double>>, std::vector<double>> GenerateTestInput(int sz, int sizeOfRib) {
+static std::pair<std::vector<std::vector<double>>, std::vector<double>> GenerateTestInput(int sz, int size_of_rib) {
   std::vector<std::vector<double>> matrix(sz, std::vector<double>(sz, 0.0));
   std::vector<double> vec(sz, 0.0);
 
-  int k = sizeOfRib - 1;
+  int k = size_of_rib - 1;
 
   for (int i = 0; i < sz; ++i) {
     double sum = 0.0;

@@ -20,7 +20,14 @@ class ShvetsovaKGaussVertStripSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int sizeOfRib = 0;
+  // Вспомогательные методы для снижения когнитивной сложности
+  void FindPivotAndSwap(int target_row, int n, std::vector<std::vector<double>> &band, std::vector<int> &offsets,
+                        std::vector<double> &vec);
+
+  void EliminateBelow(int target_row, int n, std::vector<std::vector<double>> &band, const std::vector<int> &offsets,
+                      std::vector<double> &vec);
+
+  int size_of_rib_ = 0;
 };
 
 }  // namespace shvetsova_k_gausse_vert_strip

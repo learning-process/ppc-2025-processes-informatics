@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
-#include <random>
 #include <vector>
 
 #include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
@@ -16,11 +16,11 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
   void SetUp() override {
     // Размер матрицы для замера производительности (1000x1000)
 
-    const int sz = 6000;
+    const int sz = 5000;
 
     // Полуширина ленты
 
-    const int sizeOfRib = 600;
+    const int size_of_rib = 500;
 
     std::vector<std::vector<double>> matrix(sz, std::vector<double>(sz, 0.0));
 
@@ -33,9 +33,9 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
     for (int i = 0; i < sz; ++i) {
       double row_sum = 0.0;
 
-      for (int j = std::max(0, i - sizeOfRib + 1); j <= std::min(sz - 1, i + sizeOfRib - 1); ++j) {
+      for (int j = std::max(0, i - size_of_rib + 1); j <= std::min(sz - 1, i + size_of_rib - 1); ++j) {
         if (i != j) {
-          matrix[i][j] = (i + j) % 5 + 1.0;  // Заполнение вне диагонали
+          matrix[i][j] = ((i + j) % 5) + 1.0;  // Заполнение вне диагонали
 
           row_sum += std::abs(matrix[i][j]);
         }
