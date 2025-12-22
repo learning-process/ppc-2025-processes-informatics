@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -22,15 +23,13 @@ GusevaAJarvisMPI::GusevaAJarvisMPI(const InType &in) {
 }
 
 bool GusevaAJarvisMPI::ValidationImpl() {
-  const auto &input_tuple = GetInput();
-  const int width = std::get<0>(input_tuple);
-  const int height = std::get<1>(input_tuple);
-  const std::vector<int> &image = std::get<2>(input_tuple);
-  int validation_result = 0;
+  const auto &[width, height, image] = GetInput();
+  // const int width = std::get<0>(input_tuple);
+  // const int height = std::get<1>(input_tuple);
+  // const std::vector<int> &image = std::get<2>(input_tuple);
 
   if (rank_ == 0) {
     const bool is_size_match = static_cast<int>(image.size()) == width * height;
-
     bool is_image_binary = true;
     for (const int pixel_value : image) {
       if (pixel_value != 0 && pixel_value != 1) {
@@ -38,14 +37,11 @@ bool GusevaAJarvisMPI::ValidationImpl() {
         break;
       }
     }
-
     const bool is_size_possible = width > 0 && height > 0;
-    validation_result = (is_image_binary && is_size_possible && is_size_match) ? 1 : 0;
+    return is_image_binary && is_size_possible && is_size_match;
   }
 
-  MPI_Bcast(&validation_result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  return validation_result == 1;
+  return true;
 }
 
 bool GusevaAJarvisMPI::PreProcessingImpl() {
@@ -55,8 +51,13 @@ bool GusevaAJarvisMPI::PreProcessingImpl() {
   const std::vector<int> &image = std::get<2>(input_tuple);
 
   points_.clear();
+  int rows_per_process = height / size_;
+  int remainder = height % size_;
 
-  for (int yy = 0; yy < height; ++yy) {
+  int start_row = (rank_ * rows_per_process) + std::min(rank_, remainder);
+  int end_row = start_row + rows_per_process + (rank_ < remainder ? 1 : 0);
+
+  for (int yy = start_row; yy < end_row; ++yy) {
     for (int xx = 0; xx < width; ++xx) {
       if (image[(yy * width) + xx] == 1) {
         points_.emplace_back(xx, yy);
