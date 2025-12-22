@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/common/include/optimization_common.hpp"
 #include "task/include/task.hpp"
@@ -25,10 +26,10 @@ class LevonychevIMultistep2dOptimizationMPI : public BaseTask {
                                 OptimizationResult &result);
 
   static void GatherAndSelectCandidates(int rank, const std::vector<Point> &local_candidates,
-                                 std::vector<Point> &all_candidates);
+                                        std::vector<Point> &all_candidates);
 
-  static void ScatterNewRegions(int rank, int size, const OptimizationParams &params, const std::vector<Point> &all_candidates,
-                         int step, SearchRegion &my_region);
+  static void ScatterNewRegions(int rank, int size, const OptimizationParams &params,
+                                const std::vector<Point> &all_candidates, int step, SearchRegion &my_region);
 
   static void BuildNewRegions(const OptimizationParams &params, const std::vector<Point> &all_candidates, int step,
                               std::vector<SearchRegion> &new_regions);
