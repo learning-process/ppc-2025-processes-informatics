@@ -25,18 +25,18 @@ inline double F2(double x, double y) {
 }
 
 inline double F3(double x, double y) {
-  return exp(-(x * x) - (y * y)) * sin(10 * x) * cos(10 * y);
+  return (exp(-(x * x) - (y * y)) * sin(10 * x)) * cos(10 * y);
 }
 
 inline double F4(double x, double y) {
   double r = sqrt((x * x) + (y * y));
-  return exp(-r) * sin(20 * r) + log(1 + (x * x) + (y * y));
+  return (exp(-r) * sin(20 * r)) + log(1 + (x * x) + (y * y));
 }
 
 inline double F5(double x, double y) {
   double s = 0.0;
   for (int k = 1; k <= 150; k++) {
-    s += sin(pow(x, 5)) * cos(k * y) + log(1 + (x * x) + (y * y)) * 5;
+    s += (sin(pow(x, 5)) * cos(k * y)) + (log(1 + (x * x) + (y * y)) * 5);
   }
   return s;
 }
@@ -63,6 +63,8 @@ inline auto GetFunc(int num) {
       return &F4;
     case 5:
       return &F5;
+    default:
+    return &F1;
   }
   return &F1;
 }

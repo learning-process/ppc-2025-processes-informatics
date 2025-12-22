@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>
 #include <tuple>
-#include <vector>
+#include <cmath>
 
 #include "luzan_e_simps_int/common/include/common.hpp"
 #include "luzan_e_simps_int/mpi/include/ops_mpi.hpp"

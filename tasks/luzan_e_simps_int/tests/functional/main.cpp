@@ -17,7 +17,15 @@ namespace luzan_e_simps_int {
 class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_";
+    int n = get<0>(test_param);
+    unsigned a = static_cast<unsigned>(100.0 * fabs(std::get<0>(std::get<1>(test_param))));
+    unsigned b = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<1>(test_param))));
+    unsigned c = static_cast<unsigned>(100.0 * fabs(std::get<0>(std::get<2>(test_param))));
+    unsigned d = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<2>(test_param))));
+    int func_num = std::get<3>(test_param);
+
+    std::string square = "square_" + std::to_string(a) + "_" + std::to_string(b) + "___" + std::to_string(c) + "_" + std::to_string(d);
+    return "for_" + std::to_string(n) + "pieces_" + "_" + square + "__by_func_No_" + std::to_string(func_num);
   }
 
  protected:

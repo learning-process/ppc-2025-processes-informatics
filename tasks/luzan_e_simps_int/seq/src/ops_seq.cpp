@@ -32,7 +32,8 @@ bool LuzanESimpsIntSEQ::PreProcessingImpl() {
 bool LuzanESimpsIntSEQ::RunImpl() {
   double a = 0.0;
   double b = 0.0;
-  double c = 0.0, d = 0.0;
+  double c = 0.0;
+  double d = 0.0;
   int n = 0;  // кол-во отрезков
   int func_num = 0;
 
