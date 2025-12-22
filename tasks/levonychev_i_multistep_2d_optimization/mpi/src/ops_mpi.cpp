@@ -167,31 +167,31 @@ void LevonychevIMultistep2dOptimizationMPI::ExecuteOptimizationSteps(int rank, i
     std::vector<Point> local_candidates;
     ProcessLocalCandidates(params, local_points, local_candidates);
 
-    if (step < params.num_steps - 1) {
-      std::vector<Point> all_candidates;
-      if (rank == 0) {
-        all_candidates.resize(static_cast<size_t>(params.candidates_per_step) * static_cast<size_t>(size));
-      }
-
-      MPI_Gather(local_candidates.data(), static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE,
-                 all_candidates.data(), static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE, 0,
-                 MPI_COMM_WORLD);
-
-      if (rank == 0) {
-        std::vector<Point> valid_candidates;
-        for (const auto &point : all_candidates) {
-          if (point.value < std::numeric_limits<double>::max()) {
-            valid_candidates.push_back(point);
-          }
-        }
-        std::ranges::sort(valid_candidates, [](const Point &a, const Point &b) { return a.value < b.value; });
-
-        int num_global_candidates = std::min(params.candidates_per_step, static_cast<int>(valid_candidates.size()));
-        all_candidates.assign(valid_candidates.begin(), valid_candidates.begin() + num_global_candidates);
-      }
-
-      ScatterNewRegions(rank, size, params, all_candidates, step, my_region);
+    if (step >= params.num_steps - 1) {
+      result.iterations += grid_size * grid_size;
+      continue;
     }
+
+    std::vector<Point> all_candidates;
+    if (rank == 0) {
+      all_candidates.resize(static_cast<size_t>(params.candidates_per_step) * static_cast<size_t>(size));
+    }
+
+    MPI_Gather(local_candidates.data(), static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE,
+               all_candidates.data(), static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE, 0,
+               MPI_COMM_WORLD);
+
+    if (rank == 0) {
+      std::vector<Point> valid_candidates;
+      std::ranges::copy_if(all_candidates, std::back_inserter(valid_candidates),
+                           [](const Point &p) { return p.value < std::numeric_limits<double>::max(); });
+      std::ranges::sort(valid_candidates, [](const Point &a, const Point &b) { return a.value < b.value; });
+
+      int num_global_candidates = std::min(params.candidates_per_step, static_cast<int>(valid_candidates.size()));
+      all_candidates.assign(valid_candidates.begin(), valid_candidates.begin() + num_global_candidates);
+    }
+
+    ScatterNewRegions(rank, size, params, all_candidates, step, my_region);
 
     result.iterations += grid_size * grid_size;
   }
