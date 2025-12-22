@@ -34,11 +34,18 @@ class MaslovaURowMatrVecPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int rank = 0;
+    int is_initialized;
+    MPI_Initialized(&is_initialized);
+
+    if (is_initialized) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
     if (rank != 0) {
       return true;
     }
+
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
