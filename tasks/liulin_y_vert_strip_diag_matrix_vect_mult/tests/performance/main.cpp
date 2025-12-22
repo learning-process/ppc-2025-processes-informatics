@@ -21,7 +21,7 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
   };
 
   static TestConfig GetLiulinSpecificConfig(const std::string &test_name) {
-    constexpr int kLargeDim = 2048;
+    constexpr int kLargeDim = 8192;
     if (test_name.find("liulin_y_vert_strip_diag_matrix_vect_mult_mpi") != std::string::npos) {
       return {.rows = kLargeDim, .cols = kLargeDim, .name = "mpi_large"};
     }
