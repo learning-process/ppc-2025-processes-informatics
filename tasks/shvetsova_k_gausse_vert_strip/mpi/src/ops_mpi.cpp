@@ -7,12 +7,13 @@
 #include <utility>
 #include <vector>
 
+#include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
 namespace shvetsova_k_gausse_vert_strip {
 
 // Вспомогательная функция для определения ранга-владельца колонки k
-static int GetOwner(int k, int N, int size) {
-  int base_cols = N / size;
-  int remainder = N % size;
+int GetOwner(int k, int n, int size) {
+  int base_cols = n / size;
+  int remainder = n % size;
   int threshold = remainder * (base_cols + 1);
   if (k < threshold) {
     return k / (base_cols + 1);
@@ -21,9 +22,9 @@ static int GetOwner(int k, int N, int size) {
 }
 
 // Вспомогательная функция для определения начального индекса колонки для ранга
-static int GetColStart(int rank, int N, int size) {
-  int base_cols = N / size;
-  int remainder = N % size;
+int GetColStart(int rank, int n, int size) {
+  int base_cols = n / size;
+  int remainder = n % size;
   if (rank < remainder) {
     return rank * (base_cols + 1);
   }
@@ -55,7 +56,7 @@ bool ShvetsovaKGaussVertStripMPI::PreProcessingImpl() {
 }
 
 void ShvetsovaKGaussVertStripMPI::ForwardStep(int k, int n, int local_cols, int col_start,
-                                              std::vector<std::vector<double>> &a_local, std::vector<double> &b) {
+                                              std::vector<std::vector<double>> &a_local, std::vector<double> &b) const {
   int size = 0;
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -89,7 +90,7 @@ void ShvetsovaKGaussVertStripMPI::ForwardStep(int k, int n, int local_cols, int 
 }
 
 void ShvetsovaKGaussVertStripMPI::BackwardStep(int k, int n, int col_start, std::vector<std::vector<double>> &a_local,
-                                               std::vector<double> &b, std::vector<double> &x) {
+                                               std::vector<double> &b, std::vector<double> &x) const{
   int size = 0;
   int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);

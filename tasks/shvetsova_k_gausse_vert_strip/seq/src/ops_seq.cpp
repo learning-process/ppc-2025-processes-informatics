@@ -5,12 +5,13 @@
 #include <limits>
 #include <vector>
 
+#include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
+
 namespace shvetsova_k_gausse_vert_strip {
 
-ShvetsovaKGaussVertStripSEQ::ShvetsovaKGaussVertStripSEQ(const InType &in) {
+ShvetsovaKGaussVertStripSEQ::ShvetsovaKGaussVertStripSEQ(const InType &in) : size_of_rib_(1) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = InType(in);
-  size_of_rib_ = 1;
 }
 
 bool ShvetsovaKGaussVertStripSEQ::ValidationImpl() {

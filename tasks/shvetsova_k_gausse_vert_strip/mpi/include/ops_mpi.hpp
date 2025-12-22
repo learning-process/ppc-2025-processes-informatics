@@ -21,12 +21,12 @@ class ShvetsovaKGaussVertStripMPI : public BaseTask {
   bool PostProcessingImpl() override;
   int size_of_rib_ = 0;
   // Доп функции
-  static int GetOwnerOfColumn(int k, int N, int size);
-  static int GetColumnStartIndex(int rank, int N, int size);
-  void ForwardStep(int k, int N, int local_cols, int col_start, std::vector<std::vector<double>> &A_local,
-                   std::vector<double> &b);
-  void BackwardStep(int k, int N, int col_start, std::vector<std::vector<double>> &A_local, std::vector<double> &b,
-                    std::vector<double> &x);
+  static int GetOwnerOfColumn(int k, int n, int size);
+  static int GetColumnStartIndex(int rank, int n, int size);
+  void ForwardStep(int k, int n, int local_cols, int col_start, std::vector<std::vector<double>> &a_local,
+                   std::vector<double> &b) const;
+  void BackwardStep(int k, int n, int col_start, std::vector<std::vector<double>> &a_local, std::vector<double> &b,
+                    std::vector<double> &x) const;
 };
 
 }  // namespace shvetsova_k_gausse_vert_strip
