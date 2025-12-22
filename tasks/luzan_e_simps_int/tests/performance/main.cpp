@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <tuple>
 #include <cmath>
+#include <tuple>
 
 #include "luzan_e_simps_int/common/include/common.hpp"
 #include "luzan_e_simps_int/mpi/include/ops_mpi.hpp"

@@ -64,7 +64,7 @@ inline auto GetFunc(int num) {
     case 5:
       return &F5;
     default:
-    return &F1;
+      return &F1;
   }
   return &F1;
 }
