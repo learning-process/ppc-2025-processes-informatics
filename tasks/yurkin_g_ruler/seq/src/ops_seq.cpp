@@ -1,8 +1,5 @@
 #include "yurkin_g_ruler/seq/include/ops_seq.hpp"
 
-#include <vector>
-
-#include "util/include/util.hpp"
 #include "yurkin_g_ruler/common/include/common.hpp"
 
 namespace yurkin_g_ruler {

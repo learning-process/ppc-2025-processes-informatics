@@ -2,12 +2,8 @@
 
 #include <mpi.h>
 
-#include <cerrno>
-#include <climits>
-#include <cstdlib>
-#include <vector>
+#include <algorithm>
 
-#include "util/include/util.hpp"
 #include "yurkin_g_ruler/common/include/common.hpp"
 
 namespace yurkin_g_ruler {
@@ -27,28 +23,6 @@ bool YurkinGRulerMPI::PreProcessingImpl() {
   return true;
 }
 
-namespace {
-int ParseEnvOrDefault(const char *name, int def) {
-  const char *val = std::getenv(name);
-  if (val == nullptr) {
-    return def;
-  }
-  char *end = nullptr;
-  errno = 0;
-  long v = std::strtol(val, &end, 10);
-  if (end == val || errno != 0) {
-    return def;
-  }
-  if (v < INT_MIN) {
-    return INT_MIN;
-  }
-  if (v > INT_MAX) {
-    return INT_MAX;
-  }
-  return static_cast<int>(v);
-}
-}  // namespace
-
 bool YurkinGRulerMPI::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -59,23 +33,11 @@ bool YurkinGRulerMPI::RunImpl() {
     return false;
   }
 
-  int default_src = 0;
-  int default_dst = (size > 0) ? (size - 1) : 0;
-  int src = ParseEnvOrDefault("PPC_SRC", default_src);
-  int dst = ParseEnvOrDefault("PPC_DST", default_dst);
+  int src = 0;
+  int dst = size - 1;
 
-  if (src < 0) {
-    src = 0;
-  }
-  if (src >= size) {
-    src = size - 1;
-  }
-  if (dst < 0) {
-    dst = 0;
-  }
-  if (dst >= size) {
-    dst = size - 1;
-  }
+  src = std::clamp(src, 0, size - 1);
+  dst = std::clamp(dst, 0, size - 1);
 
   int payload = GetInput();
 
@@ -89,37 +51,37 @@ bool YurkinGRulerMPI::RunImpl() {
     return true;
   }
 
-  int direction = (dst > src) ? +1 : -1;
+  const int low = std::min(src, dst);
+  const int high = std::max(src, dst);
+  const int direction = (dst > src) ? +1 : -1;
 
-  bool on_path = false;
-  if (direction > 0) {
-    on_path = (rank >= src && rank <= dst);
-  } else {
-    on_path = (rank <= src && rank >= dst);
-  }
-
-  if (!on_path) {
+  if (rank < low || rank > high) {
     GetOutput() = 0;
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
 
   if (rank == src) {
-    int next = rank + direction;
+    const int next = rank + direction;
     MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
     GetOutput() = 0;
-  } else {
-    int prev = rank - direction;
-    int recv_val = 0;
-    MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (rank == dst) {
-      GetOutput() = recv_val;
-    } else {
-      int next = rank + direction;
-      MPI_Send(&recv_val, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-      GetOutput() = 0;
-    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
   }
+
+  const int prev = rank - direction;
+  int recv_val = 0;
+  MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  if (rank == dst) {
+    GetOutput() = recv_val;
+    MPI_Barrier(MPI_COMM_WORLD);
+    return true;
+  }
+
+  const int next = rank + direction;
+  MPI_Send(&recv_val, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
+  GetOutput() = 0;
 
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
