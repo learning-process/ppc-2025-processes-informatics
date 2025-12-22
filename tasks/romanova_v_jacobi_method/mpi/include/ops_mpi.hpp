@@ -18,11 +18,20 @@ class RomanovaVJacobiMethodMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<double> x_;
-  std::vector<std::vector<double>> A_;
-  std::vector<double> b_;
-  double eps_;
-  size_t maxIterations_;
+  bool isDiagonallyDominant(const std::vector<OutType>& matrix);
+  bool isConverge(const OutType& prev, const OutType& curr);
+
+  OutType x_;
+  OutType A_; //чтобы не мучаться с пересылкой будем сразу хранить данные в одномерном массиве
+  OutType b_;
+  double eps_{};
+  size_t maxIterations_{};
+
+  OutType local_data_;
+
+  size_t n_{};
+  size_t st_row_{};
+  size_t local_n_{};
 };
 
 }  // namespace romanova_v_jacobi_method
