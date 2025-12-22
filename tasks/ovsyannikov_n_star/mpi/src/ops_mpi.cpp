@@ -15,10 +15,7 @@ OvsyannikovNStarMPI::OvsyannikovNStarMPI(const InType &in) {
 }
 
 bool OvsyannikovNStarMPI::ValidationImpl() {
-  int size = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  const auto &in = GetInput();
-  return in.size() == 3 && in[0] >= 0 && in[0] < size && in[1] >= 0 && in[1] < size;
+  return GetInput().size() == 3;
 }
 
 bool OvsyannikovNStarMPI::PreProcessingImpl() {
@@ -38,30 +35,35 @@ bool OvsyannikovNStarMPI::RunImpl() {
   const int center = 0;
   int res = 0;
 
-  if (src == dst) {
-    if (rank == src) {
-      res = val;
+  if (size > 1 && src < size && dst < size) {
+    if (src == dst) {
+      if (rank == src) {
+        res = val;
+      }
+    } else if (src == center || dst == center) {
+      if (rank == src) {
+        MPI_Send(&val, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+      } else if (rank == dst) {
+        MPI_Recv(&res, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      }
+    } else {
+      if (rank == src) {
+        MPI_Send(&val, 1, MPI_INT, center, 0, MPI_COMM_WORLD);
+      } else if (rank == center) {
+        int buf = 0;
+        MPI_Recv(&buf, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Send(&buf, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+      } else if (rank == dst) {
+        MPI_Recv(&res, 1, MPI_INT, center, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      }
     }
-  } else if (src == center || dst == center) {
-    if (rank == src) {
-      MPI_Send(&val, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
-    } else if (rank == dst) {
-      MPI_Recv(&res, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
+    GetOutput() = res;
+    MPI_Bcast(&GetOutput(), 1, MPI_INT, dst, MPI_COMM_WORLD);
   } else {
-    if (rank == src) {
-      MPI_Send(&val, 1, MPI_INT, center, 0, MPI_COMM_WORLD);
-    } else if (rank == center) {
-      int buf = 0;
-      MPI_Recv(&buf, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Send(&buf, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
-    } else if (rank == dst) {
-      MPI_Recv(&res, 1, MPI_INT, center, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (rank == 0) {
+      GetOutput() = val;
     }
   }
-
-  GetOutput() = res;
-  MPI_Bcast(&GetOutput(), 1, MPI_INT, dst, MPI_COMM_WORLD);
 
   return true;
 }
