@@ -1,18 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
-
+#include <iostream>
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/mpi/include/ops_mpi.hpp"
 #include "levonychev_i_multistep_2d_optimization/seq/include/ops_seq.hpp"
@@ -21,17 +15,17 @@
 
 namespace levonychev_i_multistep_2d_optimization {
 
-inline double ParaboloidFunction(double x, double y, double x0, double y0) {
+static inline double ParaboloidFunction(double x, double y, double x0, double y0) {
   double dx = x - x0;
   double dy = y - y0;
-  return dx * dx + dy * dy;
+  return (dx * dx) + (dy * dy);
 }
 
-inline double xy(double x, double y) {
+static inline double Xy(double x, double y) {
   return x * y;
 }
 
-inline double xy_reverse(double x, double y) {
+static inline double Xyreverse(double x, double y) {
   return 1.0 / (x * y);
 }
 
@@ -77,7 +71,7 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
       const double y_min = 3.0;
       const double y_max = 10.0;
 
-      auto func = [](double x, double y) -> double { return xy(x, y); };
+      auto func = [](double x, double y) -> double { return Xy(x, y); };
 
       input_data_.func = func;
       input_data_.x_min = x_min;
@@ -99,7 +93,7 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
       const double y_min = 4;
       const double y_max = 10;
 
-      auto func = [](double x, double y) -> double { return xy_reverse(x, y); };
+      auto func = [](double x, double y) -> double { return Xyreverse(x, y); };
 
       input_data_.func = func;
       input_data_.x_min = x_min;
@@ -145,7 +139,7 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
       tolerance_value = 5;
     }
     std::cout << test_id << " x_min: " << output_data.x_min << " y_min: " << output_data.y_min
-              << " value: " << output_data.value << std::endl;
+              << " value: " << output_data.value << '\n';
     bool x_ok = std::abs(output_data.x_min - expected_x_min_) < tolerance_coord;
     bool y_ok = std::abs(output_data.y_min - expected_y_min_) < tolerance_coord;
     bool value_ok = std::abs(output_data.value - expected_value_) < tolerance_value;

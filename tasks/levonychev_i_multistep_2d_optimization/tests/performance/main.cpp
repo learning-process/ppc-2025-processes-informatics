@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-
+#include <iostream>
 #include <cmath>
 
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
@@ -9,10 +9,10 @@
 
 namespace levonychev_i_multistep_2d_optimization {
 
-inline double RosenbrockFunction(double x, double y) {
+static inline double RosenbrockFunction(double x, double y) {
   double term1 = 1.0 - x;
-  double term2 = y - x * x;
-  return term1 * term1 + 100.0 * term2 * term2;
+  double term2 = y - (x * x);
+  return (term1 * term1) + (100.0 * term2 * term2);
 }
 
 class LevonychevIMultistep2dOptimizationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
@@ -56,7 +56,7 @@ class LevonychevIMultistep2dOptimizationPerfTests : public ppc::util::BaseRunPer
     const double tolerance_coord = 0.5;
     const double tolerance_value = 2.0;
     std::cout << " x_min: " << output_data.x_min << " y_min: " << output_data.y_min << " value: " << output_data.value
-              << std::endl;
+              << '\n';
     bool x_ok = std::abs(output_data.x_min - expected_x_min_) < tolerance_coord;
     bool y_ok = std::abs(output_data.y_min - expected_y_min_) < tolerance_coord;
     bool value_ok = std::abs(output_data.value - expected_value_min_) < tolerance_value;

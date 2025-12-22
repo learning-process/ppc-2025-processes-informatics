@@ -15,11 +15,10 @@ struct Point {
 
   Point() = default;
   Point(double x_val, double y_val, double func_value) : x(x_val), y(y_val), value(func_value) {}
-
-  bool operator<(const Point &other) const {
-    return value < other.value;
-  }
 };
+inline bool operator<(const Point &lhs, const Point &rhs) {
+    return lhs.value < rhs.value;
+  }
 
 struct SearchRegion {
   double x_min = 0.0;
@@ -46,8 +45,8 @@ inline Point LocalOptimization(const std::function<double(double, double)> &func
     double grad_x = (func(x + h, y) - func(x - h, y)) / (2.0 * h);
     double grad_y = (func(x, y + h) - func(x, y - h)) / (2.0 * h);
 
-    double new_x = x - step_size * grad_x;
-    double new_y = y - step_size * grad_y;
+    double new_x = x - (step_size * grad_x);
+    double new_y = y - (step_size * grad_y);
 
     new_x = std::max(x_min, std::min(x_max, new_x));
     new_y = std::max(y_min, std::min(y_max, new_y));
@@ -63,7 +62,7 @@ inline Point LocalOptimization(const std::function<double(double, double)> &func
     current_value = new_value;
   }
 
-  return Point(x, y, current_value);
+  return {x, y, current_value};
 }
 
 inline std::vector<Point> SearchInRegion(const std::function<double(double, double)> &func, const SearchRegion &region,
@@ -75,15 +74,15 @@ inline std::vector<Point> SearchInRegion(const std::function<double(double, doub
 
   for (int i = 0; i < grid_size; ++i) {
     for (int j = 0; j < grid_size; ++j) {
-      double x = region.x_min + i * step_x;
-      double y = region.y_min + j * step_y;
+      double x = region.x_min + (i * step_x);
+      double y = region.y_min + (j * step_y);
 
       double value = func(x, y);
       points.emplace_back(x, y, value);
     }
   }
 
-  std::sort(points.begin(), points.end());
+  std::ranges::sort(points, [](const Point& a, const Point& b) { return a.value < b.value; });
   return points;
 }
 
