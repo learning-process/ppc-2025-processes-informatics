@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
-#include <iostream>
+
 #include <cmath>
+#include <iostream>
 
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/mpi/include/ops_mpi.hpp"

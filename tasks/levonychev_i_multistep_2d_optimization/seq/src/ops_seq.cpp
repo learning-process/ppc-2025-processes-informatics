@@ -28,9 +28,8 @@ bool LevonychevIMultistep2dOptimizationSEQ::PreProcessingImpl() {
   return true;
 }
 
-std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::GenerateGridPoints(double x_min, double x_max,
-                                                                              double y_min, double y_max,
-                                                                              int grid_size) {
+std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::GenerateGridPoints(double x_min, double x_max, double y_min,
+                                                                             double y_max, int grid_size) {
   const auto &params = GetInput();
   std::vector<Point> grid_points;
 
@@ -53,7 +52,7 @@ std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::GenerateGridPoints(dou
 }
 
 std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::SelectTopCandidates(const std::vector<Point> &points,
-                                                                               int num_candidates) const {
+                                                                              int num_candidates) const {
   std::vector<Point> sorted_points = points;
   std::ranges::sort(sorted_points, [](const Point &a, const Point &b) { return a.value < b.value; });
 
@@ -62,8 +61,8 @@ std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::SelectTopCandidates(co
 }
 
 void LevonychevIMultistep2dOptimizationSEQ::UpdateSearchRegionFromCandidates(const std::vector<Point> &candidates,
-                                                                              double &x_min, double &x_max,
-                                                                              double &y_min, double &y_max) {
+                                                                             double &x_min, double &x_max,
+                                                                             double &y_min, double &y_max) {
   const auto &params = GetInput();
 
   if (candidates.empty()) {
@@ -100,8 +99,7 @@ void LevonychevIMultistep2dOptimizationSEQ::UpdateSearchRegionFromCandidates(con
   }
 }
 
-Point LevonychevIMultistep2dOptimizationSEQ::ApplyLocalOptimizationToCandidates(
-    const std::vector<Point> &candidates) {
+Point LevonychevIMultistep2dOptimizationSEQ::ApplyLocalOptimizationToCandidates(const std::vector<Point> &candidates) {
   const auto &params = GetInput();
   Point best_point = candidates[0];
 
@@ -151,8 +149,8 @@ bool LevonychevIMultistep2dOptimizationSEQ::RunImpl() {
   for (int step = 0; step < params.num_steps; ++step) {
     int grid_size = params.grid_size_step1 * (1 << step);
 
-    std::vector<Point> grid_points = GenerateGridPoints(current_x_min, current_x_max, current_y_min, current_y_max,
-                                                        grid_size);
+    std::vector<Point> grid_points =
+        GenerateGridPoints(current_x_min, current_x_max, current_y_min, current_y_max, grid_size);
     candidates = SelectTopCandidates(grid_points, params.candidates_per_step);
 
     if (step < params.num_steps - 1 && !candidates.empty()) {

@@ -17,8 +17,8 @@ struct Point {
   Point(double x_val, double y_val, double func_value) : x(x_val), y(y_val), value(func_value) {}
 };
 inline bool operator<(const Point &lhs, const Point &rhs) {
-    return lhs.value < rhs.value;
-  }
+  return lhs.value < rhs.value;
+}
 
 struct SearchRegion {
   double x_min = 0.0;
@@ -82,7 +82,7 @@ inline std::vector<Point> SearchInRegion(const std::function<double(double, doub
     }
   }
 
-  std::ranges::sort(points, [](const Point& a, const Point& b) { return a.value < b.value; });
+  std::ranges::sort(points, [](const Point &a, const Point &b) { return a.value < b.value; });
   return points;
 }
 

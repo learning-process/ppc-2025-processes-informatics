@@ -78,8 +78,8 @@ bool LevonychevIMultistep2dOptimizationMPI::RunImpl() {
     }
 
     MPI_Gather(local_candidates.data(), static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE,
-               (rank == 0) ? all_candidates.data() : nullptr, static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE, 0,
-               MPI_COMM_WORLD);
+               (rank == 0) ? all_candidates.data() : nullptr,
+               static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
       std::vector<Point> valid_candidates;
@@ -89,7 +89,7 @@ bool LevonychevIMultistep2dOptimizationMPI::RunImpl() {
         }
       }
 
-      std::ranges::sort(valid_candidates, [](const Point& a, const Point& b) { return a.value < b.value; });
+      std::ranges::sort(valid_candidates, [](const Point &a, const Point &b) { return a.value < b.value; });
 
       int num_global_candidates = std::min(params.candidates_per_step, static_cast<int>(valid_candidates.size()));
       all_candidates.assign(valid_candidates.begin(), valid_candidates.begin() + num_global_candidates);

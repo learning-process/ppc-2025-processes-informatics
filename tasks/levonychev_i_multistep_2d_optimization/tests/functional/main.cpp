@@ -4,9 +4,10 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <tuple>
-#include <iostream>
+
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
 #include "levonychev_i_multistep_2d_optimization/mpi/include/ops_mpi.hpp"
 #include "levonychev_i_multistep_2d_optimization/seq/include/ops_seq.hpp"
