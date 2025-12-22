@@ -10,7 +10,7 @@
 
 namespace nikitin_a_buble_sort {
 
-NikitinABubleSortMPI::NikitinABubleSortMPI(const InType &in) : n_(0) {
+NikitinABubleSortMPI::NikitinABubleSortMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput().clear();

@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -29,7 +30,7 @@ class NikitinABubleSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     auto params = GetParam();
     TestType test_params = std::get<2>(params);
 
-    test_case_id_ = std::get<0>(test_params);
+    test_case_id_ = static_cast<int>(std::get<0>(test_params));
     test_description_ = std::get<1>(test_params);
 
     // Генерируем тестовые данные в зависимости от ID теста
