@@ -12,6 +12,8 @@
 namespace liulin_y_vert_strip_diag_matrix_vect_mult {
 
 LiulinYVertStripDiagMatrixVectMultMPI::LiulinYVertStripDiagMatrixVectMultMPI(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+
   auto &matrix = std::get<0>(GetInput());
   auto &vect = std::get<1>(GetInput());
 
