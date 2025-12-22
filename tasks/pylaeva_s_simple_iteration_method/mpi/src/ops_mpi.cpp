@@ -36,26 +36,59 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
-  const auto &n = std::get<0>(GetInput());
-  const auto &A = std::get<1>(GetInput());
-  const auto &b = std::get<2>(GetInput());
+  size_t n = 0;
+  std::vector<double> A;
+  std::vector<double> b;
 
-  int base = static_cast<int>(n) / proc_num;
-  int rem = static_cast<int>(n) % proc_num;
-  int start = (proc_rank * base) + std::min(proc_rank, rem);
-  int count = base + (proc_rank < rem ? 1 : 0);
+  if (proc_rank == 0) {
+    const auto &input = GetInput();
+    n = std::get<0>(input);
+    A = std::get<1>(input);
+    b = std::get<2>(input);
+  }
+
+  MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+
+  std::vector<int> row_counts_per_rank(proc_num);
+  std::vector<int> row_offsets_per_rank(proc_num);
+  CalculateRowsDistribution(proc_num, static_cast<int>(n), row_counts_per_rank, row_offsets_per_rank);
+
+  std::vector<int> mat_block_sizes(proc_num, 0);
+  std::vector<int> mat_block_offsets(proc_num, 0);
+
+  int base = n / proc_num;
+  int rem = n % proc_num;
+
+  for (int i = 0; i < proc_num; ++i) {
+    int rows = base + (i < rem ? 1 : 0);
+    mat_block_sizes[i] = rows * n;
+    if (i > 0) {
+      mat_block_offsets[i] = mat_block_offsets[i - 1] + mat_block_sizes[i - 1];
+    }
+  }
+
+  int local_rows = row_counts_per_rank[proc_rank];
+  int local_matrix_size = mat_block_sizes[proc_rank];
+
+  std::vector<double> local_a(local_matrix_size);
+  std::vector<double> local_b(local_rows);
+
+  MPI_Scatterv(proc_rank == 0 ? A.data() : nullptr, mat_block_sizes.data(), mat_block_offsets.data(), MPI_DOUBLE,
+               local_a.data(), local_matrix_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  MPI_Scatterv(proc_rank == 0 ? b.data() : nullptr, row_counts_per_rank.data(), row_offsets_per_rank.data(), MPI_DOUBLE, local_b.data(),
+               local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  int start = row_offsets_per_rank[proc_rank];
+  int count = local_rows;
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
   std::vector<double> local_x_new(count, 0.0);
 
-  std::vector<int> recv_counts(proc_num, 0);
-  std::vector<int> displs(proc_num, 0);
-  recv_counts[0] = base + (0 < rem ? 1 : 0);
-  for (int i = 1; i < proc_num; ++i) {
-    recv_counts[i] = base + (i < rem ? 1 : 0);
-    displs[i] = displs[i - 1] + recv_counts[i - 1];
-  }
+  std::vector<int> recv_counts(proc_num);
+  std::vector<int> allgather_displs(proc_num);
+  CalculateRowsDistribution(proc_num, static_cast<int>(n), recv_counts, allgather_displs);
 
   for (int iter = 0; iter < MaxIterations; ++iter) {
     for (int i = 0; i < count; ++i) {
@@ -63,14 +96,14 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
       double sum = 0.0;
       for (size_t j = 0; j < n; ++j) {
         if (std::cmp_not_equal(j, global_i)) {
-          sum += A[(global_i * n) + j] * x[j];
+          sum += local_a[(i * n) + j] * x[j];
         }
       }
-      local_x_new[i] = (b[global_i] - sum) / A[(global_i * n) + global_i];
+      local_x_new[i] = (local_b[i] - sum) / local_a[(i * n) + global_i];
     }
 
-    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), displs.data(), MPI_DOUBLE,
-                   MPI_COMM_WORLD);
+    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), allgather_displs.data(),
+                   MPI_DOUBLE, MPI_COMM_WORLD);
 
     double local_norm = 0.0;
     for (int i = 0; i < count; ++i) {
@@ -78,17 +111,18 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
       double diff = x_new[gi] - x[gi];
       local_norm += diff * diff;
     }
-
     double global_norm = 0.0;
     MPI_Allreduce(&local_norm, &global_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     x = x_new;
+
     if (std::sqrt(global_norm) < EPS) {
       break;
     }
   }
 
   GetOutput() = x;
+
   return true;
 }
 
@@ -158,6 +192,22 @@ bool PylaevaSSimpleIterationMethodMPI::DiagonalDominance(const std::vector<doubl
     }
   }
   return true;
+}
+
+void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, int n, std::vector<int> &row_counts_per_rank, std::vector<int> &row_offsets_per_rank) {
+  if (row_offsets_per_rank.empty()) {
+    return;
+  }
+  int base = n / proc_num;
+  int rem = n % proc_num;
+
+  row_offsets_per_rank[0] = 0;
+  for (int i = 0; i < proc_num; ++i) {
+    row_counts_per_rank[i] = base + (i < rem ? 1 : 0);
+    if (i > 0) {
+      row_offsets_per_rank[i] = row_offsets_per_rank[i - 1] + row_counts_per_rank[i - 1];
+    }
+  }
 }
 
 }  // namespace pylaeva_s_simple_iteration_method

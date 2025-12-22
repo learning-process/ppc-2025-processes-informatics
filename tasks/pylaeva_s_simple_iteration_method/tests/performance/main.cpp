@@ -32,7 +32,7 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    constexpr double EPS = 1e-4;
+    constexpr double EPS = 1e-6;
     if (output_data.size() != expected_data_.size()) {
       return false;
     }

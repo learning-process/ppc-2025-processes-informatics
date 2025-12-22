@@ -18,7 +18,7 @@ class PylaevaSSimpleIterationMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  const double EPS = 1e-5;
+  const double EPS = 1e-6;
   const int MaxIterations = 10000;
 
   bool NotNullDeterm(const std::vector<double> &a, size_t n);
