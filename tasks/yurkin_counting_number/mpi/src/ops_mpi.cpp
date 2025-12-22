@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
-#include <ranges>
 #include <utility>
 
 #include "yurkin_counting_number/common/include/common.hpp"
@@ -22,7 +21,7 @@ int BroadcastTotalSize(int total_size) {
 void BroadcastInputBuffer(InType &local_input, int total_size, int world_rank, const InType &input) {
   local_input.assign(static_cast<std::size_t>(total_size), '\0');
   if (world_rank == 0 && total_size > 0) {
-    std::ranges::copy(input, local_input.begin());
+    std::ranges::copy_n(input.begin(), static_cast<std::size_t>(total_size), local_input.begin());
   }
   MPI_Bcast(total_size > 0 ? local_input.data() : nullptr, total_size, MPI_CHAR, 0, MPI_COMM_WORLD);
   MPI_Barrier(MPI_COMM_WORLD);
@@ -44,8 +43,7 @@ std::pair<std::size_t, std::size_t> ComputeRange(int total_size, int world_size,
 int CountRange(const InType &data, std::size_t start, std::size_t size) {
   int count = 0;
   std::size_t n = data.size();
-  std::size_t end = start + size;
-  end = std::min(end, n);
+  std::size_t end = std::min(start + size, n);
   if (start >= n) {
     return 0;
   }
