@@ -33,7 +33,6 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
   const double R = in.radius;
   const double R_sq = R * R;
 
-  // Инициализация генератора случайных чисел
   std::mt19937 generator(42);
   std::uniform_real_distribution<double> distribution(-R, R);
 
@@ -50,7 +49,7 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
     }
 
     if (in.domain_type == IntegrationDomain::kHyperSphere) {
-      // Проверка попадания в гиперсферу (расчет L2-нормы)
+      // Проверка попадания в гиперсферу
       for (int d = 0; d < D; ++d) {
         distance_sq += std::pow(point[d] - in.center[d], 2);
       }
@@ -59,8 +58,7 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
         is_in_domain = false;
       }
     }
-
-    // Суммирование
+    
     if (is_in_domain) {
       sum += in.func(point);
     }

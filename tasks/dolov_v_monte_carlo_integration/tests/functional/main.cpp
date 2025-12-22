@@ -32,7 +32,6 @@ inline double func_square_sum(const std::vector<double> &x) {
 }
 
 // Класс тестирования: гиперкуб
-
 class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -119,21 +118,18 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
 namespace {
 
 // Тестовые вызовы
-//  Функциональный вызов для КУБА
 TEST_P(MonteCarloHyperCubeTests, IntegrationHyperCube2D) {
   ExecuteTest(GetParam());
 }
 
-// Функциональный вызов для СФЕРЫ
 TEST_P(MonteCarloHyperSphereTests, IntegrationHyperSphere2D) {
   ExecuteTest(GetParam());
 }
 
-// Параметры для тестирования (Samples Count, Name)
 const std::array<TestType, 3> kTestParam = {std::make_tuple(10000, "small"), std::make_tuple(50000, "medium"),
                                             std::make_tuple(200000, "large")};
 
-// 1. Создание списка задач для куба
+// Создание списка задач для куба
 const auto kCubeTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
                                                    kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration),
                                                ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
@@ -145,7 +141,7 @@ const auto kCubeTestName = MonteCarloHyperCubeTests::PrintFuncTestName<MonteCarl
 
 INSTANTIATE_TEST_SUITE_P(MonteCarloHyperCubeTests, MonteCarloHyperCubeTests, kCubeGtestValues, kCubeTestName);
 
-// 2. Создание списка задач для сферы
+// Создание списка задач для сферы
 const auto kSphereTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
                                                      kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration),
                                                  ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(

@@ -46,7 +46,6 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &current_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &total_procs);
 
-  // 1. BROADCAST KEY SCALARS AND VECTORS
   InType params = GetInput();
 
   int dim = params.dimension;
@@ -67,7 +66,6 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     params.radius = rad;
     params.domain_type = static_cast<IntegrationDomain>(domain_type_int);
 
-    // Пересоздаем вектор центра и bcast'им его
     params.center.resize(dim);
   }
 
@@ -76,14 +74,12 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     MPI_Bcast(params.center.data(), dim, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   }
 
-  // 2. CALCULATE LOCAL WORKLOAD
   int local_samples = total_samples / total_procs;
   // Добавляем остаток к последнему процессу
   if (current_rank == total_procs - 1) {
     local_samples += total_samples % total_procs;
   }
 
-  // 3. LOCAL COMPUTATION (Монте-Карло)
   const double R_sq = params.radius * params.radius;
 
   std::mt19937 random_generator(current_rank + 101);
@@ -117,7 +113,8 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     }
   }
 
-  // 4. REDUCE AND FINAL CALCULATION
+
+  
   double global_sum_of_f = 0.0;
   // Собираем все локальные суммы на корневой процесс 0
   MPI_Reduce(&local_sum_of_f, &global_sum_of_f, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
