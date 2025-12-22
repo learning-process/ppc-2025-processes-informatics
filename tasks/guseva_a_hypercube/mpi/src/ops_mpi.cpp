@@ -51,6 +51,7 @@ bool GusevaAHypercubeMine::RunImpl() {
     hypercube_handler_->ReduceSum(local_result, MPI_DOUBLE, result);
     GetOutput() = result;
   }
+
   MPI_Bcast(&GetOutput(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   return true;
 }
