@@ -5,10 +5,14 @@
 #include <algorithm>  // min, max
 #include <cmath>      // abs
 #include <cstddef>    // size_t
+#include <utility>    // std::move
+#include <vector>     // std::vector
+
+#include "spichek_d_jacobi/common/include/common.hpp"
 
 namespace spichek_d_jacobi {
 
-SpichekDJacobiMPI::SpichekDJacobiMPI(const InType &in) : input_(in) {
+SpichekDJacobiMPI::SpichekDJacobiMPI(InType in) : input_(std::move(in)) {
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 

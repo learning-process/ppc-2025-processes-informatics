@@ -3,11 +3,14 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <utility>
 #include <vector>
+
+#include "spichek_d_jacobi/common/include/common.hpp"
 
 namespace spichek_d_jacobi {
 
-SpichekDJacobiSEQ::SpichekDJacobiSEQ(const InType &in) : input_(in) {
+SpichekDJacobiSEQ::SpichekDJacobiSEQ(InType in) : input_(std::move(in)) {
   SetTypeOfTask(GetStaticTypeOfTask());
 }
 
