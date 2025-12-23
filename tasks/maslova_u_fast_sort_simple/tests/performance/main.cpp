@@ -22,7 +22,7 @@ class MaslovaUFastSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
     if (rank == 0) {
-      const size_t count = 1000000;
+      const size_t count = 20000000;
       input_data_.resize(count);
       std::mt19937 gen(42);
       for (size_t i = 0; i < count; ++i) {
