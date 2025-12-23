@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <algorithm>  // для std::ranges::copy, std::ranges::remove_if
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -24,11 +24,11 @@ double EvaluateCenter(const Function2D &f, Region &r) {
 }
 
 int ComputeStartIndex(int rank, int regions_per_proc, int remainder) {
-  return rank * regions_per_proc + (rank < remainder ? rank : remainder);
+  return rank * regions_per_proc + ((rank < remainder) ? rank : remainder);
 }
 
 int ComputeEndIndex(int start_idx, int regions_per_proc, int rank, int remainder) {
-  return start_idx + regions_per_proc + (rank < remainder ? 1 : 0);
+  return start_idx + regions_per_proc + ((rank < remainder) ? 1 : 0);
 }
 
 Region SplitRegionX(const Region &r, double xm) {
@@ -47,7 +47,6 @@ Region SplitRegionYTop(const Region &r, double ym) {
   return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
 }
 
-// Вычисление локального лучшего региона
 Region FindLocalBest(const Function2D &f, std::vector<Region> &local_regions, int start_idx, int end_idx) {
   Region best{.x_min = 0, .x_max = 0, .y_min = 0, .y_max = 0, .value = std::numeric_limits<double>::max()};
   bool initialized = false;
@@ -64,7 +63,6 @@ Region FindLocalBest(const Function2D &f, std::vector<Region> &local_regions, in
   return best;
 }
 
-// Обновление списка регионов после разбиения
 void UpdateRegions(std::vector<Region> &regions, const Region &global_best) {
   double dx = global_best.x_max - global_best.x_min;
   double dy = global_best.y_max - global_best.y_min;
@@ -103,7 +101,8 @@ bool KrykovEMultistepSADMPI::PreProcessingImpl() {
 }
 
 bool KrykovEMultistepSADMPI::RunImpl() {
-  int size{}, rank{};
+  int size{};
+  int rank{};
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -168,7 +167,9 @@ bool KrykovEMultistepSADMPI::RunImpl() {
   }
 
   Region best_region{.x_min = 0, .x_max = 0, .y_min = 0, .y_max = 0, .value = std::numeric_limits<double>::max()};
-  double x = 0.0, y = 0.0, value = 0.0;
+  double x = 0.0;
+  double y = 0.0;
+  double value = 0.0;
 
   if (rank == 0) {
     for (auto &r : regions) {
