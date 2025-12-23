@@ -22,6 +22,6 @@ class FrolovaSStarTopologyMPI : public BaseTask {
  private:
   std::vector<int> data_;
   std::vector<int> output_;
-  int dest_;
+  int dest_ = 0;
 };
 }  // namespace frolova_s_star_topology

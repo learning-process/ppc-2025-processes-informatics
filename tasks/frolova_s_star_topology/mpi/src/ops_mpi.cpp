@@ -11,7 +11,7 @@ constexpr int kTerm = -1;  // terminating parameter
 
 namespace frolova_s_star_topology {
 
-FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) : dest_(0) {  // fix this
+FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
