@@ -38,20 +38,12 @@ bool LevonychevIMultistep2dOptimizationMPI::PreProcessingImpl() {
 
 void LevonychevIMultistep2dOptimizationMPI::InitializeRegions(int rank, int size, const OptimizationParams &params,
                                                               SearchRegion &my_region) {
-  std::vector<SearchRegion> initial_regions;
-  if (rank == 0) {
-    double total_width = params.x_max - params.x_min;
-    double width_per_process = total_width / size;
+  double total_width = params.x_max - params.x_min;
+  double width_per_process = total_width / size;
 
-    initial_regions.resize(size);
-    for (int proc = 0; proc < size; ++proc) {
-      double x_min_proc = params.x_min + (proc * width_per_process);
-      double x_max_proc = (proc == size - 1) ? params.x_max : params.x_min + ((proc + 1) * width_per_process);
-      initial_regions[proc] = SearchRegion(x_min_proc, x_max_proc, params.y_min, params.y_max);
-    }
-  }
-  MPI_Scatter(initial_regions.data(), sizeof(SearchRegion), MPI_BYTE, &my_region, sizeof(SearchRegion), MPI_BYTE, 0,
-              MPI_COMM_WORLD);
+  double x_min_proc = params.x_min + (rank * width_per_process);
+  double x_max_proc = (rank == size - 1) ? params.x_max : params.x_min + ((rank + 1) * width_per_process);
+  my_region = SearchRegion(x_min_proc, x_max_proc, params.y_min, params.y_max);
 }
 
 void LevonychevIMultistep2dOptimizationMPI::BuildNewRegions(const OptimizationParams &params,
@@ -114,7 +106,9 @@ void LevonychevIMultistep2dOptimizationMPI::ExecuteOptimizationSteps(int rank, i
                                                                      OptimizationResult &result) {
   for (int step = 0; step < params.num_steps; ++step) {
     int grid_size = params.grid_size_step1 * (1 << step);
-    std::vector<Point> local_points = SearchInRegion(params.func, my_region, grid_size);
+    std::vector<Point> local_points;
+    local_points.reserve(grid_size * grid_size);
+    SearchInRegion(local_points, params.func, my_region, grid_size);
 
     std::vector<Point> local_candidates;
     ProcessLocalCandidates(params, local_points, local_candidates);
@@ -190,7 +184,9 @@ Point LevonychevIMultistep2dOptimizationMPI::FindGlobalBest(int rank, int size, 
     for (int i = 0; i < params.num_steps - 1; ++i) {
       power_of_2 *= 2;
     }
-    std::vector<Point> local_points = SearchInRegion(params.func, my_region, params.grid_size_step1 * power_of_2);
+    std::vector<Point> local_points;
+    local_points.reserve(params.grid_size_step1 * power_of_2 * params.grid_size_step1 * power_of_2);
+    SearchInRegion(local_points, params.func, my_region, params.grid_size_step1 * power_of_2);
 
     if (!local_points.empty()) {
       my_best = local_points[0];
@@ -221,19 +217,34 @@ bool LevonychevIMultistep2dOptimizationMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   SearchRegion my_region;
+  double t1 = MPI_Wtime();
   InitializeRegions(rank, size, params, my_region);
+  double t2 = MPI_Wtime();
+  std::cout << "Process " << rank << " initialized region in " << (t2 - t1) << " seconds." << std::endl;
 
+  t1 = MPI_Wtime();
   ExecuteOptimizationSteps(rank, size, params, my_region, result);
+  t2 = MPI_Wtime();
+  std::cout << "Process " << rank << " executed optimization steps in " << (t2 - t1) << " seconds." << std::endl;
 
+  t1 = MPI_Wtime();
   Point global_best = FindGlobalBest(rank, size, params, my_region);
-
+  t2 = MPI_Wtime();
+  std::cout << "Process " << rank << " found global best in " << (t2 - t1) << " seconds." << std::endl;
   result.x_min = global_best.x;
   result.y_min = global_best.y;
   result.value = global_best.value;
 
+  int power_of_2 = 1;
+  for (int i = 0; i < params.num_steps - 1; ++i) {
+    power_of_2 *= 2;
+  }
+  int final_grid_size = params.grid_size_step1 * power_of_2;
+  result.iterations += final_grid_size * final_grid_size;
+
   int local_iterations = result.iterations;
   int global_iterations = 0;
-  MPI_Allreduce(&local_iterations, &global_iterations, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_iterations, &global_iterations, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
   result.iterations = global_iterations;
 
   return true;

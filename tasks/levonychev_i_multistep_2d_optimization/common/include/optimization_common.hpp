@@ -16,9 +16,6 @@ struct Point {
   Point() = default;
   Point(double x_val, double y_val, double func_value) : x(x_val), y(y_val), value(func_value) {}
 };
-inline bool operator<(const Point &lhs, const Point &rhs) {
-  return lhs.value < rhs.value;
-}
 
 struct SearchRegion {
   double x_min = 0.0;
@@ -65,9 +62,8 @@ inline Point LocalOptimization(const std::function<double(double, double)> &func
   return {x, y, current_value};
 }
 
-inline std::vector<Point> SearchInRegion(const std::function<double(double, double)> &func, const SearchRegion &region,
-                                         int grid_size) {
-  std::vector<Point> points;
+inline void SearchInRegion(std::vector<Point>& grid_points, const std::function<double(double, double)> &func, const SearchRegion &region,
+                           int grid_size) {
 
   double step_x = (region.x_max - region.x_min) / (grid_size - 1);
   double step_y = (region.y_max - region.y_min) / (grid_size - 1);
@@ -78,12 +74,11 @@ inline std::vector<Point> SearchInRegion(const std::function<double(double, doub
       double y = region.y_min + (j * step_y);
 
       double value = func(x, y);
-      points.emplace_back(x, y, value);
+      grid_points.emplace_back(x, y, value);
     }
   }
 
-  std::ranges::sort(points, [](const Point &a, const Point &b) { return a.value < b.value; });
-  return points;
+  std::ranges::sort(grid_points, [](const Point &a, const Point &b) { return a.value < b.value; });
 }
 
 }  // namespace levonychev_i_multistep_2d_optimization
