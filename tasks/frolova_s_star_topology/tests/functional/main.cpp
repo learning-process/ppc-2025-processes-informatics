@@ -23,7 +23,7 @@ static std::vector<int> MakeRandomVector(size_t sz) {
 
 }  // namespace frolova_s_star_topology
 
-TEST(frolovaSStar, dataLength0) {
+TEST(frolovaSStar, DataLength0) {
   const size_t data_length = 0;
   int rank = 0;
   int size = 0;
