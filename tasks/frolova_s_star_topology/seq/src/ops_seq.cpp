@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "frolova_s_star_topology/common/include/common.hpp"
-#include "util/include/util.hpp"
+//#include "util/include/util.hpp"
 
 namespace frolova_s_star_topology {
 
