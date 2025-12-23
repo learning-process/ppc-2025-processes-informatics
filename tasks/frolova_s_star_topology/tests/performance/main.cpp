@@ -3,12 +3,11 @@
 
 #include <algorithm>
 #include <cstddef>
-// #include <numeric>
 #include <random>
 #include <vector>
 
+// ТОЛЬКО заголовочный файл
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
-#include "frolova_s_star_topology/mpi/src/ops_mpi.cpp"
 
 namespace frolova_s_star_topology {
 
@@ -51,14 +50,19 @@ TEST(frolovaSStar, pipelineRun) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
+  // СОЗДАЕМ задачу для ВСЕХ процессов
+  int dst = (rank == 0) ? 1 : destinations[rank - 1];
+  frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
+
+  // Проверяем только для workers
   if (rank != 0) {
-    int dst = destinations[rank - 1];
-    frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
     ASSERT_EQ(task.ValidationImpl(), true);
-    task.PreProcessingImpl();
-    task.RunImpl();
-    task.PostProcessingImpl();
   }
+
+  // ВЫЗЫВАЕМ методы для ВСЕХ процессов
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
 }
 
 TEST(frolovaSStar, taskRun) {
@@ -88,13 +92,17 @@ TEST(frolovaSStar, taskRun) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (rank != 0) {
-    int dst = destinations[rank - 1];
-    frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
+  // СОЗДАЕМ задачу для ВСЕХ процессов
+  int dst = (rank == 0) ? 1 : destinations[rank - 1];
+  frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 
+  // Проверяем только для workers
+  if (rank != 0) {
     ASSERT_EQ(task.ValidationImpl(), true);
-    task.PreProcessingImpl();
-    task.RunImpl();
-    task.PostProcessingImpl();
   }
+
+  // ВЫЗЫВАЕМ методы для ВСЕХ процессов
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
 }

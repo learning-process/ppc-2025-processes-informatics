@@ -3,12 +3,11 @@
 
 #include <algorithm>
 #include <cstddef>
-// #include <numeric>
 #include <random>
 #include <vector>
 
+// ТОЛЬКО заголовочный файл
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
-#include "frolova_s_star_topology/mpi/src/ops_mpi.cpp"
 
 namespace frolova_s_star_topology {
 
@@ -52,25 +51,29 @@ TEST(frolovaSStar, DataLength0) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
+  // СОЗДАЕМ задачу для ВСЕХ процессов
+  int dst = (rank == 0) ? 1 : destinations[rank - 1];
+  frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
+
+  // Проверяем только для workers
   if (rank != 0) {
-    int dst = destinations[rank - 1];
-    frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
-
     ASSERT_EQ(task.ValidationImpl(), true);
-    task.PreProcessingImpl();
-    task.RunImpl();
-    task.PostProcessingImpl();
+  }
 
-    int is_failed = 0;
-    if (rank != 0) {
-      res = data;
-    }
+  // ВЫЗЫВАЕМ методы для ВСЕХ процессов
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
 
-    int failures = 0;
-    MPI_Reduce(&is_failed, &failures, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    if (rank == 0) {
-      EXPECT_EQ(failures, 0);
-    }
+  int is_failed = 0;
+  if (rank != 0) {
+    res = data;
+  }
+
+  int failures = 0;
+  MPI_Reduce(&is_failed, &failures, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (rank == 0) {
+    EXPECT_EQ(failures, 0);
   }
 }
 
@@ -102,14 +105,19 @@ TEST(frolovaSStar, DataLength64) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
+  // СОЗДАЕМ задачу для ВСЕХ процессов
+  int dst = (rank == 0) ? 1 : destinations[rank - 1];
+  frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
+
+  // Проверяем только для workers
   if (rank != 0) {
-    int dst = destinations[rank - 1];
-    frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
     ASSERT_EQ(task.ValidationImpl(), true);
-    task.PreProcessingImpl();
-    task.RunImpl();
-    task.PostProcessingImpl();
   }
+
+  // ВЫЗЫВАЕМ методы для ВСЕХ процессов
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
 
   int is_failed = 0;
   if (rank != 0) {
@@ -151,14 +159,19 @@ TEST(frolovaSStar, dataLength1024) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
+  // СОЗДАЕМ задачу для ВСЕХ процессов
+  int dst = (rank == 0) ? 1 : destinations[rank - 1];
+  frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
+
+  // Проверяем только для workers
   if (rank != 0) {
-    int dst = destinations[rank - 1];
-    frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
     ASSERT_EQ(task.ValidationImpl(), true);
-    task.PreProcessingImpl();
-    task.RunImpl();
-    task.PostProcessingImpl();
   }
+
+  // ВЫЗЫВАЕМ методы для ВСЕХ процессов
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
 
   int is_failed = 0;
   if (rank != 0) {
@@ -200,14 +213,19 @@ TEST(frolovaSStar, dataLength32768) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
+  // СОЗДАЕМ задачу для ВСЕХ процессов
+  int dst = (rank == 0) ? 1 : destinations[rank - 1];
+  frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
+
+  // Проверяем только для workers
   if (rank != 0) {
-    int dst = destinations[rank - 1];
-    frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
     ASSERT_EQ(task.ValidationImpl(), true);
-    task.PreProcessingImpl();
-    task.RunImpl();
-    task.PostProcessingImpl();
   }
+
+  // ВЫЗЫВАЕМ методы для ВСЕХ процессов
+  task.PreProcessingImpl();
+  task.RunImpl();
+  task.PostProcessingImpl();
 
   int is_failed = 0;
   if (rank != 0) {
