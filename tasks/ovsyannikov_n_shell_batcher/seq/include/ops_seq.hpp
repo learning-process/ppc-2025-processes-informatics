@@ -1,16 +1,17 @@
 #pragma once
 
-#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
+#include <vector>
+#include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace ovsyannikov_n_num_mistm_in_two_str {
+namespace ovsyannikov_n_shell_batcher {
 
-class OvsyannikovNNumMistmInTwoStrSEQ : public BaseTask {
+class OvsyannikovNShellBatcherSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit OvsyannikovNNumMistmInTwoStrSEQ(const InType &in);
+  explicit OvsyannikovNShellBatcherSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +20,4 @@ class OvsyannikovNNumMistmInTwoStrSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace ovsyannikov_n_num_mistm_in_two_str
+}  // namespace ovsyannikov_n_shell_batcher

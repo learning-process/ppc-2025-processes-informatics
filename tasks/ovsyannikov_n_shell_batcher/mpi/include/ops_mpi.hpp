@@ -1,22 +1,25 @@
 #pragma once
 
-#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
+#include <vector>
+#include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace ovsyannikov_n_num_mistm_in_two_str {
+namespace ovsyannikov_n_shell_batcher {
 
-class OvsyannikovNNumMistmInTwoStrMPI : public BaseTask {
+class OvsyannikovNShellBatcherMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit OvsyannikovNNumMistmInTwoStrMPI(const InType &in);
+  explicit OvsyannikovNShellBatcherMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static void ShellSort(std::vector<int> &arr);
 };
 
-}  // namespace ovsyannikov_n_num_mistm_in_two_str
+}  // namespace ovsyannikov_n_shell_batcher

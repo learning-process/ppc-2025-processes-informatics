@@ -1,61 +1,66 @@
 #include <gtest/gtest.h>
-
-#include <string>
-#include <utility>
-
-#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
-#include "ovsyannikov_n_num_mistm_in_two_str/mpi/include/ops_mpi.hpp"
-#include "ovsyannikov_n_num_mistm_in_two_str/seq/include/ops_seq.hpp"
+#include <mpi.h>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <random>
+#include <cmath>
+#include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
+#include "ovsyannikov_n_shell_batcher/mpi/include/ops_mpi.hpp"
+#include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace ovsyannikov_n_num_mistm_in_two_str {
+namespace ovsyannikov_n_shell_batcher {
 
-class OvsyannikovNRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    // Размер 100 миллионов символов
-    const int benchmark_size = 100'000'000;
+    const int size = 50000;
+    input_data_.resize(size);
+    std::iota(input_data_.begin(), input_data_.end(), 0);
+    std::shuffle(input_data_.begin(), input_data_.end(), std::mt19937{std::random_device{}()});
+    expected_output_ = input_data_;
+    std::sort(expected_output_.begin(), expected_output_.end());
+  }
 
-    std::string sample_a(benchmark_size, 'a');
-    std::string sample_b(benchmark_size, 'a');
+  bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
+    int is_initialized = 0;
+    MPI_Initialized(&is_initialized);
 
-    expected_output_ = 0;
-    for (int i = 0; i < benchmark_size; ++i) {
-      if (i % 2 == 0) {
-        sample_b[i] = 'b';
-        expected_output_++;
-      }
+    if (is_initialized != 0) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
-    input_data_ = std::make_pair(sample_a, sample_b);
+    if (rank != 0) {
+      return true;
+    }
+
+    if (output_data.size() != expected_output_.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(static_cast<double>(output_data[i]) - static_cast<double>(expected_output_[i])) > 1e-6) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  bool CheckTestOutputData(OutType &calculated_res) final {
-    return calculated_res == expected_output_;
-  }
-
-  InType GetTestInputData() final {
-    return input_data_;
-  }
-
+  InType GetTestInputData() final { return input_data_; }
  private:
   InType input_data_;
-  OutType expected_output_ = 0;
+  OutType expected_output_;
 };
-;
 
-TEST_P(OvsyannikovNRunPerfTestProcesses, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
+TEST_P(OvsyannikovNShellBatcherPerfTest, RunPerfModes) { ExecuteTest(GetParam()); }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNNumMistmInTwoStrMPI, OvsyannikovNNumMistmInTwoStrSEQ>(
-        PPC_SETTINGS_ovsyannikov_n_num_mistm_in_two_str);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, OvsyannikovNShellBatcherMPI, OvsyannikovNShellBatcherSEQ>(
+    PPC_SETTINGS_ovsyannikov_n_shell_batcher);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
-const auto kPerfTestName = OvsyannikovNRunPerfTestProcesses::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, OvsyannikovNRunPerfTestProcesses, kGtestValues, kPerfTestName);
-
-}  // namespace ovsyannikov_n_num_mistm_in_two_str
+INSTANTIATE_TEST_SUITE_P(ovsyannikov_n_shell_batcher, OvsyannikovNShellBatcherPerfTest,
+                         ppc::util::TupleToGTestValues(kAllPerfTasks),
+                         [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
+                           return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
+                         });
+}  // namespace ovsyannikov_n_shell_batcher 

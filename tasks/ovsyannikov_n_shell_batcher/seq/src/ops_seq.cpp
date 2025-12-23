@@ -1,45 +1,64 @@
-#include "ovsyannikov_n_num_mistm_in_two_str/seq/include/ops_seq.hpp"
+#include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
+#include <mpi.h>
+#include <algorithm>
+#include <vector>
 
-#include <cstddef>
+namespace ovsyannikov_n_shell_batcher {
 
-// Clang-Tidy требует явного подключения файла, где определен InType
-#include "ovsyannikov_n_num_mistm_in_two_str/common/include/common.hpp"
-
-namespace ovsyannikov_n_num_mistm_in_two_str {
-
-OvsyannikovNNumMistmInTwoStrSEQ::OvsyannikovNNumMistmInTwoStrSEQ(const InType &in) {
+OvsyannikovNShellBatcherSEQ::OvsyannikovNShellBatcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
-bool OvsyannikovNNumMistmInTwoStrSEQ::ValidationImpl() {
-  return GetInput().first.size() == GetInput().second.size();
-}
-
-bool OvsyannikovNNumMistmInTwoStrSEQ::PreProcessingImpl() {
-  GetOutput() = 0;
+bool OvsyannikovNShellBatcherSEQ::ValidationImpl() {
   return true;
 }
 
-bool OvsyannikovNNumMistmInTwoStrSEQ::RunImpl() {
-  const auto &seq_one = GetInput().first;
-  const auto &seq_two = GetInput().second;
-  int diff_cnt = 0;
+bool OvsyannikovNShellBatcherSEQ::PreProcessingImpl() {
+  GetOutput() = GetInput();
+  return true;
+}
 
-  size_t length = seq_one.size();
-  for (size_t i = 0; i < length; ++i) {
-    if (seq_one[i] != seq_two[i]) {
-      diff_cnt++;
+bool OvsyannikovNShellBatcherSEQ::RunImpl() {
+  int rank = 0;
+  int is_mpi_init = 0;
+  MPI_Initialized(&is_mpi_init);
+  if (is_mpi_init) MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  // Считает только Rank 0
+  if (rank == 0) {
+    auto &arr = GetOutput();
+    int n = static_cast<int>(arr.size());
+    if (n > 1) {
+      for (int gap = n / 2; gap > 0; gap /= 2) {
+        for (int i = gap; i < n; i++) {
+          int temp = arr[i];
+          int j;
+          for (j = i; j >= gap && arr[j - gap] > temp; j -= gap) {
+            arr[j] = arr[j - gap];
+          }
+          arr[j] = temp;
+        }
+      }
     }
   }
 
-  GetOutput() = diff_cnt;
+  // Рассылаем всем, если мы в MPI среде
+  if (is_mpi_init) {
+    int n = 0;
+    if (rank == 0) n = static_cast<int>(GetOutput().size());
+    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (rank != 0) GetOutput().resize(n);
+    if (n > 0) {
+      MPI_Bcast(GetOutput().data(), n, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+  }
+
   return true;
 }
 
-bool OvsyannikovNNumMistmInTwoStrSEQ::PostProcessingImpl() {
+bool OvsyannikovNShellBatcherSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace ovsyannikov_n_num_mistm_in_two_str
+}  // namespace ovsyannikov_n_shell_batcher
