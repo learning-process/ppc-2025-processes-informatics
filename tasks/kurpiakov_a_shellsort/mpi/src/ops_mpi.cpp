@@ -2,13 +2,10 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstddef>
-#include <utility>
 #include <vector>
 
 #include "kurpiakov_a_shellsort/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kurpiakov_a_shellsort {
 

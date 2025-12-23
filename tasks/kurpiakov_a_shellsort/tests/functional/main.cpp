@@ -56,7 +56,7 @@ std::vector<int> GenerateRandomVector(int size, int seed = 42) {
 
 std::vector<int> GetSortedCopy(const std::vector<int> &vec) {
   std::vector<int> sorted = vec;
-  std::sort(sorted.begin(), sorted.end());
+  std::ranges::sort(sorted.begin(), sorted.end());
   return sorted;
 }
 

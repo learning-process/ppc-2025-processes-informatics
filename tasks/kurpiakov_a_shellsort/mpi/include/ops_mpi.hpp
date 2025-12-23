@@ -14,8 +14,8 @@ class KurpiakovAShellsortMPI : public BaseTask {
 
  private:
   OutType data_;
-  int world_size_;
-  int rank_;
+  int world_size_ = 0;
+  int rank_ = 0;
 
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
