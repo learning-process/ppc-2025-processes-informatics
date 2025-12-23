@@ -5,17 +5,16 @@
 #include <vector>
 
 #include "frolova_s_star_topology/common/include/common.hpp"
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 constexpr int kTerm = -1;  // terminating parameter
 
 namespace frolova_s_star_topology {
 
-FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) {
+FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) : dest_(0) {  // fix this
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
-  dest_ = 0;
 }
 
 bool FrolovaSStarTopologyMPI::ValidationImpl() {
