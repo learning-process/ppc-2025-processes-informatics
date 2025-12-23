@@ -1,7 +1,9 @@
 #include "krykov_e_multistep_sad/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
+#include <ranges>
 #include <vector>
 
 #include "krykov_e_multistep_sad/common/include/common.hpp"
@@ -18,6 +20,22 @@ double EvaluateCenter(const Function2D &f, Region &r) {
   const double yc = 0.5 * (r.y_min + r.y_max);
   r.value = f(xc, yc);
   return r.value;
+}
+
+Region SplitRegionX(const Region &r, double xm) {
+  return Region{.x_min = r.x_min, .x_max = xm, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitRegionXRight(const Region &r, double xm) {
+  return Region{.x_min = xm, .x_max = r.x_max, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitRegionY(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = r.y_min, .y_max = ym, .value = 0.0};
+}
+
+Region SplitRegionYTop(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
 }
 
 }  // namespace
@@ -40,18 +58,16 @@ bool KrykovEMultistepSADSEQ::RunImpl() {
   const auto &[f, x_min, x_max, y_min, y_max] = GetInput();
 
   std::vector<Region> regions;
-  regions.push_back({x_min, x_max, y_min, y_max, 0.0});
+  regions.push_back(Region{.x_min = x_min, .x_max = x_max, .y_min = y_min, .y_max = y_max, .value = 0.0});
   EvaluateCenter(f, regions.front());
 
   for (int iter = 0; iter < kMaxIter; ++iter) {
-    auto best_it = std::min_element(regions.begin(), regions.end(),
-                                    [](const Region &a, const Region &b) { return a.value < b.value; });
-
+    auto best_it = std::ranges::min_element(regions, {}, &Region::value);
     Region best = *best_it;
     regions.erase(best_it);
 
-    const double dx = best.x_max - best.x_min;
-    const double dy = best.y_max - best.y_min;
+    double dx = best.x_max - best.x_min;
+    double dy = best.y_max - best.y_min;
 
     if (std::max(dx, dy) < kEps) {
       break;
@@ -59,16 +75,16 @@ bool KrykovEMultistepSADSEQ::RunImpl() {
 
     if (dx >= dy) {
       double xm = 0.5 * (best.x_min + best.x_max);
-      Region r1{best.x_min, xm, best.y_min, best.y_max, 0.0};
-      Region r2{xm, best.x_max, best.y_min, best.y_max, 0.0};
+      Region r1 = SplitRegionX(best, xm);
+      Region r2 = SplitRegionXRight(best, xm);
       EvaluateCenter(f, r1);
       EvaluateCenter(f, r2);
       regions.push_back(r1);
       regions.push_back(r2);
     } else {
       double ym = 0.5 * (best.y_min + best.y_max);
-      Region r1{best.x_min, best.x_max, best.y_min, ym, 0.0};
-      Region r2{best.x_min, best.x_max, ym, best.y_max, 0.0};
+      Region r1 = SplitRegionY(best, ym);
+      Region r2 = SplitRegionYTop(best, ym);
       EvaluateCenter(f, r1);
       EvaluateCenter(f, r2);
       regions.push_back(r1);
@@ -76,13 +92,11 @@ bool KrykovEMultistepSADSEQ::RunImpl() {
     }
   }
 
-  const auto &best = *std::min_element(regions.begin(), regions.end(),
-                                       [](const Region &a, const Region &b) { return a.value < b.value; });
-
-  const double x = 0.5 * (best.x_min + best.x_max);
-  const double y = 0.5 * (best.y_min + best.y_max);
-
+  const auto &best = *std::ranges::min_element(regions, {}, &Region::value);
+  double x = 0.5 * (best.x_min + best.x_max);
+  double y = 0.5 * (best.y_min + best.y_max);
   GetOutput() = {x, y, best.value};
+
   return true;
 }
 

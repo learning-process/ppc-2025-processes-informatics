@@ -60,16 +60,16 @@ class KrykovEMultistepSADFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 namespace {
 
 // f(x,y) = x^2 + y^2
-const TestType kTest1 = {{[](double x, double y) { return x * x + y * y; }, -1.0, 1.0, -1.0, 1.0}, {0.0, 0.0, 0.0}};
+const TestType kTest1 = {{[](double x, double y) { return (x * x) + (y * y); }, -1.0, 1.0, -1.0, 1.0}, {0.0, 0.0, 0.0}};
 
 // f(x,y) = (x-1)^2 + (y+2)^2
 const TestType kTest2 = {
-    {[](double x, double y) { return (x - 1.0) * (x - 1.0) + (y + 2.0) * (y + 2.0); }, -5.0, 5.0, -5.0, 5.0},
+    {[](double x, double y) { return ((x - 1.0) * (x - 1.0)) + ((y + 2.0) * (y + 2.0)); }, -5.0, 5.0, -5.0, 5.0},
     {1.0, -2.0, 0.0}};
 
 // f(x,y) = (x+1)^2 + (y-3)^2
 const TestType kTest3 = {
-    {[](double x, double y) { return (x + 1.0) * (x + 1.0) + (y - 3.0) * (y - 3.0); }, -5.0, 5.0, -5.0, 5.0},
+    {[](double x, double y) { return ((x + 1.0) * (x + 1.0)) + ((y - 3.0) * (y - 3.0)); }, -5.0, 5.0, -5.0, 5.0},
     {-1.0, 3.0, 0.0}};
 
 TEST_P(KrykovEMultistepSADFuncTests, GlobalOptimizationTests) {

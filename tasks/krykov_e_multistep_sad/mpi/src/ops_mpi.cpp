@@ -2,8 +2,10 @@
 
 #include <mpi.h>
 
+#include <algorithm>  // для std::ranges::copy, std::ranges::remove_if
 #include <cmath>
 #include <limits>
+#include <utility>  // для std::min
 #include <vector>
 
 #include "krykov_e_multistep_sad/common/include/common.hpp"
@@ -20,6 +22,30 @@ double EvaluateCenter(const Function2D &f, Region &r) {
   const double yc = 0.5 * (r.y_min + r.y_max);
   r.value = f(xc, yc);
   return r.value;
+}
+
+int ComputeStartIndex(int rank, int regions_per_proc, int remainder) {
+  return rank * regions_per_proc + std::min(rank, remainder);
+}
+
+int ComputeEndIndex(int start_idx, int regions_per_proc, int rank, int remainder) {
+  return start_idx + regions_per_proc + (rank < remainder ? 1 : 0);
+}
+
+Region SplitRegionX(const Region &r, double xm) {
+  return Region{.x_min = r.x_min, .x_max = xm, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitRegionXRight(const Region &r, double xm) {
+  return Region{.x_min = xm, .x_max = r.x_max, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitRegionY(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = r.y_min, .y_max = ym, .value = 0.0};
+}
+
+Region SplitRegionYTop(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
 }
 
 }  // namespace
@@ -39,7 +65,8 @@ bool KrykovEMultistepSADMPI::PreProcessingImpl() {
 }
 
 bool KrykovEMultistepSADMPI::RunImpl() {
-  int size = 0, rank = 0;
+  int size{};
+  int rank{};
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -47,15 +74,14 @@ bool KrykovEMultistepSADMPI::RunImpl() {
 
   std::vector<Region> regions;
   if (rank == 0) {
-    regions.push_back({x_min, x_max, y_min, y_max, 0.0});
+    regions.push_back(Region{.x_min = x_min, .x_max = x_max, .y_min = y_min, .y_max = y_max, .value = 0.0});
     EvaluateCenter(f, regions.front());
   }
 
   int stop_flag = 0;
 
-  for (int iter = 0; iter < kMaxIter && !stop_flag; ++iter) {
-    int n_regions = regions.size();
-
+  for (int iter = 0; iter < kMaxIter && stop_flag == 0; ++iter) {
+    int n_regions{};
     if (rank == 0) {
       n_regions = static_cast<int>(regions.size());
     }
@@ -69,20 +95,18 @@ bool KrykovEMultistepSADMPI::RunImpl() {
 
     std::vector<Region> local_regions(n_regions);
     if (rank == 0) {
-      std::copy(regions.begin(), regions.end(), local_regions.begin());
+      std::ranges::copy(regions, local_regions.begin());
     }
     MPI_Bcast(local_regions.data(), n_regions * sizeof(Region), MPI_BYTE, 0, MPI_COMM_WORLD);
 
-    // Каждый процесс вычисляет локальный лучший
     int regions_per_proc = n_regions / size;
     int remainder = n_regions % size;
-    int start_idx = rank * regions_per_proc + std::min(rank, remainder);
-    int end_idx = start_idx + regions_per_proc + (rank < remainder ? 1 : 0);
+    int start_idx = ComputeStartIndex(rank, regions_per_proc, remainder);
+    int end_idx = ComputeEndIndex(start_idx, regions_per_proc, rank, remainder);
 
-    Region local_best = {0, 0, 0, 0, std::numeric_limits<double>::max()};
+    Region local_best{.x_min = 0, .x_max = 0, .y_min = 0, .y_max = 0, .value = std::numeric_limits<double>::max()};
     bool local_best_initialized = false;
 
-    // Вычисляем центры и находим локальный минимум
     for (int i = start_idx; i < end_idx; ++i) {
       EvaluateCenter(f, local_regions[i]);
       if (!local_best_initialized || local_regions[i].value < local_best.value) {
@@ -95,17 +119,18 @@ bool KrykovEMultistepSADMPI::RunImpl() {
       local_best.value = 9999;
     }
 
-    // Master получает глобально лучший регион
     struct {
       double value;
       int rank;
-    } local_val{local_best.value, rank}, global_val;
+    } local_val{.value = local_best.value, .rank = rank}, global_val{.value = 0.0, .rank = 0};
+
     MPI_Allreduce(&local_val, &global_val, 1, MPI_DOUBLE_INT, MPI_MINLOC, MPI_COMM_WORLD);
 
-    Region global_best = local_best;  // Инициализация
+    Region global_best = local_best;
     if (rank == global_val.rank) {
       global_best = local_best;
     }
+
     MPI_Bcast(&global_best, sizeof(Region), MPI_BYTE, global_val.rank, MPI_COMM_WORLD);
 
     if (rank == 0) {
@@ -120,14 +145,15 @@ bool KrykovEMultistepSADMPI::RunImpl() {
                  r.y_max == global_best.y_max;
         }),
                       regions.end());
+
         if (dx >= dy) {
           double xm = 0.5 * (global_best.x_min + global_best.x_max);
-          regions.push_back({global_best.x_min, xm, global_best.y_min, global_best.y_max, 0.0});
-          regions.push_back({xm, global_best.x_max, global_best.y_min, global_best.y_max, 0.0});
+          regions.push_back(SplitRegionX(global_best, xm));
+          regions.push_back(SplitRegionXRight(global_best, xm));
         } else {
           double ym = 0.5 * (global_best.y_min + global_best.y_max);
-          regions.push_back({global_best.x_min, global_best.x_max, global_best.y_min, ym, 0.0});
-          regions.push_back({global_best.x_min, global_best.x_max, ym, global_best.y_max, 0.0});
+          regions.push_back(SplitRegionY(global_best, ym));
+          regions.push_back(SplitRegionYTop(global_best, ym));
         }
       }
     }
@@ -135,23 +161,15 @@ bool KrykovEMultistepSADMPI::RunImpl() {
     MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
-  double x = 0.0;
-  double y = 0.0;
-  double value = 0.0;
-
-  Region best_region;
+  Region best_region{.x_min = 0, .x_max = 0, .y_min = 0, .y_max = 0, .value = std::numeric_limits<double>::max()};
+  double x = 0.0, y = 0.0, value = 0.0;
 
   if (rank == 0) {
     for (auto &r : regions) {
       EvaluateCenter(f, r);
     }
-
-    best_region = regions.front();
-    for (const auto &r : regions) {
-      if (r.value < best_region.value) {
-        best_region = r;
-      }
-    }
+    best_region = *std::min_element(regions.begin(), regions.end(),
+                                    [](const Region &a, const Region &b) { return a.value < b.value; });
 
     x = 0.5 * (best_region.x_min + best_region.x_max);
     y = 0.5 * (best_region.y_min + best_region.y_max);
@@ -163,7 +181,6 @@ bool KrykovEMultistepSADMPI::RunImpl() {
   MPI_Bcast(&value, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   GetOutput() = {x, y, value};
-
   return true;
 }
 

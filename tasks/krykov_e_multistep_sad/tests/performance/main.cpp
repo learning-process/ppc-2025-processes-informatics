@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstddef>
 #include <tuple>
-#include <vector>
 
 #include "krykov_e_multistep_sad/common/include/common.hpp"
 #include "krykov_e_multistep_sad/mpi/include/ops_mpi.hpp"
@@ -23,7 +22,7 @@ class KrykovEMultistepSADPerfTests : public ppc::util::BaseRunPerfTests<InType, 
       for (int i = 1; i <= 100; ++i) {
         const double dx = x - 1.0;
         const double dy = y + 2.0;
-        s += dx * dx + dy * dy + static_cast<double>(i);
+        s += (dx * dx) + (dy * dy) + static_cast<double>(i);
       }
       return s;
     }, -10.0, 10.0, -10.0, 10.0};
