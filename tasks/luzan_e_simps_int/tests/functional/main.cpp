@@ -18,10 +18,10 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     int n = get<0>(test_param);
-    unsigned a = static_cast<unsigned>(100.0 * fabs(std::get<0>(std::get<1>(test_param))));
-    unsigned b = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<1>(test_param))));
-    unsigned c = static_cast<unsigned>(100.0 * fabs(std::get<0>(std::get<2>(test_param))));
-    unsigned d = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<2>(test_param))));
+    auto a = static_cast<unsigned>(100.0 * fabs(std::get<0>(std::get<1>(test_param))));
+    auto b = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<1>(test_param))));
+    auto c = static_cast<unsigned>(100.0 * fabs(std::get<0>(std::get<2>(test_param))));
+    auto d = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<2>(test_param))));
     int func_num = std::get<3>(test_param);
 
     std::string square =
