@@ -103,7 +103,7 @@ void LeonovaAStarSEQ::MultiplyMatrices(const std::vector<std::vector<int>> &matr
                                        size_t cols_b) {
   for (size_t index = 0; index < rows_a; ++index) {
     for (size_t jndex = 0; jndex < cols_b; ++jndex) {
-      GetOutput()[index][jndex] = ComputeDotProduct(matrix_a, matrix_b, index, cols_a, jndex);
+      GetOutput()[index][jndex] = ComputeDotProduct(matrix_a, matrix_b, index, jndex, cols_a);
     }
   }
 }
