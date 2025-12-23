@@ -3,9 +3,12 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <numeric>
 #include <vector>
+
+#include "yurkin_counting_number/common/include/common.hpp"
 
 namespace yurkin_counting_number {
 
@@ -25,39 +28,50 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberMPI::RunImpl() {
-  int rank = 0;
-  int size = 0;
-
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int world_rank = 0;
+  int world_size = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   int total_size = 0;
-  if (rank == 0) {
+  if (world_rank == 0) {
     total_size = static_cast<int>(GetInput().size());
   }
 
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> sendcounts(size, 0);
-  std::vector<int> displs(size, 0);
-
-  const int base = (size > 0) ? total_size / size : 0;
-  const int rem = (size > 0) ? total_size % size : 0;
-
-  for (int i = 0; i < size; ++i) {
-    sendcounts[i] = base + (i < rem ? 1 : 0);
+  std::vector<char> buffer;
+  if (world_rank == 0 && total_size > 0) {
+    buffer.assign(GetInput().begin(), GetInput().end());
   }
 
-  std::partial_sum(sendcounts.begin(), sendcounts.end() - 1, displs.begin() + 1);
+  std::vector<int> sendcounts(static_cast<std::size_t>(world_size), 0);
+  std::vector<int> displs(static_cast<std::size_t>(world_size), 0);
 
-  std::vector<char> local_buf(static_cast<std::size_t>(sendcounts[rank]));
+  if (world_size > 0 && total_size > 0) {
+    int base = total_size / world_size;
+    int rem = total_size % world_size;
+    for (int r = 0; r < world_size; ++r) {
+      sendcounts[r] = base + (r < rem ? 1 : 0);
+    }
+    displs[0] = 0;
+    for (int r = 1; r < world_size; ++r) {
+      displs[r] = displs[r - 1] + sendcounts[r - 1];
+    }
+  }
 
-  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, sendcounts.data(), displs.data(), MPI_CHAR, local_buf.data(),
-               sendcounts[rank], MPI_CHAR, 0, MPI_COMM_WORLD);
+  int local_count_chars = 0;
+  if (world_size > 0) {
+    local_count_chars = sendcounts[world_rank];
+  }
+  std::vector<char> local_buf(static_cast<std::size_t>(local_count_chars));
+
+  MPI_Scatterv((buffer.empty() ? nullptr : buffer.data()), sendcounts.data(), displs.data(), MPI_CHAR,
+               (local_buf.empty() ? nullptr : local_buf.data()), local_count_chars, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int local_count = 0;
-  for (unsigned char c : local_buf) {
-    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+  for (char c : local_buf) {
+    if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
       ++local_count;
     }
   }

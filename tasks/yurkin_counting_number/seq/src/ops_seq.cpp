@@ -2,6 +2,8 @@
 
 #include <cctype>
 
+#include "yurkin_counting_number/common/include/common.hpp"
+
 namespace yurkin_counting_number {
 
 YurkinCountingNumberSEQ::YurkinCountingNumberSEQ(const InType &in) {
@@ -20,16 +22,15 @@ bool YurkinCountingNumberSEQ::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberSEQ::RunImpl() {
-  const auto &input = GetInput();
-  int count = 0;
-
-  for (unsigned char c : input) {
-    if (std::isalpha(c) != 0) {
-      ++count;
+  const InType &input = GetInput();
+  int total_size = static_cast<int>(input.size());
+  int local_count = 0;
+  for (int i = 0; i < total_size; ++i) {
+    if (std::isalpha(static_cast<unsigned char>(input[i])) != 0) {
+      ++local_count;
     }
   }
-
-  GetOutput() = count;
+  GetOutput() = local_count;
   return true;
 }
 

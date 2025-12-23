@@ -2,8 +2,10 @@
 
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -15,15 +17,14 @@ namespace yurkin_counting_number {
 
 class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const auto &param) {
-    const auto &name = std::get<1>(param);
-    std::string res = name;
-    for (auto &c : res) {
-      if (!std::isalnum(static_cast<unsigned char>(c))) {
+  static std::string PrintTestParam(const TestType &test_param) {
+    std::string name = std::get<1>(test_param);
+    for (auto &c : name) {
+      if (std::isalnum(static_cast<unsigned char>(c)) == 0) {
         c = '_';
       }
     }
-    return res;
+    return name;
   }
 
  protected:
@@ -36,8 +37,8 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
   bool CheckTestOutputData(OutType &output_data) final {
     int expected = 0;
     for (char c : input_data_) {
-      if (std::isalpha(static_cast<unsigned char>(c))) {
-        expected++;
+      if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
+        ++expected;
       }
     }
     return expected == output_data;
@@ -53,18 +54,18 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
 
 namespace {
 
-const std::array<TestType, 6> kTestParam = {
-    std::make_tuple(0, "AbC123"), std::make_tuple(1, "!!!!abcd"), std::make_tuple(2, "123"),
-    std::make_tuple(3, ""),       std::make_tuple(4, "ALLCAPS"),  std::make_tuple(5, "mixED123!@#"),
-};
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple(0, ""),           std::make_tuple(1, "a"),
+    std::make_tuple(2, "A1!"),        std::make_tuple(3, "abcXYZ"),
+    std::make_tuple(4, "123456"),     std::make_tuple(5, "   \n\t"),
+    std::make_tuple(6, "!@#$%^&*()"), std::make_tuple(7, std::string(1000, 'a'))};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
     ppc::util::AddFuncTask<YurkinCountingNumberSEQ, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number));
 
 const auto kValues = ppc::util::ExpandToValues(kTasks);
-
-const auto kName = YurkinCountingNumberFuncTests::PrintTestParam;
+const auto kName = YurkinCountingNumberFuncTests::PrintFuncTestName<YurkinCountingNumberFuncTests>;
 
 TEST_P(YurkinCountingNumberFuncTests, MainTest) {
   ExecuteTest(GetParam());
@@ -73,4 +74,5 @@ TEST_P(YurkinCountingNumberFuncTests, MainTest) {
 INSTANTIATE_TEST_SUITE_P(YurkinTests, YurkinCountingNumberFuncTests, kValues, kName);
 
 }  // namespace
+
 }  // namespace yurkin_counting_number

@@ -1,6 +1,6 @@
 # Отчёт
 
-# Подсчёт количества заданных чисел во входных данных. Последовательная и MPI-реализации.
+# Подсчёт количества букв во входных данных. Последовательная и MPI реализации
 
 - **Студент:** Юркин Георгий Алексеевич, группа 3823Б1ФИ1  
 - **Технология:** SEQ–MPI  
@@ -63,25 +63,29 @@
 ### Псевдокод
 
 ```
-rank = MPI_Comm_rank()
-size = MPI_Comm_size()
-
-N = size of input array
-chunk = N / size
-remainder = N % size
-
-start = rank * chunk + min(rank, remainder)
-length = chunk + (rank < remainder ? 1 : 0)
-
-local_count = 0
-for i = start .. start + length - 1:
-    if input[i] is a letter (A-Z or a-z):
-        local_count += 1
-
-global_count = MPI_Reduce_SUM(local_count, root=0)
+MPI_Comm_rank(MPI_COMM_WORLD, &rank)
+MPI_Comm_size(MPI_COMM_WORLD, &size)
 
 if rank == 0:
-    result = global_count
+    N = GetInput().size()
+MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD)
+
+compute sendcounts and displs based on N and size
+
+local_buf = vector<char>(sendcounts[rank])
+MPI_Scatterv(root_buffer, sendcounts, displs, MPI_CHAR,
+             local_buf, sendcounts[rank], MPI_CHAR, 0, MPI_COMM_WORLD)
+
+local_count = 0
+for c in local_buf:
+    if isalpha(static_cast<unsigned char>(c)):
+        local_count += 1
+
+global_count = 0
+MPI_Allreduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD)
+
+GetOutput() = global_count
+
 
 
 ```
@@ -166,21 +170,48 @@ int world_rank, world_size;
 MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-int N = GetInput().size();
+int total_size = 0;
+if (world_rank == 0) {
+    total_size = static_cast<int>(GetInput().size());
+}
+MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-int base = N / world_size;
-int rem = N % world_size;
+std::vector<char> buffer;
+if (world_rank == 0 && total_size > 0) {
+    buffer.assign(GetInput().begin(), GetInput().end());
+}
 
-int start = world_rank * base + std::min(world_rank, rem);
-int length = base + (world_rank < rem ? 1 : 0);
+std::vector<int> sendcounts(static_cast<std::size_t>(world_size), 0);
+std::vector<int> displs(static_cast<std::size_t>(world_size), 0);
+if (world_size > 0 && total_size > 0) {
+    int base = total_size / world_size;
+    int rem = total_size % world_size;
+    for (int r = 0; r < world_size; ++r) {
+        sendcounts[r] = base + (r < rem ? 1 : 0);
+    }
+    displs[0] = 0;
+    for (int r = 1; r < world_size; ++r) {
+        displs[r] = displs[r - 1] + sendcounts[r - 1];
+    }
+}
 
-std::vector<char> local_buf(length);
-MPI_Scatterv(GetInput().data(), sendcounts, displs, MPI_CHAR,
-             local_buf.data(), length, MPI_CHAR, 0, MPI_COMM_WORLD);
+int local_count_chars = sendcounts[world_rank];
+std::vector<char> local_buf(static_cast<std::size_t>(local_count_chars));
+
+MPI_Scatterv(
+    (buffer.empty() ? nullptr : buffer.data()),
+    sendcounts.data(),
+    displs.data(),
+    MPI_CHAR,
+    (local_buf.empty() ? nullptr : local_buf.data()),
+    local_count_chars,
+    MPI_CHAR,
+    0,
+    MPI_COMM_WORLD);
 
 int local_count = 0;
-for (unsigned char c : local_buf) {
-    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+for (char c : local_buf) {
+    if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
         ++local_count;
     }
 }
@@ -188,9 +219,8 @@ for (unsigned char c : local_buf) {
 int global_count = 0;
 MPI_Allreduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-if (world_rank == 0) {
-    GetOutput() = global_count;
-}
+GetOutput() = global_count;
+
 
 
 ```
