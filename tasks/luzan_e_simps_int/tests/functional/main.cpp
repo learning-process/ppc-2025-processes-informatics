@@ -102,7 +102,7 @@ const std::array<TestType, 16> kTestParam = {
     std::make_tuple(70, std::make_tuple(-50, 50), std::make_tuple(-50, 50), 1),   // big rectangle
     std::make_tuple(100, std::make_tuple(-100, 0), std::make_tuple(0, 1), 1),     // tube
     std::make_tuple(100, std::make_tuple(-10, 0), std::make_tuple(0, 100), 1),    // vertical tube
-    std::make_tuple(6, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),          //  std
+    std::make_tuple(6, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),          // std
     std::make_tuple(24, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),      // std
     std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(-50, -15), 4),  // negative rectangle
     std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(15, 25), 4),    // half negative rectangle
