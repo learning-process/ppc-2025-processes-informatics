@@ -41,7 +41,9 @@ TEST(frolovaSStar, dataLength0) {
   if (rank == 0) {
     std::random_device rd;
     destinations.resize(size - 1);
-    std::ranges::iota(destinations, 1);
+    for (size_t i = 0; i < destinations.size(); ++i) {
+      destinations[i] = static_cast<int>(i) + 1;
+    }
     std::shuffle(destinations.begin(), destinations.end(), rd);
     data = frolova_s_star_topology::MakeRandomVector((size - 1) * data_length);
   }
@@ -89,7 +91,9 @@ TEST(frolovaSStar, dataLength64) {
   if (rank == 0) {
     std::random_device rd;
     destinations.resize(size - 1);
-    std::ranges::iota(destinations, 1);
+    for (size_t i = 0; i < destinations.size(); ++i) {
+      destinations[i] = static_cast<int>(i) + 1;
+    }
     std::shuffle(destinations.begin(), destinations.end(), rd);
     data = frolova_s_star_topology::MakeRandomVector((size - 1) * data_length);
   }
@@ -136,7 +140,9 @@ TEST(frolovaSStar, dataLength1024) {
   if (rank == 0) {
     std::random_device rd;
     destinations.resize(size - 1);
-    std::ranges::iota(destinations, 1);
+    for (size_t i = 0; i < destinations.size(); ++i) {
+      destinations[i] = static_cast<int>(i) + 1;
+    }
     std::shuffle(destinations.begin(), destinations.end(), rd);
     data = frolova_s_star_topology::MakeRandomVector((size - 1) * data_length);
   }
@@ -183,7 +189,9 @@ TEST(frolovaSStar, dataLength32768) {
   if (rank == 0) {
     std::random_device rd;
     destinations.resize(size - 1);
-    std::ranges::iota(destinations, 1);
+    for (size_t i = 0; i < destinations.size(); ++i) {
+      destinations[i] = static_cast<int>(i) + 1;
+    }
     std::shuffle(destinations.begin(), destinations.end(), rd);
     data = frolova_s_star_topology::MakeRandomVector((size - 1) * data_length);
   }
