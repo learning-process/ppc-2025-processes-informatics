@@ -1,5 +1,6 @@
 #include "chyokotov_a_seidel_method/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -73,10 +74,8 @@ bool ChyokotovASeidelMethodSEQ::Convergence() {
     }
     max_error = std::max(std::abs(error), max_error);
   }
-  if (max_error < 0.000001) {
-    return true;
-  }
-  return false;
+
+  return (max_error < 0.000001);
 }
 
 bool ChyokotovASeidelMethodSEQ::RunImpl() {

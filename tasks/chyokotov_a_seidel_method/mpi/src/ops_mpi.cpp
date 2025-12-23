@@ -67,7 +67,7 @@ bool ChyokotovASeidelMethodMPI::ValidationImpl() {
 
   MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  return is_valid == 1 ? true : false;
+  return (is_valid == 1);
 }
 
 bool ChyokotovASeidelMethodMPI::PreProcessingImpl() {
@@ -78,24 +78,9 @@ bool ChyokotovASeidelMethodMPI::PreProcessingImpl() {
   return true;
 }
 
-std::pair<int, int> ChyokotovASeidelMethodMPI::SendMatrixData(int rank, int size, int n,
-                                                              std::vector<std::vector<double>> &a,
-                                                              std::vector<double> &b, std::vector<int> &displs,
-                                                              std::vector<int> &counts) {
-  int base = n / size;
-  int rem = n % size;
-
-  int local_rows = base + (rank < rem ? 1 : 0);
-  int local_start = (rank * base) + std::min(rank, rem);
-
-  a.resize(local_rows, std::vector<double>(n));
-  b.resize(local_rows);
-
-  for (int i = 0; i < size; i++) {
-    counts[i] = base + (i < rem ? 1 : 0);
-    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
-  }
-
+void ChyokotovASeidelMethodMPI::ExchangeMatrixData(int rank, int size, int n, std::vector<std::vector<double>> &a,
+                                                   std::vector<double> &b, const std::vector<int> &displs,
+                                                   int local_rows) {
   if (rank == 0) {
     const auto &matrix = GetInput().first;
     const auto &vector = GetInput().second;
@@ -104,6 +89,8 @@ std::pair<int, int> ChyokotovASeidelMethodMPI::SendMatrixData(int rank, int size
       b[i] = vector[i];
     }
 
+    int base = n / size;
+    int rem = n % size;
     for (int proc = 1; proc < size; proc++) {
       int proc_rows = base + (proc < rem ? 1 : 0);
       int proc_start = displs[proc];
@@ -120,6 +107,28 @@ std::pair<int, int> ChyokotovASeidelMethodMPI::SendMatrixData(int rank, int size
       MPI_Recv(&b[i], 1, MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   }
+}
+
+std::pair<int, int> ChyokotovASeidelMethodMPI::DistributeMatrixData(int rank, int size, int n,
+                                                                    std::vector<std::vector<double>> &a,
+                                                                    std::vector<double> &b, std::vector<int> &displs,
+                                                                    std::vector<int> &counts) {
+  int base = n / size;
+  int rem = n % size;
+
+  int local_rows = base + (rank < rem ? 1 : 0);
+  int local_start = (rank * base) + std::min(rank, rem);
+
+  a.resize(local_rows, std::vector<double>(n));
+  b.resize(local_rows);
+
+  for (int i = 0; i < size; i++) {
+    counts[i] = base + (i < rem ? 1 : 0);
+    displs[i] = (i == 0) ? 0 : displs[i - 1] + counts[i - 1];
+  }
+
+  ExchangeMatrixData(rank, size, n, a, b, displs, local_rows);
+
   return std::make_pair(local_rows, local_start);
 }
 
@@ -188,7 +197,7 @@ bool ChyokotovASeidelMethodMPI::RunImpl() {
   std::vector<std::vector<double>> my_a;
   std::vector<double> my_b;
 
-  std::pair<int, int> p = SendMatrixData(rank, size, n, my_a, my_b, displs, counts);
+  std::pair<int, int> p = DistributeMatrixData(rank, size, n, my_a, my_b, displs, counts);
   int local_rows = p.first;
   int local_start = p.second;
 
