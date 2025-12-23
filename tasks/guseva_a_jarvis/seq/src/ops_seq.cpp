@@ -1,7 +1,6 @@
 #include "guseva_a_jarvis/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
