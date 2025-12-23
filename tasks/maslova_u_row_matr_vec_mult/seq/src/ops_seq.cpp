@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "maslova_u_row_matr_vec_mult/common/include/common.hpp"
+
 namespace maslova_u_row_matr_vec_mult {
 
 MaslovaURowMatrVecMultSEQ::MaslovaURowMatrVecMultSEQ(const InType &in) {

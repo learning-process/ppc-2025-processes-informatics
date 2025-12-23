@@ -33,10 +33,10 @@ class MaslovaURowMatrVecMultFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
-    int is_initialized;
+    int is_initialized = 0;
     MPI_Initialized(&is_initialized);  // Проверяем, запущен ли MPI
 
-    if (is_initialized) {
+    if (is_initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 

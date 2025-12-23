@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "maslova_u_row_matr_vec_mult/common/include/common.hpp"
