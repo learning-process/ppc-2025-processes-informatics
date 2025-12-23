@@ -23,65 +23,73 @@ double EvaluateCenter(const Function2D &f, Region &r) {
   return r.value;
 }
 
-int ComputeStartIndex(int rank, int regions_per_proc, int remainder) {
-  return rank * regions_per_proc + ((rank < remainder) ? rank : remainder);
+int ComputeStartIndex(int rank, int per_proc, int remainder) {
+  return rank * per_proc + std::min(rank, remainder);
 }
 
-int ComputeEndIndex(int start_idx, int regions_per_proc, int rank, int remainder) {
-  return start_idx + regions_per_proc + ((rank < remainder) ? 1 : 0);
+int ComputeEndIndex(int start, int per_proc, int rank, int remainder) {
+  return start + per_proc + (rank < remainder ? 1 : 0);
 }
 
-Region SplitRegionX(const Region &r, double xm) {
-  return Region{.x_min = r.x_min, .x_max = xm, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+Region SplitXLeft(const Region &r, double xm) {
+  return Region{r.x_min, xm, r.y_min, r.y_max, 0.0};
 }
 
-Region SplitRegionXRight(const Region &r, double xm) {
-  return Region{.x_min = xm, .x_max = r.x_max, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+Region SplitXRight(const Region &r, double xm) {
+  return Region{xm, r.x_max, r.y_min, r.y_max, 0.0};
 }
 
-Region SplitRegionY(const Region &r, double ym) {
-  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = r.y_min, .y_max = ym, .value = 0.0};
+Region SplitYBottom(const Region &r, double ym) {
+  return Region{r.x_min, r.x_max, r.y_min, ym, 0.0};
 }
 
-Region SplitRegionYTop(const Region &r, double ym) {
-  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
+Region SplitYTop(const Region &r, double ym) {
+  return Region{r.x_min, r.x_max, ym, r.y_max, 0.0};
 }
 
-Region FindLocalBest(const Function2D &f, std::vector<Region> &local_regions, int start_idx, int end_idx) {
-  Region best{.x_min = 0, .x_max = 0, .y_min = 0, .y_max = 0, .value = std::numeric_limits<double>::max()};
-  bool initialized = false;
-  for (int i = start_idx; i < end_idx; ++i) {
-    EvaluateCenter(f, local_regions[i]);
-    if (!initialized || local_regions[i].value < best.value) {
-      best = local_regions[i];
-      initialized = true;
+Region FindLocalBest(const Function2D &f, std::vector<Region> &regions, int begin, int end) {
+  Region best{};
+  best.value = std::numeric_limits<double>::max();
+
+  for (int i = begin; i < end; ++i) {
+    EvaluateCenter(f, regions[i]);
+    if (regions[i].value < best.value) {
+      best = regions[i];
     }
   }
-  if (!initialized) {
-    best.value = 9999;
-  }
+
   return best;
 }
 
-void UpdateRegions(std::vector<Region> &regions, const Region &global_best) {
-  double dx = global_best.x_max - global_best.x_min;
-  double dy = global_best.y_max - global_best.y_min;
+bool IsRegionSmallEnough(const Region &r) {
+  return std::max(r.x_max - r.x_min, r.y_max - r.y_min) < kEps;
+}
 
-  auto sub = std::ranges::remove_if(regions, [&](const Region &r) {
-    return r.x_min == global_best.x_min && r.x_max == global_best.x_max && r.y_min == global_best.y_min &&
-           r.y_max == global_best.y_max;
+void ReplaceWithSplit(std::vector<Region> &regions, const Region &best) {
+  const double dx = best.x_max - best.x_min;
+  const double dy = best.y_max - best.y_min;
+
+  auto it = std::ranges::remove_if(regions, [&](const Region &r) {
+    return r.x_min == best.x_min && r.x_max == best.x_max && r.y_min == best.y_min && r.y_max == best.y_max;
   });
-  regions.erase(sub.begin(), sub.end());
+  regions.erase(it.begin(), it.end());
 
   if (dx >= dy) {
-    double xm = 0.5 * (global_best.x_min + global_best.x_max);
-    regions.push_back(SplitRegionX(global_best, xm));
-    regions.push_back(SplitRegionXRight(global_best, xm));
+    const double xm = 0.5 * (best.x_min + best.x_max);
+    regions.push_back(SplitXLeft(best, xm));
+    regions.push_back(SplitXRight(best, xm));
   } else {
-    double ym = 0.5 * (global_best.y_min + global_best.y_max);
-    regions.push_back(SplitRegionY(global_best, ym));
-    regions.push_back(SplitRegionYTop(global_best, ym));
+    const double ym = 0.5 * (best.y_min + best.y_max);
+    regions.push_back(SplitYBottom(best, ym));
+    regions.push_back(SplitYTop(best, ym));
   }
+}
+
+Region FinalBestRegion(const Function2D &f, std::vector<Region> &regions) {
+  for (auto &r : regions) {
+    EvaluateCenter(f, r);
+  }
+  return *std::ranges::min_element(regions, {}, &Region::value);
 }
 
 }  // namespace
@@ -101,8 +109,8 @@ bool KrykovEMultistepSADMPI::PreProcessingImpl() {
 }
 
 bool KrykovEMultistepSADMPI::RunImpl() {
-  int size{};
-  int rank{};
+  int size = 0;
+  int rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -110,18 +118,16 @@ bool KrykovEMultistepSADMPI::RunImpl() {
 
   std::vector<Region> regions;
   if (rank == 0) {
-    regions.push_back(Region{.x_min = x_min, .x_max = x_max, .y_min = y_min, .y_max = y_max, .value = 0.0});
+    regions.push_back({x_min, x_max, y_min, y_max, 0.0});
     EvaluateCenter(f, regions.front());
   }
 
   int stop_flag = 0;
-  for (int iter = 0; iter < kMaxIter && stop_flag == 0; ++iter) {
-    int n_regions = 0;
-    if (rank == 0) {
-      n_regions = static_cast<int>(regions.size());
-    }
 
+  for (int iter = 0; iter < kMaxIter && stop_flag == 0; ++iter) {
+    int n_regions = (rank == 0) ? static_cast<int>(regions.size()) : 0;
     MPI_Bcast(&n_regions, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
     if (n_regions == 0) {
       stop_flag = 1;
       MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -132,54 +138,44 @@ bool KrykovEMultistepSADMPI::RunImpl() {
     if (rank == 0) {
       std::ranges::copy(regions, local_regions.begin());
     }
-    MPI_Bcast(local_regions.data(), static_cast<int>(n_regions * sizeof(Region)), MPI_BYTE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(local_regions.data(), n_regions * static_cast<int>(sizeof(Region)), MPI_BYTE, 0, MPI_COMM_WORLD);
 
-    int regions_per_proc = n_regions / size;
-    int remainder = n_regions % size;
-    int start_idx = ComputeStartIndex(rank, regions_per_proc, remainder);
-    int end_idx = ComputeEndIndex(start_idx, regions_per_proc, rank, remainder);
+    const int per_proc = n_regions / size;
+    const int remainder = n_regions % size;
+    const int begin = ComputeStartIndex(rank, per_proc, remainder);
+    const int end = ComputeEndIndex(begin, per_proc, rank, remainder);
 
-    Region local_best = FindLocalBest(f, local_regions, start_idx, end_idx);
+    const Region local_best = FindLocalBest(f, local_regions, begin, end);
 
     struct {
       double value;
       int rank;
-    } local_val{.value = local_best.value, .rank = rank}, global_val{.value = 0.0, .rank = 0};
+    } local_val{local_best.value, rank}, global_val{};
 
     MPI_Allreduce(&local_val, &global_val, 1, MPI_DOUBLE_INT, MPI_MINLOC, MPI_COMM_WORLD);
 
     Region global_best = local_best;
-    if (rank == global_val.rank) {
-      global_best = local_best;
-    }
-
-    MPI_Bcast(&global_best, sizeof(Region), MPI_BYTE, global_val.rank, MPI_COMM_WORLD);
+    MPI_Bcast(&global_best, static_cast<int>(sizeof(Region)), MPI_BYTE, global_val.rank, MPI_COMM_WORLD);
 
     if (rank == 0) {
-      if (std::max(global_best.x_max - global_best.x_min, global_best.y_max - global_best.y_min) < kEps) {
-        stop_flag = 1;
-      } else {
-        UpdateRegions(regions, global_best);
+      stop_flag = IsRegionSmallEnough(global_best);
+      if (!stop_flag) {
+        ReplaceWithSplit(regions, global_best);
       }
     }
 
     MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
-  Region best_region{.x_min = 0, .x_max = 0, .y_min = 0, .y_max = 0, .value = std::numeric_limits<double>::max()};
   double x = 0.0;
   double y = 0.0;
   double value = 0.0;
 
   if (rank == 0) {
-    for (auto &r : regions) {
-      EvaluateCenter(f, r);
-    }
-    best_region = *std::ranges::min_element(regions, {}, &Region::value);
-
-    x = 0.5 * (best_region.x_min + best_region.x_max);
-    y = 0.5 * (best_region.y_min + best_region.y_max);
-    value = best_region.value;
+    const Region best = FinalBestRegion(f, regions);
+    x = 0.5 * (best.x_min + best.x_max);
+    y = 0.5 * (best.y_min + best.y_max);
+    value = best.value;
   }
 
   MPI_Bcast(&x, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
