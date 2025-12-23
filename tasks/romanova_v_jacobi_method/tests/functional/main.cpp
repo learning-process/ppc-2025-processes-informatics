@@ -43,16 +43,20 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
       }
 
       std::vector<double> x(rows);
-      for(int i = 0; i < rows; i++) {
+      for (int i = 0; i < rows; i++) {
         file >> x[i];
       }
 
       std::vector<double> b(rows);
-      for(int i = 0; i < rows; i++) file >> b[i];
+      for (int i = 0; i < rows; i++) {
+        file >> b[i];
+      }
 
       std::vector<std::vector<double>> A(rows, std::vector<double>(columns));
-      for(int i = 0; i < rows; i++){
-        for(int j = 0; j < columns; j++) file >> A[i][j];
+      for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+          file >> A[i][j];
+        }
       }
 
       input_data_ = std::make_tuple(x, A, b, eps, iterations);
@@ -63,8 +67,14 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if(output_data.size() != exp_answer_.size()) return false;
-    for(int i = 0; i < output_data.size(); i++) if(abs(output_data[i]-exp_answer_[i]) > eps_) return false;
+    if (output_data.size() != exp_answer_.size()) {
+      return false;
+    }
+    for (int i = 0; i < output_data.size(); i++) {
+      if (abs(output_data[i] - exp_answer_[i]) > eps_) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -84,15 +94,16 @@ TEST_P(RomanovaVJacobiMethodFuncTestsProcesses, Jacobi) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {"simpleTest"};
+const std::array<TestType, 2> kTestParam = {"reallySmallTest", "simpleTest"};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<RomanovaVJacobiMethodMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_jacobi_method),
-                   ppc::util::AddFuncTask<RomanovaVJacobiMethodSEQ, InType>(kTestParam, PPC_SETTINGS_romanova_v_jacobi_method));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<RomanovaVJacobiMethodMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_jacobi_method),
+    ppc::util::AddFuncTask<RomanovaVJacobiMethodSEQ, InType>(kTestParam, PPC_SETTINGS_romanova_v_jacobi_method));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = RomanovaVJacobiMethodFuncTestsProcesses::PrintFuncTestName<RomanovaVJacobiMethodFuncTestsProcesses>;
+const auto kPerfTestName =
+    RomanovaVJacobiMethodFuncTestsProcesses::PrintFuncTestName<RomanovaVJacobiMethodFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(Tests, RomanovaVJacobiMethodFuncTestsProcesses, kGtestValues, kPerfTestName);
 
