@@ -1,27 +1,27 @@
 #include "maslova_u_fast_sort_simple/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 #include <vector>
 
 namespace maslova_u_fast_sort_simple {
 
 MaslovaUFastSortSimpleSEQ::MaslovaUFastSortSimpleSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
+  SetTypeOfTask(ppc::task::TypeOfTask::kMPI);
   GetInput() = in;
 }
 
 bool MaslovaUFastSortSimpleSEQ::ValidationImpl() {
-  // Просто проверяем входные данные на Rank 0 (единственном, где выполняется SEQ)
-  return true; 
+  return true;
 }
 
 bool MaslovaUFastSortSimpleSEQ::PreProcessingImpl() {
-  // Инициализируем выходной вектор входными данными
-  GetOutput() = GetInput();
   return true;
 }
 
 bool MaslovaUFastSortSimpleSEQ::RunImpl() {
-  // Чистая сортировка без MPI
+  GetOutput() = GetInput();
+
+  // Сортируем
   if (!GetOutput().empty()) {
     std::sort(GetOutput().begin(), GetOutput().end());
   }
