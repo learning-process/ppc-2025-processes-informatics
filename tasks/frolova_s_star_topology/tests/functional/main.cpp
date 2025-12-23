@@ -73,7 +73,7 @@ TEST(frolovaSStar, DataLength0) {
   }
 }
 
-TEST(frolovaSStar, dataLength64) {
+TEST(frolovaSStar, DataLength64) {
   const size_t data_length = 64;
   int rank = 0;
   int size = 0;
