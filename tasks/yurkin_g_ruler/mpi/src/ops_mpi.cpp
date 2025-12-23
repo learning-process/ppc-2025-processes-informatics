@@ -39,14 +39,10 @@ bool YurkinGRulerMPI::RunImpl() {
   src = std::clamp(src, 0, size - 1);
   dst = std::clamp(dst, 0, size - 1);
 
+  GetOutput() = GetInput();
   int payload = GetInput();
 
   if (src == dst) {
-    if (rank == src) {
-      GetOutput() = payload;
-    } else {
-      GetOutput() = 0;
-    }
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -56,7 +52,6 @@ bool YurkinGRulerMPI::RunImpl() {
   const int direction = (dst > src) ? +1 : -1;
 
   if (rank < low || rank > high) {
-    GetOutput() = 0;
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -64,7 +59,7 @@ bool YurkinGRulerMPI::RunImpl() {
   if (rank == src) {
     const int next = rank + direction;
     MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-    GetOutput() = payload;
+
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -81,7 +76,6 @@ bool YurkinGRulerMPI::RunImpl() {
 
   const int next = rank + direction;
   MPI_Send(&recv_val, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-  GetOutput() = 0;
 
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
