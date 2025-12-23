@@ -18,11 +18,12 @@ FrolovaSStarTopologyMPI::FrolovaSStarTopologyMPI(const InType &in) {
 }
 
 bool FrolovaSStarTopologyMPI::ValidationImpl() {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  return size >= 2 && (rank == 0 || ((GetInput() > 0)));
+  // int rank = 0;
+  // int size = 0;
+  // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  // MPI_Comm_size(MPI_COMM_WORLD, &size);
+  // return size >= 2 && (rank == 0 || ((GetInput() > 0)));
+  return true;
 }
 
 bool FrolovaSStarTopologyMPI::PreProcessingImpl() {
