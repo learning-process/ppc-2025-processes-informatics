@@ -51,13 +51,13 @@
 ### Идея распараллеливания
 
 - Входные данные логически делятся между MPI-процессами  
-- Каждый процесс обрабатывает свою часть данных  
-- Вычисляются локальные частичные результаты  
-- Глобальный результат формируется с помощью `MPI_Reduce`  
+- Распределение выполняется с помощью MPI_Scatterv, что позволяет каждому процессу получить только свой участок массива  
+- Распределение выполняется с помощью MPI_Scatterv, что позволяет каждому процессу получить только свой участок массива 
+- Глобальный результат формируется с помощью `MPI_Allreduce`  
 
 ### Синхронизация
 - Используется `MPI_COMM_WORLD`  
-- Объединение частичных результатов выполняется коллективной операцией MPI_Reduce
+- Объединение частичных результатов выполняется коллективной операцией MPI_Allreduce
 
 ---
 ### Псевдокод
@@ -70,11 +70,13 @@ if rank == 0:
     N = GetInput().size()
 MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD)
 
-compute sendcounts and displs based on N and size
+compute sendcounts[] and displs[] based on N and size
 
 local_buf = vector<char>(sendcounts[rank])
-MPI_Scatterv(root_buffer, sendcounts, displs, MPI_CHAR,
-             local_buf, sendcounts[rank], MPI_CHAR, 0, MPI_COMM_WORLD)
+
+MPI_Scatterv(input_buffer, sendcounts, displs, MPI_CHAR,
+             local_buf, sendcounts[rank], MPI_CHAR,
+             0, MPI_COMM_WORLD)
 
 local_count = 0
 for c in local_buf:
@@ -85,6 +87,7 @@ global_count = 0
 MPI_Allreduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD)
 
 GetOutput() = global_count
+
 
 
 
@@ -141,7 +144,7 @@ GetOutput() = global_count
 | mpi  | 4         | 1 × 10⁶               | 0.031    | 3.06    |
 
 **Обсуждение:**  
-MPI-версия показывает ускорение при использовании нескольких процессов за счёт распараллеливания подсчёта. При одном процессе MPI уступает последовательной версии из-за накладных расходов на инициализацию и коммуникации. С ростом числа процессов и размера входных данных эффективность параллелизации возрастает, однако масштабируемость ограничена затратами на коллективные операции (`MPI_Reduce`).
+MPI-версия показывает ускорение при использовании нескольких процессов за счёт распараллеливания подсчёта. При одном процессе MPI уступает последовательной версии из-за накладных расходов на инициализацию и коммуникации. С ростом числа процессов и размера входных данных эффективность параллелизации возрастает, однако масштабируемость ограничена затратами на коллективные операции (`MPI_Allreduce`).
 
 
 ## 8. Заключение
@@ -166,7 +169,7 @@ MPI-версия показывает ускорение при использо
 ### MPI-код
 
 ```
-int world_rank, world_size;
+int world_rank = 0, world_size = 0;
 MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
@@ -176,38 +179,60 @@ if (world_rank == 0) {
 }
 MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-std::vector<char> buffer;
-if (world_rank == 0 && total_size > 0) {
-    buffer.assign(GetInput().begin(), GetInput().end());
-}
+std::vector<int> sendcounts;
+std::vector<int> displs;
 
-std::vector<int> sendcounts(static_cast<std::size_t>(world_size), 0);
-std::vector<int> displs(static_cast<std::size_t>(world_size), 0);
-if (world_size > 0 && total_size > 0) {
-    int base = total_size / world_size;
-    int rem = total_size % world_size;
+if (world_rank == 0) {
+    sendcounts.assign(world_size, 0);
+    displs.assign(world_size, 0);
+
+    std::size_t n = static_cast<std::size_t>(total_size);
+    std::size_t chunk = n / world_size;
+    std::size_t rem = n % world_size;
+
+    std::size_t offset = 0;
     for (int r = 0; r < world_size; ++r) {
-        sendcounts[r] = base + (r < rem ? 1 : 0);
-    }
-    displs[0] = 0;
-    for (int r = 1; r < world_size; ++r) {
-        displs[r] = displs[r - 1] + sendcounts[r - 1];
+        std::size_t add = chunk + (r < static_cast<int>(rem) ? 1U : 0U);
+        sendcounts[r] = static_cast<int>(add);
+        displs[r] = static_cast<int>(offset);
+        offset += add;
     }
 }
 
-int local_count_chars = sendcounts[world_rank];
-std::vector<char> local_buf(static_cast<std::size_t>(local_count_chars));
+int recvcount = 0;
+if (world_rank == 0) {
+    MPI_Scatter(sendcounts.data(), 1, MPI_INT,
+                &recvcount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+} else {
+    MPI_Scatter(nullptr, 1, MPI_INT,
+                &recvcount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+}
 
-MPI_Scatterv(
-    (buffer.empty() ? nullptr : buffer.data()),
-    sendcounts.data(),
-    displs.data(),
-    MPI_CHAR,
-    (local_buf.empty() ? nullptr : local_buf.data()),
-    local_count_chars,
-    MPI_CHAR,
-    0,
-    MPI_COMM_WORLD);
+if (recvcount < 0) recvcount = 0;
+
+std::vector<char> local_buf(static_cast<std::size_t>(recvcount));
+
+if (world_rank == 0) {
+    MPI_Scatterv(GetInput().data(),
+                 sendcounts.data(),
+                 displs.data(),
+                 MPI_CHAR,
+                 local_buf.data(),
+                 recvcount,
+                 MPI_CHAR,
+                 0,
+                 MPI_COMM_WORLD);
+} else {
+    MPI_Scatterv(nullptr,
+                 nullptr,
+                 nullptr,
+                 MPI_CHAR,
+                 local_buf.data(),
+                 recvcount,
+                 MPI_CHAR,
+                 0,
+                 MPI_COMM_WORLD);
+}
 
 int local_count = 0;
 for (char c : local_buf) {

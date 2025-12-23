@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -55,10 +54,14 @@ class YurkinCountingNumberFuncTests : public ppc::util::BaseRunFuncTests<InType,
 namespace {
 
 const std::array<TestType, 8> kTestParam = {
-    std::make_tuple(0, ""),           std::make_tuple(1, "a"),
-    std::make_tuple(2, "A1!"),        std::make_tuple(3, "abcXYZ"),
-    std::make_tuple(4, "123456"),     std::make_tuple(5, "   \n\t"),
-    std::make_tuple(6, "!@#$%^&*()"), std::make_tuple(7, std::string(1000, 'a'))};
+    std::make_tuple(0, "AbC123"),
+    std::make_tuple(1, "onlyLetters"),
+    std::make_tuple(2, "1234567890"),
+    std::make_tuple(3, "!!!!@@@###"),
+    std::make_tuple(4, "a!b@c#1 2 3"),
+    std::make_tuple(5, ""),
+    std::make_tuple(6, " A \tB \nC "),
+    std::make_tuple(7, "aaaaaaaaaabbbbbbbbbbCCCCCCCCCCddddddddddeeeeeeeeeeffffffffff")};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<YurkinCountingNumberMPI, InType>(kTestParam, PPC_SETTINGS_yurkin_counting_number),
@@ -74,5 +77,4 @@ TEST_P(YurkinCountingNumberFuncTests, MainTest) {
 INSTANTIATE_TEST_SUITE_P(YurkinTests, YurkinCountingNumberFuncTests, kValues, kName);
 
 }  // namespace
-
 }  // namespace yurkin_counting_number
