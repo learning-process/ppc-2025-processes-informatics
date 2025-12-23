@@ -28,20 +28,20 @@ bool ScalarProductSEQ::PreProcessingImpl() {
 bool ScalarProductSEQ::RunImpl() {
   const auto &vector_a = GetInput().first;
   const auto &vector_b = GetInput().second;
-  
+
   if (vector_a.empty() || vector_b.empty()) {
     return false;
   }
 
   int dot_product = 0;
   size_t size = vector_a.size();
-  
+
   for (size_t i = 0; i < size; ++i) {
     dot_product += vector_a[i] * vector_b[i];
   }
 
   GetOutput() = dot_product;
-  
+
   return true;
 }
 

@@ -20,7 +20,7 @@ class ScalarProductRunFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   static std::string PrintTestParam(const TestType &test_param) {
     const auto &[vectors, description] = test_param;
     return std::string(description);
-}
+  }
 
  protected:
   void SetUp() override {
@@ -30,7 +30,7 @@ class ScalarProductRunFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &[vector_a, vector_b] = input_data_;
-    
+
     int expected_result = 0;
     for (size_t i = 0; i < vector_a.size(); ++i) {
       expected_result += vector_a[i] * vector_b[i];
@@ -172,18 +172,15 @@ const std::array<TestType, 17> kTestParam = {
                     "minimum_nonempty")
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ScalarProductMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_scalar_product),
-                                           ppc::util::AddFuncTask<ScalarProductSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_scalar_product));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<ScalarProductMPI, InType>(kTestParam, PPC_SETTINGS_scalar_product),
+                   ppc::util::AddFuncTask<ScalarProductSEQ, InType>(kTestParam, PPC_SETTINGS_scalar_product));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ScalarProductRunFuncTests::PrintFuncTestName<
-    ScalarProductRunFuncTests>;
+const auto kPerfTestName = ScalarProductRunFuncTests::PrintFuncTestName<ScalarProductRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ScalarProductTests, ScalarProductRunFuncTests, kGtestValues,
-                         kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ScalarProductTests, ScalarProductRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 

@@ -1,6 +1,7 @@
 #include "scalar_product/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <numeric>
 #include <vector>
 
@@ -26,7 +27,7 @@ bool ScalarProductMPI::PreProcessingImpl() {
 
   const auto &vector_a = GetInput().first;
   const auto &vector_b = GetInput().second;
-  
+
   int global_size = 0;
   if (rank == 0) {
     global_size = static_cast<int>(vector_a.size());
@@ -38,16 +39,14 @@ bool ScalarProductMPI::PreProcessingImpl() {
 
   const int base = global_size / world_size;
   int remain = global_size % world_size;
-  
 
   for (int i = 0; i < world_size; ++i) {
     if (remain > 0) {
       counts[i] = base + 1;
-        --remain;
-    } 
-    else {
-    counts[i] = base;
-  }
+      --remain;
+    } else {
+      counts[i] = base;
+    }
     if (remain > 0) {
       --remain;
     }
@@ -58,22 +57,16 @@ bool ScalarProductMPI::PreProcessingImpl() {
   }
   const int local_count = counts[rank];
 
-  local_vector_a.assign(static_cast<std::size_t>(local_count), 0); 
-  local_vector_b.assign(static_cast<std::size_t>(local_count), 0);  
+  local_vector_a.assign(static_cast<std::size_t>(local_count), 0);
+  local_vector_b.assign(static_cast<std::size_t>(local_count), 0);
 
-MPI_Scatterv(
-    rank == 0 ? vector_a.data() : nullptr, 
-    counts.data(), displase.data(), MPI_INT,
-    local_vector_a.data(), local_count, MPI_INT, 0, MPI_COMM_WORLD
-);
-MPI_Scatterv(
-    rank == 0 ? vector_b.data() : nullptr,
-    counts.data(), displase.data(), MPI_INT,
-    local_vector_b.data(), local_count, MPI_INT, 0, MPI_COMM_WORLD
-);
+  MPI_Scatterv(rank == 0 ? vector_a.data() : nullptr, counts.data(), displase.data(), MPI_INT, local_vector_a.data(),
+               local_count, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(rank == 0 ? vector_b.data() : nullptr, counts.data(), displase.data(), MPI_INT, local_vector_b.data(),
+               local_count, MPI_INT, 0, MPI_COMM_WORLD);
 
-  local_sum = 0; 
-  result = 0; 
+  local_sum = 0;
+  result = 0;
   return true;
 }
 

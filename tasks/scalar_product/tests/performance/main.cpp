@@ -15,13 +15,13 @@ class ScalarProductRunPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   InType input_data_;
 
   void SetUp() override {
-    const size_t vector_size = 100000000; 
+    const size_t vector_size = 100000000;
 
     std::vector<int> vector_a(vector_size);
     std::vector<int> vector_b(vector_size);
 
     for (size_t i = 0; i < vector_size; ++i) {
-      vector_a[i] = static_cast<int>(i % 500) + 1;          
+      vector_a[i] = static_cast<int>(i % 500) + 1;
       vector_b[i] = static_cast<int>((i * 4) % 500) + 1;
     }
 
@@ -29,7 +29,6 @@ class ScalarProductRunPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-
     return (output_data != 0);
   }
 
@@ -43,8 +42,7 @@ TEST_P(ScalarProductRunPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ScalarProductMPI, ScalarProductSEQ>(
-        PPC_SETTINGS_scalar_product);
+    ppc::util::MakeAllPerfTasks<InType, ScalarProductMPI, ScalarProductSEQ>(PPC_SETTINGS_scalar_product);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
