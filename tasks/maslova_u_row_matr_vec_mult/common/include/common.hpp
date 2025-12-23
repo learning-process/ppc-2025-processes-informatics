@@ -11,8 +11,8 @@
 namespace maslova_u_row_matr_vec_mult {
 struct Matrix {
   std::vector<double> data;
-  size_t rows;
-  size_t cols;
+  size_t rows = 0;
+  size_t cols = 0;
 };
 
 using InType = std::pair<Matrix, std::vector<double>>;

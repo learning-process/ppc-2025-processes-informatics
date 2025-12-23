@@ -1,6 +1,6 @@
 #include "maslova_u_row_matr_vec_mult/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 namespace maslova_u_row_matr_vec_mult {
@@ -16,7 +16,7 @@ bool MaslovaURowMatrVecMultSEQ::ValidationImpl() {
   if (matrix.data.empty()) {
     return true;
   }
-  return (matrix.cols == vec.size()) && (matrix.data.size() == (size_t)matrix.rows * matrix.cols);
+  return (matrix.cols == vec.size()) && (matrix.data.size() == matrix.rows * matrix.cols);
 }
 
 bool MaslovaURowMatrVecMultSEQ::PreProcessingImpl() {

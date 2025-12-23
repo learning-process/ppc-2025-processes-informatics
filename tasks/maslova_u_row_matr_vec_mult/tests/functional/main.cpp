@@ -71,13 +71,20 @@ TEST_P(MaslovaURowMatrVecMultFuncTests, matrVecMult) {
 }
 
 const std::array<TestType, 7> kTestParam = {
-    {std::make_tuple(InType{Matrix{{1, 2, 3, 4}, 2, 2}, {1, 1}}, OutType{3, 7}, "square_2x2"),
-     std::make_tuple(InType{Matrix{{1, 0, 0, 1}, 2, 2}, {5, 3}}, OutType{5, 3}, "identity_2x2"),
-     std::make_tuple(InType{Matrix{{1, 2, 3, 4, 5, 6}, 2, 3}, {1, 1, 1}}, OutType{6, 15}, "horizontal_2x3"),
-     std::make_tuple(InType{Matrix{{1, 2, 3, 4, 5, 6}, 3, 2}, {1, 0}}, OutType{1, 3, 5}, "vertical_3x2"),
-     std::make_tuple(InType{Matrix{{0, 0, 0, 0}, 2, 2}, {1, 2}}, OutType{0, 0}, "zero_matrix"),
-     std::make_tuple(InType{Matrix{{-1, 2, -3, 4}, 2, 2}, {1, 2}}, OutType{3, 5}, "negative_values"),
-     std::make_tuple(InType{Matrix{{2.5, 1.5, 4.0, 2.0}, 2, 2}, {2.0, 4.0}}, OutType{11.0, 16.0}, "double_values")}};
+    {std::make_tuple(InType{Matrix{.data = {1.0, 2.0, 3.0, 4.0}, .rows = 2, .cols = 2}, {1.0, 1.0}}, OutType{3.0, 7.0},
+                     "square_2x2"),
+     std::make_tuple(InType{Matrix{.data = {1.0, 0.0, 0.0, 1.0}, .rows = 2, .cols = 2}, {5.0, 3.0}}, OutType{5.0, 3.0},
+                     "identity_2x2"),
+     std::make_tuple(InType{Matrix{.data = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}, .rows = 2, .cols = 3}, {1.0, 1.0, 1.0}},
+                     OutType{6.0, 15.0}, "horizontal_2x3"),
+     std::make_tuple(InType{Matrix{.data = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0}, .rows = 3, .cols = 2}, {1.0, 0.0}},
+                     OutType{1.0, 3.0, 5.0}, "vertical_3x2"),
+     std::make_tuple(InType{Matrix{.data = {0.0, 0.0, 0.0, 0.0}, .rows = 2, .cols = 2}, {1.0, 2.0}}, OutType{0.0, 0.0},
+                     "zero_matrix"),
+     std::make_tuple(InType{Matrix{.data = {-1.0, 2.0, -3.0, 4.0}, .rows = 2, .cols = 2}, {1.0, 2.0}},
+                     OutType{3.0, 5.0}, "negative_values"),
+     std::make_tuple(InType{Matrix{.data = {2.5, 1.5, 4.0, 2.0}, .rows = 2, .cols = 2}, {2.0, 4.0}},
+                     OutType{11.0, 16.0}, "double_values")}};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<MaslovaURowMatrVecMultMPI, InType>(kTestParam, PPC_SETTINGS_maslova_u_row_matr_vec_mult),

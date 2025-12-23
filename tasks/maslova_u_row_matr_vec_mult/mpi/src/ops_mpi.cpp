@@ -2,11 +2,9 @@
 
 #include <mpi.h>
 
-#include <numeric>
 #include <vector>
 
 #include "maslova_u_row_matr_vec_mult/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace maslova_u_row_matr_vec_mult {
 
@@ -33,8 +31,8 @@ bool MaslovaURowMatrVecMultMPI::PreProcessingImpl() {
 }
 
 bool MaslovaURowMatrVecMultMPI::RunImpl() {
-  int rank;
-  int proc_size;
+  int rank = 0;
+  int proc_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &proc_size);
 
@@ -47,7 +45,7 @@ bool MaslovaURowMatrVecMultMPI::RunImpl() {
   MPI_Bcast(&rows, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cols, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);  // рассылаем размеры матрицы
 
-  MPI_Datatype row_type;  // для удобства создадим новый тип строка
+  MPI_Datatype row_type = MPI_DATATYPE_NULL;  // для удобства создадим новый тип строка
   MPI_Type_contiguous(static_cast<int>(cols), MPI_DOUBLE, &row_type);
   MPI_Type_commit(&row_type);
 
@@ -78,7 +76,7 @@ bool MaslovaURowMatrVecMultMPI::RunImpl() {
   std::vector<double> local_res(local_rows, 0.0);
   for (int i = 0; i < local_rows; ++i) {
     for (size_t j = 0; j < cols; ++j) {
-      local_res[i] += local_matrix[i * cols + j] * vec[j];  // вычисляем локально
+      local_res[i] += local_matrix[(i * cols) + j] * vec[j];  // вычисляем локально
     }
   }
 

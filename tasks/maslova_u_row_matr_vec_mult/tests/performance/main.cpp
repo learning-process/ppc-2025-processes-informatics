@@ -2,6 +2,7 @@
 #include <mpi.h>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "maslova_u_row_matr_vec_mult/common/include/common.hpp"
@@ -14,7 +15,7 @@ namespace maslova_u_row_matr_vec_mult {
 class MaslovaURowMatrVecPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
-  OutType expected_output_{};
+  OutType expected_output_;
 
  protected:
   void SetUp() override {
@@ -35,10 +36,10 @@ class MaslovaURowMatrVecPerfTests : public ppc::util::BaseRunPerfTests<InType, O
 
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
-    int is_initialized;
+    int is_initialized = 0;
     MPI_Initialized(&is_initialized);
 
-    if (is_initialized) {
+    if (is_initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
