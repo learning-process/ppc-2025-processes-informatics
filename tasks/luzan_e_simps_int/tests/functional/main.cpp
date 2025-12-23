@@ -95,8 +95,9 @@ TEST_P(LuzanESimpsIntFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 15> kTestParam = {
+const std::array<TestType, 16> kTestParam = {
     std::make_tuple(4, std::make_tuple(3, 5), std::make_tuple(3, 5), 1),          // std
+    std::make_tuple(4, std::make_tuple(3, 4), std::make_tuple(2, 3), 5),          // std
     std::make_tuple(10, std::make_tuple(0.5, 1), std::make_tuple(0.5, 1), 2),     // small rectangle
     std::make_tuple(70, std::make_tuple(-50, 50), std::make_tuple(-50, 50), 1),   // big rectangle
     std::make_tuple(100, std::make_tuple(-100, 0), std::make_tuple(0, 1), 1),     // tube
