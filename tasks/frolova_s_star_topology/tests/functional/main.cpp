@@ -29,10 +29,10 @@ TEST(frolovaSStar, DataLength0) {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if (size < 3) {
-    GTEST_SKIP();
-    return;
-  }
+  // if (size < 3) {
+  //   GTEST_SKIP();
+  //   return;
+  // }
 
   std::vector<int> destinations(size - 1);
   std::vector<int> data((size - 1) * data_length);
@@ -137,10 +137,10 @@ TEST(frolovaSStar, dataLength1024) {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if (size < 3) {
-    GTEST_SKIP();
-    return;
-  }
+  // if (size < 3) {
+  //   GTEST_SKIP();
+  //   return;
+  // }
 
   std::vector<int> destinations(size - 1);
   std::vector<int> data((size - 1) * data_length);
@@ -191,10 +191,10 @@ TEST(frolovaSStar, dataLength32768) {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if (size < 3) {
-    GTEST_SKIP();
-    return;
-  }
+  // if (size < 3) {
+  //   GTEST_SKIP();
+  //   return;
+  // }
 
   std::vector<int> destinations(size - 1);
   std::vector<int> data((size - 1) * data_length);
