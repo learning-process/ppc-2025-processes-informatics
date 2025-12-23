@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
-#include "frolova_s_star_topology/mpi/src/ops_mpi.сpp"
+#include "frolova_s_star_topology/mpi/src/ops_mpi.cpp"
 
 namespace frolova_s_star_topology {
 
