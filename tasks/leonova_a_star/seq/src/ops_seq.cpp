@@ -42,7 +42,10 @@ LeonovaAStarSEQ::LeonovaAStarSEQ(const InType &in) {
     size_t cols = matrix_b[0].size();
 
     if (rows <= kMaxMatrixSize && cols <= kMaxMatrixSize) {
-      GetOutput().resize(rows, std::vector<int>(cols, 0));
+      GetOutput().resize(rows);
+      for (auto &row : GetOutput()) {
+        row.resize(cols, 0);
+      }
     }
   }
 }
@@ -112,7 +115,6 @@ bool LeonovaAStarSEQ::RunImpl() {
   if (!ValidationImpl()) {
     return false;
   }
-
   const auto &matrix_a = std::get<0>(GetInput());
   const auto &matrix_b = std::get<1>(GetInput());
 
