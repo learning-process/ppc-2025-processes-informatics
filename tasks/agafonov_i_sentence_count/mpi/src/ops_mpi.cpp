@@ -19,8 +19,7 @@ bool SentenceCountMPI::ValidationImpl() {
 }
 
 bool SentenceCountMPI::PreProcessingImpl() {
-  GetOutput() = 0;
-  return true;
+  return GetOutput() >= 0;
 }
 
 bool SentenceCountMPI::RunImpl() {
@@ -41,7 +40,8 @@ bool SentenceCountMPI::RunImpl() {
     int local_count = 0;
     int global_count = 0;
     MPI_Reduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Bcast(&global_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    GetOutput() = global_count;
     return true;
   }
 
@@ -50,13 +50,13 @@ bool SentenceCountMPI::RunImpl() {
 
   if (world_rank > 0 && start > 0) {
     char prev_char = text[start - 1];
-    local_in_sentence = std::isalpha(prev_char) || std::isdigit(prev_char);
+    local_in_sentence = std::isalnum(static_cast<unsigned char>(prev_char));
   }
 
   for (int i = start; i < end && i < total_length; ++i) {
     char c = text[i];
 
-    if (std::isalpha(static_cast<unsigned char>(c)) || std::isdigit(static_cast<unsigned char>(c))) {
+    if (std::isalnum(static_cast<unsigned char>(c))) {
       local_in_sentence = true;
     } else if (c == '.' && local_in_sentence) {
       if (i + 1 < total_length && text[i + 1] == '.') {
@@ -75,30 +75,33 @@ bool SentenceCountMPI::RunImpl() {
 
   if (world_rank == 0) {
     for (int i = 1; i < world_size; ++i) {
-      int chunk_end = (i * chunk_size + std::min(i, remainder)) - 1;
-      if (chunk_end >= 0 && chunk_end < total_length - 1) {
-        char end_char = text[chunk_end];
-        char start_char = text[chunk_end + 1];
+      int boundary_idx = (i * chunk_size + std::min(i, remainder)) - 1;
 
-        if ((std::isalpha(static_cast<unsigned char>(end_char)) ||
-             std::isdigit(static_cast<unsigned char>(end_char))) &&
-            start_char == '.') {
-          global_count++;
+      if (boundary_idx >= 0 && boundary_idx < total_length - 1) {
+        char left_char = text[boundary_idx];
+        char right_char = text[boundary_idx + 1];
+
+        if (std::isalnum(static_cast<unsigned char>(left_char)) &&
+            (right_char == '.' || right_char == '!' || right_char == '?')) {
+          if (!(right_char == '.' && boundary_idx + 2 < total_length && text[boundary_idx + 2] == '.')) {
+            global_count--;
+          }
         }
       }
     }
 
     if (total_length > 0) {
       char last_char = text[total_length - 1];
-      if (std::isalpha(static_cast<unsigned char>(last_char)) || std::isdigit(static_cast<unsigned char>(last_char))) {
+      if (std::isalnum(static_cast<unsigned char>(last_char))) {
         global_count++;
       }
     }
-
-    GetOutput() = global_count;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Bcast(&global_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput() = global_count;
+
   return true;
 }
 
