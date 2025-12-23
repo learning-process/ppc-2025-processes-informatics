@@ -72,6 +72,7 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
     }
     for (int i = 0; i < output_data.size(); i++) {
       if (abs(output_data[i] - exp_answer_[i]) > eps_) {
+        std::cout << output_data[i] << " " << exp_answer_[i] << "\n";
         return false;
       }
     }
@@ -94,7 +95,10 @@ TEST_P(RomanovaVJacobiMethodFuncTestsProcesses, Jacobi) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 2> kTestParam = {"reallySmallTest", "simpleTest"};
+const std::array<TestType, 11> kTestParam = {"trivialTest",          "reallySmallTest",      "simpleTest",
+                                             "fastConvergeTest",     "slowConvergeTest",     "sparseMatrixTest",
+                                             "alternatingSignsTest", "matrix5x5Test",        "blockMatrixTest",
+                                             "matrix8x8Test",        "tridiagonalMatrixTest"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<RomanovaVJacobiMethodMPI, InType>(kTestParam, PPC_SETTINGS_romanova_v_jacobi_method),

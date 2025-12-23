@@ -28,27 +28,20 @@ bool RomanovaVJacobiMethodMPI::ValidationImpl() {
   if (rank == 0) {
     std::vector<OutType> A = std::get<1>(GetInput());
 
-    // std::cout << "A.size(): " << A.size() << "\n";
-    // for(int i = 0; i < A.size(); i++){
-    //   for(int j = 0; j < A[i].size(); j++) std::cout << A[i][j] << " ";
-    //   std::cout << "\n";
-    // }
-
     OutType x = std::get<0>(GetInput());
     OutType b = std::get<2>(GetInput());
     status = status && !A.empty();
     for (size_t i = 0; i < A.size(); i++) {
       status = status && (A.size() == A[i].size());
     }
-    // std::cout << status << " ";
+
     status = status && isDiagonallyDominant(A);
-    // std::cout << status << "\n";
+
     status = status && (A.size() == x.size());
     status = status && (A.size() == b.size());
   }
 
   MPI_Bcast(&status, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-  // std::cout << "validation ended\n";
   return status;
 }
 
@@ -58,8 +51,6 @@ bool RomanovaVJacobiMethodMPI::PreProcessingImpl() {
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &n);
-
-  // std::cout << rank << "\n";
 
   std::vector<int> send_countsA(n);
   vector_counts_ = std::vector<int>(n);
@@ -77,7 +68,6 @@ bool RomanovaVJacobiMethodMPI::PreProcessingImpl() {
   if (rank == 0) {
     std::vector<OutType> tempA;
     std::tie(x_, tempA, b_, eps_, maxIterations_) = GetInput();
-    // n_ = tempA.size();
 
     for (const auto &vec : tempA) {
       A_.insert(A_.end(), vec.begin(), vec.end());
@@ -113,8 +103,6 @@ bool RomanovaVJacobiMethodMPI::PreProcessingImpl() {
   OutType local_data = OutType(local_n_ * n_);
   OutType local_b = OutType(local_n_);
 
-  // std::cout << "rank: " << rank << ", x_.size(): " << x_.size() << "\n";
-
   MPI_Bcast(x_.data(), n_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   MPI_Scatterv(rank == 0 ? A_.data() : nullptr, send_countsA.data(), displs_scattA.data(), MPI_DOUBLE,
@@ -126,23 +114,10 @@ bool RomanovaVJacobiMethodMPI::PreProcessingImpl() {
   A_ = std::move(local_data);
   b_ = std::move(local_b);
 
-  //  std::cout << "hi, my name is " << rank << " and i'm going to show you my data\n";
-  // std::cout << "my A_:\n";
-  // for(int i = 0; i < local_n_; i++){
-  //   for(int j = 0; j < n_; j++) std::cout << A_[i*n_+j] << " ";
-  //   std::cout << "\n";
-  // }
-  // std::cout << "my b_:\n";
-  // for(int i = 0; i < local_n_; i++) std::cout << b_[i] << " ";
-  // std::cout << "\nmy x_:\n";
-  // for(int i = 0; i < n_; i++) std::cout << x_[i]<<" ";
-  // std::cout << "\n";
-
   return true;
 }
 
 bool RomanovaVJacobiMethodMPI::RunImpl() {
-  // std::cout << "we are in runimpl\n";
   size_t k = 0;
   OutType prev(x_.size(), 0.0);
   OutType local_x(local_n_);
@@ -160,14 +135,10 @@ bool RomanovaVJacobiMethodMPI::RunImpl() {
       diff = std::max(diff, abs(local_x[i] - prev[st_row_ + i]));
     }
     k++;
-    // std::cout << "k: " << k;
     MPI_Allgatherv(local_x.data(), local_n_, MPI_DOUBLE, x_.data(), vector_counts_.data(), vector_displs_.data(),
                    MPI_DOUBLE, MPI_COMM_WORLD);
 
     MPI_Allreduce(&diff, &glob_diff, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    // std::cout << " current x_: ";
-    // for(int i = 0; i < x_.size(); i++) std::cout << x_[i] << " ";
-    // std::cout << "\n";
 
   } while (glob_diff >= eps_ && k <= maxIterations_);
 
