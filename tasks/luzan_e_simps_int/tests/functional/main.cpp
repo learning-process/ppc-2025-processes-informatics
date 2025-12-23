@@ -24,9 +24,9 @@ class LuzanESimpsIntFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTy
     auto d = static_cast<unsigned>(100.0 * fabs(std::get<1>(std::get<2>(test_param))));
     int func_num = std::get<3>(test_param);
 
-    std::string square =
-        "square_" + std::to_string(a) + "_" + std::to_string(b) + "__" + std::to_string(c) + "_" + std::to_string(d);
-    return "for_" + std::to_string(n) + "pieces_" + square + "__by_func_No_" + std::to_string(func_num);
+    std::string rectangle =
+        "rectangle_" + std::to_string(a) + "_" + std::to_string(b) + "__" + std::to_string(c) + "_" + std::to_string(d);
+    return "for_" + std::to_string(n) + "pieces_" + rectangle + "__by_func_No_" + std::to_string(func_num);
   }
 
  protected:
@@ -97,20 +97,20 @@ TEST_P(LuzanESimpsIntFuncTests, MatmulFromPic) {
 
 const std::array<TestType, 15> kTestParam = {
     std::make_tuple(4, std::make_tuple(3, 5), std::make_tuple(3, 5), 1),          // std
-    std::make_tuple(10, std::make_tuple(0.5, 1), std::make_tuple(0.5, 1), 2),     // small square
-    std::make_tuple(70, std::make_tuple(-50, 50), std::make_tuple(-50, 50), 1),   // big square
+    std::make_tuple(10, std::make_tuple(0.5, 1), std::make_tuple(0.5, 1), 2),     // small rectangle
+    std::make_tuple(70, std::make_tuple(-50, 50), std::make_tuple(-50, 50), 1),   // big rectangle
     std::make_tuple(100, std::make_tuple(-100, 0), std::make_tuple(0, 1), 1),     // tube
     std::make_tuple(100, std::make_tuple(-10, 0), std::make_tuple(0, 100), 1),    // vertical tube
     std::make_tuple(6, std::make_tuple(3, 5), std::make_tuple(3, 5), 2),          //  std
     std::make_tuple(24, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),      // std
-    std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(-50, -15), 4),  // negative square
-    std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(15, 25), 4),    // half negative square
-    std::make_tuple(70, std::make_tuple(5, 10), std::make_tuple(-25, -5), 4),     // half negative square 2
-    std::make_tuple(10, std::make_tuple(-60, 60), std::make_tuple(-60, 60), 1),   // big square, small n
-    std::make_tuple(200, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),     // small square, big n
+    std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(-50, -15), 4),  // negative rectangle
+    std::make_tuple(70, std::make_tuple(-10, -5), std::make_tuple(15, 25), 4),    // half negative rectangle
+    std::make_tuple(70, std::make_tuple(5, 10), std::make_tuple(-25, -5), 4),     // half negative rectangle 2
+    std::make_tuple(10, std::make_tuple(-60, 60), std::make_tuple(-60, 60), 1),   // big rectangle, small n
+    std::make_tuple(200, std::make_tuple(-2, 5), std::make_tuple(12, 25), 3),     // small rectangle, big n
     std::make_tuple(30, std::make_tuple(-20, 5), std::make_tuple(2, 25), 4),      // std
-    std::make_tuple(300, std::make_tuple(0, 1), std::make_tuple(0, 1), 4),        // small square, big n
-    std::make_tuple(6, std::make_tuple(0, 1), std::make_tuple(0, 1), 1)           // small square, small n
+    std::make_tuple(300, std::make_tuple(0, 1), std::make_tuple(0, 1), 4),        // small rectangle, big n
+    std::make_tuple(6, std::make_tuple(0, 1), std::make_tuple(0, 1), 1)           // small rectangle, small n
 };
 
 const auto kTestTasksList =
