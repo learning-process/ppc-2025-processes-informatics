@@ -6,7 +6,6 @@
 #include <random>
 #include <vector>
 
-// ТОЛЬКО заголовочный файл
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
 
 namespace frolova_s_star_topology {
@@ -50,7 +49,7 @@ TEST(frolovaSStar, pipelineRun) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  // СОЗДАЕМ задачу для ВСЕХ процессов
+  // ВАЖНО: создаем задачу для ВСЕХ процессов
   int dst = (rank == 0) ? 1 : destinations[rank - 1];
   frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 
@@ -92,7 +91,7 @@ TEST(frolovaSStar, taskRun) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  // СОЗДАЕМ задачу для ВСЕХ процессов
+  // ВАЖНО: создаем задачу для ВСЕХ процессов
   int dst = (rank == 0) ? 1 : destinations[rank - 1];
   frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 

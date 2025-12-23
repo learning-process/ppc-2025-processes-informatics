@@ -6,8 +6,8 @@
 #include <random>
 #include <vector>
 
-// ТОЛЬКО заголовочный файл
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
+#include "frolova_s_star_topology/seq/include/ops_seq.hpp"
 
 namespace frolova_s_star_topology {
 
@@ -51,7 +51,7 @@ TEST(frolovaSStar, DataLength0) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  // СОЗДАЕМ задачу для ВСЕХ процессов
+  // ВАЖНО: создаем задачу для ВСЕХ процессов
   int dst = (rank == 0) ? 1 : destinations[rank - 1];
   frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 
@@ -105,7 +105,7 @@ TEST(frolovaSStar, DataLength64) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  // СОЗДАЕМ задачу для ВСЕХ процессов
+  // ВАЖНО: создаем задачу для ВСЕХ процессов
   int dst = (rank == 0) ? 1 : destinations[rank - 1];
   frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 
@@ -159,7 +159,7 @@ TEST(frolovaSStar, dataLength1024) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  // СОЗДАЕМ задачу для ВСЕХ процессов
+  // ВАЖНО: создаем задачу для ВСЕХ процессов
   int dst = (rank == 0) ? 1 : destinations[rank - 1];
   frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 
@@ -213,7 +213,7 @@ TEST(frolovaSStar, dataLength32768) {
   MPI_Bcast(destinations.data(), size - 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(data.data(), static_cast<int>((size - 1) * data_length), MPI_INT, 0, MPI_COMM_WORLD);
 
-  // СОЗДАЕМ задачу для ВСЕХ процессов
+  // ВАЖНО: создаем задачу для ВСЕХ процессов
   int dst = (rank == 0) ? 1 : destinations[rank - 1];
   frolova_s_star_topology::FrolovaSStarTopologyMPI task(dst);
 
@@ -224,7 +224,7 @@ TEST(frolovaSStar, dataLength32768) {
 
   // ВЫЗЫВАЕМ методы для ВСЕХ процессов
   task.PreProcessingImpl();
-  task.RunImpl();
+  task.RunImpl();  // ← Этот вызов даст coverage!
   task.PostProcessingImpl();
 
   int is_failed = 0;
