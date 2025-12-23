@@ -51,8 +51,8 @@
 ### Идея распараллеливания
 
 - Входные данные логически делятся между MPI-процессами  
-- Распределение выполняется с помощью MPI_Scatterv, что позволяет каждому процессу получить только свой участок массива  
-- Распределение выполняется с помощью MPI_Scatterv, что позволяет каждому процессу получить только свой участок массива 
+- Для распределения данных используется MPI_Scatterv, что позволяет каждому процессу получить только свой участок массива; корневой процесс предварительно вычисляет массивы sendcounts и displs  
+- Каждый процесс подсчитывает количество букв в своей части
 - Глобальный результат формируется с помощью `MPI_Allreduce`  
 
 ### Синхронизация
@@ -105,7 +105,7 @@ GetOutput() = global_count
 
 ### Особенности
 - MPI-реализация использует Scatterv для распределения входного массива между процессами
-- После локального подсчёта букв используется Allreduce для получения глобального результата 
+- После локального подсчёта букв используется `MPI_Allreduce` для получения глобального результата
 - Логика SEQ и MPI версий максимально совпадает  
 
 ---
@@ -187,12 +187,12 @@ if (world_rank == 0) {
     displs.assign(world_size, 0);
 
     std::size_t n = static_cast<std::size_t>(total_size);
-    std::size_t chunk = n / world_size;
-    std::size_t rem = n % world_size;
+    std::size_t chunk = n / static_cast<std::size_t>(world_size);
+    std::size_t rem = n % static_cast<std::size_t>(world_size);
 
     std::size_t offset = 0;
     for (int r = 0; r < world_size; ++r) {
-        std::size_t add = chunk + (r < static_cast<int>(rem) ? 1U : 0U);
+        std::size_t add = chunk + (static_cast<std::size_t>(r) < rem ? 1U : 0U);
         sendcounts[r] = static_cast<int>(add);
         displs[r] = static_cast<int>(offset);
         offset += add;

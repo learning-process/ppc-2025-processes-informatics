@@ -1,6 +1,7 @@
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
 #include <cctype>
+#include <cstddef>
 
 #include "yurkin_counting_number/common/include/common.hpp"
 
@@ -23,11 +24,11 @@ bool YurkinCountingNumberSEQ::PreProcessingImpl() {
 
 bool YurkinCountingNumberSEQ::RunImpl() {
   const InType &input = GetInput();
-  const int total_size = static_cast<int>(input.size());
+  std::size_t total_size = input.size();
 
   int local_count = 0;
-  for (int i = 0; i < total_size; ++i) {
-    if (std::isalpha(static_cast<unsigned char>(input[static_cast<std::size_t>(i)])) != 0) {
+  for (std::size_t i = 0; i < total_size; ++i) {
+    if (std::isalpha(static_cast<unsigned char>(input[i])) != 0) {
       ++local_count;
     }
   }
