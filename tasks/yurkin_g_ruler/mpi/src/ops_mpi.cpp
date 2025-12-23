@@ -64,7 +64,7 @@ bool YurkinGRulerMPI::RunImpl() {
   if (rank == src) {
     const int next = rank + direction;
     MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-    GetOutput() = 0;
+    GetOutput() = payload;
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
