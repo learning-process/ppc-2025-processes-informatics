@@ -10,7 +10,7 @@
 namespace egorova_l_a_broadcast {
 
 class EgorovaLRunPerfTestProcesses2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 1000000;
+  const int kCount_ = 45000000;
   InType input_data_{};
 
   void SetUp() override {
