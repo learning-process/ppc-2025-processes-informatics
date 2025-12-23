@@ -16,13 +16,15 @@ RomanovaVJacobiMethodSEQ::RomanovaVJacobiMethodSEQ(const InType &in) {
 
 bool RomanovaVJacobiMethodSEQ::ValidationImpl() {
   bool status = true;
-  //матрица имеет корректные размеры
+  // матрица имеет корректные размеры
   std::vector<std::vector<double>> A = std::get<1>(GetInput());
   std::vector<double> x = std::get<0>(GetInput());
   std::vector<double> b = std::get<2>(GetInput());
   status = status && !A.empty();
-  for(size_t i = 0; i < A.size(); i++) status = status && (A.size() == A[i].size());
-  
+  for (size_t i = 0; i < A.size(); i++) {
+    status = status && (A.size() == A[i].size());
+  }
+
   status = status && isDiagonallyDominant(A);
 
   status = status && (A.size() == x.size());
@@ -44,19 +46,19 @@ bool RomanovaVJacobiMethodSEQ::PreProcessingImpl() {
 bool RomanovaVJacobiMethodSEQ::RunImpl() {
   size_t k = 0;
   std::vector<double> prev(x_.size(), 0.0);
-  do{
+  do {
     prev = x_;
-    for(size_t i = 0; i < size_; i++){
+    for (size_t i = 0; i < size_; i++) {
       double sum = 0.0;
-      for(size_t j = 0; j < size_; j++){
-        if(i != j){
-          sum += A_[i][j]*prev[j];
+      for (size_t j = 0; j < size_; j++) {
+        if (i != j) {
+          sum += A_[i][j] * prev[j];
         }
       }
-      x_[i] = (b_[i] - sum)/A_[i][i];
+      x_[i] = (b_[i] - sum) / A_[i][i];
     }
     k++;
-  }while(!isConverge(prev,x_) && k <= maxIterations_);
+  } while (!isConverge(prev, x_) && k <= maxIterations_);
 
   return true;
 }
@@ -66,21 +68,26 @@ bool RomanovaVJacobiMethodSEQ::PostProcessingImpl() {
   return true;
 }
 
-
-bool RomanovaVJacobiMethodSEQ::isDiagonallyDominant(const std::vector<std::vector<double>>& matrix){
-  for(int i = 0; i < matrix.size(); i++){
+bool RomanovaVJacobiMethodSEQ::isDiagonallyDominant(const std::vector<std::vector<double>> &matrix) {
+  for (int i = 0; i < matrix.size(); i++) {
     double sum = 0.0;
-    for(int j = 0; j < matrix[i].size(); j++){
-      if(i != j) sum += matrix[i][j];
+    for (int j = 0; j < matrix[i].size(); j++) {
+      if (i != j) {
+        sum += matrix[i][j];
+      }
     }
-    if(matrix[i][i] <= sum) return false;
+    if (matrix[i][i] <= sum) {
+      return false;
+    }
   }
   return true;
 }
 
-bool RomanovaVJacobiMethodSEQ::isConverge(const std::vector<double>& prev, const std::vector<double>& curr){
+bool RomanovaVJacobiMethodSEQ::isConverge(const std::vector<double> &prev, const std::vector<double> &curr) {
   double diff = 0.0;
-  for(size_t i = 0; i < prev.size(); i++) diff = std::max(diff, abs(prev[i]-curr[i]));
+  for (size_t i = 0; i < prev.size(); i++) {
+    diff = std::max(diff, abs(prev[i] - curr[i]));
+  }
   return (diff < eps_);
 }
 

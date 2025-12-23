@@ -29,8 +29,8 @@ TEST_P(RomanovaVJacobiMethodPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovaVJacobiMethodMPI, RomanovaVJacobiMethodSEQ>(PPC_SETTINGS_romanova_v_jacobi_method);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RomanovaVJacobiMethodMPI, RomanovaVJacobiMethodSEQ>(
+    PPC_SETTINGS_romanova_v_jacobi_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

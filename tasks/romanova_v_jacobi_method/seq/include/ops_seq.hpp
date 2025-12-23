@@ -18,8 +18,8 @@ class RomanovaVJacobiMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  bool isDiagonallyDominant(const std::vector<std::vector<double>>& matrix);
-  bool isConverge(const std::vector<double>& prev, const std::vector<double>& curr);
+  bool isDiagonallyDominant(const std::vector<std::vector<double>> &matrix);
+  bool isConverge(const std::vector<double> &prev, const std::vector<double> &curr);
 
   std::vector<double> x_;
   std::vector<std::vector<double>> A_;
