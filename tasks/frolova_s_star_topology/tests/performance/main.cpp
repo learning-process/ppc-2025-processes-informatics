@@ -40,7 +40,7 @@ TEST(frolovaSStar, pipelineRun) {
   if (rank == 0) {
     std::random_device rd;
     destinations.resize(size - 1);
-  std::ranges::iota(destinations, 1);
+    std::ranges::iota(destinations, 1);
     std::shuffle(destinations.begin(), destinations.end(), rd);
     data = frolova_s_star_topology::MakeRandomVector((size - 1) * data_length);
   }
