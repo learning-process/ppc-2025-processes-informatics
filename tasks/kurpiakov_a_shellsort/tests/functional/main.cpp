@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <random>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "kurpiakov_a_shellsort/common/include/common.hpp"
@@ -20,26 +16,21 @@
 
 namespace kurpiakov_a_shellsort {
 
-class KurpiakovARunFuncTestsProcesses3 : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class KurpiakovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<0>(params);
+    expected_data_ = std::get<2>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    return output_data == expected_data_;
   }
 
   InType GetTestInputData() final {
@@ -47,26 +38,58 @@ class KurpiakovARunFuncTestsProcesses3 : public ppc::util::BaseRunFuncTests<InTy
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_data_;
 };
 
 namespace {
 
-TEST_P(KurpiakovARunFuncTestsProcesses3, MatmulFromPic) {
+std::vector<int> GenerateRandomVector(int size, int seed = 42) {
+  std::vector<int> vec(size);
+  std::mt19937 gen(seed);
+  std::uniform_int_distribution<> dist(-10000, 10000);
+  for (int i = 0; i < size; i++) {
+    vec[i] = dist(gen);
+  }
+  return vec;
+}
+
+std::vector<int> GetSortedCopy(const std::vector<int> &vec) {
+  std::vector<int> sorted = vec;
+  std::sort(sorted.begin(), sorted.end());
+  return sorted;
+}
+
+const std::vector<int> kVecEmpty = {};
+const std::vector<int> kVecSingle = {42};
+const std::vector<int> kVecSorted = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+const std::vector<int> kVecReverse = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+const std::vector<int> kVecDuplicates = {5, 3, 8, 3, 1, 5, 8, 2, 3, 5};
+const auto kVec10 = GenerateRandomVector(10);
+const auto kVec1000 = GenerateRandomVector(1000);
+
+const std::array<TestType, 7> kTestParam = {
+    std::make_tuple(std::make_tuple(0, kVecEmpty), "test1_empty", std::vector<int>{}),
+    std::make_tuple(std::make_tuple(1, kVecSingle), "test2_single", std::vector<int>{42}),
+    std::make_tuple(std::make_tuple(10, kVecSorted), "test3_sorted", GetSortedCopy(kVecSorted)),
+    std::make_tuple(std::make_tuple(10, kVecReverse), "test4_reverse", GetSortedCopy(kVecReverse)),
+    std::make_tuple(std::make_tuple(10, kVecDuplicates), "test5_duplicates", GetSortedCopy(kVecDuplicates)),
+    std::make_tuple(std::make_tuple(10, kVec10), "test6_random10", GetSortedCopy(kVec10)),
+    std::make_tuple(std::make_tuple(1000, kVec1000), "test7_random1000", GetSortedCopy(kVec1000))};
+
+TEST_P(KurpiakovARunFuncTestsProcesses, ShellSortTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
-
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KurpiakovAShellsortMPI, InType>(kTestParam, PPC_SETTINGS_kurpiakov_a_shellsort),
-                   ppc::util::AddFuncTask<KurpiakovAShellsortSEQ, InType>(kTestParam, PPC_SETTINGS_kurpiakov_a_shellsort));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<KurpiakovAShellsortMPI, InType>(kTestParam, PPC_SETTINGS_kurpiakov_a_shellsort),
+    ppc::util::AddFuncTask<KurpiakovAShellsortSEQ, InType>(kTestParam, PPC_SETTINGS_kurpiakov_a_shellsort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = KurpiakovARunFuncTestsProcesses3::PrintFuncTestName<KurpiakovARunFuncTestsProcesses3>;
+const auto kPerfTestName = KurpiakovARunFuncTestsProcesses::PrintFuncTestName<KurpiakovARunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, KurpiakovARunFuncTestsProcesses3, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ShellSortTests, KurpiakovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 

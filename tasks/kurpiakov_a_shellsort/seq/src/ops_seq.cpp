@@ -1,6 +1,6 @@
 #include "kurpiakov_a_shellsort/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
 #include <vector>
 
 #include "kurpiakov_a_shellsort/common/include/common.hpp"
@@ -11,50 +11,48 @@ namespace kurpiakov_a_shellsort {
 KurpiakovAShellsortSEQ::KurpiakovAShellsortSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = {};
 }
 
 bool KurpiakovAShellsortSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  int input_size = std::get<0>(GetInput());
+  auto vector_size = static_cast<int>(std::get<1>(GetInput()).size());
+  return input_size == vector_size && input_size >= 0;
 }
 
 bool KurpiakovAShellsortSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  data_ = std::get<1>(GetInput());
+
+  int n = static_cast<int>(data_.size());
+  gaps_.clear();
+  for (int gap = n / 2; gap > 0; gap /= 2) {
+    gaps_.push_back(gap);
+  }
+
+  return true;
 }
 
 bool KurpiakovAShellsortSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
-  }
+  int n = static_cast<int>(data_.size());
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+  for (int gap : gaps_) {
+    for (int i = gap; i < n; i++) {
+      int temp = data_[i];
+      int j = i;
+      while (j >= gap && data_[j - gap] > temp) {
+        data_[j] = data_[j - gap];
+        j -= gap;
       }
+      data_[j] = temp;
     }
   }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  return true;
 }
 
 bool KurpiakovAShellsortSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = data_;
+  return true;
 }
 
 }  // namespace kurpiakov_a_shellsort

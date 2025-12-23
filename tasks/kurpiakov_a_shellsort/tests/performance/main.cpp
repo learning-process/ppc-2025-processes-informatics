@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <random>
+#include <vector>
+
 #include "kurpiakov_a_shellsort/common/include/common.hpp"
 #include "kurpiakov_a_shellsort/mpi/include/ops_mpi.hpp"
 #include "kurpiakov_a_shellsort/seq/include/ops_seq.hpp"
@@ -7,16 +11,26 @@
 
 namespace kurpiakov_a_shellsort {
 
-class KurpiakovARunPerfTestProcesses3 : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+class KurpiakovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  static constexpr int kPerfSize = 100000;
   InType input_data_{};
+  OutType expected_output_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    std::vector<int> vec(kPerfSize);
+    std::mt19937 gen(42);
+    std::uniform_int_distribution<> dist(-100000, 100000);
+    for (int i = 0; i < kPerfSize; i++) {
+      vec[i] = dist(gen);
+    }
+    input_data_ = std::make_tuple(kPerfSize, vec);
+
+    expected_output_ = vec;
+    std::sort(expected_output_.begin(), expected_output_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return output_data == expected_output_;
   }
 
   InType GetTestInputData() final {
@@ -24,17 +38,17 @@ class KurpiakovARunPerfTestProcesses3 : public ppc::util::BaseRunPerfTests<InTyp
   }
 };
 
-TEST_P(KurpiakovARunPerfTestProcesses3, RunPerfModes) {
+TEST_P(KurpiakovARunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KurpiakovAShellsortMPI, KurpiakovAShellsortSEQ>(PPC_SETTINGS_kurpiakov_a_shellsort);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, KurpiakovAShellsortMPI, KurpiakovAShellsortSEQ>(
+    PPC_SETTINGS_kurpiakov_a_shellsort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = KurpiakovARunPerfTestProcesses3::CustomPerfTestName;
+const auto kPerfTestName = KurpiakovARunPerfTestProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, KurpiakovARunPerfTestProcesses3, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, KurpiakovARunPerfTestProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace kurpiakov_a_shellsort

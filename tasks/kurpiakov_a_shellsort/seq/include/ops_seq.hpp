@@ -13,6 +13,9 @@ class KurpiakovAShellsortSEQ : public BaseTask {
   explicit KurpiakovAShellsortSEQ(const InType &in);
 
  private:
+  OutType data_;
+  OutType gaps_;
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;

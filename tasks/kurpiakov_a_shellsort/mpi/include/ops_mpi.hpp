@@ -13,10 +13,17 @@ class KurpiakovAShellsortMPI : public BaseTask {
   explicit KurpiakovAShellsortMPI(const InType &in);
 
  private:
+  OutType data_;
+  int world_size_;
+  int rank_;
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static void ShellSortLocal(OutType &arr);
+  static OutType MergeSortedArrays(const OutType &a, const OutType &b);
 };
 
 }  // namespace kurpiakov_a_shellsort
