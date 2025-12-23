@@ -3,9 +3,11 @@
 
 #include <array>
 #include <climits>
+#include <cmath>
 #include <cstddef>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "chyokotov_a_seidel_method/common/include/common.hpp"

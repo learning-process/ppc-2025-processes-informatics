@@ -17,6 +17,8 @@ class ChyokotovASeidelMethodSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  bool Convergence();
 };
 
 }  // namespace chyokotov_a_seidel_method

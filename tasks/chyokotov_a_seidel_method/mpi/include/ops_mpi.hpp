@@ -17,6 +17,12 @@ class ChyokotovASeidelMethodMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  bool CheckMatrix();
+  std::pair<int, int> SendMatrixData(int rank, int size, int n, std::vector<std::vector<double>> &a,
+                                     std::vector<double> &b, std::vector<int> &displs, std::vector<int> &counts);
+  void Iteration(int n, int local_rows, int local_start, std::vector<std::vector<double>> &my_a,
+                 std::vector<double> &my_b, std::vector<int> &displs, std::vector<int> &counts);
 };
 
 }  // namespace chyokotov_a_seidel_method

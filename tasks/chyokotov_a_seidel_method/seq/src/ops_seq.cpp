@@ -1,7 +1,7 @@
 #include "chyokotov_a_seidel_method/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <climits>
+#include <cmath>
 #include <cstddef>
 #include <vector>
 
@@ -59,6 +59,26 @@ bool ChyokotovASeidelMethodSEQ::PreProcessingImpl() {
   return true;
 }
 
+bool ChyokotovASeidelMethodSEQ::Convergence() {
+  const auto &matrix = GetInput().first;
+  const auto &vec = GetInput().second;
+  auto &output = GetOutput();
+  const int n = static_cast<int>(vec.size());
+
+  double max_error = 0.0;
+  for (int i = 0; i < n; i++) {
+    double error = vec[i];
+    for (int j = 0; j < n; j++) {
+      error -= matrix[i][j] * output[j];
+    }
+    max_error = std::max(std::abs(error), max_error);
+  }
+  if (max_error < 0.000001) {
+    return true;
+  }
+  return false;
+}
+
 bool ChyokotovASeidelMethodSEQ::RunImpl() {
   const auto &matrix = GetInput().first;
   if (matrix.empty()) {
@@ -66,11 +86,9 @@ bool ChyokotovASeidelMethodSEQ::RunImpl() {
   }
   const auto &vec = GetInput().second;
   auto &output = GetOutput();
-  int n = matrix.size();
+  int n = static_cast<int>(matrix.size());
 
-  const int maxiter = 1000;
-
-  for (int it = 0; it < maxiter; it++) {
+  for (int it = 0; it < 1000; it++) {
     for (int i = 0; i < n; i++) {
       double new_x = vec[i];
 
@@ -83,18 +101,7 @@ bool ChyokotovASeidelMethodSEQ::RunImpl() {
       output[i] = new_x / matrix[i][i];
     }
 
-    double max_error = 0.0;
-    for (int i = 0; i < n; i++) {
-      double error = vec[i];
-      for (int j = 0; j < n; j++) {
-        error -= matrix[i][j] * output[j];
-      }
-      if (std::abs(error) > max_error) {
-        max_error = std::abs(error);
-      }
-    }
-
-    if (max_error < 0.000001) {
+    if (Convergence()) {
       break;
     }
   }

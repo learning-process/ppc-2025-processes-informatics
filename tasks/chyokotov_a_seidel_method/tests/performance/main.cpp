@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <climits>
+#include <cmath>
 #include <cstddef>
 #include <vector>
 
@@ -17,7 +17,7 @@ class ChyokotovASeidelMethodPerfTest : public ppc::util::BaseRunPerfTests<InType
   OutType expected_output_;
 
   void SetUp() override {
-    const int n = 4000;
+    const int n = 5000;
     auto &matrix = input_data_.first;
     auto &vector = input_data_.second;
     matrix.resize(n, std::vector<double>(n, 1.0));
@@ -25,8 +25,8 @@ class ChyokotovASeidelMethodPerfTest : public ppc::util::BaseRunPerfTests<InType
     expected_output_.resize(n);
 
     for (int i = 0; i < n; i++) {
-      expected_output_[i] = 1.0 + (static_cast<double>(i) / 4000.0);
-      matrix[i][i] = 4001.0;
+      expected_output_[i] = 1.0 + (static_cast<double>(i) / 5000.0);
+      matrix[i][i] = 5001.0;
     }
 
     for (int i = 0; i < n; i++) {
