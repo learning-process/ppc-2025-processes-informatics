@@ -10,21 +10,20 @@
 
 ## 1. Введение
 
-В данной работе рассматривается задача подсчёта количества чисел, удовлетворяющих заданному условию, во входных данных. Задача является типовой для анализа массивов данных и хорошо подходит для демонстрации возможностей параллельных вычислений.
+В данной работе рассматривается задача подсчёта количества букв (A–Z, a–z) во входных данных. Задача является типовой для анализа массивов данных и хорошо подходит для демонстрации возможностей последовательных и параллельных вычислений.
 
 Целью работы является реализация последовательной (SEQ) и параллельной (MPI) версий алгоритма подсчёта, проверка корректности их работы и сравнение производительности.
-
 ---
 
 ## 2. Постановка задачи
 
-Необходимо выполнить подсчёт количества элементов во входных данных.
+Необходимо выполнить подсчёт количества букв во входных данных.
 
 ### Входные данные
-- `input` — целочисленное значение или массив данных, определяющий объём вычислений  
+- `input`— массив символов (std::vector<char>) 
 
 ### Выходные данные
-- `result` — количество элементов, удовлетворяющих условию задачи  
+- `result` — количество букв в массиве  
 
 ### Требования
 - Реализация SEQ и MPI версий  
@@ -58,7 +57,7 @@
 
 ### Синхронизация
 - Используется `MPI_COMM_WORLD`  
-- Объединение частичных результатов выполняется на корневом процессе  
+- Объединение частичных результатов выполняется коллективной операцией MPI_Reduce
 
 ---
 ### Псевдокод
@@ -67,29 +66,23 @@
 rank = MPI_Comm_rank()
 size = MPI_Comm_size()
 
-
-N = input
-total_count = 0
-
-
+N = size of input array
 chunk = N / size
 remainder = N % size
 
 start = rank * chunk + min(rank, remainder)
 length = chunk + (rank < remainder ? 1 : 0)
 
-
 local_count = 0
 for i = start .. start + length - 1:
-if i % 3 == 0:
-local_count = local_count + 1
+    if input[i] is a letter (A-Z or a-z):
+        local_count += 1
 
-
-global_count = MPI_Reduce_SUM(local_count, root = 0)
-
+global_count = MPI_Reduce_SUM(local_count, root=0)
 
 if rank == 0:
-result = global_count
+    result = global_count
+
 
 ```
 ---
@@ -104,8 +97,8 @@ result = global_count
 - `tests/performance` — тесты производительности  
 
 ### Особенности
-- Используется стандартная модель передачи сообщений MPI  
-- Реализация не требует добавления дополнительных методов  
+- MPI-реализация использует Scatterv для распределения входного массива между процессами
+- После локального подсчёта букв используется Allreduce для получения глобального результата 
 - Логика SEQ и MPI версий максимально совпадает  
 
 ---
@@ -169,27 +162,35 @@ MPI-версия показывает ускорение при использо
 ### MPI-код
 
 ```
-int world_size, world_rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+int world_rank, world_size;
+MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  int full = GetInput();
+int N = GetInput().size();
 
-  int chunk = full / world_size;
-  int rem = full % world_size;
+int base = N / world_size;
+int rem = N % world_size;
 
-  int start = world_rank * chunk + std::min(world_rank, rem);
-  int size = chunk + (world_rank < rem ? 1 : 0);
+int start = world_rank * base + std::min(world_rank, rem);
+int length = base + (world_rank < rem ? 1 : 0);
 
-  int local = size;
-  int global = 0;
+std::vector<char> local_buf(length);
+MPI_Scatterv(GetInput().data(), sendcounts, displs, MPI_CHAR,
+             local_buf.data(), length, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  MPI_Reduce(&local, &global, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+int local_count = 0;
+for (unsigned char c : local_buf) {
+    if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+        ++local_count;
+    }
+}
 
-  if (world_rank == 0) {
-    GetOutput() = global;
-  }
+int global_count = 0;
+MPI_Allreduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  return true;
+if (world_rank == 0) {
+    GetOutput() = global_count;
+}
+
 
 ```

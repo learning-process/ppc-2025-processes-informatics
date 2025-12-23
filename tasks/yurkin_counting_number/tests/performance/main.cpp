@@ -1,16 +1,13 @@
 #include <gtest/gtest.h>
 
 #include "util/include/perf_test_util.hpp"
-#include "yurkin_counting_number/common/include/common.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
 #include "yurkin_counting_number/seq/include/ops_seq.hpp"
 
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_;
-
+ protected:
   void SetUp() override {
     input_data_ = InType(kCount_, 'a');
   }
@@ -23,6 +20,10 @@ class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType,
   InType GetTestInputData() final {
     return input_data_;
   }
+
+ private:
+  const int kCount_ = 100;
+  InType input_data_;
 };
 
 TEST_P(YurkinCountingNumberPerfTests, RunPerfModes) {
