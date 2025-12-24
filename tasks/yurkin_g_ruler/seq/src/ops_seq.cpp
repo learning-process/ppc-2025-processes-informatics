@@ -5,7 +5,7 @@
 namespace yurkin_g_ruler {
 
 YurkinGRulerSEQ::YurkinGRulerSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
+  SetTypeOfTask(YurkinGRulerSEQ::GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
