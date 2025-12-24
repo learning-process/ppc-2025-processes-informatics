@@ -136,7 +136,7 @@ void ChyokotovASeidelMethodMPI::Iteration(int n, int local_rows, int local_start
                                           std::vector<std::vector<double>> &my_a, std::vector<double> &my_b,
                                           std::vector<int> &displs, std::vector<int> &counts) {
   std::vector<double> my_x(local_rows);
-  std::vector<double> x(n, 0.0);
+  std::vector<double> &x = GetOutput();
 
   for (int iter = 0; iter < 1000; iter++) {
     double local_max_diff = 0.0;
@@ -171,8 +171,6 @@ void ChyokotovASeidelMethodMPI::Iteration(int n, int local_rows, int local_start
       break;
     }
   }
-
-  GetOutput() = std::move(x);
 }
 
 bool ChyokotovASeidelMethodMPI::RunImpl() {
