@@ -28,7 +28,7 @@ class ShkrebkoMRunFuncTestsShellSortBatcherMerge : public ppc::util::BaseRunFunc
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int seed = static_cast<int>(param % 100ULL);
+    int seed = static_cast<int>(param % 100);
     std::mt19937 e(seed);
     std::uniform_int_distribution<int> gen(-100000, 100000);
     std::vector<int> &vec = input_data_;
