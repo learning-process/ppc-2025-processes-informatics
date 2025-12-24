@@ -46,7 +46,6 @@ class GaivoronskiyMRunPerfTestsSmall : public ppc::util::BaseRunPerfTests<InType
   }
 };
 
-
 // Тест производительности для средних матриц (80x80)
 class GaivoronskiyMRunPerfTestsMedium : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kMatrixSize_ = 80;
@@ -117,7 +116,6 @@ class GaivoronskiyMRunPerfTestsLarge : public ppc::util::BaseRunPerfTests<InType
   }
 };
 
-
 TEST_P(GaivoronskiyMRunPerfTestsSmall, RunPerfModesSmall) {
   ExecuteTest(GetParam());
 }
@@ -130,34 +128,25 @@ TEST_P(GaivoronskiyMRunPerfTestsLarge, RunPerfModesLarge) {
   ExecuteTest(GetParam());
 }
 
-
 const auto kAllPerfTasksSmall =
-    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(
-        PPC_SETTINGS_gauss_jordan);
+    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(PPC_SETTINGS_gauss_jordan);
 
 const auto kAllPerfTasksMedium =
-    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(
-        PPC_SETTINGS_gauss_jordan);
+    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(PPC_SETTINGS_gauss_jordan);
 
 const auto kAllPerfTasksLarge =
-    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(
-        PPC_SETTINGS_gauss_jordan);
+    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(PPC_SETTINGS_gauss_jordan);
 
 const auto kGtestValuesSmall = ppc::util::TupleToGTestValues(kAllPerfTasksSmall);
 const auto kGtestValuesMedium = ppc::util::TupleToGTestValues(kAllPerfTasksMedium);
 const auto kGtestValuesLarge = ppc::util::TupleToGTestValues(kAllPerfTasksLarge);
 
-
 const auto kPerfTestNameSmall = GaivoronskiyMRunPerfTestsSmall::CustomPerfTestName;
 const auto kPerfTestNameMedium = GaivoronskiyMRunPerfTestsMedium::CustomPerfTestName;
 const auto kPerfTestNameLarge = GaivoronskiyMRunPerfTestsLarge::CustomPerfTestName;
 
-
-INSTANTIATE_TEST_SUITE_P(RunModeTestsSmall, GaivoronskiyMRunPerfTestsSmall, 
-                         kGtestValuesSmall, kPerfTestNameSmall);
-INSTANTIATE_TEST_SUITE_P(RunModeTestsMedium, GaivoronskiyMRunPerfTestsMedium, 
-                         kGtestValuesMedium, kPerfTestNameMedium);
-INSTANTIATE_TEST_SUITE_P(RunModeTestsLarge, GaivoronskiyMRunPerfTestsLarge, 
-                         kGtestValuesLarge, kPerfTestNameLarge);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsSmall, GaivoronskiyMRunPerfTestsSmall, kGtestValuesSmall, kPerfTestNameSmall);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsMedium, GaivoronskiyMRunPerfTestsMedium, kGtestValuesMedium, kPerfTestNameMedium);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsLarge, GaivoronskiyMRunPerfTestsLarge, kGtestValuesLarge, kPerfTestNameLarge);
 
 }  // namespace gauss_jordan
