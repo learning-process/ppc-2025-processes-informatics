@@ -69,8 +69,8 @@ TEST_P(ZeninAGaussFilterPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZeninAGaussFilterMPI, ZeninAGaussFilterSEQ>(
-    PPC_SETTINGS_zenin_a_gauss_filter);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ZeninAGaussFilterMPI, ZeninAGaussFilterSEQ>(PPC_SETTINGS_zenin_a_gauss_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
