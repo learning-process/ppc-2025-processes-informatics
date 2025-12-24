@@ -27,16 +27,6 @@ inline bool IsNumericallyZero(double value) {
   return std::fabs(value) < EPSILON;
 }
 
-int LocatePivotIndex(const std::vector<std::vector<double>> &augmented_matrix, int start_row, int column,
-                     int total_rows) {
-  for (int row_idx = start_row; row_idx < total_rows; ++row_idx) {
-    if (!IsNumericallyZero(augmented_matrix[row_idx][column])) {
-      return row_idx;
-    }
-  }
-  return -1;
-}
-
 void EliminateFromRow(std::vector<std::vector<double>> &augmented_matrix, int target_row, int source_row,
                       double elimination_coefficient, int columns) {
   if (IsNumericallyZero(elimination_coefficient)) {
