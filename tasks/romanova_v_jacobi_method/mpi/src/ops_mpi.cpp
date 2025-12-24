@@ -81,7 +81,7 @@ bool RomanovaVJacobiMethodMPI::PreProcessingImpl() {
   size_t extra = n_ % n;
 
   local_n_ = delta + (static_cast<size_t>(rank) < extra ? 1 : 0);
-  st_row_ = rank * delta + (static_cast<size_t>(rank) ? rank : extra);
+  st_row_ = rank * delta + (static_cast<size_t>(rank) < extra ? rank : extra);
 
   if (rank == 0) {
     send_countsA = std::vector<int>(n, static_cast<int>(delta * n_));
