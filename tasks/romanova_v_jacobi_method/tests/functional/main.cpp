@@ -70,7 +70,7 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
     if (output_data.size() != exp_answer_.size()) {
       return false;
     }
-    for (int i = 0; i < output_data.size(); i++) {
+    for (size_t i = 0; i < output_data.size(); i++) {
       if (abs(output_data[i] - exp_answer_[i]) > eps_) {
         // std::cout << output_data[i] << " " << exp_answer_[i] << "\n";
         return false;
