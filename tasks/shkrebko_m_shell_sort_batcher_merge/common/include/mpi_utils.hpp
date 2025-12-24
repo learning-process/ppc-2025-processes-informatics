@@ -1,6 +1,7 @@
 #pragma once
 
 #include <mpi.h>
+
 #include <vector>
 
 namespace shkrebko_m_shell_sort_batcher_merge {

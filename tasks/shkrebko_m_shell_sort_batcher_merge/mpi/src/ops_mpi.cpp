@@ -1,13 +1,14 @@
 #include "shkrebko_m_shell_sort_batcher_merge/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <cstddef>
 #include <utility>
 #include <vector>
 
 #include "shkrebko_m_shell_sort_batcher_merge/common/include/common.hpp"
-#include "shkrebko_m_shell_sort_batcher_merge/common/include/utils.hpp"
 #include "shkrebko_m_shell_sort_batcher_merge/common/include/mpi_utils.hpp"
+#include "shkrebko_m_shell_sort_batcher_merge/common/include/utils.hpp"
 
 namespace shkrebko_m_shell_sort_batcher_merge {
 

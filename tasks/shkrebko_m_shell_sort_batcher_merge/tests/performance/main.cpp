@@ -41,9 +41,9 @@ TEST_P(ShkrebkoMRunPerfTestShellSortBatcherMerge, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ShkrebkoMShellSortBatcherMergeMPI,
-                                                       ShkrebkoMShellSortBatcherMergeSEQ>(
-    PPC_SETTINGS_shkrebko_m_shell_sort_batcher_merge);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, ShkrebkoMShellSortBatcherMergeMPI, ShkrebkoMShellSortBatcherMergeSEQ>(
+        PPC_SETTINGS_shkrebko_m_shell_sort_batcher_merge);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

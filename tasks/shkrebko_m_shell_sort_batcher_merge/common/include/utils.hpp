@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vector>
+#include <algorithm>
 #include <cstddef>
 #include <utility>
-#include <algorithm>
+#include <vector>
 
 namespace shkrebko_m_shell_sort_batcher_merge {
 

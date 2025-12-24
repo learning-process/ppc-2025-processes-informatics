@@ -18,8 +18,7 @@
 
 namespace shkrebko_m_shell_sort_batcher_merge {
 
-class ShkrebkoMRunFuncTestsShellSortBatcherMerge
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class ShkrebkoMRunFuncTestsShellSortBatcherMerge : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(static_cast<unsigned long long>(test_param));
@@ -58,19 +57,18 @@ TEST_P(ShkrebkoMRunFuncTestsShellSortBatcherMerge, GetShellSortBatcherMerge) {
 
 const std::array<TestType, 3> kTestParam = {100, 1000, 10000};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<ShkrebkoMShellSortBatcherMergeMPI, InType>(
-        kTestParam, PPC_SETTINGS_shkrebko_m_shell_sort_batcher_merge),
-    ppc::util::AddFuncTask<ShkrebkoMShellSortBatcherMergeSEQ, InType>(
-        kTestParam, PPC_SETTINGS_shkrebko_m_shell_sort_batcher_merge));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<ShkrebkoMShellSortBatcherMergeMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_shkrebko_m_shell_sort_batcher_merge),
+                                           ppc::util::AddFuncTask<ShkrebkoMShellSortBatcherMergeSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_shkrebko_m_shell_sort_batcher_merge));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = ShkrebkoMRunFuncTestsShellSortBatcherMerge::PrintFuncTestName<
-    ShkrebkoMRunFuncTestsShellSortBatcherMerge>;
+const auto kPerfTestName =
+    ShkrebkoMRunFuncTestsShellSortBatcherMerge::PrintFuncTestName<ShkrebkoMRunFuncTestsShellSortBatcherMerge>;
 
-INSTANTIATE_TEST_SUITE_P(ShellSortBatcherMergeTests, ShkrebkoMRunFuncTestsShellSortBatcherMerge,
-                         kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ShellSortBatcherMergeTests, ShkrebkoMRunFuncTestsShellSortBatcherMerge, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace
 
