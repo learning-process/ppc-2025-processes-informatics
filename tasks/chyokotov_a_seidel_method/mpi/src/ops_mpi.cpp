@@ -15,7 +15,13 @@ namespace chyokotov_a_seidel_method {
 
 ChyokotovASeidelMethodMPI::ChyokotovASeidelMethodMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput().first.clear();
+  GetInput().first.reserve(in.first.size());
+  for (const auto &row : in.first) {
+    GetInput().first.push_back(row);
+  }
+  GetInput().second.clear();
+  GetInput().second = in.second;
   GetOutput().clear();
 }
 
@@ -114,7 +120,10 @@ std::pair<int, int> ChyokotovASeidelMethodMPI::DistributeMatrixData(int rank, in
   int local_rows = base + (rank < rem ? 1 : 0);
   int local_start = (rank * base) + std::min(rank, rem);
 
-  a.resize(local_rows, std::vector<double>(n));
+  a.resize(local_rows);
+  for (auto& row : a) {
+    row.resize(n);
+  }
   b.resize(local_rows);
 
   for (int i = 0; i < size; i++) {
