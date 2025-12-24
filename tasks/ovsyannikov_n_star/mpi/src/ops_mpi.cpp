@@ -39,29 +39,26 @@ bool OvsyannikovNStarMPI::RunImpl() {
   }
 
   int res = 0;
-  if (src == dst) {
-    if (rank == src) {
-      res = val;
-    }
-  } else if (src == 0 || dst == 0) {
-    if (rank == src) {
-      MPI_Send(&val, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
-    }
-    if (rank == dst) {
-      MPI_Recv(&res, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
-  } else {
-    if (rank == src) {
-      MPI_Send(&val, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
-    if (rank == 0) {
-      int tmp = 0;
-      MPI_Recv(&tmp, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Send(&tmp, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
-    }
-    if (rank == dst) {
-      MPI_Recv(&res, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
+  bool is_transit = (src != 0 && dst != 0);
+
+  if (rank == src && src == dst) {
+    res = val;
+  }
+
+  if (rank == src && src != dst) {
+    int target = is_transit ? 0 : dst;
+    MPI_Send(&val, 1, MPI_INT, target, 0, MPI_COMM_WORLD);
+  }
+
+  if (rank == 0 && is_transit) {
+    int tmp = 0;
+    MPI_Recv(&tmp, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Send(&tmp, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+  }
+
+  if (rank == dst && src != dst) {
+    int source = is_transit ? 0 : src;
+    MPI_Recv(&res, 1, MPI_INT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
   GetOutput() = res;
