@@ -69,9 +69,9 @@ bool RomanovaVJacobiMethodSEQ::PostProcessingImpl() {
 }
 
 bool RomanovaVJacobiMethodSEQ::isDiagonallyDominant(const std::vector<std::vector<double>> &matrix) {
-  for (int i = 0; i < matrix.size(); i++) {
+  for (size_t i = 0; i < matrix.size(); i++) {
     double sum = 0.0;
-    for (int j = 0; j < matrix[i].size(); j++) {
+    for (size_t j = 0; j < matrix[i].size(); j++) {
       if (i != j) {
         sum += matrix[i][j];
       }

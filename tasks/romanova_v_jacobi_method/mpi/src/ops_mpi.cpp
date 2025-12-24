@@ -86,7 +86,7 @@ bool RomanovaVJacobiMethodMPI::PreProcessingImpl() {
   if (rank == 0) {
     send_countsA = std::vector<int>(n, static_cast<int>(delta * n_));
     vector_counts_ = std::vector<int>(n, static_cast<int>(delta));
-    for (int i = 0; i < extra; i++) {
+    for (size_t i = 0; i < extra; i++) {
       send_countsA[i] += n_;
       vector_counts_[i]++;
     }
@@ -151,9 +151,9 @@ bool RomanovaVJacobiMethodMPI::PostProcessingImpl() {
 }
 
 bool RomanovaVJacobiMethodMPI::isDiagonallyDominant(const std::vector<OutType> &matrix) {
-  for (int i = 0; i < matrix.size(); i++) {
+  for (size_t i = 0; i < matrix.size(); i++) {
     double sum = 0.0;
-    for (int j = 0; j < matrix[i].size(); j++) {
+    for (size_t j = 0; j < matrix[i].size(); j++) {
       if (i != j) {
         sum += matrix[i][j];
       }
