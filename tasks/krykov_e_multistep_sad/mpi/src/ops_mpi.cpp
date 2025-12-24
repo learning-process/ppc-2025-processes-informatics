@@ -24,32 +24,31 @@ double EvaluateCenter(const Function2D &f, Region &r) {
 }
 
 int ComputeStartIndex(int rank, int per_proc, int remainder) {
-  return rank * per_proc + std::min(rank, remainder);
+  return (rank * per_proc) + std::min(rank, remainder);
 }
 
 int ComputeEndIndex(int start, int per_proc, int rank, int remainder) {
-  return start + per_proc + (rank < remainder ? 1 : 0);
+  return start + per_proc + ((rank < remainder) ? 1 : 0);
 }
 
 Region SplitXLeft(const Region &r, double xm) {
-  return Region{r.x_min, xm, r.y_min, r.y_max, 0.0};
+  return Region{.x_min = r.x_min, .x_max = xm, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
 }
 
 Region SplitXRight(const Region &r, double xm) {
-  return Region{xm, r.x_max, r.y_min, r.y_max, 0.0};
+  return Region{.x_min = xm, .x_max = r.x_max, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
 }
 
 Region SplitYBottom(const Region &r, double ym) {
-  return Region{r.x_min, r.x_max, r.y_min, ym, 0.0};
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = r.y_min, .y_max = ym, .value = 0.0};
 }
 
 Region SplitYTop(const Region &r, double ym) {
-  return Region{r.x_min, r.x_max, ym, r.y_max, 0.0};
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
 }
 
 Region FindLocalBest(const Function2D &f, std::vector<Region> &regions, int begin, int end) {
-  Region best{};
-  best.value = std::numeric_limits<double>::max();
+  Region best{.x_min = 0.0, .x_max = 0.0, .y_min = 0.0, .y_max = 0.0, .value = std::numeric_limits<double>::max()};
 
   for (int i = begin; i < end; ++i) {
     EvaluateCenter(f, regions[i]);
@@ -101,7 +100,7 @@ KrykovEMultistepSADMPI::KrykovEMultistepSADMPI(const InType &in) {
 
 bool KrykovEMultistepSADMPI::ValidationImpl() {
   const auto &[f, x1, x2, y1, y2] = GetInput();
-  return static_cast<bool>(f) && x1 < x2 && y1 < y2;
+  return static_cast<bool>(f) && (x1 < x2) && (y1 < y2);
 }
 
 bool KrykovEMultistepSADMPI::PreProcessingImpl() {
@@ -118,13 +117,13 @@ bool KrykovEMultistepSADMPI::RunImpl() {
 
   std::vector<Region> regions;
   if (rank == 0) {
-    regions.push_back({x_min, x_max, y_min, y_max, 0.0});
+    regions.push_back(Region{.x_min = x_min, .x_max = x_max, .y_min = y_min, .y_max = y_max, .value = 0.0});
     EvaluateCenter(f, regions.front());
   }
 
   int stop_flag = 0;
 
-  for (int iter = 0; iter < kMaxIter && stop_flag == 0; ++iter) {
+  for (int iter = 0; (iter < kMaxIter) && (stop_flag == 0); ++iter) {
     int n_regions = (rank == 0) ? static_cast<int>(regions.size()) : 0;
     MPI_Bcast(&n_regions, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -138,6 +137,7 @@ bool KrykovEMultistepSADMPI::RunImpl() {
     if (rank == 0) {
       std::ranges::copy(regions, local_regions.begin());
     }
+
     MPI_Bcast(local_regions.data(), n_regions * static_cast<int>(sizeof(Region)), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     const int per_proc = n_regions / size;
@@ -150,7 +150,7 @@ bool KrykovEMultistepSADMPI::RunImpl() {
     struct {
       double value;
       int rank;
-    } local_val{local_best.value, rank}, global_val{};
+    } local_val{.value = local_best.value, .rank = rank}, global_val{};
 
     MPI_Allreduce(&local_val, &global_val, 1, MPI_DOUBLE_INT, MPI_MINLOC, MPI_COMM_WORLD);
 
@@ -158,8 +158,8 @@ bool KrykovEMultistepSADMPI::RunImpl() {
     MPI_Bcast(&global_best, static_cast<int>(sizeof(Region)), MPI_BYTE, global_val.rank, MPI_COMM_WORLD);
 
     if (rank == 0) {
-      stop_flag = IsRegionSmallEnough(global_best);
-      if (!stop_flag) {
+      stop_flag = static_cast<int>(IsRegionSmallEnough(global_best));
+      if (stop_flag == 0) {
         ReplaceWithSplit(regions, global_best);
       }
     }
