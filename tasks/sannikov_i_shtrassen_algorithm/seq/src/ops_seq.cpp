@@ -14,7 +14,7 @@ namespace {
 using Matrix = std::vector<std::vector<double>>;
 using Flat = std::vector<double>;
 
-constexpr std::size_t kClassicThreshold = 64;
+constexpr std::size_t kClassicThreshold = 1;
 
 std::size_t NextPow2(std::size_t value) {
   std::size_t pow2 = 1;
