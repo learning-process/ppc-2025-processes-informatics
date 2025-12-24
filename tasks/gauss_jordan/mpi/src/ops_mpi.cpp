@@ -13,7 +13,7 @@ namespace gauss_jordan {
 
 namespace {
 
-constexpr double EPSILON = 1e-12;
+constexpr double kEpsilon = 1e-12;
 
 void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_row, int second_row, int columns) {
   if (first_row == second_row) {
@@ -26,7 +26,7 @@ void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_
 }
 
 inline bool IsNumericallyZero(double value) {
-  return std::fabs(value) < EPSILON;
+  return std::fabs(value) < kEpsilon;
 }
 
 void NormalizeRow(std::vector<std::vector<double>> &augmented_matrix, int row_index, double normalizer, int columns) {
@@ -70,49 +70,63 @@ void BroadcastMatrix(std::vector<std::vector<double>> &augmented_matrix, int row
   }
 }
 
+int FindPivotMPI(const std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
+                 int equations_count) {
+  return LocatePivotIndex(augmented_matrix, current_row, current_col, equations_count);
+}
+
+void ProcessPivotRow(std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
+                     int pivot_row, int augmented_columns) {
+  if (pivot_row != current_row) {
+    ExchangeRows(augmented_matrix, current_row, pivot_row, augmented_columns);
+  }
+
+  double pivot_value = augmented_matrix[current_row][current_col];
+  if (!IsNumericallyZero(pivot_value)) {
+    NormalizeRow(augmented_matrix, current_row, pivot_value, augmented_columns);
+  }
+
+  BroadcastRow(augmented_matrix, current_row, augmented_columns);
+}
+
+void EliminateColumnFromOtherRows(std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
+                                  int equations_count, int augmented_columns) {
+  for (int row_idx = 0; row_idx < equations_count; ++row_idx) {
+    if (row_idx == current_row) {
+      continue;
+    }
+
+    double coefficient = augmented_matrix[row_idx][current_col];
+    if (!IsNumericallyZero(coefficient)) {
+      EliminateFromRow(augmented_matrix, row_idx, current_row, coefficient, augmented_columns);
+    }
+  }
+}
+
 void TransformToReducedRowEchelonFormMPI(std::vector<std::vector<double>> &augmented_matrix, int equations_count,
                                          int augmented_columns) {
   int current_row = 0;
   int current_col = 0;
 
   while (current_row < equations_count && current_col < augmented_columns - 1) {
-    int pivot_row = LocatePivotIndex(augmented_matrix, current_row, current_col, equations_count);
+    int pivot_row = FindPivotMPI(augmented_matrix, current_row, current_col, equations_count);
 
     if (pivot_row == -1) {
       current_col++;
       continue;
     }
 
-    if (pivot_row != current_row) {
-      ExchangeRows(augmented_matrix, current_row, pivot_row, augmented_columns);
-    }
+    ProcessPivotRow(augmented_matrix, current_row, current_col, pivot_row, augmented_columns);
 
-    double pivot_value = augmented_matrix[current_row][current_col];
-    if (!IsNumericallyZero(pivot_value)) {
-      NormalizeRow(augmented_matrix, current_row, pivot_value, augmented_columns);
-    }
-
-    BroadcastRow(augmented_matrix, current_row, augmented_columns);
-
-    for (int row_idx = 0; row_idx < equations_count; ++row_idx) {
-      if (row_idx == current_row) {
-        continue;
-      }
-
-      double coefficient = augmented_matrix[row_idx][current_col];
-      if (!IsNumericallyZero(coefficient)) {
-        EliminateFromRow(augmented_matrix, row_idx, current_row, coefficient, augmented_columns);
-      }
-    }
+    EliminateColumnFromOtherRows(augmented_matrix, current_row, current_col, equations_count, augmented_columns);
 
     BroadcastMatrix(augmented_matrix, equations_count, augmented_columns);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     current_row++;
     current_col++;
-    MPI_Barrier(MPI_COMM_WORLD);
   }
 }
-
 bool IsZeroRow(const std::vector<double> &row, int columns_minus_one) {
   for (int j = 0; j < columns_minus_one; ++j) {
     if (!IsNumericallyZero(row[j])) {
@@ -180,7 +194,7 @@ void FlattenAndBroadcastMatrix(const std::vector<std::vector<double>> &matrix, i
 
   for (int i = 0; i < equations_count; ++i) {
     for (int j = 0; j < augmented_columns; ++j) {
-      flat_matrix[static_cast<size_t>(i * augmented_columns + j)] = matrix[i][j];
+      flat_matrix[static_cast<size_t>((i * augmented_columns) + j)] = matrix[i][j];
     }
   }
 
@@ -195,7 +209,7 @@ void ReceiveAndReconstructMatrix(std::vector<std::vector<double>> &matrix, int e
   for (int i = 0; i < equations_count; ++i) {
     matrix[i].resize(static_cast<size_t>(augmented_columns));
     for (int j = 0; j < augmented_columns; ++j) {
-      matrix[i][j] = flat_matrix[static_cast<size_t>(i * augmented_columns + j)];
+      matrix[i][j] = flat_matrix[static_cast<size_t>((i * augmented_columns) + j)];
     }
   }
 }
@@ -377,9 +391,7 @@ bool GaussJordanMPI::RunImpl() {
   MPI_Bcast(&global_inconsistent, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    if (global_inconsistent) {
-      GetOutput() = std::vector<double>();
-    } else if (global_rank < augmented_columns - 1 || global_rank < equations_count) {
+    if (global_inconsistent || (global_rank < augmented_columns - 1 || global_rank < equations_count)) {
       GetOutput() = std::vector<double>();
     } else {
       GetOutput() = local_solution;
