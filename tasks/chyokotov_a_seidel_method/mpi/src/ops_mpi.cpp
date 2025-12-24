@@ -173,33 +173,33 @@ void ChyokotovASeidelMethodMPI::Iteration(int n, int local_rows, int local_start
   }
 }*/
 
-bool ChyokotovASeidelMethodMPI::RunImpl() {/*
-  int rank{};
-  int size{};
+bool ChyokotovASeidelMethodMPI::RunImpl() { /*
+   int rank{};
+   int size{};
 
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int n{};
+   int n{};
 
-  if (rank == 0) {
-    auto &matrix = GetInput().first;
-    n = static_cast<int>(matrix.size());
-  }
+   if (rank == 0) {
+     auto &matrix = GetInput().first;
+     n = static_cast<int>(matrix.size());
+   }
 
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> displs(size);
-  std::vector<int> counts(size);
+   std::vector<int> displs(size);
+   std::vector<int> counts(size);
 
-  std::vector<std::vector<double>> my_a;
-  std::vector<double> my_b;
+   std::vector<std::vector<double>> my_a;
+   std::vector<double> my_b;
 
-  std::pair<int, int> p = DistributeMatrixData(rank, size, n, my_a, my_b, displs, counts);
-  int local_rows = p.first;
-  int local_start = p.second;
+   std::pair<int, int> p = DistributeMatrixData(rank, size, n, my_a, my_b, displs, counts);
+   int local_rows = p.first;
+   int local_start = p.second;
 
-  Iteration(n, local_rows, local_start, my_a, my_b, displs, counts);*/
+   Iteration(n, local_rows, local_start, my_a, my_b, displs, counts);*/
 
   return true;
 }
