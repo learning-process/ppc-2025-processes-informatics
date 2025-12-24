@@ -9,42 +9,61 @@ namespace romanova_v_jacobi_method {
 
 class RomanovaVJacobiMethodPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
-    TestType path = "perfTest";
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_jacobi_method, path);
-    std::ifstream file(abs_path + ".txt");
-    if (file.is_open()) {
-      int rows = 0;
-      int columns = 0;
-      size_t iterations = 0;
-      double eps = 0.0;
-      file >> rows >> columns >> iterations >> eps;
-      exp_answer_ = OutType(rows);
-      for (int i = 0; i < rows; i++) {
-        file >> exp_answer_[i];
-      }
+    // TestType path = "perfTest";
+    // std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_romanova_v_jacobi_method, path);
+    // std::ifstream file(abs_path + ".txt");
+    // if (file.is_open()) {
 
-      std::vector<double> x(rows);
-      for (int i = 0; i < rows; i++) {
-        file >> x[i];
-      }
 
-      std::vector<double> b(rows);
-      for (int i = 0; i < rows; i++) {
-        file >> b[i];
-      }
+    //   int rows = 0;
+    //   int columns = 0;
+    //   size_t iterations = 0;
+    //   double eps = 0.0;
+    //   file >> rows >> columns >> iterations >> eps;
+    //   exp_answer_ = OutType(rows);
+    //   for (int i = 0; i < rows; i++) {
+    //     file >> exp_answer_[i];
+    //   }
 
-      std::vector<std::vector<double>> A(rows, std::vector<double>(columns));
-      for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < columns; j++) {
-          file >> A[i][j];
+    //   std::vector<double> x(rows);
+    //   for (int i = 0; i < rows; i++) {
+    //     file >> x[i];
+    //   }
+
+    //   std::vector<double> b(rows);
+    //   for (int i = 0; i < rows; i++) {
+    //     file >> b[i];
+    //   }
+
+    //   std::vector<std::vector<double>> A(rows, std::vector<double>(columns));
+    //   for (int i = 0; i < rows; i++) {
+    //     for (int j = 0; j < columns; j++) {
+    //       file >> A[i][j];
+    //     }
+    //   }
+
+      size_t n = 200;
+      std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+
+      for(size_t i = 0; i < n; i++){
+        for(size_t j = 0; j < n; j++){
+          if(i == j)A[i][j] = 10.01;
+          if(j == i - 1  || j == i + 1) A[i][j] = 5.0;
         }
       }
 
-      input_data_ = std::make_tuple(x, A, b, eps, iterations);
-      eps_ = eps;
+      std::vector<double> x(n, -1000.0);
+      std::vector<double> b(n, 20.01);
+      b[0] = b[n-1] = 15.01;
+      size_t iterations = 100000;
+      eps_ = 1e-9;
 
-      file.close();
-    }
+      input_data_ = std::make_tuple(x, A, b, eps_, iterations);
+      exp_answer_ = std::vector<double>(n, 1.0);
+      //eps_ = eps;
+
+      //file.close();
+    //}
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
