@@ -33,7 +33,8 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
   const double radius = in.radius;
   const double r_sq = radius * radius;
 
-  std::mt19937 generator(42);
+  std::random_device rd;
+  std::mt19937 generator(rd());
   std::uniform_real_distribution<double> distribution(-radius, radius);
 
   double sum_val = 0.0;
@@ -46,13 +47,12 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
 
     bool is_in_domain = true;
     if (in.domain_type == IntegrationDomain::kHyperSphere) {
-      double distance_sq = 0.0;
+      double d_sq = 0.0;
       for (int dim_idx = 0; dim_idx < dim_count; ++dim_idx) {
-        distance_sq += std::pow(point[dim_idx] - in.center[dim_idx], 2);
+        double diff = point[dim_idx] - in.center[dim_idx];
+        d_sq += diff * diff;
       }
-      if (distance_sq > r_sq) {
-        is_in_domain = false;
-      }
+      is_in_domain = (d_sq <= r_sq);
     }
 
     if (is_in_domain) {
@@ -61,10 +61,7 @@ bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
   }
 
   const double v_cube = std::pow(2.0 * radius, dim_count);
-  double integral_approximation = v_cube * (sum_val / n_samples);
-
-  GetOutput() = integral_approximation;
-
+  GetOutput() = v_cube * (sum_val / n_samples);
   return std::isfinite(GetOutput());
 }
 

@@ -13,8 +13,7 @@ namespace {
 
 class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
-  static constexpr int k_samples = 1000000;
-
+  static constexpr int kSamples = 1000000;
   InType input_data_{};
   OutType expected_result_ = 0.0;
 
@@ -28,23 +27,21 @@ class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<
 
  protected:
   void SetUp() override {
-    const int k_dim = 3;
-    const double k_rad = 1.0;
-    const std::vector<double> k_center = {0.0, 0.0, 0.0};
+    const int kDim = 3;
+    const double kRad = 1.0;
+    const std::vector<double> kCenter = {0.0, 0.0, 0.0};
 
     input_data_ = {.func = FuncSumCoords3D,
-                   .dimension = k_dim,
-                   .samples_count = k_samples,
-                   .center = k_center,
-                   .radius = k_rad,
+                   .dimension = kDim,
+                   .samples_count = kSamples,
+                   .center = kCenter,
+                   .radius = kRad,
                    .domain_type = IntegrationDomain::kHyperCube};
-
     expected_result_ = 0.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const double k_tolerance = 0.02;
-    return std::abs(output_data - expected_result_) < k_tolerance;
+    return std::abs(output_data - expected_result_) < 0.02;
   }
 
   InType GetTestInputData() final {
@@ -56,14 +53,14 @@ TEST_P(DolovVMonteCarloIntegrationPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto k_all_perf_tasks =
+const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, DolovVMonteCarloIntegrationMPI, DolovVMonteCarloIntegrationSEQ>(
         PPC_SETTINGS_dolov_v_monte_carlo_integration);
 
-const auto k_perf_vals = ppc::util::TupleToGTestValues(k_all_perf_tasks);
-const auto k_perf_name = DolovVMonteCarloIntegrationPerfTests::CustomPerfTestName;
+const auto kPerfVals = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kPerfName = DolovVMonteCarloIntegrationPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(MonteCarlo3DPerf, DolovVMonteCarloIntegrationPerfTests, k_perf_vals, k_perf_name);
+INSTANTIATE_TEST_SUITE_P(MonteCarlo3DPerf, DolovVMonteCarloIntegrationPerfTests, kPerfVals, kPerfName);
 
 }  // namespace
 }  // namespace dolov_v_monte_carlo_integration

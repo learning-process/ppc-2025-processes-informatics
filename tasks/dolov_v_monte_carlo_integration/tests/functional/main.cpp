@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cmath>
-#include <numeric>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -12,13 +13,14 @@
 #include "util/include/func_test_util.hpp"
 
 namespace dolov_v_monte_carlo_integration {
+namespace {
 
 using InType = InputParams;
 using OutType = double;
 using TestType = std::tuple<int, std::string>;
 
-// Вспомогательная функция: f(x1, x2) = x1^2 + x2^2 (PascalCase для Clang-Tidy)
-inline double FuncSquareSum(const std::vector<double> &x) {
+// Помещаем в анонимное пространство имен для соответствия misc-use-internal-linkage
+double FuncSquareSum(const std::vector<double> &x) {
   double sum_val = 0.0;
   for (double val : x) {
     sum_val += val * val;
@@ -34,26 +36,20 @@ class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutT
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int samples = std::get<0>(params);
 
-    const int k_dim = 2;
-    const double k_rad = 1.0;
-    const std::vector<double> k_center = {0.0, 0.0};
-
     input_data_ = {.func = FuncSquareSum,
-                   .dimension = k_dim,
+                   .dimension = 2,
                    .samples_count = samples,
-                   .center = k_center,
-                   .radius = k_rad,
+                   .center = {0.0, 0.0},
+                   .radius = 1.0,
                    .domain_type = IntegrationDomain::kHyperCube};
-
     expected_result_ = 8.0 / 3.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const double k_tolerance = 0.05;
-    return std::abs(output_data - expected_result_) < k_tolerance;
+    return std::abs(output_data - expected_result_) < 0.05;
   }
 
   InType GetTestInputData() final {
@@ -73,26 +69,21 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int samples = std::get<0>(params);
 
-    const int k_dim = 2;
-    const double k_rad = 1.0;
-    const std::vector<double> k_center = {0.0, 0.0};
-
     input_data_ = {.func = FuncSquareSum,
-                   .dimension = k_dim,
+                   .dimension = 2,
                    .samples_count = samples,
-                   .center = k_center,
-                   .radius = k_rad,
+                   .center = {0.0, 0.0},
+                   .radius = 1.0,
                    .domain_type = IntegrationDomain::kHyperSphere};
-
-    expected_result_ = M_PI / 2.0;
+    // Используем acos(-1.0) вместо M_PI, если clang-tidy ругается на отсутствие заголовка для M_PI
+    expected_result_ = std::acos(-1.0) / 2.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const double k_tolerance = 0.05;
-    return std::abs(output_data - expected_result_) < k_tolerance;
+    return std::abs(output_data - expected_result_) < 0.05;
   }
 
   InType GetTestInputData() final {
@@ -104,7 +95,6 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
   OutType expected_result_ = 0.0;
 };
 
-namespace {
 TEST_P(MonteCarloHyperCubeTests, IntegrationHyperCube2D) {
   ExecuteTest(GetParam());
 }
@@ -112,25 +102,27 @@ TEST_P(MonteCarloHyperSphereTests, IntegrationHyperSphere2D) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> k_test_p = {std::make_tuple(10000, "small"), std::make_tuple(50000, "medium"),
-                                          std::make_tuple(200000, "large")};
+// Константы в стиле kPascalCase
+const std::array<TestType, 3> kTestParamsArray = {std::make_tuple(10000, "small"), std::make_tuple(50000, "medium"),
+                                                  std::make_tuple(200000, "large")};
 
-const auto k_cube_tasks = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
-                                             k_test_p, PPC_SETTINGS_dolov_v_monte_carlo_integration),
-                                         ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
-                                             k_test_p, PPC_SETTINGS_dolov_v_monte_carlo_integration));
-
-const auto k_cube_vals = ppc::util::ExpandToValues(k_cube_tasks);
-const auto k_cube_name = MonteCarloHyperCubeTests::PrintFuncTestName<MonteCarloHyperCubeTests>;
-INSTANTIATE_TEST_SUITE_P(MonteCarloHyperCubeTests, MonteCarloHyperCubeTests, k_cube_vals, k_cube_name);
-
-const auto k_sphere_tasks = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
-                                               k_test_p, PPC_SETTINGS_dolov_v_monte_carlo_integration),
+const auto kCubeTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
+                                               kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration),
                                            ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
-                                               k_test_p, PPC_SETTINGS_dolov_v_monte_carlo_integration));
+                                               kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration));
 
-const auto k_sphere_vals = ppc::util::ExpandToValues(k_sphere_tasks);
-const auto k_sphere_name = MonteCarloHyperSphereTests::PrintFuncTestName<MonteCarloHyperSphereTests>;
-INSTANTIATE_TEST_SUITE_P(MonteCarloHyperSphereTests, MonteCarloHyperSphereTests, k_sphere_vals, k_sphere_name);
+const auto kCubeValsList = ppc::util::ExpandToValues(kCubeTasksList);
+const auto kCubeNameStr = MonteCarloHyperCubeTests::PrintFuncTestName<MonteCarloHyperCubeTests>;
+INSTANTIATE_TEST_SUITE_P(MonteCarloHyperCubeTests, MonteCarloHyperCubeTests, kCubeValsList, kCubeNameStr);
+
+const auto kSphereTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
+                                                 kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration),
+                                             ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
+                                                 kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration));
+
+const auto kSphereValsList = ppc::util::ExpandToValues(kSphereTasksList);
+const auto kSphereNameStr = MonteCarloHyperSphereTests::PrintFuncTestName<MonteCarloHyperSphereTests>;
+INSTANTIATE_TEST_SUITE_P(MonteCarloHyperSphereTests, MonteCarloHyperSphereTests, kSphereValsList, kSphereNameStr);
+
 }  // namespace
 }  // namespace dolov_v_monte_carlo_integration

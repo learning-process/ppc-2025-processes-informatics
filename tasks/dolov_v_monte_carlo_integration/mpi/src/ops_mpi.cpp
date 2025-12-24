@@ -20,17 +20,12 @@ DolovVMonteCarloIntegrationMPI::DolovVMonteCarloIntegrationMPI(const InType &in)
 bool DolovVMonteCarloIntegrationMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   bool is_valid = true;
-
-  // Валидация происходит только на корневом процессе (rank 0)
   if (rank == 0) {
     const auto &in = GetInput();
     is_valid = in.func && (in.samples_count > 0) && (in.dimension > 0) &&
                (in.center.size() == static_cast<size_t>(in.dimension)) && (in.radius > 0.0);
   }
-
-  // Результат валидации должен быть передан всем процессам
   MPI_Bcast(&is_valid, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
   return is_valid;
 }
@@ -75,7 +70,8 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
   }
 
   const double r_sq = params.radius * params.radius;
-  std::mt19937 random_generator(current_rank + 101);
+  std::random_device rd;
+  std::mt19937 random_generator(rd());
   std::uniform_real_distribution<double> value_distributor(-params.radius, params.radius);
 
   double local_sum_of_f = 0.0;
@@ -90,11 +86,10 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     if (params.domain_type == IntegrationDomain::kHyperSphere) {
       double distance_sq = 0.0;
       for (int dim_idx = 0; dim_idx < params.dimension; ++dim_idx) {
-        distance_sq += std::pow(sample_point[dim_idx] - params.center[dim_idx], 2);
+        double diff = sample_point[dim_idx] - params.center[dim_idx];
+        distance_sq += diff * diff;
       }
-      if (distance_sq > r_sq) {
-        is_valid_point = false;
-      }
+      is_valid_point = (distance_sq <= r_sq);
     }
 
     if (is_valid_point) {
@@ -105,14 +100,14 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
   double global_sum_of_f = 0.0;
   MPI_Reduce(&local_sum_of_f, &global_sum_of_f, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  double final_integral_result = 0.0;
+  double final_result = 0.0;
   if (current_rank == 0) {
-    const double hyperspace_volume = std::pow(2.0 * params.radius, params.dimension);
-    final_integral_result = hyperspace_volume * (global_sum_of_f / total_samples);
+    const double volume = std::pow(2.0 * params.radius, params.dimension);
+    final_result = volume * (global_sum_of_f / total_samples);
   }
 
-  MPI_Bcast(&final_integral_result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  GetOutput() = final_integral_result;
+  MPI_Bcast(&final_result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  GetOutput() = final_result;
   return std::isfinite(GetOutput());
 }
 
