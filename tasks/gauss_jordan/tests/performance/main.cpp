@@ -11,9 +11,9 @@
 
 namespace gauss_jordan {
 
-// Тест производительности для маленьких матриц (20x20)
+// Тест производительности для маленьких матриц (200x200)
 class GaivoronskiyMRunPerfTestsSmall : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kMatrixSize_ = 20;
+  const int kMatrixSize_ = 200;
   InType input_data_;
 
   void SetUp() override {
@@ -46,9 +46,9 @@ class GaivoronskiyMRunPerfTestsSmall : public ppc::util::BaseRunPerfTests<InType
   }
 };
 
-// Тест производительности для средних матриц (80x80)
+// Тест производительности для средних матриц (500x500)
 class GaivoronskiyMRunPerfTestsMedium : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kMatrixSize_ = 80;
+  const int kMatrixSize_ = 500;
   InType input_data_;
 
   void SetUp() override {
@@ -81,9 +81,9 @@ class GaivoronskiyMRunPerfTestsMedium : public ppc::util::BaseRunPerfTests<InTyp
   }
 };
 
-// Тест производительности для больших матриц (150x150)
+// Тест производительности для больших матриц (1000x1000)
 class GaivoronskiyMRunPerfTestsLarge : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kMatrixSize_ = 150;
+  const int kMatrixSize_ = 1000;
   InType input_data_;
 
   void SetUp() override {
