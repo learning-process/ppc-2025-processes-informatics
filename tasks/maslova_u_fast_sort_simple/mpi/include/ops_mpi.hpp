@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "maslova_u_fast_sort_simple/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,8 @@ class MaslovaUFastSortSimpleMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void TreeMerge(std::vector<int> &local_vec, int rank, int size);
 };
 
 }  // namespace maslova_u_fast_sort_simple
