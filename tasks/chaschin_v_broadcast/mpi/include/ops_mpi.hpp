@@ -12,13 +12,11 @@ class ChaschinVBroadcastMPI : public BaseTask<T> {
  public:
   using InType = std::vector<T>;
   using OutType = std::vector<T>;
-  // GCOVR_EXCL_START
-  // codecov:disable
+
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  // GCOVR_EXCL_START
-  // codecov:enable
+
   explicit ChaschinVBroadcastMPI(const InType &in);
 
  private:
