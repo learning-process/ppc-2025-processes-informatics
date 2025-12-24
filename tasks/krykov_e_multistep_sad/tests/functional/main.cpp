@@ -23,6 +23,9 @@ class KrykovEMultistepSADFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   static std::string PrintTestParam(const TestType &test_param) {
     (void)test_param;
     static int counter = 1;
+    if (counter > 8) {
+      counter = 1;
+    }
     return "GlobalOpt2D_Test_" + std::to_string(counter++);
   }
 
@@ -72,11 +75,34 @@ const TestType kTest3 = {
     {[](double x, double y) { return ((x + 1.0) * (x + 1.0)) + ((y - 3.0) * (y - 3.0)); }, -5.0, 5.0, -5.0, 5.0},
     {-1.0, 3.0, 0.0}};
 
+// f(x,y) = 10*x^2 + y^2
+const TestType kTest4 = {{[](double x, double y) { return (10.0 * x * x) + (y * y); }, -1.0, 1.0, -1.0, 1.0},
+                         {0.0, 0.0, 0.0}};
+
+// f(x,y) = 0.5*(x-2)^2 + 3*(y+1)^2
+const TestType kTest5 = {{[](double x, double y) {
+  return (0.5 * (x - 2.0) * (x - 2.0)) + (3.0 * (y + 1.0) * (y + 1.0));
+}, -5.0, 5.0, -5.0, 5.0},
+                         {2.0, -1.0, 0.0}};
+
+// f(x,y) = |x| + |y|
+const TestType kTest6 = {{[](double x, double y) { return std::abs(x) + std::abs(y); }, -1.0, 1.0, -1.0, 1.0},
+                         {0.0, 0.0, 0.0}};
+
+// f(x,y) = x^2 + xy + 2y^2
+const TestType kTest7 = {{[](double x, double y) { return (x * x) + (x * y) + (2.0 * y * y); }, -2.0, 2.0, -2.0, 2.0},
+                         {0.0, 0.0, 0.0}};
+
+// f(x,y) = x^4 + y^4 + x^2 + y^2
+const TestType kTest8 = {
+    {[](double x, double y) { return (x * x * x * x) + (y * y * y * y) + (x * x) + (y * y); }, -2.0, 2.0, -2.0, 2.0},
+    {0.0, 0.0, 0.0}};
+
 TEST_P(KrykovEMultistepSADFuncTests, GlobalOptimizationTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {kTest1, kTest2, kTest3};
+const std::array<TestType, 8> kTestParam = {kTest1, kTest2, kTest3, kTest4, kTest5, kTest6, kTest7, kTest8};
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KrykovEMultistepSADMPI, InType>(kTestParam, PPC_SETTINGS_krykov_e_multistep_sad),
     ppc::util::AddFuncTask<KrykovEMultistepSADSEQ, InType>(kTestParam, PPC_SETTINGS_krykov_e_multistep_sad));

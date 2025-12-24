@@ -60,6 +60,10 @@ bool KrykovEMultistepSADSEQ::RunImpl() {
   EvaluateCenter(f, regions.front());
 
   for (int iter = 0; iter < kMaxIter; ++iter) {
+    for (auto &r : regions) {
+      EvaluateCenter(f, r);
+    }
+
     auto best_it = std::ranges::min_element(regions, {}, &Region::value);
     Region best = *best_it;
     regions.erase(best_it);
@@ -68,6 +72,7 @@ bool KrykovEMultistepSADSEQ::RunImpl() {
     double dy = best.y_max - best.y_min;
 
     if (std::max(dx, dy) < kEps) {
+      regions.push_back(best);
       break;
     }
 
