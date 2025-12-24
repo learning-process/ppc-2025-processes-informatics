@@ -18,7 +18,6 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     int test_idx = std::get<0>(test_info);
     const int sizes[] = {100, 1000, 10000, 100000, 1000000};
     int size = sizes[test_idx % 5];
-
     input_data_.resize(size);
     std::iota(input_data_.begin(), input_data_.end(), 0);
   }
