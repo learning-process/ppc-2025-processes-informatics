@@ -15,61 +15,59 @@ DolovVMonteCarloIntegrationSEQ::DolovVMonteCarloIntegrationSEQ(const InType &in)
   GetOutput() = 0.0;
 }
 
-bool DolovVMonteCarloIntegrationSEQ::ValidationImpl() {  // NOLINT
+bool DolovVMonteCarloIntegrationSEQ::ValidationImpl() {
   const auto &in = GetInput();
-  // Явная проверка на nullptr для func и проверка остальных полей
   return static_cast<bool>(in.func) && (in.samples_count > 0) && (in.dimension > 0) &&
          (in.center.size() == static_cast<size_t>(in.dimension)) && (in.radius > 0.0);
 }
 
-bool DolovVMonteCarloIntegrationSEQ::PreProcessingImpl() {  // NOLINT
+bool DolovVMonteCarloIntegrationSEQ::PreProcessingImpl() {
   GetOutput() = 0.0;
   return true;
 }
 
-bool DolovVMonteCarloIntegrationSEQ::RunImpl() {  // NOLINT
+bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
   const auto &in = GetInput();
-  const int n_samples = in.samples_count;
-  const int dim_val = in.dimension;
-  const double rad = in.radius;
-  const double r_sq = rad * rad;
+  const int n_val = in.samples_count;
+  const int d_val = in.dimension;
+  const double r_val = in.radius;
+  const double r_sq = r_val * r_val;
 
   std::mt19937 generator(42);
-  std::uniform_real_distribution<double> distribution(-rad, rad);
+  std::uniform_real_distribution<double> distribution(-r_val, r_val);
 
-  double sum_val = 0.0;
-  std::vector<double> point(static_cast<size_t>(dim_val));
+  double sum_res = 0.0;
+  std::vector<double> point(static_cast<size_t>(d_val));
 
-  for (int sample = 0; sample < n_samples; ++sample) {
-    for (int idx = 0; idx < dim_val; ++idx) {
-      point[idx] = in.center[idx] + distribution(generator);
+  for (int i = 0; i < n_val; ++i) {
+    for (int j = 0; j < d_val; ++j) {
+      point[j] = in.center[j] + distribution(generator);
     }
 
-    bool is_in_domain = true;
+    bool inside = true;
     if (in.domain_type == IntegrationDomain::kHyperSphere) {
-      double distance_sq = 0.0;
-      for (int idx = 0; idx < dim_val; ++idx) {
-        double diff = point[idx] - in.center[idx];
-        distance_sq += diff * diff;
+      double d2 = 0.0;
+      for (int j = 0; j < d_val; ++j) {
+        double diff = point[j] - in.center[j];
+        d2 += diff * diff;
       }
-
-      if (distance_sq > r_sq) {
-        is_in_domain = false;
+      if (d2 > r_sq) {
+        inside = false;
       }
     }
 
-    if (is_in_domain) {
-      sum_val += in.func(point);
+    if (inside) {
+      sum_res += in.func(point);
     }
   }
 
-  const double v_cube = std::pow(2.0 * rad, dim_val);
-  GetOutput() = v_cube * (sum_val / n_samples);
+  const double v_cube = std::pow(2.0 * r_val, d_val);
+  GetOutput() = v_cube * (sum_res / n_val);
 
   return std::isfinite(GetOutput());
 }
 
-bool DolovVMonteCarloIntegrationSEQ::PostProcessingImpl() {  // NOLINT
+bool DolovVMonteCarloIntegrationSEQ::PostProcessingImpl() {
   return true;
 }
 

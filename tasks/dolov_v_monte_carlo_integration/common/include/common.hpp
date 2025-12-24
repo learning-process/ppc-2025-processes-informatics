@@ -9,6 +9,7 @@
 
 #include "task/include/task.hpp"
 
+// Определяем M_PI, если он не определен (для большей совместимости)
 #ifndef M_PI
 #  define M_PI 3.14159265358979323846
 #endif
@@ -34,6 +35,7 @@ using OutType = double;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
+// Вспомогательные функции для тестирования (CamelCase для clang-tidy)
 inline double FuncSumCoords(const std::vector<double> &x) {
   double sum = 0.0;
   for (double val : x) {
@@ -42,7 +44,8 @@ inline double FuncSumCoords(const std::vector<double> &x) {
   return sum;
 }
 
-inline double FuncConstOne(const std::vector<double> & /*unused*/) {  // NOLINT
+inline double FuncConstOne(const std::vector<double> &unused_x) {
+  (void)unused_x;
   return 1.0;
 }
 

@@ -18,6 +18,11 @@
 
 namespace dolov_v_monte_carlo_integration {
 
+using InType = InputParams;
+using OutType = double;
+using TestType = std::tuple<int, std::string>;
+
+// Вспомогательная функция для тестовой функции: f(x1, x2) = x1^2 + x2^2
 inline double FuncSquareSum(const std::vector<double> &x) {
   double sum = 0.0;
   for (double val : x) {
@@ -26,28 +31,31 @@ inline double FuncSquareSum(const std::vector<double> &x) {
   return sum;
 }
 
+// Класс тестирования: гиперкуб
 class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  static std::string PrintTestParam(const ::testing::TestParamInfo<TestType> &info) {
+    return std::to_string(std::get<0>(info.param)) + "_" + std::get<1>(info.param);
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int samples = std::get<0>(params);
 
+    // Параметры для интегрирования в 2D Кубе
     const int kDimension = 2;
     const double kRadius = 1.0;
     const std::vector<double> kCenter = {0.0, 0.0};
 
-    input_data_ = {.func = FuncSquareSum,
-                   .dimension = kDimension,
-                   .samples_count = samples,
-                   .center = kCenter,
-                   .radius = kRadius,
-                   .domain_type = IntegrationDomain::kHyperCube};
+    input_data_.func = FuncSquareSum;
+    input_data_.dimension = kDimension;
+    input_data_.samples_count = samples;
+    input_data_.center = kCenter;
+    input_data_.radius = kRadius;
+    input_data_.domain_type = IntegrationDomain::kHyperCube;
 
+    // Точный результат для Int[(x1^2 + x2^2) dx1 dx2] на [-1, 1]^2 равен 8/3.
     expected_result_ = 8.0 / 3.0;
   }
 
@@ -65,28 +73,31 @@ class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutT
   OutType expected_result_ = 0.0;
 };
 
+// Класс тестирование: гиперсфера
 class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  static std::string PrintTestParam(const ::testing::TestParamInfo<TestType> &info) {
+    return std::to_string(std::get<0>(info.param)) + "_" + std::get<1>(info.param);
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int samples = std::get<0>(params);
 
+    // Параметры для интегрирования в 2D Сфере радиусом 1 (центр 0,0)
     const int kDimension = 2;
     const double kRadius = 1.0;
     const std::vector<double> kCenter = {0.0, 0.0};
 
-    input_data_ = {.func = FuncSquareSum,
-                   .dimension = kDimension,
-                   .samples_count = samples,
-                   .center = kCenter,
-                   .radius = kRadius,
-                   .domain_type = IntegrationDomain::kHyperSphere};
+    input_data_.func = FuncSquareSum;
+    input_data_.dimension = kDimension;
+    input_data_.samples_count = samples;
+    input_data_.center = kCenter;
+    input_data_.radius = kRadius;
+    input_data_.domain_type = IntegrationDomain::kHyperSphere;
 
+    // Точный результат для Int[(x1^2 + x2^2) dx1 dx2] на единичной 2D сфере равен Pi/2.
     expected_result_ = M_PI / 2.0;
   }
 
@@ -106,6 +117,7 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
 
 namespace {
 
+// Тестовые вызовы
 TEST_P(MonteCarloHyperCubeTests, IntegrationHyperCube2D) {
   ExecuteTest(GetParam());
 }
@@ -117,6 +129,7 @@ TEST_P(MonteCarloHyperSphereTests, IntegrationHyperSphere2D) {
 const std::array<TestType, 3> kTestParam = {std::make_tuple(10000, "small"), std::make_tuple(50000, "medium"),
                                             std::make_tuple(200000, "large")};
 
+// Создание списка задач для куба
 const auto kCubeTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
                                                    kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration),
                                                ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
@@ -128,6 +141,7 @@ const auto kCubeTestName = MonteCarloHyperCubeTests::PrintFuncTestName<MonteCarl
 
 INSTANTIATE_TEST_SUITE_P(MonteCarloHyperCubeTests, MonteCarloHyperCubeTests, kCubeGtestValues, kCubeTestName);
 
+// Создание списка задач для сферы
 const auto kSphereTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
                                                      kTestParam, PPC_SETTINGS_dolov_v_monte_carlo_integration),
                                                  ppc::util::AddFuncTask<DolovVMonteCarloIntegrationSEQ, InType>(
