@@ -10,6 +10,7 @@ namespace kosolapov_v_gauss_method_tape_hor_scheme {
 struct LinSystem {
   std::vector<std::vector<double>> matrix;
   std::vector<double> r_side;
+  LinSystem() = default;
 };
 
 using InType = LinSystem;

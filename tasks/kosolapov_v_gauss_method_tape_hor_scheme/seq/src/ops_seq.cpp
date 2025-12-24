@@ -13,7 +13,8 @@ namespace kosolapov_v_gauss_method_tape_hor_scheme {
 
 KosolapovVGaussMethodTapeHorSchemeSEQ::KosolapovVGaussMethodTapeHorSchemeSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput().matrix = in.matrix;
+  GetInput().r_side = in.r_side;
   GetOutput() = {};
 }
 
