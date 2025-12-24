@@ -1,5 +1,7 @@
 #include "yurkin_g_ruler/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
 #include <algorithm>
 
 #include "yurkin_g_ruler/common/include/common.hpp"
