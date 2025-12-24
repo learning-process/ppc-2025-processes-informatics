@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "shkrebko_m_shell_sort_batcher_merge/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -12,6 +10,7 @@ class ShkrebkoMShellSortBatcherMergeSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+
   explicit ShkrebkoMShellSortBatcherMergeSEQ(const InType &in);
 
  private:
@@ -20,8 +19,7 @@ class ShkrebkoMShellSortBatcherMergeSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
- private:
-  static void ShellSort(std::vector<int> &arr);
+  InType data_;
 };
 
 }  // namespace shkrebko_m_shell_sort_batcher_merge

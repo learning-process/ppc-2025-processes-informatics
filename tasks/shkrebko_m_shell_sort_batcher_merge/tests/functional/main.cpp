@@ -22,7 +22,7 @@ class ShkrebkoMRunFuncTestsShellSortBatcherMerge
     : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(test_param);
+    return std::to_string(static_cast<unsigned long long>(test_param));
   }
 
  protected:

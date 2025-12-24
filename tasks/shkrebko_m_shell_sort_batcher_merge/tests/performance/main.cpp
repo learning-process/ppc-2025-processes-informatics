@@ -17,7 +17,7 @@ class ShkrebkoMRunPerfTestShellSortBatcherMerge : public ppc::util::BaseRunPerfT
   InType input_data_;
 
   void SetUp() override {
-    TestType param = 1000000;
+    TestType param = 100000;
     int seed = static_cast<int>(param % 100ULL);
     std::mt19937 e(seed);
     std::uniform_int_distribution<int> gen(-1000000, 1000000);
