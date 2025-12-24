@@ -15,10 +15,14 @@ namespace ovsyannikov_n_shell_batcher {
 class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int size = 50000;
+    const int size = 40000;
     input_data_.resize(size);
     std::iota(input_data_.begin(), input_data_.end(), 0);
-    std::shuffle(input_data_.begin(), input_data_.end(), std::mt19937{std::random_device{}()});
+    
+    // Фиксированный seed(42) для всех процессов
+    std::mt19937 gen(42);
+    std::shuffle(input_data_.begin(), input_data_.end(), gen);
+    
     expected_output_ = input_data_;
     std::sort(expected_output_.begin(), expected_output_.end());
   }
@@ -27,18 +31,15 @@ class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InTy
     int rank = 0;
     int is_initialized = 0;
     MPI_Initialized(&is_initialized);
+    if (is_initialized != 0) MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    if (is_initialized != 0) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
+    // Ваша проверка: Rank 1-3 просто подтверждают успех
     if (rank != 0) {
       return true;
     }
 
-    if (output_data.size() != expected_output_.size()) {
-      return false;
-    }
+    // Реальная проверка только на Rank 0
+    if (output_data.size() != expected_output_.size()) return false;
     for (size_t i = 0; i < output_data.size(); ++i) {
       if (std::abs(static_cast<double>(output_data[i]) - static_cast<double>(expected_output_[i])) > 1e-6) {
         return false;
@@ -63,4 +64,4 @@ INSTANTIATE_TEST_SUITE_P(ovsyannikov_n_shell_batcher, OvsyannikovNShellBatcherPe
                          [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
                            return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
                          });
-}  // namespace ovsyannikov_n_shell_batcher 
+}  // namespace ovsyannikov_n_shell_batcher

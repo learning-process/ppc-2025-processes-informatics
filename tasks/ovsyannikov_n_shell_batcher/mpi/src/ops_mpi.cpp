@@ -6,8 +6,8 @@
 
 namespace ovsyannikov_n_shell_batcher {
 
-// Явно используем InType, чтобы сигнатура совпала с .hpp
-OvsyannikovNShellBatcherMPI::OvsyannikovNShellBatcherMPI(const InType &in) {
+// Используем явный тип std::vector<int>, чтобы линкер точно нашел конструктор
+OvsyannikovNShellBatcherMPI::OvsyannikovNShellBatcherMPI(const std::vector<int>& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -26,9 +26,10 @@ void OvsyannikovNShellBatcherMPI::ShellSort(std::vector<int> &arr) {
   for (int gap = n / 2; gap > 0; gap /= 2) {
     for (int i = gap; i < n; i++) {
       int temp = arr[i];
-      int j;
-      for (j = i; j >= gap && arr[j - gap] > temp; j -= gap) {
+      int j = i;
+      while (j >= gap && arr[j - gap] > temp) {
         arr[j] = arr[j - gap];
+        j -= gap;
       }
       arr[j] = temp;
     }
@@ -61,17 +62,12 @@ bool OvsyannikovNShellBatcherMPI::RunImpl() {
 
   ShellSort(local_data);
 
-  std::vector<int> full_vec;
-  if (rank == 0) full_vec.resize(total_len);
-
+  if (rank == 0) GetOutput().resize(total_len);
   MPI_Gatherv(local_data.data(), counts[rank], MPI_INT, 
-              rank == 0 ? full_vec.data() : nullptr, 
+              rank == 0 ? GetOutput().data() : nullptr, 
               counts.data(), displs.data(), MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (rank == 0) {
-    ShellSort(full_vec);
-    GetOutput() = std::move(full_vec);
-  }
+  if (rank == 0) ShellSort(GetOutput());
 
   if (rank != 0) GetOutput().resize(total_len);
   MPI_Bcast(GetOutput().data(), total_len, MPI_INT, 0, MPI_COMM_WORLD);
