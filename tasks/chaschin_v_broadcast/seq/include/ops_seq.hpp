@@ -1,0 +1,30 @@
+#pragma once
+#include <vector>
+
+#include "chaschin_v_broadcast/common/include/common.hpp"
+#include "task/include/task.hpp"
+
+namespace chaschin_v_broadcast {
+
+template <typename T>
+class ChaschinVBroadcastSEQ : public BaseTask<T> {
+ public:
+  using InType = std::vector<T>;
+  using OutType = std::vector<T>;
+  // GCOVR_EXCL_START
+  // codecov:disable
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+  // GCOVR_EXCL_START
+  // codecov:enable
+  explicit ChaschinVBroadcastSEQ(const InType &in);
+
+ private:
+  bool ValidationImpl() override;
+  bool PreProcessingImpl() override;
+  bool RunImpl() override;
+  bool PostProcessingImpl() override;
+};
+
+}  // namespace chaschin_v_broadcast
