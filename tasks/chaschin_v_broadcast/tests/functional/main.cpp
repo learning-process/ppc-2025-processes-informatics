@@ -52,8 +52,7 @@ TEST_P(ChaschinVRunFuncTestsProcessesBR, MatmulFromPic) {
 const std::array<TestType, 10> kTestParam = {
     std::make_tuple(1, "1"),   std::make_tuple(3, "3"),   std::make_tuple(5, "5"),   std::make_tuple(7, "7"),
     std::make_tuple(9, "9"),   std::make_tuple(11, "11"), std::make_tuple(13, "13"), std::make_tuple(15, "15"),
-    std::make_tuple(17, "17"), std::make_tuple(19, "19")}
-};
+    std::make_tuple(17, "17"), std::make_tuple(19, "19")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ChaschinVBroadcastMPI<int>, InType>(kTestParam, PPC_SETTINGS_chaschin_v_broadcast),
