@@ -11,7 +11,8 @@ class SpichekDJacobiMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
 
-  explicit SpichekDJacobiMPI(InType task_data);
+  // ИСПРАВЛЕНО: имя параметра изменено с task_data на in, чтобы совпадать с .cpp
+  explicit SpichekDJacobiMPI(InType in);
 
  private:
   InType input_;

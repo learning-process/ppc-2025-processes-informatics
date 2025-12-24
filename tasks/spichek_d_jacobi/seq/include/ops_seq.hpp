@@ -11,7 +11,8 @@ class SpichekDJacobiSEQ : public BaseTask {
     return ppc::task::TypeOfTask::kSEQ;
   }
 
-  explicit SpichekDJacobiSEQ(InType task_data);
+  // ИСПРАВЛЕНО: имя параметра изменено с task_data на in, чтобы совпадать с .cpp
+  explicit SpichekDJacobiSEQ(InType in);
 
  private:
   InType input_;
