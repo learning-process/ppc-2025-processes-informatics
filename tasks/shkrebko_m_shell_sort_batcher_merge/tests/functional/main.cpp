@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <random>
 #include <string>
@@ -21,7 +22,7 @@ namespace shkrebko_m_shell_sort_batcher_merge {
 class ShkrebkoMRunFuncTestsShellSortBatcherMerge : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(static_cast<unsigned long long>(test_param));
+    return std::to_string(static_cast<uint64_t>(test_param));
   }
 
  protected:
