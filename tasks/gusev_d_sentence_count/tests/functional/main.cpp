@@ -114,6 +114,43 @@ const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintTestParam;
 
 INSTANTIATE_TEST_SUITE_P(SentenceCountBoundaryTests, GusevDSentenceCountFuncTests, kGtestValues, kPerfTestName);
 
+TEST(GusevDSentenceCount, CoverageTestSEQ) {
+  const std::string in = "";
+  const size_t expected_out = 0;
+
+  auto task = std::make_shared<GusevDSentenceCountSEQ>(in);
+
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+
+  ASSERT_EQ(task->GetOutput(), expected_out);
+}
+
+TEST(GusevDSentenceCount, CoverageTestMPI) {
+  const std::string in = "";
+  const size_t expected_out = 0;
+
+  auto task = std::make_shared<GusevDSentenceCountMPI>(in);
+
+  ASSERT_TRUE(task->Validation());
+  ASSERT_TRUE(task->PreProcessing());
+  ASSERT_TRUE(task->Run());
+  ASSERT_TRUE(task->PostProcessing());
+
+  int rank = 0;
+  int initialized = 0;
+  MPI_Initialized(&initialized);
+  if (initialized != 0) {
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  }
+
+  if (rank == 0) {
+    ASSERT_EQ(task->GetOutput(), expected_out);
+  }
+}
+
 }  // namespace
 
 }  // namespace gusev_d_sentence_count
