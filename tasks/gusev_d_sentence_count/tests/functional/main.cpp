@@ -5,6 +5,7 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
+#include <ranges>  // NOLINT(misc-include-cleaner) - required for std::ranges::transform
 #include <string>
 #include <tuple>
 
@@ -26,7 +27,7 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
     std::string text = std::get<0>(params);
 
-    std::transform(text.begin(), text.end(), text.begin(), [](unsigned char c) {
+    std::ranges::transform(text, text.begin(), [](unsigned char c) {
       if (std::isalnum(c) || c == '_') {
         return static_cast<char>(c);
       }
@@ -76,7 +77,7 @@ TEST_P(GusevDSentenceCountFuncTests, SentenceBoundaryTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 16> kTestParam = {
+const std::array<TestType, 20> kTestParam = {
     std::make_tuple(std::string(""), 0),
     std::make_tuple(std::string("No terminators here"), 0),
     std::make_tuple(std::string("Sentence one. Sentence two! Sentence three?"), 3),
@@ -96,7 +97,12 @@ const std::array<TestType, 16> kTestParam = {
     std::make_tuple(std::string("The end is near..."), 1),
     std::make_tuple(std::string("A!B.C?"), 3),
     std::make_tuple(std::string(R"(Only terminators???!!!)"), 1),
-    std::make_tuple(std::string("A..B.C"), 2)};
+    std::make_tuple(std::string("A..B.C"), 2),
+
+    std::make_tuple(std::string("Ends with space after sentence. "), 1),
+    std::make_tuple(std::string("Multiple spaces!   Next?  End."), 3),
+    std::make_tuple(std::string("Mixed...???with!!!various??terminators."), 4),
+    std::make_tuple(std::string("Single char?"), 1)};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GusevDSentenceCountMPI, InType>(kTestParam, PPC_SETTINGS_gusev_d_sentence_count),
