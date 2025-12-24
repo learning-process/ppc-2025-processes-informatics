@@ -19,7 +19,7 @@ struct Image {
     return width == another.width && height == another.height && channels == another.channels &&
            pixels == another.pixels;
   }
-}
+};
 
 using InType = Image;
 using OutType = Image;
