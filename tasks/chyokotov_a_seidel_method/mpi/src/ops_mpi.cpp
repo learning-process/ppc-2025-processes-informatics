@@ -15,12 +15,7 @@ namespace chyokotov_a_seidel_method {
 
 ChyokotovASeidelMethodMPI::ChyokotovASeidelMethodMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput().first.clear();
-  GetInput().first.reserve(in.first.size());
-  for (const auto &row : in.first) {
-    GetInput().first.push_back(row);
-  }
-  GetInput().second = in.second;
+  GetInput() = in;
   GetOutput().clear();
 }
 
@@ -77,7 +72,7 @@ bool ChyokotovASeidelMethodMPI::PreProcessingImpl() {
   }
   return true;
 }
-/*
+
 void ChyokotovASeidelMethodMPI::ExchangeMatrixData(int rank, int size, int n, std::vector<std::vector<double>> &a,
                                                    std::vector<double> &b, const std::vector<int> &displs,
                                                    int local_rows) {
@@ -171,35 +166,35 @@ void ChyokotovASeidelMethodMPI::Iteration(int n, int local_rows, int local_start
       break;
     }
   }
-}*/
+}
 
-bool ChyokotovASeidelMethodMPI::RunImpl() { /*
-   int rank{};
-   int size{};
+bool ChyokotovASeidelMethodMPI::RunImpl() {
+  int rank{};
+  int size{};
 
-   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-   int n{};
+  int n{};
 
-   if (rank == 0) {
-     auto &matrix = GetInput().first;
-     n = static_cast<int>(matrix.size());
-   }
+  if (rank == 0) {
+    auto &matrix = GetInput().first;
+    n = static_cast<int>(matrix.size());
+  }
 
-   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-   std::vector<int> displs(size);
-   std::vector<int> counts(size);
+  std::vector<int> displs(size);
+  std::vector<int> counts(size);
 
-   std::vector<std::vector<double>> my_a;
-   std::vector<double> my_b;
+  std::vector<std::vector<double>> my_a;
+  std::vector<double> my_b;
 
-   std::pair<int, int> p = DistributeMatrixData(rank, size, n, my_a, my_b, displs, counts);
-   int local_rows = p.first;
-   int local_start = p.second;
+  std::pair<int, int> p = DistributeMatrixData(rank, size, n, my_a, my_b, displs, counts);
+  int local_rows = p.first;
+  int local_start = p.second;
 
-   Iteration(n, local_rows, local_start, my_a, my_b, displs, counts);*/
+  Iteration(n, local_rows, local_start, my_a, my_b, displs, counts);
 
   return true;
 }
