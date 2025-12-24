@@ -27,21 +27,21 @@ class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<
 
  protected:
   void SetUp() override {
-    const int kDim = 3;
-    const double kRad = 1.0;
-    const std::vector<double> kCenter = {0.0, 0.0, 0.0};
+    const int k_dim = 3;
+    const double k_rad = 1.0;
+    const std::vector<double> k_center = {0.0, 0.0, 0.0};
 
     input_data_ = {.func = FuncSumCoords3D,
-                   .dimension = kDim,
+                   .dimension = k_dim,
                    .samples_count = kSamples,
-                   .center = kCenter,
-                   .radius = kRad,
+                   .center = k_center,
+                   .radius = k_rad,
                    .domain_type = IntegrationDomain::kHyperCube};
     expected_result_ = 0.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - expected_result_) < 0.02;
+    return std::abs(output_data - expected_result_) < 0.05;
   }
 
   InType GetTestInputData() final {

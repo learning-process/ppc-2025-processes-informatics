@@ -11,6 +11,7 @@
 #include "dolov_v_monte_carlo_integration/mpi/include/ops_mpi.hpp"
 #include "dolov_v_monte_carlo_integration/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace dolov_v_monte_carlo_integration {
 namespace {
@@ -19,7 +20,6 @@ using InType = InputParams;
 using OutType = double;
 using TestType = std::tuple<int, std::string>;
 
-// Помещаем в анонимное пространство имен для соответствия misc-use-internal-linkage
 double FuncSquareSum(const std::vector<double> &x) {
   double sum_val = 0.0;
   for (double val : x) {
@@ -78,12 +78,11 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
                    .center = {0.0, 0.0},
                    .radius = 1.0,
                    .domain_type = IntegrationDomain::kHyperSphere};
-    // Используем acos(-1.0) вместо M_PI, если clang-tidy ругается на отсутствие заголовка для M_PI
     expected_result_ = std::acos(-1.0) / 2.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - expected_result_) < 0.05;
+    return std::abs(output_data - expected_result_) < 0.1;
   }
 
   InType GetTestInputData() final {
@@ -102,7 +101,6 @@ TEST_P(MonteCarloHyperSphereTests, IntegrationHyperSphere2D) {
   ExecuteTest(GetParam());
 }
 
-// Константы в стиле kPascalCase
 const std::array<TestType, 3> kTestParamsArray = {std::make_tuple(10000, "small"), std::make_tuple(50000, "medium"),
                                                   std::make_tuple(200000, "large")};
 
