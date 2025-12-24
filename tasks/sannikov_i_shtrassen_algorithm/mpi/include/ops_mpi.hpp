@@ -1,8 +1,5 @@
 #pragma once
 
-#include <cstdint>
-#include <vector>
-
 #include "sannikov_i_shtrassen_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 

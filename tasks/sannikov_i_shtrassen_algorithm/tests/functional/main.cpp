@@ -37,8 +37,8 @@ class SannikovIShtrassenAlgorithmFuncTests : public ppc::util::BaseRunFuncTests<
     if (a.size() != b.size()) {
       return false;
     }
-
-    const std::size_t n = a.size();
+    std::size_t n = 0;
+    n = a.size();
     if (output_data.size() != n) {
       return false;
     }
@@ -55,10 +55,11 @@ class SannikovIShtrassenAlgorithmFuncTests : public ppc::util::BaseRunFuncTests<
       }
     }
 
-    const double eps = 1e-7;
+    double eps = 1e-7;
+    double diff = 0;
     for (std::size_t i = 0; i < n; ++i) {
       for (std::size_t j = 0; j < n; ++j) {
-        const double diff = ref[i][j] - output_data[i][j];
+        diff = ref[i][j] - output_data[i][j];
         if (diff > eps || diff < -eps) {
           return false;
         }
