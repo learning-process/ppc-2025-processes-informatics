@@ -77,7 +77,7 @@ bool ChyokotovASeidelMethodMPI::PreProcessingImpl() {
   }
   return true;
 }
-
+/*
 void ChyokotovASeidelMethodMPI::ExchangeMatrixData(int rank, int size, int n, std::vector<std::vector<double>> &a,
                                                    std::vector<double> &b, const std::vector<int> &displs,
                                                    int local_rows) {
@@ -171,9 +171,9 @@ void ChyokotovASeidelMethodMPI::Iteration(int n, int local_rows, int local_start
       break;
     }
   }
-}
+}*/
 
-bool ChyokotovASeidelMethodMPI::RunImpl() {
+bool ChyokotovASeidelMethodMPI::RunImpl() {/*
   int rank{};
   int size{};
 
@@ -199,7 +199,7 @@ bool ChyokotovASeidelMethodMPI::RunImpl() {
   int local_rows = p.first;
   int local_start = p.second;
 
-  Iteration(n, local_rows, local_start, my_a, my_b, displs, counts);
+  Iteration(n, local_rows, local_start, my_a, my_b, displs, counts);*/
 
   return true;
 }
