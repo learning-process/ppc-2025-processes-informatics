@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
+#include <array>
 #include <cmath>
-#include <vector>
+#include <cstddef>
+#include <string>
+#include <tuple>
 
 #include "maslova_u_fast_sort_simple/common/include/common.hpp"
 #include "maslova_u_fast_sort_simple/mpi/include/ops_mpi.hpp"
