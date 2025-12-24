@@ -121,7 +121,7 @@ std::pair<int, int> ChyokotovASeidelMethodMPI::DistributeMatrixData(int rank, in
   int local_start = (rank * base) + std::min(rank, rem);
 
   a.resize(local_rows);
-  for (auto& row : a) {
+  for (auto &row : a) {
     row.resize(n);
   }
   b.resize(local_rows);
