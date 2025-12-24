@@ -3,12 +3,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <utility>
 #include <vector>
 
 namespace shkrebko_m_shell_sort_batcher_merge {
-
-namespace {
 
 inline void ShellSort(std::vector<int> *vec) {
   auto &a = *vec;
@@ -81,7 +78,7 @@ inline void OddEvenMergeNetwork(std::vector<Elem> *arr) {
   }
 }
 
-[[maybe_unused]] inline std::vector<int> BatcherOddEvenMerge(const std::vector<int> &a, const std::vector<int> &b) {
+inline std::vector<int> BatcherOddEvenMerge(const std::vector<int> &a, const std::vector<int> &b) {
   const std::size_t need = a.size() + b.size();
   const std::size_t half = NextPow2((a.size() > b.size()) ? a.size() : b.size());
 
@@ -117,7 +114,5 @@ inline void OddEvenMergeNetwork(std::vector<Elem> *arr) {
   }
   return out;
 }
-
-}  // namespace
 
 }  // namespace shkrebko_m_shell_sort_batcher_merge

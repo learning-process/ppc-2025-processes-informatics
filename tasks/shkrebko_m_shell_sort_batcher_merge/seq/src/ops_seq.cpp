@@ -1,7 +1,6 @@
 #include "shkrebko_m_shell_sort_batcher_merge/seq/include/ops_seq.hpp"
 
 #include <cstddef>
-#include <utility>
 #include <vector>
 
 #include "shkrebko_m_shell_sort_batcher_merge/common/include/common.hpp"

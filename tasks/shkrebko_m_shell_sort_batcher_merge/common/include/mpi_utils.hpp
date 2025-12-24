@@ -6,8 +6,6 @@
 
 namespace shkrebko_m_shell_sort_batcher_merge {
 
-namespace {
-
 inline std::vector<int> RecvVector(int src, int tag_base, MPI_Comm comm) {
   int sz = 0;
   MPI_Status status{};
@@ -27,7 +25,5 @@ inline void SendVector(int dst, int tag_base, const std::vector<int> &v, MPI_Com
     MPI_Send(v.data(), sz, MPI_INT, dst, tag_base + 1, comm);
   }
 }
-
-}  // namespace
 
 }  // namespace shkrebko_m_shell_sort_batcher_merge
