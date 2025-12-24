@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <cstddef>
 #include <vector>
 
 namespace shkrebko_m_shell_sort_batcher_merge {
