@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <random>
-#include <vector>
 
 #include "maslova_u_fast_sort_simple/common/include/common.hpp"
 #include "maslova_u_fast_sort_simple/mpi/include/ops_mpi.hpp"
@@ -27,8 +26,8 @@ class MaslovaUFastSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     if (rank == 0) {
       const size_t count = 20000000;
       input_data_.resize(count);
-      
-      std::mt19937 gen(42);
+      std::random_device rd;
+      std::mt19937 gen(rd());
       for (size_t i = 0; i < count; ++i) {
         input_data_[i] = static_cast<int>(gen() % 100000);
       }
@@ -40,7 +39,9 @@ class MaslovaUFastSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     }
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
@@ -72,7 +73,9 @@ class MaslovaUFastSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   OutType expected_output_;
 };
 
-TEST_P(MaslovaUFastSortPerfTests, RunPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(MaslovaUFastSortPerfTests, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MaslovaUFastSortSimpleMPI, MaslovaUFastSortSimpleSEQ>(
     PPC_SETTINGS_maslova_u_fast_sort_simple);

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "maslova_u_fast_sort_simple/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace maslova_u_fast_sort_simple {
 

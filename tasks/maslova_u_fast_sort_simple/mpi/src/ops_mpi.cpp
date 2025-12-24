@@ -21,13 +21,17 @@ bool MaslovaUFastSortSimpleMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int flag = 0;
   if (rank == 0) {
-    if (GetInput().size() > static_cast<size_t>(2147483647)) flag = 1;
+    if (GetInput().size() > static_cast<size_t>(2147483647)) {
+      flag = 1;
+    }
   }
   MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
   return flag == 0;
 }
 
-bool MaslovaUFastSortSimpleMPI::PreProcessingImpl() { return true; }
+bool MaslovaUFastSortSimpleMPI::PreProcessingImpl() {
+  return true;
+}
 
 bool MaslovaUFastSortSimpleMPI::RunImpl() {
   int rank = 0;
@@ -36,10 +40,14 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int total_size = 0;
-  if (rank == 0) total_size = static_cast<int>(GetInput().size());
+  if (rank == 0) {
+    total_size = static_cast<int>(GetInput().size());
+  }
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (total_size == 0) return true;
+  if (total_size == 0) {
+    return true;
+  }
 
   std::vector<int> send_counts(size);
   std::vector<int> displs(size);
@@ -57,29 +65,34 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
   std::ranges::sort(local_vec);
 
   for (int step = 1; step < size; step *= 2) {
-    if (rank % (2 * step) != 0) {
+    if (rank % (2 * step) == 0) {
+      if (rank + step < size) {
+        int recv_size = 0;
+        MPI_Status status;
+        MPI_Probe(rank + step, 0, MPI_COMM_WORLD, &status);
+        MPI_Get_count(&status, MPI_INT, &recv_size);
+        std::vector<int> received(recv_size);
+        MPI_Recv(received.data(), recv_size, MPI_INT, rank + step, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        std::vector<int> merged(local_vec.size() + received.size());
+        std::ranges::merge(local_vec, received, merged.begin());
+        local_vec = std::move(merged);
+      }
+    } else {
       int target = rank - step;
       MPI_Send(local_vec.data(), static_cast<int>(local_vec.size()), MPI_INT, target, 0, MPI_COMM_WORLD);
       break;
     }
-    if (rank + step < size) {
-      int recv_size = 0;
-      MPI_Status status;
-      MPI_Probe(rank + step, 0, MPI_COMM_WORLD, &status);
-      MPI_Get_count(&status, MPI_INT, &recv_size);
-      std::vector<int> received(recv_size);
-      MPI_Recv(received.data(), recv_size, MPI_INT, rank + step, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-      std::vector<int> merged(local_vec.size() + received.size());
-      std::ranges::merge(local_vec, received, merged.begin());
-      local_vec = std::move(merged);
-    }
   }
 
-  if (rank == 0) GetOutput() = std::move(local_vec);
+  if (rank == 0) {
+    GetOutput() = std::move(local_vec);
+  }
   return true;
 }
 
-bool MaslovaUFastSortSimpleMPI::PostProcessingImpl() { return true; }
+bool MaslovaUFastSortSimpleMPI::PostProcessingImpl() {
+  return true;
+}
 
 }  // namespace maslova_u_fast_sort_simple
