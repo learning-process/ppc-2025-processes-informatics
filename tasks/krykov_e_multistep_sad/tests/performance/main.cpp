@@ -17,9 +17,10 @@ class KrykovEMultistepSADPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   OutType expected_output_;
 
   void SetUp() override {
+    const int kN = 5000;
     input_data_ = {[](double x, double y) {
       double s = 0.0;
-      for (int i = 1; i <= 100; ++i) {
+      for (int i = 1; i <= kN; ++i) {
         const double dx = x - 1.0;
         const double dy = y + 2.0;
         s += (dx * dx) + (dy * dy) + static_cast<double>(i);
@@ -27,7 +28,9 @@ class KrykovEMultistepSADPerfTests : public ppc::util::BaseRunPerfTests<InType, 
       return s;
     }, -10.0, 10.0, -10.0, 10.0};
 
-    expected_output_ = {1.0, -2.0, 5050.0};
+    const double expected_value = static_cast<double>(kN) * (kN + 1) / 2.0;
+
+    expected_output_ = {1.0, -2.0, expected_value};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

@@ -1,141 +1,97 @@
 # Отчёт по лабораторной работе  
-## «Решение СЛАУ методом простых итераций с использованием MPI»  
+## «Многошаговая схема решения двумерных задач глобальной оптимизации с использованием MPI»  
 
 **Дисциплина:** Параллельное программирование  
 **Преподаватель:** Нестеров Александр Юрьевич и Оболенский Арсений Андреевич  
 **Студент:** Крюков Егор Федорович 3823Б1ФИ1
-**Вариант:** 20
+**Вариант:** 12
 
 
 ## Введение
 
-Решение систем линейных алгебраических уравнений (СЛАУ) является одной из фундаментальных задач вычислительной математики. Метод простых итераций — это итерационный численный метод, который позволяет находить приближённое решение СЛАУ. Параллельные вычисления позволяют ускорить процесс решения больших систем уравнений, что актуально для задач моделирования, обработки данных и машинного обучения.
+Задачи глобальной оптимизации играют важную роль в вычислительной математике и прикладных областях, таких как оптимизация параметров, машинное обучение, физическое моделирование и анализ сложных функций. В отличие от локальной оптимизации, глобальная оптимизация направлена на поиск глобального экстремума функции, что требует исследования всей области допустимых значений.
 
-В рамках данной работы были реализованы последовательная и параллельная версии метода простых итераций для решения СЛАУ.
+В рамках данной работы рассматривается многошаговая схема решения двумерных задач глобальной оптимизации, основанная на последовательном разбиении области поиска. 
 
 
 ## Постановка задачи
 
-Задача заключается в решении системы линейных уравнений вида: Ax = b, где A — квадратная матрица коэффициентов размера n, b — вектор правых частей, x — искомый вектор решения.
+Требуется найти глобальный минимум двумерной функции f(x, y) на прямоугольной области( x \in [x_{\min}, x_{\max}], ; y \in [y_{\min}, y_{\max}] ).
 
-Метод простых итераций использует итерационную формулу. Итерации продолжаются до достижения заданной точности Eps: x(k+1) - x(k)  < Eps
+Алгоритм должен возвращать координаты точки минимума ( (x^*, y^*) ) и значение функции в этой точке. Поиск осуществляется итерационным методом путём адаптивного разбиения области поиска до достижения заданной точности Eps либо до достижения максимального числа итераций.
+
 
 
 ## Описание алгоритма
 
-Базовый последовательный алгоритм начинается с инициализации начального приближения вектора x нулями. На каждой итерации для каждого i вычисляется новое значение x_i по итерационной формуле. После завершения итераций для всех компонент вычисляется норма разности между новым и старым вектором решения. Если норма меньше заданной точности Eps, процесс останавливается. В противном случае итерации продолжаются до достижения максимального числа итераций.
+В последовательной реализации используется многошаговая схема глобальной оптимизации. На первом шаге рассматривается начальная прямоугольная область поиска. Для каждой области вычисляется значение функции в её центральной точке. На каждой итерации выбирается область с минимальным значением функции в центре. Далее эта область проверяется на достижение заданной точности: если она достигнута, процесс завершается. В противном случае выбранная область делится на две подобласти вдоль более длинной стороны (по оси X или Y). Для новых областей вычисляются значения функции в центральных точках, после чего они добавляются в общий список областей поиска.
+
+Алгоритм повторяется до выполнения критерия остановки. В качестве результата выбирается область с минимальным значением функции, а искомая точка определяется как центр этой области.
 
 ## Описание схемы параллельного алгоритма
 
-Параллельная реализация с использованием MPI основывается на распределении строк матрицы A и соответствующих компонент векторов b и x между процессами. Каждый процесс вычисляет новые значения для своей части вектора x. После этого с помощью операций MPI (MPI_Allgatherv) обновлённые значения собираются со всех процессов, чтобы каждый процесс имел полный актуальный вектор x для следующей итерации. Норма разности вычисляется локально на каждом процессе для его части, а затем находится глобальная норма. Итерации продолжаются до достижения заданной точности.
+Параллельная реализация алгоритма выполнена с использованием MPI и основана на распределении областей поиска между процессами. На каждой итерации текущий список областей транслируется рабочим процессам. Каждому процессу назначается подмножество областей, для которых он вычисляет значения функции и определяет локально лучшую область.
+
+С помощью коллективной операции MPI_Allreduce с оператором определяется глобально лучшая область среди всех локальных кандидатов. Далее информация о выбранной области передаётся всем процессам. Процесс с рангом 0 отвечает за модификацию глобального списка областей: проверку критерия остановки и разбиение выбранной области на две новые.
 
 
 ## Условия экспериментов
 
-Размеры тестовой матрицы n: 20, 200, 500.
 Среда выполнения: Windows, MPI.
-Количество процессов MPI: 4, 6 и 8 (задаётся параметром -n при запуске mpiexec).
+Количество процессов MPI: 2, 4, 6 и 8 (задаётся параметром -n при запуске mpiexec).
 Измерение времени — средствами тестового окружения GoogleTest (режимы pipeline и task_run).
 
 
-### Результаты при n = 20
-
-#### 4 процесса
+### Результаты при 2 процессах
 
 | Режим выполнения | Время (сек) | Комментарий             |
 | ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.00087096 | Параллельная версия     |
-| MPI task_run     |  0.00030684 | Параллельная версия     |
-| SEQ pipeline     |  0.00006164 | Последовательная версия |
-| SEQ task_run     |  0.00002200 | Последовательная версия |
+| MPI pipeline     |     0.00177 | Параллельная версия     |
+| MPI task_run     |     0.00179 | Параллельная версия     |
+| SEQ pipeline     |     0.00180 | Последовательная версия |
+| SEQ task_run     |     0.00181 | Последовательная версия |
 
-#### 6 процессов
+Вывод: при использовании 2 MPI-процессов параллельная версия демонстрирует сопоставимое время выполнения с последовательной, что объясняется накладными расходами на инициализацию и коммуникации.
 
-| Режим выполнения | Время (сек) | Комментарий             |
-| ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.00086728 | Параллельная версия     |
-| MPI task_run     |  0.00147854 | Параллельная версия     |
-| SEQ pipeline     |  0.00002384 | Последовательная версия |
-| SEQ task_run     |  0.00004000 | Последовательная версия |
-
-#### 8 процессов
+### Результаты при 4 процессах
 
 | Режим выполнения | Время (сек) | Комментарий             |
 | ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.00411746 | Параллельная версия     |
-| MPI task_run     |  0.00621348 | Параллельная версия     |
-| SEQ pipeline     |  0.00002588 | Последовательная версия |
-| SEQ task_run     |  0.00003900 | Последовательная версия |
+| MPI pipeline     |     0.00181 | Параллельная версия     |
+| MPI task_run     |     0.00176 | Параллельная версия     |
+| SEQ pipeline     |     0.00183 | Последовательная версия |
+| SEQ task_run     |     0.00184 | Последовательная версия |
 
-Вывод: при малых размерах матрицы последовательная версия остаётся наиболее эффективной. MPI приводит к росту накладных расходов, что нивелирует выигрыш от параллелизма. И чем больше потоков, тем это заметнее.
+Вывод: при 4 процессах параллельная версия начинает демонстрировать небольшой выигрыш по времени по сравнению с последовательной реализацией. 
 
-
-### Результаты при n = 200 
-
-#### 4 процесса
+### Результаты при 6 процессах
 
 | Режим выполнения | Время (сек) | Комментарий             |
 | ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.00907084 | Параллельная версия     |
-| MPI task_run     |  0.00864608 | Параллельная версия     |
-| SEQ pipeline     |  0.02082334 | Последовательная версия |
-| SEQ task_run     |  0.01980000 | Последовательная версия |
+| MPI pipeline     |     0.00221 | Параллельная версия     |
+| MPI task_run     |     0.00133 | Параллельная версия     |
+| SEQ pipeline     |     0.00185 | Последовательная версия |
+| SEQ task_run     |     0.00186 | Последовательная версия |
 
-#### 6 процессов
+Вывод: при 6 MPI-процессах достигается наилучшее ускорение. Особенно заметен выигрыш в режиме `task_run`.
 
-| Режим выполнения | Время (сек) | Комментарий             |
-| ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.01021396 | Параллельная версия     |
-| MPI task_run     |  0.00881760 | Параллельная версия     |
-| SEQ pipeline     |  0.02261434 | Последовательная версия |
-| SEQ task_run     |  0.02140000 | Последовательная версия |
-
-#### 8 процессов
+### Результаты при 8 процессах
 
 | Режим выполнения | Время (сек) | Комментарий             |
 | ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.08793538 | Параллельная версия     |
-| MPI task_run     |  0.40329608 | Параллельная версия     |
-| SEQ pipeline     |  0.02561020 | Последовательная версия |
-| SEQ task_run     |  0.02390000 | Последовательная версия |
+| MPI pipeline     |     0.00224 | Параллельная версия     |
+| MPI task_run     |     0.00190 | Параллельная версия     |
+| SEQ pipeline     |     0.00187 | Последовательная версия |
+| SEQ task_run     |     0.00188 | Последовательная версия |
 
-Вывод: при n = 200 наилучшие результаты достигаются при использовании 4–6 MPI‑процессов. Тут MPI начинает заметно выигрывать по времени. При 8 процессах заметно проявляются накладные расходы на коммуникации и синхронизацию.
-
-### Результаты при n = 500
-
-#### 4 процесса
-
-| Режим выполнения | Время (сек) | Комментарий             |
-| ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.11769880 | Параллельная версия     |
-| MPI task_run     |  0.12385586 | Параллельная версия     |
-| SEQ pipeline     |  0.35500810 | Последовательная версия |
-| SEQ task_run     |  0.33300000 | Последовательная версия |
-
-#### 6 процессов
-
-| Режим выполнения | Время (сек) | Комментарий             |
-| ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  0.08243434 | Параллельная версия     |
-| MPI task_run     |  0.09656232 | Параллельная версия     |
-| SEQ pipeline     |  0.35716270 | Последовательная версия |
-| SEQ task_run     |  0.33600000 | Последовательная версия |
-
-#### 8 процессов
-
-| Режим выполнения | Время (сек) | Комментарий             |
-| ---------------- | ----------: | ----------------------- |
-| MPI pipeline     |  3.52576780 | Параллельная версия     |
-| MPI task_run     |  3.57389524 | Параллельная версия     |
-| SEQ pipeline     |  0.49392714 | Последовательная версия |
-| SEQ task_run     |  0.47000000 | Последовательная версия |
-
-Вывод: при больших размерах системы оптимальным является использование 4–6 MPI‑процессов. При 8 процессах наблюдается резкое ухудшение производительности из‑за существенных коммуникационных издержек.
+Вывод: при 8 процессах выигрыш от параллелизма снижается. Накладные расходы на синхронизацию и обмен данными между процессами начинают компенсировать преимущества распараллеливания. К тому же ухудшение по времени связано с ограничениями процессора
 
 
 ## Заключение
 
-В ходе работы успешно реализованы последовательный и параллельный алгоритмы решения СЛАУ методом простых итераций. Параллельная реализация с использованием MPI показывает значительное ускорение на больших размерах системы, однако на малых размерах накладные расходы на коммуникацию делают последовательную версию более эффективной. Оптимальная область применения параллельного алгоритма — задачи с большими системами уравнений.
+В ходе выполнения лабораторной работы были реализованы последовательный и параллельный алгоритмы решения двумерной задачи глобальной оптимизации на основе многошаговой схемы разбиения области поиска. Последовательная версия алгоритма обеспечивает корректный поиск глобального минимума при заданной точности, а параллельная версия позволяет ускорить вычисления за счёт распределения областей между MPI-процессами.
+
+Параллельная реализация демонстрирует наибольшую эффективность на среднем количестве потоков. Однако из-за накладных расходов она не дает значительного выигрыша в сравнении с последовательной версией
 
 
 ## Источники
@@ -153,8 +109,35 @@
 ```cpp
 namespace krykov_e_multistep_sad {
 
-constexpr double kEps = 1e-5;
-constexpr int kMaxIter = 10000;
+namespace {
+
+constexpr double kEps = 1e-4;
+constexpr int kMaxIter = 1000;
+
+double EvaluateCenter(const Function2D &f, Region &r) {
+  const double xc = 0.5 * (r.x_min + r.x_max);
+  const double yc = 0.5 * (r.y_min + r.y_max);
+  r.value = f(xc, yc);
+  return r.value;
+}
+
+Region SplitRegionX(const Region &r, double xm) {
+  return Region{.x_min = r.x_min, .x_max = xm, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitRegionXRight(const Region &r, double xm) {
+  return Region{.x_min = xm, .x_max = r.x_max, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitRegionY(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = r.y_min, .y_max = ym, .value = 0.0};
+}
+
+Region SplitRegionYTop(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
+}
+
+}  // namespace
 
 KrykovEMultistepSADSEQ::KrykovEMultistepSADSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -162,8 +145,8 @@ KrykovEMultistepSADSEQ::KrykovEMultistepSADSEQ(const InType &in) {
 }
 
 bool KrykovEMultistepSADSEQ::ValidationImpl() {
-  const auto &[n, A, b] = GetInput();
-  return n > 0 && A.size() == n * n && b.size() == n;
+  const auto &[f, x1, x2, y1, y2] = GetInput();
+  return static_cast<bool>(f) && x1 < x2 && y1 < y2;
 }
 
 bool KrykovEMultistepSADSEQ::PreProcessingImpl() {
@@ -171,106 +154,147 @@ bool KrykovEMultistepSADSEQ::PreProcessingImpl() {
 }
 
 bool KrykovEMultistepSADSEQ::RunImpl() {
-  const auto &[n, A, b] = GetInput();
+  const auto &[f, x_min, x_max, y_min, y_max] = GetInput();
 
-  std::vector<double> x(n, 0.0);
-  std::vector<double> x_new(n, 0.0);
+  std::vector<Region> regions;
+  regions.push_back(Region{.x_min = x_min, .x_max = x_max, .y_min = y_min, .y_max = y_max, .value = 0.0});
+  EvaluateCenter(f, regions.front());
 
   for (int iter = 0; iter < kMaxIter; ++iter) {
-    for (size_t i = 0; i < n; ++i) {
-      double sum = 0.0;
-      for (size_t j = 0; j < n; ++j) {
-        if (j != i) {
-          sum += A[(i * n) + j] * x[j];
-        }
-      }
-      x_new[i] = (b[i] - sum) / A[(i * n) + i];
+    for (auto &r : regions) {
+      EvaluateCenter(f, r);
     }
 
-    double norm = 0.0;
-    for (size_t i = 0; i < n; ++i) {
-      double diff = x_new[i] - x[i];
-      norm += diff * diff;
-    }
+    auto best_it = std::ranges::min_element(regions, {}, &Region::value);
+    Region best = *best_it;
+    regions.erase(best_it);
 
-    x = x_new;
+    double dx = best.x_max - best.x_min;
+    double dy = best.y_max - best.y_min;
 
-    if (std::sqrt(norm) < kEps) {
+    if (std::max(dx, dy) < kEps) {
+      regions.push_back(best);
       break;
+    }
+
+    if (dx >= dy) {
+      double xm = 0.5 * (best.x_min + best.x_max);
+      Region r1 = SplitRegionX(best, xm);
+      Region r2 = SplitRegionXRight(best, xm);
+      EvaluateCenter(f, r1);
+      EvaluateCenter(f, r2);
+      regions.push_back(r1);
+      regions.push_back(r2);
+    } else {
+      double ym = 0.5 * (best.y_min + best.y_max);
+      Region r1 = SplitRegionY(best, ym);
+      Region r2 = SplitRegionYTop(best, ym);
+      EvaluateCenter(f, r1);
+      EvaluateCenter(f, r2);
+      regions.push_back(r1);
+      regions.push_back(r2);
     }
   }
 
-  GetOutput() = x;
+  const auto &best = *std::ranges::min_element(regions, {}, &Region::value);
+  double x = 0.5 * (best.x_min + best.x_max);
+  double y = 0.5 * (best.y_min + best.y_max);
+  GetOutput() = {x, y, best.value};
+
   return true;
 }
 
 bool KrykovEMultistepSADSEQ::PostProcessingImpl() {
-  return !GetOutput().empty();
+  return true;
 }
 
 }  // namespace krykov_e_multistep_sad
+
 
 ```
 
 ### MPI-версия
 ```cpp
 namespace krykov_e_multistep_sad {
+
 namespace {
 
-constexpr double kEps = 1e-5;
-constexpr int kMaxIter = 10000;
+constexpr double kEps = 1e-4;
+constexpr int kMaxIter = 1000;
 
-void CalculateLocalXNew(int start, int count, size_t n, const std::vector<double> &local_a,
-                        const std::vector<double> &local_b, const std::vector<double> &x,
-                        std::vector<double> &local_x_new) {
-  for (int i = 0; i < count; ++i) {
-    int global_i = start + i;
-    double sum = 0.0;
-    for (size_t j = 0; j < n; ++j) {
-      if (std::cmp_not_equal(j, global_i)) {
-        sum += local_a[i * n + j] * x[j];
-      }
+double EvaluateCenter(const Function2D &f, Region &r) {
+  const double xc = 0.5 * (r.x_min + r.x_max);
+  const double yc = 0.5 * (r.y_min + r.y_max);
+  r.value = f(xc, yc);
+  return r.value;
+}
+
+int ComputeStartIndex(int rank, int per_proc, int remainder) {
+  return (rank * per_proc) + std::min(rank, remainder);
+}
+
+int ComputeEndIndex(int start, int per_proc, int rank, int remainder) {
+  return start + per_proc + ((rank < remainder) ? 1 : 0);
+}
+
+Region SplitXLeft(const Region &r, double xm) {
+  return Region{.x_min = r.x_min, .x_max = xm, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitXRight(const Region &r, double xm) {
+  return Region{.x_min = xm, .x_max = r.x_max, .y_min = r.y_min, .y_max = r.y_max, .value = 0.0};
+}
+
+Region SplitYBottom(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = r.y_min, .y_max = ym, .value = 0.0};
+}
+
+Region SplitYTop(const Region &r, double ym) {
+  return Region{.x_min = r.x_min, .x_max = r.x_max, .y_min = ym, .y_max = r.y_max, .value = 0.0};
+}
+
+Region FindLocalBest(const Function2D &f, std::vector<Region> &regions, int begin, int end) {
+  Region best{.x_min = 0.0, .x_max = 0.0, .y_min = 0.0, .y_max = 0.0, .value = std::numeric_limits<double>::max()};
+
+  for (int i = begin; i < end; ++i) {
+    EvaluateCenter(f, regions[i]);
+    if (regions[i].value < best.value) {
+      best = regions[i];
     }
-    local_x_new[i] = (local_b[i] - sum) / local_a[i * n + global_i];
+  }
+
+  return best;
+}
+
+bool IsRegionSmallEnough(const Region &r) {
+  return std::max(r.x_max - r.x_min, r.y_max - r.y_min) < kEps;
+}
+
+void ReplaceWithSplit(std::vector<Region> &regions, const Region &best) {
+  const double dx = best.x_max - best.x_min;
+  const double dy = best.y_max - best.y_min;
+
+  auto it = std::ranges::remove_if(regions, [&](const Region &r) {
+    return r.x_min == best.x_min && r.x_max == best.x_max && r.y_min == best.y_min && r.y_max == best.y_max;
+  });
+  regions.erase(it.begin(), it.end());
+
+  if (dx >= dy) {
+    const double xm = 0.5 * (best.x_min + best.x_max);
+    regions.push_back(SplitXLeft(best, xm));
+    regions.push_back(SplitXRight(best, xm));
+  } else {
+    const double ym = 0.5 * (best.y_min + best.y_max);
+    regions.push_back(SplitYBottom(best, ym));
+    regions.push_back(SplitYTop(best, ym));
   }
 }
 
-double CalculateLocalNorm(int start, int count, const std::vector<double> &x_new, const std::vector<double> &x) {
-  double local_norm = 0.0;
-  for (int i = 0; i < count; ++i) {
-    int gi = start + i;
-    double diff = x_new[gi] - x[gi];
-    local_norm += diff * diff;
+Region FinalBestRegion(const Function2D &f, std::vector<Region> &regions) {
+  for (auto &r : regions) {
+    EvaluateCenter(f, r);
   }
-  return local_norm;
-}
-
-void CalculateChunkSizesAndDispls(int size, int n, std::vector<int> &chunk_sizes, std::vector<int> &displs) {
-  int base = n / size;
-  int rem = n % size;
-
-  displs[0] = 0;
-  for (int i = 0; i < size; ++i) {
-    chunk_sizes[i] = base + (i < rem ? 1 : 0);
-    if (i > 0) {
-      displs[i] = displs[i - 1] + chunk_sizes[i - 1];
-    }
-  }
-}
-
-void CalculateMatrixChunkSizesAndDispls(int size, int n, std::vector<int> &matrix_chunk_sizes,
-                                        std::vector<int> &matrix_displs) {
-  int base = n / size;
-  int rem = n % size;
-
-  matrix_displs[0] = 0;
-  for (int i = 0; i < size; ++i) {
-    int rows = base + (i < rem ? 1 : 0);
-    matrix_chunk_sizes[i] = rows * n;
-    if (i > 0) {
-      matrix_displs[i] = matrix_displs[i - 1] + matrix_chunk_sizes[i - 1];
-    }
-  }
+  return *std::ranges::min_element(regions, {}, &Region::value);
 }
 
 }  // namespace
@@ -281,8 +305,8 @@ KrykovEMultistepSADMPI::KrykovEMultistepSADMPI(const InType &in) {
 }
 
 bool KrykovEMultistepSADMPI::ValidationImpl() {
-  const auto &[n, a, b] = GetInput();
-  return n > 0 && a.size() == n * n && b.size() == n;
+  const auto &[f, x1, x2, y1, y2] = GetInput();
+  return static_cast<bool>(f) && (x1 < x2) && (y1 < y2);
 }
 
 bool KrykovEMultistepSADMPI::PreProcessingImpl() {
@@ -295,69 +319,76 @@ bool KrykovEMultistepSADMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  size_t n = 0;
-  std::vector<double> a;
-  std::vector<double> b;
+  const auto &[f, x_min, x_max, y_min, y_max] = GetInput();
 
+  std::vector<Region> regions;
   if (rank == 0) {
-    const auto &input = GetInput();
-    n = std::get<0>(input);
-    a = std::get<1>(input);
-    b = std::get<2>(input);
+    regions.push_back(Region{.x_min = x_min, .x_max = x_max, .y_min = y_min, .y_max = y_max, .value = 0.0});
+    EvaluateCenter(f, regions.front());
   }
 
-  MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+  int stop_flag = 0;
 
-  std::vector<int> chunk_sizes(size);
-  std::vector<int> displs(size);
-  CalculateChunkSizesAndDispls(size, static_cast<int>(n), chunk_sizes, displs);
+  for (int iter = 0; (iter < kMaxIter) && (stop_flag == 0); ++iter) {
+    int n_regions = (rank == 0) ? static_cast<int>(regions.size()) : 0;
+    MPI_Bcast(&n_regions, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> matrix_chunk_sizes(size);
-  std::vector<int> matrix_displs(size);
-  CalculateMatrixChunkSizesAndDispls(size, static_cast<int>(n), matrix_chunk_sizes, matrix_displs);
-
-  int local_rows = chunk_sizes[rank];
-  int local_matrix_size = matrix_chunk_sizes[rank];
-
-  std::vector<double> local_a(local_matrix_size);
-  std::vector<double> local_b(local_rows);
-
-  MPI_Scatterv(rank == 0 ? a.data() : nullptr, matrix_chunk_sizes.data(), matrix_displs.data(), MPI_DOUBLE,
-               local_a.data(), local_matrix_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  MPI_Scatterv(rank == 0 ? b.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_DOUBLE, local_b.data(),
-               local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  int start = displs[rank];
-  int count = local_rows;
-
-  std::vector<double> x(n, 0.0);
-  std::vector<double> x_new(n, 0.0);
-  std::vector<double> local_x_new(count, 0.0);
-
-  std::vector<int> recv_counts(size);
-  std::vector<int> allgather_displs(size);
-  CalculateChunkSizesAndDispls(size, static_cast<int>(n), recv_counts, allgather_displs);
-
-  for (int iter = 0; iter < kMaxIter; ++iter) {
-    CalculateLocalXNew(start, count, n, local_a, local_b, x, local_x_new);
-
-    MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), allgather_displs.data(),
-                   MPI_DOUBLE, MPI_COMM_WORLD);
-
-    double local_norm = CalculateLocalNorm(start, count, x_new, x);
-    double global_norm = 0.0;
-    MPI_Allreduce(&local_norm, &global_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-    x = x_new;
-
-    if (std::sqrt(global_norm) < kEps) {
+    if (n_regions == 0) {
+      stop_flag = 1;
+      MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
       break;
     }
+
+    std::vector<Region> local_regions(n_regions);
+    if (rank == 0) {
+      std::ranges::copy(regions, local_regions.begin());
+    }
+
+    MPI_Bcast(local_regions.data(), n_regions * static_cast<int>(sizeof(Region)), MPI_BYTE, 0, MPI_COMM_WORLD);
+
+    const int per_proc = n_regions / size;
+    const int remainder = n_regions % size;
+    const int begin = ComputeStartIndex(rank, per_proc, remainder);
+    const int end = ComputeEndIndex(begin, per_proc, rank, remainder);
+
+    const Region local_best = FindLocalBest(f, local_regions, begin, end);
+
+    struct {
+      double value;
+      int rank;
+    } local_val{.value = local_best.value, .rank = rank}, global_val{};
+
+    MPI_Allreduce(&local_val, &global_val, 1, MPI_DOUBLE_INT, MPI_MINLOC, MPI_COMM_WORLD);
+
+    Region global_best = local_best;
+    MPI_Bcast(&global_best, static_cast<int>(sizeof(Region)), MPI_BYTE, global_val.rank, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+      stop_flag = static_cast<int>(IsRegionSmallEnough(global_best));
+      if (stop_flag == 0) {
+        ReplaceWithSplit(regions, global_best);
+      }
+    }
+
+    MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
   }
 
-  GetOutput() = x;
+  double x = 0.0;
+  double y = 0.0;
+  double value = 0.0;
 
+  if (rank == 0) {
+    const Region best = FinalBestRegion(f, regions);
+    x = 0.5 * (best.x_min + best.x_max);
+    y = 0.5 * (best.y_min + best.y_max);
+    value = best.value;
+  }
+
+  MPI_Bcast(&x, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&y, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&value, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  GetOutput() = {x, y, value};
   return true;
 }
 
