@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "dolov_v_monte_carlo_integration/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace dolov_v_monte_carlo_integration {
 
@@ -25,7 +26,7 @@ bool DolovVMonteCarloIntegrationMPI::ValidationImpl() {
   // Валидация происходит только на корневом процессе (rank 0)
   if (rank == 0) {
     const auto &in = GetInput();
-    is_valid = static_cast<bool>(in.func) && (in.samples_count > 0) && (in.dimension > 0) &&
+    is_valid = in.func && (in.samples_count > 0) && (in.dimension > 0) &&
                (in.center.size() == static_cast<size_t>(in.dimension)) && (in.radius > 0.0);
   }
 
@@ -65,7 +66,7 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     params.radius = rad;
     params.domain_type = static_cast<IntegrationDomain>(domain_type_int);
 
-    params.center.resize(static_cast<size_t>(dim));
+    params.center.resize(dim);
   }
 
   // Bcast вектора центра
@@ -79,52 +80,49 @@ bool DolovVMonteCarloIntegrationMPI::RunImpl() {
     local_samples += total_samples % total_procs;
   }
 
-  const double r_sq = params.radius * params.radius;
+  const double R_sq = params.radius * params.radius;
 
-  // Инициализация генератора (static_cast для clang-tidy)
-  std::mt19937 random_generator(static_cast<unsigned int>(current_rank) + 101);
+  std::mt19937 random_generator(current_rank + 101);
   std::uniform_real_distribution<double> value_distributor(-params.radius, params.radius);
 
-  double local_sum_f = 0.0;
-  std::vector<double> sample_point(static_cast<size_t>(params.dimension));
+  double local_sum_of_f = 0.0;
+  std::vector<double> sample_point(params.dimension);
 
   for (int i = 0; i < local_samples; ++i) {
+    double distance_sq = 0.0;
     bool is_valid_point = true;
 
     // Генерация случайной точки в гиперкубе
     for (int d = 0; d < params.dimension; ++d) {
-      sample_point[static_cast<size_t>(d)] =
-          params.center[static_cast<size_t>(d)] + value_distributor(random_generator);
+      sample_point[d] = params.center[d] + value_distributor(random_generator);
     }
 
     if (params.domain_type == IntegrationDomain::kHyperSphere) {
       // Проверка попадания в гиперсферу
-      double distance_sq = 0.0;
       for (int d = 0; d < params.dimension; ++d) {
-        double diff = sample_point[static_cast<size_t>(d)] - params.center[static_cast<size_t>(d)];
-        distance_sq += diff * diff;
+        distance_sq += std::pow(sample_point[d] - params.center[d], 2);
       }
 
-      if (distance_sq > r_sq) {
+      if (distance_sq > R_sq) {
         is_valid_point = false;
       }
     }
 
     if (is_valid_point) {
-      local_sum_f += params.func(sample_point);
+      local_sum_of_f += params.func(sample_point);
     }
   }
 
-  double global_sum_f = 0.0;
+  double global_sum_of_f = 0.0;
   // Собираем все локальные суммы на корневой процесс 0
-  MPI_Reduce(&local_sum_f, &global_sum_f, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_sum_of_f, &global_sum_of_f, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   double final_integral_result = 0.0;
 
   if (current_rank == 0) {
     // Объем описанного гиперкуба
     const double hyperspace_volume = std::pow(2.0 * params.radius, params.dimension);
-    final_integral_result = hyperspace_volume * (global_sum_f / total_samples);
+    final_integral_result = hyperspace_volume * (global_sum_of_f / total_samples);
   }
 
   // Bcast финальный результат всем процессам, чтобы GetOutput() был одинаковым

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <cstdint>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -16,7 +15,7 @@
 
 namespace dolov_v_monte_carlo_integration {
 
-enum class IntegrationDomain : uint8_t { kHyperCube, kHyperSphere };
+enum class IntegrationDomain { kHyperCube, kHyperSphere };
 
 struct InputParams {
   std::function<double(const std::vector<double> &)> func;
@@ -25,8 +24,6 @@ struct InputParams {
   std::vector<double> center;
   double radius = 1.0;
   IntegrationDomain domain_type = IntegrationDomain::kHyperCube;
-
-  InputParams() = default;
 };
 
 using InType = InputParams;
@@ -35,8 +32,8 @@ using OutType = double;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-// Вспомогательные функции для тестирования (CamelCase для clang-tidy)
-inline double FuncSumCoords(const std::vector<double> &x) {
+// Вспомогательные функции для тестирования
+inline double func_sum_coords(const std::vector<double> &x) {
   double sum = 0.0;
   for (double val : x) {
     sum += val;
@@ -44,8 +41,7 @@ inline double FuncSumCoords(const std::vector<double> &x) {
   return sum;
 }
 
-inline double FuncConstOne(const std::vector<double> &unused_x) {
-  (void)unused_x;
+inline double func_const_one(const std::vector<double> &) {
   return 1.0;
 }
 

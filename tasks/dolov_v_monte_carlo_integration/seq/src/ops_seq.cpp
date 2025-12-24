@@ -17,7 +17,7 @@ DolovVMonteCarloIntegrationSEQ::DolovVMonteCarloIntegrationSEQ(const InType &in)
 
 bool DolovVMonteCarloIntegrationSEQ::ValidationImpl() {
   const auto &in = GetInput();
-  return static_cast<bool>(in.func) && (in.samples_count > 0) && (in.dimension > 0) &&
+  return in.func && (in.samples_count > 0) && (in.dimension > 0) &&
          (in.center.size() == static_cast<size_t>(in.dimension)) && (in.radius > 0.0);
 }
 
@@ -28,41 +28,47 @@ bool DolovVMonteCarloIntegrationSEQ::PreProcessingImpl() {
 
 bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
   const auto &in = GetInput();
-  const int n_val = in.samples_count;
-  const int d_val = in.dimension;
-  const double r_val = in.radius;
-  const double r_sq = r_val * r_val;
+  const int N = in.samples_count;
+  const int D = in.dimension;
+  const double R = in.radius;
+  const double R_sq = R * R;
 
   std::mt19937 generator(42);
-  std::uniform_real_distribution<double> distribution(-r_val, r_val);
+  std::uniform_real_distribution<double> distribution(-R, R);
 
-  double sum_res = 0.0;
-  std::vector<double> point(static_cast<size_t>(d_val));
+  double sum = 0.0;
+  std::vector<double> point(D);
 
-  for (int i = 0; i < n_val; ++i) {
-    for (int j = 0; j < d_val; ++j) {
-      point[j] = in.center[j] + distribution(generator);
+  for (int sample = 0; sample < N; ++sample) {
+    double distance_sq = 0.0;
+    bool is_in_domain = true;
+
+    // Генерация случайной точки в гиперкубе
+    for (int d = 0; d < D; ++d) {
+      point[d] = in.center[d] + distribution(generator);
     }
 
-    bool inside = true;
     if (in.domain_type == IntegrationDomain::kHyperSphere) {
-      double d2 = 0.0;
-      for (int j = 0; j < d_val; ++j) {
-        double diff = point[j] - in.center[j];
-        d2 += diff * diff;
+      // Проверка попадания в гиперсферу
+      for (int d = 0; d < D; ++d) {
+        distance_sq += std::pow(point[d] - in.center[d], 2);
       }
-      if (d2 > r_sq) {
-        inside = false;
+
+      if (distance_sq > R_sq) {
+        is_in_domain = false;
       }
     }
 
-    if (inside) {
-      sum_res += in.func(point);
+    if (is_in_domain) {
+      sum += in.func(point);
     }
   }
 
-  const double v_cube = std::pow(2.0 * r_val, d_val);
-  GetOutput() = v_cube * (sum_res / n_val);
+  // Объем описанного гиперкуба
+  const double V_cube = std::pow(2.0 * R, D);
+  double integral_approximation = V_cube * (sum / N);
+
+  GetOutput() = integral_approximation;
 
   return std::isfinite(GetOutput());
 }

@@ -23,7 +23,7 @@ using OutType = double;
 using TestType = std::tuple<int, std::string>;
 
 // Вспомогательная функция для тестовой функции: f(x1, x2) = x1^2 + x2^2
-inline double FuncSquareSum(const std::vector<double> &x) {
+inline double func_square_sum(const std::vector<double> &x) {
   double sum = 0.0;
   for (double val : x) {
     sum += val * val;
@@ -34,8 +34,8 @@ inline double FuncSquareSum(const std::vector<double> &x) {
 // Класс тестирования: гиперкуб
 class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const ::testing::TestParamInfo<TestType> &info) {
-    return std::to_string(std::get<0>(info.param)) + "_" + std::get<1>(info.param);
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
 
  protected:
@@ -48,12 +48,12 @@ class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutT
     const double kRadius = 1.0;
     const std::vector<double> kCenter = {0.0, 0.0};
 
-    input_data_.func = FuncSquareSum;
-    input_data_.dimension = kDimension;
-    input_data_.samples_count = samples;
-    input_data_.center = kCenter;
-    input_data_.radius = kRadius;
-    input_data_.domain_type = IntegrationDomain::kHyperCube;
+    input_data_ = {.func = func_square_sum,
+                   .dimension = kDimension,
+                   .samples_count = samples,
+                   .center = kCenter,
+                   .radius = kRadius,
+                   .domain_type = IntegrationDomain::kHyperCube};
 
     // Точный результат для Int[(x1^2 + x2^2) dx1 dx2] на [-1, 1]^2 равен 8/3.
     expected_result_ = 8.0 / 3.0;
@@ -76,8 +76,8 @@ class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutT
 // Класс тестирование: гиперсфера
 class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const ::testing::TestParamInfo<TestType> &info) {
-    return std::to_string(std::get<0>(info.param)) + "_" + std::get<1>(info.param);
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
 
  protected:
@@ -90,12 +90,12 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
     const double kRadius = 1.0;
     const std::vector<double> kCenter = {0.0, 0.0};
 
-    input_data_.func = FuncSquareSum;
-    input_data_.dimension = kDimension;
-    input_data_.samples_count = samples;
-    input_data_.center = kCenter;
-    input_data_.radius = kRadius;
-    input_data_.domain_type = IntegrationDomain::kHyperSphere;
+    input_data_ = {.func = func_square_sum,
+                   .dimension = kDimension,
+                   .samples_count = samples,
+                   .center = kCenter,
+                   .radius = kRadius,
+                   .domain_type = IntegrationDomain::kHyperSphere};
 
     // Точный результат для Int[(x1^2 + x2^2) dx1 dx2] на единичной 2D сфере равен Pi/2.
     expected_result_ = M_PI / 2.0;
