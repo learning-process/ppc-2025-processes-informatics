@@ -14,7 +14,6 @@ class RomanovaVJacobiMethodPerfTestProcesses : public ppc::util::BaseRunPerfTest
     // std::ifstream file(abs_path + ".txt");
     // if (file.is_open()) {
 
-
     //   int rows = 0;
     //   int columns = 0;
     //   size_t iterations = 0;
@@ -42,27 +41,31 @@ class RomanovaVJacobiMethodPerfTestProcesses : public ppc::util::BaseRunPerfTest
     //     }
     //   }
 
-      size_t n = 200;
-      std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
+    size_t n = 200;
+    std::vector<std::vector<double>> A(n, std::vector<double>(n, 0.0));
 
-      for(size_t i = 0; i < n; i++){
-        for(size_t j = 0; j < n; j++){
-          if(i == j)A[i][j] = 10.01;
-          if(j == i - 1  || j == i + 1) A[i][j] = 5.0;
+    for (size_t i = 0; i < n; i++) {
+      for (size_t j = 0; j < n; j++) {
+        if (i == j) {
+          A[i][j] = 10.01;
+        }
+        if (j == i - 1 || j == i + 1) {
+          A[i][j] = 5.0;
         }
       }
+    }
 
-      std::vector<double> x(n, -1000.0);
-      std::vector<double> b(n, 20.01);
-      b[0] = b[n-1] = 15.01;
-      size_t iterations = 100000;
-      eps_ = 1e-9;
+    std::vector<double> x(n, -1000.0);
+    std::vector<double> b(n, 20.01);
+    b[0] = b[n - 1] = 15.01;
+    size_t iterations = 100000;
+    eps_ = 1e-9;
 
-      input_data_ = std::make_tuple(x, A, b, eps_, iterations);
-      exp_answer_ = std::vector<double>(n, 1.0);
-      //eps_ = eps;
+    input_data_ = std::make_tuple(x, A, b, eps_, iterations);
+    exp_answer_ = std::vector<double>(n, 1.0);
+    // eps_ = eps;
 
-      //file.close();
+    // file.close();
     //}
   }
 
