@@ -1,10 +1,10 @@
 #include "gauss_jordan/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cmath>
-#include <cstddef>
 #include <functional>
 #include <vector>
+#include <cstddef>
+#include <cmath>
 
 #include "gauss_jordan/common/include/common.hpp"
 
@@ -152,9 +152,7 @@ std::vector<double> ComputeSolutionVector(const std::vector<std::vector<double>>
     return solution;
 }
  
-
 }  // namespace 
-
 
 GaussJordanSEQ::GaussJordanSEQ(const InType &input) {
     SetTypeOfTask(GetStaticTypeOfTask());
@@ -193,35 +191,51 @@ bool GaussJordanSEQ::RunImpl() {
     const auto& input_matrix = GetInput();
     
     if (input_matrix.empty()) {
+        GetOutput() = std::vector<double>();
         return true;
     }
     
-
-std::vector<std::vector<double>> augmented_matrix = GetInput();
+    std::vector<std::vector<double>> augmented_matrix = input_matrix;
     
     if (augmented_matrix.empty()) {
+        GetOutput() = std::vector<double>();
         return true;
     }
     
     int equations_count = static_cast<int>(augmented_matrix.size());
     int augmented_columns = static_cast<int>(augmented_matrix[0].size());
-    
 
     for (int i = 1; i < equations_count; ++i) {
         if (static_cast<int>(augmented_matrix[i].size()) != augmented_columns) {
-            return false;
+            GetOutput() = std::vector<double>();
+            return true;
         }
     }
     
     if (augmented_columns <= 1) {
-        return false; 
+        GetOutput() = std::vector<double>();
+        return true;
+    }
+    
+    bool is_zero_matrix = true;
+    for (int i = 0; i < equations_count && is_zero_matrix; ++i) {
+        for (int j = 0; j < augmented_columns && is_zero_matrix; ++j) {
+            if (std::abs(augmented_matrix[i][j]) > 1e-12) {
+                is_zero_matrix = false;
+            }
+        }
+    }
+    
+    if (is_zero_matrix) {
+        GetOutput() = std::vector<double>();
+        return true;
     }
     
     TransformToReducedRowEchelonForm(augmented_matrix, equations_count, augmented_columns);
     
     if (HasInconsistentEquation(augmented_matrix, equations_count, augmented_columns)) {
         GetOutput() = std::vector<double>();
-        return false;
+        return true;
     }
     
     int matrix_rank = ComputeMatrixRank(augmented_matrix, equations_count, augmented_columns);
@@ -229,19 +243,14 @@ std::vector<std::vector<double>> augmented_matrix = GetInput();
     
     if (matrix_rank < variable_count && matrix_rank < equations_count) {
         GetOutput() = std::vector<double>();
-        return false; 
+        return true;
     }
     
     GetOutput() = ComputeSolutionVector(augmented_matrix, equations_count, augmented_columns);
-    return true;  
-}
-
-bool GaussJordanSEQ::PostProcessingImpl() {
-    if (GetOutput().empty()) {
-        return false;
-    }
-  
     return true;
 }
 
-}  // namespace gauss_jordan
+bool GaussJordanSEQ::PostProcessingImpl() {
+    return true;
+}
+} //namespace gauss_jordan

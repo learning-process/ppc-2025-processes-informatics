@@ -1,22 +1,44 @@
 #include <gtest/gtest.h>
 
-#include "example_processes/common/include/common.hpp"
-#include "example_processes/mpi/include/ops_mpi.hpp"
-#include "example_processes/seq/include/ops_seq.hpp"
+#include <cmath>
+#include <cstddef>
+#include <vector>
+
+#include "gauss_jordan/common/include/common.hpp"
+#include "gauss_jordan/mpi/include/ops_mpi.hpp"
+#include "gauss_jordan/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace gauss_jordan {
 
-class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
+// Тест производительности для маленьких матриц (20x20)
+class GaivoronskiyMRunPerfTestsSmall : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kMatrixSize_ = 20;
+  InType input_data_;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    int n = kMatrixSize_;
+    int m = kMatrixSize_;
+    input_data_ = InType(static_cast<size_t>(n), std::vector<double>(static_cast<size_t>(m + 1)));
+
+    for (int i = 0; i < n; i++) {
+      double sum = 0;
+      for (int j = 0; j < m; j++) {
+        if (i == j) {
+          input_data_[i][j] = 8.0 + ((i % 50) / 5.0);
+        } else if (std::abs(i - j) <= 2) {
+          input_data_[i][j] = 0.3;
+        } else {
+          input_data_[i][j] = (i + j) % 7 / 7.0;
+        }
+        sum += std::abs(input_data_[i][j]);
+      }
+      input_data_[i][m] = sum;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    return !output_data.empty();
   }
 
   InType GetTestInputData() final {
@@ -24,17 +46,118 @@ class ExampleRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
-TEST_P(ExampleRunPerfTestProcesses, RunPerfModes) {
+
+// Тест производительности для средних матриц (80x80)
+class GaivoronskiyMRunPerfTestsMedium : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kMatrixSize_ = 80;
+  InType input_data_;
+
+  void SetUp() override {
+    int n = kMatrixSize_;
+    int m = kMatrixSize_;
+    input_data_ = InType(static_cast<size_t>(n), std::vector<double>(static_cast<size_t>(m + 1)));
+
+    for (int i = 0; i < n; i++) {
+      double sum = 0;
+      for (int j = 0; j < m; j++) {
+        if (i == j) {
+          input_data_[i][j] = 15.0 + ((i % 100) / 8.0);
+        } else if (std::abs(i - j) <= 3) {
+          input_data_[i][j] = 0.4;
+        } else {
+          input_data_[i][j] = ((i * j) % 11) / 11.0;
+        }
+        sum += std::abs(input_data_[i][j]);
+      }
+      input_data_[i][m] = sum;
+    }
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return !output_data.empty();
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+};
+
+// Тест производительности для больших матриц (150x150)
+class GaivoronskiyMRunPerfTestsLarge : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kMatrixSize_ = 150;
+  InType input_data_;
+
+  void SetUp() override {
+    int n = kMatrixSize_;
+    int m = kMatrixSize_;
+    input_data_ = InType(static_cast<size_t>(n), std::vector<double>(static_cast<size_t>(m + 1)));
+
+    for (int i = 0; i < n; i++) {
+      double sum = 0;
+      for (int j = 0; j < m; j++) {
+        if (i == j) {
+          input_data_[i][j] = 25.0 + ((i % 150) / 10.0);
+        } else if (std::abs(i - j) <= 5) {
+          input_data_[i][j] = 0.2;
+        } else {
+          input_data_[i][j] = ((i + j * 3) % 13) / 13.0;
+        }
+        sum += std::abs(input_data_[i][j]);
+      }
+      input_data_[i][m] = sum;
+    }
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return !output_data.empty();
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+};
+
+
+TEST_P(GaivoronskiyMRunPerfTestsSmall, RunPerfModesSmall) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, NesterovATestTaskMPI, NesterovATestTaskSEQ>(PPC_SETTINGS_example_processes);
+TEST_P(GaivoronskiyMRunPerfTestsMedium, RunPerfModesMedium) {
+  ExecuteTest(GetParam());
+}
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+TEST_P(GaivoronskiyMRunPerfTestsLarge, RunPerfModesLarge) {
+  ExecuteTest(GetParam());
+}
 
-const auto kPerfTestName = ExampleRunPerfTestProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ExampleRunPerfTestProcesses, kGtestValues, kPerfTestName);
+const auto kAllPerfTasksSmall =
+    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(
+        PPC_SETTINGS_gauss_jordan);
 
-}  // namespace nesterov_a_test_task_processes
+const auto kAllPerfTasksMedium =
+    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(
+        PPC_SETTINGS_gauss_jordan);
+
+const auto kAllPerfTasksLarge =
+    ppc::util::MakeAllPerfTasks<InType, GaussJordanMPI, GaussJordanSEQ>(
+        PPC_SETTINGS_gauss_jordan);
+
+const auto kGtestValuesSmall = ppc::util::TupleToGTestValues(kAllPerfTasksSmall);
+const auto kGtestValuesMedium = ppc::util::TupleToGTestValues(kAllPerfTasksMedium);
+const auto kGtestValuesLarge = ppc::util::TupleToGTestValues(kAllPerfTasksLarge);
+
+
+const auto kPerfTestNameSmall = GaivoronskiyMRunPerfTestsSmall::CustomPerfTestName;
+const auto kPerfTestNameMedium = GaivoronskiyMRunPerfTestsMedium::CustomPerfTestName;
+const auto kPerfTestNameLarge = GaivoronskiyMRunPerfTestsLarge::CustomPerfTestName;
+
+
+INSTANTIATE_TEST_SUITE_P(RunModeTestsSmall, GaivoronskiyMRunPerfTestsSmall, 
+                         kGtestValuesSmall, kPerfTestNameSmall);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsMedium, GaivoronskiyMRunPerfTestsMedium, 
+                         kGtestValuesMedium, kPerfTestNameMedium);
+INSTANTIATE_TEST_SUITE_P(RunModeTestsLarge, GaivoronskiyMRunPerfTestsLarge, 
+                         kGtestValuesLarge, kPerfTestNameLarge);
+
+}  // namespace gauss_jordan

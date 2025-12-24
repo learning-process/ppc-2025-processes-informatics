@@ -1,58 +1,43 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
-#include "example_processes/mpi/include/ops_mpi.hpp"
-#include "example_processes/seq/include/ops_seq.hpp"
+#include "gauss_jordan/common/include/common.hpp"
+#include "gauss_jordan/mpi/include/ops_mpi.hpp"
+#include "gauss_jordan/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace nesterov_a_test_task_processes {
+namespace gauss_jordan {
 
-class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class RunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<0>(test_param);
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_example_processes, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    input_data_ = std::get<1>(params);
+    res_ = std::get<2>(params);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    if (res_.size() != output_data.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < res_.size(); i++) {
+      if (std::abs(res_[i] - output_data[i]) > 1e-6) {
+        return false;
+      }
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -60,27 +45,86 @@ class NesterovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType res_;
 };
 
 namespace {
 
-TEST_P(NesterovARunFuncTestsProcesses, MatmulFromPic) {
+TEST_P(RunFuncTestsProcesses, GaussJordan) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+// Тестовые системы уравнений
+// Пример 1: 2x + y - z = 8, -3x - y + 2z = -11, -2x + y + 2z = -3
+// Решение: x = 2, y = 3, z = -1
+const std::array<TestType, 10> kTestParam = {
+    // 1. Единичная матрица 3x3 - самый простой случай
+    std::make_tuple("test_identity", 
+        std::vector<std::vector<double>>{{1, 0, 0, 1}, {0, 1, 0, 2}, {0, 0, 1, 3}},
+        std::vector<double>{1.0, 2.0, 3.0}),
+    
+    // 2. Диагональная матрица 3x3
+    std::make_tuple("test_diagonal", 
+        std::vector<std::vector<double>>{{2, 0, 0, 4}, {0, 3, 0, 9}, {0, 0, 4, 8}},
+        std::vector<double>{2.0, 3.0, 2.0}),
+    
+    // 3. Простая система 2x2 (x + y = 5, 2x - y = 1)
+    std::make_tuple("test_simple_2x2", 
+        std::vector<std::vector<double>>{{1, 1, 5}, {2, -1, 1}},
+        std::vector<double>{2.0, 3.0}),
+    
+    // 4. Система с перестановкой строк
+    std::make_tuple("test_row_swap", 
+        std::vector<std::vector<double>>{{0, 2, 4}, {1, 1, 3}},
+        std::vector<double>{1.0, 2.0}),
+    
+    // 5. Система с одним уравнением
+    std::make_tuple("test_single_equation", 
+        std::vector<std::vector<double>>{{2, 6}},
+        std::vector<double>{3.0}),
+    
+    // 6. Простая система 4x4 (единичная)
+    std::make_tuple("test_4x4_identity",
+        std::vector<std::vector<double>>{{1, 0, 0, 0, 1}, {0, 1, 0, 0, 2}, {0, 0, 1, 0, 3}, {0, 0, 0, 1, 4}},
+        std::vector<double>{1.0, 2.0, 3.0, 4.0}),
+    
+    // 7. Система с отрицательными коэффициентами (-x + y = 1, x + y = 3)
+    std::make_tuple("test_negative_coeffs", 
+        std::vector<std::vector<double>>{{-1, 1, 1}, {1, 1, 3}},
+        std::vector<double>{1.0, 2.0}),
+    
+    // 8. Система с дробными коэффициентами
+    std::make_tuple("test_fractional", 
+        std::vector<std::vector<double>>{{0.5, 0.25, 1.5}, {0.75, -0.5, 0.5}},
+        std::vector<double>{2.0, 2.0}),
+    
+    // 9. Верхнетреугольная система
+    std::make_tuple("test_triangular", 
+        std::vector<std::vector<double>>{{1, 1, 1, 6}, {0, 1, 1, 5}, {0, 0, 1, 3}},
+        std::vector<double>{1.0, 2.0, 3.0}),
+    
+    // 10. Система 5x5 (единичная)
+    std::make_tuple("test_5x5_identity",
+        std::vector<std::vector<double>>{
+            {1, 0, 0, 0, 0, 1}, 
+            {0, 1, 0, 0, 0, 2}, 
+            {0, 0, 1, 0, 0, 3}, 
+            {0, 0, 0, 1, 0, 4}, 
+            {0, 0, 0, 0, 1, 5}},
+        std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0})
+};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<NesterovATestTaskMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
-                   ppc::util::AddFuncTask<NesterovATestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_example_processes));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<GaussJordanMPI, InType>(kTestParam, PPC_SETTINGS_gauss_jordan),
+    ppc::util::AddFuncTask<GaussJordanSEQ, InType>(kTestParam, PPC_SETTINGS_gauss_jordan));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = NesterovARunFuncTestsProcesses::PrintFuncTestName<NesterovARunFuncTestsProcesses>;
+const auto kPerfTestName = RunFuncTestsProcesses::PrintFuncTestName<RunFuncTestsProcesses>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, NesterovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(GaussJordanTests, RunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
 }  // namespace
 
-}  // namespace nesterov_a_test_task_processes
+}  // namespace gauss_jordan
