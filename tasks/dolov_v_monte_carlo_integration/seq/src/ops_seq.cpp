@@ -15,65 +15,61 @@ DolovVMonteCarloIntegrationSEQ::DolovVMonteCarloIntegrationSEQ(const InType &in)
   GetOutput() = 0.0;
 }
 
-bool DolovVMonteCarloIntegrationSEQ::ValidationImpl() {
+bool DolovVMonteCarloIntegrationSEQ::ValidationImpl() {  // NOLINT
   const auto &in = GetInput();
-  return in.func && (in.samples_count > 0) && (in.dimension > 0) &&
+  // Явная проверка на nullptr для func и проверка остальных полей
+  return static_cast<bool>(in.func) && (in.samples_count > 0) && (in.dimension > 0) &&
          (in.center.size() == static_cast<size_t>(in.dimension)) && (in.radius > 0.0);
 }
 
-bool DolovVMonteCarloIntegrationSEQ::PreProcessingImpl() {
+bool DolovVMonteCarloIntegrationSEQ::PreProcessingImpl() {  // NOLINT
   GetOutput() = 0.0;
   return true;
 }
 
-bool DolovVMonteCarloIntegrationSEQ::RunImpl() {
+bool DolovVMonteCarloIntegrationSEQ::RunImpl() {  // NOLINT
   const auto &in = GetInput();
-  const int N = in.samples_count;
-  const int D = in.dimension;
-  const double R = in.radius;
-  const double R_sq = R * R;
+  const int n_samples = in.samples_count;
+  const int dim_val = in.dimension;
+  const double rad = in.radius;
+  const double r_sq = rad * rad;
 
   std::mt19937 generator(42);
-  std::uniform_real_distribution<double> distribution(-R, R);
+  std::uniform_real_distribution<double> distribution(-rad, rad);
 
-  double sum = 0.0;
-  std::vector<double> point(D);
+  double sum_val = 0.0;
+  std::vector<double> point(static_cast<size_t>(dim_val));
 
-  for (int sample = 0; sample < N; ++sample) {
-    double distance_sq = 0.0;
-    bool is_in_domain = true;
-
-    // Генерация случайной точки в гиперкубе
-    for (int d = 0; d < D; ++d) {
-      point[d] = in.center[d] + distribution(generator);
+  for (int sample = 0; sample < n_samples; ++sample) {
+    for (int idx = 0; idx < dim_val; ++idx) {
+      point[idx] = in.center[idx] + distribution(generator);
     }
 
+    bool is_in_domain = true;
     if (in.domain_type == IntegrationDomain::kHyperSphere) {
-      // Проверка попадания в гиперсферу
-      for (int d = 0; d < D; ++d) {
-        distance_sq += std::pow(point[d] - in.center[d], 2);
+      double distance_sq = 0.0;
+      for (int idx = 0; idx < dim_val; ++idx) {
+        double diff = point[idx] - in.center[idx];
+        distance_sq += diff * diff;
       }
 
-      if (distance_sq > R_sq) {
+      if (distance_sq > r_sq) {
         is_in_domain = false;
       }
     }
 
     if (is_in_domain) {
-      sum += in.func(point);
+      sum_val += in.func(point);
     }
   }
 
-  // Объем описанного гиперкуба
-  const double V_cube = std::pow(2.0 * R, D);
-  double integral_approximation = V_cube * (sum / N);
-
-  GetOutput() = integral_approximation;
+  const double v_cube = std::pow(2.0 * rad, dim_val);
+  GetOutput() = v_cube * (sum_val / n_samples);
 
   return std::isfinite(GetOutput());
 }
 
-bool DolovVMonteCarloIntegrationSEQ::PostProcessingImpl() {
+bool DolovVMonteCarloIntegrationSEQ::PostProcessingImpl() {  // NOLINT
   return true;
 }
 

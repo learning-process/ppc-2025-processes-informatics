@@ -13,14 +13,12 @@ namespace {
 
 class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
-  // Количество семплов для Performance-теста
   static constexpr int kSamples = 1000000;
 
   InType input_data_{};
   OutType expected_result_ = 0.0;
 
-  // Функция для тестирования: f(x1, x2, x3) = x1 + x2 + x3, (Точный интеграл на [-1, 1]^3 равен 0)
-  static double func_sum_coords_3d(const std::vector<double> &x) {
+  static double FuncSumCoords3d(const std::vector<double> &x) {
     double sum = 0.0;
     for (double val : x) {
       sum += val;
@@ -30,19 +28,17 @@ class DolovVMonteCarloIntegrationPerfTests : public ppc::util::BaseRunPerfTests<
 
  protected:
   void SetUp() override {
-    //  Инициализация InType для 3D интегрирования
     const int kDimension = 3;
     const double kRadius = 1.0;
     const std::vector<double> kCenter = {0.0, 0.0, 0.0};
 
-    input_data_ = {.func = func_sum_coords_3d,
+    input_data_ = {.func = FuncSumCoords3d,
                    .dimension = kDimension,
                    .samples_count = kSamples,
                    .center = kCenter,
                    .radius = kRadius,
                    .domain_type = IntegrationDomain::kHyperCube};
 
-    // Интеграл f(x1 + x2 + x3) на симметричном кубе [-1, 1]^3 равен 0.
     expected_result_ = 0.0;
   }
 
