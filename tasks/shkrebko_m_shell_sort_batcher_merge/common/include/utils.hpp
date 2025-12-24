@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -9,7 +10,7 @@ namespace shkrebko_m_shell_sort_batcher_merge {
 
 namespace {
 
-void ShellSort(std::vector<int> *vec) {
+inline void ShellSort(std::vector<int> *vec) {
   auto &a = *vec;
   const std::size_t n = a.size();
   for (std::size_t gap = n / 2; gap > 0; gap /= 2) {
@@ -45,7 +46,7 @@ inline void CompareExchange(std::vector<Elem> *arr, std::size_t i, std::size_t j
   }
 }
 
-std::size_t NextPow2(std::size_t x) {
+inline std::size_t NextPow2(std::size_t x) {
   std::size_t p = 1;
   while (p < x) {
     p <<= 1U;
@@ -53,7 +54,7 @@ std::size_t NextPow2(std::size_t x) {
   return p;
 }
 
-void OddEvenMergeStep(std::vector<Elem> *arr, std::size_t k, std::size_t j) {
+inline void OddEvenMergeStep(std::vector<Elem> *arr, std::size_t k, std::size_t j) {
   const std::size_t n = arr->size();
   for (std::size_t i = 0; i < n; ++i) {
     const std::size_t ixj = i ^ j;
@@ -67,7 +68,7 @@ void OddEvenMergeStep(std::vector<Elem> *arr, std::size_t k, std::size_t j) {
   }
 }
 
-void OddEvenMergeNetwork(std::vector<Elem> *arr) {
+inline void OddEvenMergeNetwork(std::vector<Elem> *arr) {
   const std::size_t n = arr->size();
   if (n <= 1) {
     return;
@@ -80,7 +81,7 @@ void OddEvenMergeNetwork(std::vector<Elem> *arr) {
   }
 }
 
-std::vector<int> BatcherOddEvenMerge(const std::vector<int> &a, const std::vector<int> &b) {
+[[maybe_unused]] inline std::vector<int> BatcherOddEvenMerge(const std::vector<int> &a, const std::vector<int> &b) {
   const std::size_t need = a.size() + b.size();
   const std::size_t half = NextPow2((a.size() > b.size()) ? a.size() : b.size());
 
