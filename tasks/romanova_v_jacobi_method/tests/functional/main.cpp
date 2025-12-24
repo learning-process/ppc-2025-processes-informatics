@@ -72,7 +72,7 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
     }
     for (int i = 0; i < output_data.size(); i++) {
       if (abs(output_data[i] - exp_answer_[i]) > eps_) {
-        std::cout << output_data[i] << " " << exp_answer_[i] << "\n";
+        // std::cout << output_data[i] << " " << exp_answer_[i] << "\n";
         return false;
       }
     }
@@ -84,9 +84,9 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
   }
 
  private:
-  InType input_data_;
-  OutType exp_answer_;
-  double eps_;
+  InType input_data_{};
+  OutType exp_answer_{};
+  double eps_ = 0.0;
 };
 
 namespace {
