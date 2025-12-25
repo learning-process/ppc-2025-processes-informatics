@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mpi.h>
+
 #include <cstdint>
 #include <vector>
 
@@ -14,6 +16,7 @@ class DolovVTorusTopologyMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit DolovVTorusTopologyMPI(const InType &in);
+  ~DolovVTorusTopologyMPI() override;
 
  private:
   enum class MoveSide : uint8_t { kNorth, kSouth, kWest, kEast, kStay };
@@ -34,6 +37,8 @@ class DolovVTorusTopologyMPI : public BaseTask {
 
   InputData input_;
   OutputData output_;
+
+  MPI_Comm torus_comm = MPI_COMM_NULL;
 };
 
 }  // namespace dolov_v_torus_topology

@@ -22,7 +22,7 @@ class DolovVTorusTopologyPerfTests : public ppc::util::BaseRunPerfTests<InType, 
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
 
-    const int kLargeDataSize = 1'000'000;
+    const int kLargeDataSize = 10'000'000;
     std::vector<int> big_message(kLargeDataSize, 1);
 
     int sender = 0;
