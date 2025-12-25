@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
-#include <vector>
-#include <string>
+
 #include <cmath>
+#include <string>
+#include <vector>
+
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
 #include "ovsyannikov_n_shell_batcher/mpi/include/ops_mpi.hpp"
 #include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
@@ -12,7 +14,10 @@ namespace ovsyannikov_n_shell_batcher {
 
 class OvsyannikovNShellBatcherFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) { return std::get<2>(test_param); }
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
+
  protected:
   void SetUp() override {
     TestType params = std::get<TestType>(GetParam());
@@ -44,13 +49,18 @@ class OvsyannikovNShellBatcherFuncTest : public ppc::util::BaseRunFuncTests<InTy
     return true;
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
  private:
   InType input_data_;
   OutType expected_;
 };
 
-TEST_P(OvsyannikovNShellBatcherFuncTest, TestSorting) { ExecuteTest(GetParam()); }
+TEST_P(OvsyannikovNShellBatcherFuncTest, TestSorting) {
+  ExecuteTest(GetParam());
+}
 
 const std::array<TestType, 6> kTestParam = {{
     std::make_tuple(std::vector<int>{}, std::vector<int>{}, "EmptyVector"),
@@ -65,9 +75,10 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<OvsyannikovNShellBatcherMPI, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_shell_batcher),
     ppc::util::AddFuncTask<OvsyannikovNShellBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_shell_batcher));
 
-INSTANTIATE_TEST_SUITE_P(ovsyannikov_n_shell_batcher, OvsyannikovNShellBatcherFuncTest, 
+INSTANTIATE_TEST_SUITE_P(ovsyannikov_n_shell_batcher, OvsyannikovNShellBatcherFuncTest,
                          ppc::util::ExpandToValues(kTestTasksList),
                          [](const testing::TestParamInfo<OvsyannikovNShellBatcherFuncTest::ParamType> &info) {
-                           return OvsyannikovNShellBatcherFuncTest::PrintFuncTestName<OvsyannikovNShellBatcherFuncTest>(info);
+                           return OvsyannikovNShellBatcherFuncTest::PrintFuncTestName<OvsyannikovNShellBatcherFuncTest>(
+                               info);
                          });
 }  // namespace ovsyannikov_n_shell_batcher

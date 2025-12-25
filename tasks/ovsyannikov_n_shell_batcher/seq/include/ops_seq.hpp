@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "task/include/task.hpp"
+
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace ovsyannikov_n_shell_batcher {
 

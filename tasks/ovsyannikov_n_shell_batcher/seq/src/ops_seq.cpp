@@ -1,4 +1,5 @@
 #include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 
 namespace ovsyannikov_n_shell_batcher {
@@ -22,7 +23,9 @@ bool OvsyannikovNShellBatcherSEQ::PreProcessingImpl() {
 bool OvsyannikovNShellBatcherSEQ::RunImpl() {
   auto &arr = GetOutput();
   int n = static_cast<int>(arr.size());
-  if (n < 2) return true;
+  if (n < 2) {
+    return true;
+  }
 
   // Обычная сортировка Шелла без MPI
   for (int gap = n / 2; gap > 0; gap /= 2) {
@@ -43,4 +46,4 @@ bool OvsyannikovNShellBatcherSEQ::PostProcessingImpl() {
   return true;
 }
 
-} // namespace ovsyannikov_n_shell_batcher
+}  // namespace ovsyannikov_n_shell_batcher
