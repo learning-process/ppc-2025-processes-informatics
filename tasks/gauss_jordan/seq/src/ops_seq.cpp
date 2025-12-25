@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <functional>
 #include <vector>
 
 #include "gauss_jordan/common/include/common.hpp"
@@ -11,7 +10,7 @@
 namespace gauss_jordan {
 
 namespace {
-constexpr double EPSILON = 1e-12;
+constexpr double kEpsilon = 1e-12;
 
 void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_row, int second_row, int columns) {
   if (first_row == second_row) {
@@ -24,7 +23,7 @@ void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_
 }
 
 inline bool IsNumericallyZero(double value) {
-  return std::fabs(value) < EPSILON;
+  return std::fabs(value) < kEpsilon;
 }
 
 void EliminateFromRow(std::vector<std::vector<double>> &augmented_matrix, int target_row, int source_row,
@@ -53,7 +52,6 @@ void TransformToReducedRowEchelonForm(std::vector<std::vector<double>> &augmente
   int current_row = 0;
 
   for (int current_col = 0; current_col < augmented_columns - 1 && current_row < equations_count; current_col++) {
-    // Выбор ведущего элемента (частичный выбор для улучшения устойчивости)
     int pivot_row = current_row;
     double max_val = std::abs(augmented_matrix[current_row][current_col]);
 
@@ -116,6 +114,42 @@ int ComputeMatrixRank(const std::vector<std::vector<double>> &augmented_matrix, 
     }
   }
   return rank;
+}
+
+bool ValidateMatrixDimensions(const std::vector<std::vector<double>> &matrix) {
+  if (matrix.empty()) {
+    return false;
+  }
+
+  size_t expected_cols = matrix[0].size();
+  for (size_t i = 1; i < matrix.size(); ++i) {
+    if (matrix[i].size() != expected_cols) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CheckIfZeroMatrix(const std::vector<std::vector<double>> &matrix) {
+  for (const auto &row : matrix) {
+    for (double val : row) {
+      if (std::abs(val) > kEpsilon) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool CanSystemBeSolved(const std::vector<std::vector<double>> &matrix, int equations_count, int augmented_columns) {
+  if (HasInconsistentEquation(matrix, equations_count, augmented_columns)) {
+    return false;
+  }
+
+  int matrix_rank = ComputeMatrixRank(matrix, equations_count, augmented_columns);
+  int variable_count = augmented_columns - 1;
+
+  return !(matrix_rank < variable_count && matrix_rank < equations_count);
 }
 
 std::vector<double> ComputeSolutionVector(const std::vector<std::vector<double>> &matrix, int n, int m) {
@@ -189,53 +223,29 @@ bool GaussJordanSEQ::RunImpl() {
     return true;
   }
 
-  std::vector<std::vector<double>> augmented_matrix = input_matrix;
-
-  if (augmented_matrix.empty()) {
+  if (!ValidateMatrixDimensions(input_matrix)) {
     GetOutput() = std::vector<double>();
     return true;
   }
 
-  int equations_count = static_cast<int>(augmented_matrix.size());
-  int augmented_columns = static_cast<int>(augmented_matrix[0].size());
-
-  for (int i = 1; i < equations_count; ++i) {
-    if (static_cast<int>(augmented_matrix[i].size()) != augmented_columns) {
-      GetOutput() = std::vector<double>();
-      return true;
-    }
-  }
+  int equations_count = static_cast<int>(input_matrix.size());
+  int augmented_columns = static_cast<int>(input_matrix[0].size());
 
   if (augmented_columns <= 1) {
     GetOutput() = std::vector<double>();
     return true;
   }
 
-  bool is_zero_matrix = true;
-  for (int i = 0; i < equations_count && is_zero_matrix; ++i) {
-    for (int j = 0; j < augmented_columns && is_zero_matrix; ++j) {
-      if (std::abs(augmented_matrix[i][j]) > 1e-12) {
-        is_zero_matrix = false;
-      }
-    }
-  }
-
-  if (is_zero_matrix) {
+  if (CheckIfZeroMatrix(input_matrix)) {
     GetOutput() = std::vector<double>();
     return true;
   }
+
+  std::vector<std::vector<double>> augmented_matrix = input_matrix;
 
   TransformToReducedRowEchelonForm(augmented_matrix, equations_count, augmented_columns);
 
-  if (HasInconsistentEquation(augmented_matrix, equations_count, augmented_columns)) {
-    GetOutput() = std::vector<double>();
-    return true;
-  }
-
-  int matrix_rank = ComputeMatrixRank(augmented_matrix, equations_count, augmented_columns);
-  int variable_count = augmented_columns - 1;
-
-  if (matrix_rank < variable_count && matrix_rank < equations_count) {
+  if (!CanSystemBeSolved(augmented_matrix, equations_count, augmented_columns)) {
     GetOutput() = std::vector<double>();
     return true;
   }

@@ -194,7 +194,8 @@ void FlattenAndBroadcastMatrix(const std::vector<std::vector<double>> &matrix, i
 
   for (int i = 0; i < equations_count; ++i) {
     for (int j = 0; j < augmented_columns; ++j) {
-      flat_matrix[static_cast<size_t>((i * augmented_columns) + j)] = matrix[i][j];
+      size_t index = static_cast<size_t>(i) * static_cast<size_t>(augmented_columns) + static_cast<size_t>(j);
+      flat_matrix[index] = matrix[i][j];
     }
   }
 
@@ -209,7 +210,8 @@ void ReceiveAndReconstructMatrix(std::vector<std::vector<double>> &matrix, int e
   for (int i = 0; i < equations_count; ++i) {
     matrix[i].resize(static_cast<size_t>(augmented_columns));
     for (int j = 0; j < augmented_columns; ++j) {
-      matrix[i][j] = flat_matrix[static_cast<size_t>((i * augmented_columns) + j)];
+      size_t index = static_cast<size_t>(i) * static_cast<size_t>(augmented_columns) + static_cast<size_t>(j);
+      matrix[i][j] = flat_matrix[index];
     }
   }
 }
@@ -322,7 +324,6 @@ bool GaussJordanMPI::RunImpl() {
     return true;
   }
 
-  // Проверяем, что все строки имеют одинаковую длину
   bool valid_matrix = true;
   if (rank == 0) {
     for (int i = 1; i < equations_count; ++i) {
@@ -370,7 +371,6 @@ bool GaussJordanMPI::RunImpl() {
     return true;
   }
 
-  // Продолжаем нормальное выполнение
   TransformToReducedRowEchelonFormMPI(augmented_matrix, equations_count, augmented_columns);
 
   bool local_inconsistent = HasInconsistentEquation(augmented_matrix, equations_count, augmented_columns);
