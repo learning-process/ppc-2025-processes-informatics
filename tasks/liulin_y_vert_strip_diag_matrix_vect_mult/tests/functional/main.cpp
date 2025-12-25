@@ -50,7 +50,10 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
     for (int j = 0; j < cols; ++j) {
       file >> vect[j];
     }
-
+    if (vect.size() != static_cast<std::size_t>(cols)) {
+      throw std::runtime_error("Incompatible shapes: matrix has " + std::to_string(cols) + " columns, but vector has " +
+                               std::to_string(vect.size()) + " elements");
+    }
     input_data_ = std::make_tuple(matrix, vect);
 
     exp_output_.assign(rows, 0);
