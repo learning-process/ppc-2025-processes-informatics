@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <vector>
 
 #include "ovsyannikov_n_star/common/include/common.hpp"
@@ -16,7 +15,6 @@ OvsyannikovNStarMPI::OvsyannikovNStarMPI(const InType &in) {
 }
 
 bool OvsyannikovNStarMPI::ValidationImpl() {
-  // Проверка, что входных данных ровно 3 (src, dst, val)
   return GetInput().size() == 3;
 }
 
@@ -26,56 +24,47 @@ bool OvsyannikovNStarMPI::PreProcessingImpl() {
 }
 
 bool OvsyannikovNStarMPI::RunImpl() {
-  int is_initialized = 0;
-  MPI_Initialized(&is_initialized);
-  if (!is_initialized) {
-    GetOutput() = GetInput()[2];
-    return true;
-  }
-
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int src = GetInput()[0];
-  int dst = GetInput()[1];
-  int val = GetInput()[2];
+  const auto &input = GetInput();
+  int src = input[0];
+  int dst = input[1];
+  int val = input[2];
 
-  // Если данные некорректны для текущего количества процессов
   if (size <= 1 || src >= size || dst >= size || src < 0 || dst < 0) {
-    if (rank == 0) {
-      GetOutput() = val;
-    }
+    GetOutput() = val;
     return true;
   }
 
   int res = 0;
-  bool is_transit = (src != 0 && dst != 0);
 
-  if (rank == src) {
-    if (src == dst) {
-      res = val;
-    } else {
-      int next_hop = is_transit ? 0 : dst;
-      MPI_Send(&val, 1, MPI_INT, next_hop, 0, MPI_COMM_WORLD);
-    }
+  if (rank == src && src == dst) {
+    res = val;
   }
 
-  if (rank == 0 && is_transit) {
-    int tmp;
-    MPI_Recv(&tmp, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    MPI_Send(&tmp, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+  if (rank == src && src != 0 && dst != src) {
+    MPI_Send(&val, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   }
 
-  if (rank == dst && src != dst) {
-    int source_hop = is_transit ? 0 : src;
-    MPI_Recv(&res, 1, MPI_INT, source_hop, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if (rank == 0 && src != 0 && dst != 0) {
+    int buf = 0;
+    MPI_Recv(&buf, 1, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Send(&buf, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+  }
+
+  if (rank == 0 && src == 0 && dst != 0) {
+    MPI_Send(&val, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+  }
+
+  if (rank == dst && dst != src) {
+    MPI_Recv(&res, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
   GetOutput() = res;
-  // Рассылаем результат от dst всем остальным
   MPI_Bcast(&GetOutput(), 1, MPI_INT, dst, MPI_COMM_WORLD);
-
   return true;
 }
 
