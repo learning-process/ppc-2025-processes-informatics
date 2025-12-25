@@ -64,10 +64,6 @@ void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_
   }
 }
 
-inline bool IsNumericallyZero(double value) {
-  return std::fabs(value) < kEpsilon;
-}
-
 void NormalizeRow(std::vector<std::vector<double>> &augmented_matrix, int row_index, double normalizer, int columns) {
   if (IsNumericallyZero(normalizer)) {
     return;
