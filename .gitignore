@@ -17,3 +17,5 @@ CMakeSettings.json
 .cache
 install
 *.pyc
+.sh
+.log
