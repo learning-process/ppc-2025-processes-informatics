@@ -87,7 +87,7 @@ MyBcast(buffer, count, datatype, root, comm):
 ### 5.1. Файловая структура проекта
 `tasks/sakharov_a_transmission_from_one_to_all/`:
 - `common/include/common.hpp` — типы `InType`, `OutType`, `BaseTask`.
-- `mpi/include/ops_mpi.hpp]` — объявление `MyBcast` и класса `SakharovATransmissionFromOneToAllMPI`.
+- `mpi/include/ops_mpi.hpp` — объявление `MyBcast` и класса `SakharovATransmissionFromOneToAllMPI`.
 - `mpi/src/ops_mpi.cpp` — реализация дерева рассылки, проверки типов, логика задачи.
 - `seq/include/ops_seq.hpp`, `seq/src/ops_seq.cpp` — последовательная заглушка.
 - `tests/functional/main.cpp`, `tests/performance/main.cpp` — функциональные и производительные тесты.

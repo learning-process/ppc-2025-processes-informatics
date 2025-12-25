@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
 #include <cstddef>
@@ -64,6 +65,64 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = SakharovARunFuncTestsProcesses::PrintFuncTestName<SakharovARunFuncTestsProcesses>;
 
 INSTANTIATE_TEST_SUITE_P(BroadcastTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+
+// Additional MPI-only tests with different root values
+class SakharovAMPIRootTests : public ::testing::Test {};
+
+TEST_F(SakharovAMPIRootTests, BroadcastFromRoot1) {
+  int world_size = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  if (world_size < 2) {
+    GTEST_SKIP() << "Need at least 2 processes";
+  }
+
+  InType input{1, {7, 8, 9, 10}};
+  SakharovATransmissionFromOneToAllMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+
+  OutType expected = {7, 8, 9, 10};
+  EXPECT_EQ(task.GetOutput(), expected);
+}
+
+TEST_F(SakharovAMPIRootTests, BroadcastFromRoot2) {
+  int world_size = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  if (world_size < 3) {
+    GTEST_SKIP() << "Need at least 3 processes";
+  }
+
+  InType input{2, {100, 200, 300}};
+  SakharovATransmissionFromOneToAllMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+
+  OutType expected = {100, 200, 300};
+  EXPECT_EQ(task.GetOutput(), expected);
+}
+
+TEST_F(SakharovAMPIRootTests, BroadcastFromLastRoot) {
+  int world_size = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  if (world_size < 2) {
+    GTEST_SKIP() << "Need at least 2 processes";
+  }
+
+  int last_root = world_size - 1;
+  InType input{last_root, {42, 43, 44, 45, 46}};
+  SakharovATransmissionFromOneToAllMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  task.PreProcessing();
+  task.Run();
+  task.PostProcessing();
+
+  OutType expected = {42, 43, 44, 45, 46};
+  EXPECT_EQ(task.GetOutput(), expected);
+}
 
 }  // namespace
 
