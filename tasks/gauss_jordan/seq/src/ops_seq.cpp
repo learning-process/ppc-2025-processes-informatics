@@ -47,43 +47,64 @@ void NormalizeRow(std::vector<std::vector<double>> &augmented_matrix, int row_in
   }
 }
 
+int FindPivotRow(const std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
+                 int equations_count) {
+  int pivot_row = current_row;
+  double max_val = std::abs(augmented_matrix[current_row][current_col]);
+
+  for (int i = current_row + 1; i < equations_count; i++) {
+    double val = std::abs(augmented_matrix[i][current_col]);
+    if (val > max_val) {
+      max_val = val;
+      pivot_row = i;
+    }
+  }
+
+  return pivot_row;
+}
+
+bool ShouldSkipColumn(double max_val) {
+  return IsNumericallyZero(max_val);
+}
+
+void ProcessPivotRow(std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
+                     int pivot_row, int augmented_columns) {
+  if (pivot_row != current_row) {
+    ExchangeRows(augmented_matrix, current_row, pivot_row, augmented_columns);
+  }
+
+  double pivot_value = augmented_matrix[current_row][current_col];
+  NormalizeRow(augmented_matrix, current_row, pivot_value, augmented_columns);
+}
+
+void EliminateFromOtherRows(std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
+                            int equations_count, int augmented_columns) {
+  for (int row_idx = 0; row_idx < equations_count; row_idx++) {
+    if (row_idx == current_row) {
+      continue;
+    }
+
+    double coefficient = augmented_matrix[row_idx][current_col];
+    if (!IsNumericallyZero(coefficient)) {
+      EliminateFromRow(augmented_matrix, row_idx, current_row, coefficient, augmented_columns);
+    }
+  }
+}
+
 void TransformToReducedRowEchelonForm(std::vector<std::vector<double>> &augmented_matrix, int equations_count,
                                       int augmented_columns) {
   int current_row = 0;
 
   for (int current_col = 0; current_col < augmented_columns - 1 && current_row < equations_count; current_col++) {
-    int pivot_row = current_row;
-    double max_val = std::abs(augmented_matrix[current_row][current_col]);
+    int pivot_row = FindPivotRow(augmented_matrix, current_row, current_col, equations_count);
+    double max_val = std::abs(augmented_matrix[pivot_row][current_col]);
 
-    for (int i = current_row + 1; i < equations_count; i++) {
-      double val = std::abs(augmented_matrix[i][current_col]);
-      if (val > max_val) {
-        max_val = val;
-        pivot_row = i;
-      }
-    }
-
-    if (IsNumericallyZero(max_val)) {
+    if (ShouldSkipColumn(max_val)) {
       continue;
     }
 
-    if (pivot_row != current_row) {
-      ExchangeRows(augmented_matrix, current_row, pivot_row, augmented_columns);
-    }
-
-    double pivot_value = augmented_matrix[current_row][current_col];
-    NormalizeRow(augmented_matrix, current_row, pivot_value, augmented_columns);
-
-    for (int row_idx = 0; row_idx < equations_count; row_idx++) {
-      if (row_idx == current_row) {
-        continue;
-      }
-
-      double coefficient = augmented_matrix[row_idx][current_col];
-      if (!IsNumericallyZero(coefficient)) {
-        EliminateFromRow(augmented_matrix, row_idx, current_row, coefficient, augmented_columns);
-      }
-    }
+    ProcessPivotRow(augmented_matrix, current_row, current_col, pivot_row, augmented_columns);
+    EliminateFromOtherRows(augmented_matrix, current_row, current_col, equations_count, augmented_columns);
 
     current_row++;
   }
@@ -149,7 +170,7 @@ bool CanSystemBeSolved(const std::vector<std::vector<double>> &matrix, int equat
   int matrix_rank = ComputeMatrixRank(matrix, equations_count, augmented_columns);
   int variable_count = augmented_columns - 1;
 
-  return !(matrix_rank < variable_count && matrix_rank < equations_count);
+  return matrix_rank >= variable_count || matrix_rank >= equations_count;
 }
 
 std::vector<double> ComputeSolutionVector(const std::vector<std::vector<double>> &matrix, int n, int m) {
