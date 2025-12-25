@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cstdlib>
-#include <string>
 
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
