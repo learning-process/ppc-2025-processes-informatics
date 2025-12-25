@@ -31,8 +31,8 @@ bool PylaevaSSimpleIterationMethodMPI::PreProcessingImpl() {
 }
 
 bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
-  int proc_num = 0;
-  int proc_rank = 0;
+  size_t proc_num = 0;
+  size_t proc_rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
@@ -48,26 +48,26 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
 
   MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
-  std::vector<int> row_counts_per_rank(proc_num);
-  std::vector<int> row_offsets_per_rank(proc_num);
-  CalculateRowsDistribution(proc_num, static_cast<int>(n), row_counts_per_rank, row_offsets_per_rank);
+  std::vector<size_t> row_counts_per_rank(proc_num);
+  std::vector<size_t> row_offsets_per_rank(proc_num);
+  CalculateRowsDistribution(proc_num, n, row_counts_per_rank, row_offsets_per_rank);
 
-  std::vector<int> mat_block_sizes(proc_num, 0);
-  std::vector<int> mat_block_offsets(proc_num, 0);
+  std::vector<size_t> mat_block_sizes(proc_num, 0);
+  std::vector<size_t> mat_block_offsets(proc_num, 0);
 
   size_t base = n / proc_num;
   size_t rem = n % proc_num;
 
-  for (int i = 0; i < proc_num; ++i) {
-    int rows = base + (i < rem ? 1 : 0);
+  for (size_t i = 0; i < proc_num; ++i) {
+    size_t rows = base + (i < rem ? 1 : 0);
     mat_block_sizes[i] = rows * n;
     if (i > 0) {
       mat_block_offsets[i] = mat_block_offsets[i - 1] + mat_block_sizes[i - 1];
     }
   }
 
-  int local_rows = row_counts_per_rank[proc_rank];
-  int local_matrix_size = mat_block_sizes[proc_rank];
+  size_t local_rows = row_counts_per_rank[proc_rank];
+  size_t local_matrix_size = mat_block_sizes[proc_rank];
 
   std::vector<double> local_a(local_matrix_size);
   std::vector<double> local_b(local_rows);
@@ -78,20 +78,20 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
   MPI_Scatterv(proc_rank == 0 ? b.data() : nullptr, row_counts_per_rank.data(), row_offsets_per_rank.data(), MPI_DOUBLE,
                local_b.data(), local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  int start = row_offsets_per_rank[proc_rank];
-  int count = local_rows;
+  size_t start = row_offsets_per_rank[proc_rank];
+  size_t count = local_rows;
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
   std::vector<double> local_x_new(count, 0.0);
 
-  std::vector<int> recv_counts(proc_num);
-  std::vector<int> allgather_displs(proc_num);
-  CalculateRowsDistribution(proc_num, static_cast<int>(n), recv_counts, allgather_displs);
+  std::vector<size_t> recv_counts(proc_num);
+  std::vector<size_t> allgather_displs(proc_num);
+  CalculateRowsDistribution(proc_num, n, recv_counts, allgather_displs);
 
-  for (int iter = 0; iter < kMaxIterations; ++iter) {
-    for (int i = 0; i < count; ++i) {
-      int global_i = start + i;
+  for (size_t iter = 0; iter < kMaxIterations; ++iter) {
+    for (size_t i = 0; i < count; ++i) {
+      size_t global_i = start + i;
       double sum = 0.0;
       for (size_t j = 0; j < n; ++j) {
         if (std::cmp_not_equal(j, global_i)) {
@@ -105,8 +105,8 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
                    MPI_DOUBLE, MPI_COMM_WORLD);
 
     double local_norm = 0.0;
-    for (int i = 0; i < count; ++i) {
-      int gi = start + i;
+    for (size_t i = 0; i < count; ++i) {
+      size_t gi = start + i;
       double diff = x_new[gi] - x[gi];
       local_norm += diff * diff;
     }
@@ -193,9 +193,9 @@ bool PylaevaSSimpleIterationMethodMPI::DiagonalDominance(const std::vector<doubl
   return true;
 }
 
-void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, int n,
-                                                                 std::vector<int> &row_counts_per_rank,
-                                                                 std::vector<int> &row_offsets_per_rank) {
+void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, size_t n,
+                                                                 std::vector<size_t> &row_counts_per_rank,
+                                                                 std::vector<size_t> &row_offsets_per_rank) {
   if (row_offsets_per_rank.empty()) {
     return;
   }
@@ -203,7 +203,7 @@ void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, i
   size_t rem = n % proc_num;
 
   row_offsets_per_rank[0] = 0;
-  for (int i = 0; i < proc_num; ++i) {
+  for (size_t i = 0; i < proc_num; ++i) {
     row_counts_per_rank[i] = base + (i < rem ? 1 : 0);
     if (i > 0) {
       row_offsets_per_rank[i] = row_offsets_per_rank[i - 1] + row_counts_per_rank[i - 1];
