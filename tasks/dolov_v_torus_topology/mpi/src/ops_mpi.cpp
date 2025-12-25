@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <set>
 #include <vector>
 
 namespace dolov_v_torus_topology {
@@ -36,18 +37,24 @@ bool DolovVTorusTopologyMPI::PreProcessingImpl() {
   int rows, cols;
   DefineGridDimensions(proc_count, rows, cols);
 
-  // Определение соседей для виртуальной топологии "Тор"
-  // У каждого узла в 2D торе ровно 4 соседа
-  std::vector<int> neighbors = {
-      GetTargetNeighbor(rank, MoveSide::kNorth, rows, cols), GetTargetNeighbor(rank, MoveSide::kSouth, rows, cols),
-      GetTargetNeighbor(rank, MoveSide::kWest, rows, cols), GetTargetNeighbor(rank, MoveSide::kEast, rows, cols)};
+  // Динамическое определение соседей.
+  // В 2D торе у узла всегда есть 4 направления (N, S, W, E).
+  // Даже если соседи совпадают (при малом P), мы указываем их все,
+  // чтобы MPI корректно построил топологию графа.
+  std::vector<int> neighbors;
+  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kNorth, rows, cols));
+  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kSouth, rows, cols));
+  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kWest, rows, cols));
+  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kEast, rows, cols));
 
-  // Создание распределенного графа (виртуальной топологии)
-  // Это заменяет MPI_Graph_create и MPI_Cart_create
   int degrees = static_cast<int>(neighbors.size());
-  MPI_Dist_graph_create_adjacent(MPI_COMM_WORLD, degrees, neighbors.data(), MPI_UNWEIGHTED,  // Входящие ребра
-                                 degrees, neighbors.data(), MPI_UNWEIGHTED,                  // Исходящие ребра
-                                 MPI_INFO_NULL, false, &torus_comm);
+
+  // Исправление: MPI_Dist_graph_create_adjacent требует, чтобы граф был
+  // возможен в рамках текущего коммуникатора.
+  // При degrees=4 и proc_count=1 MPI может выдать ошибку на некоторых реализациях.
+  // Однако, передача соседей, равных собственному рангу, является легальной.
+  MPI_Dist_graph_create_adjacent(MPI_COMM_WORLD, degrees, neighbors.data(), MPI_UNWEIGHTED, degrees, neighbors.data(),
+                                 MPI_UNWEIGHTED, MPI_INFO_NULL, false, &torus_comm);
 
   return torus_comm != MPI_COMM_NULL;
 }
@@ -75,6 +82,7 @@ bool DolovVTorusTopologyMPI::RunImpl() {
   int current_node = input_.sender_rank;
   std::vector<int> path = {current_node};
 
+  // Логика передачи сообщения от узла к узлу
   while (current_node != input_.receiver_rank) {
     MoveSide next_step = FindShortestPathStep(current_node, input_.receiver_rank, rows, cols);
     int next_node = GetTargetNeighbor(current_node, next_step, rows, cols);
@@ -96,6 +104,7 @@ bool DolovVTorusTopologyMPI::RunImpl() {
 
     int prev_owner = current_node;
     current_node = next_node;
+    // Синхронизируем текущее положение сообщения для всех процессов
     MPI_Bcast(&current_node, 1, MPI_INT, prev_owner, torus_comm);
   }
 
@@ -104,9 +113,10 @@ bool DolovVTorusTopologyMPI::RunImpl() {
     output_.route = std::move(path);
   }
 
-  // Финальная синхронизация результатов через новый коммуникатор
+  // Финальная рассылка маршрута и данных всем процессам
   int final_path_size = static_cast<int>(output_.route.size());
   MPI_Bcast(&final_path_size, 1, MPI_INT, input_.receiver_rank, torus_comm);
+
   if (rank != input_.receiver_rank) {
     output_.route.resize(static_cast<size_t>(final_path_size));
   }
@@ -119,9 +129,6 @@ bool DolovVTorusTopologyMPI::RunImpl() {
 
   return true;
 }
-
-// ... Остальные вспомогательные функции (DefineGridDimensions, FindShortestPathStep, GetTargetNeighbor)
-// остаются без изменений, как в вашем исходном коде ...
 
 void DolovVTorusTopologyMPI::DefineGridDimensions(int total_procs, int &r, int &c) {
   r = static_cast<int>(std::sqrt(total_procs));
@@ -138,18 +145,21 @@ DolovVTorusTopologyMPI::MoveSide DolovVTorusTopologyMPI::FindShortestPathStep(in
   int tar_y = target / c;
   int dx = tar_x - curr_x;
   int dy = tar_y - curr_y;
+
   if (std::abs(dx) > c / 2) {
     dx = (dx > 0) ? dx - c : dx + c;
   }
   if (std::abs(dy) > r / 2) {
     dy = (dy > 0) ? dy - r : dy + r;
   }
+
   if (dx != 0) {
     return (dx > 0) ? MoveSide::kEast : MoveSide::kWest;
   }
   if (dy != 0) {
     return (dy > 0) ? MoveSide::kSouth : MoveSide::kNorth;
   }
+
   return MoveSide::kStay;
 }
 
