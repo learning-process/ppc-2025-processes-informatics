@@ -145,7 +145,6 @@ bool ZeninAGaussFilterMPI::RunImpl() {
           int gy = bb.start_y + ly;
           int gx = bb.start_x + lx;
 
-          // clamp как в SEQ
           gy = std::max(0, std::min(height_ - 1, gy));
           gx = std::max(0, std::min(width_ - 1, gx));
 
@@ -159,14 +158,12 @@ bool ZeninAGaussFilterMPI::RunImpl() {
       }
     };
 
-    // 1) self
     {
       std::vector<std::uint8_t> tmp;
       fill_expanded_for(b, tmp);
       local_in = std::move(tmp);
     }
 
-    // 2) others
     for (int r = 1; r < proc_num_; ++r) {
       const int rpr = r / grid_cols_;
       const int rpc = r % grid_cols_;
@@ -177,13 +174,10 @@ bool ZeninAGaussFilterMPI::RunImpl() {
       MPI_Send(pack.data(), static_cast<int>(pack.size()), MPI_UNSIGNED_CHAR, r, 200, MPI_COMM_WORLD);
     }
   } else {
-    // ---------- NON-ROOT: получает расширенный блок ----------
     MPI_Recv(local_in.data(), static_cast<int>(local_in.size()), MPI_UNSIGNED_CHAR, 0, 200, MPI_COMM_WORLD,
              MPI_STATUS_IGNORE);
   }
 
-  // ---------- Convolution: считаем только внутренний блок ----------
-  // local_in имеет размер (my_h+2) x (my_w+2)
   for (int y = 0; y < my_h; ++y) {
     const int ly = y + halo;
     for (int x = 0; x < my_w; ++x) {
@@ -195,17 +189,15 @@ bool ZeninAGaussFilterMPI::RunImpl() {
             sum += K[dy + 1][dx + 1] * static_cast<int>(getLocal(local_in, lw, channels_, lx + dx, ly + dy, c));
           }
         }
-        const int res = (sum + (K_SUM / 2)) / K_SUM;  // (sum + 8) / 16
+        const int res = (sum + (K_SUM / 2)) / K_SUM;
         local_out[((y * my_w + x) * channels_) + c] = clampu8(res);
       }
     }
   }
 
-  // ---------- Gather to root ----------
   std::vector<std::uint8_t> final_image(static_cast<std::size_t>(width_) * height_ * channels_, 0);
 
   if (rank == 0) {
-    // place own
     for (int y = 0; y < my_h; ++y) {
       for (int x = 0; x < my_w; ++x) {
         const int gy = b.start_y + y;
@@ -216,7 +208,6 @@ bool ZeninAGaussFilterMPI::RunImpl() {
       }
     }
 
-    // recv others
     for (int src = 1; src < proc_num_; ++src) {
       const int spr = src / grid_cols_;
       const int spc = src % grid_cols_;
@@ -240,7 +231,6 @@ bool ZeninAGaussFilterMPI::RunImpl() {
     MPI_Send(local_out.data(), static_cast<int>(local_out.size()), MPI_UNSIGNED_CHAR, 0, 500, MPI_COMM_WORLD);
   }
 
-  // ---------- Bcast result for safety ----------
   MPI_Bcast(final_image.data(), static_cast<int>(final_image.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   GetOutput() = OutType{height_, width_, channels_, std::move(final_image)};

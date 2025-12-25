@@ -1,6 +1,7 @@
 #include "zenin_a_gauss_filter/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -48,26 +49,30 @@ bool ZeninAGaussFilterSEQ::PreProcessingImpl() {
 bool ZeninAGaussFilterSEQ::RunImpl() {
   const auto &input_image = GetInput();
   auto &output_image = GetOutput();
-  const int w = input_image.width;
-  const int h = input_image.height;
-  const int c = input_image.channels;
-  static constexpr int kernel[9] = {1, 2, 1, 2, 4, 2, 1, 2, 1};
-  static constexpr int kernel_sum = 16;
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      for (int ch = 0; ch < c; ++ch) {
+  const int width = input_image.width;
+  const int height = input_image.height;
+  const int channels = input_image.channels;
+  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{
+      {{1, 2, 1}},
+      {{2, 4, 2}},
+      {{1, 2, 1}},
+  }};
+  static constexpr int kKernelSum = 16;
+  for (int iy = 0; iy < height; ++iy) {
+    for (int ix = 0; ix < width; ++ix) {
+      for (int ch = 0; ch < channels; ++ch) {
         int sum = 0;
+
         for (int ky = -1; ky <= 1; ++ky) {
           for (int kx = -1; kx <= 1; ++kx) {
-            const int value = Clamp(input_image, x + kx, y + ky, ch);
-            const int k_value = kernel[(ky + 1) * 3 + (kx + 1)];
+            const int value = Clamp(input_image, ix + kx, iy + ky, ch);
+            const int k_value = kKernel[static_cast<std::size_t>(ky + 1)][static_cast<std::size_t>(kx + 1)];
             sum += value * k_value;
           }
         }
 
-        const int res = (sum + (kernel_sum / 2)) / kernel_sum;
-
-        output_image.pixels[(((y * w) + x) * c) + ch] = static_cast<std::uint8_t>(std::clamp(res, 0, 255));
+        const int res = (sum + (kKernelSum / 2)) / kKernelSum;
+        output_image.pixels[((iy * width + ix) * channels) + ch] = static_cast<std::uint8_t>(std::clamp(res, 0, 255));
       }
     }
   }

@@ -36,7 +36,6 @@ class ZeninAGaussFilterFunctTests : public ppc::util::BaseRunFuncTests<InType, O
     const int height = std::get<2>(params);
     const int channels = std::get<3>(params);
 
-    // Детерминированная "случайность" по имени теста
     std::mt19937 gen(static_cast<std::mt19937::result_type>(std::hash<std::string>{}(test_name)));
     std::uniform_int_distribution<int> dist(0, 255);
 
@@ -47,7 +46,6 @@ class ZeninAGaussFilterFunctTests : public ppc::util::BaseRunFuncTests<InType, O
 
     input_data_ = Image(height, width, channels, std::move(pixels));
 
-    // Эталон: SEQ
     ZeninAGaussFilterSEQ seq_filter(input_data_);
     ASSERT_TRUE(seq_filter.Validation());
     ASSERT_TRUE(seq_filter.PreProcessing());
