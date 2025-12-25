@@ -149,8 +149,6 @@ const auto kPerfTestNameSmallInput = GusevDSentenceCountSmallInputPerfTests::Cus
 INSTANTIATE_TEST_SUITE_P(RunModeTestsSmallInput, GusevDSentenceCountSmallInputPerfTests, kGtestValuesSmallInput,
                          kPerfTestNameSmallInput);
 
-<<<<<<< HEAD
+}  // namespace
+
 }  // namespace gusev_d_sentence_count
-=======
-}  // namespace gusev_d_sentence_count
->>>>>>> 425508a440a761cbd62d9f6d146d4a9800b6cb0a
