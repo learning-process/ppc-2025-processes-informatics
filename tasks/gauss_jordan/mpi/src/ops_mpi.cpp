@@ -15,6 +15,10 @@ namespace {
 
 constexpr double kEpsilon = 1e-12;
 
+inline bool IsNumericallyZero(double value) {
+  return std::fabs(value) < kEpsilon;
+}
+
 bool IsZeroRow(const std::vector<double> &row, int columns_minus_one) {
   for (int j = 0; j < columns_minus_one; ++j) {
     if (!IsNumericallyZero(row[j])) {
