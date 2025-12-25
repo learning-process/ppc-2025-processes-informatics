@@ -15,6 +15,9 @@ struct CompressedColumnMatrix {
   std::vector<double> value_data;
   std::vector<int> row_index_data;
   std::vector<int> column_pointer_data;
+
+  CompressedColumnMatrix() : row_count(0), column_count(0), non_zero_count(0) {}
+  CompressedColumnMatrix(int r, int c, int nz) : row_count(r), column_count(c), non_zero_count(nz) {}
 };
 
 using InType = std::pair<CompressedColumnMatrix, CompressedColumnMatrix>;
