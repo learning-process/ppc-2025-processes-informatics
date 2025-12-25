@@ -19,12 +19,12 @@ class FrolovaSRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType,
     const auto &full_param = GetParam();
     const std::string &test_name = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
 
-    // Пропускаем SEQ тесты для топологии
-    if (test_name.find("seq_enabled") != std::string::npos) {
-      GTEST_SKIP() << "SEQ performance tests are skipped for topology tasks.";
+    // Инициализируем только для mpi версии, так как на seq у нас заглушка
+    if (test_name.find("mpi_enabled") != std::string::npos) {
+      input_data_ = kPerfDataSize;
+    } else {
+      GTEST_SKIP();
     }
-
-    input_data_ = kPerfDataSize;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
