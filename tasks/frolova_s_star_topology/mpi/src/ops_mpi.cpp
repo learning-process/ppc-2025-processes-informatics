@@ -89,41 +89,29 @@ bool FrolovaSStarTopologyMPI::RunImpl() {
   if (rank == 0) {
     std::vector<int> buf;
 
-    for (int i = 0; i < nodes; i++) {
+    for (int i = 0; i < nodes; ++i) {
       int dst = 0;
       MPI_Recv(&dst, 1, MPI_INT, MPI_ANY_SOURCE, 0, MPI_COMM_WORLD, &status);
       const int src = status.MPI_SOURCE;
 
-      // Получаем данные
       MPI_Probe(src, 0, MPI_COMM_WORLD, &status);
       int buf_size = 0;
       MPI_Get_count(&status, MPI_INT, &buf_size);
       buf.resize(buf_size);
       MPI_Recv(buf.data(), buf_size, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      // Проверяем dst и отправляем
-      if (dst < 1 || dst >= size) {
-        // Некорректный dst - отправляем обратно отправителю
-        MPI_Send(&src, 1, MPI_INT, src, 0, MPI_COMM_WORLD);
-        MPI_Send(buf.data(), buf_size, MPI_INT, src, 0, MPI_COMM_WORLD);
-      } else if (dst == src) {
-        // Отправка самому себе - тоже отправляем обратно
-        MPI_Send(&src, 1, MPI_INT, src, 0, MPI_COMM_WORLD);
-        MPI_Send(buf.data(), buf_size, MPI_INT, src, 0, MPI_COMM_WORLD);
-      } else {
-        // Корректный dst - отправляем получателю
-        MPI_Send(&src, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
-        MPI_Send(buf.data(), buf_size, MPI_INT, dst, 0, MPI_COMM_WORLD);
-      }
+      const bool is_dst_valid = dst >= 1 && dst < size && dst != src;
+      const int target = is_dst_valid ? dst : src;
+
+      MPI_Send(&src, 1, MPI_INT, target, 0, MPI_COMM_WORLD);
+      MPI_Send(buf.data(), buf_size, MPI_INT, target, 0, MPI_COMM_WORLD);
     }
 
-    // Завершение
-    for (int i = 0; i < nodes; i++) {
+    for (int i = 0; i < nodes; ++i) {
       MPI_Send(&kTerm, 1, MPI_INT, i + 1, 0, MPI_COMM_WORLD);
     }
 
   } else {
-    // Периферийный процесс
     MPI_Send(&dest_, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
     if (!data_.empty()) {

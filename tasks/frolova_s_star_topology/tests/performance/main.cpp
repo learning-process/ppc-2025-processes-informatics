@@ -1,22 +1,33 @@
 #include <gtest/gtest.h>
 
+#include <string>
+
 #include "frolova_s_star_topology/common/include/common.hpp"
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
 #include "frolova_s_star_topology/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace frolova_s_star_topology {
 
 class FrolovaSRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kPerfDataSize = 2000000;
-
-  InType input_data_;
+  InType input_data_ = 0;
 
   void SetUp() override {
+    const auto &full_param = GetParam();
+    const std::string &test_name = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
+
+    // Пропускаем SEQ тесты для топологии
+    if (test_name.find("seq_enabled") != std::string::npos) {
+      GTEST_SKIP() << "SEQ performance tests are skipped for topology tasks.";
+    }
+
     input_data_ = kPerfDataSize;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    // Для MPI тестов проверяем, что результат в допустимом диапазоне
     return output_data >= 0 && output_data <= kPerfDataSize;
   }
 

@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <utility>
+// #include <utility>
 
 #include "frolova_s_star_topology/common/include/common.hpp"
 #include "frolova_s_star_topology/mpi/include/ops_mpi.hpp"
