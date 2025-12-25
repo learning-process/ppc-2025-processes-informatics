@@ -1,11 +1,9 @@
 #include "kosolapov_v_calc_mult_integrals_m_simpson/seq/include/ops_seq.hpp"
 
 #include <cmath>
-#include <numeric>
 #include <tuple>
 
 #include "kosolapov_v_calc_mult_integrals_m_simpson/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kosolapov_v_calc_mult_integrals_m_simpson {
 
@@ -44,7 +42,7 @@ bool KosolapovVCalcMultIntegralsMSimpsonSEQ::PostProcessingImpl() {
 
 double KosolapovVCalcMultIntegralsMSimpsonSEQ::Function1(double x, double y) {
   // f(x,y) = x^2 + y^2
-  return x * x + y * y;
+  return (x * x) + (y * y);
 }
 double KosolapovVCalcMultIntegralsMSimpsonSEQ::Function2(double x, double y) {
   // f(x,y) = sin(x) * cos(y)
@@ -52,7 +50,7 @@ double KosolapovVCalcMultIntegralsMSimpsonSEQ::Function2(double x, double y) {
 }
 double KosolapovVCalcMultIntegralsMSimpsonSEQ::Function3(double x, double y) {
   // f(x,y) = exp(-(x^2 + y^2))
-  return std::exp(-(x * x + y * y));
+  return std::exp(-((x * x) + (y * y)));
 }
 double KosolapovVCalcMultIntegralsMSimpsonSEQ::Function4(double x, double y) {
   // f(x,y) = sin(x + y)
@@ -77,11 +75,11 @@ std::tuple<double, double, double, double> KosolapovVCalcMultIntegralsMSimpsonSE
     case 1:
       return {0.0, 1.0, 0.0, 1.0};
     case 2:
-      return {0.0, 3.14159265358979323846, 0.0, 3.14159265358979323846 / 2.0};
+      return {0.0, kPi, 0.0, kPi / 2.0};
     case 3:
       return {-1.0, 1.0, -1.0, 1.0};
     case 4:
-      return {0.0, 3.14159265358979323846, 0.0, 3.14159265358979323846};
+      return {0.0, kPi, 0.0, kPi};
     default:
       return {0.0, 1.0, 0.0, 1.0};
   }
@@ -92,12 +90,12 @@ double KosolapovVCalcMultIntegralsMSimpsonSEQ::SimpsonIntegral(int func_id, int 
   double hy = (d - c) / steps;
   double result = 0.0;
   for (int i = 0; i <= steps; i++) {
-    double x = a + i * hx;
+    double x = a + (i * hx);
     double wx = GetSimpsonWeight(i, steps);
     for (int j = 0; j <= steps; j++) {
-      double y = c + j * hy;
+      double y = c + (j * hy);
       double wy = GetSimpsonWeight(j, steps);
-      result += wx * wy * CallFunction(func_id, x, y);
+      result += (wx * wy) * CallFunction(func_id, x, y);
     }
   }
   result *= (hx * hy) / 9.0;

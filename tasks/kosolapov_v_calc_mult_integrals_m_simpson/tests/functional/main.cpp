@@ -1,16 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "kosolapov_v_calc_mult_integrals_m_simpson/common/include/common.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_simpson/mpi/include/ops_mpi.hpp"
@@ -40,15 +34,16 @@ class KosolapovVCalcMultIntegralsMSimpsonFuncTestsProcesses
     int func_id = std::get<1>(input_data_);
     switch (func_id) {
       case 1:
-        return std::abs(output_data - 2.0 / 3.0) < 0.01;
+        return std::abs(output_data - (2.0 / 3.0)) < 0.01;
       case 2:
         return std::abs(output_data - 2.0) < 0.05;
       case 3:
         return std::abs(output_data - 2.230) < 0.05;
       case 4:
         return std::abs(output_data) < 0.05;
+      default:
+        return false;
     }
-    return false;
   }
 
   InType GetTestInputData() final {

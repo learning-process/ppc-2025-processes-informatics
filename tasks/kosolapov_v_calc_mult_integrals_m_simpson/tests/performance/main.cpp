@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <tuple>
+
 #include "kosolapov_v_calc_mult_integrals_m_simpson/common/include/common.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_simpson/mpi/include/ops_mpi.hpp"
 #include "kosolapov_v_calc_mult_integrals_m_simpson/seq/include/ops_seq.hpp"
@@ -9,7 +12,7 @@ namespace kosolapov_v_calc_mult_integrals_m_simpson {
 
 class KosolapovVCalcMultIntegralsMSimpsonPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 10000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     int func_id = 1;

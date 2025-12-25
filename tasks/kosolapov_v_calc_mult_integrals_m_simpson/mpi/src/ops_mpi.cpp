@@ -3,11 +3,9 @@
 #include <mpi.h>
 
 #include <cmath>
-#include <numeric>
 #include <tuple>
 
 #include "kosolapov_v_calc_mult_integrals_m_simpson/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kosolapov_v_calc_mult_integrals_m_simpson {
 
@@ -49,12 +47,13 @@ bool KosolapovVCalcMultIntegralsMSimpsonMPI::RunImpl() {
   int rows_per_process = (steps + 1) / processes_count;
   int remainder = (steps + 1) % processes_count;
 
-  int start_i, end_i;
+  int start_i = 0;
+  int end_i = 0;
   if (rank < remainder) {
     start_i = rank * (rows_per_process + 1);
     end_i = start_i + rows_per_process;
   } else {
-    start_i = remainder * (rows_per_process + 1) + (rank - remainder) * rows_per_process;
+    start_i = (remainder * (rows_per_process + 1)) + ((rank - remainder) * rows_per_process);
     end_i = start_i + rows_per_process - 1;
   }
   if (rank == processes_count - 1) {
@@ -85,7 +84,7 @@ bool KosolapovVCalcMultIntegralsMSimpsonMPI::PostProcessingImpl() {
 
 double KosolapovVCalcMultIntegralsMSimpsonMPI::Function1(double x, double y) {
   // f(x,y) = x^2 + y^2
-  return x * x + y * y;
+  return (x * x) + (y * y);
 }
 double KosolapovVCalcMultIntegralsMSimpsonMPI::Function2(double x, double y) {
   // f(x,y) = sin(x) * cos(y)
@@ -93,7 +92,7 @@ double KosolapovVCalcMultIntegralsMSimpsonMPI::Function2(double x, double y) {
 }
 double KosolapovVCalcMultIntegralsMSimpsonMPI::Function3(double x, double y) {
   // f(x,y) = exp(-(x^2 + y^2))
-  return std::exp(-(x * x + y * y));
+  return std::exp(-((x * x) + (y * y)));
 }
 double KosolapovVCalcMultIntegralsMSimpsonMPI::Function4(double x, double y) {
   // f(x,y) = sin(x + y)
@@ -134,12 +133,12 @@ double KosolapovVCalcMultIntegralsMSimpsonMPI::ComputePartialSimpsonIntegral(int
   double hy = (d - c) / steps;
   double local_sum = 0.0;
   for (int i = start_i; i <= end_i; i++) {
-    double x = a + i * hx;
+    double x = a + (i * hx);
     double wx = GetSimpsonWeight(i, steps);
     for (int j = 0; j <= steps; j++) {
-      double y = c + j * hy;
+      double y = c + (j * hy);
       double wy = GetSimpsonWeight(j, steps);
-      local_sum += wx * wy * CallFunction(func_id, x, y);
+      local_sum += (wx * wy) * CallFunction(func_id, x, y);
     }
   }
   return local_sum;
