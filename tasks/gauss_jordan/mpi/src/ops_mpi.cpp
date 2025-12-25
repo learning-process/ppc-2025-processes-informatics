@@ -54,16 +54,16 @@ bool CheckIfZeroMatrix(const std::vector<std::vector<double>> &augmented_matrix,
   return true;
 }
 
-void HandleRankZeroOutput(int rank, std::vector<double> result) {
+void HandleRankZeroOutput(int rank, std::vector<double> &output, std::vector<double> result) {
   if (rank == 0) {
-    GetOutput() = std::move(result);
+    output = std::move(result);
   }
 }
 
 bool ShouldReturnEarly(int rank, const std::vector<std::vector<double>> &matrix, int equations_count,
-                       int augmented_columns) {
+                       int augmented_columns, std::vector<double> &output) {  // Добавлен параметр output
   if (augmented_columns == 0) {
-    HandleRankZeroOutput(rank, std::vector<double>());
+    HandleRankZeroOutput(rank, output, std::vector<double>());
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -71,13 +71,13 @@ bool ShouldReturnEarly(int rank, const std::vector<std::vector<double>> &matrix,
   bool valid_matrix = ValidateMatrixDimensions(matrix, equations_count, augmented_columns, rank);
   MPI_Bcast(&valid_matrix, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
   if (!valid_matrix) {
-    HandleRankZeroOutput(rank, std::vector<double>());
+    HandleRankZeroOutput(rank, output, std::vector<double>());
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
 
   if (augmented_columns <= 1) {
-    HandleRankZeroOutput(rank, std::vector<double>());
+    HandleRankZeroOutput(rank, output, std::vector<double>());
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -85,7 +85,7 @@ bool ShouldReturnEarly(int rank, const std::vector<std::vector<double>> &matrix,
   bool is_zero_matrix = CheckIfZeroMatrix(matrix, equations_count, augmented_columns, rank);
   MPI_Bcast(&is_zero_matrix, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
   if (is_zero_matrix) {
-    HandleRankZeroOutput(rank, std::vector<double>());
+    HandleRankZeroOutput(rank, output, std::vector<double>());
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -294,7 +294,6 @@ void FlattenAndBroadcastMatrix(const std::vector<std::vector<double>> &matrix, i
 
   for (int i = 0; i < equations_count; ++i) {
     for (int j = 0; j < augmented_columns; ++j) {
-      // Исправлено: добавлены скобки для явного указания порядка операций
       size_t index = (static_cast<size_t>(i) * static_cast<size_t>(augmented_columns)) + static_cast<size_t>(j);
       flat_matrix[index] = matrix[i][j];
     }
@@ -311,7 +310,6 @@ void ReceiveAndReconstructMatrix(std::vector<std::vector<double>> &matrix, int e
   for (int i = 0; i < equations_count; ++i) {
     matrix[i].resize(static_cast<size_t>(augmented_columns));
     for (int j = 0; j < augmented_columns; ++j) {
-      // Исправлено: добавлены скобки для явного указания порядка операций
       size_t index = (static_cast<size_t>(i) * static_cast<size_t>(augmented_columns)) + static_cast<size_t>(j);
       matrix[i][j] = flat_matrix[index];
     }
@@ -407,7 +405,7 @@ bool GaussJordanMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   if (GetInput().empty()) {
-    HandleRankZeroOutput(rank, std::vector<double>());
+    HandleRankZeroOutput(rank, GetOutput(), std::vector<double>());
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
@@ -416,7 +414,7 @@ bool GaussJordanMPI::RunImpl() {
   int equations_count = static_cast<int>(augmented_matrix.size());
   int augmented_columns = (equations_count > 0) ? static_cast<int>(augmented_matrix[0].size()) : 0;
 
-  if (ShouldReturnEarly(rank, augmented_matrix, equations_count, augmented_columns)) {
+  if (ShouldReturnEarly(rank, augmented_matrix, equations_count, augmented_columns, GetOutput())) {
     return true;
   }
 
