@@ -87,9 +87,6 @@ const std::array<TestType, 38> kTestParam = {
     std::make_tuple("Random10x10BW", 10, 10, 1),
     std::make_tuple("Random15x15RGB", 15, 15, 3),
 
-    // Граничные случаи для clamp на краях
-    
-
     // Проверка 2D разбиения (простые числа и не делится нацело)
     std::make_tuple("Size7x7BW", 7, 7, 1),
     std::make_tuple("Size11x11BW", 11, 11, 1),

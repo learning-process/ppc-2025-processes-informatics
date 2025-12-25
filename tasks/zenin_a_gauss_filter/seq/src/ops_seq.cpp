@@ -16,7 +16,7 @@ int Clamp(const Image &img, int x, int y, int ch) {
   y = std::clamp(y, 0, h - 1);
   return static_cast<int>(img.pixels[(((y * w) + x) * c) + ch]);
 }
-} //namespace
+}  // namespace
 
 ZeninAGaussFilterSEQ::ZeninAGaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
