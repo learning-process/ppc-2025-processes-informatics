@@ -22,10 +22,8 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   result_matrix.row_count = row_count;
   result_matrix.column_count = column_count;
 
-  // Детерминированный генератор с фиксированным seed
   std::mt19937 rng(seed);
 
-  // Используем хеш от параметров для создания уникального seed для каждой комбинации
   std::hash<std::string> hasher;
   std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
@@ -70,9 +68,7 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
 
 class LobanovDMultiplyMatrixFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  // Статический метод должен называться PrintTestParam (как ожидает func_test_util.hpp)
   static std::string PrintTestParam(const TestType &test_parameter) {
-    // Получаем название теста из tuple
     return std::get<0>(test_parameter);
   }
 
@@ -80,11 +76,8 @@ class LobanovDMultiplyMatrixFuncTest : public ppc::util::BaseRunFuncTests<InType
   void SetUp() override {
     TestType parameters = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    // Получаем название теста
     std::string test_name = std::get<0>(parameters);
 
-    // Получаем матрицы из tuple (но для простоты игнорируем и создаем свои)
-    // Для тестов создаем простые матрицы в зависимости от названия теста
     if (test_name.find("small") != std::string::npos) {
       matrix_a_ = CreateRandomCompressedColumnMatrix(10, 10, 0.3);
       matrix_b_ = CreateRandomCompressedColumnMatrix(10, 10, 0.3);
@@ -95,7 +88,6 @@ class LobanovDMultiplyMatrixFuncTest : public ppc::util::BaseRunFuncTests<InType
       matrix_a_ = CreateRandomCompressedColumnMatrix(100, 100, 0.05);
       matrix_b_ = CreateRandomCompressedColumnMatrix(100, 100, 0.05);
     } else {
-      // По умолчанию создаем маленькие матрицы
       matrix_a_ = CreateRandomCompressedColumnMatrix(5, 5, 0.5);
       matrix_b_ = CreateRandomCompressedColumnMatrix(5, 5, 0.5);
     }
@@ -108,12 +100,10 @@ class LobanovDMultiplyMatrixFuncTest : public ppc::util::BaseRunFuncTests<InType
       return true;
     }
 
-    // Проверяем, что размеры результата корректны
     bool dimensions_correct =
         output_data.row_count == matrix_a_.row_count && output_data.column_count == matrix_b_.column_count &&
         output_data.column_pointer_data.size() == static_cast<size_t>(output_data.column_count) + 1;
 
-    // Для функциональных тестов также проверяем непустоту результата
     return dimensions_correct && output_data.non_zero_count >= 0;
   }
 
@@ -132,7 +122,6 @@ TEST_P(LobanovDMultiplyMatrixFuncTest, MatrixMultiplicationCorrectness) {
   ExecuteTest(GetParam());
 }
 
-// Создаем пустую матрицу для заполнителя ожидаемого результата
 CompressedColumnMatrix CreateEmptyMatrix(int rows, int cols) {
   CompressedColumnMatrix matrix;
   matrix.row_count = rows;
@@ -167,7 +156,6 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LobanovDMultip
 
 const auto kGtestParameterValues = ppc::util::ExpandToValues(kTestTasksList);
 
-// Используем правильный метод для имени теста
 const auto kPerfTestName = LobanovDMultiplyMatrixFuncTest::PrintFuncTestName<LobanovDMultiplyMatrixFuncTest>;
 
 INSTANTIATE_TEST_SUITE_P(MatrixMultiplicationFuncTests, LobanovDMultiplyMatrixFuncTest, kGtestParameterValues,

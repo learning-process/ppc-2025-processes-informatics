@@ -187,13 +187,11 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
                                                   std::vector<double> &local_result_values,
                                                   std::vector<int> &local_result_row_indices,
                                                   std::vector<int> &local_result_column_pointers, int total_processes) {
-  // Инициализация результата
   CompressedColumnMatrix result_matrix;
   result_matrix.row_count = matrix_a.row_count;
   result_matrix.column_count = matrix_b.column_count;
   result_matrix.column_pointer_data.push_back(0);
 
-  // Структуры для сбора данных
   std::vector<std::vector<double>> value_collections(total_processes);
   std::vector<std::vector<int>> row_index_collections(total_processes);
   std::vector<std::vector<int>> column_pointer_collections(total_processes);
@@ -214,38 +212,31 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
     MPI_Recv(col_pointers.data(), cols + 1, MPI_INT, process_id, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   };
 
-  // Сохранение локальных данных
   value_collections[0] = std::move(local_result_values);
   row_index_collections[0] = std::move(local_result_row_indices);
   column_pointer_collections[0] = std::move(local_result_column_pointers);
 
-  // Получение данных от рабочих процессов
   for (int pid = 1; pid < total_processes; ++pid) {
     receive_process_data(pid, value_collections[pid], row_index_collections[pid], column_pointer_collections[pid]);
   }
 
-  // Объединение данных
   int value_offset = 0;
 
   for (int pid = 0; pid < total_processes; ++pid) {
-    // Добавление значений и индексов строк
     result_matrix.value_data.insert(result_matrix.value_data.end(), value_collections[pid].begin(),
                                     value_collections[pid].end());
 
     result_matrix.row_index_data.insert(result_matrix.row_index_data.end(), row_index_collections[pid].begin(),
                                         row_index_collections[pid].end());
 
-    // Добавление указателей столбцов с учетом смещений
     for (size_t i = 1; i < column_pointer_collections[pid].size(); ++i) {
       result_matrix.column_pointer_data.push_back(column_pointer_collections[pid][i] + value_offset);
     }
 
-    // Обновление смещений
     value_offset += static_cast<int>(value_collections[pid].size());
     column_offset += static_cast<int>(column_pointer_collections[pid].size() - 1);
   }
 
-  // Завершение
   result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
   GetOutput() = result_matrix;
 

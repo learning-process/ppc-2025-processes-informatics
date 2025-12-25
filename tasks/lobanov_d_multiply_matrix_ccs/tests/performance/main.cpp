@@ -20,10 +20,8 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   result_matrix.row_count = row_count;
   result_matrix.column_count = column_count;
 
-  // Детерминированный генератор с фиксированным seed
   std::mt19937 rng(seed);
 
-  // Используем хеш от параметров для создания уникального seed для каждой комбинации
   std::hash<std::string> hasher;
   std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
@@ -66,11 +64,9 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   return result_matrix;
 }
 
-// Базовый класс для производительных тестов
 class LobanovDMultiplyMatrixPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    // Используем параметры из GetTestParams()
     auto params = GetTestParams();
     int dimension = std::get<0>(params);
     double density = std::get<1>(params);
@@ -82,7 +78,6 @@ class LobanovDMultiplyMatrixPerfTest : public ppc::util::BaseRunPerfTests<InType
     input_data_ = std::make_pair(first_matrix_, second_matrix_);
   }
 
-  // Возвращает параметры теста: размер, плотность, смещение для seed
   virtual std::tuple<int, double, int> GetTestParams() const {
     return {2000, 0.1, 0};  // По умолчанию
   }
@@ -143,14 +138,12 @@ TEST_P(LargeMatrixPerfTest, LargeMatrixPerformance) {
   ExecuteTest(GetParam());
 }
 
-// Создаем задачи производительности для всех реализаций
 const auto kAllPerformanceTasks =
     ppc::util::MakeAllPerfTasks<InType, LobanovDMultiplyMatrixMPI, LobanovDMultiplyMatrixSEQ>(
         PPC_SETTINGS_lobanov_d_multiply_matrix_ccs);
 
 const auto kGtestPerformanceValues = ppc::util::TupleToGTestValues(kAllPerformanceTasks);
 
-// Регистрируем три набора тестов
 INSTANTIATE_TEST_SUITE_P(SmallMatrixTests, SmallMatrixPerfTest, kGtestPerformanceValues,
                          LobanovDMultiplyMatrixPerfTest::CustomPerfTestName);
 
