@@ -226,7 +226,6 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
 
   // Объединение данных
   int value_offset = 0;
-  int column_offset = 0;
 
   for (int pid = 0; pid < total_processes; ++pid) {
     // Добавление значений и индексов строк
