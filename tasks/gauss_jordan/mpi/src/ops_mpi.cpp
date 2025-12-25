@@ -32,7 +32,7 @@ bool ValidateMatrixDimensions(const std::vector<std::vector<double>> &augmented_
                               int augmented_columns, int rank) {
   if (rank == 0) {
     for (int i = 1; i < equations_count; ++i) {
-      if (static_cast<int>(augmented_matrix[i].size()) != augmented_columns) {
+      if (augmented_matrix[i].size() != static_cast<size_t>(augmented_columns)) {
         return false;
       }
     }
@@ -52,6 +52,49 @@ bool CheckIfZeroMatrix(const std::vector<std::vector<double>> &augmented_matrix,
     }
   }
   return true;
+}
+
+void HandleRankZeroOutput(int rank, std::vector<double> result) {
+    if (rank == 0) {
+        GetOutput() = std::move(result);
+    }
+}
+
+bool ShouldReturnEarly(int rank, const std::vector<std::vector<double>>& matrix,
+                       int equations_count, int augmented_columns) {
+    if (augmented_columns == 0) {
+        HandleRankZeroOutput(rank, std::vector<double>());
+        MPI_Barrier(MPI_COMM_WORLD);
+        return true;
+    }
+
+    bool valid_matrix = ValidateMatrixDimensions(matrix, equations_count, augmented_columns, rank);
+    MPI_Bcast(&valid_matrix, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    if (!valid_matrix) {
+        HandleRankZeroOutput(rank, std::vector<double>());
+        MPI_Barrier(MPI_COMM_WORLD);
+        return true;
+    }
+
+    if (augmented_columns <= 1) {
+        HandleRankZeroOutput(rank, std::vector<double>());
+        MPI_Barrier(MPI_COMM_WORLD);
+        return true;
+    }
+
+    bool is_zero_matrix = CheckIfZeroMatrix(matrix, equations_count, augmented_columns, rank);
+    MPI_Bcast(&is_zero_matrix, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    if (is_zero_matrix) {
+        HandleRankZeroOutput(rank, std::vector<double>());
+        MPI_Barrier(MPI_COMM_WORLD);
+        return true;
+    }
+
+    return false;
+}
+
+bool HasValidRank(int global_rank, int augmented_columns, int equations_count) {
+    return global_rank >= augmented_columns - 1 && global_rank >= equations_count;
 }
 
 void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_row, int second_row, int columns) {
@@ -360,80 +403,47 @@ bool GaussJordanMPI::PreProcessingImpl() {
 }
 
 bool GaussJordanMPI::RunImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (GetInput().empty()) {
-    if (rank == 0) {
-      GetOutput() = std::vector<double>();
+    // Ранний возврат для пустого ввода
+    if (GetInput().empty()) {
+        HandleRankZeroOutput(rank, std::vector<double>());
+        MPI_Barrier(MPI_COMM_WORLD);
+        return true;
     }
+
+    std::vector<std::vector<double>> augmented_matrix = GetInput();
+    int equations_count = static_cast<int>(augmented_matrix.size());
+    int augmented_columns = (equations_count > 0) ? static_cast<int>(augmented_matrix[0].size()) : 0;
+
+    // Ранние возвраты для невалидных случаев
+    if (ShouldReturnEarly(rank, augmented_matrix, equations_count, augmented_columns)) {
+        return true;
+    }
+
+    // Основная обработка
+    TransformToReducedRowEchelonFormMPI(augmented_matrix, equations_count, augmented_columns);
+
+    bool global_inconsistent = false;
+    int global_rank = 0;
+    std::vector<double> local_solution;
+
+    ProcessReducedMatrix(augmented_matrix, equations_count, augmented_columns,
+                         global_inconsistent, global_rank, local_solution, rank);
+
+    // Формирование результата
+    if (rank == 0) {
+        if (global_inconsistent || !HasValidRank(global_rank, augmented_columns, equations_count)) {
+            GetOutput() = std::vector<double>();
+        } else {
+            GetOutput() = local_solution;
+        }
+    }
+
+    BroadcastSolution(GetOutput(), rank);
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
-  }
-
-  std::vector<std::vector<double>> augmented_matrix = GetInput();
-  int equations_count = static_cast<int>(augmented_matrix.size());
-  int augmented_columns = (equations_count > 0) ? static_cast<int>(augmented_matrix[0].size()) : 0;
-
-  if (augmented_columns == 0) {
-    if (rank == 0) {
-      GetOutput() = std::vector<double>();
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
-  }
-
-  bool valid_matrix = ValidateMatrixDimensions(augmented_matrix, equations_count, augmented_columns, rank);
-  MPI_Bcast(&valid_matrix, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
-  if (!valid_matrix) {
-    if (rank == 0) {
-      GetOutput() = std::vector<double>();
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
-  }
-
-  if (augmented_columns <= 1) {
-    if (rank == 0) {
-      GetOutput() = std::vector<double>();
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
-  }
-
-  bool is_zero_matrix = CheckIfZeroMatrix(augmented_matrix, equations_count, augmented_columns, rank);
-  MPI_Bcast(&is_zero_matrix, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-
-  if (is_zero_matrix) {
-    if (rank == 0) {
-      GetOutput() = std::vector<double>();
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-    return true;
-  }
-
-  TransformToReducedRowEchelonFormMPI(augmented_matrix, equations_count, augmented_columns);
-
-  bool global_inconsistent = false;
-  int global_rank = 0;
-  std::vector<double> local_solution;
-
-  ProcessReducedMatrix(augmented_matrix, equations_count, augmented_columns, global_inconsistent, global_rank,
-                       local_solution, rank);
-
-  if (rank == 0) {
-    if (global_inconsistent || (global_rank < augmented_columns - 1 || global_rank < equations_count)) {
-      GetOutput() = std::vector<double>();
-    } else {
-      GetOutput() = local_solution;
-    }
-  }
-
-  BroadcastSolution(GetOutput(), rank);
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  return true;
 }
 
 bool GaussJordanMPI::PostProcessingImpl() {
