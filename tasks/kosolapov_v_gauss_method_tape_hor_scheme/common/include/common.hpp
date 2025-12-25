@@ -15,7 +15,7 @@ struct LinSystem {
   LinSystem &operator=(const LinSystem &other) {
     if (this != &other) {
       matrix = std::vector<std::vector<double>>(other.matrix);
-      r_side = std::vector<double> r_side(other.r_side);
+      r_side = std::vector<double>(other.r_side);
     }
     return *this;
   }
