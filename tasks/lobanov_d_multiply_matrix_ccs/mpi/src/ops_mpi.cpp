@@ -124,11 +124,30 @@ void LobanovDMultiplyMatrixMPI::ComputeTransposedMatrixMPI(const CompressedColum
 
 std::pair<int, int> LobanovDMultiplyMatrixMPI::DetermineColumnDistribution(int total_columns, int process_rank,
                                                                            int process_count) {
+  if (total_columns <= 0) {
+    return {0, 0};
+  }
+
+  if (process_count <= 0) {
+    return {0, 0};
+  }
+
+  if (process_rank < 0 || process_rank >= process_count) {
+    return {0, 0};
+  }
+
   int base_columns_per_process = total_columns / process_count;
   int remaining_columns = total_columns % process_count;
 
   int start_column = (process_rank * base_columns_per_process) + std::min(process_rank, remaining_columns);
   int end_column = start_column + base_columns_per_process + (process_rank < remaining_columns ? 1 : 0);
+
+  start_column = std::max(0, std::min(start_column, total_columns));
+  end_column = std::max(0, std::min(end_column, total_columns));
+
+  if (start_column > end_column) {
+    start_column = end_column;
+  }
 
   return {start_column, end_column};
 }
@@ -463,7 +482,6 @@ bool LobanovDMultiplyMatrixMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &process_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &total_processes);
   const auto &[matrix_a, matrix_b] = GetInput();
-  CompressedColumnMatrix transposed_matrix_a;
   CompressedColumnMatrix transposed_matrix_a;
   transposed_matrix_a.row_count = 0;
   transposed_matrix_a.column_count = 0;
