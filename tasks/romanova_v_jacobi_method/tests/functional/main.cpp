@@ -105,9 +105,9 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
     RomanovaVJacobiMethodFuncTestsProcesses::PrintFuncTestName<RomanovaVJacobiMethodFuncTestsProcesses>;
-
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(Tests, RomanovaVJacobiMethodFuncTestsProcesses, kGtestValues, kPerfTestName);
-
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 }  // namespace
 
 }  // namespace romanova_v_jacobi_method

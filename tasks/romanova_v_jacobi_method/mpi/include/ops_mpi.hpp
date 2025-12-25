@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <vector>
 
 #include "romanova_v_jacobi_method/common/include/common.hpp"
 #include "task/include/task.hpp"
