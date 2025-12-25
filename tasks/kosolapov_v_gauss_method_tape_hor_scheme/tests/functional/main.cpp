@@ -1,14 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "kosolapov_v_gauss_method_tape_hor_scheme/common/include/common.hpp"
@@ -32,7 +29,7 @@ class KosolapovVGaussMethodTapeHorSchemeFuncTestsProcesses
     std::string data_source =
         ppc::util::GetAbsoluteTaskPath(PPC_ID_kosolapov_v_gauss_method_tape_hor_scheme, params + ".txt");
     std::ifstream file(data_source);
-    int n;
+    int n = 0;
     file >> n;
     InType system;
     system.matrix.resize(n, std::vector<double>(n));

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "kosolapov_v_gauss_method_tape_hor_scheme/common/include/common.hpp"
 #include "task/include/task.hpp"
 

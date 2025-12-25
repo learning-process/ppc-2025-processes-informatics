@@ -4,12 +4,10 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "kosolapov_v_gauss_method_tape_hor_scheme/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace kosolapov_v_gauss_method_tape_hor_scheme {
 
@@ -25,7 +23,7 @@ bool KosolapovVGaussMethodTapeHorSchemeMPI::ValidationImpl() {
 
   if (rank == 0) {
     const auto &input = GetInput();
-    if (input.matrix.size() <= 0) {
+    if (input.matrix.empty()) {
       return false;
     }
     for (size_t i = 0; i < input.matrix.size(); ++i) {
@@ -67,7 +65,7 @@ bool KosolapovVGaussMethodTapeHorSchemeMPI::RunImpl() {
   int rows_per_process = rows / processes_count;
   int remainder = rows % processes_count;
 
-  int start_row = rank * rows_per_process + std::min(rank, remainder);
+  int start_row = (rank * rows_per_process) + std::min(rank, remainder);
   int end_row = start_row + rows_per_process + (rank < remainder ? 1 : 0) - 1;
   int local_rows = end_row - start_row + 1;
   std::vector<std::vector<double>> local_matrix;
@@ -97,7 +95,7 @@ bool KosolapovVGaussMethodTapeHorSchemeMPI::RunImpl() {
     if (step >= start_row && step <= end_row) {
       owner_process = rank;
     }
-    int global_owner;
+    int global_owner = 0;
     MPI_Allreduce(&owner_process, &global_owner, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     int pivot_row_local_idx = -1;
     double pivot_value = 0.0;

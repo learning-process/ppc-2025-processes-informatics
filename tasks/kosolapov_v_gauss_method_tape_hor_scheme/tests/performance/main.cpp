@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <vector>
+
 #include "kosolapov_v_gauss_method_tape_hor_scheme/common/include/common.hpp"
 #include "kosolapov_v_gauss_method_tape_hor_scheme/mpi/include/ops_mpi.hpp"
 #include "kosolapov_v_gauss_method_tape_hor_scheme/seq/include/ops_seq.hpp"
@@ -23,7 +26,7 @@ class KosolapovVGaussMethodTapeHorSchemeRunPerfTestProcesses : public ppc::util:
           row_sum += system.matrix[i][j];
         }
       }
-      system.matrix[i][i] = row_sum + (i + 1) * 2.0;
+      system.matrix[i][i] = row_sum + ((i + 1) * 2.0);
       system.r_side[i] = row_sum + system.matrix[i][i];
     }
     input_data_ = system;
