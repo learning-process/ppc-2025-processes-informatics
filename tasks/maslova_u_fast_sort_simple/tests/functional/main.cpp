@@ -22,7 +22,7 @@ class MaslovaUFastSortFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
  protected:
   void SetUp() override {
-    auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<0>(params);
     expected_ = std::get<1>(params);
   }
