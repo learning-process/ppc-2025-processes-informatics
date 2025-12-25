@@ -59,9 +59,7 @@ bool YurkinGRulerMPI::RunImpl() {
   int repeats = 1;
   {
     const int in = GetInput();
-    if (in <= 0) {
-      repeats = 1000;
-    } else if (in < 1000) {
+    if (in < 1000) {
       repeats = 1000;
     } else if (in < 100000) {
       repeats = 100;
@@ -74,7 +72,7 @@ bool YurkinGRulerMPI::RunImpl() {
     const int next = rank + direction;
 
     double t0 = MPI_Wtime();
-    for (int r = 0; r < repeats; ++r) {
+    for (int rep_idx = 0; rep_idx < repeats; ++rep_idx) {
       MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
       MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -90,7 +88,7 @@ bool YurkinGRulerMPI::RunImpl() {
   const int prev = rank - direction;
   int recv_val = 0;
 
-  for (int r = 0; r < repeats; ++r) {
+  for (int rep_idx = 0; rep_idx < repeats; ++rep_idx) {
     MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     if (rank == dst) {
