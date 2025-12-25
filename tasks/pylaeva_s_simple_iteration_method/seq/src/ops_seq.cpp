@@ -17,9 +17,9 @@ PylaevaSSimpleIterationMethodSEQ::PylaevaSSimpleIterationMethodSEQ(const InType 
 
 bool PylaevaSSimpleIterationMethodSEQ::ValidationImpl() {
   const auto &n = std::get<0>(GetInput());
-  const auto &A = std::get<1>(GetInput());
+  const auto &a = std::get<1>(GetInput());
   const auto &b = std::get<2>(GetInput());
-  return ((n > 0) && (A.size() == n * n) && (b.size() == n) && (NotNullDeterm(A, n)) && (DiagonalDominance(A, n)));
+  return ((n > 0) && (a.size() == n * n) && (b.size() == n) && (NotNullDeterm(a, n)) && (DiagonalDominance(a, n)));
 }
 
 bool PylaevaSSimpleIterationMethodSEQ::PreProcessingImpl() {
@@ -28,7 +28,7 @@ bool PylaevaSSimpleIterationMethodSEQ::PreProcessingImpl() {
 
 bool PylaevaSSimpleIterationMethodSEQ::RunImpl() {
   const auto &n = std::get<0>(GetInput());
-  const auto &A = std::get<1>(GetInput());
+  const auto &a = std::get<1>(GetInput());
   const auto &b = std::get<2>(GetInput());
 
   std::vector<double> x(n, 0.0);
@@ -39,10 +39,10 @@ bool PylaevaSSimpleIterationMethodSEQ::RunImpl() {
       double sum = 0.0;
       for (size_t j = 0; j < n; ++j) {
         if (j != i) {
-          sum += A[(i * n) + j] * x[j];
+          sum += a[(i * n) + j] * x[j];
         }
       }
-      x_new[i] = (b[i] - sum) / A[(i * n) + i];
+      x_new[i] = (b[i] - sum) / a[(i * n) + i];
     }
 
     double norm = 0.0;

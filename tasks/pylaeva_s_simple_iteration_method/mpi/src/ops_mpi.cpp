@@ -21,9 +21,9 @@ PylaevaSSimpleIterationMethodMPI::PylaevaSSimpleIterationMethodMPI(const InType 
 
 bool PylaevaSSimpleIterationMethodMPI::ValidationImpl() {
   const auto &n = std::get<0>(GetInput());
-  const auto &A = std::get<1>(GetInput());
+  const auto &a = std::get<1>(GetInput());
   const auto &b = std::get<2>(GetInput());
-  return ((n > 0) && (A.size() == n * n) && (b.size() == n) && (NotNullDeterm(A, n)) && (DiagonalDominance(A, n)));
+  return ((n > 0) && (a.size() == n * n) && (b.size() == n) && (NotNullDeterm(a, n)) && (DiagonalDominance(a, n)));
 }
 
 bool PylaevaSSimpleIterationMethodMPI::PreProcessingImpl() {
@@ -31,82 +31,82 @@ bool PylaevaSSimpleIterationMethodMPI::PreProcessingImpl() {
 }
 
 bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
-  size_t proc_num = 0;
-  size_t proc_rank = 0;
+  int proc_num = 0;
+  int proc_rank = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
   MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
   size_t n = 0;
-  std::vector<double> A;
+  std::vector<double> a;
   std::vector<double> b;
 
   if (proc_rank == 0) {
     n = std::get<0>(GetInput());
-    A = std::get<1>(GetInput());
+    a = std::get<1>(GetInput());
     b = std::get<2>(GetInput());
   }
 
   MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
-  std::vector<size_t> row_counts_per_rank(proc_num);
-  std::vector<size_t> row_offsets_per_rank(proc_num);
-  CalculateRowsDistribution(proc_num, n, row_counts_per_rank, row_offsets_per_rank);
+  std::vector<int> row_counts_per_rank(proc_num);
+  std::vector<int> row_offsets_per_rank(proc_num);
+  CalculateRowsDistribution(proc_num, static_cast<int>(n), row_counts_per_rank, row_offsets_per_rank);
 
-  std::vector<size_t> mat_block_sizes(proc_num, 0);
-  std::vector<size_t> mat_block_offsets(proc_num, 0);
+  std::vector<int> mat_block_sizes(proc_num, 0);
+  std::vector<int> mat_block_offsets(proc_num, 0);
 
-  size_t base = n / proc_num;
-  size_t rem = n % proc_num;
+  int base = n / proc_num;
+  int rem = n % proc_num;
 
-  for (size_t i = 0; i < proc_num; ++i) {
-    size_t rows = base + (i < rem ? 1 : 0);
+  for (int i = 0; i < proc_num; ++i) {
+    int rows = base + (i < rem ? 1 : 0);
     mat_block_sizes[i] = rows * n;
     if (i > 0) {
       mat_block_offsets[i] = mat_block_offsets[i - 1] + mat_block_sizes[i - 1];
     }
   }
 
-  size_t local_rows = row_counts_per_rank[proc_rank];
-  size_t local_matrix_size = mat_block_sizes[proc_rank];
+  int local_rows = row_counts_per_rank[proc_rank];
+  int local_matrix_size = mat_block_sizes[proc_rank];
 
   std::vector<double> local_a(local_matrix_size);
   std::vector<double> local_b(local_rows);
 
-  MPI_Scatterv(proc_rank == 0 ? A.data() : nullptr, mat_block_sizes.data(), mat_block_offsets.data(), MPI_DOUBLE,
+  MPI_Scatterv(proc_rank == 0 ? a.data() : nullptr, mat_block_sizes.data(), mat_block_offsets.data(), MPI_DOUBLE,
                local_a.data(), local_matrix_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   MPI_Scatterv(proc_rank == 0 ? b.data() : nullptr, row_counts_per_rank.data(), row_offsets_per_rank.data(), MPI_DOUBLE,
                local_b.data(), local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  size_t start = row_offsets_per_rank[proc_rank];
-  size_t count = local_rows;
+  int start = row_offsets_per_rank[proc_rank];
+  int count = local_rows;
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
   std::vector<double> local_x_new(count, 0.0);
 
-  std::vector<size_t> recv_counts(proc_num);
-  std::vector<size_t> allgather_displs(proc_num);
-  CalculateRowsDistribution(proc_num, n, recv_counts, allgather_displs);
+  std::vector<int> recv_counts(proc_num);
+  std::vector<int> allgather_displs(proc_num);
+  CalculateRowsDistribution(proc_num, static_cast<int>(n), recv_counts, allgather_displs);
 
-  for (size_t iter = 0; iter < kMaxIterations; ++iter) {
-    for (size_t i = 0; i < count; ++i) {
-      size_t global_i = start + i;
+  for (int iter = 0; iter < kMaxIterations; ++iter) {
+    for (int i = 0; i < count; ++i) {
+      int global_i = start + i;
       double sum = 0.0;
-      for (size_t j = 0; j < n; ++j) {
+      for (int j = 0; j < static_cast<int>(n); ++j) {
         if (std::cmp_not_equal(j, global_i)) {
-          sum += local_a[(i * n) + j] * x[j];
+          sum += local_a[(i * static_cast<int>(n)) + j] * x[j];
         }
       }
-      local_x_new[i] = (local_b[i] - sum) / local_a[(i * n) + global_i];
+      local_x_new[i] = (local_b[i] - sum) / local_a[(i * static_cast<int>(n)) + global_i];
     }
 
     MPI_Allgatherv(local_x_new.data(), count, MPI_DOUBLE, x_new.data(), recv_counts.data(), allgather_displs.data(),
                    MPI_DOUBLE, MPI_COMM_WORLD);
 
     double local_norm = 0.0;
-    for (size_t i = 0; i < count; ++i) {
-      size_t gi = start + i;
+    for (int i = 0; i < count; ++i) {
+      int gi = start + i;
       double diff = x_new[gi] - x[gi];
       local_norm += diff * diff;
     }
@@ -193,17 +193,17 @@ bool PylaevaSSimpleIterationMethodMPI::DiagonalDominance(const std::vector<doubl
   return true;
 }
 
-void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, size_t n,
-                                                                 std::vector<size_t> &row_counts_per_rank,
-                                                                 std::vector<size_t> &row_offsets_per_rank) {
+void PylaevaSSimpleIterationMethodMPI::CalculateRowsDistribution(int proc_num, int n,
+                                                                 std::vector<int> &row_counts_per_rank,
+                                                                 std::vector<int> &row_offsets_per_rank) {
   if (row_offsets_per_rank.empty()) {
     return;
   }
-  size_t base = n / proc_num;
-  size_t rem = n % proc_num;
+  int base = n / proc_num;
+  int rem = n % proc_num;
 
   row_offsets_per_rank[0] = 0;
-  for (size_t i = 0; i < proc_num; ++i) {
+  for (int i = 0; i < proc_num; ++i) {
     row_counts_per_rank[i] = base + (i < rem ? 1 : 0);
     if (i > 0) {
       row_offsets_per_rank[i] = row_offsets_per_rank[i - 1] + row_counts_per_rank[i - 1];

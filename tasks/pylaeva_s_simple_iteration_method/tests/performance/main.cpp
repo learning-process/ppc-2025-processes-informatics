@@ -21,16 +21,16 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
   const size_t N = 300;
 
   void SetUp() override {
-    std::vector<double> A(N * N, 1.0);
+    std::vector<double> a(N * N, 1.0);
     std::vector<double> b(N, 0.0);
     expected_data_.assign(N, 1.0);
 
     for (size_t i = 0; i < N; ++i) {
-      A[(i * N) + i] = N;
+      a[(i * N) + i] = N;
       b[i] = (2 * N) - 1.0;
     }
 
-    input_data_ = std::make_tuple(N, A, b);
+    input_data_ = std::make_tuple(N, a, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

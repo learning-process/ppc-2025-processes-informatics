@@ -22,7 +22,7 @@ class PylaevaSSimpleIterationMethodMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   const double kEps = 1e-6;
-  const size_t kMaxIterations = 10000;
+  const int kMaxIterations = 10000;
 
   bool NotNullDeterm(const std::vector<double> &a, size_t n);
   bool DiagonalDominance(const std::vector<double> &a, size_t n);
