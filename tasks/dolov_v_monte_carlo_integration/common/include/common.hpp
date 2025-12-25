@@ -32,7 +32,6 @@ using OutType = double;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-// Вспомогательные функции для тестирования
 inline double FuncSumCoords(const std::vector<double> &x) {
   double sum = 0.0;
   for (double val : x) {

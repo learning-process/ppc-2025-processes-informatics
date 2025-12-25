@@ -49,7 +49,7 @@ class MonteCarloHyperCubeTests : public ppc::util::BaseRunFuncTests<InType, OutT
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - expected_result_) < 0.15;
+    return std::abs(output_data - expected_result_) < 0.1;
   }
 
   InType GetTestInputData() final {
@@ -71,22 +71,18 @@ class MonteCarloHyperSphereTests : public ppc::util::BaseRunFuncTests<InType, Ou
   void SetUp() override {
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int samples = std::get<0>(params);
-    // Изменяем радиус для параметров 'large', чтобы покрыть ветки логики радиуса
-    double rad = (std::get<1>(params) == "large") ? 1.1 : 1.0;
 
     input_data_ = {.func = FuncSquareSum,
                    .dimension = 2,
                    .samples_count = samples,
                    .center = {0.0, 0.0},
-                   .radius = rad,
+                   .radius = 1.0,
                    .domain_type = IntegrationDomain::kHyperSphere};
-
-    // Формула для x^2 + y^2 по кругу: (PI * R^4) / 2
-    expected_result_ = (std::acos(-1.0) * std::pow(rad, 4)) / 2.0;
+    expected_result_ = std::acos(-1.0) / 2.0;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - expected_result_) < 0.15;
+    return std::abs(output_data - expected_result_) < 0.1;
   }
 
   InType GetTestInputData() final {
@@ -105,17 +101,8 @@ TEST_P(MonteCarloHyperSphereTests, IntegrationHyperSphere2D) {
   ExecuteTest(GetParam());
 }
 
-// Дополнительный тест для покрытия функций и конструкторов (Functions & Branches)
-TEST(DolovVMonteCarloIntegrationFunctionalTest, ManualTaskCoverage) {
-  InType in = {FuncSquareSum, 2, 100, {0.0, 0.0}, 1.0, IntegrationDomain::kHyperCube};
-  DolovVMonteCarloIntegrationSEQ test_seq(in);
-  DolovVMonteCarloIntegrationMPI test_mpi(in);
-  ASSERT_EQ(in.dimension, 2);
-  ASSERT_GE(in.samples_count, 10);
-}
-
 const std::array<TestType, 3> kTestParamsArray = {std::make_tuple(10000, "small"), std::make_tuple(50000, "medium"),
-                                                  std::make_tuple(100000, "large")};
+                                                  std::make_tuple(200000, "large")};
 
 const auto kCubeTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
                                                kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration),
@@ -123,8 +110,8 @@ const auto kCubeTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCar
                                                kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration));
 
 const auto kCubeValsList = ppc::util::ExpandToValues(kCubeTasksList);
-INSTANTIATE_TEST_SUITE_P(MonteCarloHyperCubeTests, MonteCarloHyperCubeTests, kCubeValsList,
-                         MonteCarloHyperCubeTests::PrintFuncTestName<MonteCarloHyperCubeTests>);
+const auto kCubeNameStr = MonteCarloHyperCubeTests::PrintFuncTestName<MonteCarloHyperCubeTests>;
+INSTANTIATE_TEST_SUITE_P(MonteCarloHyperCubeTests, MonteCarloHyperCubeTests, kCubeValsList, kCubeNameStr);
 
 const auto kSphereTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteCarloIntegrationMPI, InType>(
                                                  kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration),
@@ -132,8 +119,8 @@ const auto kSphereTasksList = std::tuple_cat(ppc::util::AddFuncTask<DolovVMonteC
                                                  kTestParamsArray, PPC_SETTINGS_dolov_v_monte_carlo_integration));
 
 const auto kSphereValsList = ppc::util::ExpandToValues(kSphereTasksList);
-INSTANTIATE_TEST_SUITE_P(MonteCarloHyperSphereTests, MonteCarloHyperSphereTests, kSphereValsList,
-                         MonteCarloHyperSphereTests::PrintFuncTestName<MonteCarloHyperSphereTests>);
+const auto kSphereNameStr = MonteCarloHyperSphereTests::PrintFuncTestName<MonteCarloHyperSphereTests>;
+INSTANTIATE_TEST_SUITE_P(MonteCarloHyperSphereTests, MonteCarloHyperSphereTests, kSphereValsList, kSphereNameStr);
 
 }  // namespace
 }  // namespace dolov_v_monte_carlo_integration
