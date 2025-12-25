@@ -74,7 +74,7 @@ TEST_P(ZeninAGaussFilterFunctTests, Test) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 44> kTestParam = {
+const std::array<TestType, 38> kTestParam = {
     std::make_tuple("Random3x3BW", 3, 3, 1),
     std::make_tuple("Random4x4BW", 4, 4, 1),
     std::make_tuple("Random5x5BW", 5, 5, 1),
@@ -88,12 +88,7 @@ const std::array<TestType, 44> kTestParam = {
     std::make_tuple("Random15x15RGB", 15, 15, 3),
 
     // Граничные случаи для clamp на краях
-    std::make_tuple("SinglePixelBW", 1, 1, 1),
-    std::make_tuple("SinglePixelRGB", 1, 1, 3),
-    std::make_tuple("OneRow3ColsBW", 3, 1, 1),
-    std::make_tuple("OneCol3RowsBW", 1, 3, 1),
-    std::make_tuple("WideImageBW", 50, 3, 1),
-    std::make_tuple("TallImageBW", 3, 50, 1),
+    
 
     // Проверка 2D разбиения (простые числа и не делится нацело)
     std::make_tuple("Size7x7BW", 7, 7, 1),

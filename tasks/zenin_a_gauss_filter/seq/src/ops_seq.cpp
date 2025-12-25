@@ -6,6 +6,8 @@
 #include "zenin_a_gauss_filter/common/include/common.hpp"
 
 namespace zenin_a_gauss_filter {
+
+namespace {
 int Clamp(const Image &img, int x, int y, int ch) {
   const int h = img.height;
   const int w = img.width;
@@ -14,6 +16,7 @@ int Clamp(const Image &img, int x, int y, int ch) {
   y = std::clamp(y, 0, h - 1);
   return static_cast<int>(img.pixels[(((y * w) + x) * c) + ch]);
 }
+} //namespace
 
 ZeninAGaussFilterSEQ::ZeninAGaussFilterSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
