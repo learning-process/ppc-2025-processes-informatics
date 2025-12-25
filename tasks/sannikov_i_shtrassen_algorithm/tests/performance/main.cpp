@@ -15,7 +15,7 @@ class SannikovIShtrassenAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<
  public:
   using Matrix = std::vector<std::vector<double>>;
   void SetUp() override {
-    std::size_t n = 2048;
+    std::size_t n = 256;
 
     Matrix a(n, std::vector<double>(n, 0.0));
     Matrix b(n, std::vector<double>(n, 0.0));

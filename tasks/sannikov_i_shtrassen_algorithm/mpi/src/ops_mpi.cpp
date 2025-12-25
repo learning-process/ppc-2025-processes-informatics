@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "sannikov_i_shtrassen_algorithm/common/include/common.hpp"
@@ -60,6 +61,8 @@ namespace {
 using Flat = std::vector<double>;
 using Matrix = std::vector<std::vector<double>>;
 
+constexpr std::size_t kClassicThreshold = 2;
+
 std::size_t NextPow2(std::size_t value) {
   std::size_t pow2 = 1;
   while (pow2 < value) {
@@ -80,6 +83,272 @@ bool SizeOkU64(std::uint64_t n64) {
 
 std::size_t Idx(std::size_t row, std::size_t col, std::size_t ld) {
   return (row * ld) + col;
+}
+
+Flat MultiplyClassicFlat(const Flat &a, const Flat &b, std::size_t n) {
+  Flat c(n * n, 0.0);
+  for (std::size_t row = 0; row < n; ++row) {
+    double *crow = &c[Idx(row, 0, n)];
+    for (std::size_t mid = 0; mid < n; ++mid) {
+      const double aik = a[Idx(row, mid, n)];
+      const double *brow = &b[Idx(mid, 0, n)];
+      for (std::size_t col = 0; col < n; ++col) {
+        crow[col] += aik * brow[col];
+      }
+    }
+  }
+  return c;
+}
+
+Flat ExtractBlockFlat(const Flat &src, std::size_t src_n, std::size_t row0, std::size_t col0, std::size_t blk_n) {
+  Flat blk(blk_n * blk_n, 0.0);
+  for (std::size_t row = 0; row < blk_n; ++row) {
+    for (std::size_t col = 0; col < blk_n; ++col) {
+      blk[Idx(row, col, blk_n)] = src[Idx(row + row0, col + col0, src_n)];
+    }
+  }
+  return blk;
+}
+
+void PlaceBlockFlat(const Flat &blk, std::size_t blk_n, Flat *dst, std::size_t dst_n, std::size_t row0,
+                    std::size_t col0) {
+  for (std::size_t row = 0; row < blk_n; ++row) {
+    for (std::size_t col = 0; col < blk_n; ++col) {
+      (*dst)[Idx(row + row0, col + col0, dst_n)] = blk[Idx(row, col, blk_n)];
+    }
+  }
+}
+
+void AddFlat(const Flat &a, const Flat &b, Flat *out) {
+  const std::size_t n = a.size();
+  out->assign(n, 0.0);
+  for (std::size_t i = 0; i < n; ++i) {
+    (*out)[i] = a[i] + b[i];
+  }
+}
+
+void SubFlat(const Flat &a, const Flat &b, Flat *out) {
+  const std::size_t n = a.size();
+  out->assign(n, 0.0);
+  for (std::size_t i = 0; i < n; ++i) {
+    (*out)[i] = a[i] - b[i];
+  }
+}
+
+struct Frame {
+  Flat a;
+  Flat b;
+  std::size_t n = 0;
+
+  bool has_parent = false;
+  std::size_t parent_idx = 0;
+  int parent_slot = 0;
+
+  int stage = 0;
+  Flat res;
+
+  Flat a11, a12, a21, a22;
+  Flat b11, b12, b21, b22;
+
+  Flat m1, m2, m3, m4, m5, m6, m7;
+};
+
+void AssignToParent(std::vector<Frame> *stack, const Frame &child) {
+  if (!child.has_parent) {
+    return;
+  }
+  Frame &parent = (*stack)[child.parent_idx];
+  const int slot = child.parent_slot;
+
+  if (slot == 1) {
+    parent.m1 = child.res;
+  }
+  if (slot == 2) {
+    parent.m2 = child.res;
+  }
+  if (slot == 3) {
+    parent.m3 = child.res;
+  }
+  if (slot == 4) {
+    parent.m4 = child.res;
+  }
+  if (slot == 5) {
+    parent.m5 = child.res;
+  }
+  if (slot == 6) {
+    parent.m6 = child.res;
+  }
+  if (slot == 7) {
+    parent.m7 = child.res;
+  }
+}
+
+bool IsLeaf(const Frame &frame) {
+  return frame.n <= kClassicThreshold;
+}
+
+void SplitIfNeeded(Frame *frame) {
+  if (frame->stage != 0) {
+    return;
+  }
+
+  const std::size_t half = frame->n / 2;
+
+  frame->a11 = ExtractBlockFlat(frame->a, frame->n, 0, 0, half);
+  frame->a12 = ExtractBlockFlat(frame->a, frame->n, 0, half, half);
+  frame->a21 = ExtractBlockFlat(frame->a, frame->n, half, 0, half);
+  frame->a22 = ExtractBlockFlat(frame->a, frame->n, half, half, half);
+
+  frame->b11 = ExtractBlockFlat(frame->b, frame->n, 0, 0, half);
+  frame->b12 = ExtractBlockFlat(frame->b, frame->n, 0, half, half);
+  frame->b21 = ExtractBlockFlat(frame->b, frame->n, half, 0, half);
+  frame->b22 = ExtractBlockFlat(frame->b, frame->n, half, half, half);
+
+  frame->stage = 1;
+}
+
+void BuildChildOperands(const Frame &parent, int slot, Flat *left, Flat *right) {
+  if (slot == 1) {
+    AddFlat(parent.a11, parent.a22, left);
+    AddFlat(parent.b11, parent.b22, right);
+    return;
+  }
+  if (slot == 2) {
+    AddFlat(parent.a21, parent.a22, left);
+    *right = parent.b11;
+    return;
+  }
+  if (slot == 3) {
+    *left = parent.a11;
+    SubFlat(parent.b12, parent.b22, right);
+    return;
+  }
+  if (slot == 4) {
+    *left = parent.a22;
+    SubFlat(parent.b21, parent.b11, right);
+    return;
+  }
+  if (slot == 5) {
+    AddFlat(parent.a11, parent.a12, left);
+    *right = parent.b22;
+    return;
+  }
+  if (slot == 6) {
+    SubFlat(parent.a21, parent.a11, left);
+    AddFlat(parent.b11, parent.b12, right);
+    return;
+  }
+  SubFlat(parent.a12, parent.a22, left);
+  AddFlat(parent.b21, parent.b22, right);
+}
+
+Frame MakeChild(const Frame &parent, std::size_t parent_idx, int slot) {
+  Flat left;
+  Flat right;
+  BuildChildOperands(parent, slot, &left, &right);
+
+  Frame child;
+  child.a = std::move(left);
+  child.b = std::move(right);
+  child.n = parent.n / 2;
+
+  child.has_parent = true;
+  child.parent_idx = parent_idx;
+  child.parent_slot = slot;
+  child.stage = 0;
+  return child;
+}
+
+void CombineOnFrame(Frame *frame) {
+  const std::size_t half = frame->n / 2;
+  const std::size_t kk = half * half;
+
+  Flat c11(kk, 0.0);
+  Flat c12(kk, 0.0);
+  Flat c21(kk, 0.0);
+  Flat c22(kk, 0.0);
+
+  for (std::size_t i = 0; i < kk; ++i) {
+    c11[i] = frame->m1[i] + frame->m4[i] - frame->m5[i] + frame->m7[i];
+  }
+  for (std::size_t i = 0; i < kk; ++i) {
+    c12[i] = frame->m3[i] + frame->m5[i];
+  }
+  for (std::size_t i = 0; i < kk; ++i) {
+    c21[i] = frame->m2[i] + frame->m4[i];
+  }
+  for (std::size_t i = 0; i < kk; ++i) {
+    c22[i] = frame->m1[i] - frame->m2[i] + frame->m3[i] + frame->m6[i];
+  }
+
+  frame->res.assign(frame->n * frame->n, 0.0);
+  PlaceBlockFlat(c11, half, &frame->res, frame->n, 0, 0);
+  PlaceBlockFlat(c12, half, &frame->res, frame->n, 0, half);
+  PlaceBlockFlat(c21, half, &frame->res, frame->n, half, 0);
+  PlaceBlockFlat(c22, half, &frame->res, frame->n, half, half);
+}
+
+Flat ShtrassenIterativeFlat(const Flat &a0, const Flat &b0, std::size_t n0) {
+  std::vector<Frame> frames;
+  frames.reserve(64);
+
+  Frame root;
+  root.a = a0;
+  root.b = b0;
+  root.n = n0;
+  root.has_parent = false;
+  root.stage = 0;
+  frames.push_back(std::move(root));
+
+  while (!frames.empty()) {
+    Frame &cur = frames.back();
+
+    if (IsLeaf(cur)) {
+      cur.res = MultiplyClassicFlat(cur.a, cur.b, cur.n);
+
+      const Frame finished = cur;
+      frames.pop_back();
+
+      if (frames.empty()) {
+        return finished.res;
+      }
+      AssignToParent(&frames, finished);
+      continue;
+    }
+
+    SplitIfNeeded(&cur);
+
+    if ((cur.stage >= 1) && (cur.stage <= 7)) {
+      const int slot = cur.stage;
+      const std::size_t parent_idx = frames.size() - 1;
+
+      Frame child = MakeChild(cur, parent_idx, slot);
+      cur.stage += 1;
+      frames.push_back(std::move(child));
+      continue;
+    }
+
+    if (cur.stage != 8) {
+      cur.stage = 8;
+      continue;
+    }
+
+    CombineOnFrame(&cur);
+
+    const Frame finished = cur;
+    frames.pop_back();
+
+    if (frames.empty()) {
+      return finished.res;
+    }
+    AssignToParent(&frames, finished);
+  }
+
+  return Flat{};
+}
+void MulStrassenOrClassic(const Flat &left, const Flat &right, int k, Flat *out) {
+  const auto kk = static_cast<std::size_t>(k);
+  *out = ShtrassenIterativeFlat(left, right, kk);
 }
 
 void PadToFlatOnRoot(const Matrix &src, int n0, int m, Flat *flat) {
@@ -127,23 +396,6 @@ void SubVec(const Flat &a, const Flat &b, Flat *out) {
   }
 }
 
-void MulClassic(const Flat &a, const Flat &b, int k, Flat *out) {
-  out->assign(static_cast<std::size_t>(k) * static_cast<std::size_t>(k), 0.0);
-  const auto kk = static_cast<std::size_t>(k);
-
-  for (int row = 0; row < k; ++row) {
-    const auto rr = static_cast<std::size_t>(row);
-    for (int mid = 0; mid < k; ++mid) {
-      const auto mid_sz = static_cast<std::size_t>(mid);
-      const double aik = a[Idx(rr, mid_sz, kk)];
-      for (int col = 0; col < k; ++col) {
-        const auto cc = static_cast<std::size_t>(col);
-        (*out)[Idx(rr, cc, kk)] += aik * b[Idx(mid_sz, cc, kk)];
-      }
-    }
-  }
-}
-
 int OwnerForTask(int task_id, int comm_size) {
   if (comm_size <= 0) {
     return 0;
@@ -159,39 +411,39 @@ void ComputeOneStrassenTask(int task_id, const Flat &a11, const Flat &a12, const
   if (task_id == 1) {
     AddVec(a11, a22, &tmp1);
     AddVec(b11, b22, &tmp2);
-    MulClassic(tmp1, tmp2, k, out_m);
+    MulStrassenOrClassic(tmp1, tmp2, k, out_m);
     return;
   }
   if (task_id == 2) {
     AddVec(a21, a22, &tmp1);
-    MulClassic(tmp1, b11, k, out_m);
+    MulStrassenOrClassic(tmp1, b11, k, out_m);
     return;
   }
   if (task_id == 3) {
     SubVec(b12, b22, &tmp2);
-    MulClassic(a11, tmp2, k, out_m);
+    MulStrassenOrClassic(a11, tmp2, k, out_m);
     return;
   }
   if (task_id == 4) {
     SubVec(b21, b11, &tmp2);
-    MulClassic(a22, tmp2, k, out_m);
+    MulStrassenOrClassic(a22, tmp2, k, out_m);
     return;
   }
   if (task_id == 5) {
     AddVec(a11, a12, &tmp1);
-    MulClassic(tmp1, b22, k, out_m);
+    MulStrassenOrClassic(tmp1, b22, k, out_m);
     return;
   }
   if (task_id == 6) {
     SubVec(a21, a11, &tmp1);
     AddVec(b11, b12, &tmp2);
-    MulClassic(tmp1, tmp2, k, out_m);
+    MulStrassenOrClassic(tmp1, tmp2, k, out_m);
     return;
   }
 
   SubVec(a12, a22, &tmp1);
   AddVec(b21, b22, &tmp2);
-  MulClassic(tmp1, tmp2, k, out_m);
+  MulStrassenOrClassic(tmp1, tmp2, k, out_m);
 }
 
 void AssembleCOnRoot(const Flat &m1, const Flat &m2, const Flat &m3, const Flat &m4, const Flat &m5, const Flat &m6,
