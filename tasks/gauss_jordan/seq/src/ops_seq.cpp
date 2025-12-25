@@ -47,6 +47,7 @@ void NormalizeRow(std::vector<std::vector<double>> &augmented_matrix, int row_in
   }
 }
 
+// Разбиваем сложную функцию на более простые
 int FindPivotRow(const std::vector<std::vector<double>> &augmented_matrix, int current_row, int current_col,
                  int equations_count) {
   int pivot_row = current_row;
@@ -91,6 +92,7 @@ void EliminateFromOtherRows(std::vector<std::vector<double>> &augmented_matrix, 
   }
 }
 
+// Упрощенная основная функция с меньшей когнитивной сложностью
 void TransformToReducedRowEchelonForm(std::vector<std::vector<double>> &augmented_matrix, int equations_count,
                                       int augmented_columns) {
   int current_row = 0;
@@ -170,6 +172,7 @@ bool CanSystemBeSolved(const std::vector<std::vector<double>> &matrix, int equat
   int matrix_rank = ComputeMatrixRank(matrix, equations_count, augmented_columns);
   int variable_count = augmented_columns - 1;
 
+  // Исправлено: упрощение булевого выражения по Де Моргану
   return matrix_rank >= variable_count || matrix_rank >= equations_count;
 }
 

@@ -15,6 +15,64 @@ namespace {
 
 constexpr double kEpsilon = 1e-12;
 
+// Вспомогательные функции объявляем вначале анонимного namespace
+bool ValidateMatrixDimensions(const std::vector<std::vector<double>> &augmented_matrix, int equations_count,
+                              int augmented_columns, int rank) {
+  if (rank == 0) {
+    for (int i = 1; i < equations_count; ++i) {
+      if (static_cast<int>(augmented_matrix[i].size()) != augmented_columns) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+bool CheckIfZeroMatrix(const std::vector<std::vector<double>> &augmented_matrix, int equations_count,
+                       int augmented_columns, int rank) {
+  if (rank == 0) {
+    for (int i = 0; i < equations_count; ++i) {
+      for (int j = 0; j < augmented_columns; ++j) {
+        if (std::abs(augmented_matrix[i][j]) > 1e-12) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+void ProcessReducedMatrix(const std::vector<std::vector<double>> &augmented_matrix, int equations_count,
+                          int augmented_columns, bool &global_inconsistent, int &global_rank,
+                          std::vector<double> &local_solution, int rank) {
+  bool local_inconsistent = HasInconsistentEquation(augmented_matrix, equations_count, augmented_columns);
+  int local_rank = ComputeMatrixRank(augmented_matrix, equations_count, augmented_columns);
+
+  if (!local_inconsistent && local_rank >= augmented_columns - 1 && local_rank >= equations_count) {
+    local_solution = ComputeSolutionVector(augmented_matrix, equations_count, augmented_columns);
+  }
+
+  MPI_Reduce(&local_inconsistent, &global_inconsistent, 1, MPI_C_BOOL, MPI_LOR, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_rank, &global_rank, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  MPI_Bcast(&global_rank, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&global_inconsistent, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+}
+
+void BroadcastSolution(std::vector<double> &solution, int rank) {
+  int solution_size = static_cast<int>(solution.size());
+  MPI_Bcast(&solution_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    solution.resize(static_cast<size_t>(solution_size));
+  }
+
+  if (solution_size > 0) {
+    MPI_Bcast(solution.data(), solution_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  }
+}
+
+// Остальные вспомогательные функции
 void ExchangeRows(std::vector<std::vector<double>> &augmented_matrix, int first_row, int second_row, int columns) {
   if (first_row == second_row) {
     return;
@@ -127,6 +185,7 @@ void TransformToReducedRowEchelonFormMPI(std::vector<std::vector<double>> &augme
     current_col++;
   }
 }
+
 bool IsZeroRow(const std::vector<double> &row, int columns_minus_one) {
   for (int j = 0; j < columns_minus_one; ++j) {
     if (!IsNumericallyZero(row[j])) {
@@ -194,6 +253,7 @@ void FlattenAndBroadcastMatrix(const std::vector<std::vector<double>> &matrix, i
 
   for (int i = 0; i < equations_count; ++i) {
     for (int j = 0; j < augmented_columns; ++j) {
+      // Исправлено: добавлены скобки для явного указания порядка операций
       size_t index = (static_cast<size_t>(i) * static_cast<size_t>(augmented_columns)) + static_cast<size_t>(j);
       flat_matrix[index] = matrix[i][j];
     }
@@ -210,6 +270,7 @@ void ReceiveAndReconstructMatrix(std::vector<std::vector<double>> &matrix, int e
   for (int i = 0; i < equations_count; ++i) {
     matrix[i].resize(static_cast<size_t>(augmented_columns));
     for (int j = 0; j < augmented_columns; ++j) {
+      // Исправлено: добавлены скобки для явного указания порядка операций
       size_t index = (static_cast<size_t>(i) * static_cast<size_t>(augmented_columns)) + static_cast<size_t>(j);
       matrix[i][j] = flat_matrix[index];
     }
@@ -380,61 +441,4 @@ bool GaussJordanMPI::RunImpl() {
 bool GaussJordanMPI::PostProcessingImpl() {
   return true;
 }
-
-bool ValidateMatrixDimensions(const std::vector<std::vector<double>> &augmented_matrix, int equations_count,
-                              int augmented_columns, int rank) {
-  if (rank == 0) {
-    for (int i = 1; i < equations_count; ++i) {
-      if (augmented_matrix[i].size() != static_cast<size_t>(augmented_columns)) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-bool CheckIfZeroMatrix(const std::vector<std::vector<double>> &augmented_matrix, int equations_count,
-                       int augmented_columns, int rank) {
-  if (rank == 0) {
-    for (int i = 0; i < equations_count; ++i) {
-      for (int j = 0; j < augmented_columns; ++j) {
-        if (std::abs(augmented_matrix[i][j]) > 1e-12) {
-          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
-void ProcessReducedMatrix(const std::vector<std::vector<double>> &augmented_matrix, int equations_count,
-                          int augmented_columns, bool &global_inconsistent, int &global_rank,
-                          std::vector<double> &local_solution, int rank) {
-  bool local_inconsistent = HasInconsistentEquation(augmented_matrix, equations_count, augmented_columns);
-  int local_rank = ComputeMatrixRank(augmented_matrix, equations_count, augmented_columns);
-
-  if (!local_inconsistent && local_rank >= augmented_columns - 1 && local_rank >= equations_count) {
-    local_solution = ComputeSolutionVector(augmented_matrix, equations_count, augmented_columns);
-  }
-
-  MPI_Reduce(&local_inconsistent, &global_inconsistent, 1, MPI_C_BOOL, MPI_LOR, 0, MPI_COMM_WORLD);
-  MPI_Reduce(&local_rank, &global_rank, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-
-  MPI_Bcast(&global_rank, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&global_inconsistent, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-}
-
-void BroadcastSolution(std::vector<double> &solution, int rank) {
-  int solution_size = static_cast<int>(solution.size());
-  MPI_Bcast(&solution_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    solution.resize(static_cast<size_t>(solution_size));
-  }
-
-  if (solution_size > 0) {
-    MPI_Bcast(solution.data(), solution_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  }
-}
-
 }  // namespace gauss_jordan
