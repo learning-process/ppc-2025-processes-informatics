@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstdlib>
+#include <string>
+
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
@@ -8,7 +11,7 @@
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  const int kCount_ = 1'000'000;
   InType input_data_;
 
   void SetUp() override {
@@ -16,8 +19,18 @@ class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    (void)output_data;
-    return true;
+    YurkinCountingNumberSEQ seq_task(GetTestInputData());
+    if (!seq_task.PreProcessing()) {
+      return false;
+    }
+    if (!seq_task.Run()) {
+      return false;
+    }
+    if (!seq_task.PostProcessing()) {
+      return false;
+    }
+    const OutType expected = seq_task.GetOutput();
+    return expected == output_data;
   }
 
   InType GetTestInputData() final {
