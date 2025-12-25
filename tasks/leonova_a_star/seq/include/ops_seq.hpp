@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "leonova_a_star/common/include/common.hpp"
 #include "task/include/task.hpp"
 

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <new>
+#include <tuple>
 #include <vector>
 
 #include "leonova_a_star/common/include/common.hpp"
