@@ -20,7 +20,7 @@ class MaslovaUFastSortSimpleMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void TreeMerge(std::vector<int> &local_vec, int rank, int size);
+  static void TreeMerge(std::vector<int> &local_vec, int rank, int size);
 };
 
 }  // namespace maslova_u_fast_sort_simple

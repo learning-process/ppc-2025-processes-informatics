@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "maslova_u_fast_sort_simple/common/include/common.hpp"
 #include "maslova_u_fast_sort_simple/mpi/include/ops_mpi.hpp"
