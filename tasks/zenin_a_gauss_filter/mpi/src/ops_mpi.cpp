@@ -125,126 +125,65 @@ bool ZeninAGaussFilterMPI::RunImpl() {
 
   std::vector<std::uint8_t> local_in(static_cast<std::size_t>(lh) * lw * channels_, 0);
   std::vector<std::uint8_t> local_out(static_cast<std::size_t>(my_h) * my_w * channels_, 0);
+  auto global_idx = [&](int gx, int gy, int c) -> std::size_t {
+    return (static_cast<std::size_t>(gy) * width_ + gx) * channels_ + c;
+  };
 
   if (rank == 0) {
     const auto &img = GetInput();
 
-    for (int y = 0; y < my_h; ++y) {
-      for (int x = 0; x < my_w; ++x) {
-        const int gy = b.start_y + y;
-        const int gx = b.start_x + x;
-        for (int c = 0; c < channels_; ++c) {
-          const int gidx = ((gy * width_ + gx) * channels_) + c;
-          setLocal(local_in, lw, channels_, x + halo, y + halo, c, img.pixels[gidx]);
+    auto fill_expanded_for = [&](const BlockInfo &bb, std::vector<std::uint8_t> &dst) {
+      const int hh = bb.my_h;
+      const int ww = bb.my_w;
+      const int dst_w = ww + 2 * halo;
+      const int dst_h = hh + 2 * halo;
+
+      dst.assign(static_cast<std::size_t>(dst_h) * dst_w * channels_, 0);
+
+      for (int ly = -halo; ly < hh + halo; ++ly) {
+        for (int lx = -halo; lx < ww + halo; ++lx) {
+          int gy = bb.start_y + ly;
+          int gx = bb.start_x + lx;
+
+          // clamp как в SEQ
+          gy = std::max(0, std::min(height_ - 1, gy));
+          gx = std::max(0, std::min(width_ - 1, gx));
+
+          const int dy = ly + halo;
+          const int dx = lx + halo;
+
+          for (int c = 0; c < channels_; ++c) {
+            dst[((dy * dst_w + dx) * channels_) + c] = img.pixels[global_idx(gx, gy, c)];
+          }
         }
       }
+    };
+
+    // 1) self
+    {
+      std::vector<std::uint8_t> tmp;
+      fill_expanded_for(b, tmp);
+      local_in = std::move(tmp);
     }
 
+    // 2) others
     for (int r = 1; r < proc_num_; ++r) {
       const int rpr = r / grid_cols_;
       const int rpc = r % grid_cols_;
       const BlockInfo rb = calcBlock(rpr, rpc, height_, width_, grid_rows_, grid_cols_);
 
-      std::vector<std::uint8_t> pack(static_cast<std::size_t>(rb.my_h) * rb.my_w * channels_);
-      for (int y = 0; y < rb.my_h; ++y) {
-        for (int x = 0; x < rb.my_w; ++x) {
-          const int gy = rb.start_y + y;
-          const int gx = rb.start_x + x;
-          for (int c = 0; c < channels_; ++c) {
-            const int gidx = ((gy * width_ + gx) * channels_) + c;
-            pack[((y * rb.my_w + x) * channels_) + c] = img.pixels[gidx];
-          }
-        }
-      }
+      std::vector<std::uint8_t> pack;
+      fill_expanded_for(rb, pack);
       MPI_Send(pack.data(), static_cast<int>(pack.size()), MPI_UNSIGNED_CHAR, r, 200, MPI_COMM_WORLD);
     }
   } else {
-    std::vector<std::uint8_t> pack(static_cast<std::size_t>(my_h) * my_w * channels_);
-    MPI_Recv(pack.data(), static_cast<int>(pack.size()), MPI_UNSIGNED_CHAR, 0, 200, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    for (int y = 0; y < my_h; ++y) {
-      for (int x = 0; x < my_w; ++x) {
-        for (int c = 0; c < channels_; ++c) {
-          setLocal(local_in, lw, channels_, x + halo, y + halo, c, pack[((y * my_w + x) * channels_) + c]);
-        }
-      }
-    }
+    // ---------- NON-ROOT: получает расширенный блок ----------
+    MPI_Recv(local_in.data(), static_cast<int>(local_in.size()), MPI_UNSIGNED_CHAR, 0, 200, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
   }
 
-  const int up = (pr > 0) ? (rank - grid_cols_) : MPI_PROC_NULL;
-  const int down = (pr < grid_rows_ - 1) ? (rank + grid_cols_) : MPI_PROC_NULL;
-  const int left = (pc > 0) ? (rank - 1) : MPI_PROC_NULL;
-  const int right = (pc < grid_cols_ - 1) ? (rank + 1) : MPI_PROC_NULL;
-
-  const int row_bytes = lw * channels_;
-
-  if (up != MPI_PROC_NULL) {
-    MPI_Sendrecv(local_in.data() + (1 * row_bytes), row_bytes, MPI_UNSIGNED_CHAR, up, 300,
-                 local_in.data() + (0 * row_bytes), row_bytes, MPI_UNSIGNED_CHAR, up, 301, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
-  } else {
-    std::copy(local_in.begin() + (1 * row_bytes), local_in.begin() + (2 * row_bytes),
-              local_in.begin() + (0 * row_bytes));
-  }
-
-  if (down != MPI_PROC_NULL) {
-    MPI_Sendrecv(local_in.data() + ((lh - 2) * row_bytes), row_bytes, MPI_UNSIGNED_CHAR, down, 301,
-                 local_in.data() + ((lh - 1) * row_bytes), row_bytes, MPI_UNSIGNED_CHAR, down, 300, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
-  } else {
-    std::copy(local_in.begin() + ((lh - 2) * row_bytes), local_in.begin() + ((lh - 1) * row_bytes),
-              local_in.begin() + ((lh - 1) * row_bytes));
-  }
-
-  std::vector<std::uint8_t> send_col(static_cast<std::size_t>(lh) * channels_);
-  std::vector<std::uint8_t> recv_col(static_cast<std::size_t>(lh) * channels_);
-
-  if (left != MPI_PROC_NULL) {
-    for (int y = 0; y < lh; ++y) {
-      for (int c = 0; c < channels_; ++c) {
-        send_col[(y * channels_) + c] = getLocal(local_in, lw, channels_, 1, y, c);
-      }
-    }
-
-    MPI_Sendrecv(send_col.data(), static_cast<int>(send_col.size()), MPI_UNSIGNED_CHAR, left, 400, recv_col.data(),
-                 static_cast<int>(recv_col.size()), MPI_UNSIGNED_CHAR, left, 401, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    for (int y = 0; y < lh; ++y) {
-      for (int c = 0; c < channels_; ++c) {
-        setLocal(local_in, lw, channels_, 0, y, c, recv_col[(y * channels_) + c]);
-      }
-    }
-  } else {
-    for (int y = 0; y < lh; ++y) {
-      for (int c = 0; c < channels_; ++c) {
-        setLocal(local_in, lw, channels_, 0, y, c, getLocal(local_in, lw, channels_, 1, y, c));
-      }
-    }
-  }
-
-  if (right != MPI_PROC_NULL) {
-    for (int y = 0; y < lh; ++y) {
-      for (int c = 0; c < channels_; ++c) {
-        send_col[(y * channels_) + c] = getLocal(local_in, lw, channels_, lw - 2, y, c);
-      }
-    }
-
-    MPI_Sendrecv(send_col.data(), static_cast<int>(send_col.size()), MPI_UNSIGNED_CHAR, right, 401, recv_col.data(),
-                 static_cast<int>(recv_col.size()), MPI_UNSIGNED_CHAR, right, 400, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-    for (int y = 0; y < lh; ++y) {
-      for (int c = 0; c < channels_; ++c) {
-        setLocal(local_in, lw, channels_, lw - 1, y, c, recv_col[(y * channels_) + c]);
-      }
-    }
-  } else {
-    for (int y = 0; y < lh; ++y) {
-      for (int c = 0; c < channels_; ++c) {
-        setLocal(local_in, lw, channels_, lw - 1, y, c, getLocal(local_in, lw, channels_, lw - 2, y, c));
-      }
-    }
-  }
-
+  // ---------- Convolution: считаем только внутренний блок ----------
+  // local_in имеет размер (my_h+2) x (my_w+2)
   for (int y = 0; y < my_h; ++y) {
     const int ly = y + halo;
     for (int x = 0; x < my_w; ++x) {
@@ -262,9 +201,11 @@ bool ZeninAGaussFilterMPI::RunImpl() {
     }
   }
 
+  // ---------- Gather to root ----------
   std::vector<std::uint8_t> final_image(static_cast<std::size_t>(width_) * height_ * channels_, 0);
 
   if (rank == 0) {
+    // place own
     for (int y = 0; y < my_h; ++y) {
       for (int x = 0; x < my_w; ++x) {
         const int gy = b.start_y + y;
@@ -275,6 +216,7 @@ bool ZeninAGaussFilterMPI::RunImpl() {
       }
     }
 
+    // recv others
     for (int src = 1; src < proc_num_; ++src) {
       const int spr = src / grid_cols_;
       const int spc = src % grid_cols_;
@@ -298,6 +240,7 @@ bool ZeninAGaussFilterMPI::RunImpl() {
     MPI_Send(local_out.data(), static_cast<int>(local_out.size()), MPI_UNSIGNED_CHAR, 0, 500, MPI_COMM_WORLD);
   }
 
+  // ---------- Bcast result for safety ----------
   MPI_Bcast(final_image.data(), static_cast<int>(final_image.size()), MPI_UNSIGNED_CHAR, 0, MPI_COMM_WORLD);
 
   GetOutput() = OutType{height_, width_, channels_, std::move(final_image)};

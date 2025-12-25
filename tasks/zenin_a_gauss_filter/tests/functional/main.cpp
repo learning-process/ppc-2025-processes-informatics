@@ -74,54 +74,37 @@ TEST_P(ZeninAGaussFilterFunctTests, Test) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 38> kTestParam = {
-    std::make_tuple("Random3x3BW", 3, 3, 1),
-    std::make_tuple("Random4x4BW", 4, 4, 1),
-    std::make_tuple("Random5x5BW", 5, 5, 1),
-    std::make_tuple("Random6x6BW", 6, 6, 1),
+const std::array<TestType, 44> kTestParam = {
+    std::make_tuple("Random3x3BW", 3, 3, 1),       std::make_tuple("Random4x4BW", 4, 4, 1),
+    std::make_tuple("Random5x5BW", 5, 5, 1),       std::make_tuple("Random6x6BW", 6, 6, 1),
 
-    std::make_tuple("Random3x3RGB", 3, 3, 3),
-    std::make_tuple("Random4x4RGB", 4, 4, 3),
+    std::make_tuple("Random3x3RGB", 3, 3, 3),      std::make_tuple("Random4x4RGB", 4, 4, 3),
     std::make_tuple("Random5x5RGB", 5, 5, 3),
 
-    std::make_tuple("Random10x10BW", 10, 10, 1),
-    std::make_tuple("Random15x15RGB", 15, 15, 3),
+    std::make_tuple("Random10x10BW", 10, 10, 1),   std::make_tuple("Random15x15RGB", 15, 15, 3),
+    std::make_tuple("SinglePixelBW", 1, 1, 1),     std::make_tuple("SinglePixelRGB", 1, 1, 3),
+    std::make_tuple("OneRow3ColsBW", 3, 1, 1),     std::make_tuple("OneCol3RowsBW", 1, 3, 1),
+    std::make_tuple("WideImageBW", 50, 3, 1),      std::make_tuple("TallImageBW", 3, 50, 1),
 
-    // Проверка 2D разбиения (простые числа и не делится нацело)
-    std::make_tuple("Size7x7BW", 7, 7, 1),
-    std::make_tuple("Size11x11BW", 11, 11, 1),
-    std::make_tuple("Size13x13RGB", 13, 13, 3),
-    std::make_tuple("Size17x17BW", 17, 17, 1),
-    std::make_tuple("Size19x19BW", 19, 19, 1),
-    std::make_tuple("Size23x23BW", 23, 23, 1),
-    std::make_tuple("Size29x29BW", 29, 29, 1),
-    std::make_tuple("Size31x31BW", 31, 31, 1),
+    std::make_tuple("Size7x7BW", 7, 7, 1),         std::make_tuple("Size11x11BW", 11, 11, 1),
+    std::make_tuple("Size13x13RGB", 13, 13, 3),    std::make_tuple("Size17x17BW", 17, 17, 1),
+    std::make_tuple("Size19x19BW", 19, 19, 1),     std::make_tuple("Size23x23BW", 23, 23, 1),
+    std::make_tuple("Size29x29BW", 29, 29, 1),     std::make_tuple("Size31x31BW", 31, 31, 1),
 
-    // Разные соотношения сторон
-    std::make_tuple("Rect3x7BW", 3, 7, 1),
-    std::make_tuple("Rect7x3BW", 7, 3, 1),
-    std::make_tuple("Rect5x8RGB", 5, 8, 3),
-    std::make_tuple("Rect8x5RGB", 8, 5, 3),
+    std::make_tuple("Rect3x7BW", 3, 7, 1),         std::make_tuple("Rect7x3BW", 7, 3, 1),
+    std::make_tuple("Rect5x8RGB", 5, 8, 3),        std::make_tuple("Rect8x5RGB", 8, 5, 3),
 
-    std::make_tuple("Prime53x53BW", 53, 53, 1),
-    std::make_tuple("Prime59x59BW", 59, 59, 1),
-    std::make_tuple("Prime61x61RGB", 61, 61, 3),
-    std::make_tuple("Prime67x67BW", 67, 67, 1),
-    std::make_tuple("Const0BW", 64, 64, 1),
-    std::make_tuple("Const255RGB", 32, 32, 3),
+    std::make_tuple("Prime53x53BW", 53, 53, 1),    std::make_tuple("Prime59x59BW", 59, 59, 1),
+    std::make_tuple("Prime61x61RGB", 61, 61, 3),   std::make_tuple("Prime67x67BW", 67, 67, 1),
+    std::make_tuple("Const0BW", 64, 64, 1),        std::make_tuple("Const255RGB", 32, 32, 3),
     std::make_tuple("Const17BW", 17, 19, 1),
 
-    std::make_tuple("CheckerBW", 31, 31, 1),
-    std::make_tuple("CheckerRGB", 32, 17, 3),
+    std::make_tuple("CheckerBW", 31, 31, 1),       std::make_tuple("CheckerRGB", 32, 17, 3),
 
-    std::make_tuple("GradXBW", 64, 8, 1),
-    std::make_tuple("GradYBW", 8, 64, 1),
-    std::make_tuple("GradXRGB", 63, 19, 3),
-    std::make_tuple("GradYRGB", 19, 63, 3),
-    std::make_tuple("ImpulseCenterBW", 33, 33, 1),
-    std::make_tuple("ImpulseCornerBW", 33, 33, 1),
-    std::make_tuple("StepVerticalBW", 50, 20, 1),
-    std::make_tuple("StepHorizontalRGB", 45, 23, 3),
+    std::make_tuple("GradXBW", 64, 8, 1),          std::make_tuple("GradYBW", 8, 64, 1),
+    std::make_tuple("GradXRGB", 63, 19, 3),        std::make_tuple("GradYRGB", 19, 63, 3),
+    std::make_tuple("ImpulseCenterBW", 33, 33, 1), std::make_tuple("ImpulseCornerBW", 33, 33, 1),
+    std::make_tuple("StepVerticalBW", 50, 20, 1),  std::make_tuple("StepHorizontalRGB", 45, 23, 3),
 };
 
 const auto kTestTasksList =
