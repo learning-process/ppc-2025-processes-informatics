@@ -46,9 +46,9 @@ $$\max_i |x_i^{(k+1)} - x_i^{(k)}| < \epsilon$$
 
 Итерационная формула:
 
-$$x_i^{(k+1)} = rac{1}{a_{ii}} \left( b_i - \sum_{j 
-e i} a_{ij} x_j^{(k)} 
-ight)$$
+$$
+x_i^{(k+1)} = \frac{1}{a_{ii}} \left( b_i - \sum_{j \ne i} a_{ij} x_j^{(k)} \right)
+$$
 
 **Шаги:**
 
