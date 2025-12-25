@@ -7,7 +7,7 @@
 #include "frolova_s_star_topology/common/include/common.hpp"
 // #include "util/include/util.hpp"
 
-constexpr int kTerm = -1;  // terminating parameter
+// constexpr int kTerm = -1;  // terminating parameter
 
 namespace frolova_s_star_topology {
 
