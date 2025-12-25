@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cstddef>  // для size_t
 #include <vector>
-#include <cstddef> // для size_t
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 #include "task/include/task.hpp"

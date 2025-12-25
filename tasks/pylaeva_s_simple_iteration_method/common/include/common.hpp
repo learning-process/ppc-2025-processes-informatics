@@ -1,10 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <cstddef>  // для size_t
+#include <string>
 #include <tuple>
 #include <vector>
-#include <string>
-#include <cstddef> // для size_t
 
 #include "task/include/task.hpp"
 
