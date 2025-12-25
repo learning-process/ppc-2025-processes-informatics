@@ -19,7 +19,7 @@ class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InTy
     input_data_.resize(size);
     std::iota(input_data_.begin(), input_data_.end(), 0);
     
-    // Фиксированный seed(42) для всех процессов
+    // Фиксированный seed(42) гарантирует идентичность данных на всех процессах
     std::mt19937 gen(42);
     std::shuffle(input_data_.begin(), input_data_.end(), gen);
     
@@ -33,12 +33,10 @@ class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InTy
     MPI_Initialized(&is_initialized);
     if (is_initialized != 0) MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    // Ваша проверка: Rank 1-3 просто подтверждают успех
-    if (rank != 0) {
-      return true;
-    }
+    // Ваша проверка: вспомогательные процессы просто возвращают true
+    if (rank != 0) return true;
 
-    // Реальная проверка только на Rank 0
+    // Сравнение векторов для Rank 0
     if (output_data.size() != expected_output_.size()) return false;
     for (size_t i = 0; i < output_data.size(); ++i) {
       if (std::abs(static_cast<double>(output_data[i]) - static_cast<double>(expected_output_[i])) > 1e-6) {
