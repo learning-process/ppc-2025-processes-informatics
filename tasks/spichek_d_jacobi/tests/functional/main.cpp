@@ -29,7 +29,6 @@ class SpichekDJacobiRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<I
   }
 
   bool CheckTestOutputData(OutType &output_data) override {
-    // Просто проверяем, что метод сошёлся и результат адекватный
     if (output_data.empty()) {
       return false;
     }
