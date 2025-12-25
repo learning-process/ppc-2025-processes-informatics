@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <cstddef> // для size_t
+
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,8 +21,8 @@ class PylaevaSSimpleIterationMethodMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  const double EPS = 1e-6;
-  const int MaxIterations = 10000;
+  const double kEps = 1e-6;
+  const int kMaxIterations = 10000;
 
   bool NotNullDeterm(const std::vector<double> &a, size_t n);
   bool DiagonalDominance(const std::vector<double> &a, size_t n);

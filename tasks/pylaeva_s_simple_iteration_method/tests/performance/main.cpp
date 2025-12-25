@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <tuple>
 #include <vector>
+#include <fstream>   // для std::ifstream
+#include <stdexcept> // для std::runtime_error
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 #include "pylaeva_s_simple_iteration_method/mpi/include/ops_mpi.hpp"
@@ -32,12 +34,12 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    constexpr double EPS = 1e-6;
+    constexpr double kEps = 1e-6;
     if (output_data.size() != expected_data_.size()) {
       return false;
     }
     for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::abs(output_data[i] - expected_data_[i]) > EPS) {
+      if (std::abs(output_data[i] - expected_data_[i]) > kEps) {
         return false;
       }
     }

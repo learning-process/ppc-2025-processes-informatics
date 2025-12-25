@@ -7,6 +7,8 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <fstream>   // для std::ifstream
+#include <stdexcept> // для std::runtime_error
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 #include "pylaeva_s_simple_iteration_method/mpi/include/ops_mpi.hpp"
@@ -75,7 +77,7 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
     }
 
     for (size_t i = 0; i < output_data.size(); i++) {
-      if (std::fabs(expected_data_[i] - output_data[i]) > EPS) {
+      if (std::fabs(expected_data_[i] - output_data[i]) > kEps) {
         return false;
       }
     }
@@ -90,7 +92,7 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
  private:
   InType input_data_;
   OutType expected_data_{};
-  const double EPS = 1e-6;
+  const double kEps = 1e-6;
 };
 
 TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationsTests) {

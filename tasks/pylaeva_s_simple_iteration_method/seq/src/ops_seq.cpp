@@ -34,7 +34,7 @@ bool PylaevaSSimpleIterationMethodSEQ::RunImpl() {
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
 
-  for (int iter = 0; iter < MaxIterations; ++iter) {
+  for (int iter = 0; iter < kMaxIterations; ++iter) {
     for (size_t i = 0; i < n; ++i) {
       double sum = 0.0;
       for (size_t j = 0; j < n; ++j) {
@@ -53,7 +53,7 @@ bool PylaevaSSimpleIterationMethodSEQ::RunImpl() {
 
     x = x_new;
 
-    if (std::sqrt(norm) < EPS) {
+    if (std::sqrt(norm) < kEps) {
       break;
     }
   }
