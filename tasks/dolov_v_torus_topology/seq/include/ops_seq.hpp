@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "dolov_v_torus_topology/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,9 @@ class DolovVTorusTopologySEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  InputData internal_input_;
+  OutputData internal_output_;
 };
 
 }  // namespace dolov_v_torus_topology

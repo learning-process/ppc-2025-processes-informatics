@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+#include <vector>
+
 #include "dolov_v_torus_topology/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -13,10 +16,24 @@ class DolovVTorusTopologyMPI : public BaseTask {
   explicit DolovVTorusTopologyMPI(const InType &in);
 
  private:
+  enum class MoveSide : uint8_t { kNorth, kSouth, kWest, kEast, kStay };
+
+  struct ProtocolTags {
+    static constexpr int kDataTransfer = 0;
+    static constexpr int kRouteSync = 1;
+  };
+
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static void DefineGridDimensions(int total_procs, int &r, int &c);
+  static MoveSide FindShortestPathStep(int current, int target, int r, int c);
+  static int GetTargetNeighbor(int current, MoveSide side, int r, int c);
+
+  InputData input_;
+  OutputData output_;
 };
 
 }  // namespace dolov_v_torus_topology

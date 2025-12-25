@@ -1,4 +1,9 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
+
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 #include "dolov_v_torus_topology/common/include/common.hpp"
 #include "dolov_v_torus_topology/mpi/include/ops_mpi.hpp"
@@ -8,20 +13,56 @@
 namespace dolov_v_torus_topology {
 
 class DolovVTorusTopologyPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
-  InType input_data_{};
-
+ protected:
   void SetUp() override {
-    input_data_ = kCount_;
+    int world_size = 1;
+    int is_init = 0;
+    MPI_Initialized(&is_init);
+    if (is_init) {
+      MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    }
+
+    const int kLargeDataSize = 1'000'000;
+    std::vector<int> big_message(kLargeDataSize, 1);
+
+    int sender = 0;
+    int receiver = (world_size > 1) ? (world_size - 1) : 0;
+
+    // Инициализация входных данных с учетом поля total_procs
+    input_data_.sender_rank = sender;
+    input_data_.receiver_rank = receiver;
+    input_data_.total_procs = world_size;
+    input_data_.message = big_message;
+
+    expected_result_.received_message.resize(kLargeDataSize, 1);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    // Проверка размера полученного сообщения
+    if (output_data.received_message.size() != expected_result_.received_message.size()) {
+      return false;
+    }
+
+    // Выборочная проверка содержимого сообщения для экономии времени в perf-тестах
+    size_t size = output_data.received_message.size();
+    if (size > 0) {
+      if (output_data.received_message[0] != 1 || output_data.received_message[size / 2] != 1 ||
+          output_data.received_message[size - 1] != 1) {
+        return false;
+      }
+    }
+
+    // Маршрут не должен быть пустым
+    return !output_data.route.empty();
   }
 
   InType GetTestInputData() final {
     return input_data_;
   }
+
+ private:
+  InType input_data_;
+  OutType expected_result_;
 };
 
 TEST_P(DolovVTorusTopologyPerfTests, RunPerfModes) {
@@ -33,8 +74,7 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DolovVTorusTopolo
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = DolovVTorusTopologyPerfTests::CustomPerfTestName;
-
-INSTANTIATE_TEST_SUITE_P(RunModeTests, DolovVTorusTopologyPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(TorusPerformance, DolovVTorusTopologyPerfTests, kGtestValues,
+                         DolovVTorusTopologyPerfTests::CustomPerfTestName);
 
 }  // namespace dolov_v_torus_topology
