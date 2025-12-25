@@ -1,7 +1,6 @@
 #include "zenin_a_gauss_filter/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -49,33 +48,46 @@ bool ZeninAGaussFilterSEQ::PreProcessingImpl() {
 bool ZeninAGaussFilterSEQ::RunImpl() {
   const auto &input_image = GetInput();
   auto &output_image = GetOutput();
+
   const int width = input_image.width;
   const int height = input_image.height;
   const int channels = input_image.channels;
-  static constexpr std::array<std::array<int, 3>, 3> kKernel = {{
-      {{1, 2, 1}},
-      {{2, 4, 2}},
-      {{1, 2, 1}},
-  }};
+
   static constexpr int kKernelSum = 16;
+
   for (int iy = 0; iy < height; ++iy) {
     for (int ix = 0; ix < width; ++ix) {
-      for (int ch = 0; ch < channels; ++ch) {
-        int sum = 0;
+      for (int channel = 0; channel < channels; ++channel) {
+        const int v00 = Clamp(input_image, ix - 1, iy - 1, channel);
+        const int v01 = Clamp(input_image, ix, iy - 1, channel);
+        const int v02 = Clamp(input_image, ix + 1, iy - 1, channel);
 
-        for (int ky = -1; ky <= 1; ++ky) {
-          for (int kx = -1; kx <= 1; ++kx) {
-            const int value = Clamp(input_image, ix + kx, iy + ky, ch);
-            const int k_value = kKernel[static_cast<std::size_t>(ky + 1)][static_cast<std::size_t>(kx + 1)];
-            sum += value * k_value;
-          }
-        }
+        const int v10 = Clamp(input_image, ix - 1, iy, channel);
+        const int v11 = Clamp(input_image, ix, iy, channel);
+        const int v12 = Clamp(input_image, ix + 1, iy, channel);
+
+        const int v20 = Clamp(input_image, ix - 1, iy + 1, channel);
+        const int v21 = Clamp(input_image, ix, iy + 1, channel);
+        const int v22 = Clamp(input_image, ix + 1, iy + 1, channel);
+
+        int sum = 0;
+        sum += v00 * 1;
+        sum += v01 * 2;
+        sum += v02 * 1;
+        sum += v10 * 2;
+        sum += v11 * 4;
+        sum += v12 * 2;
+        sum += v20 * 1;
+        sum += v21 * 2;
+        sum += v22 * 1;
 
         const int res = (sum + (kKernelSum / 2)) / kKernelSum;
-        output_image.pixels[((iy * width + ix) * channels) + ch] = static_cast<std::uint8_t>(std::clamp(res, 0, 255));
+        output_image.pixels[((iy * width + ix) * channels) + channel] =
+            static_cast<std::uint8_t>(std::clamp(res, 0, 255));
       }
     }
   }
+
   return true;
 }
 
