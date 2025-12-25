@@ -3,17 +3,17 @@
 #include "../../common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace kutergin_v_linear_contrast_stretching
-{
+namespace kutergin_v_linear_contrast_stretching {
 
-class LinearContrastStretchingMPI : public BaseTask  // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)
+class LinearContrastStretchingMPI
+    : public BaseTask  // наследник BaseTask (псевдоним для ppc::task::Task<InType, OutType>)
 {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() 
-  {
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit LinearContrastStretchingMPI(const InType &in);  // конструктор принимает InType (псевдоним для структуры InputData)
+  explicit LinearContrastStretchingMPI(
+      const InType &in);  // конструктор принимает InType (псевдоним для структуры InputData)
 
  protected:
   bool ValidationImpl() override;

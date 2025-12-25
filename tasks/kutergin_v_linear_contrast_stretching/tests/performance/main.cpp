@@ -23,8 +23,8 @@ class LinearContrastStretchingPerfTests : public ppc::util::BaseRunPerfTests<InT
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
-    const int width = 2000;
-    const int height = 2000;
+    const int width = 4000;
+    const int height = 4000;
     const size_t image_size = static_cast<size_t>(width) * height;
 
     std::mt19937 gen(rank);
