@@ -14,7 +14,7 @@ DolovVTorusTopologyMPI::DolovVTorusTopologyMPI(const InType &in) : input_(in) {
 }
 
 DolovVTorusTopologyMPI::~DolovVTorusTopologyMPI() {
-  if (torus_comm != MPI_COMM_NULL && torus_comm != MPI_COMM_WORLD) {
+  if (torus_comm != MPI_COMM_NULL) {
     MPI_Comm_free(&torus_comm);
   }
 }
@@ -37,22 +37,21 @@ bool DolovVTorusTopologyMPI::PreProcessingImpl() {
   int rows, cols;
   DefineGridDimensions(proc_count, rows, cols);
 
-  // Динамическое определение соседей.
-  // В 2D торе у узла всегда есть 4 направления (N, S, W, E).
-  // Даже если соседи совпадают (при малом P), мы указываем их все,
-  // чтобы MPI корректно построил топологию графа.
-  std::vector<int> neighbors;
-  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kNorth, rows, cols));
-  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kSouth, rows, cols));
-  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kWest, rows, cols));
-  neighbors.push_back(GetTargetNeighbor(rank, MoveSide::kEast, rows, cols));
+  // Собираем уникальных соседей. В торе их максимум 4.
+  std::set<int> unique_neighbors;
+  unique_neighbors.insert(GetTargetNeighbor(rank, MoveSide::kNorth, rows, cols));
+  unique_neighbors.insert(GetTargetNeighbor(rank, MoveSide::kSouth, rows, cols));
+  unique_neighbors.insert(GetTargetNeighbor(rank, MoveSide::kWest, rows, cols));
+  unique_neighbors.insert(GetTargetNeighbor(rank, MoveSide::kEast, rows, cols));
 
+  // Убираем петлю на себя, если процесс всего один.
+  // Это критично для стабильности MPI_Dist_graph_create_adjacent на Windows.
+  unique_neighbors.erase(rank);
+
+  std::vector<int> neighbors(unique_neighbors.begin(), unique_neighbors.end());
   int degrees = static_cast<int>(neighbors.size());
 
-  // Исправление: MPI_Dist_graph_create_adjacent требует, чтобы граф был
-  // возможен в рамках текущего коммуникатора.
-  // При degrees=4 и proc_count=1 MPI может выдать ошибку на некоторых реализациях.
-  // Однако, передача соседей, равных собственному рангу, является легальной.
+  // ТЗ: Создаем виртуальную топологию (распределенный граф)
   MPI_Dist_graph_create_adjacent(MPI_COMM_WORLD, degrees, neighbors.data(), MPI_UNWEIGHTED, degrees, neighbors.data(),
                                  MPI_UNWEIGHTED, MPI_INFO_NULL, false, &torus_comm);
 
@@ -60,10 +59,9 @@ bool DolovVTorusTopologyMPI::PreProcessingImpl() {
 }
 
 bool DolovVTorusTopologyMPI::RunImpl() {
-  int rank;
+  // Работаем ТОЛЬКО с torus_comm
+  int rank, proc_count;
   MPI_Comm_rank(torus_comm, &rank);
-
-  int proc_count;
   MPI_Comm_size(torus_comm, &proc_count);
 
   int rows, cols;
@@ -82,7 +80,7 @@ bool DolovVTorusTopologyMPI::RunImpl() {
   int current_node = input_.sender_rank;
   std::vector<int> path = {current_node};
 
-  // Логика передачи сообщения от узла к узлу
+  // Алгоритм передачи: работает корректно даже при P=1 (цикл не начнется)
   while (current_node != input_.receiver_rank) {
     MoveSide next_step = FindShortestPathStep(current_node, input_.receiver_rank, rows, cols);
     int next_node = GetTargetNeighbor(current_node, next_step, rows, cols);
@@ -104,7 +102,6 @@ bool DolovVTorusTopologyMPI::RunImpl() {
 
     int prev_owner = current_node;
     current_node = next_node;
-    // Синхронизируем текущее положение сообщения для всех процессов
     MPI_Bcast(&current_node, 1, MPI_INT, prev_owner, torus_comm);
   }
 
@@ -113,8 +110,8 @@ bool DolovVTorusTopologyMPI::RunImpl() {
     output_.route = std::move(path);
   }
 
-  // Финальная рассылка маршрута и данных всем процессам
-  int final_path_size = static_cast<int>(output_.route.size());
+  // Рассылка финальных данных всем участникам коммуникатора torus_comm
+  int final_path_size = (rank == input_.receiver_rank) ? static_cast<int>(output_.route.size()) : 0;
   MPI_Bcast(&final_path_size, 1, MPI_INT, input_.receiver_rank, torus_comm);
 
   if (rank != input_.receiver_rank) {
@@ -139,12 +136,9 @@ void DolovVTorusTopologyMPI::DefineGridDimensions(int total_procs, int &r, int &
 }
 
 DolovVTorusTopologyMPI::MoveSide DolovVTorusTopologyMPI::FindShortestPathStep(int current, int target, int r, int c) {
-  int curr_x = current % c;
-  int curr_y = current / c;
-  int tar_x = target % c;
-  int tar_y = target / c;
-  int dx = tar_x - curr_x;
-  int dy = tar_y - curr_y;
+  int curr_x = current % c, curr_y = current / c;
+  int tar_x = target % c, tar_y = target / c;
+  int dx = tar_x - curr_x, dy = tar_y - curr_y;
 
   if (std::abs(dx) > c / 2) {
     dx = (dx > 0) ? dx - c : dx + c;
@@ -159,13 +153,11 @@ DolovVTorusTopologyMPI::MoveSide DolovVTorusTopologyMPI::FindShortestPathStep(in
   if (dy != 0) {
     return (dy > 0) ? MoveSide::kSouth : MoveSide::kNorth;
   }
-
   return MoveSide::kStay;
 }
 
 int DolovVTorusTopologyMPI::GetTargetNeighbor(int current, MoveSide side, int r, int c) {
-  int x = current % c;
-  int y = current / c;
+  int x = current % c, y = current / c;
   switch (side) {
     case MoveSide::kNorth:
       y = (y - 1 + r) % r;
