@@ -83,11 +83,11 @@ bool FrolovaSStarTopologyMPI::RunImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  const auto nodes = size - 1;
-  MPI_Status status;
 
   if (rank == 0) {
+    const int nodes = size - 1;
     std::vector<int> buf;
+    MPI_Status status;
 
     for (int i = 0; i < nodes; ++i) {
       int dst = 0;
@@ -100,11 +100,8 @@ bool FrolovaSStarTopologyMPI::RunImpl() {
       buf.resize(buf_size);
       MPI_Recv(buf.data(), buf_size, MPI_INT, src, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      const bool is_dst_valid = dst >= 1 && dst < size && dst != src;
-      const int target = is_dst_valid ? dst : src;
-
-      MPI_Send(&src, 1, MPI_INT, target, 0, MPI_COMM_WORLD);
-      MPI_Send(buf.data(), buf_size, MPI_INT, target, 0, MPI_COMM_WORLD);
+      MPI_Send(&src, 1, MPI_INT, dst, 0, MPI_COMM_WORLD);
+      MPI_Send(buf.data(), buf_size, MPI_INT, dst, 0, MPI_COMM_WORLD);
     }
 
     for (int i = 0; i < nodes; ++i) {
@@ -113,22 +110,17 @@ bool FrolovaSStarTopologyMPI::RunImpl() {
 
   } else {
     MPI_Send(&dest_, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-
-    if (!data_.empty()) {
-      MPI_Send(data_.data(), static_cast<int>(data_.size()), MPI_INT, 0, 0, MPI_COMM_WORLD);
-    } else {
-      int dummy = 0;
-      MPI_Send(&dummy, 0, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    }
+    int send_size = data_.empty() ? 0 : static_cast<int>(data_.size());
+    MPI_Send(data_.data(), send_size, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
     while (true) {
       int src = 0;
       MPI_Recv(&src, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
       if (src == kTerm) {
         break;
       }
 
+      MPI_Status status;
       MPI_Probe(0, 0, MPI_COMM_WORLD, &status);
       int buf_size = 0;
       MPI_Get_count(&status, MPI_INT, &buf_size);

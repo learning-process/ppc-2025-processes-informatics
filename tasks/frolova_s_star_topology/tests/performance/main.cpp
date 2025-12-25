@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string>
 
 #include "frolova_s_star_topology/common/include/common.hpp"
@@ -27,7 +28,6 @@ class FrolovaSRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Для MPI тестов проверяем, что результат в допустимом диапазоне
     return output_data >= 0 && output_data <= kPerfDataSize;
   }
 
