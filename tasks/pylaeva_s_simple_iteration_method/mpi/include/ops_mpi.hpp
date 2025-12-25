@@ -21,13 +21,11 @@ class PylaevaSSimpleIterationMethodMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  const double kEps = 1e-6;
-  const int kMaxIterations = 10000;
+  double kEps = 1e-6;
+  int kMaxIterations = 10000;
 
   bool NotNullDeterm(const std::vector<double> &a, size_t n);
   bool DiagonalDominance(const std::vector<double> &a, size_t n);
-  void CalculateRowsDistribution(int proc_num, int n, std::vector<int> &row_counts_per_rank,
-                                 std::vector<int> &row_offsets_per_rank);
 };
 
 }  // namespace pylaeva_s_simple_iteration_method
