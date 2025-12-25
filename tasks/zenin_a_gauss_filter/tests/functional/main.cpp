@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
-
 #include <stb/stb_image.h>
-#include <random>
+
 #include <array>
+#include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <random>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <cctype>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -27,8 +27,7 @@ class ZeninAGaussFilterFunctTests : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    TestType params =
-        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     const std::string test_name = std::get<0>(params);
     const int width = std::get<1>(params);
@@ -44,7 +43,6 @@ class ZeninAGaussFilterFunctTests : public ppc::util::BaseRunFuncTests<InType, O
       pixels[i] = static_cast<std::uint8_t>(dist(gen));
     }
 
-    
     input_data_ = Image(height, width, channels, std::move(pixels));
 
     // Эталон: SEQ
@@ -57,12 +55,9 @@ class ZeninAGaussFilterFunctTests : public ppc::util::BaseRunFuncTests<InType, O
     expected_pixels_ = seq_filter.GetOutput().pixels;
   }
 
-
   bool CheckTestOutputData(OutType &output_data) final {
-    
     return output_data.pixels == expected_pixels_;
   }
-  
 
   InType GetTestInputData() final {
     return input_data_;
@@ -126,7 +121,7 @@ const std::array<TestType, 44> kTestParam = {
 
     std::make_tuple("CheckerBW", 31, 31, 1),
     std::make_tuple("CheckerRGB", 32, 17, 3),
-    
+
     std::make_tuple("GradXBW", 64, 8, 1),
     std::make_tuple("GradYBW", 8, 64, 1),
     std::make_tuple("GradXRGB", 63, 19, 3),
@@ -137,15 +132,12 @@ const std::array<TestType, 44> kTestParam = {
     std::make_tuple("StepHorizontalRGB", 45, 23, 3),
 };
 
-
-
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<ZeninAGaussFilterMPI, InType>(kTestParam, PPC_SETTINGS_zenin_a_gauss_filter),
                    ppc::util::AddFuncTask<ZeninAGaussFilterSEQ, InType>(kTestParam, PPC_SETTINGS_zenin_a_gauss_filter));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = ZeninAGaussFilterFunctTests::PrintFuncTestName<ZeninAGaussFilterFunctTests>;
-
 
 INSTANTIATE_TEST_SUITE_P(ZeninAGaussFilter, ZeninAGaussFilterFunctTests, kGtestValues, kPerfTestName);
 
