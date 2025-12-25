@@ -7,6 +7,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <random>
 
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -17,47 +18,26 @@
 namespace zenin_a_gauss_filter {
 
 class ZeninAGaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kMsgSize = 100000000;
-  InType input_data_;
+  private: 
+    const int width_ = 1500;
+    const int height_ = 1500;
+    const int channels_ = 3;
+  
+    InType input_data_;
 
   void SetUp() override {
-    const auto &full_param = GetParam();
-    const std::string &test_name = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
-    if (test_name.find("seq_enabled") != std::string::npos) {
-      GTEST_SKIP() << "SKIP";
-    }
-    int world_size = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-    const int center = 0;
-    const int src = center;
-    const int dst = (world_size > 1) ? world_size - 1 : 0;
-    std::vector<double> data(kMsgSize);
-    for (size_t i = 0; i < kMsgSize; ++i) {
-      data[i] = static_cast<double>(i);
-    }
-    input_data_ = std::make_tuple(static_cast<size_t>(src), static_cast<size_t>(dst), std::move(data));
+    std::mt19937 gen(static_cast<std::mt19937::result_type>(height_ * 1337u + width_));
+    std::uniform_int_distribution<int> dist(0, 255);
+
+    std::vector<std::uint8_t> pixels(static_cast<std::size_t>(width_) * height_ * channels_);
+    for (auto& v : pixels) v = static_cast<std::uint8_t>(dist(gen));
+
+    // ВАЖНО: Image(height, width, channels, pixels)
+    input_data_ = Image(height_, width_, channels_, std::move(pixels));
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    int world_rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-    const auto &in = input_data_;
-    const int dst = static_cast<int>(std::get<1>(in));
-    const auto &data = std::get<2>(in);
-    if (world_rank == dst) {
-      if (output_data.size() != data.size()) {
-        return false;
-      }
-      for (size_t i = 0; i < data.size(); ++i) {
-        if (output_data[i] != data[i]) {
-          return false;
-        }
-      }
-    } else {
-      if (!output_data.empty()) {
-        return false;
-      }
-    }
-    return true;
+    return (input_data_.width == output_data.width && input_data_.height == output_data.height &&
+            input_data_.channels == output_data.channels && !output_data.pixels.empty());
   }
 
   InType GetTestInputData() final {
@@ -69,8 +49,8 @@ TEST_P(ZeninAGaussFilterPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, ZeninAGaussFilterMPI, ZeninAGaussFilterSEQ>(PPC_SETTINGS_zenin_a_gauss_filter);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ZeninAGaussFilterMPI, ZeninAGaussFilterSEQ>(
+    PPC_SETTINGS_zenin_a_gauss_filter);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

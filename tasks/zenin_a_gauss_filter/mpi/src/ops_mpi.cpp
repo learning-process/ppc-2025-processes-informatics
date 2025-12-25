@@ -120,8 +120,8 @@ bool ZeninAGaussFilterMPI::RunImpl() {
   const int my_w = b.my_w;
 
   const int halo = 1;
-  const int lw = my_w + 2 * halo;  // local width with halo
-  const int lh = my_h + 2 * halo;  // local height with halo
+  const int lw = my_w + 2 * halo;  
+  const int lh = my_h + 2 * halo;  
 
   std::vector<std::uint8_t> local_in(static_cast<std::size_t>(lh) * lw * channels_, 0);
   std::vector<std::uint8_t> local_out(static_cast<std::size_t>(my_h) * my_w * channels_, 0);
