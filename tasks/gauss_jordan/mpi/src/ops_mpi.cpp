@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "gauss_jordan/common/include/common.hpp"
