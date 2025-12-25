@@ -56,25 +56,53 @@ bool YurkinGRulerMPI::RunImpl() {
     return true;
   }
 
+  int repeats = 1;
+  {
+    const int in = GetInput();
+    if (in <= 0) {
+      repeats = 1000;
+    } else if (in < 1000) {
+      repeats = 1000;
+    } else if (in < 100000) {
+      repeats = 100;
+    } else {
+      repeats = 10;
+    }
+  }
+
   if (rank == src) {
     const int next = rank + direction;
-    MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
+
+    double t0 = MPI_Wtime();
+    for (int r = 0; r < repeats; ++r) {
+      MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
+      MPI_Barrier(MPI_COMM_WORLD);
+    }
+    double t1 = MPI_Wtime();
+
+    (void)t0;
+    (void)t1;
+
     MPI_Barrier(MPI_COMM_WORLD);
     return true;
   }
 
   const int prev = rank - direction;
   int recv_val = 0;
-  MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  if (rank == dst) {
-    GetOutput() = recv_val;
+  for (int r = 0; r < repeats; ++r) {
+    MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    if (rank == dst) {
+      GetOutput() = recv_val;
+      MPI_Barrier(MPI_COMM_WORLD);
+      continue;
+    }
+
+    const int next = rank + direction;
+    MPI_Send(&recv_val, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
-    return true;
   }
-
-  const int next = rank + direction;
-  MPI_Send(&recv_val, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
 
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
