@@ -8,7 +8,7 @@
 namespace frolova_s_star_topology {
 
 class FrolovaSRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kPerfDataSize = 1000000;
+  static constexpr int kPerfDataSize = 2000000;
 
   InType input_data_;
 
