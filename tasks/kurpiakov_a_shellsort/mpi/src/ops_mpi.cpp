@@ -2,14 +2,13 @@
 
 #include <mpi.h>
 
-#include <cstddef>
 #include <vector>
 
 #include "kurpiakov_a_shellsort/common/include/common.hpp"
 
 namespace kurpiakov_a_shellsort {
 
-KurpiakovAShellsortMPI::KurpiakovAShellsortMPI(const InType &in) : world_size_(0), rank_(0) {
+KurpiakovAShellsortMPI::KurpiakovAShellsortMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};

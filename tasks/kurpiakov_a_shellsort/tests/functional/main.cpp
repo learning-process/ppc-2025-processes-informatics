@@ -30,14 +30,14 @@ class KurpiakovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InTyp
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int size_output = output_data.size();
-    int size_exp = expected_data_.size();
+    size_t size_output = output_data.size();
+    size_t size_exp = expected_data_.size();
 
     if (size_output != size_exp) {
       return false;
     }
 
-    for (int i = 0; i < size_exp; ++i) {
+    for (size_t i = 0; i < size_exp; ++i) {
       if (output_data[i] != expected_data_[i]) {
         return false;
       }
