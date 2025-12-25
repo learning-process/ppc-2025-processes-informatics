@@ -12,23 +12,15 @@
 namespace frolova_s_star_topology {
 
 class FrolovaSRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kPerfDataSize = 2000000;
-  InType input_data_ = 0;
+  const int kCount_ = 1000000;
+  InType input_data_{};
 
   void SetUp() override {
-    const auto &full_param = GetParam();
-    const std::string &test_name = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kNameTest)>(full_param);
-
-    // Инициализируем только для mpi версии, так как на seq у нас заглушка
-    if (test_name.find("mpi_enabled") != std::string::npos) {
-      input_data_ = kPerfDataSize;
-    } else {
-      GTEST_SKIP();
-    }
+    input_data_ = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data >= 0 && output_data <= kPerfDataSize;
+    return input_data_ == output_data;
   }
 
   InType GetTestInputData() final {
