@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 
-
 #include <algorithm>
-#include <random>
-#include <vector>
-#include <tuple>
 #include <ranges>
+#include <tuple>
+#include <vector>
 
 #include "kurpiakov_a_shellsort/common/include/common.hpp"
 #include "kurpiakov_a_shellsort/mpi/include/ops_mpi.hpp"
@@ -21,28 +19,25 @@ class KurpiakovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
 
   void SetUp() override {
     std::vector<int> vec(kPerfSize);
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(-100000, 100000);
-    for (int i = 0; i < kPerfSize; i++) {
-      vec[i] = dist(gen);
+    for (int i = 0; i < kPerfSize; ++i) {
+      vec[i] = kPerfSize - i;
     }
-    input_data_ = std::make_tuple(kPerfSize, vec);
 
+    input_data_ = std::make_tuple(kPerfSize, vec);
+    std::ranges::reverse(vec);
     expected_data_ = vec;
-    std::ranges::sort(expected_data_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     int size_output = output_data.size();
-    int size_exp = expected_data_.data();
-    
-    if (size_output != size_exp){
+    int size_exp = expected_data_.size();
+
+    if (size_output != size_exp) {
       return false;
     }
 
-    for (int i = 0; i < size_exp){
-      if (output_data[i] != expected_data_[i]){
+    for (int i = 0; i < size_exp; ++i) {
+      if (output_data[i] != expected_data_[i]) {
         return false;
       }
     }

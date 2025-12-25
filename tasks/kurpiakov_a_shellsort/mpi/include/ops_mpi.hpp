@@ -23,7 +23,7 @@ class KurpiakovAShellsortMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   static void ShellSortLocal(OutType &arr);
-  static OutType MergeSortedArrays(const OutType &a, const OutType &b);
+  void MergeSortedArrays(const OutType &send_counts, const OutType &gathered_data, const OutType &displs, const int &n);
 };
 
 }  // namespace kurpiakov_a_shellsort

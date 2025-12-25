@@ -61,25 +61,30 @@ void KurpiakovAShellsortMPI::ShellSortLocal(OutType &arr) {
   }
 }
 
-OutType KurpiakovAShellsortMPI::MergeSortedArrays(const OutType &a, const OutType &b) {
-  OutType result;
-  result.reserve(a.size() + b.size());
-  size_t i = 0;
-  size_t j = 0;
-  while (i < a.size() && j < b.size()) {
-    if (a[i] <= b[j]) {
-      result.push_back(a[i++]);
-    } else {
-      result.push_back(b[j++]);
+void KurpiakovAShellsortMPI::MergeSortedArrays(const OutType &send_counts, const OutType &gathered_data,
+                                               const OutType &displs, const int &n) {
+  data_.clear();
+  data_.reserve(n);
+
+  std::vector<int> indices(world_size_, 0);
+
+  for (int k = 0; k < n; k++) {
+    int min_val = 0;
+    int min_part = -1;
+
+    for (int i = 0; i < world_size_; i++) {
+      if (indices[i] < send_counts[i]) {
+        int val = gathered_data[displs[i] + indices[i]];
+        if (min_part == -1 || val < min_val) {
+          min_val = val;
+          min_part = i;
+        }
+      }
     }
+
+    data_.push_back(min_val);
+    indices[min_part]++;
   }
-  while (i < a.size()) {
-    result.push_back(a[i++]);
-  }
-  while (j < b.size()) {
-    result.push_back(b[j++]);
-  }
-  return result;
 }
 
 bool KurpiakovAShellsortMPI::RunImpl() {
@@ -122,28 +127,7 @@ bool KurpiakovAShellsortMPI::RunImpl() {
               0, MPI_COMM_WORLD);
 
   if (rank_ == 0) {
-    data_.clear();
-    data_.reserve(n);
-
-    std::vector<int> indices(world_size_, 0);
-
-    for (int k = 0; k < n; k++) {
-      int min_val = 0;
-      int min_part = -1;
-
-      for (int i = 0; i < world_size_; i++) {
-        if (indices[i] < send_counts[i]) {
-          int val = gathered_data[displs[i] + indices[i]];
-          if (min_part == -1 || val < min_val) {
-            min_val = val;
-            min_part = i;
-          }
-        }
-      }
-
-      data_.push_back(min_val);
-      indices[min_part]++;
-    }
+    MergeSortedArrays(send_counts, gathered_data, displs, n);
   }
 
   if (rank_ != 0) {
