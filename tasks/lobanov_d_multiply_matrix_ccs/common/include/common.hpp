@@ -22,11 +22,7 @@ using OutType = CompressedColumnMatrix;
 using TestType = std::tuple<std::string, CompressedColumnMatrix, CompressedColumnMatrix, CompressedColumnMatrix>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-CompressedColumnMatrix CreateRandomCompressedColumnMatrix(
-    int row_count,
-    int column_count, 
-    double density_factor,
-    int seed
-);
+CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int column_count, double density_factor,
+                                                          int seed);
 
 }  // namespace lobanov_d_multiply_matrix_ccs
