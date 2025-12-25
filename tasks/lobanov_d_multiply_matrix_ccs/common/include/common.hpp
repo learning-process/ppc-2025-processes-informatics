@@ -9,9 +9,9 @@
 namespace lobanov_d_multiply_matrix_ccs {
 
 struct CompressedColumnMatrix {
-  int row_count;
-  int column_count;
-  int non_zero_count;
+  int row_count = 0;
+  int column_count = 0;
+  int non_zero_count = 0;
   std::vector<double> value_data;
   std::vector<int> row_index_data;
   std::vector<int> column_pointer_data;

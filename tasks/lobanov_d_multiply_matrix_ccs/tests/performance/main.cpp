@@ -19,7 +19,7 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   CompressedColumnMatrix result_matrix;
   result_matrix.row_count = row_count;
   result_matrix.column_count = column_count;
-
+  result_matrix.non_zero_count = 0;
   std::mt19937 rng(seed);
 
   std::hash<std::string> hasher;

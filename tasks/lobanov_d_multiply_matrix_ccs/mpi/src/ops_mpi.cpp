@@ -19,7 +19,11 @@ constexpr double EPSILON_THRESHOLD = 1e-10;
 LobanovDMultiplyMatrixMPI::LobanovDMultiplyMatrixMPI(const InType &input_matrices) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = input_matrices;
-  GetOutput() = CompressedColumnMatrix{};
+  CompressedColumnMatrix empty_matrix;
+  empty_matrix.row_count = 0;
+  empty_matrix.column_count = 0;
+  empty_matrix.non_zero_count = 0;
+  GetOutput() = empty_matrix;
 }
 
 bool LobanovDMultiplyMatrixMPI::ValidationImpl() {
@@ -191,6 +195,7 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
   result_matrix.row_count = matrix_a.row_count;
   result_matrix.column_count = matrix_b.column_count;
   result_matrix.column_pointer_data.push_back(0);
+  result_matrix.non_zero_count = 0;
 
   std::vector<std::vector<double>> value_collections(total_processes);
   std::vector<std::vector<int>> row_index_collections(total_processes);

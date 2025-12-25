@@ -14,7 +14,11 @@ constexpr double EPSILON_THRESHOLD = 1e-12;
 LobanovDMultiplyMatrixSEQ::LobanovDMultiplyMatrixSEQ(const InType &input_matrices) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = input_matrices;
-  GetOutput() = CompressedColumnMatrix{};
+  CompressedColumnMatrix empty_matrix;
+  empty_matrix.row_count = 0;
+  empty_matrix.column_count = 0;
+  empty_matrix.non_zero_count = 0;
+  GetOutput() = empty_matrix;
 }
 
 bool LobanovDMultiplyMatrixSEQ::ValidationImpl() {
@@ -122,6 +126,10 @@ void LobanovDMultiplyMatrixSEQ::PerformMatrixMultiplication(const CompressedColu
                                                             const CompressedColumnMatrix &second_matrix,
                                                             CompressedColumnMatrix &product_result) {
   CompressedColumnMatrix transposed_first = {};
+  transposed_first.row_count = 0;
+  transposed_first.column_count = 0;
+  transposed_first.non_zero_count = 0;
+
   ComputeTransposedMatrix(first_matrix, transposed_first);
 
   product_result.row_count = first_matrix.row_count;
@@ -149,6 +157,10 @@ bool LobanovDMultiplyMatrixSEQ::RunImpl() {
 
   try {
     CompressedColumnMatrix result_matrix;
+    result_matrix.row_count = 0;
+    result_matrix.column_count = 0;
+    result_matrix.non_zero_count = 0;
+
     PerformMatrixMultiplication(matrix_a, matrix_b, result_matrix);
     GetOutput() = result_matrix;
     return true;
