@@ -1,22 +1,20 @@
 #include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
 #include <algorithm>
-#include <vector>
 
 namespace ovsyannikov_n_shell_batcher {
 
-// Конструктор: просто принимаем данные
-OvsyannikovNShellBatcherSEQ::OvsyannikovNShellBatcherSEQ(const std::vector<int>& in) {
+OvsyannikovNShellBatcherSEQ::OvsyannikovNShellBatcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool OvsyannikovNShellBatcherSEQ::ValidationImpl() {
+  // ЗДЕСЬ НЕ ДОЛЖНО БЫТЬ MPI_Bcast или MPI_Barrier
   return true;
 }
 
 bool OvsyannikovNShellBatcherSEQ::PreProcessingImpl() {
-  // НИКАКИХ MPI_Bcast, MPI_Comm_rank и т.д.
-  // Просто готовим выходной вектор
+  // Просто копируем данные. Фреймворк PPC уже положил их в GetInput() на Rank 0.
   GetOutput() = GetInput();
   return true;
 }
@@ -26,8 +24,7 @@ bool OvsyannikovNShellBatcherSEQ::RunImpl() {
   int n = static_cast<int>(arr.size());
   if (n < 2) return true;
 
-  // Обычная последовательная сортировка Шелла.
-  // В режиме pipeline этот код будет запущен фреймворком на одном ядре (Rank 0).
+  // Обычная сортировка Шелла без MPI
   for (int gap = n / 2; gap > 0; gap /= 2) {
     for (int i = gap; i < n; i++) {
       int temp = arr[i];
@@ -46,4 +43,4 @@ bool OvsyannikovNShellBatcherSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace ovsyannikov_n_shell_batcher
+} // namespace ovsyannikov_n_shell_batcher

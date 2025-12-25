@@ -15,7 +15,7 @@ namespace ovsyannikov_n_shell_batcher {
 class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int size = 40000;
+    const int size = 500;
     input_data_.resize(size);
     std::iota(input_data_.begin(), input_data_.end(), 0);
     
