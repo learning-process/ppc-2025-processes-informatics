@@ -1,16 +1,13 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <random>
-#include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 #include "zenin_a_gauss_filter/common/include/common.hpp"
 #include "zenin_a_gauss_filter/mpi/include/ops_mpi.hpp"
 #include "zenin_a_gauss_filter/seq/include/ops_seq.hpp"
@@ -26,7 +23,7 @@ class ZeninAGaussFilterPerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
   InType input_data_;
 
   void SetUp() override {
-    std::mt19937 gen(static_cast<std::mt19937::result_type>(height_ * 1337u + width_));
+    std::mt19937 gen(static_cast<std::mt19937::result_type>((height_ * 1337U) + width_));
     std::uniform_int_distribution<int> dist(0, 255);
 
     std::vector<std::uint8_t> pixels(static_cast<std::size_t>(width_) * height_ * channels_);

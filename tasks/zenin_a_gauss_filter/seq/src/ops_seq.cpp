@@ -1,6 +1,9 @@
 #include "zenin_a_gauss_filter/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "zenin_a_gauss_filter/common/include/common.hpp"

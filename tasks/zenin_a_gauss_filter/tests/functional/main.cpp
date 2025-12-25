@@ -5,6 +5,8 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <random>
 #include <string>
 #include <tuple>
