@@ -8,11 +8,11 @@
 #include "zenin_a_gauss_filter/common/include/common.hpp"
 
 namespace zenin_a_gauss_filter {
-inline int clampi(int v, int lo, int hi) {
+static int Clampi(int v, int lo, int hi) {
   return std::max(lo, std::min(hi, v));
 }
 inline std::uint8_t clampu8(int v) {
-  return static_cast<std::uint8_t>(clampi(v, 0, 255));
+  return static_cast<std::uint8_t>(Clampi(v, 0, 255));
 }
 
 constexpr int K[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
