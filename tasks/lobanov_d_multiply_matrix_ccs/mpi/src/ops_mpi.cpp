@@ -234,7 +234,6 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
     }
 
     value_offset += static_cast<int>(value_collections[pid].size());
-    column_offset += static_cast<int>(column_pointer_collections[pid].size() - 1);
   }
 
   result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
