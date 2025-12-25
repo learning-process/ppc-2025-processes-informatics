@@ -26,28 +26,53 @@ bool FrolovaSStarTopologyMPI::ValidationImpl() {
 }
 
 bool FrolovaSStarTopologyMPI::PreProcessingImpl() {
+  // int rank = 0;
+  // int size = 0;
+  // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  // MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  // if (rank != 0) {
+  //   dest_ = GetInput();
+
+  //   // Гарантируем, что dest_ в диапазоне [1, size-1]
+  //   if (dest_ < 1 || dest_ >= size) {
+  //     dest_ = 1;  // По умолчанию процесс 1
+  //   }
+
+  //   // Не отправляем самому себе
+  //   if (dest_ == rank) {
+  //     dest_ = (dest_ == 1) ? 2 : 1;
+  //     if (dest_ >= size) {
+  //       dest_ = 1;
+  //     }
+  //   }
+
+  //   output_.resize(GetInput());
+  // }
+
+  // return true;
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   if (rank != 0) {
-    dest_ = GetInput();
+    int data_size = GetInput();
 
-    // Гарантируем, что dest_ в диапазоне [1, size-1]
-    if (dest_ < 1 || dest_ >= size) {
-      dest_ = 1;  // По умолчанию процесс 1
-    }
-
-    // Не отправляем самому себе
+    dest_ = 1 + (rank % (size - 1));
     if (dest_ == rank) {
-      dest_ = (dest_ == 1) ? 2 : 1;
-      if (dest_ >= size) {
-        dest_ = 1;
-      }
+      dest_ = (dest_ + 1) % size;
+    }
+    if (dest_ == 0) {
+      dest_ = 1;
     }
 
-    output_.resize(GetInput());
+    data_.resize(data_size);
+    output_.resize(data_size);
+
+    for (int i = 0; i < data_size; ++i) {
+      data_[i] = i;
+    }
   }
 
   return true;
