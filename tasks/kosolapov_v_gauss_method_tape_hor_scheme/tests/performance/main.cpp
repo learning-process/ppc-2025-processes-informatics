@@ -35,7 +35,7 @@ class KosolapovVGaussMethodTapeHorSchemeRunPerfTestProcesses : public ppc::util:
   bool CheckTestOutputData(OutType &output_data) final {
     const auto &matrix = input_data_.matrix;
     const auto &r_side = input_data_.r_side;
-    int n = matrix.size();
+    int n = static_cast<int>(matrix.size());
     double epsilon = 1e-6;
     bool solution_correct = true;
 

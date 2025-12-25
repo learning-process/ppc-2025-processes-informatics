@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "kosolapov_v_gauss_method_tape_hor_scheme/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,10 @@ class KosolapovVGaussMethodTapeHorSchemeSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  void ForwardElimination(std::vector<std::vector<double>> &a, std::vector<double> &b, std::vector<int> &col_order,
+                          int n);
+  std::vector<double> BackwardSubstitution(std::vector<std::vector<double>> &a, std::vector<double> &b,
+                                           std::vector<int> &col_order, int n);
 };
 
 }  // namespace kosolapov_v_gauss_method_tape_hor_scheme
