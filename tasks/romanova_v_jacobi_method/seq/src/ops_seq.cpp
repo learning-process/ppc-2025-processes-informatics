@@ -1,10 +1,12 @@
 #include "romanova_v_jacobi_method/seq/include/ops_seq.hpp"
 
-#include <numeric>
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <tuple>
 #include <vector>
 
 #include "romanova_v_jacobi_method/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace romanova_v_jacobi_method {
 
@@ -17,18 +19,18 @@ RomanovaVJacobiMethodSEQ::RomanovaVJacobiMethodSEQ(const InType &in) {
 bool RomanovaVJacobiMethodSEQ::ValidationImpl() {
   bool status = true;
   // матрица имеет корректные размеры
-  std::vector<std::vector<double>> A = std::get<1>(GetInput());
+  std::vector<std::vector<double>> a = std::get<1>(GetInput());
   std::vector<double> x = std::get<0>(GetInput());
   std::vector<double> b = std::get<2>(GetInput());
-  status = status && !A.empty();
-  for (size_t i = 0; i < A.size(); i++) {
-    status = status && (A.size() == A[i].size());
+  status = status && !a.empty();
+  for (size_t i = 0; i < a.size(); i++) {
+    status = status && (a.size() == a[i].size());
   }
 
-  status = status && isDiagonallyDominant(A);
+  status = status && IsDiagonallyDominant(a);
 
-  status = status && (A.size() == x.size());
-  status = status && (A.size() == b.size());
+  status = status && (a.size() == x.size());
+  status = status && (a.size() == b.size());
   return status;
 }
 
@@ -46,7 +48,9 @@ bool RomanovaVJacobiMethodSEQ::PreProcessingImpl() {
 bool RomanovaVJacobiMethodSEQ::RunImpl() {
   size_t k = 0;
   std::vector<double> prev(x_.size(), 0.0);
-  do {
+  double diff = eps_;
+  while (diff >= eps_ && k < maxIterations_) {
+    diff = 0.0;
     prev = x_;
     for (size_t i = 0; i < size_; i++) {
       double sum = 0.0;
@@ -56,9 +60,10 @@ bool RomanovaVJacobiMethodSEQ::RunImpl() {
         }
       }
       x_[i] = (b_[i] - sum) / A_[i][i];
+      diff = std::max(diff, std::abs(x_[i] - prev[i]));
     }
     k++;
-  } while (!isConverge(prev, x_) && k <= maxIterations_);
+  }
 
   return true;
 }
@@ -68,7 +73,7 @@ bool RomanovaVJacobiMethodSEQ::PostProcessingImpl() {
   return true;
 }
 
-bool RomanovaVJacobiMethodSEQ::isDiagonallyDominant(const std::vector<std::vector<double>> &matrix) {
+bool RomanovaVJacobiMethodSEQ::IsDiagonallyDominant(const std::vector<std::vector<double>> &matrix) {
   for (size_t i = 0; i < matrix.size(); i++) {
     double sum = 0.0;
     for (size_t j = 0; j < matrix[i].size(); j++) {
@@ -81,14 +86,6 @@ bool RomanovaVJacobiMethodSEQ::isDiagonallyDominant(const std::vector<std::vecto
     }
   }
   return true;
-}
-
-bool RomanovaVJacobiMethodSEQ::isConverge(const std::vector<double> &prev, const std::vector<double> &curr) {
-  double diff = 0.0;
-  for (size_t i = 0; i < prev.size(); i++) {
-    diff = std::max(diff, abs(prev[i] - curr[i]));
-  }
-  return (diff < eps_);
 }
 
 }  // namespace romanova_v_jacobi_method

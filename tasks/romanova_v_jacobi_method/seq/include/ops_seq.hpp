@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "romanova_v_jacobi_method/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,15 +21,14 @@ class RomanovaVJacobiMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  bool isDiagonallyDominant(const std::vector<std::vector<double>> &matrix);
-  bool isConverge(const std::vector<double> &prev, const std::vector<double> &curr);
+  static bool IsDiagonallyDominant(const std::vector<std::vector<double>> &matrix);
 
   std::vector<double> x_;
   std::vector<std::vector<double>> A_;
   std::vector<double> b_;
-  double eps_;
-  size_t maxIterations_;
-  size_t size_;
+  double eps_{};
+  size_t maxIterations_{};
+  size_t size_{};
 };
 
 }  // namespace romanova_v_jacobi_method

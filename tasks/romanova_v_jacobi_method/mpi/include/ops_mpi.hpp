@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "romanova_v_jacobi_method/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,7 +20,7 @@ class RomanovaVJacobiMethodMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  bool isDiagonallyDominant(const std::vector<OutType> &matrix);
+  static bool IsDiagonallyDominant(const std::vector<OutType> &matrix);
 
   OutType x_;
   OutType A_;  // чтобы не мучаться с пересылкой будем сразу хранить данные в одномерном массиве

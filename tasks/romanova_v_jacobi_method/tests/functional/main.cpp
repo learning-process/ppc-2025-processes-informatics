@@ -1,15 +1,12 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
+#include <fstream>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "romanova_v_jacobi_method/common/include/common.hpp"
@@ -52,14 +49,14 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
         file >> b[i];
       }
 
-      std::vector<std::vector<double>> A(rows, std::vector<double>(columns));
+      std::vector<std::vector<double>> a(rows, std::vector<double>(columns));
       for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
-          file >> A[i][j];
+          file >> a[i][j];
         }
       }
 
-      input_data_ = std::make_tuple(x, A, b, eps, iterations);
+      input_data_ = std::make_tuple(x, a, b, eps, iterations);
       eps_ = eps;
 
       file.close();
@@ -84,8 +81,8 @@ class RomanovaVJacobiMethodFuncTestsProcesses : public ppc::util::BaseRunFuncTes
   }
 
  private:
-  InType input_data_{};
-  OutType exp_answer_{};
+  InType input_data_;
+  OutType exp_answer_;
   double eps_ = 0.0;
 };
 
