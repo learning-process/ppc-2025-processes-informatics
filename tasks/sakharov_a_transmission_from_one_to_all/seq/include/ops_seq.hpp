@@ -1,16 +1,16 @@
 #pragma once
 
-#include "sakharov_a_cannon_algorithm/common/include/common.hpp"
+#include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace sakharov_a_cannon_algorithm {
+namespace sakharov_a_transmission_from_one_to_all {
 
-class SakharovACannonAlgorithmSEQ : public BaseTask {
+class SakharovATransmissionFromOneToAllSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit SakharovACannonAlgorithmSEQ(const InType &in);
+  explicit SakharovATransmissionFromOneToAllSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -19,4 +19,4 @@ class SakharovACannonAlgorithmSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace sakharov_a_cannon_algorithm
+}  // namespace sakharov_a_transmission_from_one_to_all
