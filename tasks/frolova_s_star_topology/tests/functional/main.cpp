@@ -44,7 +44,7 @@ TEST_P(FrolovaSRunFuncTestsProcesses, StarTopologyTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "1"), std::make_tuple(2, "2"), std::make_tuple(3, "3")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "1"), std::make_tuple(2, "3"), std::make_tuple(3, "4")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<FrolovaSStarTopologyMPI, InType>(kTestParam, PPC_SETTINGS_frolova_s_star_topology),
