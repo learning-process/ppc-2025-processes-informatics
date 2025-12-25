@@ -15,8 +15,7 @@ namespace kosolapov_v_gauss_method_tape_hor_scheme {
 
 KosolapovVGaussMethodTapeHorSchemeMPI::KosolapovVGaussMethodTapeHorSchemeMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput().matrix = in.matrix;
-  GetInput().r_side = in.r_side;
+  GetInput() = InType(in);
   GetOutput() = {};
 }
 
