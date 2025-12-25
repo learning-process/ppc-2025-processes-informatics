@@ -8,7 +8,7 @@
 namespace frolova_s_star_topology {
 
 class FrolovaSRunPerfTestsProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 10000;
+  const int kCount_ = 2147483645;
   InType input_data_{};
 
   void SetUp() override {
