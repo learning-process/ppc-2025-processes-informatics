@@ -40,7 +40,7 @@ bool LiulinYIntegMnogFuncMonteCarloMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  long long total_points = input.num_points;
+  int64_t total_points = input.num_points;
   MPI_Bcast(&total_points, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
   if (total_points <= 0) {
@@ -56,9 +56,9 @@ bool LiulinYIntegMnogFuncMonteCarloMPI::RunImpl() {
     return true;
   }
 
-  long long base_points = total_points / world_size;
-  long long remainder = total_points % world_size;
-  long long local_points = base_points + (world_rank < remainder ? 1 : 0);
+  int64_t base_points = total_points / world_size;
+  int64_t remainder = total_points % world_size;
+  int64_t local_points = base_points + (world_rank < remainder ? 1 : 0);
 
   std::random_device rd;
   std::mt19937 gen(rd() + world_rank);
@@ -66,7 +66,7 @@ bool LiulinYIntegMnogFuncMonteCarloMPI::RunImpl() {
   std::uniform_real_distribution<double> dist_y(input.y_min, input.y_max);
 
   double local_sum = 0.0;
-  for (long long i = 0; i < local_points; ++i) {
+  for (int64_t i = 0; i < local_points; ++i) {
     double x = dist_x(gen);
     double y = dist_y(gen);
     local_sum += input.f(x, y);

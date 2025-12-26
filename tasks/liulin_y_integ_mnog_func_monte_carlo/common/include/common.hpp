@@ -9,10 +9,10 @@
 namespace liulin_y_integ_mnog_func_monte_carlo {
 
 struct TaskInput {
-  double x_min, x_max;                      // Границы по x
-  double y_min, y_max;                      // Границы по y
-  std::function<double(double, double)> f;  // f(x, y)
-  long long num_points;                     // Количество случайных точек
+  double x_min = 0.0, x_max = 0.0;                      // Границы по x
+  double y_min = 0.0, y_max = 0.0;                      // Границы по y
+  std::function<double(double, double)> f;              // f(x, y)
+  int64_t num_points = 0;                           // Количество случайных точек
 };
 
 using InType = TaskInput;

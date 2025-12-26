@@ -34,7 +34,7 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRu
     }
 
     double x_min = 0.0, x_max = 0.0, y_min = 0.0, y_max = 0.0;
-    long long num_points = 0;
+    int64_t num_points = 0;
     int func_id = 1;
 
     file >> x_min >> x_max >> y_min >> y_max >> num_points;

@@ -16,12 +16,12 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
   struct TestConfig {
     double x_min, x_max;
     double y_min, y_max;
-    long long num_points;
+    int64_t num_points;
     std::string name;
   };
 
   static TestConfig GetLiulinSpecificConfig(const std::string &test_name) {
-    constexpr long long kLargeN = 100000000LL;
+    constexpr int64_t kLargeN = 100000000LL;
     if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_mpi") != std::string::npos) {
       return {0.0, 1.0, 0.0, 1.0, kLargeN, "mpi_large"};
     }
@@ -101,7 +101,7 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
   double x_max_ = 0.0;
   double y_min_ = 0.0;
   double y_max_ = 0.0;
-  long long num_points_ = 0;
+  int64_t num_points_ = 0;
   InType input_data_;
   OutType expected_output_ = 0.0;
 };

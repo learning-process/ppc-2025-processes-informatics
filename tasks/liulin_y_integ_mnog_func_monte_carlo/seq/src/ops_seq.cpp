@@ -43,7 +43,7 @@ bool LiulinYIntegMnogFuncMonteCarloSEQ::RunImpl() {
   std::uniform_real_distribution<double> dist_y(input.y_min, input.y_max);
 
   double sum = 0.0;
-  for (long long i = 0; i < input.num_points; ++i) {
+  for (int64_t i = 0; i < input.num_points; ++i) {
     double x = dist_x(gen);
     double y = dist_y(gen);
     sum += input.f(x, y);
