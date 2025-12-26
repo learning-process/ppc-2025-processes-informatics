@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
+#include <cstddef>
 #include <vector>
-#include <memory>
-#include <string>
-#include <array>
 
 #include "util/include/perf_test_util.hpp"
 
@@ -16,24 +14,24 @@ namespace egorova_l_gauss_filter_vert {
 class EgorovaLGaussFilterVertRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   // Размеры для теста производительности
-  const int kRows = 2000;
-  const int kCols = 2000;
-  const int kChannels = 1;
+  const int kRows_ = 2000;
+  const int kCols_ = 2000;
+  const int kChannels_ = 1;
   InType input_data_;
 
  public:
   void SetUp() override {
     // Инициализация структуры Image согласно common.hpp
-    input_data_.rows = kRows;
-    input_data_.cols = kCols;
-    input_data_.channels = kChannels;
-    input_data_.data.assign(kRows * kCols * kChannels, 128); // Тестовое заполнение
+    input_data_.rows = kRows_;
+    input_data_.cols = kCols_;
+    input_data_.channels = kChannels_;
+    input_data_.data.assign(static_cast<size_type>(kRows_ * kCols_ * kChannels_), 128); // Тестовое заполнение
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     // Простейшая проверка: выходное изображение должно иметь те же размеры
-    return output_data.rows == kRows && 
-           output_data.cols == kCols && 
+    return output_data.rows == kRows_ && 
+           output_data.cols == kCols_ && 
            output_data.data.size() == input_data_.data.size();
   }
 

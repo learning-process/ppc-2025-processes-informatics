@@ -1,18 +1,19 @@
 #pragma once
 
-#include <vector>
 #include <cstdint>
 #include <string>
 #include <tuple>
+#include <vector>
+
 #include "task/include/task.hpp"
 
 namespace egorova_l_gauss_filter_vert {
 
 struct Image {
-    std::vector<uint8_t> data;
-    int rows = 0;
-    int cols = 0;
-    int channels = 1;
+  int rows;
+  int cols;
+  int channels;
+  std::vector<uint8_t> data;
 };
 
 using InType = Image;

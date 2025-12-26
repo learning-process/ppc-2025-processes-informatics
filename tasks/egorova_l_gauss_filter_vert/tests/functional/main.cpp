@@ -1,17 +1,18 @@
 #include <gtest/gtest.h>
-#include <vector>
+#include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <array>
+#include <vector>
 
 #include "egorova_l_gauss_filter_vert/common/include/common.hpp"
 #include "egorova_l_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 #include "egorova_l_gauss_filter_vert/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace egorova_l_gauss_filter_vert {
 
-// ПЕРЕИМЕНОВАНО: EgorovaLRunFuncTestsProcesses -> EgorovaLGaussFilterRunFuncTests
 class EgorovaLGaussFilterRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
@@ -25,14 +26,14 @@ class EgorovaLGaussFilterRunFuncTests : public ppc::util::BaseRunFuncTests<InTyp
   void SetUp() override {
     auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     
-    int r = std::get<0>(test_params);
-    int c = std::get<1>(test_params);
+    int rr = std::get<0>(test_params);
+    int cc = std::get<1>(test_params);
     int ch = std::get<2>(test_params);
 
-    input_data_.rows = r;
-    input_data_.cols = c;
+    input_data_.rows = rr;
+    input_data_.cols = cc;
     input_data_.channels = ch;
-    input_data_.data.assign(r * c * ch, 128); 
+    input_data_.data.assign(static_cast<std::size_t>(rr * cc * ch), 128); 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -51,7 +52,6 @@ class EgorovaLGaussFilterRunFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
 namespace {
 
-// ПЕРЕИМЕНОВАНО: Используем новый класс фикстуры
 TEST_P(EgorovaLGaussFilterRunFuncTests, GaussFilterVertical) {
   ExecuteTest(GetParam());
 }
@@ -74,7 +74,6 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName = EgorovaLGaussFilterRunFuncTests::PrintFuncTestName<EgorovaLGaussFilterRunFuncTests>;
 
-// ПЕРЕИМЕНОВАНО: GaussFilterTests и EgorovaLGaussFilterRunFuncTests
 INSTANTIATE_TEST_SUITE_P(EgorovaLGaussFilterFunc, EgorovaLGaussFilterRunFuncTests, kGtestValues, kFuncTestName);
 
 }  // namespace
