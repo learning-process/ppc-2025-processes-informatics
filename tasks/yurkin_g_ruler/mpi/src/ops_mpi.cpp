@@ -24,7 +24,7 @@ bool YurkinGRulerMPI::PreProcessingImpl() {
 }
 
 bool YurkinGRulerMPI::RunImpl() {
-  MPI_Comm topo_comm;
+  MPI_Comm topo_comm = MPI_COMM_NULL;
   MPI_Comm_dup(MPI_COMM_WORLD, &topo_comm);
 
   int rank = 0;
@@ -33,14 +33,15 @@ bool YurkinGRulerMPI::RunImpl() {
   MPI_Comm_size(topo_comm, &size);
 
   if (size <= 0) {
-    MPI_Comm_free(&topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
     return false;
   }
 
   const int input_value = GetInput();
   const int src = input_value % size;
   const int dst = (input_value / size) % size;
-
   int payload = input_value;
 
   if (src == dst) {
@@ -48,18 +49,21 @@ bool YurkinGRulerMPI::RunImpl() {
       GetOutput() = payload;
     }
     MPI_Barrier(topo_comm);
-    MPI_Comm_free(&topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
     return true;
   }
 
   const int direction = (dst > src) ? +1 : -1;
-
   const int low = std::min(src, dst);
   const int high = std::max(src, dst);
 
   if (rank < low || rank > high) {
     MPI_Barrier(topo_comm);
-    MPI_Comm_free(&topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
     return true;
   }
 
@@ -67,7 +71,9 @@ bool YurkinGRulerMPI::RunImpl() {
     const int next = rank + direction;
     MPI_Send(&payload, 1, MPI_INT, next, 0, topo_comm);
     MPI_Barrier(topo_comm);
-    MPI_Comm_free(&topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
     return true;
   }
 
@@ -79,7 +85,9 @@ bool YurkinGRulerMPI::RunImpl() {
   if (rank == dst) {
     GetOutput() = recv_val;
     MPI_Barrier(topo_comm);
-    MPI_Comm_free(&topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
     return true;
   }
 
@@ -87,7 +95,9 @@ bool YurkinGRulerMPI::RunImpl() {
   MPI_Send(&recv_val, 1, MPI_INT, next, 0, topo_comm);
 
   MPI_Barrier(topo_comm);
-  MPI_Comm_free(&topo_comm);
+  if (topo_comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&topo_comm);
+  }
   return true;
 }
 
