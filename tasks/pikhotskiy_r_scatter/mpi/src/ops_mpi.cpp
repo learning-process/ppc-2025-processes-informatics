@@ -2,8 +2,8 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstring>
+#include <utility>  // Добавлено для std::move
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
 
@@ -15,10 +15,10 @@ PikhotskiyRScatterMPI::PikhotskiyRScatterMPI(const InputType &input_args) {
 
   MPI_Comm_rank(input_args.communicator, &mpi_rank_);
   MPI_Comm_size(input_args.communicator, &mpi_size_);
-  is_root_process_ = (mpi_rank_ == input_args.root_process);  // NOLINT
+  is_root_process_ = (mpi_rank_ == input_args.root_process);
 }
 
-bool PikhotskiyRScatterMPI::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterMPI::ValidationImpl() {
   const auto &params = GetInput();
 
   if (params.elements_to_send <= 0 || params.elements_to_send != params.elements_to_receive) {
@@ -42,11 +42,11 @@ bool PikhotskiyRScatterMPI::ValidationImpl() {  // NOLINT(readability-convert-me
   return validate_data_type(params.send_data_type);
 }
 
-bool PikhotskiyRScatterMPI::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterMPI::PreProcessingImpl() {
   return true;
 }
 
-bool PikhotskiyRScatterMPI::RunImpl() {  // NOLINT(readability-make-member-function-const)
+bool PikhotskiyRScatterMPI::RunImpl() {
   auto &parameters = GetInput();
 
   const void *send_ptr = is_root_process_ ? parameters.source_buffer : nullptr;
@@ -76,7 +76,7 @@ bool PikhotskiyRScatterMPI::RunImpl() {  // NOLINT(readability-make-member-funct
   return true;
 }
 
-bool PikhotskiyRScatterMPI::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterMPI::PostProcessingImpl() {
   return true;
 }
 

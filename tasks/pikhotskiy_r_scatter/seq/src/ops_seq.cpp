@@ -2,10 +2,10 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cstdint>
 #include <cstring>
-// #include <vector>  // Удалено, не используется напрямую
+#include <utility>  // Добавлено для std::move
+#include <vector>   // Добавлено для std::vector
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
 
@@ -16,7 +16,7 @@ PikhotskiyRScatterSEQ::PikhotskiyRScatterSEQ(const InputType &input_args) {
   GetInput() = input_args;
 }
 
-bool PikhotskiyRScatterSEQ::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterSEQ::ValidationImpl() {
   const auto &args = GetInput();
 
   if (args.elements_to_send <= 0) {
@@ -44,11 +44,11 @@ bool PikhotskiyRScatterSEQ::ValidationImpl() {  // NOLINT(readability-convert-me
   return check_type(args.send_data_type);
 }
 
-bool PikhotskiyRScatterSEQ::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool PikhotskiyRScatterSEQ::RunImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterSEQ::RunImpl() {
   const auto &args = GetInput();
 
   // Определяем размер одного элемента
@@ -65,8 +65,9 @@ bool PikhotskiyRScatterSEQ::RunImpl() {  // NOLINT(readability-convert-member-fu
   std::size_t total_data_size = static_cast<std::size_t>(args.elements_to_send) * element_size;
 
   // Копируем исходные данные
-  auto source_start = static_cast<const std::uint8_t *>(args.source_buffer);
-  auto source_end = source_start + total_data_size;
+  // ИСПРАВЛЕНО: добавлен const auto * для указателей
+  const auto *source_start = static_cast<const std::uint8_t *>(args.source_buffer);
+  const auto *source_end = source_start + total_data_size;
 
   std::vector<std::uint8_t> processed_data(source_start, source_end);
 
@@ -79,7 +80,7 @@ bool PikhotskiyRScatterSEQ::RunImpl() {  // NOLINT(readability-convert-member-fu
   return true;
 }
 
-bool PikhotskiyRScatterSEQ::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterSEQ::PostProcessingImpl() {
   return true;
 }
 
