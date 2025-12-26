@@ -22,18 +22,38 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   result_matrix.row_count = row_count;
   result_matrix.column_count = column_count;
   result_matrix.non_zero_count = 0;
-  std::mt19937 rng(seed);
+
+  result_matrix.value_data.clear();
+  result_matrix.row_index_data.clear();
+  result_matrix.column_pointer_data.clear();
+
+  if (row_count <= 0 || column_count <= 0) {
+    result_matrix.column_pointer_data.assign(column_count + 1, 0);
+    return result_matrix;
+  }
+
+  density_factor = std::max(0.0, std::min(1.0, density_factor));
+
+  std::mt19937 rng;
+  rng.seed(static_cast<unsigned int>(seed));
 
   std::hash<std::string> hasher;
   std::string param_hash =
       std::to_string(row_count) + "_" + std::to_string(column_count) + "_" + std::to_string(density_factor);
-  rng.seed(static_cast<unsigned int>(seed + hasher(param_hash)));
+  unsigned int hash_value = static_cast<unsigned int>(hasher(param_hash));
+  rng.seed(seed + hash_value);
 
   std::uniform_real_distribution<double> val_dist(0.1, 10.0);
   std::uniform_real_distribution<double> prob_dist(0.0, 1.0);
 
   std::vector<std::vector<int>> row_indices_per_column(column_count);
   std::vector<std::vector<double>> values_per_column(column_count);
+
+  for (int j = 0; j < column_count; ++j) {
+    row_indices_per_column[j] = std::vector<int>();
+    values_per_column[j] = std::vector<double>();
+  }
+
   int nnz_counter = 0;
 
   for (int j = 0; j < column_count; ++j) {
@@ -47,20 +67,39 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   }
 
   result_matrix.non_zero_count = nnz_counter;
-  result_matrix.value_data.reserve(nnz_counter);
-  result_matrix.row_index_data.reserve(nnz_counter);
-  result_matrix.column_pointer_data.resize(column_count + 1);
+  if (nnz_counter > 0) {
+    result_matrix.value_data.reserve(nnz_counter);
+    result_matrix.row_index_data.reserve(nnz_counter);
+  }
+
+  result_matrix.column_pointer_data.assign(column_count + 1, 0);
 
   int offset = 0;
   result_matrix.column_pointer_data[0] = 0;
 
   for (int j = 0; j < column_count; ++j) {
     for (size_t k = 0; k < row_indices_per_column[j].size(); ++k) {
-      result_matrix.row_index_data.push_back(row_indices_per_column[j][k]);
-      result_matrix.value_data.push_back(values_per_column[j][k]);
+      int row_idx = row_indices_per_column[j][k];
+      if (row_idx >= 0 && row_idx < row_count) {
+        result_matrix.row_index_data.push_back(row_idx);
+        result_matrix.value_data.push_back(values_per_column[j][k]);
+      }
     }
-    offset += row_indices_per_column[j].size();
+    offset += static_cast<int>(row_indices_per_column[j].size());
     result_matrix.column_pointer_data[j + 1] = offset;
+  }
+
+  if (!result_matrix.column_pointer_data.empty()) {
+    result_matrix.column_pointer_data.back() = static_cast<int>(result_matrix.value_data.size());
+  }
+
+  result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
+
+  // Гарантировать что column_pointer_data монотонно не убывает
+  for (size_t i = 1; i < result_matrix.column_pointer_data.size(); ++i) {
+    if (result_matrix.column_pointer_data[i] < result_matrix.column_pointer_data[i - 1]) {
+      result_matrix.column_pointer_data[i] = result_matrix.column_pointer_data[i - 1];
+    }
   }
 
   return result_matrix;
