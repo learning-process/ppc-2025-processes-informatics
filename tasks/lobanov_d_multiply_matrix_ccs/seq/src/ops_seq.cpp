@@ -62,7 +62,7 @@ void LobanovDMultiplyMatrixSEQ::ComputeTransposedMatrix(const CompressedColumnMa
     }
   }
 
-  std::sort(elements.begin(), elements.end(), [](const Element &a, const Element &b) {
+  std::ranges::sort(elements.begin(), elements.end(), [](const Element &a, const Element &b) {
     return (a.new_col < b.new_col) || (a.new_col == b.new_col && a.new_row < b.new_row);
   });  // NOLINTNEXTLINE(modernize-use-ranges)
 

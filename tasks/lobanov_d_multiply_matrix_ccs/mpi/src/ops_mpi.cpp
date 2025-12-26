@@ -128,18 +128,14 @@ bool ValidateTransposedMatrix(const CompressedColumnMatrix &transposed_matrix_a)
 }
 
 bool ValidateColumnRange(int column_start_position, int column_end_position, const std::vector<double> &local_values) {
-  return !(column_start_position < 0 || static_cast<std::size_t>(column_end_position) > local_values.size() ||
-           column_start_position > column_end_position);
+  return column_start_position >= 0 && static_cast<std::size_t>(column_end_position) <= local_values.size() &&
+         column_start_position <= column_end_position;
 }
 
 bool ValidateTemporaryArrays(const std::vector<double> &temporary_row_values, const std::vector<int> &row_marker_array,
                              int column_count) {
-  if (temporary_row_values.size() != static_cast<std::size_t>(column_count) ||
-      row_marker_array.size() != static_cast<std::size_t>(column_count)) {
-    return false;
-  }
-
-  return true;
+  return temporary_row_values.size() == static_cast<std::size_t>(column_count) &&
+         row_marker_array.size() == static_cast<std::size_t>(column_count);
 }
 
 bool ValidateMatrixBElement(int matrix_b_row, int column_count, const std::vector<int> &column_pointers) {
@@ -155,12 +151,8 @@ bool ValidateMatrixBElement(int matrix_b_row, int column_count, const std::vecto
 }
 
 bool ValidateTransposedRange(int transposed_start, int transposed_end, const std::vector<double> &transposed_values) {
-  if (transposed_start < 0 || static_cast<std::size_t>(transposed_end) > transposed_values.size() ||
-      transposed_start > transposed_end) {
-    return false;
-  }
-
-  return true;
+  return transposed_start >= 0 && static_cast<std::size_t>(transposed_end) <= transposed_values.size() &&
+         transposed_start <= transposed_end;
 }
 
 bool ValidateMatrixAElement(int matrix_a_row, int column_count) {
