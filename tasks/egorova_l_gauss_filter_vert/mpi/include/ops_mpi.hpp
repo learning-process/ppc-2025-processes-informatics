@@ -21,7 +21,6 @@ class EgorovaLGaussFilterVertMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
-  // ОБЯЗАТЕЛЬНО: Объявление метода, который вы реализуете в .cpp
   static void ApplyFilter(const std::vector<uint8_t> &local_in, std::vector<uint8_t> &local_out, int rows,
                           int local_cols, int total_lc, int ch);
 };

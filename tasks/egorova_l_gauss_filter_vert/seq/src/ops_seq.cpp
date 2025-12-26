@@ -54,7 +54,6 @@ bool EgorovaLGaussFilterVertSEQ::RunImpl() {
 
             std::size_t k_idx = (static_cast<std::size_t>(ky + 1) * 3) + static_cast<std::size_t>(kx + 1);
 
-            // Использование указателя на данные массива убирает предупреждение о неконстантном индексе
             sum += (static_cast<float>(in.data[in_idx]) * ker_ptr[k_idx]);
           }
         }
