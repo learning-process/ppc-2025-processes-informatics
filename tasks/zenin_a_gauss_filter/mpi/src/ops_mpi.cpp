@@ -6,6 +6,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <utility>
 #include <vector>
 
@@ -25,7 +26,7 @@ struct BlockInfo {
 };
 
 std::size_t GlobalIdx(int gx, int gy, int chan, int width, int channels) {
-  return (static_cast<std::size_t>(gy) * width + gx) * channels + static_cast<std::size_t>(chan);
+  return ((static_cast<std::size_t>(gy) * width + gx) * channels) + static_cast<std::size_t>(chan);
 }
 
 int Clampi(int v, int lo, int hi) {
@@ -60,8 +61,8 @@ void FillExpandedBlock(const zenin_a_gauss_filter::Image &img, const zenin_a_gau
                        int height, int channels, std::vector<std::uint8_t> *dst) {
   const int hh = bb.my_h;
   const int ww = bb.my_w;
-  const int dst_w = ww + 2 * kHalo;
-  const int dst_h = hh + 2 * kHalo;
+  const int dst_w = ww + (2 * kHalo);
+  const int dst_h = hh + (2 * kHalo);
 
   dst->assign(static_cast<std::size_t>(dst_h) * dst_w * channels, 0);
 
@@ -88,10 +89,8 @@ void BuildOrRecvExpandedBlock(int rank, int proc_num, int grid_cols, int width, 
                               const std::function<zenin_a_gauss_filter::BlockInfo(int, int)> &calc_block,
                               const zenin_a_gauss_filter::Image *root_img, std::vector<std::uint8_t> *local_in) {
   if (rank == 0) {
-    // self
     FillExpandedBlock(*root_img, my_block, width, height, channels, local_in);
 
-    // others
     for (int rnk = 1; rnk < proc_num; ++rnk) {
       const int rpr = rnk / grid_cols;
       const int rpc = rnk % grid_cols;
@@ -146,42 +145,35 @@ void ConvolveLocalBlock(const std::vector<std::uint8_t> &local_in, int lw, int m
   }
 }
 
-void GatherAndBroadcastResult(int rank, int proc_num, int grid_cols, int width, int channels,
-                              const zenin_a_gauss_filter::BlockInfo &my_block,
-                              const std::function<zenin_a_gauss_filter::BlockInfo(int, int)> &calc_block,
-                              const std::vector<std::uint8_t> &local_out, std::vector<std::uint8_t> *final_image) {
-  if (rank == 0) {
-    // place own
-    for (int yd = 0; yd < my_block.my_h; ++yd) {
-      for (int xd = 0; xd < my_block.my_w; ++xd) {
-        const int gy = my_block.start_y + yd;
-        const int gx = my_block.start_x + xd;
-        for (int chan = 0; chan < channels; ++chan) {
-          (*final_image)[((gy * width + gx) * channels) + chan] =
-              local_out[((yd * my_block.my_w + xd) * channels) + chan];
-        }
+void CopyBlockToImage(const BlockInfo &block, const std::vector<std::uint8_t> &src, int src_w, int width, int channels,
+                      std::vector<std::uint8_t> *dst) {
+  for (int yd = 0; yd < block.my_h; ++yd) {
+    for (int xd = 0; xd < block.my_w; ++xd) {
+      const int gy = block.start_y + yd;
+      const int gx = block.start_x + xd;
+      for (int chan = 0; chan < channels; ++chan) {
+        (*dst)[((gy * width + gx) * channels) + chan] = src[((yd * src_w + xd) * channels) + chan];
       }
     }
+  }
+}
 
-    // recv others
-    for (int src = 1; src < proc_num; ++src) {
-      const int spr = src / grid_cols;
-      const int spc = src % grid_cols;
-      const auto sb = calc_block(spr, spc);
+void GatherAndBroadcastResult(int rank, int proc_num, int grid_cols, int width, int channels, const BlockInfo &my_block,
+                              const std::function<BlockInfo(int, int)> &calc_block,
+                              const std::vector<std::uint8_t> &local_out, std::vector<std::uint8_t> *final_image) {
+  if (rank == 0) {
+    CopyBlockToImage(my_block, local_out, my_block.my_w, width, channels, final_image);
+
+    for (int src_rank = 1; src_rank < proc_num; ++src_rank) {
+      const int spr = src_rank / grid_cols;
+      const int spc = src_rank % grid_cols;
+      const BlockInfo sb = calc_block(spr, spc);
 
       std::vector<std::uint8_t> recv(static_cast<std::size_t>(sb.my_h) * sb.my_w * channels);
-      MPI_Recv(recv.data(), static_cast<int>(recv.size()), MPI_UNSIGNED_CHAR, src, kTagResult, MPI_COMM_WORLD,
+      MPI_Recv(recv.data(), static_cast<int>(recv.size()), MPI_UNSIGNED_CHAR, src_rank, kTagResult, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
 
-      for (int yd = 0; yd < sb.my_h; ++yd) {
-        for (int xd = 0; xd < sb.my_w; ++xd) {
-          const int gy = sb.start_y + yd;
-          const int gx = sb.start_x + xd;
-          for (int chan = 0; chan < channels; ++chan) {
-            (*final_image)[((gy * width + gx) * channels) + chan] = recv[((yd * sb.my_w + xd) * channels) + chan];
-          }
-        }
-      }
+      CopyBlockToImage(sb, recv, sb.my_w, width, channels, final_image);
     }
   } else {
     MPI_Send(local_out.data(), static_cast<int>(local_out.size()), MPI_UNSIGNED_CHAR, 0, kTagResult, MPI_COMM_WORLD);
@@ -264,8 +256,8 @@ bool ZeninAGaussFilterMPI::RunImpl() {
   const int my_h = my_block.my_h;
   const int my_w = my_block.my_w;
 
-  const int lw = my_w + 2 * kHalo;
-  const int lh = my_h + 2 * kHalo;
+  const int lw = my_w + (2 * kHalo);
+  const int lh = my_h + (2 * kHalo);
 
   std::vector<std::uint8_t> local_in(static_cast<std::size_t>(lh) * lw * channels_, 0);
   std::vector<std::uint8_t> local_out(static_cast<std::size_t>(my_h) * my_w * channels_, 0);
