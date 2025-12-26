@@ -12,7 +12,8 @@ namespace liulin_y_integ_mnog_func_monte_carlo {
 struct TaskInput {
   double x_min = 0.0;
   double x_max = 0.0;
-  double y_min = 0.0 double y_max = 0.0;
+  double y_min = 0.0;
+  double y_max = 0.0;
   std::function<double(double, double)> f;
   int64_t num_points = 0;
 
