@@ -1,19 +1,17 @@
 #include <gtest/gtest.h>
+
 #include <cstddef>
 #include <vector>
 
-#include "util/include/perf_test_util.hpp"
-
-// Заголовки вашей текущей задачи
 #include "egorova_l_gauss_filter_vert/common/include/common.hpp"
 #include "egorova_l_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 #include "egorova_l_gauss_filter_vert/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace egorova_l_gauss_filter_vert {
 
 class EgorovaLGaussFilterVertRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
-  // Размеры для теста производительности
   const int kRows_ = 2000;
   const int kCols_ = 2000;
   const int kChannels_ = 1;
@@ -21,17 +19,13 @@ class EgorovaLGaussFilterVertRunPerfTests : public ppc::util::BaseRunPerfTests<I
 
  public:
   void SetUp() override {
-    // Инициализация структуры Image согласно common.hpp
     input_data_.rows = kRows_;
     input_data_.cols = kCols_;
     input_data_.channels = kChannels_;
-    input_data_.data.assign(static_cast<size_type>(kRows_ * kCols_ * kChannels_), 128); // Тестовое заполнение
+    input_data_.data.assign(static_cast<std::size_t>(kRows_) * kCols_ * kChannels_, 128);
   }
-
   bool CheckTestOutputData(OutType &output_data) final {
-    // Простейшая проверка: выходное изображение должно иметь те же размеры
-    return output_data.rows == kRows_ && 
-           output_data.cols == kCols_ && 
+    return output_data.rows == kRows_ && output_data.cols == kCols_ &&
            output_data.data.size() == input_data_.data.size();
   }
 
@@ -44,13 +38,12 @@ TEST_P(EgorovaLGaussFilterVertRunPerfTests, EgorovaLGaussPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, EgorovaLGaussFilterVertMPI, EgorovaLGaussFilterVertSEQ>(
-        PPC_SETTINGS_egorova_l_gauss_filter_vert);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, EgorovaLGaussFilterVertMPI, EgorovaLGaussFilterVertSEQ>(
+    PPC_SETTINGS_egorova_l_gauss_filter_vert);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = EgorovaLGaussFilterVertRunPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(EgorovaLGaussPerf, EgorovaLGaussFilterVertRunPerfTests, kGtestValues, kPerfTestName);
 
-} // namespace egorova_l_gauss_filter_vert
+}  // namespace egorova_l_gauss_filter_vert

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -10,9 +11,9 @@
 namespace egorova_l_gauss_filter_vert {
 
 struct Image {
-  int rows;
-  int cols;
-  int channels;
+  int rows = 0;
+  int cols = 0;
+  int channels = 0;
   std::vector<uint8_t> data;
 };
 
