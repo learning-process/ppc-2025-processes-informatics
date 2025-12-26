@@ -117,11 +117,11 @@ std::tuple<double, double, double, double> KosolapovVCalcMultIntegralsMSimpsonMP
     case 1:
       return {0.0, 1.0, 0.0, 1.0};
     case 2:
-      return {0.0, 3.14159265358979323846, 0.0, 3.14159265358979323846 / 2.0};
+      return {0.0, kPi, 0.0, kPi / 2.0};
     case 3:
       return {-1.0, 1.0, -1.0, 1.0};
     case 4:
-      return {0.0, 3.14159265358979323846, 0.0, 3.14159265358979323846};
+      return {0.0, kPi, 0.0, kPi};
     default:
       return {0.0, 1.0, 0.0, 1.0};
   }

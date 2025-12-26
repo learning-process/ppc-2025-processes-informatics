@@ -26,8 +26,8 @@ class KosolapovVCalcMultIntegralsMSimpsonMPI : public BaseTask {
   static double Function4(double x, double y);
   static double CallFunction(int func_id, double x, double y);
   static std::tuple<double, double, double, double> GetBounds(int func_id);
-  double ComputePartialSimpsonIntegral(int func_id, int steps, double a, double b, double c, double d, int start_i,
-                                       int end_i);
+  static double ComputePartialSimpsonIntegral(int func_id, int steps, double a, double b, double c, double d,
+                                              int start_i, int end_i);
   static double GetSimpsonWeight(int index, int steps);
 };
 

@@ -20,7 +20,7 @@ class KosolapovVCalcMultIntegralsMSimpsonPerfTestProcesses : public ppc::util::B
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::abs(output_data - 2.0 / 3.0) < 0.01;
+    return std::abs(output_data - (2.0 / 3.0)) < 0.01;
   }
 
   InType GetTestInputData() final {
