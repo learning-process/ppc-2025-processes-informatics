@@ -157,7 +157,7 @@ class LobanovDMultiplyMatrixPerfTest : public ppc::util::BaseRunPerfTests<InType
 // Тест 1: Малые матрицы (быстрый запуск)
 class SmallMatrixPerfTest : public LobanovDMultiplyMatrixPerfTest {
  protected:
-  std::tuple<int, double, int> GetTestParams() const override {
+  [[nodiscard]] std::tuple<int, double, int> GetTestParams() const override {
     return {500, 0.1, 1};  // 500x500, плотность 10%
   }
 };
@@ -165,7 +165,7 @@ class SmallMatrixPerfTest : public LobanovDMultiplyMatrixPerfTest {
 // Тест 2: Средние матрицы
 class MediumMatrixPerfTest : public LobanovDMultiplyMatrixPerfTest {
  protected:
-  std::tuple<int, double, int> GetTestParams() const override {
+  [[nodiscard]] std::tuple<int, double, int> GetTestParams() const override {
     return {1000, 0.08, 2};  // 1000x1000, плотность 8%
   }
 };
@@ -173,7 +173,7 @@ class MediumMatrixPerfTest : public LobanovDMultiplyMatrixPerfTest {
 // Тест 3: Большие матрицы
 class LargeMatrixPerfTest : public LobanovDMultiplyMatrixPerfTest {
  protected:
-  std::tuple<int, double, int> GetTestParams() const override {
+  [[nodiscard]] std::tuple<int, double, int> GetTestParams() const override {
     return {3000, 0.05, 3};  // 3000x3000, плотность 5%
   }
 };

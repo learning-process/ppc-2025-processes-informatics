@@ -1,5 +1,6 @@
 #include "lobanov_d_multiply_matrix_ccs/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <exception>

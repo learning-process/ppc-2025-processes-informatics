@@ -16,6 +16,414 @@ namespace lobanov_d_multiply_matrix_ccs {
 
 namespace {
 constexpr double kEpsilonThreshold = 1e-10;
+
+bool ValidateSourceMatrix(const CompressedColumnMatrix &source_matrix) {
+  if (source_matrix.row_count <= 0 || source_matrix.column_count <= 0) {
+    return false;
+  }
+
+  if (source_matrix.column_pointer_data.size() != static_cast<std::size_t>(source_matrix.column_count) + 1) {
+    return false;
+  }
+
+  if (source_matrix.non_zero_count < 0) {
+    return false;
+  }
+
+  if (source_matrix.non_zero_count > 0) {
+    if (source_matrix.value_data.size() != static_cast<std::size_t>(source_matrix.non_zero_count) ||
+        source_matrix.row_index_data.size() != static_cast<std::size_t>(source_matrix.non_zero_count)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void InitializeEmptyTransposedResult(const CompressedColumnMatrix &source_matrix,
+                                     CompressedColumnMatrix &transposed_result) {
+  transposed_result.row_count = source_matrix.column_count;
+  transposed_result.column_count = source_matrix.row_count;
+  transposed_result.non_zero_count = 0;
+  transposed_result.value_data.clear();
+  transposed_result.row_index_data.clear();
+  transposed_result.column_pointer_data.assign(transposed_result.column_count + 1, 0);
+}
+
+std::vector<int> CountElementsPerRow(const CompressedColumnMatrix &source_matrix, int column_count) {
+  std::vector<int> row_element_count(column_count, 0);
+
+  for (int element_index = 0; element_index < source_matrix.non_zero_count; element_index++) {
+    int row_idx = source_matrix.row_index_data[element_index];
+    if (row_idx >= 0 && row_idx < column_count) {
+      row_element_count[row_idx]++;
+    }
+  }
+
+  return row_element_count;
+}
+
+void BuildColumnPointers(CompressedColumnMatrix &transposed_result, const std::vector<int> &row_element_count) {
+  transposed_result.column_pointer_data.resize(transposed_result.column_count + 1);
+  transposed_result.column_pointer_data[0] = 0;
+
+  for (int row_index = 0; row_index < transposed_result.column_count; row_index++) {
+    transposed_result.column_pointer_data[row_index + 1] =
+        transposed_result.column_pointer_data[row_index] + row_element_count[row_index];
+  }
+}
+
+void FillTransposedMatrixData(const CompressedColumnMatrix &source_matrix, CompressedColumnMatrix &transposed_result) {
+  transposed_result.value_data.resize(source_matrix.non_zero_count);
+  transposed_result.row_index_data.resize(source_matrix.non_zero_count);
+
+  std::vector<int> current_position_array(transposed_result.column_count, 0);
+
+  for (int column_counter = 0; column_counter < source_matrix.column_count; column_counter++) {
+    int column_start = source_matrix.column_pointer_data[column_counter];
+    int column_end = source_matrix.column_pointer_data[column_counter + 1];
+
+    for (int element_counter = column_start; element_counter < column_end; element_counter++) {
+      int row_position = source_matrix.row_index_data[element_counter];
+      double element_value = source_matrix.value_data[element_counter];
+
+      if (row_position >= 0 && row_position < transposed_result.column_count) {
+        int target_slot = transposed_result.column_pointer_data[row_position] + current_position_array[row_position];
+
+        if (target_slot >= 0 && target_slot < source_matrix.non_zero_count) {
+          transposed_result.value_data[target_slot] = element_value;
+          transposed_result.row_index_data[target_slot] = column_counter;
+        }
+
+        current_position_array[row_position]++;
+      }
+    }
+  }
+}
+
+bool ValidateInputParameters(int column_index, const std::vector<int> &local_column_pointers,
+                             const std::vector<double> &local_values, const std::vector<int> &local_row_indices) {
+  if (column_index < 0 || column_index >= static_cast<int>(local_column_pointers.size()) - 1) {
+    return false;
+  }
+
+  if (local_values.size() != local_row_indices.size()) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateTransposedMatrix(const CompressedColumnMatrix &transposed_matrix_a) {
+  if (transposed_matrix_a.column_count <= 0 || transposed_matrix_a.row_count <= 0) {
+    return false;
+  }
+
+  if (transposed_matrix_a.column_pointer_data.size() !=
+      static_cast<std::size_t>(transposed_matrix_a.column_count) + 1) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateColumnRange(int column_start_position, int column_end_position, const std::vector<double> &local_values) {
+  if (column_start_position < 0 || static_cast<std::size_t>(column_end_position) > local_values.size() ||
+      column_start_position > column_end_position) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateTemporaryArrays(const std::vector<double> &temporary_row_values, const std::vector<int> &row_marker_array,
+                             int column_count) {
+  if (temporary_row_values.size() != static_cast<std::size_t>(column_count) ||
+      row_marker_array.size() != static_cast<std::size_t>(column_count)) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateMatrixBElement(int matrix_b_row, int column_count, const std::vector<int> &column_pointers) {
+  if (matrix_b_row < 0 || matrix_b_row >= column_count) {
+    return false;
+  }
+
+  if (matrix_b_row + 1 >= static_cast<int>(column_pointers.size())) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateTransposedRange(int transposed_start, int transposed_end, const std::vector<double> &transposed_values) {
+  if (transposed_start < 0 || static_cast<std::size_t>(transposed_end) > transposed_values.size() ||
+      transposed_start > transposed_end) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateMatrixAElement(int matrix_a_row, int column_count) {
+  return !(matrix_a_row < 0 || matrix_a_row >= column_count);
+}
+
+void ProcessTransposedElement(int matrix_a_row, int column_index, double matrix_a_value, double matrix_b_value,
+                              std::vector<double> &temporary_row_values, std::vector<int> &row_marker_array) {
+  if (row_marker_array[matrix_a_row] != column_index) {
+    row_marker_array[matrix_a_row] = column_index;
+    temporary_row_values[matrix_a_row] = matrix_a_value * matrix_b_value;
+  } else {
+    temporary_row_values[matrix_a_row] += matrix_a_value * matrix_b_value;
+  }
+}
+
+void ProcessMatrixBElement(int matrix_b_row, double matrix_b_value, const CompressedColumnMatrix &transposed_matrix_a,
+                           int column_index, std::vector<double> &temporary_row_values,
+                           std::vector<int> &row_marker_array) {
+  int transposed_start = transposed_matrix_a.column_pointer_data[matrix_b_row];
+  int transposed_end = transposed_matrix_a.column_pointer_data[matrix_b_row + 1];
+
+  if (!ValidateTransposedRange(transposed_start, transposed_end, transposed_matrix_a.value_data)) {
+    return;
+  }
+
+  for (int transposed_index = transposed_start; transposed_index < transposed_end; transposed_index++) {
+    int matrix_a_row = transposed_matrix_a.row_index_data[transposed_index];
+    double matrix_a_value = transposed_matrix_a.value_data[transposed_index];
+
+    if (!ValidateMatrixAElement(matrix_a_row, transposed_matrix_a.column_count)) {
+      continue;
+    }
+
+    ProcessTransposedElement(matrix_a_row, column_index, matrix_a_value, matrix_b_value, temporary_row_values,
+                             row_marker_array);
+  }
+}
+
+void ProcessLocalColumnElements(int column_start_position, int column_end_position,
+                                const std::vector<double> &local_values, const std::vector<int> &local_row_indices,
+                                const CompressedColumnMatrix &transposed_matrix_a, int column_index,
+                                std::vector<double> &temporary_row_values, std::vector<int> &row_marker_array) {
+  for (int element_index = column_start_position; element_index < column_end_position; element_index++) {
+    int matrix_b_row = local_row_indices[element_index];
+    double matrix_b_value = local_values[element_index];
+
+    if (!ValidateMatrixBElement(matrix_b_row, transposed_matrix_a.column_count,
+                                transposed_matrix_a.column_pointer_data)) {
+      continue;
+    }
+
+    ProcessMatrixBElement(matrix_b_row, matrix_b_value, transposed_matrix_a, column_index, temporary_row_values,
+                          row_marker_array);
+  }
+}
+
+void CollectNonZeroResults(const std::vector<double> &temporary_row_values, const std::vector<int> &row_marker_array,
+                           int column_index, int column_count, std::vector<double> &result_values,
+                           std::vector<int> &result_row_indices) {
+  for (int row_index = 0; row_index < column_count; row_index++) {
+    if (row_marker_array[row_index] == column_index && std::abs(temporary_row_values[row_index]) > kEpsilonThreshold) {
+      result_values.push_back(temporary_row_values[row_index]);
+      result_row_indices.push_back(row_index);
+    }
+  }
+}
+
+bool ValidateInputRange(int start_column, int end_column, int column_count) {
+  if (start_column < 0 || end_column < 0 || start_column >= end_column) {
+    return false;
+  }
+
+  if (start_column >= column_count) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateMatrixB(const CompressedColumnMatrix &matrix_b) {
+  if (matrix_b.column_count <= 0 || matrix_b.row_count <= 0) {
+    return false;
+  }
+
+  if (matrix_b.column_pointer_data.size() != static_cast<std::size_t>(matrix_b.column_count) + 1) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ValidateColumnIndex(int col_index, int column_count) {
+  return !(col_index < 0 || col_index >= column_count);
+}
+
+bool ValidateColumnPointerBounds(int col_index, const std::vector<int> &column_pointers) {
+  return !(col_index + 1 >= static_cast<int>(column_pointers.size()));
+}
+
+bool ValidateColumnRange(int col_start, int col_end) {
+  return !(col_start < 0 || col_end < 0 || col_start > col_end);
+}
+
+bool ValidateDataBounds(int col_end, const std::vector<double> &values, const std::vector<int> &row_indices) {
+  return !(static_cast<std::size_t>(col_end) > values.size() || static_cast<std::size_t>(col_end) > row_indices.size());
+}
+
+bool ValidateRowIndex(int row_idx, int row_count) {
+  return !(row_idx < 0 || row_idx >= row_count);
+}
+
+int ExtractSingleColumnData(int col_index, const CompressedColumnMatrix &matrix_b, std::vector<double> &local_values,
+                            std::vector<int> &local_row_indices) {
+  if (!ValidateColumnIndex(col_index, matrix_b.column_count)) {
+    return static_cast<int>(local_values.size());
+  }
+
+  if (!ValidateColumnPointerBounds(col_index, matrix_b.column_pointer_data)) {
+    return static_cast<int>(local_values.size());
+  }
+
+  int col_start = matrix_b.column_pointer_data[col_index];
+  int col_end = matrix_b.column_pointer_data[col_index + 1];
+
+  if (!ValidateColumnRange(col_start, col_end)) {
+    return static_cast<int>(local_values.size());
+  }
+
+  if (!ValidateDataBounds(col_end, matrix_b.value_data, matrix_b.row_index_data)) {
+    return static_cast<int>(local_values.size());
+  }
+
+  for (int idx = col_start; idx < col_end; ++idx) {
+    int row_idx = matrix_b.row_index_data[idx];
+
+    if (!ValidateRowIndex(row_idx, matrix_b.row_count)) {
+      continue;
+    }
+
+    local_values.push_back(matrix_b.value_data[idx]);
+    local_row_indices.push_back(row_idx);
+  }
+
+  return static_cast<int>(local_values.size());
+}
+
+bool ValidateProcessCount(int total_processes) {
+  return total_processes > 0;
+}
+
+void InitializeResultMatrix(const CompressedColumnMatrix &matrix_a, const CompressedColumnMatrix &matrix_b,
+                            CompressedColumnMatrix &result_matrix) {
+  result_matrix.row_count = matrix_a.row_count;
+  result_matrix.column_count = matrix_b.column_count;
+  result_matrix.non_zero_count = 0;
+  result_matrix.value_data.clear();
+  result_matrix.row_index_data.clear();
+  result_matrix.column_pointer_data.clear();
+  result_matrix.column_pointer_data.push_back(0);
+}
+
+bool ReceiveProcessDataMPI(int process_id, std::vector<double> &values, std::vector<int> &row_indices,
+                           std::vector<int> &col_pointers) {
+  int nnz = 0;
+  int cols = 0;
+  MPI_Status status;
+
+  if (MPI_Recv(&nnz, 1, MPI_INT, process_id, 0, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
+    return false;
+  }
+  if (MPI_Recv(&cols, 1, MPI_INT, process_id, 1, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
+    return false;
+  }
+
+  const int MAX_SIZE = 100000000;
+  if (nnz < 0 || cols < 0 || nnz > MAX_SIZE || cols > MAX_SIZE) {
+    return false;
+  }
+
+  values.resize(nnz);
+  row_indices.resize(nnz);
+  col_pointers.resize(cols + 1);
+
+  if (nnz > 0) {
+    if (MPI_Recv(values.data(), nnz, MPI_DOUBLE, process_id, 2, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
+      return false;
+    }
+    if (MPI_Recv(row_indices.data(), nnz, MPI_INT, process_id, 3, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
+      return false;
+    }
+  }
+
+  if (MPI_Recv(col_pointers.data(), cols + 1, MPI_INT, process_id, 4, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
+    return false;
+  }
+
+  return true;
+}
+
+void ProcessLocalWorkerData(int pid, const std::vector<std::vector<double>> &value_collections,
+                            const std::vector<std::vector<int>> &row_index_collections,
+                            const std::vector<std::vector<int>> &column_pointer_collections, int &value_offset,
+                            CompressedColumnMatrix &result_matrix) {
+  if (value_collections[pid].size() != row_index_collections[pid].size()) {
+    return;
+  }
+
+  if (column_pointer_collections[pid].empty()) {
+    return;
+  }
+
+  if (!value_collections[pid].empty()) {
+    result_matrix.value_data.insert(result_matrix.value_data.end(), value_collections[pid].begin(),
+                                    value_collections[pid].end());
+
+    result_matrix.row_index_data.insert(result_matrix.row_index_data.end(), row_index_collections[pid].begin(),
+                                        row_index_collections[pid].end());
+  }
+
+  for (size_t i = 1; i < column_pointer_collections[pid].size(); ++i) {
+    int adjusted_value = std::max(column_pointer_collections[pid][i], 0);
+    result_matrix.column_pointer_data.push_back(adjusted_value + value_offset);
+  }
+
+  value_offset += static_cast<int>(value_collections[pid].size());
+}
+
+void ReceiveAllWorkerData(int total_processes, std::vector<std::vector<double>> &value_collections,
+                          std::vector<std::vector<int>> &row_index_collections,
+                          std::vector<std::vector<int>> &column_pointer_collections,
+                          const std::vector<double> &local_result_values,
+                          const std::vector<int> &local_result_row_indices,
+                          const std::vector<int> &local_result_column_pointers) {
+  value_collections[0] = std::move(local_result_values);
+  row_index_collections[0] = std::move(local_result_row_indices);
+  column_pointer_collections[0] = std::move(local_result_column_pointers);
+
+  for (int pid = 1; pid < total_processes; ++pid) {
+    if (!ReceiveProcessDataMPI(pid, value_collections[pid], row_index_collections[pid],
+                               column_pointer_collections[pid])) {
+      value_collections[pid].clear();
+      row_index_collections[pid].clear();
+      column_pointer_collections[pid].clear();
+    }
+  }
+}
+
+void FinalizeResultMatrix(CompressedColumnMatrix &result_matrix) {
+  result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
+
+  if (result_matrix.column_pointer_data.size() != static_cast<std::size_t>(result_matrix.column_count) + 1) {
+    result_matrix.column_pointer_data.resize(result_matrix.column_count + 1);
+    if (!result_matrix.column_pointer_data.empty()) {
+      result_matrix.column_pointer_data[0] = 0;
+    }
+  }
+}
+
 }  // namespace
 
 LobanovDMultiplyMatrixMPI::LobanovDMultiplyMatrixMPI(const InType &input_matrices) {
@@ -40,31 +448,10 @@ bool LobanovDMultiplyMatrixMPI::PreProcessingImpl() {
 
 void LobanovDMultiplyMatrixMPI::ComputeTransposedMatrixMPI(const CompressedColumnMatrix &source_matrix,
                                                            CompressedColumnMatrix &transposed_result) {
-  // Полная инициализация результата
-  transposed_result.row_count = 0;
-  transposed_result.column_count = 0;
-  transposed_result.non_zero_count = 0;
-  transposed_result.value_data.clear();
-  transposed_result.row_index_data.clear();
-  transposed_result.column_pointer_data.clear();
+  transposed_result.ZeroInitialize();
 
-  if (source_matrix.row_count <= 0 || source_matrix.column_count <= 0) {
+  if (!ValidateSourceMatrix(source_matrix)) {
     return;
-  }
-
-  if (source_matrix.column_pointer_data.size() != static_cast<std::size_t>(source_matrix.column_count) + 1) {
-    return;
-  }
-
-  if (source_matrix.non_zero_count < 0) {
-    return;
-  }
-
-  if (source_matrix.non_zero_count > 0) {
-    if (source_matrix.value_data.size() != static_cast<std::size_t>(source_matrix.non_zero_count) ||
-        source_matrix.row_index_data.size() != static_cast<std::size_t>(source_matrix.non_zero_count)) {
-      return;
-    }
   }
 
   transposed_result.row_count = source_matrix.column_count;
@@ -72,56 +459,15 @@ void LobanovDMultiplyMatrixMPI::ComputeTransposedMatrixMPI(const CompressedColum
   transposed_result.non_zero_count = source_matrix.non_zero_count;
 
   if (source_matrix.non_zero_count == 0) {
-    transposed_result.value_data.clear();
-    transposed_result.row_index_data.clear();
-    transposed_result.column_pointer_data.assign(transposed_result.column_count + 1, 0);
+    InitializeEmptyTransposedResult(source_matrix, transposed_result);
     return;
   }
 
-  std::vector<int> row_element_count(transposed_result.column_count, 0);
-  for (int element_index = 0; element_index < source_matrix.non_zero_count; element_index++) {
-    int row_idx = source_matrix.row_index_data[element_index];
-    if (row_idx >= 0 && row_idx < transposed_result.column_count) {
-      row_element_count[row_idx]++;
-    }
-  }
+  std::vector<int> row_element_count = CountElementsPerRow(source_matrix, transposed_result.column_count);
 
-  transposed_result.column_pointer_data.resize(transposed_result.column_count + 1);
-  transposed_result.column_pointer_data[0] = 0;
-  for (int row_index = 0; row_index < transposed_result.column_count; row_index++) {
-    transposed_result.column_pointer_data[row_index + 1] =
-        transposed_result.column_pointer_data[row_index] + row_element_count[row_index];
-  }
+  BuildColumnPointers(transposed_result, row_element_count);
 
-  transposed_result.value_data.resize(source_matrix.non_zero_count);
-  transposed_result.row_index_data.resize(source_matrix.non_zero_count);
-
-  std::vector<int> current_position_array(transposed_result.column_count, 0);
-  int column_counter = 0;
-
-  while (column_counter < source_matrix.column_count) {
-    int column_start = source_matrix.column_pointer_data[column_counter];
-    int column_end = source_matrix.column_pointer_data[column_counter + 1];
-    int element_counter = column_start;
-
-    while (element_counter < column_end) {
-      int row_position = source_matrix.row_index_data[element_counter];
-      double element_value = source_matrix.value_data[element_counter];
-
-      if (row_position >= 0 && row_position < transposed_result.column_count) {
-        int target_slot = transposed_result.column_pointer_data[row_position] + current_position_array[row_position];
-
-        if (target_slot >= 0 && target_slot < source_matrix.non_zero_count) {
-          transposed_result.value_data[target_slot] = element_value;
-          transposed_result.row_index_data[target_slot] = column_counter;
-        }
-
-        current_position_array[row_position]++;
-      }
-      element_counter++;
-    }
-    column_counter++;
-  }
+  FillTransposedMatrixData(source_matrix, transposed_result);
 }
 
 std::pair<int, int> LobanovDMultiplyMatrixMPI::DetermineColumnDistribution(int total_columns, int process_rank,
@@ -157,79 +503,30 @@ void LobanovDMultiplyMatrixMPI::ProcessLocalColumnMPI(
     const std::vector<int> &local_row_indices, const std::vector<int> &local_column_pointers, int column_index,
     std::vector<double> &temporary_row_values, std::vector<int> &row_marker_array, std::vector<double> &result_values,
     std::vector<int> &result_row_indices) {
-  if (column_index < 0 || column_index >= static_cast<int>(local_column_pointers.size()) - 1) {
+  if (!ValidateInputParameters(column_index, local_column_pointers, local_values, local_row_indices)) {
     return;
   }
 
-  if (local_values.size() != local_row_indices.size()) {
-    return;
-  }
-
-  if (transposed_matrix_a.column_count <= 0 || transposed_matrix_a.row_count <= 0) {
-    return;
-  }
-
-  if (transposed_matrix_a.column_pointer_data.size() !=
-      static_cast<std::size_t>(transposed_matrix_a.column_count) + 1) {
+  if (!ValidateTransposedMatrix(transposed_matrix_a)) {
     return;
   }
 
   int column_start_position = local_column_pointers[column_index];
   int column_end_position = local_column_pointers[column_index + 1];
 
-  if (column_start_position < 0 || static_cast<std::size_t>(column_end_position) > local_values.size() ||
-      column_start_position > column_end_position) {
+  if (!ValidateColumnRange(column_start_position, column_end_position, local_values)) {
     return;
   }
 
-  if (temporary_row_values.size() != static_cast<std::size_t>(transposed_matrix_a.column_count) ||
-      row_marker_array.size() != static_cast<std::size_t>(transposed_matrix_a.column_count)) {
+  if (!ValidateTemporaryArrays(temporary_row_values, row_marker_array, transposed_matrix_a.column_count)) {
     return;
   }
 
-  for (int element_index = column_start_position; element_index < column_end_position; element_index++) {
-    int matrix_b_row = local_row_indices[element_index];
-    double matrix_b_value = local_values[element_index];
+  ProcessLocalColumnElements(column_start_position, column_end_position, local_values, local_row_indices,
+                             transposed_matrix_a, column_index, temporary_row_values, row_marker_array);
 
-    if (matrix_b_row < 0 || matrix_b_row >= transposed_matrix_a.column_count) {
-      continue;
-    }
-
-    if (matrix_b_row + 1 >= static_cast<int>(transposed_matrix_a.column_pointer_data.size())) {
-      continue;
-    }
-
-    int transposed_start = transposed_matrix_a.column_pointer_data[matrix_b_row];
-    int transposed_end = transposed_matrix_a.column_pointer_data[matrix_b_row + 1];
-
-    if (transposed_start < 0 || static_cast<std::size_t>(transposed_end) > transposed_matrix_a.value_data.size() ||
-        transposed_start > transposed_end) {
-      continue;
-    }
-
-    for (int transposed_index = transposed_start; transposed_index < transposed_end; transposed_index++) {
-      int matrix_a_row = transposed_matrix_a.row_index_data[transposed_index];
-      double matrix_a_value = transposed_matrix_a.value_data[transposed_index];
-
-      if (matrix_a_row < 0 || matrix_a_row >= transposed_matrix_a.column_count) {
-        continue;
-      }
-
-      if (row_marker_array[matrix_a_row] != column_index) {
-        row_marker_array[matrix_a_row] = column_index;
-        temporary_row_values[matrix_a_row] = matrix_a_value * matrix_b_value;
-      } else {
-        temporary_row_values[matrix_a_row] += matrix_a_value * matrix_b_value;
-      }
-    }
-  }
-
-  for (int row_index = 0; row_index < transposed_matrix_a.column_count; row_index++) {
-    if (row_marker_array[row_index] == column_index && std::abs(temporary_row_values[row_index]) > kEpsilonThreshold) {
-      result_values.push_back(temporary_row_values[row_index]);
-      result_row_indices.push_back(row_index);
-    }
-  }
+  CollectNonZeroResults(temporary_row_values, row_marker_array, column_index, transposed_matrix_a.column_count,
+                        result_values, result_row_indices);
 }
 
 void LobanovDMultiplyMatrixMPI::ExtractLocalColumnData(const CompressedColumnMatrix &matrix_b, int start_column,
@@ -241,59 +538,18 @@ void LobanovDMultiplyMatrixMPI::ExtractLocalColumnData(const CompressedColumnMat
   local_column_pointers.clear();
   local_column_pointers.push_back(0);
 
-  if (start_column < 0 || end_column < 0 || start_column >= end_column) {
+  if (!ValidateInputRange(start_column, end_column, matrix_b.column_count)) {
     return;
   }
 
-  if (matrix_b.column_count <= 0 || matrix_b.row_count <= 0) {
-    return;
-  }
-
-  if (start_column >= matrix_b.column_count) {
+  if (!ValidateMatrixB(matrix_b)) {
     return;
   }
 
   end_column = std::min(end_column, matrix_b.column_count);
 
-  if (matrix_b.column_pointer_data.size() != static_cast<std::size_t>(matrix_b.column_count) + 1) {
-    return;
-  }
-
-  auto extract_column_data = [&](int col_index) -> int {
-    if (col_index < 0 || col_index >= matrix_b.column_count) {
-      return static_cast<int>(local_values.size());
-    }
-
-    if (col_index + 1 >= static_cast<int>(matrix_b.column_pointer_data.size())) {
-      return static_cast<int>(local_values.size());
-    }
-
-    int col_start = matrix_b.column_pointer_data[col_index];
-    int col_end = matrix_b.column_pointer_data[col_index + 1];
-
-    if (col_start < 0 || col_end < 0 || col_start > col_end) {
-      return static_cast<int>(local_values.size());
-    }
-
-    if (static_cast<std::size_t>(col_end) > matrix_b.value_data.size() ||
-        static_cast<std::size_t>(col_end) > matrix_b.row_index_data.size()) {
-      return static_cast<int>(local_values.size());
-    }
-
-    for (int idx = col_start; idx < col_end; ++idx) {
-      if (matrix_b.row_index_data[idx] < 0 || matrix_b.row_index_data[idx] >= matrix_b.row_count) {
-        continue;
-      }
-
-      local_values.push_back(matrix_b.value_data[idx]);
-      local_row_indices.push_back(matrix_b.row_index_data[idx]);
-    }
-
-    return static_cast<int>(local_values.size());
-  };
-
   for (int current_col = start_column; current_col < end_column; ++current_col) {
-    int new_size = extract_column_data(current_col);
+    int new_size = ExtractSingleColumnData(current_col, matrix_b, local_values, local_row_indices);
     local_column_pointers.push_back(new_size);
   }
 }
@@ -350,107 +606,27 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
                                                   std::vector<double> &local_result_values,
                                                   std::vector<int> &local_result_row_indices,
                                                   std::vector<int> &local_result_column_pointers, int total_processes) {
-  if (total_processes <= 0) {
+  if (!ValidateProcessCount(total_processes)) {
     return false;
   }
 
   CompressedColumnMatrix result_matrix;
-  result_matrix.row_count = matrix_a.row_count;
-  result_matrix.column_count = matrix_b.column_count;
-  result_matrix.non_zero_count = 0;
-  result_matrix.column_pointer_data.clear();
-  result_matrix.column_pointer_data.push_back(0);
+  InitializeResultMatrix(matrix_a, matrix_b, result_matrix);
 
   std::vector<std::vector<double>> value_collections(total_processes);
   std::vector<std::vector<int>> row_index_collections(total_processes);
   std::vector<std::vector<int>> column_pointer_collections(total_processes);
 
-  auto receive_process_data = [](int process_id, std::vector<double> &values, std::vector<int> &row_indices,
-                                 std::vector<int> &col_pointers) {
-    int nnz = 0;
-    int cols = 0;
-    MPI_Status status;
-
-    if (MPI_Recv(&nnz, 1, MPI_INT, process_id, 0, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-      return false;
-    }
-    if (MPI_Recv(&cols, 1, MPI_INT, process_id, 1, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-      return false;
-    }
-
-    if (nnz < 0 || cols < 0 || nnz > 100000000 || cols > 100000000) {  // разумные пределы
-      return false;
-    }
-
-    values.resize(nnz);
-    row_indices.resize(nnz);
-    col_pointers.resize(cols + 1);
-
-    if (nnz > 0) {
-      if (MPI_Recv(values.data(), nnz, MPI_DOUBLE, process_id, 2, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-        return false;
-      }
-      if (MPI_Recv(row_indices.data(), nnz, MPI_INT, process_id, 3, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-        return false;
-      }
-    }
-
-    if (MPI_Recv(col_pointers.data(), cols + 1, MPI_INT, process_id, 4, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-      return false;
-    }
-
-    return true;
-  };
-
-  value_collections[0] = std::move(local_result_values);
-  row_index_collections[0] = std::move(local_result_row_indices);
-  column_pointer_collections[0] = std::move(local_result_column_pointers);
-
-  for (int pid = 1; pid < total_processes; ++pid) {
-    if (!receive_process_data(pid, value_collections[pid], row_index_collections[pid],
-                              column_pointer_collections[pid])) {
-      value_collections[pid].clear();
-      row_index_collections[pid].clear();
-      column_pointer_collections[pid].clear();
-    }
-  }
+  ReceiveAllWorkerData(total_processes, value_collections, row_index_collections, column_pointer_collections,
+                       local_result_values, local_result_row_indices, local_result_column_pointers);
 
   int value_offset = 0;
-
   for (int pid = 0; pid < total_processes; ++pid) {
-    if (value_collections[pid].size() != row_index_collections[pid].size()) {
-      continue;
-    }
-
-    if (column_pointer_collections[pid].empty()) {
-      continue;
-    }
-
-    if (!value_collections[pid].empty()) {
-      result_matrix.value_data.insert(result_matrix.value_data.end(), value_collections[pid].begin(),
-                                      value_collections[pid].end());
-
-      result_matrix.row_index_data.insert(result_matrix.row_index_data.end(), row_index_collections[pid].begin(),
-                                          row_index_collections[pid].end());
-    }
-
-    for (size_t i = 1; i < column_pointer_collections[pid].size(); ++i) {
-      int adjusted_value = column_pointer_collections[pid][i];
-      adjusted_value = std::max(adjusted_value, 0);
-      result_matrix.column_pointer_data.push_back(adjusted_value + value_offset);
-    }
-
-    value_offset += static_cast<int>(value_collections[pid].size());
+    ProcessLocalWorkerData(pid, value_collections, row_index_collections, column_pointer_collections, value_offset,
+                           result_matrix);
   }
 
-  result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
-
-  if (result_matrix.column_pointer_data.size() != static_cast<std::size_t>(result_matrix.column_count) + 1) {
-    result_matrix.column_pointer_data.resize(result_matrix.column_count + 1);
-    if (!result_matrix.column_pointer_data.empty()) {
-      result_matrix.column_pointer_data[0] = 0;
-    }
-  }
+  FinalizeResultMatrix(result_matrix);
 
   GetOutput() = result_matrix;
 
