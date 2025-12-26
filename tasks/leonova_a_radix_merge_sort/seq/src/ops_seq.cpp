@@ -147,7 +147,9 @@ void LeonovaARadixMergeSortSEQ::RadixMergeSort(std::vector<double> &arr, size_t 
   }
 
   size_t mid = left + (size / 2);
+  // NOLINTNEXTLINE(misc-no-recursion)
   RadixMergeSort(arr, left, mid);
+  // NOLINTNEXTLINE(misc-no-recursion)
   RadixMergeSort(arr, mid, right);
 
   SimpleRadixMerge(arr, left, mid, right);

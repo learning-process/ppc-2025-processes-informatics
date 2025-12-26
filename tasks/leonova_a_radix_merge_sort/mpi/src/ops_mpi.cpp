@@ -396,7 +396,9 @@ void LeonovaARadixMergeSortMPI::RadixMergeSort(std::vector<double> &arr, size_t 
   }
 
   size_t mid = left + (size >> 1);
+  // NOLINTNEXTLINE(misc-no-recursion)
   RadixMergeSort(arr, left, mid);
+  // NOLINTNEXTLINE(misc-no-recursion)
   RadixMergeSort(arr, mid, right);
 
   std::vector<double> merged(size);
