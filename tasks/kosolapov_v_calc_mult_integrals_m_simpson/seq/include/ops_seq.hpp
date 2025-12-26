@@ -26,7 +26,7 @@ class KosolapovVCalcMultIntegralsMSimpsonSEQ : public BaseTask {
   static double Function4(double x, double y);
   static double CallFunction(int func_id, double x, double y);
   static std::tuple<double, double, double, double> GetBounds(int func_id);
-  double SimpsonIntegral(int func_id, int steps, double a, double b, double c, double d);
+  static double SimpsonIntegral(int func_id, int steps, double a, double b, double c, double d);
   static double GetSimpsonWeight(int index, int steps);
 };
 
