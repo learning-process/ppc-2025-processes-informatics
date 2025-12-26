@@ -1,13 +1,13 @@
 #include "liulin_y_integ_mnog_func_monte_carlo/seq/include/ops_seq.hpp"
 
-#include <cstddef>
+#include <cstdint>
 #include <random>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 
 namespace liulin_y_integ_mnog_func_monte_carlo {
 
-thread_local static std::mt19937 gen(std::random_device{}());
+// Remove the thread_local static std::mt19937 gen declaration since it's not used
 
 LiulinYIntegMnogFuncMonteCarloSEQ::LiulinYIntegMnogFuncMonteCarloSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -74,7 +74,7 @@ bool LiulinYIntegMnogFuncMonteCarloSEQ::RunImpl() {
     sum += func(x, y);
   }
 
-  result = (sum * area) / n;
+  result = (sum * area) / static_cast<double>(n);
 
   return true;
 }

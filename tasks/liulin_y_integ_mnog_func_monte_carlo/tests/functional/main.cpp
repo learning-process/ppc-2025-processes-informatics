@@ -2,12 +2,14 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <functional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <utility>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 #include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
@@ -73,7 +75,7 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRu
         throw std::runtime_error("Unknown function id " + std::to_string(func_id) + " in file: " + filename);
     }
 
-    input_data_ = TaskInput{x_min, x_max, y_min, y_max, std::move(f), num_points};
+    input_data_ = TaskInput(x_min, x_max, y_min, y_max, std::move(f), num_points);
     exp_output_ = expected;
 
     file.close();

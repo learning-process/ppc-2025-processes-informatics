@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 #include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
@@ -14,21 +15,25 @@ namespace liulin_y_integ_mnog_func_monte_carlo {
 class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   struct TestConfig {
-    double x_min, x_max;
-    double y_min, y_max;
-    int64_t num_points;
+    double x_min = 0.0;
+    double x_max = 0.0;
+    double y_min = 0.0;
+    double y_max = 0.0;
+    int64_t num_points = 0;
     std::string name;
   };
 
   static TestConfig GetLiulinSpecificConfig(const std::string &test_name) {
     constexpr int64_t kLargeN = 100000000LL;
     if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_mpi") != std::string::npos) {
-      return {0.0, 1.0, 0.0, 1.0, kLargeN, "mpi_large"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = kLargeN, .name = "mpi_large"};
     }
     if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_seq") != std::string::npos) {
-      return {0.0, 1.0, 0.0, 1.0, kLargeN, "seq_large"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = kLargeN, .name = "seq_large"};
     }
-    return {0.0, 1.0, 0.0, 1.0, 100000LL, "small"};
+    return TestConfig{.x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = 100000LL, .name = "small"};
   }
 
   static bool HasLiulinSpecificConfig(const std::string &test_name) {
@@ -40,24 +45,30 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
       return GetLiulinSpecificConfig(test_name);
     }
     if (test_name.find("small") != std::string::npos) {
-      return {0.0, 1.0, 0.0, 1.0, 100000LL, "small"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = 100000LL, .name = "small"};
     }
     if (test_name.find("medium") != std::string::npos) {
-      return {0.0, 1.0, 0.0, 1.0, 1000000LL, "medium"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = 1000000LL, .name = "medium"};
     }
     if (test_name.find("large") != std::string::npos) {
-      return {0.0, 1.0, 0.0, 1.0, 10000000LL, "large"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = 10000000LL, .name = "large"};
     }
     if (test_name.find("xlarge") != std::string::npos) {
-      return {0.0, 1.0, 0.0, 1.0, 100000000LL, "xlarge"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = 100000000LL, .name = "xlarge"};
     }
     if (test_name.find("tall") != std::string::npos) {
-      return {0.0, 10.0, 0.0, 0.1, 10000000LL, "tall"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 10.0, .y_min = 0.0, .y_max = 0.1, .num_points = 10000000LL, .name = "tall"};
     }
     if (test_name.find("wide") != std::string::npos) {
-      return {0.0, 0.1, 0.0, 10.0, 10000000LL, "wide"};
+      return TestConfig{
+          .x_min = 0.0, .x_max = 0.1, .y_min = 0.0, .y_max = 10.0, .num_points = 10000000LL, .name = "wide"};
     }
-    return {0.0, 1.0, 0.0, 1.0, 100000LL, "small"};
+    return TestConfig{.x_min = 0.0, .x_max = 1.0, .y_min = 0.0, .y_max = 1.0, .num_points = 100000LL, .name = "small"};
   }
 
   void SetUp() override {
@@ -78,7 +89,8 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
     // Тестовая функция f(x,y) = x * y (интеграл = (x_max^2 - x_min^2)/2 * (y_max^2 - y_min^2)/2
     auto f = [](double x, double y) { return x * y; };
 
-    input_data_ = TaskInput{x_min_, x_max_, y_min_, y_max_, f, num_points_};
+    // Используем конструктор TaskInput вместо агрегатной инициализации
+    input_data_ = TaskInput(x_min_, x_max_, y_min_, y_max_, f, num_points_);
 
     // Ожидаемый аналитический интеграл
     expected_output_ = ((x_max_ * x_max_ - x_min_ * x_min_) / 2.0) * ((y_max_ * y_max_ - y_min_ * y_min_) / 2.0);

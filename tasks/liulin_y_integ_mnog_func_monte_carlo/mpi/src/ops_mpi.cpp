@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <cstddef>
+#include <cstdint>
 #include <random>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
@@ -41,7 +41,7 @@ bool LiulinYIntegMnogFuncMonteCarloMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   int64_t total_points = input.num_points;
-  MPI_Bcast(&total_points, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&total_points, 1, MPI_INT64_T, 0, MPI_COMM_WORLD);
 
   if (total_points <= 0) {
     result = 0.0;
@@ -76,7 +76,7 @@ bool LiulinYIntegMnogFuncMonteCarloMPI::RunImpl() {
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (world_rank == 0) {
-    result = global_sum / total_points * area;
+    result = global_sum / static_cast<double>(total_points) * area;
   }
 
   MPI_Bcast(&result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
