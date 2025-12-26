@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <vector>
+// #include <vector>  // Удалено, не используется напрямую
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
 #include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
@@ -26,7 +26,7 @@ class PikhotskiyRScatterPerfTests : public ppc::util::BaseRunPerfTests<InputType
     return test_name.find("sequential") != std::string::npos || test_name.find("seq") != std::string::npos;
   }
 
-  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+  // NOLINTNEXTLINE
   void SetUp() override {
     bool sequential_mode = IsSequentialTest();
 
@@ -72,7 +72,7 @@ class PikhotskiyRScatterPerfTests : public ppc::util::BaseRunPerfTests<InputType
     test_input_.communicator = MPI_COMM_WORLD;
   }
 
-  // NOLINTNEXTLINE(readability-make-member-function-const,readability-convert-member-functions-to-static)
+  // NOLINTNEXTLINE
   bool CheckTestOutputData(OutputType &output_data) final {
     if (output_data.empty()) {
       return false;
@@ -118,7 +118,7 @@ class PikhotskiyRScatterPerfTests : public ppc::util::BaseRunPerfTests<InputType
 
 namespace {
 
-// NOLINTNEXTLINE(readability-named-parameter)
+// NOLINTNEXTLINE
 void RunPerformanceTestsImpl(const testing::TestParamInfo<ppc::util::PerfTaskInfo<InputType>> & /*test_info*/) {
   PikhotskiyRScatterPerfTests test_case;
   // test_case.ExecuteTest(test_info.param);

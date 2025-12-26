@@ -3,8 +3,11 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
-#include <vector>
+// #include <vector>  // Удалено, не используется напрямую
+
+#include "pikhotskiy_r_scatter/common/include/common.hpp"
 
 namespace pikhotskiy_r_scatter {
 
@@ -13,7 +16,7 @@ PikhotskiyRScatterSEQ::PikhotskiyRScatterSEQ(const InputType &input_args) {
   GetInput() = input_args;
 }
 
-bool PikhotskiyRScatterSEQ::ValidationImpl() {
+bool PikhotskiyRScatterSEQ::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   const auto &args = GetInput();
 
   if (args.elements_to_send <= 0) {
@@ -41,11 +44,11 @@ bool PikhotskiyRScatterSEQ::ValidationImpl() {
   return check_type(args.send_data_type);
 }
 
-bool PikhotskiyRScatterSEQ::PreProcessingImpl() {
+bool PikhotskiyRScatterSEQ::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   return true;
 }
 
-bool PikhotskiyRScatterSEQ::RunImpl() {
+bool PikhotskiyRScatterSEQ::RunImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   const auto &args = GetInput();
 
   // Определяем размер одного элемента
@@ -62,8 +65,8 @@ bool PikhotskiyRScatterSEQ::RunImpl() {
   std::size_t total_data_size = static_cast<std::size_t>(args.elements_to_send) * element_size;
 
   // Копируем исходные данные
-  const std::uint8_t *source_start = static_cast<const std::uint8_t *>(args.source_buffer);
-  const std::uint8_t *source_end = source_start + total_data_size;
+  auto source_start = static_cast<const std::uint8_t *>(args.source_buffer);
+  auto source_end = source_start + total_data_size;
 
   std::vector<std::uint8_t> processed_data(source_start, source_end);
 
@@ -76,7 +79,7 @@ bool PikhotskiyRScatterSEQ::RunImpl() {
   return true;
 }
 
-bool PikhotskiyRScatterSEQ::PostProcessingImpl() {
+bool PikhotskiyRScatterSEQ::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
   return true;
 }
 

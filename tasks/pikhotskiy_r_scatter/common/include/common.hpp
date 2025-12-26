@@ -1,14 +1,14 @@
 #pragma once
 
 // Только необходимые заголовки
-#include <cstdint>  // используется для std::uint8_t
-#include <vector>   // используется для std::vector
+#include <cstdint>  // NOLINT
+#include <vector>   // NOLINT
 
 // MPI заголовок
 #include <mpi.h>
 
 // Заголовок задачи
-#include "task/include/task.hpp"
+#include "task/include/task.hpp"  // NOLINT
 
 namespace pikhotskiy_r_scatter {
 

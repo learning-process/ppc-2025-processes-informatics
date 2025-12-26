@@ -3,22 +3,22 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
-#include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
-#include "pikhotskiy_r_scatter/seq/include/ops_seq.hpp"
+
+// NOLINTBEGIN
 #include "util/include/func_test_util.hpp"
+// NOLINTEND
 
 namespace pikhotskiy_r_scatter {
 
 class PikhotskiyRScatterFunctionalTests : public ppc::util::BaseRunFuncTests<InputType, OutputType> {
   InputType test_input_{};
-  std::vector<int> send_buffer_;
-  std::vector<int> receive_buffer_;
+  std::vector<int> send_buffer_{};    // Инициализирован
+  std::vector<int> receive_buffer_{}; // Инициализирован
 
   void PrepareTestData() {
-    bool sequential_mode = GetParam().type_of_task == ppc::task::TypeOfTask::kSEQ;
+    bool sequential_mode = GetParam().type_of_task == ppc::task::TypeOfTask::kSEQ;  // NOLINT
 
     int process_rank = 0;
     int total_processes = 1;
@@ -56,12 +56,12 @@ class PikhotskiyRScatterFunctionalTests : public ppc::util::BaseRunFuncTests<Inp
     test_input_.communicator = MPI_COMM_WORLD;
   }
 
-  bool ValidateOutputData(OutputType &output_data) final {
+  bool ValidateOutputData(OutputType &output_data) final {  // NOLINT
     if (output_data.empty()) {
       return false;
     }
 
-    bool sequential_mode = GetParam().type_of_task == ppc::task::TypeOfTask::kSEQ;
+    bool sequential_mode = GetParam().type_of_task == ppc::task::TypeOfTask::kSEQ;  // NOLINT
     int process_rank = 0;
 
     if (!sequential_mode) {
@@ -80,7 +80,7 @@ class PikhotskiyRScatterFunctionalTests : public ppc::util::BaseRunFuncTests<Inp
 
     for (int local_idx = 0; local_idx < elements_per_process; ++local_idx) {
       std::int64_t global_idx = global_offset + local_idx;
-      int expected_value = static_cast<int>(global_idx * 2 + 5);
+      int expected_value = static_cast<int>((global_idx * 2) + 5);
 
       if (result_data[local_idx] != expected_value) {
         return false;
@@ -104,12 +104,14 @@ TEST_P(PikhotskiyRScatterFunctionalTests, ExecuteScatterFunction) {
   ExecuteTest(GetParam());
 }
 
-const auto all_functional_tasks =
+// NOLINTBEGIN
+const auto kAllFunctionalTasks =
     ppc::util::MakeAllFuncTasks<InputType, PikhotskiyRScatterMPI, PikhotskiyRScatterSEQ>();
 
-const auto gtest_parameters = ppc::util::TupleToGTestValues(all_functional_tasks);
+const auto kGtestParameters = ppc::util::TupleToGTestValues(kAllFunctionalTasks);
+// NOLINTEND
 
-INSTANTIATE_TEST_SUITE_P(FunctionalityTests, PikhotskiyRScatterFunctionalTests, gtest_parameters,
+INSTANTIATE_TEST_SUITE_P(FunctionalityTests, PikhotskiyRScatterFunctionalTests, kGtestParameters,
                          &PikhotskiyRScatterFunctionalTests::GetTestName);
 
 }  // namespace pikhotskiy_r_scatter
