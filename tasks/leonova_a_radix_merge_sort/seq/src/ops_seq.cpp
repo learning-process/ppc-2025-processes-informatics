@@ -137,22 +137,43 @@ void LeonovaARadixMergeSortSEQ::SimpleRadixMerge(std::vector<double> &arr, size_
   std::ranges::copy(merged, left_it);
 }
 
-void LeonovaARadixMergeSortSEQ::RadixMergeSort(std::vector<double> &arr, size_t left,
-                                               size_t right) {  // NOLINT(misc-no-recursion)
-  size_t size = right - left;
+void LeonovaARadixMergeSortSEQ::RadixMergeSort(std::vector<double> &arr, size_t left, size_t right) {
+  struct SortTask {
+    size_t left;
+    size_t right;
+    bool sorted;
+  };
 
-  if (size <= kRadixThreshold) {
-    RadixSort(arr, left, right);
-    return;
+  std::vector<SortTask> stack;
+  stack.reserve(128);
+  stack.push_back({left, right, false});
+
+  while (!stack.empty()) {
+    SortTask current = stack.back();
+    stack.pop_back();
+
+    size_t size = current.right - current.left;
+
+    if (size <= 1) {
+      continue;
+    }
+
+    if (size <= kRadixThreshold) {
+      RadixSort(arr, current.left, current.right);
+      continue;
+    }
+
+    if (!current.sorted) {
+      size_t mid = current.left + (size / 2);
+
+      stack.push_back({current.left, current.right, true});
+      stack.push_back({mid, current.right, false});
+      stack.push_back({current.left, mid, false});
+    } else {
+      size_t mid = current.left + (size / 2);
+      SimpleRadixMerge(arr, current.left, mid, current.right);
+    }
   }
-
-  size_t mid = left + (size / 2);
-  // NOLINTNEXTLINE(misc-no-recursion)
-  RadixMergeSort(arr, left, mid);
-  // NOLINTNEXTLINE(misc-no-recursion)
-  RadixMergeSort(arr, mid, right);
-
-  SimpleRadixMerge(arr, left, mid, right);
 }
 
 }  // namespace leonova_a_radix_merge_sort

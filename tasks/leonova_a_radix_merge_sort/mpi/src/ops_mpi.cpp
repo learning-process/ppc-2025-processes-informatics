@@ -386,26 +386,49 @@ void LeonovaARadixMergeSortMPI::MergeTwoParts(const std::vector<double> &arr, si
   CopyRemainingElements(arr, mid + jndex, right_size - jndex, merged, kndex);
 }
 
-void LeonovaARadixMergeSortMPI::RadixMergeSort(std::vector<double> &arr, size_t left,
-                                               size_t right) {  // NOLINT(misc-no-recursion)
-  size_t size = right - left;
+void LeonovaARadixMergeSortMPI::RadixMergeSort(std::vector<double> &arr, size_t left, size_t right) {
+  struct SortTask {
+    size_t left;
+    size_t right;
+    bool sorted;
+  };
 
-  if (size <= kRadixThreshold) {
-    RadixSort(arr, left, right);
-    return;
+  std::vector<SortTask> stack;
+  stack.reserve(128);
+
+  // Начинаем с исходной задачи
+  stack.push_back({left, right, false});
+
+  while (!stack.empty()) {
+    SortTask current = stack.back();
+    stack.pop_back();
+
+    size_t size = current.right - current.left;
+
+    if (size <= 1) {
+      continue;
+    }
+
+    if (size <= kRadixThreshold) {
+      RadixSort(arr, current.left, current.right);
+      continue;
+    }
+
+    if (!current.sorted) {
+      size_t mid = current.left + (size >> 1);
+
+      stack.push_back({current.left, current.right, true});
+      stack.push_back({mid, current.right, false});
+      stack.push_back({current.left, mid, false});
+    } else {
+      // Обе части отсортированы, нужно их слить
+      size_t mid = current.left + (size >> 1);
+      std::vector<double> merged(size);
+      MergeTwoParts(arr, current.left, mid, current.right, merged);
+      auto left_it = arr.begin() + static_cast<typename std::vector<double>::difference_type>(current.left);
+      std::ranges::copy(merged, left_it);
+    }
   }
-
-  size_t mid = left + (size >> 1);
-  // NOLINTNEXTLINE(misc-no-recursion)
-  RadixMergeSort(arr, left, mid);
-  // NOLINTNEXTLINE(misc-no-recursion)
-  RadixMergeSort(arr, mid, right);
-
-  std::vector<double> merged(size);
-  MergeTwoParts(arr, left, mid, right, merged);
-
-  auto left_it = arr.begin() + static_cast<typename std::vector<double>::difference_type>(left);
-  std::ranges::copy(merged, left_it);
 }
 
 }  // namespace leonova_a_radix_merge_sort
