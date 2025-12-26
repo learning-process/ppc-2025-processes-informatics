@@ -2,7 +2,7 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cmath>
+#include <cstddef>
 #include <numeric>
 #include <random>
 #include <vector>
@@ -17,43 +17,22 @@ namespace ovsyannikov_n_shell_batcher {
 class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int size = 500;
+    const int size = 40000;
     input_data_.resize(size);
-    std::iota(input_data_.begin(), input_data_.end(), 0);
-
-    // Фиксированный seed(42) гарантирует идентичность данных на всех процессах
-    std::mt19937 gen(42);
-    std::shuffle(input_data_.begin(), input_data_.end(), gen);
-
+    std::ranges::iota(input_data_, 0);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+    std::ranges::shuffle(input_data_, gen);
     expected_output_ = input_data_;
-    std::sort(expected_output_.begin(), expected_output_.end());
+    std::ranges::sort(expected_output_);
   }
-
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
-    int is_initialized = 0;
-    MPI_Initialized(&is_initialized);
-    if (is_initialized != 0) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
-    // Ваша проверка: вспомогательные процессы просто возвращают true
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank != 0) {
       return true;
     }
-
-    // Сравнение векторов для Rank 0
-    if (output_data.size() != expected_output_.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (std::abs(static_cast<double>(output_data[i]) - static_cast<double>(expected_output_[i])) > 1e-6) {
-        return false;
-      }
-    }
-    return true;
+    return output_data == expected_output_;
   }
-
   InType GetTestInputData() final {
     return input_data_;
   }
@@ -67,13 +46,17 @@ TEST_P(OvsyannikovNShellBatcherPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNShellBatcherMPI, OvsyannikovNShellBatcherSEQ>(
-        PPC_SETTINGS_ovsyannikov_n_shell_batcher);
+INSTANTIATE_TEST_SUITE_P(
+    ovsyannikov_n_shell_batcher_mpi, OvsyannikovNShellBatcherPerfTest,
+    ppc::util::TupleToGTestValues(ppc::util::MakePerfTaskTuples<OvsyannikovNShellBatcherMPI, InType>("mpi")),
+    [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
+      return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
+    });
 
-INSTANTIATE_TEST_SUITE_P(ovsyannikov_n_shell_batcher, OvsyannikovNShellBatcherPerfTest,
-                         ppc::util::TupleToGTestValues(kAllPerfTasks),
-                         [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
-                           return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
-                         });
+INSTANTIATE_TEST_SUITE_P(
+    ovsyannikov_n_shell_batcher_seq, OvsyannikovNShellBatcherPerfTest,
+    ppc::util::TupleToGTestValues(ppc::util::MakePerfTaskTuples<OvsyannikovNShellBatcherSEQ, InType>("seq")),
+    [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
+      return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
+    });
 }  // namespace ovsyannikov_n_shell_batcher

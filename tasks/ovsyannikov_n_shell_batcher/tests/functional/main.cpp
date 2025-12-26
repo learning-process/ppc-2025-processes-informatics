@@ -1,8 +1,11 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
@@ -24,20 +27,12 @@ class OvsyannikovNShellBatcherFuncTest : public ppc::util::BaseRunFuncTests<InTy
     input_data_ = std::get<0>(params);
     expected_ = std::get<1>(params);
   }
-
   bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
-    int is_initialized = 0;
-    MPI_Initialized(&is_initialized);
-
-    if (is_initialized != 0) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank != 0) {
       return true;
     }
-
     if (output_data.size() != expected_.size()) {
       return false;
     }
@@ -48,7 +43,6 @@ class OvsyannikovNShellBatcherFuncTest : public ppc::util::BaseRunFuncTests<InTy
     }
     return true;
   }
-
   InType GetTestInputData() final {
     return input_data_;
   }
@@ -71,14 +65,17 @@ const std::array<TestType, 6> kTestParam = {{
     std::make_tuple(std::vector<int>{2, 2, 1, 1}, std::vector<int>{1, 1, 2, 2}, "Duplicates"),
 }};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<OvsyannikovNShellBatcherMPI, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_shell_batcher),
-    ppc::util::AddFuncTask<OvsyannikovNShellBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_shell_batcher));
+INSTANTIATE_TEST_SUITE_P(
+    ovsyannikov_n_shell_batcher_mpi, OvsyannikovNShellBatcherFuncTest,
+    ppc::util::ExpandToValues(ppc::util::AddFuncTask<OvsyannikovNShellBatcherMPI, InType>(kTestParam, "mpi")),
+    [](const testing::TestParamInfo<OvsyannikovNShellBatcherFuncTest::ParamType> &info) {
+      return OvsyannikovNShellBatcherFuncTest::PrintFuncTestName<OvsyannikovNShellBatcherFuncTest>(info);
+    });
 
-INSTANTIATE_TEST_SUITE_P(ovsyannikov_n_shell_batcher, OvsyannikovNShellBatcherFuncTest,
-                         ppc::util::ExpandToValues(kTestTasksList),
-                         [](const testing::TestParamInfo<OvsyannikovNShellBatcherFuncTest::ParamType> &info) {
-                           return OvsyannikovNShellBatcherFuncTest::PrintFuncTestName<OvsyannikovNShellBatcherFuncTest>(
-                               info);
-                         });
+INSTANTIATE_TEST_SUITE_P(
+    ovsyannikov_n_shell_batcher_seq, OvsyannikovNShellBatcherFuncTest,
+    ppc::util::ExpandToValues(ppc::util::AddFuncTask<OvsyannikovNShellBatcherSEQ, InType>(kTestParam, "seq")),
+    [](const testing::TestParamInfo<OvsyannikovNShellBatcherFuncTest::ParamType> &info) {
+      return OvsyannikovNShellBatcherFuncTest::PrintFuncTestName<OvsyannikovNShellBatcherFuncTest>(info);
+    });
 }  // namespace ovsyannikov_n_shell_batcher

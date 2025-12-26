@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mpi.h>
+
 #include <vector>
 
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
@@ -14,12 +16,12 @@ class OvsyannikovNShellBatcherMPI : public BaseTask {
   }
   explicit OvsyannikovNShellBatcherMPI(const InType &in);
 
- private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+ private:
   static void ShellSort(std::vector<int> &arr);
 };
 

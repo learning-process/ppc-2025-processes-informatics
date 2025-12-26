@@ -1,33 +1,30 @@
 #include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
 
-#include <algorithm>
+#include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
 
 namespace ovsyannikov_n_shell_batcher {
 
 OvsyannikovNShellBatcherSEQ::OvsyannikovNShellBatcherSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  this->SetTypeOfTask(GetStaticTypeOfTask());
+  this->GetInput() = in;
 }
 
 bool OvsyannikovNShellBatcherSEQ::ValidationImpl() {
-  // ЗДЕСЬ НЕ ДОЛЖНО БЫТЬ MPI_Bcast или MPI_Barrier
   return true;
 }
 
 bool OvsyannikovNShellBatcherSEQ::PreProcessingImpl() {
-  // Просто копируем данные. Фреймворк PPC уже положил их в GetInput() на Rank 0.
-  GetOutput() = GetInput();
+  this->GetOutput() = this->GetInput();
   return true;
 }
 
 bool OvsyannikovNShellBatcherSEQ::RunImpl() {
-  auto &arr = GetOutput();
+  auto &arr = this->GetOutput();
   int n = static_cast<int>(arr.size());
   if (n < 2) {
     return true;
   }
 
-  // Обычная сортировка Шелла без MPI
   for (int gap = n / 2; gap > 0; gap /= 2) {
     for (int i = gap; i < n; i++) {
       int temp = arr[i];
