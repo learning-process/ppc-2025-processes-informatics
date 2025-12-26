@@ -1,8 +1,10 @@
 #pragma once
 
-#include <ostream>  // добавьте для оператора вывода
+#include <cstddef>
+#include <ostream>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -17,18 +19,17 @@ struct CompressedColumnMatrix {
   std::vector<int> row_index_data;
   std::vector<int> column_pointer_data;
 
-  CompressedColumnMatrix() : row_count(0), column_count(0), non_zero_count(0) {}
+  CompressedColumnMatrix() = default;
 
   CompressedColumnMatrix(int r, int c, int nz) : row_count(r), column_count(c), non_zero_count(nz) {
     if (nz > 0) {
-      value_data.reserve(nz);
-      row_index_data.reserve(nz);
+      value_data.reserve(static_cast<std::size_t>(nz));
+      row_index_data.reserve(static_cast<std::size_t>(nz));
     }
-    column_pointer_data.reserve(c + 1);
+    column_pointer_data.reserve(static_cast<std::size_t>(c + 1));
   }
 
   CompressedColumnMatrix(const CompressedColumnMatrix &other) = default;
-
   CompressedColumnMatrix &operator=(const CompressedColumnMatrix &other) = default;
 
   ~CompressedColumnMatrix() = default;
@@ -42,19 +43,19 @@ struct CompressedColumnMatrix {
     column_pointer_data.clear();
   }
 
-  bool IsValid() const {
+  [[nodiscard]] bool IsValid() const {
     if (row_count < 0 || column_count < 0 || non_zero_count < 0) {
       return false;
     }
     if (non_zero_count > 0) {
-      if (value_data.size() != static_cast<size_t>(non_zero_count)) {
+      if (value_data.size() != static_cast<std::size_t>(non_zero_count)) {
         return false;
       }
-      if (row_index_data.size() != static_cast<size_t>(non_zero_count)) {
+      if (row_index_data.size() != static_cast<std::size_t>(non_zero_count)) {
         return false;
       }
     }
-    if (column_pointer_data.size() != static_cast<size_t>(column_count + 1)) {
+    if (column_pointer_data.size() != static_cast<std::size_t>(column_count + 1U)) {
       return false;
     }
     if (!column_pointer_data.empty() && column_pointer_data[0] != 0) {
@@ -72,4 +73,9 @@ using BaseTask = ppc::task::Task<InType, OutType>;
 CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int column_count, double density_factor,
                                                           int seed);
 
+inline std::ostream &operator<<(std::ostream &os, const CompressedColumnMatrix &matrix) {
+  os << "CompressedColumnMatrix{"
+     << "rows=" << matrix.row_count << ", cols=" << matrix.column_count << ", nnz=" << matrix.non_zero_count << "}";
+  return os;
+}
 }  // namespace lobanov_d_multiply_matrix_ccs

@@ -9,7 +9,7 @@
 
 namespace lobanov_d_multiply_matrix_ccs {
 
-constexpr double EPSILON_THRESHOLD = 1e-12;
+constexpr double kEpsilonThreshold = 1e-12;
 
 LobanovDMultiplyMatrixSEQ::LobanovDMultiplyMatrixSEQ(const InType &input_matrices) {
   SetTypeOfTask(GetStaticTypeOfTask());
