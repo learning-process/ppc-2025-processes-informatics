@@ -65,30 +65,14 @@ void KosolapovVGaussMethodTapeHorSchemeSEQ::ForwardElimination(std::vector<std::
   for (int i = 0; i < n; i++) {
     int leading_col = i;
     double max_elem = std::abs(a[i][i]);
-    for (int j = i + 1; j < n; j++) {
-      if (std::abs(a[i][j]) > max_elem) {
-        max_elem = std::abs(a[i][j]);
-        leading_col = j;
-      }
-    }
-    if (leading_col != i) {
-      for (int k = 0; k < n; k++) {
-        std::swap(a[k][i], a[k][leading_col]);
-      }
-      std::swap(col_order[i], col_order[leading_col]);
-    }
+    SelectPivot(i, n, a, max_elem, leading_col);
+    SwapRows(leading_col, n, i, a, col_order);
     double cur_el = a[i][i];
     for (int j = i; j < n; j++) {
       a[i][j] /= cur_el;
     }
     b[i] /= cur_el;
-    for (int k = i + 1; k < n; k++) {
-      double ratio = a[k][i];
-      for (int j = i; j < n; j++) {
-        a[k][j] -= ratio * a[i][j];
-      }
-      b[k] -= ratio * b[i];
-    }
+    RowSub(i, n, a, b);
   }
 }
 std::vector<double> KosolapovVGaussMethodTapeHorSchemeSEQ::BackwardSubstitution(std::vector<std::vector<double>> &a,
@@ -103,5 +87,32 @@ std::vector<double> KosolapovVGaussMethodTapeHorSchemeSEQ::BackwardSubstitution(
   }
   return output;
 }
-
+void KosolapovVGaussMethodTapeHorSchemeSEQ::SelectPivot(int i, int n, const std::vector<std::vector<double>> &a,
+                                                        double &max_elem, int &leading_col) {
+  for (int j = i + 1; j < n; j++) {
+    if (std::abs(a[i][j]) > max_elem) {
+      max_elem = std::abs(a[i][j]);
+      leading_col = j;
+    }
+  }
+}
+void KosolapovVGaussMethodTapeHorSchemeSEQ::SwapRows(int leading_col, int n, int i, std::vector<std::vector<double>> &a,
+                                                     std::vector<int> &col_order) {
+  if (leading_col != i) {
+    for (int k = 0; k < n; k++) {
+      std::swap(a[k][i], a[k][leading_col]);
+    }
+    std::swap(col_order[i], col_order[leading_col]);
+  }
+}
+void KosolapovVGaussMethodTapeHorSchemeSEQ::RowSub(int i, int n, std::vector<std::vector<double>> &a,
+                                                   std::vector<double> &b) {
+  for (int k = i + 1; k < n; k++) {
+    double ratio = a[k][i];
+    for (int j = i; j < n; j++) {
+      a[k][j] -= ratio * a[i][j];
+    }
+    b[k] -= ratio * b[i];
+  }
+}
 }  // namespace kosolapov_v_gauss_method_tape_hor_scheme

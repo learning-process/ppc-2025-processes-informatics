@@ -164,26 +164,11 @@ bool KosolapovVGaussMethodTapeHorSchemeMPI::ForwardElimination(
       MPI_Barrier(MPI_COMM_WORLD);
       return false;
     }
-    if (pivot_col != step) {
-      for (int i = 0; i < local_rows; i++) {
-        std::swap(local_matrix[i][step], local_matrix[i][pivot_col]);
-      }
-      std::swap(col_order[step], col_order[pivot_col]);
-    }
-    if (rank == owner_process && pivot_row_local_idx >= 0) {
-      for (int j = step; j < rows; j++) {
-        local_matrix[pivot_row_local_idx][j] /= pivot_value;
-      }
-      local_rsd[pivot_row_local_idx] /= pivot_value;
-    }
+    SwapColumns(pivot_col, step, local_rows, local_matrix, col_order);
+    NormalizePivot(rank, owner_process, pivot_row_local_idx, step, rows, pivot_value, local_matrix, local_rsd);
     std::vector<double> pivot_row(rows - step, 0.0);
     double pivot_rhs = 0.0;
-    if (rank == owner_process && pivot_row_local_idx >= 0) {
-      for (int j = step; j < rows; j++) {
-        pivot_row[j - step] = local_matrix[pivot_row_local_idx][j];
-      }
-      pivot_rhs = local_rsd[pivot_row_local_idx];
-    }
+    PriparePivot(rank, owner_process, pivot_row_local_idx, step, rows, pivot_row, pivot_rhs, local_matrix, local_rsd);
     MPI_Bcast(pivot_row.data(), rows - step, MPI_DOUBLE, global_owner, MPI_COMM_WORLD);
     MPI_Bcast(&pivot_rhs, 1, MPI_DOUBLE, global_owner, MPI_COMM_WORLD);
     RowSub(local_rows, step, rows, local_matrix, local_rsd, local_row_indices, pivot_row, pivot_rhs);
@@ -258,5 +243,36 @@ void KosolapovVGaussMethodTapeHorSchemeMPI::RowSub(int local_rows, int step, int
     }
   }
 }
-
+void KosolapovVGaussMethodTapeHorSchemeMPI::SwapColumns(int pivot_col, int step, int local_rows,
+                                                        std::vector<std::vector<double>> &local_matrix,
+                                                        std::vector<int> &col_order) {
+  if (pivot_col != step) {
+    for (int i = 0; i < local_rows; i++) {
+      std::swap(local_matrix[i][step], local_matrix[i][pivot_col]);
+    }
+    std::swap(col_order[step], col_order[pivot_col]);
+  }
+}
+void KosolapovVGaussMethodTapeHorSchemeMPI::NormalizePivot(int rank, int owner_process, int pivot_row_local_idx,
+                                                           int step, int rows, double pivot_value,
+                                                           std::vector<std::vector<double>> &local_matrix,
+                                                           std::vector<double> &local_rsd) {
+  if (rank == owner_process && pivot_row_local_idx >= 0) {
+    for (int j = step; j < rows; j++) {
+      local_matrix[pivot_row_local_idx][j] /= pivot_value;
+    }
+    local_rsd[pivot_row_local_idx] /= pivot_value;
+  }
+}
+void KosolapovVGaussMethodTapeHorSchemeMPI::PriparePivot(int rank, int owner_process, int pivot_row_local_idx, int step,
+                                                         int rows, std::vector<double> &pivot_row, double &pivot_rhs,
+                                                         const std::vector<std::vector<double>> &local_matrix,
+                                                         const std::vector<double> &local_rsd) {
+  if (rank == owner_process && pivot_row_local_idx >= 0) {
+    for (int j = step; j < rows; j++) {
+      pivot_row[j - step] = local_matrix[pivot_row_local_idx][j];
+    }
+    pivot_rhs = local_rsd[pivot_row_local_idx];
+  }
+}
 }  // namespace kosolapov_v_gauss_method_tape_hor_scheme

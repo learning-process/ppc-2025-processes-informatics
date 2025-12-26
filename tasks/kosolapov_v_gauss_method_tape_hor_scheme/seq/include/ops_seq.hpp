@@ -19,10 +19,13 @@ class KosolapovVGaussMethodTapeHorSchemeSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  void ForwardElimination(std::vector<std::vector<double>> &a, std::vector<double> &b, std::vector<int> &col_order,
-                          int n);
-  std::vector<double> BackwardSubstitution(std::vector<std::vector<double>> &a, std::vector<double> &b,
-                                           std::vector<int> &col_order, int n);
+  static void ForwardElimination(std::vector<std::vector<double>> &a, std::vector<double> &b,
+                                 std::vector<int> &col_order, int n);
+  static std::vector<double> BackwardSubstitution(std::vector<std::vector<double>> &a, std::vector<double> &b,
+                                                  std::vector<int> &col_order, int n);
+  static void SelectPivot(int i, int n, const std::vector<std::vector<double>> &a, double &max_elem, int &leading_col);
+  static void SwapRows(int leading_col, int n, int i, std::vector<std::vector<double>> &a, std::vector<int> &col_order);
+  static void RowSub(int i, int n, std::vector<std::vector<double>> &a, std::vector<double> &b);
 };
 
 }  // namespace kosolapov_v_gauss_method_tape_hor_scheme
