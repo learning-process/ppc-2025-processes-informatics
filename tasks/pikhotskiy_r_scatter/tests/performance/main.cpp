@@ -1,10 +1,13 @@
+// NOLINTBEGIN
+#ifndef PIKHOTSKIY_R_SCATTER_PERF_TESTS_HPP
+#define PIKHOTSKIY_R_SCATTER_PERF_TESTS_HPP
+
 #include <gtest/gtest.h>
 #include <mpi.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
-// #include <vector>  // Удалено, не используется напрямую
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
 #include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
@@ -119,21 +122,21 @@ class PikhotskiyRScatterPerfTests : public ppc::util::BaseRunPerfTests<InputType
 namespace {
 
 // NOLINTNEXTLINE
-void RunPerformanceTestsImpl(const testing::TestParamInfo<ppc::util::PerfTaskInfo<InputType>> & /*test_info*/) {
-  PikhotskiyRScatterPerfTests test_case;
-  // test_case.ExecuteTest(test_info.param);
-}
-
-// NOLINTNEXTLINE
 TEST_P(PikhotskiyRScatterPerfTests, RunPerformanceTests) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InputType, PikhotskiyRScatterMPI, PikhotskiyRScatterSEQ>(
-    PPC_SETTINGS_pikhotskiy_r_scatter);
+// Используем алиасы для типов задач с правильным именованием
+using MpiTask = PikhotskiyRScatterMPI;
+using SeqTask = PikhotskiyRScatterSEQ;
 
+// NOLINTNEXTLINE
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InputType, MpiTask, SeqTask>(PPC_SETTINGS_pikhotskiy_r_scatter);
+
+// NOLINTNEXTLINE
 const auto kGtestParamValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
+// NOLINTNEXTLINE
 const auto kPerfTestNaming = PikhotskiyRScatterPerfTests::CustomPerfTestName;
 
 // NOLINTNEXTLINE
@@ -141,3 +144,6 @@ INSTANTIATE_TEST_SUITE_P(RunModeTests, PikhotskiyRScatterPerfTests, kGtestParamV
 
 }  // namespace
 }  // namespace pikhotskiy_r_scatter
+
+#endif  // PIKHOTSKIY_R_SCATTER_PERF_TESTS_HPP
+        // NOLINTEND
