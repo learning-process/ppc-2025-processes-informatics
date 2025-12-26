@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <cstddef>
+#include <cmath>
+#include <cstdint>
 #include <string>
-#include <tuple>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 #include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
@@ -84,17 +84,17 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
     expected_output_ = ((x_max_ * x_max_ - x_min_ * x_min_) / 2.0) * ((y_max_ * y_max_ - y_min_ * y_min_) / 2.0);
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    constexpr double relative_eps = 1e-2;
+  bool CheckTestOutputData(OutType &output_data) override {
+    constexpr double kRelativeEps = 1e-2;
     if (std::abs(expected_output_) < 1e-10) {
-      return std::abs(output_data) < relative_eps;
+        return std::abs(output_data) < kRelativeEps;
     }
-    return std::abs(output_data - expected_output_) / std::abs(expected_output_) < relative_eps;
-  }
+    return std::abs(output_data - expected_output_) / std::abs(expected_output_) < kRelativeEps;
+}
 
-  InType GetTestInputData() final {
+InType GetTestInputData() override {
     return input_data_;
-  }
+}
 
  private:
   double x_min_ = 0.0;

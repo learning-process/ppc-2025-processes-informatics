@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <cstddef>
+#include <cmath>
+#include <cstdint>
 #include <fstream>
+#include <functional>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -15,7 +17,8 @@
 
 namespace liulin_y_integ_mnog_func_monte_carlo {
 
-class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile
+    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
     return std::get<1>(p);
@@ -33,9 +36,12 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRu
       throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
     }
 
-    double x_min = 0.0, x_max = 0.0, y_min = 0.0, y_max = 0.0;
+    double x_min = 0.0;
+    double x_max = 0.0;
+    double y_min = 0.0;
+    double y_max = 0.0;
     int64_t num_points = 0;
-    int func_id = 1;
+    int func_id = 1;  
 
     file >> x_min >> x_max >> y_min >> y_max >> num_points;
 
@@ -53,14 +59,14 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRu
         break;
       case 2:  // f(x,y) = x + y
         f = [](double x, double y) { return x + y; };
-        expected = (x_max * x_max - x_min * x_min) / 2.0 * (y_max - y_min) +
-                   (y_max * y_max - y_min * y_min) / 2.0 * (x_max - x_min);
+        expected = ((((x_max * x_max) - (x_min * x_min)) / 2.0) * (y_max - y_min)) +
+                  ((((y_max * y_max) - (y_min * y_min)) / 2.0) * (x_max - x_min));
         break;
       case 3:  // f(x,y) = x * y
         f = [](double x, double y) { return x * y; };
-        expected = (x_max * x_max - x_min * x_min) / 2.0 * (y_max * y_max - y_min * y_min) / 2.0;
+        expected = ((x_max * x_max - x_min * x_min) / 2.0) * ((y_max * y_max - y_min * y_min) / 2.0);
         break;
-      case 4:  // f(x,y) = sin(x) * cos(y)  (
+      case 4:  // f(x,y) = sin(x) * cos(y)
         f = [](double x, double y) { return std::sin(x) * std::cos(y); };
         expected = (std::cos(x_min) - std::cos(x_max)) * (std::sin(y_max) - std::sin(y_min));
         break;
@@ -75,25 +81,25 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRu
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    constexpr double abs_eps_small_n = 0.5;
-    constexpr double abs_eps = 0.05;
-    constexpr double rel_eps = 0.05;
+    constexpr double kAbsEpsSmallN = 0.5;     
+    constexpr double kAbsEps = 0.05;         
+    constexpr double kRelEps = 0.05;         
+
 
     if (input_data_.num_points < 10000LL) {
-      return std::abs(output_data - exp_output_) <= abs_eps_small_n;
+      return std::abs(output_data - exp_output_) <= kAbsEpsSmallN;
     }
-
-    double area = (input_data_.x_max - input_data_.x_min) * (input_data_.y_max - input_data_.y_min);
+    double area = 0.0;
+    area = (input_data_.x_max - input_data_.x_min) * (input_data_.y_max - input_data_.y_min);
     if (std::abs(area) < 1e-10) {
-      constexpr double zero_area_eps = 0.1;
-      return std::abs(output_data) <= zero_area_eps;
+      constexpr double kZeroAreaEps = 0.1;  
+      return std::abs(output_data) <= kZeroAreaEps;
     }
 
     if (std::abs(exp_output_) < 1e-4) {
-      return std::abs(output_data) <= abs_eps;
+      return std::abs(output_data) <= kAbsEps;
     }
-
-    return std::abs(output_data - exp_output_) / std::abs(exp_output_) <= rel_eps;
+    return std::abs(output_data - exp_output_) / std::abs(exp_output_) <= kRelEps;
   }
 
   InType GetTestInputData() final {
@@ -124,17 +130,20 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(9, "zeroArea")     // нулевая площадь (ожидаем 0)
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo),
-                                           ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloMPI, InType>(
+        kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo),
+    ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloSEQ, InType>(
+        kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kFuncTestName =
-    LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile::PrintFuncTestName<LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile>;
+    LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile::PrintFuncTestName<
+        LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile>;
 
-INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile,
+                         kGtestValues, kFuncTestName);
 
 }  // namespace
 }  // namespace liulin_y_integ_mnog_func_monte_carlo
