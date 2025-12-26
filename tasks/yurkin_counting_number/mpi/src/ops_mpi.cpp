@@ -75,8 +75,9 @@ bool YurkinCountingNumberMPI::RunImpl() {
   std::tie(sendcounts, displs) = ComputeSendCountsAndDispls(total_size, world_size);
 
   int recvcount = 0;
-  if (world_rank >= 0 && world_rank < static_cast<int>(sendcounts.size())) {
-    recvcount = sendcounts[static_cast<std::size_t>(world_rank)];
+  const std::size_t rank_idx = static_cast<std::size_t>(world_rank);
+  if (rank_idx < sendcounts.size()) {
+    recvcount = sendcounts[rank_idx];
   }
   recvcount = std::max(recvcount, 0);
 
