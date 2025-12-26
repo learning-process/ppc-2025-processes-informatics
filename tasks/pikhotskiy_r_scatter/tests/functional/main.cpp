@@ -14,8 +14,8 @@ namespace pikhotskiy_r_scatter {
 
 class PikhotskiyRScatterFunctionalTests : public ppc::util::BaseRunFuncTests<InputType, OutputType> {
   InputType test_input_{};
-  std::vector<int> send_buffer_{};    // Инициализирован
-  std::vector<int> receive_buffer_{}; // Инициализирован
+  std::vector<int> send_buffer_{};     // Инициализирован
+  std::vector<int> receive_buffer_{};  // Инициализирован
 
   void PrepareTestData() {
     bool sequential_mode = GetParam().type_of_task == ppc::task::TypeOfTask::kSEQ;  // NOLINT
@@ -105,8 +105,7 @@ TEST_P(PikhotskiyRScatterFunctionalTests, ExecuteScatterFunction) {
 }
 
 // NOLINTBEGIN
-const auto kAllFunctionalTasks =
-    ppc::util::MakeAllFuncTasks<InputType, PikhotskiyRScatterMPI, PikhotskiyRScatterSEQ>();
+const auto kAllFunctionalTasks = ppc::util::MakeAllFuncTasks<InputType, PikhotskiyRScatterMPI, PikhotskiyRScatterSEQ>();
 
 const auto kGtestParameters = ppc::util::TupleToGTestValues(kAllFunctionalTasks);
 // NOLINTEND
