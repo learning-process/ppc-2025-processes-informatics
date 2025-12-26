@@ -27,27 +27,16 @@ bool YurkinGRulerMPI::RunImpl() {
   MPI_Comm topo_comm = MPI_COMM_NULL;
   MPI_Comm_dup(MPI_COMM_WORLD, &topo_comm);
 
-  auto cleanup_and_return_true = [&](MPI_Comm comm) -> bool {
-    if (comm != MPI_COMM_NULL) {
-      MPI_Comm_free(&comm);
-    }
-    return true;
-  };
-
-  auto cleanup_and_return_false = [&](MPI_Comm comm) -> bool {
-    if (comm != MPI_COMM_NULL) {
-      MPI_Comm_free(&comm);
-    }
-    return false;
-  };
-
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(topo_comm, &rank);
   MPI_Comm_size(topo_comm, &size);
 
   if (size <= 0) {
-    return cleanup_and_return_false(topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
+    return false;
   }
 
   const int input_value = GetInput();
@@ -60,7 +49,10 @@ bool YurkinGRulerMPI::RunImpl() {
       GetOutput() = payload;
     }
     MPI_Barrier(topo_comm);
-    return cleanup_and_return_true(topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
+    return true;
   }
 
   const int low = std::min(src, dst);
@@ -68,7 +60,10 @@ bool YurkinGRulerMPI::RunImpl() {
 
   if (rank < low || rank > high) {
     MPI_Barrier(topo_comm);
-    return cleanup_and_return_true(topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
+    return true;
   }
 
   const int direction = (dst > src) ? +1 : -1;
@@ -77,7 +72,10 @@ bool YurkinGRulerMPI::RunImpl() {
     const int next = rank + direction;
     MPI_Send(&payload, 1, MPI_INT, next, 0, topo_comm);
     MPI_Barrier(topo_comm);
-    return cleanup_and_return_true(topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
+    return true;
   }
 
   const int prev = rank - direction;
@@ -87,14 +85,20 @@ bool YurkinGRulerMPI::RunImpl() {
   if (rank == dst) {
     GetOutput() = recv_val;
     MPI_Barrier(topo_comm);
-    return cleanup_and_return_true(topo_comm);
+    if (topo_comm != MPI_COMM_NULL) {
+      MPI_Comm_free(&topo_comm);
+    }
+    return true;
   }
 
   const int next = rank + direction;
   MPI_Send(&recv_val, 1, MPI_INT, next, 0, topo_comm);
 
   MPI_Barrier(topo_comm);
-  return cleanup_and_return_true(topo_comm);
+  if (topo_comm != MPI_COMM_NULL) {
+    MPI_Comm_free(&topo_comm);
+  }
+  return true;
 }
 
 bool YurkinGRulerMPI::PostProcessingImpl() {
