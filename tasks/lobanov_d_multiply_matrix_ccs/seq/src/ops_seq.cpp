@@ -31,15 +31,16 @@ bool LobanovDMultiplyMatrixSEQ::PreProcessingImpl() {
   return true;
 }
 
-void LobanovDMultiplyMatrixSEQ::ComputeTransposedMatrix(const CompressedColumnMatrix &A, CompressedColumnMatrix &B) {
-  B.row_count = A.column_count;
-  B.column_count = A.row_count;
-  B.non_zero_count = A.non_zero_count;
+void LobanovDMultiplyMatrixSEQ::ComputeTransposedMatrix(const CompressedColumnMatrix &source_matrix,
+                                                        CompressedColumnMatrix &transposed_result) {
+  transposed_result.row_count = source_matrix.column_count;
+  transposed_result.column_count = source_matrix.row_count;
+  transposed_result.non_zero_count = source_matrix.non_zero_count;
 
-  if (A.non_zero_count == 0) {
-    B.value_data.clear();
-    B.row_index_data.clear();
-    B.column_pointer_data = std::vector<int>(B.column_count + 1);
+  if (source_matrix.non_zero_count == 0) {
+    transposed_result.value_data.clear();
+    transposed_result.row_index_data.clear();
+    transposed_result.column_pointer_data = std::vector<int>(transposed_result.column_count + 1);
     return;
   }
 
@@ -50,12 +51,12 @@ void LobanovDMultiplyMatrixSEQ::ComputeTransposedMatrix(const CompressedColumnMa
   };
 
   std::vector<Element> elements;
-  elements.reserve(A.non_zero_count);
+  elements.reserve(source_matrix.non_zero_count);
 
-  for (int old_col = 0; old_col < A.column_count; old_col++) {
-    for (int p = A.column_pointer_data[old_col]; p < A.column_pointer_data[old_col + 1]; p++) {
-      int old_row = A.row_index_data[p];
-      elements.push_back({old_row, old_col, A.value_data[p]});
+  for (int old_col = 0; old_col < source_matrix.column_count; old_col++) {
+    for (int p = source_matrix.column_pointer_data[old_col]; p < source_matrix.column_pointer_data[old_col + 1]; p++) {
+      int old_row = source_matrix.row_index_data[p];
+      elements.push_back({old_row, old_col, source_matrix.value_data[p]});
     }
   }
 
@@ -63,27 +64,27 @@ void LobanovDMultiplyMatrixSEQ::ComputeTransposedMatrix(const CompressedColumnMa
     return (a.new_col < b.new_col) || (a.new_col == b.new_col && a.new_row < b.new_row);
   });
 
-  B.value_data.resize(A.non_zero_count);
-  B.row_index_data.resize(A.non_zero_count);
-  B.column_pointer_data.resize(B.column_count + 1);
+  transposed_result.value_data.resize(source_matrix.non_zero_count);
+  transposed_result.row_index_data.resize(source_matrix.non_zero_count);
+  transposed_result.column_pointer_data.resize(transposed_result.column_count + 1);
 
-  B.column_pointer_data[0] = 0;
+  transposed_result.column_pointer_data[0] = 0;
   int current_col = 0;
   int idx = 0;
 
   for (const auto &elem : elements) {
-    B.value_data[idx] = elem.value;
-    B.row_index_data[idx] = elem.new_row;
+    transposed_result.value_data[idx] = elem.value;
+    transposed_result.row_index_data[idx] = elem.new_row;
     idx++;
 
     while (current_col < elem.new_col) {
-      B.column_pointer_data[current_col + 1] = idx;
+      transposed_result.column_pointer_data[current_col + 1] = idx;
       current_col++;
     }
   }
 
-  while (current_col < B.column_count) {
-    B.column_pointer_data[current_col + 1] = idx;
+  while (current_col < transposed_result.column_count) {
+    transposed_result.column_pointer_data[current_col + 1] = idx;
     current_col++;
   }
 }
@@ -146,10 +147,10 @@ void LobanovDMultiplyMatrixSEQ::PerformMatrixMultiplication(const CompressedColu
     ProcessMatrixColumn(transposed_first, second_matrix, column_index, column_temporary_values, column_marker_tracker,
                         product_result.value_data, product_result.row_index_data);
 
-    product_result.column_pointer_data.push_back(product_result.value_data.size());
+    product_result.column_pointer_data.push_back(static_cast<int>(product_result.value_data.size()));
   }
 
-  product_result.non_zero_count = product_result.value_data.size();
+  product_result.non_zero_count = static_cast<int>(product_result.value_data.size());
 }
 
 bool LobanovDMultiplyMatrixSEQ::RunImpl() {

@@ -26,7 +26,7 @@ struct CompressedColumnMatrix {
       value_data.reserve(static_cast<std::size_t>(nz));
       row_index_data.reserve(static_cast<std::size_t>(nz));
     }
-    column_pointer_data.reserve(static_cast<std::size_t>(c + 1));
+    column_pointer_data.reserve(static_cast<std::size_t>(c) + 1);
   }
 
   CompressedColumnMatrix(const CompressedColumnMatrix &other) = default;
@@ -55,7 +55,7 @@ struct CompressedColumnMatrix {
         return false;
       }
     }
-    if (column_pointer_data.size() != static_cast<std::size_t>(column_count + 1U)) {
+    if (column_pointer_data.size() != static_cast<std::size_t>(column_count) + 1U) {
       return false;
     }
     if (!column_pointer_data.empty() && column_pointer_data[0] != 0) {

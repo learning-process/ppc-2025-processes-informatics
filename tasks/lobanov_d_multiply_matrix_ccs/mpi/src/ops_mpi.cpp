@@ -6,7 +6,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -509,7 +509,7 @@ bool LobanovDMultiplyMatrixMPI::RunImpl() {
     transposed_matrix_a.column_count = transposed_dims[1];
     transposed_matrix_a.non_zero_count = transposed_dims[2];
   } else {
-    std::array<int, 3> transposed_dims;
+    std::array<int, 3> transposed_dims{};
     MPI_Bcast(transposed_dims.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
 
     transposed_matrix_a.row_count = transposed_dims[0];
@@ -555,9 +555,7 @@ bool LobanovDMultiplyMatrixMPI::RunImpl() {
   if (start_column < 0 || end_column < 0 || start_column >= end_column || end_column > matrix_b.column_count) {
     start_column = std::max(0, std::min(start_column, matrix_b.column_count));
     end_column = std::max(0, std::min(end_column, matrix_b.column_count));
-    if (start_column > end_column) {
-      start_column = end_column;
-    }
+    start_column = std::min(start_column, end_column);
     local_column_count = end_column - start_column;
   }
 

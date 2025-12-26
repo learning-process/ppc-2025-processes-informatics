@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <random>
 #include <string>
 #include <tuple>
@@ -15,14 +17,6 @@
 #include "util/include/util.hpp"
 
 namespace lobanov_d_multiply_matrix_ccs {
-
-#include <algorithm>   // для std::min, std::max, std::clamp
-#include <cstddef>     // для std::size_t
-#include <functional>  // для std::hash
-#include <random>      // для std::mt19937, std::uniform_real_distribution
-#include <string>      // для std::to_string
-#include <vector>
-
 CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int column_count, double density_factor,
                                                           int seed = 42) {
   CompressedColumnMatrix result_matrix;
