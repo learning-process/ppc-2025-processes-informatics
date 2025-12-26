@@ -1,13 +1,13 @@
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/seq/include/ops_seq.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/seq/include/ops_seq.hpp"
 
 #include <cstddef>
 #include <vector>
 
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/common/include/common.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 
-namespace liulin_y_vert_strip_diag_matrix_vect_mult {
+namespace liulin_y_integ_mnog_func_monte_carlo {
 
-LiulinYVertStripDiagMatrixVectMultSEQ::LiulinYVertStripDiagMatrixVectMultSEQ(const InType &in) {
+LiulinYIntegMnogFuncMonteCarloSEQ::LiulinYIntegMnogFuncMonteCarloSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 
   auto &matrix = std::get<0>(GetInput());
@@ -30,7 +30,7 @@ LiulinYVertStripDiagMatrixVectMultSEQ::LiulinYVertStripDiagMatrixVectMultSEQ(con
   GetOutput().clear();
 }
 
-bool LiulinYVertStripDiagMatrixVectMultSEQ::ValidationImpl() {
+bool LiulinYIntegMnogFuncMonteCarloSEQ::ValidationImpl() {
   const auto &input = GetInput();
   const auto &matrix = std::get<0>(input);
   const auto &vect = std::get<1>(input);
@@ -42,7 +42,7 @@ bool LiulinYVertStripDiagMatrixVectMultSEQ::ValidationImpl() {
   return true;
 }
 
-bool LiulinYVertStripDiagMatrixVectMultSEQ::PreProcessingImpl() {
+bool LiulinYIntegMnogFuncMonteCarloSEQ::PreProcessingImpl() {
   const auto &input = GetInput();
   const auto &matrix = std::get<0>(input);
 
@@ -56,7 +56,7 @@ bool LiulinYVertStripDiagMatrixVectMultSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool LiulinYVertStripDiagMatrixVectMultSEQ::RunImpl() {
+bool LiulinYIntegMnogFuncMonteCarloSEQ::RunImpl() {
   const auto &input = GetInput();
   const auto &matrix = std::get<0>(input);
   const auto &vect = std::get<1>(input);
@@ -78,8 +78,8 @@ bool LiulinYVertStripDiagMatrixVectMultSEQ::RunImpl() {
   return true;
 }
 
-bool LiulinYVertStripDiagMatrixVectMultSEQ::PostProcessingImpl() {
+bool LiulinYIntegMnogFuncMonteCarloSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace liulin_y_vert_strip_diag_matrix_vect_mult
+}  // namespace liulin_y_integ_mnog_func_monte_carlo

@@ -8,15 +8,15 @@
 #include <tuple>
 #include <vector>
 
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/common/include/common.hpp"
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/mpi/include/ops_mpi.hpp"
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/seq/include/ops_seq.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
-namespace liulin_y_vert_strip_diag_matrix_vect_mult {
+namespace liulin_y_integ_mnog_func_monte_carlo {
 
-class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
+class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile
     : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
@@ -28,7 +28,7 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     std::string filename = std::get<1>(params);
-    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_liulin_y_vert_strip_diag_matrix_vect_mult, filename);
+    std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_liulin_y_integ_mnog_func_monte_carlo, filename);
 
     std::ifstream file(abs_path + ".txt");
     if (!file.is_open()) {
@@ -81,7 +81,7 @@ class LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile
 
 namespace {
 
-TEST_P(LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile, MatrixVectorMultFromFile) {
+TEST_P(LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile, MatrixVectorMultFromFile) {
   ExecuteTest(GetParam());
 }
 
@@ -91,17 +91,17 @@ const std::array<TestType, 10> kTestParam = {std::make_tuple(0, "tiny"),      st
                                              std::make_tuple(6, "singleRow"), std::make_tuple(7, "singleColumn"),
                                              std::make_tuple(8, "negative"),  std::make_tuple(9, "zeroVector")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LiulinYVertStripDiagMatrixVectMultMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult),
-                                           ppc::util::AddFuncTask<LiulinYVertStripDiagMatrixVectMultSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo),
+                                           ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile::PrintFuncTestName<
-    LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile>;
+const auto kFuncTestName = LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile::PrintFuncTestName<
+    LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile>;
 
-INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYVertStripDiagMatrixVectMultFuncTestsFromFile, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile, kGtestValues, kFuncTestName);
 
 }  // namespace
-}  // namespace liulin_y_vert_strip_diag_matrix_vect_mult
+}  // namespace liulin_y_integ_mnog_func_monte_carlo

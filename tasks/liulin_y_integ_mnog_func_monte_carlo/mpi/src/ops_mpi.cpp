@@ -1,15 +1,15 @@
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/mpi/include/ops_mpi.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
 #include <cstddef>
 #include <vector>
 
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/common/include/common.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 
-namespace liulin_y_vert_strip_diag_matrix_vect_mult {
+namespace liulin_y_integ_mnog_func_monte_carlo {
 
-LiulinYVertStripDiagMatrixVectMultMPI::LiulinYVertStripDiagMatrixVectMultMPI(const InType &in) {
+LiulinYIntegMnogFuncMonteCarloMPI::LiulinYIntegMnogFuncMonteCarloMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
 
   auto &matrix = std::get<0>(GetInput());
@@ -32,7 +32,7 @@ LiulinYVertStripDiagMatrixVectMultMPI::LiulinYVertStripDiagMatrixVectMultMPI(con
   GetOutput().clear();
 }
 
-bool LiulinYVertStripDiagMatrixVectMultMPI::ValidationImpl() {
+bool LiulinYIntegMnogFuncMonteCarloMPI::ValidationImpl() {
   int world_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
@@ -41,7 +41,7 @@ bool LiulinYVertStripDiagMatrixVectMultMPI::ValidationImpl() {
   }
   return true;
 }
-bool LiulinYVertStripDiagMatrixVectMultMPI::PreProcessingImpl() {
+bool LiulinYIntegMnogFuncMonteCarloMPI::PreProcessingImpl() {
   return true;
 }
 
@@ -83,7 +83,7 @@ std::vector<int> ComputeLocalPartialRes(const std::vector<int> &local_data, cons
 }
 }  // namespace
 
-bool LiulinYVertStripDiagMatrixVectMultMPI::RunImpl() {
+bool LiulinYIntegMnogFuncMonteCarloMPI::RunImpl() {
   const auto &input = GetInput();
   auto &out = GetOutput();
 
@@ -157,8 +157,8 @@ bool LiulinYVertStripDiagMatrixVectMultMPI::RunImpl() {
   return true;
 }
 
-bool LiulinYVertStripDiagMatrixVectMultMPI::PostProcessingImpl() {
+bool LiulinYIntegMnogFuncMonteCarloMPI::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace liulin_y_vert_strip_diag_matrix_vect_mult
+}  // namespace liulin_y_integ_mnog_func_monte_carlo

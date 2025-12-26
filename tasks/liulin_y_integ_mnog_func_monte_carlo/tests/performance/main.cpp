@@ -5,14 +5,14 @@
 #include <tuple>
 #include <vector>
 
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/common/include/common.hpp"
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/mpi/include/ops_mpi.hpp"
-#include "liulin_y_vert_strip_diag_matrix_vect_mult/seq/include/ops_seq.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
+#include "liulin_y_integ_mnog_func_monte_carlo/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace liulin_y_vert_strip_diag_matrix_vect_mult {
+namespace liulin_y_integ_mnog_func_monte_carlo {
 
-class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   struct TestConfig {
     int rows;
@@ -22,17 +22,17 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
 
   static TestConfig GetLiulinSpecificConfig(const std::string &test_name) {
     constexpr int kLargeDim = 8192;
-    if (test_name.find("liulin_y_vert_strip_diag_matrix_vect_mult_mpi") != std::string::npos) {
+    if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_mpi") != std::string::npos) {
       return {.rows = kLargeDim, .cols = kLargeDim, .name = "mpi_large"};
     }
-    if (test_name.find("liulin_y_vert_strip_diag_matrix_vect_mult_seq") != std::string::npos) {
+    if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_seq") != std::string::npos) {
       return {.rows = kLargeDim, .cols = kLargeDim, .name = "seq_large"};
     }
     return {.rows = 100, .cols = 100, .name = "small"};
   }
 
   static bool HasLiulinSpecificConfig(const std::string &test_name) {
-    return test_name.find("liulin_y_vert_strip_diag_matrix_vect_mult") != std::string::npos;
+    return test_name.find("liulin_y_integ_mnog_func_monte_carlo") != std::string::npos;
   }
 
   static TestConfig GetTestConfig(const std::string &test_name) {
@@ -124,17 +124,17 @@ class LiulinYVertStripDiagMatrixVectMultPerfTests : public ppc::util::BaseRunPer
   OutType expected_output_;
 };
 
-TEST_P(LiulinYVertStripDiagMatrixVectMultPerfTests, RunPerfModes) {
+TEST_P(LiulinYIntegMnogFuncMonteCarloPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LiulinYVertStripDiagMatrixVectMultSEQ, LiulinYVertStripDiagMatrixVectMultMPI>(
-        PPC_SETTINGS_liulin_y_vert_strip_diag_matrix_vect_mult);
+    ppc::util::MakeAllPerfTasks<InType, LiulinYIntegMnogFuncMonteCarloSEQ, LiulinYIntegMnogFuncMonteCarloMPI>(
+        PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo);
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = LiulinYVertStripDiagMatrixVectMultPerfTests::CustomPerfTestName;
+const auto kPerfTestName = LiulinYIntegMnogFuncMonteCarloPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, LiulinYVertStripDiagMatrixVectMultPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, LiulinYIntegMnogFuncMonteCarloPerfTests, kGtestValues, kPerfTestName);
 
-}  // namespace liulin_y_vert_strip_diag_matrix_vect_mult
+}  // namespace liulin_y_integ_mnog_func_monte_carlo
