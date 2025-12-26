@@ -24,85 +24,70 @@ bool YurkinGRulerMPI::PreProcessingImpl() {
 }
 
 bool YurkinGRulerMPI::RunImpl() {
+  MPI_Comm topo_comm;
+  MPI_Comm_dup(MPI_COMM_WORLD, &topo_comm);
+
   int rank = 0;
   int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  MPI_Comm_rank(topo_comm, &rank);
+  MPI_Comm_size(topo_comm, &size);
 
   if (size <= 0) {
+    MPI_Comm_free(&topo_comm);
     return false;
   }
 
-  int src = 0;
-  int dst = size - 1;
+  const int input_value = GetInput();
+  const int src = input_value % size;
+  const int dst = (input_value / size) % size;
 
-  src = std::clamp(src, 0, size - 1);
-  dst = std::clamp(dst, 0, size - 1);
-
-  GetOutput() = GetInput();
-  int payload = GetInput();
+  int payload = input_value;
 
   if (src == dst) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == dst) {
+      GetOutput() = payload;
+    }
+    MPI_Barrier(topo_comm);
+    MPI_Comm_free(&topo_comm);
     return true;
   }
+
+  const int direction = (dst > src) ? +1 : -1;
 
   const int low = std::min(src, dst);
   const int high = std::max(src, dst);
-  const int direction = (dst > src) ? +1 : -1;
 
   if (rank < low || rank > high) {
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(topo_comm);
+    MPI_Comm_free(&topo_comm);
     return true;
-  }
-
-  int repeats = 1;
-  {
-    const int in = GetInput();
-    if (in < 1000) {
-      repeats = 1000;
-    } else if (in < 100000) {
-      repeats = 100;
-    } else {
-      repeats = 10;
-    }
   }
 
   if (rank == src) {
     const int next = rank + direction;
-
-    double t0 = MPI_Wtime();
-    for (int rep_idx = 0; rep_idx < repeats; ++rep_idx) {
-      MPI_Send(&payload, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-      MPI_Barrier(MPI_COMM_WORLD);
-    }
-    double t1 = MPI_Wtime();
-
-    (void)t0;
-    (void)t1;
-
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Send(&payload, 1, MPI_INT, next, 0, topo_comm);
+    MPI_Barrier(topo_comm);
+    MPI_Comm_free(&topo_comm);
     return true;
   }
 
   const int prev = rank - direction;
   int recv_val = 0;
 
-  for (int rep_idx = 0; rep_idx < repeats; ++rep_idx) {
-    MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Recv(&recv_val, 1, MPI_INT, prev, 0, topo_comm, MPI_STATUS_IGNORE);
 
-    if (rank == dst) {
-      GetOutput() = recv_val;
-      MPI_Barrier(MPI_COMM_WORLD);
-      continue;
-    }
-
-    const int next = rank + direction;
-    MPI_Send(&recv_val, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+  if (rank == dst) {
+    GetOutput() = recv_val;
+    MPI_Barrier(topo_comm);
+    MPI_Comm_free(&topo_comm);
+    return true;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  const int next = rank + direction;
+  MPI_Send(&recv_val, 1, MPI_INT, next, 0, topo_comm);
+
+  MPI_Barrier(topo_comm);
+  MPI_Comm_free(&topo_comm);
   return true;
 }
 
