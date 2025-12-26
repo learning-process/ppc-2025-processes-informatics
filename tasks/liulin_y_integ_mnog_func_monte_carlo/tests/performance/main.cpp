@@ -87,14 +87,14 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
   bool CheckTestOutputData(OutType &output_data) override {
     constexpr double kRelativeEps = 1e-2;
     if (std::abs(expected_output_) < 1e-10) {
-        return std::abs(output_data) < kRelativeEps;
+      return std::abs(output_data) < kRelativeEps;
     }
     return std::abs(output_data - expected_output_) / std::abs(expected_output_) < kRelativeEps;
-}
+  }
 
-InType GetTestInputData() override {
+  InType GetTestInputData() override {
     return input_data_;
-}
+  }
 
  private:
   double x_min_ = 0.0;

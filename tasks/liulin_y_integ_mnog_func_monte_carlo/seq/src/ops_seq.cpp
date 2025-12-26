@@ -7,6 +7,8 @@
 
 namespace liulin_y_integ_mnog_func_monte_carlo {
 
+thread_local static std::mt19937 gen(std::random_device{}());
+
 LiulinYIntegMnogFuncMonteCarloSEQ::LiulinYIntegMnogFuncMonteCarloSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -37,19 +39,42 @@ bool LiulinYIntegMnogFuncMonteCarloSEQ::RunImpl() {
     return true;
   }
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<double> dist_x(input.x_min, input.x_max);
-  std::uniform_real_distribution<double> dist_y(input.y_min, input.y_max);
+  const double x_min = input.x_min;
+  const double x_range = input.x_max - x_min;
+  const double y_min = input.y_min;
+  const double y_range = input.y_max - y_min;
+  const auto &func = input.f;
+  const int64_t n = input.num_points;
+
+  static thread_local std::minstd_rand fast_gen(std::random_device{}());
+
+  std::uniform_real_distribution<double> dist_x(0.0, x_range);
+  std::uniform_real_distribution<double> dist_y(0.0, y_range);
 
   double sum = 0.0;
-  for (int64_t i = 0; i < input.num_points; ++i) {
-    double x = dist_x(gen);
-    double y = dist_y(gen);
-    sum += input.f(x, y);
+  int64_t i = 0;
+
+  // Пришлось развернуть цикл вручную для оптимизации производительности
+  for (; i + 3 < n; i += 4) {
+    const double x1 = x_min + dist_x(fast_gen);
+    const double y1 = y_min + dist_y(fast_gen);
+    const double x2 = x_min + dist_x(fast_gen);
+    const double y2 = y_min + dist_y(fast_gen);
+    const double x3 = x_min + dist_x(fast_gen);
+    const double y3 = y_min + dist_y(fast_gen);
+    const double x4 = x_min + dist_x(fast_gen);
+    const double y4 = y_min + dist_y(fast_gen);
+
+    sum += func(x1, y1) + func(x2, y2) + func(x3, y3) + func(x4, y4);
   }
 
-  result = sum / input.num_points * area;
+  for (; i < n; ++i) {
+    const double x = x_min + dist_x(fast_gen);
+    const double y = y_min + dist_y(fast_gen);
+    sum += func(x, y);
+  }
+
+  result = (sum * area) / n;
 
   return true;
 }
