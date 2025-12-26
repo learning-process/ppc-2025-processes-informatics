@@ -113,7 +113,7 @@ void ProcessMatrixColumn(const CompressedColumnMatrix &transposed_a, const Compr
   }
 
   for (size_t row_index = 0; row_index < temporary_values.size(); row_index++) {
-    if (column_markers[row_index] == target_column && std::abs(temporary_values[row_index]) > EPSILON_THRESHOLD) {
+    if (column_markers[row_index] == target_column && std::abs(temporary_values[row_index]) > kEpsilonThreshold) {
       result_values.push_back(temporary_values[row_index]);
       result_row_indices.push_back(static_cast<int>(row_index));
     }

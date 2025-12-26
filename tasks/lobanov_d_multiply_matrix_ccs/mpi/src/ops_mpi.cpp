@@ -225,7 +225,7 @@ void LobanovDMultiplyMatrixMPI::ProcessLocalColumnMPI(
   }
 
   for (int row_index = 0; row_index < transposed_matrix_a.column_count; row_index++) {
-    if (row_marker_array[row_index] == column_index && std::abs(temporary_row_values[row_index]) > EPSILON_THRESHOLD) {
+    if (row_marker_array[row_index] == column_index && std::abs(temporary_row_values[row_index]) > kEpsilonThreshold) {
       result_values.push_back(temporary_row_values[row_index]);
       result_row_indices.push_back(row_index);
     }
