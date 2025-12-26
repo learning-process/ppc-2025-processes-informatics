@@ -72,30 +72,22 @@ bool YurkinCountingNumberMPI::RunImpl() {
 
   std::vector<int> sendcounts;
   std::vector<int> displs;
-  if (world_rank == 0) {
-    std::tie(sendcounts, displs) = ComputeSendCountsAndDispls(total_size, world_size);
-  } else {
-    sendcounts.assign(static_cast<std::size_t>(world_size), 0);
-    displs.assign(static_cast<std::size_t>(world_size), 0);
-  }
+  std::tie(sendcounts, displs) = ComputeSendCountsAndDispls(total_size, world_size);
 
   int recvcount = 0;
-  if (world_rank == 0) {
-    MPI_Scatter(sendcounts.data(), 1, MPI_INT, &recvcount, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Scatter(nullptr, 1, MPI_INT, &recvcount, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (world_rank >= 0 && world_rank < static_cast<int>(sendcounts.size())) {
+    recvcount = sendcounts[static_cast<std::size_t>(world_rank)];
   }
-
   recvcount = std::max(recvcount, 0);
 
   std::vector<char> local_buffer(static_cast<std::size_t>(recvcount), '\0');
+  void *recvbuf = (recvcount > 0) ? static_cast<void *>(local_buffer.data()) : nullptr;
 
-  if (world_rank == 0) {
-    MPI_Scatterv(global_input.data(), sendcounts.data(), displs.data(), MPI_CHAR, local_buffer.data(), recvcount,
-                 MPI_CHAR, 0, MPI_COMM_WORLD);
-  } else {
-    MPI_Scatterv(nullptr, nullptr, nullptr, MPI_CHAR, local_buffer.data(), recvcount, MPI_CHAR, 0, MPI_COMM_WORLD);
-  }
+  const void *sendbuf = (world_rank == 0 && total_size > 0) ? static_cast<const void *>(global_input.data()) : nullptr;
+  const int *sendcounts_ptr = (world_rank == 0) ? sendcounts.data() : nullptr;
+  const int *displs_ptr = (world_rank == 0) ? displs.data() : nullptr;
+
+  MPI_Scatterv(sendbuf, sendcounts_ptr, displs_ptr, MPI_CHAR, recvbuf, recvcount, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int local_count = 0;
   for (int i = 0; i < recvcount; ++i) {
