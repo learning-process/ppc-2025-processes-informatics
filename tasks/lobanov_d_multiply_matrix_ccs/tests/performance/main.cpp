@@ -12,6 +12,18 @@
 #include "lobanov_d_multiply_matrix_ccs/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
+namespace testing {
+namespace internal {
+
+template <>
+void PrintTo(const lobanov_d_multiply_matrix_ccs::CompressedColumnMatrix &matrix, std::ostream *os) {
+  *os << "CompressedColumnMatrix{"
+      << "rows=" << matrix.row_count << ", cols=" << matrix.column_count << ", nnz=" << matrix.non_zero_count << "}";
+}
+
+}  // namespace internal
+}  // namespace testing
+
 namespace lobanov_d_multiply_matrix_ccs {
 
 CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int column_count, double density_factor,

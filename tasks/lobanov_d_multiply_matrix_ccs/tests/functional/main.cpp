@@ -14,6 +14,19 @@
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
 
+namespace testing {
+namespace internal {
+
+// Специализация для печати CompressedColumnMatrix
+template <>
+void PrintTo(const lobanov_d_multiply_matrix_ccs::CompressedColumnMatrix &matrix, std::ostream *os) {
+  *os << "CompressedColumnMatrix{"
+      << "rows=" << matrix.row_count << ", cols=" << matrix.column_count << ", nnz=" << matrix.non_zero_count << "}";
+}
+
+}  // namespace internal
+}  // namespace testing
+
 namespace lobanov_d_multiply_matrix_ccs {
 
 CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int column_count, double density_factor,
