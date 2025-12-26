@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ostream>  // добавьте для оператора вывода
 #include <string>
 #include <tuple>
 #include <vector>
@@ -16,36 +17,30 @@ struct CompressedColumnMatrix {
   std::vector<int> row_index_data;
   std::vector<int> column_pointer_data;
 
-  CompressedColumnMatrix() {
-    memset(this, 0, sizeof(CompressedColumnMatrix));
+  CompressedColumnMatrix() : row_count(0), column_count(0), non_zero_count(0) {}
+
+  CompressedColumnMatrix(int r, int c, int nz) : row_count(r), column_count(c), non_zero_count(nz) {
+    if (nz > 0) {
+      value_data.reserve(nz);
+      row_index_data.reserve(nz);
+    }
+    column_pointer_data.reserve(c + 1);
+  }
+
+  CompressedColumnMatrix(const CompressedColumnMatrix &other) = default;
+
+  CompressedColumnMatrix &operator=(const CompressedColumnMatrix &other) = default;
+
+  ~CompressedColumnMatrix() = default;
+
+  void ZeroInitialize() {
     row_count = 0;
     column_count = 0;
     non_zero_count = 0;
+    value_data.clear();
+    row_index_data.clear();
+    column_pointer_data.clear();
   }
-
-  CompressedColumnMatrix(const CompressedColumnMatrix &other) {
-    memset(this, 0, sizeof(CompressedColumnMatrix));
-    row_count = other.row_count;
-    column_count = other.column_count;
-    non_zero_count = other.non_zero_count;
-    value_data = other.value_data;
-    row_index_data = other.row_index_data;
-    column_pointer_data = other.column_pointer_data;
-  }
-
-  CompressedColumnMatrix &operator=(const CompressedColumnMatrix &other) {
-    if (this != &other) {
-      row_count = other.row_count;
-      column_count = other.column_count;
-      non_zero_count = other.non_zero_count;
-      value_data = other.value_data;
-      row_index_data = other.row_index_data;
-      column_pointer_data = other.column_pointer_data;
-    }
-    return *this;
-  }
-
-  ~CompressedColumnMatrix() = default;
 
   bool IsValid() const {
     if (row_count < 0 || column_count < 0 || non_zero_count < 0) {
@@ -60,6 +55,9 @@ struct CompressedColumnMatrix {
       }
     }
     if (column_pointer_data.size() != static_cast<size_t>(column_count + 1)) {
+      return false;
+    }
+    if (!column_pointer_data.empty() && column_pointer_data[0] != 0) {
       return false;
     }
     return true;
