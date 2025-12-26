@@ -128,12 +128,8 @@ bool ValidateTransposedMatrix(const CompressedColumnMatrix &transposed_matrix_a)
 }
 
 bool ValidateColumnRange(int column_start_position, int column_end_position, const std::vector<double> &local_values) {
-  if (column_start_position < 0 || static_cast<std::size_t>(column_end_position) > local_values.size() ||
-      column_start_position > column_end_position) {
-    return false;
-  }
-
-  return true;
+  return !(column_start_position < 0 || static_cast<std::size_t>(column_end_position) > local_values.size() ||
+           column_start_position > column_end_position);
 }
 
 bool ValidateTemporaryArrays(const std::vector<double> &temporary_row_values, const std::vector<int> &row_marker_array,
@@ -168,7 +164,7 @@ bool ValidateTransposedRange(int transposed_start, int transposed_end, const std
 }
 
 bool ValidateMatrixAElement(int matrix_a_row, int column_count) {
-  return !(matrix_a_row < 0 || matrix_a_row >= column_count);
+  return matrix_a_row >= 0 && matrix_a_row < column_count;
 }
 
 void ProcessTransposedElement(int matrix_a_row, int column_index, double matrix_a_value, double matrix_b_value,
@@ -258,7 +254,7 @@ bool ValidateMatrixB(const CompressedColumnMatrix &matrix_b) {
 }
 
 bool ValidateColumnIndex(int col_index, int column_count) {
-  return !(col_index < 0 || col_index >= column_count);
+  return col_index >= 0 && col_index < column_count;
 }
 
 bool ValidateColumnPointerBounds(int col_index, const std::vector<int> &column_pointers) {
@@ -266,15 +262,15 @@ bool ValidateColumnPointerBounds(int col_index, const std::vector<int> &column_p
 }
 
 bool ValidateColumnRange(int col_start, int col_end) {
-  return !(col_start < 0 || col_end < 0 || col_start > col_end);
+  return col_start >= 0 && col_end >= 0 && col_start <= col_end;
 }
 
 bool ValidateDataBounds(int col_end, const std::vector<double> &values, const std::vector<int> &row_indices) {
-  return !(static_cast<std::size_t>(col_end) > values.size() || static_cast<std::size_t>(col_end) > row_indices.size());
+  return static_cast<std::size_t>(col_end) <= values.size() && static_cast<std::size_t>(col_end) <= row_indices.size();
 }
 
 bool ValidateRowIndex(int row_idx, int row_count) {
-  return !(row_idx < 0 || row_idx >= row_count);
+  return row_idx >= 0 && row_idx < row_count;
 }
 
 int ExtractSingleColumnData(int col_index, const CompressedColumnMatrix &matrix_b, std::vector<double> &local_values,
@@ -340,8 +336,8 @@ bool ReceiveProcessDataMPI(int process_id, std::vector<double> &values, std::vec
     return false;
   }
 
-  const int MAX_SIZE = 100000000;
-  if (nnz < 0 || cols < 0 || nnz > MAX_SIZE || cols > MAX_SIZE) {
+  const int max_size = 100000000;
+  if (nnz < 0 || cols < 0 || nnz > max_size || cols > max_size) {
     return false;
   }
 
@@ -396,9 +392,8 @@ void ProcessLocalWorkerData(int pid, const std::vector<std::vector<double>> &val
 void ReceiveAllWorkerData(int total_processes, std::vector<std::vector<double>> &value_collections,
                           std::vector<std::vector<int>> &row_index_collections,
                           std::vector<std::vector<int>> &column_pointer_collections,
-                          const std::vector<double> &local_result_values,
-                          const std::vector<int> &local_result_row_indices,
-                          const std::vector<int> &local_result_column_pointers) {
+                          std::vector<double> &local_result_values, std::vector<int> &local_result_row_indices,
+                          std::vector<int> &local_result_column_pointers) {
   value_collections[0] = std::move(local_result_values);
   row_index_collections[0] = std::move(local_result_row_indices);
   column_pointer_collections[0] = std::move(local_result_column_pointers);
