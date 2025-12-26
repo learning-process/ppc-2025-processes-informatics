@@ -8,8 +8,15 @@
 
 namespace liulin_y_integ_mnog_func_monte_carlo {
 
-using InType = std::tuple<std::vector<std::vector<int>>, std::vector<int>>;
-using OutType = std::vector<int>;
+struct TaskInput {
+  double x_min, x_max;                      // Границы по x
+  double y_min, y_max;                      // Границы по y
+  std::function<double(double, double)> f;  // f(x, y)
+  long long num_points;                     // Количество случайных точек
+};
+
+using InType = TaskInput;
+using OutType = double;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

@@ -6,7 +6,6 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 #include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
@@ -16,8 +15,7 @@
 
 namespace liulin_y_integ_mnog_func_monte_carlo {
 
-class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &p) {
     return std::get<1>(p);
@@ -35,39 +33,67 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile
       throw std::runtime_error("Cannot open test file: " + abs_path + ".txt");
     }
 
-    int rows = 0;
-    int cols = 0;
-    file >> rows >> cols;
+    double x_min = 0.0, x_max = 0.0, y_min = 0.0, y_max = 0.0;
+    long long num_points = 0;
+    int func_id = 1;
 
-    std::vector<std::vector<int>> matrix(rows, std::vector<int>(cols));
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        file >> matrix[i][j];
-      }
+    file >> x_min >> x_max >> y_min >> y_max >> num_points;
+
+    if (file.good()) {
+      file >> func_id;
     }
 
-    std::vector<int> vect(cols);
-    for (int j = 0; j < cols; ++j) {
-      file >> vect[j];
-    }
-    if (vect.size() != static_cast<std::size_t>(cols)) {
-      throw std::runtime_error("Incompatible shapes: matrix has " + std::to_string(cols) + " columns, but vector has " +
-                               std::to_string(vect.size()) + " elements");
-    }
-    input_data_ = std::make_tuple(matrix, vect);
+    std::function<double(double, double)> f;
+    double expected = 0.0;
 
-    exp_output_.assign(rows, 0);
-    for (int i = 0; i < rows; ++i) {
-      for (int j = 0; j < cols; ++j) {
-        exp_output_[i] += matrix[i][j] * vect[j];
-      }
+    switch (func_id) {
+      case 1:  // f(x,y) = 1
+        f = [](double, double) { return 1.0; };
+        expected = (x_max - x_min) * (y_max - y_min);
+        break;
+      case 2:  // f(x,y) = x + y
+        f = [](double x, double y) { return x + y; };
+        expected = (x_max * x_max - x_min * x_min) / 2.0 * (y_max - y_min) +
+                   (y_max * y_max - y_min * y_min) / 2.0 * (x_max - x_min);
+        break;
+      case 3:  // f(x,y) = x * y
+        f = [](double x, double y) { return x * y; };
+        expected = (x_max * x_max - x_min * x_min) / 2.0 * (y_max * y_max - y_min * y_min) / 2.0;
+        break;
+      case 4:  // f(x,y) = sin(x) * cos(y)  (
+        f = [](double x, double y) { return std::sin(x) * std::cos(y); };
+        expected = (std::cos(x_min) - std::cos(x_max)) * (std::sin(y_max) - std::sin(y_min));
+        break;
+      default:
+        throw std::runtime_error("Unknown function id " + std::to_string(func_id) + " in file: " + filename);
     }
+
+    input_data_ = TaskInput{x_min, x_max, y_min, y_max, std::move(f), num_points};
+    exp_output_ = expected;
 
     file.close();
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == exp_output_;
+    constexpr double abs_eps_small_n = 0.5;
+    constexpr double abs_eps = 0.05;
+    constexpr double rel_eps = 0.05;
+
+    if (input_data_.num_points < 10000LL) {
+      return std::abs(output_data - exp_output_) <= abs_eps_small_n;
+    }
+
+    double area = (input_data_.x_max - input_data_.x_min) * (input_data_.y_max - input_data_.y_min);
+    if (std::abs(area) < 1e-10) {
+      constexpr double zero_area_eps = 0.1;
+      return std::abs(output_data) <= zero_area_eps;
+    }
+
+    if (std::abs(exp_output_) < 1e-4) {
+      return std::abs(output_data) <= abs_eps;
+    }
+
+    return std::abs(output_data - exp_output_) / std::abs(exp_output_) <= rel_eps;
   }
 
   InType GetTestInputData() final {
@@ -76,20 +102,27 @@ class LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile
 
  private:
   InType input_data_;
-  OutType exp_output_;
+  OutType exp_output_ = 0.0;
 };
 
 namespace {
 
-TEST_P(LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile, MatrixVectorMultFromFile) {
+TEST_P(LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile, MonteCarloIntegrationFromFile) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {std::make_tuple(0, "tiny"),      std::make_tuple(1, "simple"),
-                                             std::make_tuple(2, "square"),    std::make_tuple(3, "rectTall"),
-                                             std::make_tuple(4, "rectWide"),  std::make_tuple(5, "singleElement"),
-                                             std::make_tuple(6, "singleRow"), std::make_tuple(7, "singleColumn"),
-                                             std::make_tuple(8, "negative"),  std::make_tuple(9, "zeroVector")};
+const std::array<TestType, 10> kTestParam = {
+    std::make_tuple(0, "const1"),      // f=1
+    std::make_tuple(1, "linear"),      // x + y
+    std::make_tuple(2, "product"),     // x * y
+    std::make_tuple(3, "trig"),        // sin(x)*cos(y)
+    std::make_tuple(4, "smallN"),      // мало точек
+    std::make_tuple(5, "largeN"),      // много точек
+    std::make_tuple(6, "unitSquare"),  // [0,1]x[0,1]
+    std::make_tuple(7, "shifted"),     // сдвинутый прямоугольник
+    std::make_tuple(8, "negative"),    // отрицательные значения
+    std::make_tuple(9, "zeroArea")     // нулевая площадь (ожидаем 0)
+};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LiulinYIntegMnogFuncMonteCarloMPI, InType>(
                                                kTestParam, PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo),
@@ -98,8 +131,8 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LiulinYIntegMn
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kFuncTestName = LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile::PrintFuncTestName<
-    LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile>;
+const auto kFuncTestName =
+    LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile::PrintFuncTestName<LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile>;
 
 INSTANTIATE_TEST_SUITE_P(FileTests, LiulinYIntegMnogFuncMonteCarloFuncTestsFromFile, kGtestValues, kFuncTestName);
 

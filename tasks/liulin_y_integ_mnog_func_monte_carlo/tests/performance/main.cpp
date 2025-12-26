@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "liulin_y_integ_mnog_func_monte_carlo/common/include/common.hpp"
 #include "liulin_y_integ_mnog_func_monte_carlo/mpi/include/ops_mpi.hpp"
@@ -15,20 +14,21 @@ namespace liulin_y_integ_mnog_func_monte_carlo {
 class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   struct TestConfig {
-    int rows;
-    int cols;
+    double x_min, x_max;
+    double y_min, y_max;
+    long long num_points;
     std::string name;
   };
 
   static TestConfig GetLiulinSpecificConfig(const std::string &test_name) {
-    constexpr int kLargeDim = 8192;
+    constexpr long long kLargeN = 100000000LL;
     if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_mpi") != std::string::npos) {
-      return {.rows = kLargeDim, .cols = kLargeDim, .name = "mpi_large"};
+      return {0.0, 1.0, 0.0, 1.0, kLargeN, "mpi_large"};
     }
     if (test_name.find("liulin_y_integ_mnog_func_monte_carlo_seq") != std::string::npos) {
-      return {.rows = kLargeDim, .cols = kLargeDim, .name = "seq_large"};
+      return {0.0, 1.0, 0.0, 1.0, kLargeN, "seq_large"};
     }
-    return {.rows = 100, .cols = 100, .name = "small"};
+    return {0.0, 1.0, 0.0, 1.0, 100000LL, "small"};
   }
 
   static bool HasLiulinSpecificConfig(const std::string &test_name) {
@@ -40,24 +40,24 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
       return GetLiulinSpecificConfig(test_name);
     }
     if (test_name.find("small") != std::string::npos) {
-      return {.rows = 100, .cols = 100, .name = "small"};
+      return {0.0, 1.0, 0.0, 1.0, 100000LL, "small"};
     }
     if (test_name.find("medium") != std::string::npos) {
-      return {.rows = 1000, .cols = 1000, .name = "medium"};
+      return {0.0, 1.0, 0.0, 1.0, 1000000LL, "medium"};
     }
     if (test_name.find("large") != std::string::npos) {
-      return {.rows = 5000, .cols = 5000, .name = "large"};
+      return {0.0, 1.0, 0.0, 1.0, 10000000LL, "large"};
     }
     if (test_name.find("xlarge") != std::string::npos) {
-      return {.rows = 10000, .cols = 10000, .name = "xlarge"};
+      return {0.0, 1.0, 0.0, 1.0, 100000000LL, "xlarge"};
     }
     if (test_name.find("tall") != std::string::npos) {
-      return {.rows = 10000, .cols = 1000, .name = "tall"};
+      return {0.0, 10.0, 0.0, 0.1, 10000000LL, "tall"};
     }
     if (test_name.find("wide") != std::string::npos) {
-      return {.rows = 1000, .cols = 10000, .name = "wide"};
+      return {0.0, 0.1, 0.0, 10.0, 10000000LL, "wide"};
     }
-    return {.rows = 100, .cols = 100, .name = "small"};
+    return {0.0, 1.0, 0.0, 1.0, 100000LL, "small"};
   }
 
   void SetUp() override {
@@ -65,52 +65,31 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
     const std::string &test_name = std::get<1>(test_param);
 
     TestConfig config = GetTestConfig(test_name);
-    rows_ = config.rows;
-    cols_ = config.cols;
+    x_min_ = config.x_min;
+    x_max_ = config.x_max;
+    y_min_ = config.y_min;
+    y_max_ = config.y_max;
+    num_points_ = config.num_points;
 
     GenerateTestData();
   }
 
-  static int GenerateCellValue(int row, int col) {
-    constexpr int kMod = 2001;
-    const int raw_value = (row * 131 + col * 17) % kMod;
-    return raw_value - 1000;
-  }
-
   void GenerateTestData() {
-    std::vector<std::vector<int>> matrix(rows_, std::vector<int>(cols_));
-    for (int i = 0; i < rows_; ++i) {
-      for (int j = 0; j < cols_; ++j) {
-        matrix[i][j] = GenerateCellValue(i, j);
-      }
-    }
+    // Тестовая функция f(x,y) = x * y (интеграл = (x_max^2 - x_min^2)/2 * (y_max^2 - y_min^2)/2
+    auto f = [](double x, double y) { return x * y; };
 
-    std::vector<int> vect(cols_);
-    for (int j = 0; j < cols_; ++j) {
-      vect[j] = GenerateCellValue(0, j + 100);
-    }
+    input_data_ = TaskInput{x_min_, x_max_, y_min_, y_max_, f, num_points_};
 
-    input_data_ = std::make_tuple(matrix, vect);
-
-    // Ожидаемый результат
-    expected_output_.assign(rows_, 0);
-    for (int i = 0; i < rows_; ++i) {
-      for (int j = 0; j < cols_; ++j) {
-        expected_output_[i] += matrix[i][j] * vect[j];
-      }
-    }
+    // Ожидаемый аналитический интеграл
+    expected_output_ = ((x_max_ * x_max_ - x_min_ * x_min_) / 2.0) * ((y_max_ * y_max_ - y_min_ * y_min_) / 2.0);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.size() != expected_output_.size()) {
-      return false;
+    constexpr double relative_eps = 1e-2;
+    if (std::abs(expected_output_) < 1e-10) {
+      return std::abs(output_data) < relative_eps;
     }
-    for (std::size_t i = 0; i < output_data.size(); ++i) {
-      if (output_data[i] != expected_output_[i]) {
-        return false;
-      }
-    }
-    return true;
+    return std::abs(output_data - expected_output_) / std::abs(expected_output_) < relative_eps;
   }
 
   InType GetTestInputData() final {
@@ -118,10 +97,13 @@ class LiulinYIntegMnogFuncMonteCarloPerfTests : public ppc::util::BaseRunPerfTes
   }
 
  private:
-  int rows_ = 0;
-  int cols_ = 0;
+  double x_min_ = 0.0;
+  double x_max_ = 0.0;
+  double y_min_ = 0.0;
+  double y_max_ = 0.0;
+  long long num_points_ = 0;
   InType input_data_;
-  OutType expected_output_;
+  OutType expected_output_ = 0.0;
 };
 
 TEST_P(LiulinYIntegMnogFuncMonteCarloPerfTests, RunPerfModes) {
@@ -131,6 +113,7 @@ TEST_P(LiulinYIntegMnogFuncMonteCarloPerfTests, RunPerfModes) {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, LiulinYIntegMnogFuncMonteCarloSEQ, LiulinYIntegMnogFuncMonteCarloMPI>(
         PPC_SETTINGS_liulin_y_integ_mnog_func_monte_carlo);
+
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = LiulinYIntegMnogFuncMonteCarloPerfTests::CustomPerfTestName;
