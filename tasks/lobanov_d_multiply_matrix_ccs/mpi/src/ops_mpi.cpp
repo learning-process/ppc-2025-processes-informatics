@@ -52,7 +52,7 @@ void LobanovDMultiplyMatrixMPI::ComputeTransposedMatrixMPI(const CompressedColum
     return;
   }
 
-  if (source_matrix.column_pointer_data.size() != static_cast<std::size_t>(source_matrix.column_count + 1)) {
+  if (source_matrix.column_pointer_data.size() != static_cast<std::size_t>(source_matrix.column_count) + 1) {
     return;
   }
 
@@ -170,20 +170,20 @@ void LobanovDMultiplyMatrixMPI::ProcessLocalColumnMPI(
   }
 
   if (transposed_matrix_a.column_pointer_data.size() !=
-      static_cast<std::size_t>(transposed_matrix_a.column_count + 1)) {
+      static_cast<std::size_t>(transposed_matrix_a.column_count) + 1) {
     return;
   }
 
   int column_start_position = local_column_pointers[column_index];
   int column_end_position = local_column_pointers[column_index + 1];
 
-  if (column_start_position < 0 || column_end_position > static_cast<int>(local_values.size()) ||
+  if (column_start_position < 0 || static_cast<std::size_t>(column_end_position) > local_values.size() ||
       column_start_position > column_end_position) {
     return;
   }
 
-  if (static_cast<int>(temporary_row_values.size()) != transposed_matrix_a.column_count ||
-      static_cast<int>(row_marker_array.size()) != transposed_matrix_a.column_count) {
+  if (temporary_row_values.size() != static_cast<std::size_t>(transposed_matrix_a.column_count) ||
+      row_marker_array.size() != static_cast<std::size_t>(transposed_matrix_a.column_count)) {
     return;
   }
 
@@ -202,7 +202,7 @@ void LobanovDMultiplyMatrixMPI::ProcessLocalColumnMPI(
     int transposed_start = transposed_matrix_a.column_pointer_data[matrix_b_row];
     int transposed_end = transposed_matrix_a.column_pointer_data[matrix_b_row + 1];
 
-    if (transposed_start < 0 || transposed_end > static_cast<int>(transposed_matrix_a.value_data.size()) ||
+    if (transposed_start < 0 || static_cast<std::size_t>(transposed_end) > transposed_matrix_a.value_data.size() ||
         transposed_start > transposed_end) {
       continue;
     }
@@ -255,7 +255,7 @@ void LobanovDMultiplyMatrixMPI::ExtractLocalColumnData(const CompressedColumnMat
 
   end_column = std::min(end_column, matrix_b.column_count);
 
-  if (matrix_b.column_pointer_data.size() != static_cast<std::size_t>(matrix_b.column_count + 1)) {
+  if (matrix_b.column_pointer_data.size() != static_cast<std::size_t>(matrix_b.column_count) + 1) {
     return;
   }
 
@@ -275,8 +275,8 @@ void LobanovDMultiplyMatrixMPI::ExtractLocalColumnData(const CompressedColumnMat
       return static_cast<int>(local_values.size());
     }
 
-    if (col_end > static_cast<int>(matrix_b.value_data.size()) ||
-        col_end > static_cast<int>(matrix_b.row_index_data.size())) {
+    if (static_cast<std::size_t>(col_end) > matrix_b.value_data.size() ||
+        static_cast<std::size_t>(col_end) > matrix_b.row_index_data.size()) {
       return static_cast<int>(local_values.size());
     }
 
@@ -322,7 +322,7 @@ void LobanovDMultiplyMatrixMPI::MultiplyLocalMatricesMPI(const CompressedColumnM
     return;
   }
 
-  if (local_column_pointers.size() != static_cast<std::size_t>(local_column_count + 1)) {
+  if (local_column_pointers.size() != static_cast<std::size_t>(local_column_count) + 1) {
     return;
   }
 
@@ -445,7 +445,7 @@ bool LobanovDMultiplyMatrixMPI::ProcessMasterRank(const CompressedColumnMatrix &
 
   result_matrix.non_zero_count = static_cast<int>(result_matrix.value_data.size());
 
-  if (result_matrix.column_pointer_data.size() != static_cast<std::size_t>(result_matrix.column_count + 1)) {
+  if (result_matrix.column_pointer_data.size() != static_cast<std::size_t>(result_matrix.column_count) + 1) {
     result_matrix.column_pointer_data.resize(result_matrix.column_count + 1);
     if (!result_matrix.column_pointer_data.empty()) {
       result_matrix.column_pointer_data[0] = 0;
@@ -526,7 +526,7 @@ bool LobanovDMultiplyMatrixMPI::RunImpl() {
                 MPI_COMM_WORLD);
     }
 
-    transposed_matrix_a.column_pointer_data.resize(static_cast<std::size_t>(transposed_matrix_a.column_count + 1U), 0);
+    transposed_matrix_a.column_pointer_data.resize(static_cast<std::size_t>(transposed_matrix_a.column_count) + 1U, 0);
     MPI_Bcast(transposed_matrix_a.column_pointer_data.data(), transposed_matrix_a.column_count + 1, MPI_INT, 0,
               MPI_COMM_WORLD);
   }
@@ -588,7 +588,7 @@ bool LobanovDMultiplyMatrixMPI::PostProcessingImpl() {
   if (current_process_rank == 0) {
     bool dimensions_valid = computed_result.row_count > 0 && computed_result.column_count > 0;
     bool structure_valid =
-        computed_result.column_pointer_data.size() == static_cast<std::size_t>(computed_result.column_count + 1U);
+        computed_result.column_pointer_data.size() == static_cast<std::size_t>(computed_result.column_count) + 1U;
     return dimensions_valid && structure_valid;
   }
 

@@ -29,7 +29,7 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
   result_matrix.column_pointer_data.clear();
 
   if (row_count <= 0 || column_count <= 0) {
-    result_matrix.column_pointer_data.assign(static_cast<std::size_t>(column_count + 1U), 0);
+    result_matrix.column_pointer_data.assign(static_cast<std::size_t>(column_count) + 1U, 0);
     return result_matrix;
   }
 
@@ -68,7 +68,7 @@ CompressedColumnMatrix CreateRandomCompressedColumnMatrix(int row_count, int col
     result_matrix.row_index_data.reserve(static_cast<std::size_t>(nnz_counter));
   }
 
-  result_matrix.column_pointer_data.assign(static_cast<std::size_t>(column_count + 1U), 0);
+  result_matrix.column_pointer_data.assign(static_cast<std::size_t>(column_count) + 1U, 0);
 
   int offset = 0;
   result_matrix.column_pointer_data[0] = 0;

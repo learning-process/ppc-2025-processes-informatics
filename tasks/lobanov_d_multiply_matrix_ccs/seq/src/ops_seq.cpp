@@ -54,9 +54,10 @@ void LobanovDMultiplyMatrixSEQ::ComputeTransposedMatrix(const CompressedColumnMa
   elements.reserve(source_matrix.non_zero_count);
 
   for (int old_col = 0; old_col < source_matrix.column_count; old_col++) {
-    for (int p = source_matrix.column_pointer_data[old_col]; p < source_matrix.column_pointer_data[old_col + 1]; p++) {
-      int old_row = source_matrix.row_index_data[p];
-      elements.push_back({old_row, old_col, source_matrix.value_data[p]});
+    for (int pos = source_matrix.column_pointer_data[old_col]; pos < source_matrix.column_pointer_data[old_col + 1];
+         pos++) {
+      int old_row = source_matrix.row_index_data[pos];
+      elements.push_back({old_row, old_col, source_matrix.value_data[pos]});
     }
   }
 
