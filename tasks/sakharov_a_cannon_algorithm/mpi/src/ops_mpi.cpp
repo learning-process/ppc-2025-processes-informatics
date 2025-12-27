@@ -15,10 +15,9 @@ void LocalMultiply(const std::vector<double> &a_block, const std::vector<double>
                    int local_rows, int k_dim, int local_cols) {
   for (int ii = 0; ii < local_rows; ++ii) {
     for (int kk = 0; kk < k_dim; ++kk) {
-      double a_val = a_block[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(k_dim)) + kk];
+      double a_val = a_block[Idx(k_dim, ii, kk)];
       for (int jj = 0; jj < local_cols; ++jj) {
-        c_block[(static_cast<std::size_t>(ii) * static_cast<std::size_t>(local_cols)) + jj] +=
-            a_val * b_block[(static_cast<std::size_t>(kk) * static_cast<std::size_t>(local_cols)) + jj];
+        c_block[Idx(local_cols, ii, jj)] += a_val * b_block[Idx(local_cols, kk, jj)];
       }
     }
   }
