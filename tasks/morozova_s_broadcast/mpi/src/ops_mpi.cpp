@@ -33,7 +33,7 @@ bool MorozovaSBroadcastMPI::ValidationImpl() {
     return false;
   }
   if (rank == root_ && GetInput().empty()) {
-    return false;
+    return true;
   }
   if (!GetOutput().empty()) {
     return false;
@@ -74,14 +74,13 @@ bool MorozovaSBroadcastMPI::RunImpl() {
     data_size = static_cast<int>(GetInput().size());
   }
   CustomBroadcast(&data_size, 1, MPI_INT, root_, MPI_COMM_WORLD);
-  if (data_size <= 0) {
-    return false;
-  }
   GetOutput().resize(data_size);
-  if (rank == root_) {
-    std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
+  if (data_size > 0) {
+    if (rank == root_) {
+      std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
+    }
+    CustomBroadcast(GetOutput().data(), data_size, MPI_INT, root_, MPI_COMM_WORLD);
   }
-  CustomBroadcast(GetOutput().data(), data_size, MPI_INT, root_, MPI_COMM_WORLD);
   return true;
 }
 
