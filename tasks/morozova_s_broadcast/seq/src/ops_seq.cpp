@@ -17,9 +17,12 @@ MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  return rank == 0;
+  if (GetExecutionMode() == ppc::util::ExecutionMode::kPipeline) {
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    return rank == 0;
+  }
+  return true;
 }
 
 bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
