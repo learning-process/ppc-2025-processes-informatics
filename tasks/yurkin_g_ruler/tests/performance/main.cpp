@@ -8,7 +8,8 @@
 namespace yurkin_g_ruler {
 
 class YurkinGRulerPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 1000000;
+ public:
+  const int kCount_ = 100000000;
 
   InType input_data_{};
 

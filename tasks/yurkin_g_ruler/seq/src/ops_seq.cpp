@@ -20,7 +20,14 @@ bool YurkinGRulerSEQ::PreProcessingImpl() {
 }
 
 bool YurkinGRulerSEQ::RunImpl() {
-  GetOutput() = GetInput();
+  volatile int acc = 0;
+  const int n = GetInput();
+
+  for (int i = 0; i < n; ++i) {
+    acc += i % 7;
+  }
+
+  GetOutput() = n;
   return true;
 }
 
