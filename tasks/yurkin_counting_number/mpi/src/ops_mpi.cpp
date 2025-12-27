@@ -47,11 +47,11 @@ YurkinCountingNumberMPI::YurkinCountingNumberMPI(const InType &in) {
 }
 
 bool YurkinCountingNumberMPI::ValidationImpl() {
+  GetOutput() = 0;
   return true;
 }
 
 bool YurkinCountingNumberMPI::PreProcessingImpl() {
-  GetOutput() = 0;
   return true;
 }
 
@@ -84,12 +84,9 @@ bool YurkinCountingNumberMPI::RunImpl() {
     recvcount = sendcounts[static_cast<std::size_t>(world_rank)];
   }
 
-  std::vector<char> local_buffer;
-  if (recvcount > 0) {
-    local_buffer.resize(static_cast<std::size_t>(recvcount));
-  }
+  std::vector<char> local_buffer(static_cast<std::size_t>(recvcount));
 
-  const void *sendbuf = (world_rank == 0 && total_size > 0) ? static_cast<const void *>(global_input.data()) : nullptr;
+  const void *sendbuf = (world_rank == 0) ? static_cast<const void *>(global_input.data()) : nullptr;
   const int *sendcounts_ptr = (world_rank == 0) ? sendcounts.data() : nullptr;
   const int *displs_ptr = (world_rank == 0) ? displs.data() : nullptr;
   void *recvbuf = (recvcount > 0) ? static_cast<void *>(local_buffer.data()) : nullptr;
