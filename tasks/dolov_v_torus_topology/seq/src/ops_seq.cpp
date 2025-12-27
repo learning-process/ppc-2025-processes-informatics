@@ -4,7 +4,7 @@
 #include <utility>
 #include <vector>
 
-#include "example_processes/common/include/common.hpp"
+#include "dolov_v_torus_topology/common/include/common.hpp"
 
 namespace dolov_v_torus_topology {
 

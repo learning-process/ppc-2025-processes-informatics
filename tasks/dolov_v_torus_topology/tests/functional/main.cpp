@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cmath>
+#include <string>
 #include <tuple>
 #include <vector>
 
