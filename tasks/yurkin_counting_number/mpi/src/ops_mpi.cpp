@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstddef>
 #include <tuple>
 #include <utility>
@@ -17,20 +18,24 @@ namespace {
 std::pair<std::vector<int>, std::vector<int>> ComputeSendCountsAndDispls(int total_size, int world_size) {
   std::vector<int> sendcounts(static_cast<std::size_t>(world_size), 0);
   std::vector<int> displs(static_cast<std::size_t>(world_size), 0);
+
   if (world_size <= 0 || total_size <= 0) {
     return {sendcounts, displs};
   }
-  const auto n = static_cast<std::size_t>(total_size);
-  const auto ws = static_cast<std::size_t>(world_size);
-  const auto chunk = (ws > 0U) ? (n / ws) : 0U;
-  const auto rem = (ws > 0U) ? (n % ws) : 0U;
+
+  const std::size_t n = static_cast<std::size_t>(total_size);
+  const std::size_t ws = static_cast<std::size_t>(world_size);
+  const std::size_t chunk = n / ws;
+  const std::size_t rem = n % ws;
+
   std::size_t offset = 0;
   for (std::size_t i = 0; i < ws; ++i) {
-    const auto add = chunk + (i < rem ? 1U : 0U);
+    const std::size_t add = chunk + (i < rem ? 1 : 0);
     sendcounts[i] = static_cast<int>(add);
     displs[i] = static_cast<int>(offset);
     offset += add;
   }
+
   return {sendcounts, displs};
 }
 
@@ -43,7 +48,7 @@ YurkinCountingNumberMPI::YurkinCountingNumberMPI(const InType &in) {
 }
 
 bool YurkinCountingNumberMPI::ValidationImpl() {
-  return GetOutput() == 0;
+  return true;
 }
 
 bool YurkinCountingNumberMPI::PreProcessingImpl() {
@@ -52,48 +57,43 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberMPI::RunImpl() {
-  int world_rank = 0;
-  int world_size = 0;
+  int world_rank = 0, world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   const InType &global_input = GetInput();
   int total_size = 0;
+
   if (world_rank == 0) {
     total_size = static_cast<int>(global_input.size());
   }
 
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (world_size <= 0) {
+  if (world_size <= 0 || total_size <= 0) {
     GetOutput() = 0;
     return true;
   }
 
-  std::vector<int> sendcounts;
-  std::vector<int> displs;
+  std::vector<int> sendcounts, displs;
   std::tie(sendcounts, displs) = ComputeSendCountsAndDispls(total_size, world_size);
 
-  int recvcount = 0;
-  auto rank_idx = static_cast<std::size_t>(world_rank);
-  if (rank_idx < sendcounts.size()) {
-    recvcount = sendcounts[rank_idx];
-  }
+  int recvcount = (world_rank < static_cast<int>(sendcounts.size())) ? sendcounts[world_rank] : 0;
   recvcount = std::max(recvcount, 0);
 
-  std::vector<char> local_buffer(static_cast<std::size_t>(recvcount), '\0');
-  void *recvbuf = (recvcount > 0) ? static_cast<void *>(local_buffer.data()) : nullptr;
+  std::vector<char> local_buffer(recvcount);
 
-  const void *sendbuf = (world_rank == 0 && total_size > 0) ? static_cast<const void *>(global_input.data()) : nullptr;
+  const void *sendbuf = (world_rank == 0) ? static_cast<const void *>(global_input.data()) : nullptr;
   const int *sendcounts_ptr = (world_rank == 0) ? sendcounts.data() : nullptr;
   const int *displs_ptr = (world_rank == 0) ? displs.data() : nullptr;
+  void *recvbuf = (recvcount > 0) ? static_cast<void *>(local_buffer.data()) : nullptr;
 
   MPI_Scatterv(sendbuf, sendcounts_ptr, displs_ptr, MPI_CHAR, recvbuf, recvcount, MPI_CHAR, 0, MPI_COMM_WORLD);
 
   int local_count = 0;
   for (int i = 0; i < recvcount; ++i) {
-    const auto uc = static_cast<unsigned char>(local_buffer[static_cast<std::size_t>(i)]);
-    if ((uc >= 'A' && uc <= 'Z') || (uc >= 'a' && uc <= 'z')) {
+    const auto uc = static_cast<unsigned char>(local_buffer[i]);
+    if (std::isalpha(uc)) {
       ++local_count;
     }
   }
