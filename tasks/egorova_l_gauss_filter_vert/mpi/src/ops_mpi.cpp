@@ -1,28 +1,40 @@
 #include "egorova_l_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <iterator>
 #include <vector>
+
+#include <mpi.h>
 
 #include "egorova_l_gauss_filter_vert/common/include/common.hpp"
 
 namespace egorova_l_gauss_filter_vert {
 
-EgorovaLGaussFilterVertMPI::EgorovaLGaussFilterVertMPI(const InType &in) : BaseTask() {
+namespace {
+void CalculateCountsAndDispls(int size, int qq, int rem, int rows, int ch, std::vector<int>& counts,
+                             std::vector<int>& displs) {
+  int offset = 0;
+  for (int i = 0; i < size; ++i) {
+    int cur_cols = qq + (i < rem ? 1 : 0);
+    counts.at(static_cast<size_t>(i)) = cur_cols * rows * ch;
+    displs.at(static_cast<size_t>(i)) = offset;
+    offset += counts.at(static_cast<size_t>(i));
+  }
+}
+}  // namespace
+
+EgorovaLGaussFilterVertMPI::EgorovaLGaussFilterVertMPI(const InType& in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool EgorovaLGaussFilterVertMPI::ValidationImpl() {
-  const auto &in = GetInput();
+  const auto& in = GetInput();
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   std::array<int, 3> params{};
   if (rank == 0) {
     params[0] = in.rows;
@@ -30,19 +42,14 @@ bool EgorovaLGaussFilterVertMPI::ValidationImpl() {
     params[2] = in.channels;
   }
   MPI_Bcast(params.data(), 3, MPI_INT, 0, MPI_COMM_WORLD);
-
   return (params[0] > 0 && params[1] > 0 && params[2] > 0);
 }
 
-bool EgorovaLGaussFilterVertMPI::PreProcessingImpl() {
-  return true;
-}
+bool EgorovaLGaussFilterVertMPI::PreProcessingImpl() { return true; }
 
-void EgorovaLGaussFilterVertMPI::ApplyFilter(const std::vector<uint8_t> &local_in, std::vector<uint8_t> &local_out,
+void EgorovaLGaussFilterVertMPI::ApplyFilter(const std::vector<uint8_t>& local_in, std::vector<uint8_t>& local_out,
                                              int rows, int local_cols, int total_lc, int ch) {
   const std::array<float, 9> ker = {0.0625F, 0.125F, 0.0625F, 0.125F, 0.25F, 0.125F, 0.0625F, 0.125F, 0.0625F};
-  const float *ker_ptr = ker.data();
-
   for (int yy = 0; yy < rows; ++yy) {
     for (int xx = 0; xx < local_cols; ++xx) {
       for (int cc = 0; cc < ch; ++cc) {
@@ -50,25 +57,51 @@ void EgorovaLGaussFilterVertMPI::ApplyFilter(const std::vector<uint8_t> &local_i
         for (int ky = -1; ky <= 1; ++ky) {
           for (int kx = -1; kx <= 1; ++kx) {
             int py = std::clamp(yy + ky, 0, rows - 1);
-            int px = xx + kx + 1;
-
-            std::size_t in_idx =
-                ((((static_cast<std::size_t>(py) * static_cast<std::size_t>(total_lc)) + static_cast<std::size_t>(px)) *
-                  static_cast<std::size_t>(ch)) +
-                 static_cast<std::size_t>(cc));
-
-            std::size_t k_idx = (static_cast<std::size_t>(ky + 1) * 3) + static_cast<std::size_t>(kx + 1);
-            sum += (static_cast<float>(local_in[in_idx]) * ker_ptr[k_idx]);
+            int px = std::clamp(xx + kx + 1, 0, total_lc - 1);
+            size_t in_idx = ((static_cast<size_t>(py) * total_lc + px) * ch) + cc;
+            size_t k_idx = (static_cast<size_t>(ky + 1) * 3) + (kx + 1);
+            sum += (static_cast<float>(local_in[in_idx]) * ker.at(k_idx));
           }
         }
-        std::size_t out_idx =
-            ((((static_cast<std::size_t>(yy) * static_cast<std::size_t>(local_cols)) + static_cast<std::size_t>(xx)) *
-              static_cast<std::size_t>(ch)) +
-             static_cast<std::size_t>(cc));
-
-        local_out[out_idx] = static_cast<uint8_t>(sum);
+        size_t out_idx = ((static_cast<size_t>(yy) * local_cols + xx) * ch) + cc;
+        local_out[out_idx] = static_cast<uint8_t>(std::clamp(std::round(sum), 0.0F, 255.0F));
       }
     }
+  }
+}
+
+void EgorovaLGaussFilterVertMPI::FillLocalWithHalo(const std::vector<uint8_t>& local_data,
+                                                   std::vector<uint8_t>& local_with_halo,
+                                                   int rows, int local_cols, int total_lc, int left_h, int ch) {
+  for (int row = 0; row < rows; ++row) {
+    size_t src_off = static_cast<size_t>(row) * local_cols * ch;
+    size_t dst_off = (static_cast<size_t>(row) * total_lc + left_h) * ch;
+    std::copy(local_data.begin() + static_cast<std::ptrdiff_t>(src_off),
+              local_data.begin() + static_cast<std::ptrdiff_t>(src_off + (static_cast<size_t>(local_cols) * ch)),
+              local_with_halo.begin() + static_cast<std::ptrdiff_t>(dst_off));
+  }
+}
+
+void EgorovaLGaussFilterVertMPI::ExchangeHalo(std::vector<uint8_t>& local_with_halo, int target, int rows,
+                                              int total_lc, int ch, size_t send_col, size_t recv_col) {
+  if (target == MPI_PROC_NULL) {
+    return;
+  }
+  std::vector<uint8_t> s_buf(static_cast<size_t>(rows) * ch);
+  std::vector<uint8_t> r_buf(static_cast<size_t>(rows) * ch);
+  for (int i = 0; i < rows; ++i) {
+    size_t s_idx = (static_cast<size_t>(i) * total_lc + send_col) * ch;
+    std::copy(local_with_halo.begin() + static_cast<std::ptrdiff_t>(s_idx),
+              local_with_halo.begin() + static_cast<std::ptrdiff_t>(s_idx + ch),
+              s_buf.begin() + static_cast<std::ptrdiff_t>(static_cast<size_t>(i) * ch));
+  }
+  MPI_Sendrecv(s_buf.data(), static_cast<int>(s_buf.size()), MPI_BYTE, target, 0, r_buf.data(),
+               static_cast<int>(r_buf.size()), MPI_BYTE, target, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  for (int i = 0; i < rows; ++i) {
+    size_t d_idx = (static_cast<size_t>(i) * total_lc + recv_col) * ch;
+    std::copy(r_buf.begin() + static_cast<std::ptrdiff_t>(static_cast<size_t>(i) * ch),
+              r_buf.begin() + static_cast<std::ptrdiff_t>(static_cast<size_t>(i + 1) * ch),
+              local_with_halo.begin() + static_cast<std::ptrdiff_t>(d_idx));
   }
 }
 
@@ -78,79 +111,61 @@ bool EgorovaLGaussFilterVertMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const auto &full_img = GetInput();
   int rr = 0;
   int cc = 0;
   int ch = 0;
-
   if (rank == 0) {
-    rr = full_img.rows;
-    cc = full_img.cols;
-    ch = full_img.channels;
+    rr = GetInput().rows;
+    cc = GetInput().cols;
+    ch = GetInput().channels;
   }
-
   MPI_Bcast(&rr, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cc, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&ch, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int qq = (cc / size);
-  int rem = (cc % size);
-  int local_cols = (qq + (rank < rem ? 1 : 0));
-  int offset = ((rank * qq) + std::min(rank, rem));
+  int qq = cc / size;
+  int rem = cc % size;
+  int local_cols = qq + (rank < rem ? 1 : 0);
 
-  int left_h = ((rank > 0) ? 1 : 0);
-  int right_h = ((rank < size - 1) ? 1 : 0);
-  int total_lc = (local_cols + left_h + right_h);
+  std::vector<int> counts(static_cast<size_t>(size));
+  std::vector<int> displs(static_cast<size_t>(size));
+  CalculateCountsAndDispls(size, qq, rem, rr, ch, counts, displs);
 
-  std::vector<uint8_t> local_in(static_cast<std::size_t>(rr) * total_lc * ch);
-  std::vector<uint8_t> local_out(static_cast<std::size_t>(rr) * local_cols * ch);
+  std::vector<uint8_t> local_data(static_cast<size_t>(rr) * local_cols * ch);
+  void* send_ptr = (rank == 0) ? GetInput().data.data() : nullptr;
+  MPI_Scatterv(send_ptr, counts.data(), displs.data(), MPI_BYTE, local_data.data(),
+               counts[static_cast<size_t>(rank)], MPI_BYTE, 0, MPI_COMM_WORLD);
 
-  std::vector<uint8_t> shared_data;
+  int left_rank = (rank > 0) ? rank - 1 : MPI_PROC_NULL;
+  int right_rank = (rank < size - 1) ? rank + 1 : MPI_PROC_NULL;
+  int left_h = (left_rank != MPI_PROC_NULL) ? 1 : 0;
+  int right_h = (right_rank != MPI_PROC_NULL) ? 1 : 0;
+  int total_lc = local_cols + left_h + right_h;
+
+  std::vector<uint8_t> local_with_halo(static_cast<size_t>(rr) * total_lc * ch, 0);
+  FillLocalWithHalo(local_data, local_with_halo, rr, local_cols, total_lc, left_h, ch);
+  
+  ExchangeHalo(local_with_halo, right_rank, rr, total_lc, ch, static_cast<size_t>(left_h + local_cols - 1), 
+               static_cast<size_t>(left_h + local_cols));
+  ExchangeHalo(local_with_halo, left_rank, rr, total_lc, ch, static_cast<size_t>(left_h), 0);
+
+  std::vector<uint8_t> local_out(static_cast<size_t>(rr) * local_cols * ch);
+  ApplyFilter(local_with_halo, local_out, rr, local_cols, total_lc, ch);
+
   if (rank == 0) {
-    shared_data = full_img.data;
-  } else {
-    shared_data.resize(static_cast<std::size_t>(rr) * cc * ch);
-  }
-  MPI_Bcast(shared_data.data(), static_cast<int>(shared_data.size()), MPI_BYTE, 0, MPI_COMM_WORLD);
-
-  for (int ii = 0; ii < rr; ++ii) {
-    std::size_t src_start = (static_cast<std::size_t>(ii) * cc + (offset - left_h)) * ch;
-    std::size_t dest_start = (static_cast<std::size_t>(ii) * total_lc) * ch;
-    std::size_t count = static_cast<std::size_t>(total_lc) * ch;
-
-    std::copy(std::next(shared_data.begin(), static_cast<std::ptrdiff_t>(src_start)),
-              std::next(shared_data.begin(), static_cast<std::ptrdiff_t>(src_start + count)),
-              std::next(local_in.begin(), static_cast<std::ptrdiff_t>(dest_start)));
+    GetOutput().rows = rr;
+    GetOutput().cols = cc;
+    GetOutput().channels = ch;
+    GetOutput().data.resize(static_cast<size_t>(rr) * cc * ch);
   }
 
-  ApplyFilter(local_in, local_out, rr, local_cols, total_lc, ch);
-
-  std::vector<int> counts(size);
-  std::vector<int> displs(size);
-  for (int ii = 0; ii < size; ++ii) {
-    counts[ii] = (qq + (ii < rem ? 1 : 0)) * ch;
-    displs[ii] = (ii == 0) ? 0 : displs[ii - 1] + counts[ii - 1];
-  }
-
-  auto &output = GetOutput();
-  output.rows = rr;
-  output.cols = cc;
-  output.channels = ch;
-  output.data.resize(static_cast<std::size_t>(rr) * cc * ch);
-
-  for (int ii = 0; ii < rr; ++ii) {
-    std::size_t send_offset = (static_cast<std::size_t>(ii) * local_cols * ch);
-    std::size_t recv_offset = (static_cast<std::size_t>(ii) * cc * ch);
-
-    MPI_Allgatherv(local_out.data() + send_offset, counts[rank], MPI_BYTE, output.data.data() + recv_offset,
-                   counts.data(), displs.data(), MPI_BYTE, MPI_COMM_WORLD);
-  }
+  void* recv_ptr = (rank == 0) ? GetOutput().data.data() : nullptr;
+  MPI_Gatherv(local_out.data(), static_cast<int>(local_out.size()), MPI_BYTE,
+              recv_ptr, counts.data(), displs.data(), MPI_BYTE, 0, MPI_COMM_WORLD);
 
   return true;
 }
 
-bool EgorovaLGaussFilterVertMPI::PostProcessingImpl() {
-  return true;
-}
+bool EgorovaLGaussFilterVertMPI::PostProcessingImpl() { return true; }
 
 }  // namespace egorova_l_gauss_filter_vert
