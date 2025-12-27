@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <iostream>
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -61,21 +63,21 @@ TEST_P(ShekhirevVCGFuncTests, Test) {
   ExecuteTest(GetParam());
 }
 
-const std::vector<double> a1 = {1.0, 0.0, 0.0, 1.0};
-const std::vector<double> b1 = {5.0, -3.0};
-const std::vector<double> x1 = {5.0, -3.0};
+const std::vector<double> kA1 = {1.0, 0.0, 0.0, 1.0};
+const std::vector<double> kB1 = {5.0, -3.0};
+const std::vector<double> kX1 = {5.0, -3.0};
 
-const std::vector<double> a2 = {4.0, 1.0, 1.0, 3.0};
-const std::vector<double> b2 = {1.0, 2.0};
-const std::vector<double> x2 = {0.090909, 0.636363};
+const std::vector<double> kA2 = {4.0, 1.0, 1.0, 3.0};
+const std::vector<double> kB2 = {1.0, 2.0};
+const std::vector<double> kX2 = {0.090909, 0.636363};
 
-const std::vector<double> a3 = {2.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 4.0};
-const std::vector<double> b3 = {2.0, 9.0, 8.0};
-const std::vector<double> x3 = {1.0, 3.0, 2.0};
+const std::vector<double> kA3 = {2.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 4.0};
+const std::vector<double> kB3 = {2.0, 9.0, 8.0};
+const std::vector<double> kX3 = {1.0, 3.0, 2.0};
 
-const std::array<TestType, 3> kTestCases = {std::make_tuple(InputData(a1, b1, 2), x1, "Identity_2x2"),
-                                            std::make_tuple(InputData(a2, b2, 2), x2, "SPD_System_2x2"),
-                                            std::make_tuple(InputData(a3, b3, 3), x3, "Diagonal_3x3")};
+const std::array<TestType, 3> kTestCases = {std::make_tuple(InputData(kA1, kB1, 2), kX1, "Identity_2x2"),
+                                            std::make_tuple(InputData(kA2, kB2, 2), kX2, "SPD_System_2x2"),
+                                            std::make_tuple(InputData(kA3, kB3, 3), kX3, "Diagonal_3x3")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<shekhirev_v_cg_method_seq::ConjugateGradientSeq, InType>(

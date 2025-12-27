@@ -3,7 +3,7 @@
 #include <mpi.h>
 
 #include <cmath>
-#include <numeric>
+#include <cstddef>
 #include <vector>
 
 namespace shekhirev_v_cg_method_mpi {
