@@ -20,12 +20,6 @@ class PylaevaSSimpleIterationMethodSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  double kEps = 1e-6;
-  int kMaxIterations = 10000;
-
-  bool NotNullDeterm(const std::vector<double> &a, size_t n);
-  bool DiagonalDominance(const std::vector<double> &a, size_t n);
 };
 
 }  // namespace pylaeva_s_simple_iteration_method

@@ -4,8 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <fstream>    // для std::ifstream
-#include <stdexcept>  // для std::runtime_error
 #include <string>
 #include <tuple>
 #include <vector>
@@ -72,6 +70,7 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    constexpr double kEps = 1e-6;
     if (expected_data_.size() != output_data.size()) {
       return false;
     }
@@ -91,8 +90,7 @@ class PylaevaSSimpleIterationMethodFuncTests : public ppc::util::BaseRunFuncTest
 
  private:
   InType input_data_;
-  OutType expected_data_{};
-  const double kEps = 1e-6;
+  OutType expected_data_;
 };
 
 TEST_P(PylaevaSSimpleIterationMethodFuncTests, SimpleIterationsTests) {

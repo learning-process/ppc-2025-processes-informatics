@@ -2,8 +2,6 @@
 
 #include <cmath>
 #include <cstddef>
-#include <fstream>    // для std::ifstream
-#include <stdexcept>  // для std::runtime_error
 #include <tuple>
 #include <vector>
 
@@ -17,20 +15,21 @@ namespace pylaeva_s_simple_iteration_method {
 class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  private:
   InType input_data_;
-  OutType expected_data_{};
-  const size_t N = 300;
+  OutType expected_data_;
 
   void SetUp() override {
-    std::vector<double> a(N * N, 1.0);
-    std::vector<double> b(N, 0.0);
-    expected_data_.assign(N, 1.0);
+    constexpr size_t kN = 300;
 
-    for (size_t i = 0; i < N; ++i) {
-      a[(i * N) + i] = N;
-      b[i] = (2 * N) - 1.0;
+    std::vector<double> a(kN * kN, 1.0);
+    std::vector<double> b(kN, 0.0);
+    expected_data_.assign(kN, 1.0);
+
+    for (size_t i = 0; i < kN; ++i) {
+      a[(i * kN) + i] = static_cast<double>(kN);
+      b[i] = 2.0 * static_cast<double>(kN) - 1.0;
     }
 
-    input_data_ = std::make_tuple(N, a, b);
+    input_data_ = std::make_tuple(kN, a, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstddef>
@@ -14,6 +13,73 @@
 
 namespace pylaeva_s_simple_iteration_method {
 namespace {
+
+  constexpr double kEps = 1e-6;
+  constexpr int kMaxIterations = 10000;
+
+  bool NotNullDeterm(const std::vector<double> &a, size_t n) {
+  std::vector<double> tmp = a;
+
+  for (size_t i = 0; i < n; i++) {
+    // Поиск строки с ненулевым элементом в i-м столбце
+    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
+      // Текущий диагональный элемент близок к нулю
+      // Ищем строку ниже с ненулевым элементом в этом столбце
+      bool found = false;
+      for (size_t j = i + 1; j < n; j++) {
+        if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
+          // Меняем строки местами
+          for (size_t k = i; k < n; k++) {
+            std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
+          }
+          found = true;
+          break;
+        }
+      }
+      // Если не нашли подходящую строку для замены, определитель = 0
+      if (!found) {
+        return false;
+      }
+    }
+
+    // Зануляем элементы ниже диагонали
+    double pivot = tmp[(i * n) + i];
+    for (size_t j = i + 1; j < n; j++) {
+      double factor = tmp[(j * n) + i] / pivot;
+      for (size_t k = i; k < n; k++) {
+        tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
+      }
+    }
+  }
+
+  // Проверяем, что все диагональные элементы не равны нулю
+  for (size_t i = 0; i < n; i++) {
+    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool DiagonalDominance(const std::vector<double> &a, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
+    double row_sum = 0.0;                     // Сумма модулей недиагональных элементов строки
+
+    for (size_t j = 0; j < n; j++) {
+      if (j != i) {
+        row_sum += std::fabs(a[(i * n) + j]);
+      }
+    }
+    // Проверка строгого диагонального преобладания:
+    // Диагональный элемент должен быть БОЛЬШЕ суммы остальных элементов строки
+    if (diag <= row_sum) {
+      return false;
+    }
+  }
+  return true;
+}
 
 void CalculateLocalXNew(int start, int count, size_t n, const std::vector<double> &local_a,
                         const std::vector<double> &local_b, const std::vector<double> &x,
@@ -165,70 +231,6 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
 }
 
 bool PylaevaSSimpleIterationMethodMPI::PostProcessingImpl() {
-  return true;
-}
-
-bool PylaevaSSimpleIterationMethodMPI::NotNullDeterm(const std::vector<double> &a, size_t n) {
-  std::vector<double> tmp = a;
-
-  for (size_t i = 0; i < n; i++) {
-    // Поиск строки с ненулевым элементом в i-м столбце
-    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
-      // Текущий диагональный элемент близок к нулю
-      // Ищем строку ниже с ненулевым элементом в этом столбце
-      bool found = false;
-      for (size_t j = i + 1; j < n; j++) {
-        if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
-          // Меняем строки местами
-          for (size_t k = i; k < n; k++) {
-            std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
-          }
-          found = true;
-          break;
-        }
-      }
-      // Если не нашли подходящую строку для замены, определитель = 0
-      if (!found) {
-        return false;
-      }
-    }
-
-    // Зануляем элементы ниже диагонали
-    double pivot = tmp[(i * n) + i];
-    for (size_t j = i + 1; j < n; j++) {
-      double factor = tmp[(j * n) + i] / pivot;
-      for (size_t k = i; k < n; k++) {
-        tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
-      }
-    }
-  }
-
-  // Проверяем, что все диагональные элементы не равны нулю
-  for (size_t i = 0; i < n; i++) {
-    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool PylaevaSSimpleIterationMethodMPI::DiagonalDominance(const std::vector<double> &a, size_t n) {
-  for (size_t i = 0; i < n; i++) {
-    double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
-    double row_sum = 0.0;                     // Сумма модулей недиагональных элементов строки
-
-    for (size_t j = 0; j < n; j++) {
-      if (j != i) {
-        row_sum += std::fabs(a[(i * n) + j]);
-      }
-    }
-    // Проверка строгого диагонального преобладания:
-    // Диагональный элемент должен быть БОЛЬШЕ суммы остальных элементов строки
-    if (diag <= row_sum) {
-      return false;
-    }
-  }
   return true;
 }
 
