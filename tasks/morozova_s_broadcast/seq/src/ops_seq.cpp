@@ -1,5 +1,7 @@
 #include "morozova_s_broadcast/seq/include/ops_seq.hpp"
 
+#include <mpi.h>
+
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -15,7 +17,9 @@ MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  return true;
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  return rank == 0;
 }
 
 bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
