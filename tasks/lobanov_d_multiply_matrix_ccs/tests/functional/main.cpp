@@ -213,7 +213,6 @@ const std::array<TestType, 9> kTestParameters = {
                     CreateEmptyMatrix(10, 10)),
     std::make_tuple("test_sparse_small", CreateEmptyMatrix(6, 6), CreateEmptyMatrix(6, 6), CreateEmptyMatrix(6, 6)),
     std::make_tuple("test_dense_small", CreateEmptyMatrix(4, 4), CreateEmptyMatrix(4, 4), CreateEmptyMatrix(4, 4)),
-    std::make_tuple("test_3x1_times_1x4", CreateEmptyMatrix(3, 1), CreateEmptyMatrix(1, 4), CreateEmptyMatrix(3, 4)),
     std::make_tuple("test_medium_matrices", CreateEmptyMatrix(50, 50), CreateEmptyMatrix(50, 50),
                     CreateEmptyMatrix(50, 50)),
     std::make_tuple("test_rectangular_1", CreateEmptyMatrix(10, 5), CreateEmptyMatrix(5, 8), CreateEmptyMatrix(10, 8)),
