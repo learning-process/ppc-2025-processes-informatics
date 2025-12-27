@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cctype>
 #include <cstddef>
 #include <tuple>
