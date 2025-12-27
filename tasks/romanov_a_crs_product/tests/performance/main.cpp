@@ -12,20 +12,23 @@
 namespace romanov_a_crs_product {
 
 class RomanovACRSProductPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100'000'000;
+  const size_t n_ = static_cast<size_t>(3000);
+  const double density_ = 0.01;
+
   InType input_data_;
+  OutType expected_;
 
   void SetUp() override {
-    auto f = std::function<double(double)>([](double x) { return std::pow(x, 3); });
-    double a = -10.0;
-    double b = 10.0;
-    int n = kCount_;
+    CRS A(n_), B(n_);
+    A.fillRandom(density_);
+    B.fillRandom(density_);
 
-    input_data_ = std::make_tuple(f, a, b, n);
+    input_data_ = std::make_tuple(A, B);
+    expected_ = A * B;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return IsEqual(static_cast<double>(output_data), 0.0);
+    return output_data == expected_;
   }
 
   InType GetTestInputData() final {

@@ -6,12 +6,16 @@
 #include <tuple>
 #include <utility>
 #include <exception>
+#include <random>
 
 #include "task/include/task.hpp"
 
 namespace romanov_a_crs_product {
 
 constexpr double kEps = 1e-6;
+
+class Dense;
+class CRS;
 
 class Dense {
 private:
@@ -33,40 +37,8 @@ public:
     return data[(i * n) + j];
   }
 
-  bool operator==(const Dense& other) const {
-    if (n != other.n) {
-      return false;
-    }
-    for (size_t i = 0; i < n * n; ++i) {
-        if (std::abs(data[i] - other.data[i]) > kEps) {
-            return false;
-        }
-    }
-    return true;
-  }
-
-  friend Dense operator*(const Dense& A, const Dense& B);
+  friend CRS ToCRS(const Dense& A);
 };
-
-Dense operator*(const Dense& A, const Dense& B) {
-  if (A.n != B.n) {
-    throw std::runtime_error("Matrix dimensions do not match for multiplication!");
-  }
-
-  size_t n = A.n;
-  Dense C(n);
-  
-  for (size_t i = 0; i < n; ++i) {
-    for (size_t j = 0; j < n; ++j) {
-      double sum = 0.0;
-      for (size_t k = 0; k < n; ++k) {
-        sum += A(i, k) * B(k, j);
-      }
-      C(i, j) = sum;
-    }
-  }
-  return C;
-}
 
 class CRS {
 private:
@@ -77,6 +49,8 @@ private:
   std::vector<size_t> row_index;
 
 public:
+
+  CRS() : n(0), row_index(1, 0) {}
 
   CRS(size_t n): n(n) {
     row_index.resize(n + 1, 0);
@@ -109,7 +83,7 @@ public:
     std::vector<size_t> new_column(nnz);
     std::vector<size_t> new_row_index(n + 1, 0);
 
-    std::vector<size_t> columns_count(n, 0);
+    std::vector<size_t> columns_count(n, static_cast<size_t>(0));
     for (size_t i = 0; i < nnz; ++i) {
       ++columns_count[column[i]];
     }
@@ -123,7 +97,7 @@ public:
 
     for (size_t row = 0; row < n; ++row) {
       size_t start = row_index[row];
-      size_t end   = row_index[row + 1];
+      size_t end   = row_index[row + static_cast<size_t>(1)];
 
       for (size_t idx = start; idx < end; ++idx) {
         size_t col = column[idx];
@@ -145,10 +119,44 @@ public:
     return result;
   }
 
+  void fillRandom(double density, unsigned seed = 0) {
+    if (density < 0.0 || density > 1.0) {
+        throw std::invalid_argument("Density must be within [0, 1]!");
+    }
+
+    value.clear();
+    column.clear();
+    row_index.assign(n + 1, 0);
+
+    std::mt19937 gen(seed);
+    std::uniform_real_distribution<double> prob(0.0, 1.0);
+    std::uniform_real_distribution<double> val(-1.0, 1.0);
+
+    value.reserve(static_cast<size_t>(n * n * density));
+    column.reserve(static_cast<size_t>(n * n * density));
+
+    for (size_t row = 0; row < n; ++row) {
+        std::vector<size_t> cols;
+        for (size_t col = 0; col < n; ++col) {
+            if (prob(gen) < density) {
+                cols.push_back(col);
+            }
+        }
+        for (size_t col : cols) {
+            column.push_back(col);
+            value.push_back(val(gen));
+        }
+
+        row_index[row + 1] = column.size();
+    }
+  }
+
   friend CRS operator*(const CRS& A, const CRS& B);
+  friend CRS ToCRS(const Dense& A);
+
 };
 
-CRS operator*(const CRS& A, const CRS& B) {
+inline CRS operator*(const CRS& A, const CRS& B) {
   if (A.n != B.n) {
     throw std::runtime_error("Matrix dimensions do not match for multiplication!");
   }
@@ -208,26 +216,9 @@ CRS operator*(const CRS& A, const CRS& B) {
   return C;
 }
 
-Dense ToDense(const CRS& crs) {
-  size_t n = crs.size();
-  Dense dense(n);
-
-  for (size_t row = 0; row < n; ++row) {
-    size_t start_p = crs.row_index[row];
-    size_t end_p   = crs.row_index[row + 1];
-
-    for (size_t idx = start_p; idx < end_p; ++idx) {
-      dense(row, crs.column[idx]) = crs.value[idx];
-    }
-  }
-  return dense;
-}
-
-CRS ToCRS(const Dense& A) {
+inline CRS ToCRS(const Dense& A) {
   size_t n = A.size();
   CRS crs(n);
-
-  crs.row_index[0] = static_cast<size_t>(0);
 
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = 0; j < n; ++j) {
@@ -241,9 +232,9 @@ CRS ToCRS(const Dense& A) {
   return crs;
 }
 
-using InType = std::tuple<size_t, CRS, CRS>;
+using InType = std::tuple<CRS, CRS>;
 using OutType = CRS;
-using TestType = std::tuple<size_t, CRS, CRS, CRS>;
+using TestType = std::tuple<CRS, CRS, CRS>;
 ;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

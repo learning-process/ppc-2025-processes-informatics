@@ -4,10 +4,9 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <functional>
-#include <numbers>
 #include <string>
 #include <tuple>
+#include <initializer_list>
 
 #include "romanov_a_crs_product/common/include/common.hpp"
 #include "romanov_a_crs_product/mpi/include/ops_mpi.hpp"
@@ -20,27 +19,21 @@ namespace romanov_a_crs_product {
 class RomanovACRSProductFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    auto [f, a, b, n, result] = test_param;
-
-    // Минус (-) от отрицательных чисел в имени gtest нельзя, функцию в имя gtest не поместить, точку (.) тоже... Как
-    // жить то?
-    return "_id" + std::to_string(static_cast<int>(std::abs((result - a + (2.0 * b) + 4.0) * 334))) + "_n" +
-           std::to_string(n);
+    const auto &[A, B, C] = test_param;
+    return "_n" + std::to_string(A.size()) + "_nnzA" + std::to_string(A.nnz()) + "_nnzB" + std::to_string(B.nnz());
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    auto [f, a, b, n, result] = params;
-
-    input_data_ = std::make_tuple(std::function<double(double)>(f), a, b, n);
-
-    expected_ = result;
+    const auto &[A, B, C] = params;
+    input_data_ = std::make_tuple(A, B);
+    expected_ = C;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return IsEqual(static_cast<double>(output_data), expected_);
+    return (output_data == expected_);
   }
 
   InType GetTestInputData() final {
@@ -49,7 +42,7 @@ class RomanovACRSProductFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
  private:
   InType input_data_;
-  double expected_ = 0.0;
+  OutType expected_;
 };
 
 namespace {
@@ -58,16 +51,72 @@ TEST_P(RomanovACRSProductFuncTests, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 6> kTestParam = {
-    std::make_tuple([](double x) { return x; }, -1.0, 1.0, 1, 0),
-    std::make_tuple([](double x) { return x; }, 0.0, 1.0, 2, 0.5),
-    std::make_tuple([](double x) { return x * x; }, 0.0, 1.0, 1000000 + 1, 1.0 / 3.0),
-    std::make_tuple([](double x) { return (std::sin(x) * x) - std::sqrt(x); }, 0.0, std::numbers::pi, 1000000 + 2,
-                    -0.570626),
-    std::make_tuple([](double x) { return std::exp(x) - x; }, -1.0, 3.0, 1000000 + 3,
-                    -4.0 - (1.0 / std::numbers::e) + std::exp(3.0)),
-    std::make_tuple([](double x) { return std::cos(x) * std::sqrt(x); }, 0.0, std::numbers::pi, 1000000 + 4,
-                    -0.894831)};
+CRS MakeDenseCRS(std::initializer_list<std::initializer_list<double>> rows) {
+    size_t n = rows.size();
+    Dense D(n);
+    size_t i = 0;
+    for (auto &r : rows) {
+        size_t j = 0;
+        for (auto &v : r) {
+            D(i, j) = v;
+            ++j;
+        }
+        ++i;
+    }
+    return ToCRS(D);
+}
+
+const std::array<TestType, 5> kTestParam = {
+    TestType{
+        MakeDenseCRS({{2.0}}),
+        MakeDenseCRS({{3.0}}),
+        MakeDenseCRS({{6.0}}),
+    },
+    TestType{
+        MakeDenseCRS({{1.0, 0.0},
+                      {0.0, 1.0}}),
+        MakeDenseCRS({{5.0, 6.0},
+                      {7.0, 8.0}}),
+        MakeDenseCRS({{5.0, 6.0},
+                      {7.0, 8.0}}),
+    },
+    TestType{
+        MakeDenseCRS({{1.0, 0.0, 2.0},
+                      {0.0, 0.0, 0.0},
+                      {3.0, 0.0, 4.0}}),
+        MakeDenseCRS({{0.0, 5.0, 0.0},
+                      {0.0, 0.0, 0.0},
+                      {0.0, 6.0, 0.0}}),
+        MakeDenseCRS({{0.0, 17.0, 0.0},
+                      {0.0,  0.0, 0.0},
+                      {0.0, 39.0, 0.0}}),
+    },
+    TestType{
+        MakeDenseCRS({{0.0, 2.0, 0.0, 1.0},
+                      {0.0, 0.0, 0.0, 0.0},
+                      {0.0, 0.0, 3.0, 0.0},
+                      {4.0, 0.0, 0.0, 0.0}}),
+        MakeDenseCRS({{0.0, 5.0, 0.0, 0.0},
+                      {7.0, 0.0, 0.0, 0.0},
+                      {0.0, 0.0, 6.0, 0.0},
+                      {0.0, 0.0, 0.0, 8.0}}),
+        MakeDenseCRS({{14.0, 0.0, 0.0, 8.0},
+                      {0.0,  0.0, 0.0, 0.0},
+                      {0.0, 0.0, 18.0, 0.0},
+                      {0.0, 20.0, 0.0, 0.0}}),
+    },
+      TestType{
+        MakeDenseCRS({{1.0, 2.0, 3.0},
+                      {4.0, 5.0, 6.0},
+                      {7.0, 8.0, 9.0}}),
+        MakeDenseCRS({{1.0, 4.0, 7.0},
+                      {2.0, 5.0, 8.0},
+                      {3.0, 6.0, 9.0}}),
+        MakeDenseCRS({{14.0, 32.0, 50.0},
+                      {32.0, 77.0, 122.0},
+                      {50.0, 122.0, 194.0}}),
+    },
+};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RomanovACRSProductMPI, InType>(
                                                kTestParam, PPC_SETTINGS_romanov_a_crs_product),
