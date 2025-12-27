@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "ovsyannikov_n_star/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -17,6 +19,10 @@ class OvsyannikovNStarMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  int dest_ = 0;
+  std::vector<int> data_;
+  std::vector<int> output_;
 };
 
 }  // namespace ovsyannikov_n_star

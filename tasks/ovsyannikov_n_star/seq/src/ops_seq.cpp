@@ -13,7 +13,7 @@ OvsyannikovNStarSEQ::OvsyannikovNStarSEQ(const InType &in) {
 }
 
 bool OvsyannikovNStarSEQ::ValidationImpl() {
-  return GetInput().size() == 3;
+  return true;
 }
 
 bool OvsyannikovNStarSEQ::PreProcessingImpl() {
@@ -22,7 +22,7 @@ bool OvsyannikovNStarSEQ::PreProcessingImpl() {
 }
 
 bool OvsyannikovNStarSEQ::RunImpl() {
-  GetOutput() = GetInput()[2];
+  GetOutput() = GetInput();
   return true;
 }
 
