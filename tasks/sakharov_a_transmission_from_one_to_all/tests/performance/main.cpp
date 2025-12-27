@@ -9,7 +9,7 @@
 
 namespace sakharov_a_transmission_from_one_to_all {
 
-class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SakharovATransmissionPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   static constexpr int kCount = 10000000;
   InType input_data_;
   OutType expected_result_;
@@ -29,7 +29,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) {
+TEST_P(SakharovATransmissionPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -39,8 +39,8 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = SakharovARunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = SakharovATransmissionPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SakharovARunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SakharovATransmissionPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace sakharov_a_transmission_from_one_to_all
