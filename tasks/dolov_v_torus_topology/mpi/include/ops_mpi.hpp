@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <cstdint>
-#include <vector>
 
 #include "dolov_v_torus_topology/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -15,7 +14,7 @@ class DolovVTorusTopologyMPI : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit DolovVTorusTopologyMPI(const InType &in);
+  explicit DolovVTorusTopologyMPI(InType in);
   ~DolovVTorusTopologyMPI() override;
 
  private:
@@ -38,7 +37,7 @@ class DolovVTorusTopologyMPI : public BaseTask {
   InputData input_;
   OutputData output_;
 
-  MPI_Comm torus_comm = MPI_COMM_NULL;
+  MPI_Comm torus_comm_ = MPI_COMM_NULL;
 };
 
 }  // namespace dolov_v_torus_topology
