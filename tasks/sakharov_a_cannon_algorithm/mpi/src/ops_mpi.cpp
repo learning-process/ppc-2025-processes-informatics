@@ -119,6 +119,8 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   MPI_Gatherv(local_c.data(), local_rows * n, MPI_DOUBLE, GetOutput().data(), recv_counts_c.data(), displs_c.data(),
               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+  // Broadcast result to all processes for test framework compatibility
+  // (tests verify output on all ranks, not just root)
   MPI_Bcast(GetOutput().data(), m * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   return true;
