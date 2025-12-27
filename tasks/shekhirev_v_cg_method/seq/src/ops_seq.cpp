@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "../../common/include/common.hpp"
+
 namespace shekhirev_v_cg_method_seq {
 
 ConjugateGradientSeq::ConjugateGradientSeq(const shekhirev_v_cg_method::InType &in) {
@@ -25,7 +27,7 @@ std::vector<double> ConjugateGradientSeq::MultiplyMatrixVector(const std::vector
   std::vector<double> result(n, 0.0);
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      result[i] += matrix[static_cast<size_t>(i) * n + j] * vec[j];
+      result[i] += (matrix[static_cast<size_t>(i) * n + j] * vec[j]);
     }
   }
   return result;
@@ -34,7 +36,7 @@ std::vector<double> ConjugateGradientSeq::MultiplyMatrixVector(const std::vector
 double ConjugateGradientSeq::DotProduct(const std::vector<double> &a, const std::vector<double> &b) {
   double res = 0.0;
   for (size_t i = 0; i < a.size(); ++i) {
-    res += a[i] * b[i];
+    res += (a[i] * b[i]);
   }
   return res;
 }
@@ -60,8 +62,8 @@ bool ConjugateGradientSeq::RunImpl() {
     const double alpha = rs_old / p_ap;
 
     for (int i = 0; i < n; ++i) {
-      x[i] += alpha * p[i];
-      r[i] -= alpha * ap[i];
+      x[i] += (alpha * p[i]);
+      r[i] -= (alpha * ap[i]);
     }
 
     double rs_new = DotProduct(r, r);
@@ -73,7 +75,7 @@ bool ConjugateGradientSeq::RunImpl() {
     const double beta = rs_new / rs_old;
 
     for (int i = 0; i < n; ++i) {
-      p[i] = r[i] + beta * p[i];
+      p[i] = r[i] + (beta * p[i]);
     }
 
     rs_old = rs_new;

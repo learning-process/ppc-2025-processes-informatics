@@ -6,6 +6,8 @@
 #include <cstddef>
 #include <vector>
 
+#include "../../common/include/common.hpp"
+
 namespace shekhirev_v_cg_method_mpi {
 
 ConjugateGradientMPI::ConjugateGradientMPI(const shekhirev_v_cg_method::InType &in) {
