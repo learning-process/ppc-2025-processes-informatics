@@ -27,8 +27,7 @@ bool YurkinGRulerMPI::RunImpl() {
   MPI_Comm topo_comm = MPI_COMM_NULL;
   MPI_Comm_dup(MPI_COMM_WORLD, &topo_comm);
 
-  int rank = 0;
-  int size = 0;
+  int rank = 0, size = 0;
   MPI_Comm_rank(topo_comm, &rank);
   MPI_Comm_size(topo_comm, &size);
 
@@ -47,16 +46,7 @@ bool YurkinGRulerMPI::RunImpl() {
   const int low = std::min(src, dst);
   const int high = std::max(src, dst);
 
-  const bool participates = (rank >= low && rank <= high);
-
-  if (participates) {
-    volatile int acc = 0;
-    for (int i = 0; i < payload; ++i) {
-      acc += i % 7;
-    }
-  }
-
-  if (!participates) {
+  if (rank < low || rank > high) {
     MPI_Barrier(topo_comm);
     if (topo_comm != MPI_COMM_NULL) {
       MPI_Comm_free(&topo_comm);
@@ -123,7 +113,6 @@ bool YurkinGRulerMPI::RunImpl() {
   if (topo_comm != MPI_COMM_NULL) {
     MPI_Comm_free(&topo_comm);
   }
-
   return true;
 }
 
