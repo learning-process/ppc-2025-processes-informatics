@@ -17,51 +17,6 @@ namespace {
 constexpr double kEps = 1e-6;
 constexpr int kMaxIterations = 10000;
 
-bool NotNullDeterm(const std::vector<double> &a, size_t n) {
-  std::vector<double> tmp = a;
-
-  for (size_t i = 0; i < n; i++) {
-    // Поиск строки с ненулевым элементом в i-м столбце
-    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
-      // Текущий диагональный элемент близок к нулю
-      // Ищем строку ниже с ненулевым элементом в этом столбце
-      bool found = false;
-      for (size_t j = i + 1; j < n; j++) {
-        if (std::fabs(tmp[(j * n) + i]) > 1e-10) {
-          // Меняем строки местами
-          for (size_t k = i; k < n; k++) {
-            std::swap(tmp[(i * n) + k], tmp[(j * n) + k]);
-          }
-          found = true;
-          break;
-        }
-      }
-      // Если не нашли подходящую строку для замены, определитель = 0
-      if (!found) {
-        return false;
-      }
-    }
-
-    // Зануляем элементы ниже диагонали
-    double pivot = tmp[(i * n) + i];
-    for (size_t j = i + 1; j < n; j++) {
-      double factor = tmp[(j * n) + i] / pivot;
-      for (size_t k = i; k < n; k++) {
-        tmp[(j * n) + k] -= tmp[(i * n) + k] * factor;
-      }
-    }
-  }
-
-  // Проверяем, что все диагональные элементы не равны нулю
-  for (size_t i = 0; i < n; i++) {
-    if (std::fabs(tmp[(i * n) + i]) < 1e-10) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 bool DiagonalDominance(const std::vector<double> &a, size_t n) {
   for (size_t i = 0; i < n; i++) {
     double diag = std::fabs(a[(i * n) + i]);  // Модуль диагонального элемента
@@ -151,7 +106,7 @@ bool PylaevaSSimpleIterationMethodMPI::ValidationImpl() {
   const auto &n = std::get<0>(GetInput());
   const auto &a = std::get<1>(GetInput());
   const auto &b = std::get<2>(GetInput());
-  return ((n > 0) && (a.size() == n * n) && (b.size() == n) && (NotNullDeterm(a, n)) && (DiagonalDominance(a, n)));
+  return ((n > 0) && (a.size() == n * n) && (b.size() == n) && (DiagonalDominance(a, n)));
 }
 
 bool PylaevaSSimpleIterationMethodMPI::PreProcessingImpl() {

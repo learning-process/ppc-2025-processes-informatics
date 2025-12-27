@@ -26,7 +26,7 @@ class PylaevaSSimpleIterationMethodPerfTests : public ppc::util::BaseRunPerfTest
 
     for (size_t i = 0; i < kN; ++i) {
       a[(i * kN) + i] = static_cast<double>(kN);
-      b[i] = 2.0 * static_cast<double>(kN) - 1.0;
+      b[i] = (2.0 * static_cast<double>(kN)) - 1.0;
     }
 
     input_data_ = std::make_tuple(kN, a, b);

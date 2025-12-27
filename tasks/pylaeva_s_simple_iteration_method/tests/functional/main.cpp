@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <fstream>    // Для std::ifstream
+#include <stdexcept>  // Для std::runtime_error
 #include <string>
 #include <tuple>
 #include <vector>
