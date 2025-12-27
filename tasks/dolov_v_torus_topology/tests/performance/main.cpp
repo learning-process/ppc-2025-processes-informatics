@@ -28,7 +28,6 @@ class DolovVTorusTopologyPerfTests : public ppc::util::BaseRunPerfTests<InType, 
     int sender = 0;
     int receiver = (world_size > 1) ? (world_size - 1) : 0;
 
-    // Инициализация входных данных
     input_data_.sender_rank = sender;
     input_data_.receiver_rank = receiver;
     input_data_.total_procs = world_size;
@@ -38,12 +37,10 @@ class DolovVTorusTopologyPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверка размера полученного сообщения
     if (output_data.received_message.size() != expected_result_.received_message.size()) {
       return false;
     }
 
-    // Выборочная проверка содержимого сообщения для экономии времени
     std::size_t size = output_data.received_message.size();
     if (size > 0) {
       if (output_data.received_message[0] != 1 || output_data.received_message[size / 2] != 1 ||
@@ -52,7 +49,6 @@ class DolovVTorusTopologyPerfTests : public ppc::util::BaseRunPerfTests<InType, 
       }
     }
 
-    // Маршрут не должен быть пустым
     return !output_data.route.empty();
   }
 

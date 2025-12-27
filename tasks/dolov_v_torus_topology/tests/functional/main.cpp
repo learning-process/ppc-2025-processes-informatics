@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -32,52 +33,45 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     TestType params = std::get<2>(GetParam());
     int test_type = std::get<0>(params);
 
-    std::vector<int> message = {42, 13, 7};
-    input_data_.sender_rank = 0;
-    input_data_.total_procs = world_size;
-    input_data_.message = message;
+    bool is_mpi = (std::get<1>(GetParam()).find("MPI") != std::string::npos);
+    int effective_procs = is_mpi ? world_size : 12;
 
-    int r = static_cast<int>(std::sqrt(world_size));
-    while (world_size % r != 0) {
+    input_data_.sender_rank = 0;
+    input_data_.total_procs = effective_procs;
+    input_data_.message = {42, 13, 7};
+    expected_.received_message = input_data_.message;
+
+    int r = static_cast<int>(std::sqrt(effective_procs));
+    while (effective_procs % r != 0) {
       r--;
     }
-    int c = world_size / r;
-
-    expected_.received_message = message;
+    int c = effective_procs / r;
 
     switch (test_type) {
-      case 0:  // Self
+      case 0:
         input_data_.receiver_rank = 0;
-        expected_.route = {0};
         break;
-      case 1:  // East
+      case 1:
         input_data_.receiver_rank = (c > 1) ? 1 : 0;
-        expected_.route.clear();  // Let CheckTestOutputData verify start/end
         break;
-      case 2:  // South
+      case 2:
         input_data_.receiver_rank = (r > 1) ? c : 0;
-        expected_.route.clear();
         break;
-      case 3:  // West Wrap
+      case 3:
         input_data_.receiver_rank = (c > 1) ? (c - 1) : 0;
-        expected_.route.clear();
         break;
-      case 4:  // North Wrap
+      case 4:
         input_data_.receiver_rank = (r > 1) ? (r - 1) * c : 0;
-        expected_.route.clear();
         break;
-      case 5:  // Opposite Corner
-        input_data_.receiver_rank = world_size - 1;
-        expected_.route.clear();
+      case 5:
+        input_data_.receiver_rank = effective_procs - 1;
         break;
-      case 6:  // Reverse path (from end to start)
-        input_data_.sender_rank = world_size - 1;
+      case 6:
+        input_data_.sender_rank = effective_procs - 1;
         input_data_.receiver_rank = 0;
-        expected_.route.clear();
         break;
       default:
         input_data_.receiver_rank = 0;
-        expected_.route = {0};
         break;
     }
   }
@@ -89,7 +83,6 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     if (output_data.route.empty()) {
       return false;
     }
-    // Проверка корректности пути: должен начинаться у отправителя и заканчиваться у получателя
     return output_data.route.front() == input_data_.sender_rank &&
            output_data.route.back() == input_data_.receiver_rank;
   }
@@ -104,7 +97,6 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 };
 
 namespace {
-
 TEST_P(DolovVTorusTopologyFuncTests, TorusRouting) {
   ExecuteTest(GetParam());
 }
@@ -122,6 +114,5 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 INSTANTIATE_TEST_SUITE_P(TorusFunctional, DolovVTorusTopologyFuncTests, kGtestValues,
                          DolovVTorusTopologyFuncTests::PrintFuncTestName<DolovVTorusTopologyFuncTests>);
-
 }  // namespace
 }  // namespace dolov_v_torus_topology
