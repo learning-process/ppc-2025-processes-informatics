@@ -3,8 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
 
 #include "yurkin_g_ruler/common/include/common.hpp"
 
