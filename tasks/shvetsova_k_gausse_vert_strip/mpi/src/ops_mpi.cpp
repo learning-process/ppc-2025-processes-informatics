@@ -4,7 +4,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 #include <vector>
+
+#include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
 
 namespace shvetsova_k_gausse_vert_strip {
 
@@ -14,13 +17,13 @@ int ShvetsovaKGaussVertStripMPI::GetOwnerOfColumn(int k, int n, int size) {
   int base = n / size;
   int rem = n % size;
   int border = rem * (base + 1);
-  return (k < border) ? k / (base + 1) : rem + (k - border) / base;
+  return (k < border) ? k / (base + 1) : rem + ((k - border) / base);
 }
 
 int ShvetsovaKGaussVertStripMPI::GetColumnStartIndex(int rank, int n, int size) {
   int base = n / size;
   int rem = n % size;
-  return (rank < rem) ? rank * (base + 1) : rem * (base + 1) + (rank - rem) * base;
+  return (rank < rem) ? rank * (base + 1) : (rem * (base + 1)) + ((rank - rem) * base);
 }
 
 int ShvetsovaKGaussVertStripMPI::GetColumnEndIndex(int rank, int n, int size) {
@@ -110,7 +113,7 @@ std::vector<double> ShvetsovaKGaussVertStripMPI::BackSubstitution(int n, int ran
 
 void ShvetsovaKGaussVertStripMPI::ScatterColumns(int n, int rank, int size, int c0, int local_cols,
                                                  const std::vector<std::vector<double>> &matrix,
-                                                 std::vector<std::vector<double>> &a_local) const {
+                                                 std::vector<std::vector<double>> &a_local) {
   if (rank == 0) {
     // копируем свои столбцы
     for (int i = 0; i < n; ++i) {
@@ -120,13 +123,13 @@ void ShvetsovaKGaussVertStripMPI::ScatterColumns(int n, int rank, int size, int 
     }
 
     // рассылаем остальным
-    for (int r = 1; r < size; ++r) {
-      int rs = GetColumnStartIndex(r, n, size);
-      int re = GetColumnEndIndex(r, n, size);
+    for (int rr = 1; rr < size; ++rr) {
+      int rs = GetColumnStartIndex(rr, n, size);
+      int re = GetColumnEndIndex(rr, n, size);
       int cols = re - rs;
 
       for (int i = 0; i < n; ++i) {
-        MPI_Send(&matrix[i][rs], cols, MPI_DOUBLE, r, 0, MPI_COMM_WORLD);
+        MPI_Send(&matrix[i][rs], cols, MPI_DOUBLE, rr, 0, MPI_COMM_WORLD);
       }
     }
   } else {
@@ -140,9 +143,7 @@ void ShvetsovaKGaussVertStripMPI::ScatterColumns(int n, int rank, int size, int 
 // основные функции
 ShvetsovaKGaussVertStripMPI::ShvetsovaKGaussVertStripMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  auto &input_ref = GetInput();
-  input_ref.first = in.first;
-  input_ref.second = in.second;
+  GetInput() = in;
   GetOutput().clear();
 }
 

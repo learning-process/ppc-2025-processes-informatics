@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <vector>
 
 #include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
@@ -11,10 +10,7 @@ namespace shvetsova_k_gausse_vert_strip {
 
 ShvetsovaKGaussVertStripSEQ::ShvetsovaKGaussVertStripSEQ(const InType &in) : size_of_rib_(1) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  auto &input_ref = GetInput();
-  input_ref.first = in.first;
-  input_ref.second = in.second;
-
+  GetInput() = in;
   GetOutput().clear();
 }
 
@@ -45,19 +41,9 @@ bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
-  const auto &matrix_a = GetInput().first;
-  const auto &vec_b = GetInput().second;
-  int n = static_cast<int>(matrix_a.size());
-
-  if (n == 0) {
-    return true;
-  }
-
-  std::vector<std::vector<double>> a = matrix_a;
-  std::vector<double> x = vec_b;
+void ShvetsovaKGaussVertStripSEQ::ForwardElimination(int n, std::vector<std::vector<double>> &a,
+                                                     std::vector<double> &x) const {
   const double eps = 1e-15;
-
   for (int i = 0; i < n; ++i) {
     double pivot = a[i][i];
     if (std::abs(pivot) < eps) {
@@ -81,7 +67,10 @@ bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
       x[k] -= factor * x[i];
     }
   }
+}
 
+std::vector<double> ShvetsovaKGaussVertStripSEQ::BackSubstitution(int n, const std::vector<std::vector<double>> &a,
+                                                                  const std::vector<double> &x) const {
   std::vector<double> res(n);
   for (int i = n - 1; i >= 0; --i) {
     double sum = x[i];
@@ -91,8 +80,24 @@ bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
     }
     res[i] = sum;
   }
+  return res;
+}
 
-  GetOutput() = res;
+bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
+  const auto &matrix_a = GetInput().first;
+  const auto &vec_b = GetInput().second;
+  int n = static_cast<int>(matrix_a.size());
+
+  if (n == 0) {
+    return true;
+  }
+
+  std::vector<std::vector<double>> a = matrix_a;
+  std::vector<double> x = vec_b;
+
+  ForwardElimination(n, a, x);
+  GetOutput() = BackSubstitution(n, a, x);
+
   return true;
 }
 

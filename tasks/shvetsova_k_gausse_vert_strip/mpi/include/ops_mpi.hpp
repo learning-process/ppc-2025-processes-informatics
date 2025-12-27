@@ -1,6 +1,5 @@
 #pragma once
 
-#include <utility>
 #include <vector>
 
 #include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
@@ -27,14 +26,14 @@ class ShvetsovaKGaussVertStripMPI : public BaseTask {
   static int GetOwnerOfColumn(int k, int n, int size);
   static int GetColumnStartIndex(int rank, int n, int size);
   static int GetColumnEndIndex(int rank, int n, int size);
-  int CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n) const;
+  [[nodiscard]] int CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n) const;
   void ForwardElimination(int n, int rank, int size, int c0, int local_cols, std::vector<std::vector<double>> &a_local,
                           std::vector<double> &b) const;
-  std::vector<double> BackSubstitution(int n, int rank, int size, int c0,
-                                       const std::vector<std::vector<double>> &a_local,
-                                       const std::vector<double> &b) const;
-  void ScatterColumns(int n, int rank, int size, int c0, int local_cols, const std::vector<std::vector<double>> &matrix,
-                      std::vector<std::vector<double>> &a_local) const;
+  [[nodiscard]] std::vector<double> BackSubstitution(int n, int rank, int size, int c0,
+                                                     const std::vector<std::vector<double>> &a_local,
+                                                     const std::vector<double> &b) const;
+  static void ScatterColumns(int n, int rank, int size, int c0, int local_cols,
+                             const std::vector<std::vector<double>> &matrix, std::vector<std::vector<double>> &a_local);
 };
 
 }  // namespace shvetsova_k_gausse_vert_strip
