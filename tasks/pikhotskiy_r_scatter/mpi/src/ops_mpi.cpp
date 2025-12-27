@@ -9,14 +9,13 @@
 
 namespace pikhotskiy_r_scatter {
 
-PikhotskiyRScatterMPI::PikhotskiyRScatterMPI(const InputType &input_args)
-    : mpi_rank_(0), mpi_size_(0), is_root_process_(false) {
+PikhotskiyRScatterMPI::PikhotskiyRScatterMPI(const InputType &input_args) {
   SetTypeOfTask(GetTaskType());
   GetInput() = input_args;
 
   MPI_Comm_rank(input_args.communicator, &mpi_rank_);
   MPI_Comm_size(input_args.communicator, &mpi_size_);
-  is_root_process_ = (mpi_rank_ == input_args.root_process);  // NOLINT
+  is_root_process_ = (mpi_rank_ == input_args.root_process);  // NOLINT(cppcoreguidelines-prefer-member-initializer)
 }
 
 bool PikhotskiyRScatterMPI::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
