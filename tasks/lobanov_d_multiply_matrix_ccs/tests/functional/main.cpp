@@ -159,9 +159,6 @@ class LobanovDMultiplyMatrixFuncTest : public ppc::util::BaseRunFuncTests<InType
     } else if (test_name.find("small_rows_large_cols") != std::string::npos) {
       matrix_a_ = CreateRandomCompressedColumnMatrix(3, 100, 0.3);
       matrix_b_ = CreateRandomCompressedColumnMatrix(100, 5, 0.3);
-    } else if (test_name.find("default_sizes") != std::string::npos) {
-      matrix_a_ = CreateRandomCompressedColumnMatrix(5, 5, 0.5);
-      matrix_b_ = CreateRandomCompressedColumnMatrix(5, 5, 0.5);
     } else {
       matrix_a_ = CreateRandomCompressedColumnMatrix(5, 5, 0.5);
       matrix_b_ = CreateRandomCompressedColumnMatrix(5, 5, 0.5);
