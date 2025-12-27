@@ -23,14 +23,14 @@ std::pair<std::vector<int>, std::vector<int>> ComputeSendCountsAndDispls(int tot
     return {sendcounts, displs};
   }
 
-  const std::size_t n = static_cast<std::size_t>(total_size);
-  const std::size_t ws = static_cast<std::size_t>(world_size);
-  const std::size_t chunk = n / ws;
-  const std::size_t rem = n % ws;
+  const auto n = static_cast<std::size_t>(total_size);
+  const auto ws = static_cast<std::size_t>(world_size);
+  const auto chunk = n / ws;
+  const auto rem = n % ws;
 
   std::size_t offset = 0;
   for (std::size_t i = 0; i < ws; ++i) {
-    const std::size_t add = chunk + (i < rem ? 1 : 0);
+    const auto add = chunk + (i < rem ? 1U : 0U);
     sendcounts[i] = static_cast<int>(add);
     displs[i] = static_cast<int>(offset);
     offset += add;
@@ -57,7 +57,8 @@ bool YurkinCountingNumberMPI::PreProcessingImpl() {
 }
 
 bool YurkinCountingNumberMPI::RunImpl() {
-  int world_rank = 0, world_size = 0;
+  int world_rank = 0;
+  int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
@@ -75,13 +76,16 @@ bool YurkinCountingNumberMPI::RunImpl() {
     return true;
   }
 
-  std::vector<int> sendcounts, displs;
+  std::vector<int> sendcounts;
+  std::vector<int> displs;
   std::tie(sendcounts, displs) = ComputeSendCountsAndDispls(total_size, world_size);
 
-  int recvcount = (world_rank < static_cast<int>(sendcounts.size())) ? sendcounts[world_rank] : 0;
-  recvcount = std::max(recvcount, 0);
+  int recvcount = 0;
+  if (std::cmp_less(world_rank, sendcounts.size())) {
+    recvcount = sendcounts[static_cast<std::size_t>(world_rank)];
+  }
 
-  std::vector<char> local_buffer(recvcount);
+  std::vector<char> local_buffer(static_cast<std::size_t>(recvcount));
 
   const void *sendbuf = (world_rank == 0) ? static_cast<const void *>(global_input.data()) : nullptr;
   const int *sendcounts_ptr = (world_rank == 0) ? sendcounts.data() : nullptr;
@@ -92,8 +96,8 @@ bool YurkinCountingNumberMPI::RunImpl() {
 
   int local_count = 0;
   for (int i = 0; i < recvcount; ++i) {
-    const auto uc = static_cast<unsigned char>(local_buffer[i]);
-    if (std::isalpha(uc)) {
+    const auto uc = static_cast<unsigned char>(local_buffer[static_cast<std::size_t>(i)]);
+    if (std::isalpha(uc) != 0) {
       ++local_count;
     }
   }
