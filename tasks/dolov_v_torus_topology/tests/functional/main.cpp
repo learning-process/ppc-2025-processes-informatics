@@ -34,7 +34,7 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     int test_type = std::get<0>(params);
 
     bool is_mpi = (std::get<1>(GetParam()).find("MPI") != std::string::npos);
-    int effective_procs = is_mpi ? world_size : 12;  //:)
+    int effective_procs = is_mpi ? world_size : 12; //:)
 
     input_data_.sender_rank = 0;
     input_data_.total_procs = effective_procs;
@@ -42,10 +42,8 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     expected_.received_message = input_data_.message;
 
     int r = static_cast<int>(std::sqrt(effective_procs));
-    while (effective_procs % r != 0) {
-      r--;
-    }
-    int c = effective_procs / r;
+    while (effective_procs % r != 0) { r--; }
+    int c = effective_procs / r; 
     switch (test_type) {
       case 0:
         input_data_.receiver_rank = 0;
@@ -76,19 +74,13 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.received_message != expected_.received_message) {
-      return false;
-    }
-    if (output_data.route.empty()) {
-      return false;
-    }
+    if (output_data.received_message != expected_.received_message) return false;
+    if (output_data.route.empty()) return false;
     return output_data.route.front() == input_data_.sender_rank &&
            output_data.route.back() == input_data_.receiver_rank;
   }
 
-  InType GetTestInputData() final {
-    return input_data_;
-  }
+  InType GetTestInputData() final { return input_data_; }
 
  private:
   InType input_data_;
@@ -96,14 +88,12 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 };
 
 namespace {
-TEST_P(DolovVTorusTopologyFuncTests, TorusRouting) {
-  ExecuteTest(GetParam());
-}
+TEST_P(DolovVTorusTopologyFuncTests, TorusRouting) { ExecuteTest(GetParam()); }
 
-const std::array<TestType, 7> kTestParam = {std::make_tuple(0, "Self"),       std::make_tuple(1, "EastStep"),
-                                            std::make_tuple(2, "SouthStep"),  std::make_tuple(3, "WestWrap"),
-                                            std::make_tuple(4, "NorthWrap"),  std::make_tuple(5, "FarDestination"),
-                                            std::make_tuple(6, "ReversePath")};
+const std::array<TestType, 7> kTestParam = {
+    std::make_tuple(0, "Self"),      std::make_tuple(1, "EastStep"),   std::make_tuple(2, "SouthStep"),
+    std::make_tuple(3, "WestWrap"),  std::make_tuple(4, "NorthWrap"),  std::make_tuple(5, "FarDestination"),
+    std::make_tuple(6, "ReversePath")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<DolovVTorusTopologyMPI, InType>(kTestParam, PPC_SETTINGS_dolov_v_torus_topology),
