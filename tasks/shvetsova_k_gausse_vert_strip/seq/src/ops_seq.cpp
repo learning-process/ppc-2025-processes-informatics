@@ -10,7 +10,9 @@ namespace shvetsova_k_gausse_vert_strip {
 
 ShvetsovaKGaussVertStripSEQ::ShvetsovaKGaussVertStripSEQ(const InType &in) : size_of_rib_(1) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  auto &input_buffer = GetInput();
+  InType tmp(in);
+  input_buffer.swap(tmp);
   GetOutput().clear();
 }
 
@@ -41,31 +43,36 @@ bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
   return true;
 }
 
+void ShvetsovaKGaussVertStripSEQ::ProcessRow(int i, int row_end, std::vector<std::vector<double>> &a,
+                                             std::vector<double> &x, const double eps) const {
+  double pivot = a[i][i];
+  if (std::abs(pivot) < eps) {
+    pivot = (pivot >= 0) ? eps : -eps;
+  }
+
+  for (int j = i; j < row_end; ++j) {
+    a[i][j] /= pivot;
+  }
+  x[i] /= pivot;
+
+  for (int k = i + 1; k < row_end; ++k) {
+    double factor = a[k][i];
+    if (std::abs(factor) < eps) {
+      continue;
+    }
+    for (int j = i; j < row_end; ++j) {
+      a[k][j] -= factor * a[i][j];
+    }
+    x[k] -= factor * x[i];
+  }
+}
+
 void ShvetsovaKGaussVertStripSEQ::ForwardElimination(int n, std::vector<std::vector<double>> &a,
                                                      std::vector<double> &x) const {
   const double eps = 1e-15;
   for (int i = 0; i < n; ++i) {
-    double pivot = a[i][i];
-    if (std::abs(pivot) < eps) {
-      pivot = (pivot >= 0) ? eps : -eps;
-    }
-
     int row_end = std::min(n, i + size_of_rib_);
-    for (int j = i; j < row_end; ++j) {
-      a[i][j] /= pivot;
-    }
-    x[i] /= pivot;
-
-    for (int k = i + 1; k < row_end; ++k) {
-      double factor = a[k][i];
-      if (std::abs(factor) < eps) {
-        continue;
-      }
-      for (int j = i; j < row_end; ++j) {
-        a[k][j] -= factor * a[i][j];
-      }
-      x[k] -= factor * x[i];
-    }
+    ProcessRow(i, row_end, a, x, eps);
   }
 }
 

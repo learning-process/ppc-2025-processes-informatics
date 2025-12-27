@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -22,6 +23,8 @@ class ShvetsovaKGaussVertStripSEQ : public BaseTask {
   void ForwardElimination(int n, std::vector<std::vector<double>> &a, std::vector<double> &x) const;
   [[nodiscard]] std::vector<double> BackSubstitution(int n, const std::vector<std::vector<double>> &a,
                                                      const std::vector<double> &x) const;
+  void ProcessRow(int i, int row_end, std::vector<std::vector<double>> &a,
+                                             std::vector<double> &x, const double eps) const;
 };
 
 }  // namespace shvetsova_k_gausse_vert_strip
