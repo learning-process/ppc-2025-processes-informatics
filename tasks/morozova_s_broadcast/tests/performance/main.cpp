@@ -17,7 +17,7 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
     static int test_counter = 0;
     constexpr std::array<int, 5> kSizes = {100, 1000, 10000, 100000, 1000000};
     const int test_idx = test_counter++ % 5;
-    const int size = kSizes[static_cast<std::size_t>(test_idx)];
+    const int size = kSizes.at(static_cast<std::size_t>(test_idx));
 
     input_data_.resize(static_cast<std::size_t>(size));
     for (int i = 0; i < size; ++i) {

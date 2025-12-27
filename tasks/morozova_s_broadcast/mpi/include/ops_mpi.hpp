@@ -22,7 +22,7 @@ class MorozovaSBroadcastMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void CustomBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+  static void CustomBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
   int root_;
 };
