@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "example_processes/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace dolov_v_torus_topology {
 
