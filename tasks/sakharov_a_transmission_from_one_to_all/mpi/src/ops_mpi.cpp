@@ -2,7 +2,6 @@
 
 #include <mpi.h>
 
-#include <cmath>
 #include <vector>
 
 #include "sakharov_a_transmission_from_one_to_all/common/include/common.hpp"
@@ -60,50 +59,30 @@ bool BroadcastInts(int root, int rank, const InType &input, std::vector<int> &da
   return true;
 }
 
-bool BroadcastFloats(int root, int rank) {
-  std::vector<float> float_data;
+void BroadcastFloats(int root, int rank) {
+  std::vector<float> float_data(100);
   constexpr int kFloatCount = 100;
 
   if (rank == root) {
-    float_data.resize(kFloatCount);
     for (int i = 0; i < kFloatCount; ++i) {
       float_data[i] = static_cast<float>(i) + 0.5F;
     }
-  } else {
-    float_data.resize(kFloatCount);
   }
 
   MyBcast(float_data.data(), kFloatCount, MPI_FLOAT, root, MPI_COMM_WORLD);
-
-  for (int i = 0; i < kFloatCount; ++i) {
-    if (std::abs(float_data[i] - (static_cast<float>(i) + 0.5F)) > 1e-5F) {
-      return false;
-    }
-  }
-  return true;
 }
 
-bool BroadcastDoubles(int root, int rank) {
-  std::vector<double> double_data;
+void BroadcastDoubles(int root, int rank) {
+  std::vector<double> double_data(100);
   constexpr int kDoubleCount = 100;
 
   if (rank == root) {
-    double_data.resize(kDoubleCount);
     for (int i = 0; i < kDoubleCount; ++i) {
       double_data[i] = static_cast<double>(i) + 0.123;
     }
-  } else {
-    double_data.resize(kDoubleCount);
   }
 
   MyBcast(double_data.data(), kDoubleCount, MPI_DOUBLE, root, MPI_COMM_WORLD);
-
-  for (int i = 0; i < kDoubleCount; ++i) {
-    if (std::abs(double_data[i] - (static_cast<double>(i) + 0.123)) > 1e-9) {
-      return false;
-    }
-  }
-  return true;
 }
 
 }  // namespace
@@ -135,13 +114,8 @@ bool SakharovATransmissionFromOneToAllMPI::RunImpl() {
     return false;
   }
 
-  if (!BroadcastFloats(root, rank)) {
-    return false;
-  }
-
-  if (!BroadcastDoubles(root, rank)) {
-    return false;
-  }
+  BroadcastFloats(root, rank);
+  BroadcastDoubles(root, rank);
 
   GetOutput() = data;
   return true;
