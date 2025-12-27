@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "mityaeva_d_contrast_enhancement_histogram_stretching/common/include/common.hpp"
@@ -48,7 +49,7 @@ bool ContrastEnhancementSEQ::PreProcessingImpl() {
   max_pixel_ = 0;
 
   for (std::size_t i = 2; i < input.size(); ++i) {
-    const std::uint8_t pixel = static_cast<std::uint8_t>(input[i]);
+    const auto pixel = static_cast<std::uint8_t>(input[i]);
     min_pixel_ = std::min(min_pixel_, pixel);
     max_pixel_ = std::max(max_pixel_, pixel);
   }
@@ -82,7 +83,7 @@ bool ContrastEnhancementSEQ::RunImpl() {
   const double scale = 255.0 / static_cast<double>(max_pixel_ - min_pixel_);
 
   for (std::size_t i = 2; i < expected_size; ++i) {
-    const std::uint8_t pixel = static_cast<std::uint8_t>(input[i]);
+    const auto pixel = static_cast<std::uint8_t>(input[i]);
     const double stretched = static_cast<double>(pixel - min_pixel_) * scale;
 
     int rounded_value = static_cast<int>(std::lround(stretched));
