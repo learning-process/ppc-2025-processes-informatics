@@ -25,7 +25,7 @@ class LeonovaARadixMergeSortMPI : public BaseTask {
 
   void HierarchicalMerge();
   void BroadcastResult();
-  void RadixMergeSort(std::vector<double> &arr, size_t left, size_t right);
+  static void RadixMergeSort(std::vector<double> &arr, size_t left, size_t right);
   static void RadixSort(std::vector<double> &arr, size_t left, size_t right);
 
   static uint64_t TransformDoubleToKey(double value);
