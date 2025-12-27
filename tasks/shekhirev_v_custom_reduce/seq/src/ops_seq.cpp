@@ -3,6 +3,8 @@
 #include <numeric>
 #include <vector>
 
+#include "../../common/include/common.hpp"
+
 namespace shekhirev_v_custom_reduce_seq {
 
 CustomReduceSequential::CustomReduceSequential(const shekhirev_v_custom_reduce::InType &in) {

@@ -2,10 +2,9 @@
 #include <mpi.h>
 
 #include <array>
-#include <numeric>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/ops_mpi.hpp"
@@ -66,6 +65,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = ShekhirevVCustomReduceFuncTests::PrintFuncTestName<ShekhirevVCustomReduceFuncTests>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CustomReduceTests, ShekhirevVCustomReduceFuncTests, kGtestValues, kTestName);
 
 }  // namespace
