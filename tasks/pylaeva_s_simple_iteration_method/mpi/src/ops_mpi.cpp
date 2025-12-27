@@ -5,7 +5,6 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -61,15 +60,15 @@ double CalculateLocalNorm(int start, int count, const std::vector<double> &x_new
   return local_norm;
 }
 
-void CalculateChunkSizesAndDispls(int size, int n, std::vector<int> &chunk_sizes, std::vector<int> &displs) {
+void CalculateChunkSizesAndDispls(int proc_num, int n, std::vector<int> &chunk_sizes, std::vector<int> &displs) {
   if (displs.empty()) {
     return;
   }
-  int base = n / size;
-  int rem = n % size;
+  int base = n / proc_num;
+  int rem = n % proc_num;
 
   displs[0] = 0;
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < proc_num; ++i) {
     chunk_sizes[i] = base + (i < rem ? 1 : 0);
     if (i > 0) {
       displs[i] = displs[i - 1] + chunk_sizes[i - 1];
@@ -77,16 +76,16 @@ void CalculateChunkSizesAndDispls(int size, int n, std::vector<int> &chunk_sizes
   }
 }
 
-void CalculateMatrixChunkSizesAndDispls(int size, int n, std::vector<int> &matrix_chunk_sizes,
+void CalculateMatrixChunkSizesAndDispls(int proc_num, int n, std::vector<int> &matrix_chunk_sizes,
                                         std::vector<int> &matrix_displs) {
   if (matrix_displs.empty()) {
     return;
   }
-  int base = n / size;
-  int rem = n % size;
+  int base = n / proc_num;
+  int rem = n % proc_num;
 
   matrix_displs[0] = 0;
-  for (int i = 0; i < size; ++i) {
+  for (int i = 0; i < proc_num; ++i) {
     int rows = base + (i < rem ? 1 : 0);
     matrix_chunk_sizes[i] = rows * n;
     if (i > 0) {
@@ -114,16 +113,16 @@ bool PylaevaSSimpleIterationMethodMPI::PreProcessingImpl() {
 }
 
 bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
-  int size = 0;
-  int rank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int proc_num = 0;
+  int proc_rank = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
+  MPI_Comm_rank(MPI_COMM_WORLD, &proc_rank);
 
   size_t n = 0;
   std::vector<double> a;
   std::vector<double> b;
 
-  if (rank == 0) {
+  if (proc_rank == 0) {
     const auto &input = GetInput();
     n = std::get<0>(input);
     a = std::get<1>(input);
@@ -132,36 +131,36 @@ bool PylaevaSSimpleIterationMethodMPI::RunImpl() {
 
   MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 
-  std::vector<int> chunk_sizes(size);
-  std::vector<int> displs(size);
-  CalculateChunkSizesAndDispls(size, static_cast<int>(n), chunk_sizes, displs);
+  std::vector<int> chunk_sizes(proc_num);
+  std::vector<int> displs(proc_num);
+  CalculateChunkSizesAndDispls(proc_num, static_cast<int>(n), chunk_sizes, displs);
 
-  std::vector<int> matrix_chunk_sizes(size);
-  std::vector<int> matrix_displs(size);
-  CalculateMatrixChunkSizesAndDispls(size, static_cast<int>(n), matrix_chunk_sizes, matrix_displs);
+  std::vector<int> matrix_chunk_sizes(proc_num);
+  std::vector<int> matrix_displs(proc_num);
+  CalculateMatrixChunkSizesAndDispls(proc_num, static_cast<int>(n), matrix_chunk_sizes, matrix_displs);
 
-  int local_rows = chunk_sizes[rank];
-  int local_matrix_size = matrix_chunk_sizes[rank];
+  int local_rows = chunk_sizes[proc_rank];
+  int local_matrix_size = matrix_chunk_sizes[proc_rank];
 
   std::vector<double> local_a(local_matrix_size);
   std::vector<double> local_b(local_rows);
 
-  MPI_Scatterv(rank == 0 ? a.data() : nullptr, matrix_chunk_sizes.data(), matrix_displs.data(), MPI_DOUBLE,
+  MPI_Scatterv(proc_rank == 0 ? a.data() : nullptr, matrix_chunk_sizes.data(), matrix_displs.data(), MPI_DOUBLE,
                local_a.data(), local_matrix_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  MPI_Scatterv(rank == 0 ? b.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_DOUBLE, local_b.data(),
+  MPI_Scatterv(proc_rank == 0 ? b.data() : nullptr, chunk_sizes.data(), displs.data(), MPI_DOUBLE, local_b.data(),
                local_rows, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  int start = displs[rank];
+  int start = displs[proc_rank];
   int count = local_rows;
 
   std::vector<double> x(n, 0.0);
   std::vector<double> x_new(n, 0.0);
   std::vector<double> local_x_new(count, 0.0);
 
-  std::vector<int> recv_counts(size);
-  std::vector<int> allgather_displs(size);
-  CalculateChunkSizesAndDispls(size, static_cast<int>(n), recv_counts, allgather_displs);
+  std::vector<int> recv_counts(proc_num);
+  std::vector<int> allgather_displs(proc_num);
+  CalculateChunkSizesAndDispls(proc_num, static_cast<int>(n), recv_counts, allgather_displs);
 
   for (int iter = 0; iter < kMaxIterations; ++iter) {
     CalculateLocalXNew(start, count, n, local_a, local_b, x, local_x_new);
