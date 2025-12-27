@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <tuple>
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
 #include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
@@ -117,18 +118,6 @@ class PikhotskiyRScatterPerfTests : public ppc::util::BaseRunPerfTests<InputType
   InputType GetTestInputData() final {
     return test_input_;
   }
-
-  // Добавляем свою функцию для генерации уникальных имен тестов
-  static std::string CustomPerfTestName(const testing::TestParamInfo<PerfTask> &test_param_info) {
-    const auto &perf_task = test_param_info.param;
-    std::string name = perf_task.task_name;
-
-    // Заменяем все неалфавитно-цифровые символы на '_'
-    std::replace_if(name.begin(), name.end(), [](char c) { return !std::isalnum(static_cast<unsigned char>(c)); }, '_');
-
-    // Добавляем суффикс для уникальности
-    return "pipeline_pikhotskiy_r_scatter_" + name;
-  }
 };
 
 namespace {
@@ -148,10 +137,28 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InputType, MpiTask, SeqTa
 // NOLINTNEXTLINE
 const auto kGtestParamValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-// Используем нашу кастомную функцию для именования тестов
+// Лямбда-функция для генерации уникальных имен тестов
+// Параметр - кортеж: (функция-фабрика, имя_задачи, тип_запуска)
+auto CustomTestName = [](const auto &test_param_info) {
+  // Извлекаем имя задачи из кортежа (второй элемент)
+  const auto &task_tuple = test_param_info.param;
+  const std::string &task_name = std::get<1>(task_tuple);
+
+  std::string name = "pipeline_pikhotskiy_r_scatter_" + task_name;
+
+  // Заменяем все неалфавитно-цифровые символы на '_'
+  for (char &c : name) {
+    if (!std::isalnum(static_cast<unsigned char>(c))) {
+      c = '_';
+    }
+  }
+
+  // Добавляем индекс для уникальности
+  return name + "_" + std::to_string(test_param_info.index);
+};
+
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(RunModeTests, PikhotskiyRScatterPerfTests, kGtestParamValues,
-                         PikhotskiyRScatterPerfTests::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, PikhotskiyRScatterPerfTests, kGtestParamValues, CustomTestName);
 
 }  // namespace
 }  // namespace pikhotskiy_r_scatter
