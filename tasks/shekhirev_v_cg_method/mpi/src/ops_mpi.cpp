@@ -34,7 +34,7 @@ std::vector<double> ConjugateGradientMPI::LocalMultiply(const std::vector<double
   std::vector<double> res(local_n, 0.0);
   for (int i = 0; i < local_n; ++i) {
     for (int j = 0; j < n; ++j) {
-      size_t index = static_cast<size_t>(i) * n + j;
+      size_t index = (static_cast<size_t>(i) * n) + j;
       res[i] += local_a[index] * global_p[j];
     }
   }

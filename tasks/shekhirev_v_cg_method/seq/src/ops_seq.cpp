@@ -27,7 +27,7 @@ std::vector<double> ConjugateGradientSeq::MultiplyMatrixVector(const std::vector
   std::vector<double> result(n, 0.0);
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
-      size_t index = static_cast<size_t>(i) * n + j;
+      size_t index = (static_cast<size_t>(i) * n) + j;
       result[i] += matrix[index] * vec[j];
     }
   }
