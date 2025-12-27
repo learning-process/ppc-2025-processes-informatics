@@ -30,7 +30,7 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
 
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<2>(GetParam());
     int test_type = std::get<0>(params);
 
     std::vector<int> message = {42, 13, 7};

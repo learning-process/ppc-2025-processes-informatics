@@ -3,10 +3,12 @@
 #include <mpi.h>
 
 #include <cmath>
-#include <cstddef>
 #include <set>
 #include <utility>
 #include <vector>
+
+#include "example_processes/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace dolov_v_torus_topology {
 
@@ -74,7 +76,7 @@ bool DolovVTorusTopologyMPI::RunImpl() {
   if (rank == input_.sender_rank) {
     current_msg = input_.message;
   } else {
-    current_msg.resize(static_cast<size_t>(msg_size));
+    current_msg.resize(static_cast<std::size_t>(msg_size));
   }
 
   int current_node = input_.sender_rank;
@@ -94,7 +96,7 @@ bool DolovVTorusTopologyMPI::RunImpl() {
                MPI_STATUS_IGNORE);
       int p_size = 0;
       MPI_Recv(&p_size, 1, MPI_INT, current_node, ProtocolTags::kRouteSync, torus_comm_, MPI_STATUS_IGNORE);
-      path.resize(static_cast<size_t>(p_size));
+      path.resize(static_cast<std::size_t>(p_size));
       MPI_Recv(path.data(), p_size, MPI_INT, current_node, ProtocolTags::kRouteSync, torus_comm_, MPI_STATUS_IGNORE);
       path.push_back(next_node);
     }
@@ -113,12 +115,12 @@ bool DolovVTorusTopologyMPI::RunImpl() {
   MPI_Bcast(&final_path_size, 1, MPI_INT, input_.receiver_rank, torus_comm_);
 
   if (rank != input_.receiver_rank) {
-    output_.route.resize(static_cast<size_t>(final_path_size));
+    output_.route.resize(static_cast<std::size_t>(final_path_size));
   }
   MPI_Bcast(output_.route.data(), final_path_size, MPI_INT, input_.receiver_rank, torus_comm_);
 
   if (rank != input_.receiver_rank) {
-    output_.received_message.resize(static_cast<size_t>(msg_size));
+    output_.received_message.resize(static_cast<std::size_t>(msg_size));
   }
   MPI_Bcast(output_.received_message.data(), msg_size, MPI_INT, input_.receiver_rank, torus_comm_);
 
