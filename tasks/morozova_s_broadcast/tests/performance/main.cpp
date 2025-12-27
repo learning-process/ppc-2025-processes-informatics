@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <numeric>
 #include <vector>
 
@@ -15,12 +16,14 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
 
   void SetUp() override {
     static int test_counter = 0;
-    const int sizes[] = {100, 1000, 10000, 100000, 1000000};
+    const std::array<int, 5> sizes = {100, 1000, 10000, 100000, 1000000};
     int test_idx = test_counter++ % 5;
-    int size = sizes[test_idx];
+    int size = sizes[static_cast<std::size_t>(test_idx)];
 
-    input_data_.resize(size);
-    std::iota(input_data_.begin(), input_data_.end(), 0);
+    input_data_.resize(static_cast<std::size_t>(size));
+    for (int i = 0; i < size; ++i) {
+      input_data_[static_cast<std::size_t>(i)] = i;
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

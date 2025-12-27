@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "morozova_s_broadcast/common/include/common.hpp"
+
 namespace morozova_s_broadcast {
 
 MorozovaSBroadcastMPI::MorozovaSBroadcastMPI(const InType &in) : BaseTask(), root_(0) {
