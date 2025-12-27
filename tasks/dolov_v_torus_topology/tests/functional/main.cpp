@@ -34,7 +34,7 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     int test_type = std::get<0>(params);
 
     bool is_mpi = (std::get<1>(GetParam()).find("MPI") != std::string::npos);
-    int effective_procs = is_mpi ? world_size : 12;
+    int effective_procs = is_mpi ? world_size : 12;  //:)
 
     input_data_.sender_rank = 0;
     input_data_.total_procs = effective_procs;
@@ -46,7 +46,6 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
       r--;
     }
     int c = effective_procs / r;
-
     switch (test_type) {
       case 0:
         input_data_.receiver_rank = 0;
