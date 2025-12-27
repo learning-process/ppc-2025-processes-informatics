@@ -16,7 +16,7 @@ class YurkinGRulerFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
 
  protected:
   void SetUp() override {
-    input_data_ = 1000000;
+    input_data_ = 100000000;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
