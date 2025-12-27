@@ -95,8 +95,8 @@ class GusevDSentenceCountSmallInputPerfTests : public ppc::util::BaseRunPerfTest
     const std::string base = "A!B.C?   Tail without terminator ";
     input_data_.clear();
 
-    const int kRepeats = 2000;
-    for (int i = 0; i < kRepeats; ++i) {
+    const int k_repeats = 2000;
+    for (int i = 0; i < k_repeats; ++i) {
       input_data_ += base;
     }
 

@@ -5,6 +5,7 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
+#include <memory>
 #include <ranges>  // NOLINT(misc-include-cleaner) - required for std::ranges::transform
 #include <string>
 #include <tuple>
@@ -115,7 +116,7 @@ const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintTestParam;
 INSTANTIATE_TEST_SUITE_P(SentenceCountBoundaryTests, GusevDSentenceCountFuncTests, kGtestValues, kPerfTestName);
 
 TEST(GusevDSentenceCount, CoverageTestSEQ) {
-  const std::string in = "";
+  const std::string in;
   const size_t expected_out = 0;
 
   auto task = std::make_shared<GusevDSentenceCountSEQ>(in);
@@ -129,7 +130,7 @@ TEST(GusevDSentenceCount, CoverageTestSEQ) {
 }
 
 TEST(GusevDSentenceCount, CoverageTestMPI) {
-  const std::string in = "";
+  const std::string in;
   const size_t expected_out = 0;
 
   auto task = std::make_shared<GusevDSentenceCountMPI>(in);
