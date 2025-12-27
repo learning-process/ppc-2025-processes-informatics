@@ -3,18 +3,18 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "pylaeva_s_simple_iteration_method/common/include/common.hpp"
 
 namespace pylaeva_s_simple_iteration_method {
 namespace {
 
-  constexpr double kEps = 1e-6;
-  constexpr int kMaxIterations = 10000;
+constexpr double kEps = 1e-6;
+constexpr int kMaxIterations = 10000;
 
-  bool NotNullDeterm(const std::vector<double> &a, size_t n) {
+bool NotNullDeterm(const std::vector<double> &a, size_t n) {
   std::vector<double> tmp = a;
 
   for (size_t i = 0; i < n; i++) {
@@ -77,8 +77,7 @@ bool DiagonalDominance(const std::vector<double> &a, size_t n) {
   }
   return true;
 }
-}//namespace
-
+}  // namespace
 
 PylaevaSSimpleIterationMethodSEQ::PylaevaSSimpleIterationMethodSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());

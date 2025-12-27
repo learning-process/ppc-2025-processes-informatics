@@ -14,10 +14,10 @@
 namespace pylaeva_s_simple_iteration_method {
 namespace {
 
-  constexpr double kEps = 1e-6;
-  constexpr int kMaxIterations = 10000;
+constexpr double kEps = 1e-6;
+constexpr int kMaxIterations = 10000;
 
-  bool NotNullDeterm(const std::vector<double> &a, size_t n) {
+bool NotNullDeterm(const std::vector<double> &a, size_t n) {
   std::vector<double> tmp = a;
 
   for (size_t i = 0; i < n; i++) {
