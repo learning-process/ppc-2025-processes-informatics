@@ -24,20 +24,6 @@ void LocalMultiply(const std::vector<double> &a_block, const std::vector<double>
   }
 }
 
-void SequentialMultiply(const MatrixInput &input, std::vector<double> &output) {
-  const int m = input.rows_a;
-  const int k = input.cols_a;
-  const int n = input.cols_b;
-  for (int ii = 0; ii < m; ++ii) {
-    for (int kk = 0; kk < k; ++kk) {
-      double a_val = input.a[Idx(k, ii, kk)];
-      for (int jj = 0; jj < n; ++jj) {
-        output[Idx(n, ii, jj)] += a_val * input.b[Idx(n, kk, jj)];
-      }
-    }
-  }
-}
-
 }  // namespace
 
 SakharovACannonAlgorithmMPI::SakharovACannonAlgorithmMPI(const InType &in) {
@@ -67,11 +53,6 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   const int k = input.cols_a;
   const int n = input.cols_b;
 
-  if (world_size == 1) {
-    SequentialMultiply(input, GetOutput());
-    return true;
-  }
-
   int base_rows = m / world_size;
   int extra_rows = m % world_size;
 
@@ -99,11 +80,9 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   MPI_Scatterv(input.a.data(), send_counts_a.data(), displs_a.data(), MPI_DOUBLE, local_a.data(), local_rows * k,
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  std::vector<double> b_data;
+  std::vector<double> b_data(static_cast<std::size_t>(k) * static_cast<std::size_t>(n));
   if (rank == 0) {
     b_data = input.b;
-  } else {
-    b_data.resize(static_cast<std::size_t>(k) * static_cast<std::size_t>(n));
   }
   MPI_Bcast(b_data.data(), k * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -119,8 +98,6 @@ bool SakharovACannonAlgorithmMPI::RunImpl() {
   MPI_Gatherv(local_c.data(), local_rows * n, MPI_DOUBLE, GetOutput().data(), recv_counts_c.data(), displs_c.data(),
               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  // Broadcast result to all processes for test framework compatibility
-  // (tests verify output on all ranks, not just root)
   MPI_Bcast(GetOutput().data(), m * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   return true;

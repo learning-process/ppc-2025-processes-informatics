@@ -28,10 +28,8 @@ inline std::size_t Idx(int cols, int row, int col) {
 }
 
 inline bool IsValidInput(const MatrixInput &input) {
-  if (input.rows_a <= 0 || input.cols_a <= 0 || input.rows_b <= 0 || input.cols_b <= 0) {
-    return false;
-  }
-  if (input.cols_a != input.rows_b) {
+  if (input.rows_a <= 0 || input.cols_a <= 0 || input.rows_b <= 0 || input.cols_b <= 0 ||
+      input.cols_a != input.rows_b) {
     return false;
   }
   auto expected_a = static_cast<std::size_t>(input.rows_a) * static_cast<std::size_t>(input.cols_a);
