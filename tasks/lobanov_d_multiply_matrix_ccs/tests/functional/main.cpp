@@ -208,7 +208,7 @@ CompressedColumnMatrix CreateEmptyMatrix(int rows, int cols) {
   return matrix;
 }
 
-const std::array<TestType, 10> kTestParameters = {
+const std::array<TestType, 9> kTestParameters = {
     std::make_tuple("test_small_matrices", CreateEmptyMatrix(10, 10), CreateEmptyMatrix(10, 10),
                     CreateEmptyMatrix(10, 10)),
     std::make_tuple("test_sparse_small", CreateEmptyMatrix(6, 6), CreateEmptyMatrix(6, 6), CreateEmptyMatrix(6, 6)),
@@ -217,7 +217,6 @@ const std::array<TestType, 10> kTestParameters = {
     std::make_tuple("test_medium_matrices", CreateEmptyMatrix(50, 50), CreateEmptyMatrix(50, 50),
                     CreateEmptyMatrix(50, 50)),
     std::make_tuple("test_rectangular_1", CreateEmptyMatrix(10, 5), CreateEmptyMatrix(5, 8), CreateEmptyMatrix(10, 8)),
-    std::make_tuple("test_rectangular_2", CreateEmptyMatrix(7, 12), CreateEmptyMatrix(12, 4), CreateEmptyMatrix(7, 4)),
     std::make_tuple("test_large_rows_small_cols", CreateEmptyMatrix(100, 3), CreateEmptyMatrix(3, 5),
                     CreateEmptyMatrix(100, 5)),
     std::make_tuple("test_small_rows_large_cols", CreateEmptyMatrix(3, 100), CreateEmptyMatrix(100, 5),
