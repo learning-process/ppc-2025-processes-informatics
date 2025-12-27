@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "kondakov_v_global_search/common/include/common.hpp"
