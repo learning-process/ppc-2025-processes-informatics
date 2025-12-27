@@ -65,6 +65,7 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 const auto kPerfTestName = ShekhirevVCGPerfTests::CustomPerfTestName;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CGPerf, ShekhirevVCGPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace

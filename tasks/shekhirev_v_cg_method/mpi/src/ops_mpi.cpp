@@ -18,13 +18,32 @@ bool ConjugateGradientMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   if (rank == 0) {
     const int n = GetInput().n;
-    return n > 0 && GetInput().A.size() == static_cast<size_t>(n * n) && GetInput().b.size() == static_cast<size_t>(n);
+    return n > 0 && GetInput().A.size() == static_cast<size_t>(n) * n && GetInput().b.size() == static_cast<size_t>(n);
   }
   return true;
 }
 
 bool ConjugateGradientMPI::PreProcessingImpl() {
   return true;
+}
+
+std::vector<double> ConjugateGradientMPI::LocalMultiply(const std::vector<double> &local_a,
+                                                        const std::vector<double> &global_p, int local_n, int n) {
+  std::vector<double> res(local_n, 0.0);
+  for (int i = 0; i < local_n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      res[i] += (local_a[static_cast<size_t>(i) * n + j] * global_p[j]);
+    }
+  }
+  return res;
+}
+
+double ConjugateGradientMPI::LocalDotProduct(const std::vector<double> &a, const std::vector<double> &b) {
+  double res = 0.0;
+  for (size_t i = 0; i < a.size(); ++i) {
+    res += (a[i] * b[i]);
+  }
+  return res;
 }
 
 bool ConjugateGradientMPI::RunImpl() {
@@ -57,7 +76,7 @@ bool ConjugateGradientMPI::RunImpl() {
   }
 
   const int local_n = counts[rank];
-  std::vector<double> local_a(local_n * n);
+  std::vector<double> local_a(static_cast<size_t>(local_n) * n);
   std::vector<double> local_b(local_n);
 
   const auto &input_a = GetInput().A;
@@ -74,11 +93,7 @@ bool ConjugateGradientMPI::RunImpl() {
   std::vector<double> local_p = local_r;
   std::vector<double> global_p(n);
 
-  double local_rs_old = 0.0;
-  for (const double val : local_r) {
-    local_rs_old += val * val;
-  }
-
+  double local_rs_old = LocalDotProduct(local_r, local_r);
   double global_rs_old = 0.0;
   MPI_Allreduce(&local_rs_old, &global_rs_old, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
@@ -89,17 +104,8 @@ bool ConjugateGradientMPI::RunImpl() {
     MPI_Allgatherv(local_p.data(), local_n, MPI_DOUBLE, global_p.data(), counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
 
-    std::vector<double> local_ap(local_n, 0.0);
-    for (int i = 0; i < local_n; ++i) {
-      for (int j = 0; j < n; ++j) {
-        local_ap[i] += (local_a[i * n + j] * global_p[j]);
-      }
-    }
-
-    double local_p_ap = 0.0;
-    for (int i = 0; i < local_n; ++i) {
-      local_p_ap += (local_p[i] * local_ap[i]);
-    }
+    std::vector<double> local_ap = LocalMultiply(local_a, global_p, local_n, n);
+    double local_p_ap = LocalDotProduct(local_p, local_ap);
 
     double global_p_ap = 0.0;
     MPI_Allreduce(&local_p_ap, &global_p_ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);

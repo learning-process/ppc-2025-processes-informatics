@@ -17,6 +17,10 @@ class ConjugateGradientSeq : public shekhirev_v_cg_method::BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static std::vector<double> MultiplyMatrixVector(const std::vector<double> &matrix, const std::vector<double> &vec,
+                                                  int n);
+  static double DotProduct(const std::vector<double> &a, const std::vector<double> &b);
 };
 
 }  // namespace shekhirev_v_cg_method_seq

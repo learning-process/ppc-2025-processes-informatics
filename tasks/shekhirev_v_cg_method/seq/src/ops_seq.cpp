@@ -13,11 +13,30 @@ ConjugateGradientSeq::ConjugateGradientSeq(const shekhirev_v_cg_method::InType &
 
 bool ConjugateGradientSeq::ValidationImpl() {
   const int n = GetInput().n;
-  return n > 0 && GetInput().A.size() == static_cast<size_t>(n * n) && GetInput().b.size() == static_cast<size_t>(n);
+  return n > 0 && GetInput().A.size() == static_cast<size_t>(n) * n && GetInput().b.size() == static_cast<size_t>(n);
 }
 
 bool ConjugateGradientSeq::PreProcessingImpl() {
   return true;
+}
+
+std::vector<double> ConjugateGradientSeq::MultiplyMatrixVector(const std::vector<double> &matrix,
+                                                               const std::vector<double> &vec, int n) {
+  std::vector<double> result(n, 0.0);
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      result[i] += (matrix[static_cast<size_t>(i) * n + j] * vec[j]);
+    }
+  }
+  return result;
+}
+
+double ConjugateGradientSeq::DotProduct(const std::vector<double> &a, const std::vector<double> &b) {
+  double res = 0.0;
+  for (size_t i = 0; i < a.size(); ++i) {
+    res += (a[i] * b[i]);
+  }
+  return res;
 }
 
 bool ConjugateGradientSeq::RunImpl() {
@@ -29,26 +48,14 @@ bool ConjugateGradientSeq::RunImpl() {
   std::vector<double> r = b_vec;
   std::vector<double> p = r;
 
-  double rs_old = 0.0;
-  for (const double val : r) {
-    rs_old += val * val;
-  }
+  double rs_old = DotProduct(r, r);
 
   const int max_iter = n * 2;
   const double epsilon = 1e-10;
 
   for (int k = 0; k < max_iter; ++k) {
-    std::vector<double> ap(n, 0.0);
-    for (int i = 0; i < n; ++i) {
-      for (int j = 0; j < n; ++j) {
-        ap[i] += (a_mat[i * n + j] * p[j]);
-      }
-    }
-
-    double p_ap = 0.0;
-    for (int i = 0; i < n; ++i) {
-      p_ap += (p[i] * ap[i]);
-    }
+    std::vector<double> ap = MultiplyMatrixVector(a_mat, p, n);
+    double p_ap = DotProduct(p, ap);
 
     const double alpha = rs_old / p_ap;
 
@@ -57,10 +64,7 @@ bool ConjugateGradientSeq::RunImpl() {
       r[i] -= (alpha * ap[i]);
     }
 
-    double rs_new = 0.0;
-    for (const double val : r) {
-      rs_new += val * val;
-    }
+    double rs_new = DotProduct(r, r);
 
     if (std::sqrt(rs_new) < epsilon) {
       break;

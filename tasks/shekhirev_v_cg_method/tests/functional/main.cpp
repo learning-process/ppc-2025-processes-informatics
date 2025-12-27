@@ -4,9 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <iostream>
-#include <numeric>
-#include <string>
 #include <tuple>
 #include <vector>
 
@@ -90,6 +87,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = ShekhirevVCGFuncTests::PrintFuncTestName<ShekhirevVCGFuncTests>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CGTests, ShekhirevVCGFuncTests, kGtestValues, kTestName);
 
 }  // namespace
