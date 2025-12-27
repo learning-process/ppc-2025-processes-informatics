@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
-#include <numeric>
-#include <vector>
+#include <cstddef>
 
 #include "morozova_s_broadcast/common/include/common.hpp"
 #include "morozova_s_broadcast/mpi/include/ops_mpi.hpp"
@@ -16,9 +15,9 @@ class MorozovaSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
 
   void SetUp() override {
     static int test_counter = 0;
-    const std::array<int, 5> sizes = {100, 1000, 10000, 100000, 1000000};
-    int test_idx = test_counter++ % 5;
-    int size = sizes[static_cast<std::size_t>(test_idx)];
+    constexpr std::array<int, 5> sizes = {100, 1000, 10000, 100000, 1000000};
+    const int test_idx = test_counter++ % 5;
+    const int size = sizes[static_cast<std::size_t>(test_idx)];
 
     input_data_.resize(static_cast<std::size_t>(size));
     for (int i = 0; i < size; ++i) {
