@@ -1,7 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <string>
+#include <tuple>
+
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "yurkin_g_ruler/common/include/common.hpp"
 #include "yurkin_g_ruler/mpi/include/ops_mpi.hpp"
 #include "yurkin_g_ruler/seq/include/ops_seq.hpp"
