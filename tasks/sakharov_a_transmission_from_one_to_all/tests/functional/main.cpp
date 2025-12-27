@@ -14,7 +14,7 @@
 
 namespace sakharov_a_transmission_from_one_to_all {
 
-class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class SakharovATransmissionFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
@@ -43,7 +43,7 @@ class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-TEST_P(SakharovARunFuncTestsProcesses, Broadcast) {
+TEST_P(SakharovATransmissionFuncTests, Broadcast) {
   ExecuteTest(GetParam());
 }
 
@@ -61,9 +61,9 @@ const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<SakharovATrans
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SakharovARunFuncTestsProcesses::PrintFuncTestName<SakharovARunFuncTestsProcesses>;
+const auto kPerfTestName = SakharovATransmissionFuncTests::PrintFuncTestName<SakharovATransmissionFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(BroadcastTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(BroadcastTests, SakharovATransmissionFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
