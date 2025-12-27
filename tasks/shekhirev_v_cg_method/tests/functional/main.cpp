@@ -18,11 +18,6 @@
 
 namespace shekhirev_v_cg_method {
 
-std::ostream &operator<<(std::ostream &os, const InputData &data) {
-  os << "n=" << data.n;
-  return os;
-}
-
 class ShekhirevVCGFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
