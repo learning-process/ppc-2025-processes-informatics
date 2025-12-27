@@ -130,7 +130,19 @@ class LobanovDMultiplyMatrixFuncTest : public ppc::util::BaseRunFuncTests<InType
 
     std::string test_name = std::get<0>(parameters);
 
-    if (test_name.find("small") != std::string::npos) {
+    if (test_name.find("rectangular_1") != std::string::npos) {
+      matrix_a_ = CreateRandomCompressedColumnMatrix(10, 5, 0.3);
+      matrix_b_ = CreateRandomCompressedColumnMatrix(5, 8, 0.3);
+    } else if (test_name.find("rectangular_2") != std::string::npos) {
+      matrix_a_ = CreateRandomCompressedColumnMatrix(7, 12, 0.3);
+      matrix_b_ = CreateRandomCompressedColumnMatrix(12, 4, 0.3);
+    } else if (test_name.find("medium_rectangular") != std::string::npos) {
+      matrix_a_ = CreateRandomCompressedColumnMatrix(30, 20, 0.1);
+      matrix_b_ = CreateRandomCompressedColumnMatrix(20, 40, 0.1);
+    } else if (test_name.find("large_rectangular") != std::string::npos) {
+      matrix_a_ = CreateRandomCompressedColumnMatrix(80, 60, 0.05);
+      matrix_b_ = CreateRandomCompressedColumnMatrix(60, 100, 0.05);
+    } else if (test_name.find("small") != std::string::npos) {
       matrix_a_ = CreateRandomCompressedColumnMatrix(10, 10, 0.3);
       matrix_b_ = CreateRandomCompressedColumnMatrix(10, 10, 0.3);
     } else if (test_name.find("medium") != std::string::npos) {
@@ -186,7 +198,7 @@ CompressedColumnMatrix CreateEmptyMatrix(int rows, int cols) {
 }
 
 // Определяем тестовые наборы данных
-const std::array<TestType, 3> kTestParameters = {
+const std::array<TestType, 7> kTestParameters = {
     // Маленькие матрицы
     std::make_tuple("test_small_matrices", CreateEmptyMatrix(10, 10),  // Заполнитель для matrix_a
                     CreateEmptyMatrix(10, 10),                         // Заполнитель для matrix_b
@@ -196,6 +208,18 @@ const std::array<TestType, 3> kTestParameters = {
     // Средние матрицы
     std::make_tuple("test_medium_matrices", CreateEmptyMatrix(50, 50), CreateEmptyMatrix(50, 50),
                     CreateEmptyMatrix(50, 50)),
+    // Неквадратные матрицы (rectangular)
+    make_tuple("test_rectangular_1", CreateEmptyMatrix(10, 5), CreateEmptyMatrix(5, 8), CreateEmptyMatrix(10, 8)),
+
+    std::make_tuple("test_rectangular_2", CreateEmptyMatrix(7, 12), CreateEmptyMatrix(12, 4), CreateEmptyMatrix(7, 4)),
+
+    // Средние матрицы (неквадратные)
+    std::make_tuple("test_medium_rectangular", CreateEmptyMatrix(30, 20), CreateEmptyMatrix(20, 40),
+                    CreateEmptyMatrix(30, 40)),
+
+    // Большие матрицы (неквадратные)
+    std::make_tuple("test_large_rectangular", CreateEmptyMatrix(80, 60), CreateEmptyMatrix(60, 100),
+                    CreateEmptyMatrix(80, 100)),
 
     // Большие матрицы
     std::make_tuple("test_large_matrices", CreateEmptyMatrix(100, 100), CreateEmptyMatrix(100, 100),
