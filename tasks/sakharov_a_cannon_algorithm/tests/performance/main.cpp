@@ -23,7 +23,7 @@ static inline void PrintTo(const PerfTestParam<InType, OutType> &param, ::std::o
 
 namespace sakharov_a_cannon_algorithm {
 
-class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SakharovACannonPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   InType input_data_;
   OutType expected_result_;
 
@@ -94,7 +94,7 @@ class SakharovARunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   }
 };
 
-TEST_P(SakharovARunPerfTestProcesses, RunPerfModes) {
+TEST_P(SakharovACannonPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -104,8 +104,8 @@ const auto kAllPerfTasks =
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = SakharovARunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = SakharovACannonPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, SakharovARunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, SakharovACannonPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace sakharov_a_cannon_algorithm
