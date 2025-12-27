@@ -24,7 +24,7 @@ static inline void PrintTo(const FuncTestParam<InType, OutType, TestType> &param
 
 namespace sakharov_a_cannon_algorithm {
 
-class SakharovARunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class SakharovACannonFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<2>(test_param);
@@ -82,7 +82,7 @@ TestType MakeCase(const InType &input, const std::string &name) {
   return TestType{input, NaiveMultiply(input), name};
 }
 
-TEST_P(SakharovARunFuncTestsProcesses, MatrixMultiply) {
+TEST_P(SakharovACannonFuncTests, MatrixMultiply) {
   ExecuteTest(GetParam());
 }
 
@@ -108,9 +108,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SakharovARunFuncTestsProcesses::PrintFuncTestName<SakharovARunFuncTestsProcesses>;
+const auto kPerfTestName = SakharovACannonFuncTests::PrintFuncTestName<SakharovACannonFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(MatrixTests, SakharovARunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MatrixTests, SakharovACannonFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
