@@ -209,7 +209,7 @@ const std::array<TestType, 7> kTestParameters = {
     std::make_tuple("test_medium_matrices", CreateEmptyMatrix(50, 50), CreateEmptyMatrix(50, 50),
                     CreateEmptyMatrix(50, 50)),
     // Неквадратные матрицы (rectangular)
-    make_tuple("test_rectangular_1", CreateEmptyMatrix(10, 5), CreateEmptyMatrix(5, 8), CreateEmptyMatrix(10, 8)),
+    std::make_tuple("test_rectangular_1", CreateEmptyMatrix(10, 5), CreateEmptyMatrix(5, 8), CreateEmptyMatrix(10, 8)),
 
     std::make_tuple("test_rectangular_2", CreateEmptyMatrix(7, 12), CreateEmptyMatrix(12, 4), CreateEmptyMatrix(7, 4)),
 
