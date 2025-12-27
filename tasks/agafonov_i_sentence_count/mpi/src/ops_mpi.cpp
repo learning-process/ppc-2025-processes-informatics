@@ -23,13 +23,21 @@ bool SentenceCountMPI::PreProcessingImpl() {
 }
 
 bool SentenceCountMPI::RunImpl() {
-  const std::string &text = GetInput();
-
   int world_size, world_rank;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  int total_length = static_cast<int>(text.length());
+  int total_length;
+  if (world_rank == 0) {
+    total_length = static_cast<int>(GetInput().length());
+  }
+  MPI_Bcast(&total_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::string text = (world_rank == 0) ? GetInput() : std::string(total_length, ' ');
+  if (total_length > 0) {
+    MPI_Bcast(const_cast<char *>(text.data()), total_length, MPI_CHAR, 0, MPI_COMM_WORLD);
+  }
+
   int chunk_size = total_length / world_size;
   int remainder = total_length % world_size;
 

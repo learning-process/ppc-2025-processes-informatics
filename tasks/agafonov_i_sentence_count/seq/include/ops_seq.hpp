@@ -19,4 +19,4 @@ class SentenceCountSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-} // namespace agafonov_i_sentence_count
+}  // namespace agafonov_i_sentence_count

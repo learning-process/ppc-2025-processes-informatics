@@ -21,7 +21,7 @@ class SentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     test_case_id_ = std::get<0>(params);
-    
+
     switch (test_case_id_) {
       case 1:
         input_data_ = "Hello world. This is a test. Another sentence! And one more? Yes.";
@@ -70,16 +70,12 @@ TEST_P(SentenceCountFuncTests, RunSentenceCountFuncTests) {
 }
 
 const std::array<TestType, 5> kTestParams = {
-    std::make_tuple(1, "five_sentences"),
-    std::make_tuple(2, "one_sentence_no_punctuation"), 
-    std::make_tuple(3, "three_sentences"),
-    std::make_tuple(4, "only_dots"),
-    std::make_tuple(5, "four_short_sentences")
-};
+    std::make_tuple(1, "five_sentences"), std::make_tuple(2, "one_sentence_no_punctuation"),
+    std::make_tuple(3, "three_sentences"), std::make_tuple(4, "only_dots"), std::make_tuple(5, "four_short_sentences")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<SentenceCountMPI, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count),
-                   ppc::util::AddFuncTask<SentenceCountSEQ, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<SentenceCountMPI, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count),
+    ppc::util::AddFuncTask<SentenceCountSEQ, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

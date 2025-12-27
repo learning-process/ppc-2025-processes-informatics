@@ -21,13 +21,13 @@ bool SentenceCountSEQ::PreProcessingImpl() {
 }
 
 bool SentenceCountSEQ::RunImpl() {
-  const std::string& text = GetInput();
+  const std::string &text = GetInput();
   int count = 0;
   bool in_sentence = false;
 
   for (size_t i = 0; i < text.length(); ++i) {
     char c = text[i];
-    
+
     if (std::isalpha(c) || std::isdigit(c)) {
       in_sentence = true;
     } else if (c == '.' && in_sentence) {
