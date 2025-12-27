@@ -4,146 +4,210 @@
 
 #include <algorithm>
 #include <cmath>
-#include <utility>
 #include <vector>
 
-#include "shvetsova_k_gausse_vert_strip/common/include/common.hpp"
 namespace shvetsova_k_gausse_vert_strip {
 
-// Вспомогательная функция для определения ранга-владельца колонки k
+// вспомогательные функции
+
 int ShvetsovaKGaussVertStripMPI::GetOwnerOfColumn(int k, int n, int size) {
-  int base_cols = n / size;
-  int remainder = n % size;
-  int threshold = remainder * (base_cols + 1);
-  if (k < threshold) {
-    return k / (base_cols + 1);
-  }
-  return remainder + ((k - threshold) / base_cols);
+  int base = n / size;
+  int rem = n % size;
+  int border = rem * (base + 1);
+  return (k < border) ? k / (base + 1) : rem + (k - border) / base;
 }
 
-// Вспомогательная функция для определения начального индекса колонки для ранга
 int ShvetsovaKGaussVertStripMPI::GetColumnStartIndex(int rank, int n, int size) {
-  int base_cols = n / size;
-  int remainder = n % size;
-  if (rank < remainder) {
-    return rank * (base_cols + 1);
-  }
-  return (remainder * (base_cols + 1)) + ((rank - remainder) * base_cols);
+  int base = n / size;
+  int rem = n % size;
+  return (rank < rem) ? rank * (base + 1) : rem * (base + 1) + (rank - rem) * base;
 }
 
-ShvetsovaKGaussVertStripMPI::ShvetsovaKGaussVertStripMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = InType(in);
+int ShvetsovaKGaussVertStripMPI::GetColumnEndIndex(int rank, int n, int size) {
+  return GetColumnStartIndex(rank + 1, n, size);
 }
 
-bool ShvetsovaKGaussVertStripMPI::ValidationImpl() {
-  return !GetInput().first.empty() && GetInput().first.size() == GetInput().second.size();
-}
-
-bool ShvetsovaKGaussVertStripMPI::PreProcessingImpl() {
-  const auto &matrix = GetInput().first;
-  int n = static_cast<int>(matrix.size());
-  size_of_rib_ = 1;
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < n; j++) {
-      if (i != j && std::abs(matrix[i][j]) > 1e-10) {
-        int dist = std::abs(i - j);
-        size_of_rib_ = std::max(size_of_rib_, dist + 1);
+int ShvetsovaKGaussVertStripMPI::CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n) const {
+  int rib_width = 1;
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      if (i != j && std::abs(matrix[i][j]) > 1e-12) {
+        rib_width = std::max(rib_width, std::abs(i - j) + 1);
       }
     }
   }
+
+  return rib_width;
+}
+
+void ShvetsovaKGaussVertStripMPI::ForwardElimination(int n, int rank, int size, int c0, int local_cols,
+                                                     std::vector<std::vector<double>> &a_local,
+                                                     std::vector<double> &b) const {
+  for (int k = 0; k < n; ++k) {
+    int owner = GetOwnerOfColumn(k, n, size);
+    double pivot = 0.0;
+
+    if (rank == owner) {
+      pivot = a_local[k][k - c0];
+    }
+    MPI_Bcast(&pivot, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
+
+    if (std::abs(pivot) < 1e-12) {
+      // единое поведение для всех рангов
+      throw std::runtime_error("Zero pivot encountered");
+    }
+
+    for (int j = 0; j < local_cols; ++j) {
+      a_local[k][j] /= pivot;
+    }
+    b[k] /= pivot;
+
+    for (int i = k + 1; i < std::min(n, k + size_of_rib_); ++i) {
+      double factor = 0.0;
+
+      if (rank == owner) {
+        factor = a_local[i][k - c0];
+      }
+      MPI_Bcast(&factor, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
+
+      for (int j = 0; j < local_cols; ++j) {
+        a_local[i][j] -= factor * a_local[k][j];
+      }
+      b[i] -= factor * b[k];
+    }
+  }
+}
+
+std::vector<double> ShvetsovaKGaussVertStripMPI::BackSubstitution(int n, int rank, int size, int c0,
+                                                                  const std::vector<std::vector<double>> &a_local,
+                                                                  const std::vector<double> &b) const {
+  std::vector<double> x(n, 0.0);
+
+  for (int k = n - 1; k >= 0; --k) {
+    double sum = b[k];
+
+    for (int j = k + 1; j < std::min(n, k + size_of_rib_); ++j) {
+      int owner = GetOwnerOfColumn(j, n, size);
+      double val = 0.0;
+
+      if (rank == owner) {
+        val = a_local[k][j - c0];
+      }
+      MPI_Bcast(&val, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
+
+      sum -= val * x[j];
+    }
+
+    int owner = GetOwnerOfColumn(k, n, size);
+    if (rank == owner) {
+      x[k] = sum;
+    }
+    MPI_Bcast(&x[k], 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
+  }
+
+  return x;
+}
+
+void ShvetsovaKGaussVertStripMPI::ScatterColumns(int n, int rank, int size, int c0, int local_cols,
+                                                 const std::vector<std::vector<double>> &matrix,
+                                                 std::vector<std::vector<double>> &a_local) const {
+  if (rank == 0) {
+    // копируем свои столбцы
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < local_cols; ++j) {
+        a_local[i][j] = matrix[i][c0 + j];
+      }
+    }
+
+    // рассылаем остальным
+    for (int r = 1; r < size; ++r) {
+      int rs = GetColumnStartIndex(r, n, size);
+      int re = GetColumnEndIndex(r, n, size);
+      int cols = re - rs;
+
+      for (int i = 0; i < n; ++i) {
+        MPI_Send(&matrix[i][rs], cols, MPI_DOUBLE, r, 0, MPI_COMM_WORLD);
+      }
+    }
+  } else {
+    // принимаем свои столбцы
+    for (int i = 0; i < n; ++i) {
+      MPI_Recv(a_local[i].data(), local_cols, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+  }
+}
+
+// основные функции
+ShvetsovaKGaussVertStripMPI::ShvetsovaKGaussVertStripMPI(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  auto &input_ref = GetInput();
+  input_ref.first = in.first;
+  input_ref.second = in.second;
+  GetOutput().clear();
+}
+
+bool ShvetsovaKGaussVertStripMPI::ValidationImpl() {
   return true;
 }
 
-void ShvetsovaKGaussVertStripMPI::ForwardStep(int k, int n, int local_cols, int col_start,
-                                              std::vector<std::vector<double>> &a_local, std::vector<double> &b) const {
-  int size = 0;
-  int rank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  int owner = GetOwnerOfColumn(k, n, size);
-  double pivot_val = 0.0;
-  if (rank == owner) {
-    pivot_val = a_local[k][k - col_start];
-  }
-  MPI_Bcast(&pivot_val, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
-
-  for (int j = 0; j < local_cols; j++) {
-    a_local[k][j] /= pivot_val;
-  }
-  b[k] /= pivot_val;
-
-  int last_row = std::min(n, k + size_of_rib_);
-  for (int i = k + 1; i < last_row; i++) {
-    double factor = 0.0;
-    if (rank == owner) {
-      factor = a_local[i][k - col_start];
-    }
-    MPI_Bcast(&factor, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
-
-    for (int j = 0; j < local_cols; j++) {
-      a_local[i][j] -= factor * a_local[k][j];
-    }
-    b[i] -= factor * b[k];
-  }
-}
-
-void ShvetsovaKGaussVertStripMPI::BackwardStep(int k, int n, int col_start, std::vector<std::vector<double>> &a_local,
-                                               std::vector<double> &b, std::vector<double> &x) const {
-  int size = 0;
-  int rank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  int owner = GetOwnerOfColumn(k, n, size);
-  if (rank == owner) {
-    x[k] = b[k];
-  }
-  MPI_Bcast(&x[k], 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
-
-  int first_row = std::max(0, k - size_of_rib_ + 1);
-  for (int i = first_row; i < k; i++) {
-    double val_ik = 0.0;
-    if (rank == owner) {
-      val_ik = a_local[i][k - col_start];
-    }
-    MPI_Bcast(&val_ik, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
-    b[i] -= val_ik * x[k];
-  }
+bool ShvetsovaKGaussVertStripMPI::PreProcessingImpl() {
+  input_data_ = GetInput();
+  return true;
 }
 
 bool ShvetsovaKGaussVertStripMPI::RunImpl() {
-  int size = 0;
   int rank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const auto &a_global = GetInput().first;
-  int n = static_cast<int>(a_global.size());
+  const auto &matrix = input_data_.first;
+  const auto &b_in = input_data_.second;
 
-  int col_start = GetColumnStartIndex(rank, n, size);
-  int next_col_start = GetColumnStartIndex(rank + 1, n, size);
-  int local_cols = next_col_start - col_start;
+  int n = 0;
+  if (rank == 0) {
+    n = static_cast<int>(matrix.size());
+  }
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (n == 0) {
+    GetOutput().clear();
+    return true;
+  }
+
+  // вычисление размера ленты
+  if (rank == 0) {
+    size_of_rib_ = CalculateRibWidth(matrix, n);
+  }
+  MPI_Bcast(&size_of_rib_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  int c0 = GetColumnStartIndex(rank, n, size);
+  int c1 = GetColumnEndIndex(rank, n, size);
+  int local_cols = c1 - c0;
 
   std::vector<std::vector<double>> a_local(n, std::vector<double>(local_cols));
-  for (int i = 0; i < n; i++) {
-    for (int j = 0; j < local_cols; j++) {
-      a_local[i][j] = a_global[i][col_start + j];
-    }
-  }
-  std::vector<double> b = GetInput().second;
+  std::vector<double> b = b_in;
 
-  for (int k = 0; k < n; k++) {
-    ForwardStep(k, n, local_cols, col_start, a_local, b);
+  // разделяем столбцы
+  ScatterColumns(n, rank, size, c0, local_cols, matrix, a_local);
+
+  MPI_Bcast(b.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  // прямой ход
+  try {
+    ForwardElimination(n, rank, size, c0, local_cols, a_local, b);
+  } catch (...) {
+    GetOutput() = std::vector<double>(n, 0.0);
+    return true;
   }
 
-  std::vector<double> x(n, 0.0);
-  for (int k = n - 1; k >= 0; k--) {
-    BackwardStep(k, n, col_start, a_local, b, x);
-  }
+  // обратный ход
+  std::vector<double> x = BackSubstitution(n, rank, size, c0, a_local, b);
 
-  GetOutput().assign(x.begin(), x.end());
+  MPI_Barrier(MPI_COMM_WORLD);
+  GetOutput() = x;
+  MPI_Barrier(MPI_COMM_WORLD);
+
   return true;
 }
 

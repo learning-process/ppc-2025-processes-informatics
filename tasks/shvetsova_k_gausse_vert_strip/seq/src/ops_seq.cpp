@@ -11,14 +11,20 @@ namespace shvetsova_k_gausse_vert_strip {
 
 ShvetsovaKGaussVertStripSEQ::ShvetsovaKGaussVertStripSEQ(const InType &in) : size_of_rib_(1) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = InType(in);
+  auto &input_ref = GetInput();
+  input_ref.first = in.first;
+  input_ref.second = in.second;
+
+  GetOutput().clear();
 }
 
 bool ShvetsovaKGaussVertStripSEQ::ValidationImpl() {
-  if (GetInput().first.empty()) {
+  const auto &matrix = GetInput().first;
+  const auto &vec = GetInput().second;
+  if (matrix.empty()) {
     return true;
   }
-  return GetInput().first.size() == GetInput().second.size();
+  return matrix.size() == vec.size();
 }
 
 bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
@@ -32,110 +38,68 @@ bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
       if (i != j && std::abs(matrix[i][j]) > 1e-12) {
-        int dist = std::abs(i - j);
-        size_of_rib_ = std::max(size_of_rib_, dist + 1);
+        size_of_rib_ = std::max(size_of_rib_, std::abs(i - j) + 1);
       }
     }
   }
   return true;
 }
 
-void ShvetsovaKGaussVertStripSEQ::FindPivotAndSwap(int target_row, int n, std::vector<std::vector<double>> &band,
-                                                   std::vector<int> &offsets, std::vector<double> &vec) const {
-  int pivot_row = target_row;
-  double max_val = std::abs(band[target_row][target_row - offsets[target_row]]);
-
-  for (int row_idx = target_row + 1; row_idx < std::min(n, target_row + size_of_rib_); ++row_idx) {
-    double current_val = std::abs(band[row_idx][target_row - offsets[row_idx]]);
-    if (current_val > max_val) {
-      max_val = current_val;
-      pivot_row = row_idx;
-    }
-  }
-
-  if (pivot_row != target_row) {
-    std::swap(vec[target_row], vec[pivot_row]);
-    std::swap(band[target_row], band[pivot_row]);
-    std::swap(offsets[target_row], offsets[pivot_row]);
-  }
-}
-
-void ShvetsovaKGaussVertStripSEQ::EliminateBelow(int target_row, int n, std::vector<std::vector<double>> &band,
-                                                 const std::vector<int> &offsets, std::vector<double> &vec) const {
-  const double eps = std::numeric_limits<double>::epsilon() * 100.0;
-  int offset_i = offsets[target_row];
-
-  for (int row_idx = target_row + 1; row_idx < std::min(n, target_row + size_of_rib_); ++row_idx) {
-    int offset_r = offsets[row_idx];
-    double factor = band[row_idx][target_row - offset_r];
-    if (std::abs(factor) <= eps) {
-      continue;
-    }
-
-    band[row_idx][target_row - offset_r] = 0.0;
-    int start_j = std::max(target_row + 1, offset_r);
-    int end_j = std::min(offset_i + static_cast<int>(band[target_row].size()),
-                         offset_r + static_cast<int>(band[row_idx].size()));
-
-    for (int j = start_j; j < end_j; ++j) {
-      band[row_idx][j - offset_r] -= factor * band[target_row][j - offset_i];
-    }
-    vec[row_idx] -= factor * vec[target_row];
-  }
-}
-
 bool ShvetsovaKGaussVertStripSEQ::RunImpl() {
   const auto &matrix_a = GetInput().first;
+  const auto &vec_b = GetInput().second;
   int n = static_cast<int>(matrix_a.size());
+
   if (n == 0) {
-    GetOutput() = std::vector<double>();
     return true;
   }
 
-  std::vector<std::vector<double>> band(n);
-  std::vector<int> offsets(n);
+  std::vector<std::vector<double>> a = matrix_a;
+  std::vector<double> x = vec_b;
+  const double eps = 1e-15;
+
   for (int i = 0; i < n; ++i) {
-    int left = std::max(0, i - size_of_rib_ + 1);
-    int right = std::min(n, i + size_of_rib_);
-    offsets[i] = left;
-    band[i].resize(right - left);
-    for (int j = left; j < right; ++j) {
-      band[i][j - left] = matrix_a[i][j];
+    double pivot = a[i][i];
+    if (std::abs(pivot) < eps) {
+      pivot = (pivot >= 0) ? eps : -eps;
+    }
+
+    int row_end = std::min(n, i + size_of_rib_);
+    for (int j = i; j < row_end; ++j) {
+      a[i][j] /= pivot;
+    }
+    x[i] /= pivot;
+
+    for (int k = i + 1; k < row_end; ++k) {
+      double factor = a[k][i];
+      if (std::abs(factor) < eps) {
+        continue;
+      }
+      for (int j = i; j < row_end; ++j) {
+        a[k][j] -= factor * a[i][j];
+      }
+      x[k] -= factor * x[i];
     }
   }
 
-  std::vector<double> vec = GetInput().second;
-  const double eps = std::numeric_limits<double>::epsilon() * 100.0;
-
-  for (int i = 0; i < n; ++i) {
-    FindPivotAndSwap(i, n, band, offsets, vec);
-    double pivot = band[i][i - offsets[i]];
-    if (std::abs(pivot) <= eps) {
-      pivot = 1e-15;
-    }
-
-    vec[i] /= pivot;
-    for (auto &val : band[i]) {
-      val /= pivot;
-    }
-
-    EliminateBelow(i, n, band, offsets, vec);
-  }
-
-  std::vector<double> x_res(n);
+  std::vector<double> res(n);
   for (int i = n - 1; i >= 0; --i) {
-    x_res[i] = vec[i];
-    int last_col = std::min(n, i + size_of_rib_);
-    for (int j = i + 1; j < last_col; ++j) {
-      x_res[i] -= band[i][j - offsets[i]] * x_res[j];
+    double sum = x[i];
+    int row_end = std::min(n, i + size_of_rib_);
+    for (int j = i + 1; j < row_end; ++j) {
+      sum -= a[i][j] * res[j];
     }
+    res[i] = sum;
   }
 
-  GetOutput().assign(x_res.begin(), x_res.end());
+  GetOutput() = res;
   return true;
 }
 
 bool ShvetsovaKGaussVertStripSEQ::PostProcessingImpl() {
+  if (GetInput().first.empty()) {
+    return true;
+  }
   return !GetOutput().empty();
 }
 

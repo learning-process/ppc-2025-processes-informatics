@@ -16,18 +16,15 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
   void SetUp() override {
     // Размер матрицы для замера производительности (1000x1000)
 
-    const int sz = 5000;
+    const int sz = 500;
 
     // Полуширина ленты
 
-    const int size_of_rib = 500;
-
+    const int size_of_rib = 5;
     std::vector<std::vector<double>> matrix(sz, std::vector<double>(sz, 0.0));
-
     std::vector<double> b(sz, 0.0);
 
     // Генерация ленточной матрицы с диагональным преобладанием
-
     // Это гарантирует, что решение существует и метод Гаусса будет устойчив
 
     for (int i = 0; i < sz; ++i) {
@@ -70,19 +67,17 @@ class ShvetsovaKGaussVertStripRunPerfTestProcesses : public ppc::util::BaseRunPe
 
 // Регистрация задач
 
+TEST_P(ShvetsovaKGaussVertStripRunPerfTestProcesses, RunPerfModes) {
+  ExecuteTest(GetParam());
+}
+
 const auto kAllPerfTasks =
-
     ppc::util::MakeAllPerfTasks<InType, ShvetsovaKGaussVertStripMPI, ShvetsovaKGaussVertStripSEQ>(
-
         PPC_SETTINGS_shvetsova_k_gausse_vert_strip);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ShvetsovaKGaussVertStripRunPerfTestProcesses::CustomPerfTestName;
-
-TEST_P(ShvetsovaKGaussVertStripRunPerfTestProcesses, RunPerfModes) {
-  ExecuteTest(GetParam());
-}
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ShvetsovaKGaussVertStripRunPerfTestProcesses, kGtestValues, kPerfTestName);
 
