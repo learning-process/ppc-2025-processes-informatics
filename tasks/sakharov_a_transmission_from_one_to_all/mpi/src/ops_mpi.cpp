@@ -22,16 +22,12 @@ int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm c
     MPI_Recv(buffer, count, datatype, real_parent, 0, comm, MPI_STATUS_IGNORE);
   }
 
-  int v_child1 = (2 * v_rank) + 1;
-  if (v_child1 < size) {
-    int real_child1 = (v_child1 + root) % size;
-    MPI_Send(buffer, count, datatype, real_child1, 0, comm);
-  }
-
-  int v_child2 = (2 * v_rank) + 2;
-  if (v_child2 < size) {
-    int real_child2 = (v_child2 + root) % size;
-    MPI_Send(buffer, count, datatype, real_child2, 0, comm);
+  for (int child_offset = 1; child_offset <= 2; ++child_offset) {
+    int v_child = (2 * v_rank) + child_offset;
+    if (v_child < size) {
+      int real_child = (v_child + root) % size;
+      MPI_Send(buffer, count, datatype, real_child, 0, comm);
+    }
   }
 
   return MPI_SUCCESS;
@@ -39,7 +35,7 @@ int MyBcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm c
 
 namespace {
 
-bool BroadcastInts(int root, int rank, const InType &input, std::vector<int> &data_out) {
+void BroadcastInts(int root, int rank, const InType &input, std::vector<int> &data_out) {
   std::vector<int> data;
   int count = 0;
 
@@ -56,7 +52,6 @@ bool BroadcastInts(int root, int rank, const InType &input, std::vector<int> &da
 
   MyBcast(data.data(), count, MPI_INT, root, MPI_COMM_WORLD);
   data_out = data;
-  return true;
 }
 
 void BroadcastFloats(int root, int rank) {
@@ -110,9 +105,7 @@ bool SakharovATransmissionFromOneToAllMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   std::vector<int> data;
-  if (!BroadcastInts(root, rank, GetInput(), data)) {
-    return false;
-  }
+  BroadcastInts(root, rank, GetInput(), data);
 
   BroadcastFloats(root, rank);
   BroadcastDoubles(root, rank);
