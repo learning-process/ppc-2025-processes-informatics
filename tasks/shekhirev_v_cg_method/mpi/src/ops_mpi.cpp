@@ -57,16 +57,16 @@ bool ConjugateGradientMPI::RunImpl() {
   }
 
   const int local_n = counts[rank];
-  std::vector<double> local_A(local_n * n);
+  std::vector<double> local_a(local_n * n);
   std::vector<double> local_b(local_n);
 
-  const auto &input_A = GetInput().A;
-  const auto &input_b = GetInput().b;
+  const auto &input_a = GetInput().A;
+  const auto &input_bb = GetInput().b;
 
-  MPI_Scatterv(input_A.data(), matrix_counts.data(), matrix_displs.data(), MPI_DOUBLE, local_A.data(), local_n * n,
+  MPI_Scatterv(input_a.data(), matrix_counts.data(), matrix_displs.data(), MPI_DOUBLE, local_a.data(), local_n * n,
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  MPI_Scatterv(input_b.data(), counts.data(), displs.data(), MPI_DOUBLE, local_b.data(), local_n, MPI_DOUBLE, 0,
+  MPI_Scatterv(input_bb.data(), counts.data(), displs.data(), MPI_DOUBLE, local_b.data(), local_n, MPI_DOUBLE, 0,
                MPI_COMM_WORLD);
 
   std::vector<double> local_x(local_n, 0.0);
@@ -89,28 +89,28 @@ bool ConjugateGradientMPI::RunImpl() {
     MPI_Allgatherv(local_p.data(), local_n, MPI_DOUBLE, global_p.data(), counts.data(), displs.data(), MPI_DOUBLE,
                    MPI_COMM_WORLD);
 
-    std::vector<double> local_Ap(local_n, 0.0);
+    std::vector<double> local_ap(local_n, 0.0);
     for (int i = 0; i < local_n; ++i) {
       for (int j = 0; j < n; ++j) {
-        local_Ap[i] += local_A[i * n + j] * global_p[j];
+        local_ap[i] += (local_a[i * n + j] * global_p[j]);
       }
     }
 
-    double local_pAp = 0.0;
+    double local_p_ap = 0.0;
     for (int i = 0; i < local_n; ++i) {
-      local_pAp += local_p[i] * local_Ap[i];
+      local_p_ap += (local_p[i] * local_ap[i]);
     }
 
-    double global_pAp = 0.0;
-    MPI_Allreduce(&local_pAp, &global_pAp, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    double global_p_ap = 0.0;
+    MPI_Allreduce(&local_p_ap, &global_p_ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    const double alpha = global_rs_old / global_pAp;
+    const double alpha = global_rs_old / global_p_ap;
 
     double local_rs_new = 0.0;
     for (int i = 0; i < local_n; ++i) {
-      local_x[i] += alpha * local_p[i];
-      local_r[i] -= alpha * local_Ap[i];
-      local_rs_new += local_r[i] * local_r[i];
+      local_x[i] += (alpha * local_p[i]);
+      local_r[i] -= (alpha * local_ap[i]);
+      local_rs_new += (local_r[i] * local_r[i]);
     }
 
     double global_rs_new = 0.0;
@@ -124,7 +124,7 @@ bool ConjugateGradientMPI::RunImpl() {
     global_rs_old = global_rs_new;
 
     for (int i = 0; i < local_n; ++i) {
-      local_p[i] = local_r[i] + beta * local_p[i];
+      local_p[i] = local_r[i] + (beta * local_p[i]);
     }
   }
 

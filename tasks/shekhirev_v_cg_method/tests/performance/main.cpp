@@ -2,6 +2,7 @@
 #include <mpi.h>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "../../common/include/common.hpp"
@@ -17,11 +18,11 @@ class ShekhirevVCGPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType
   void SetUp() override {
     int n = 100;
     input_data_.n = n;
-    input_data_.A.resize(n * n, 0.0);
+    input_data_.A.resize(static_cast<size_t>(n) * n, 0.0);
     input_data_.b.resize(n, 2.0);
 
     for (int i = 0; i < n; ++i) {
-      input_data_.A[i * n + i] = 2.0;
+      input_data_.A[(i * n) + i] = 2.0;
     }
   }
 

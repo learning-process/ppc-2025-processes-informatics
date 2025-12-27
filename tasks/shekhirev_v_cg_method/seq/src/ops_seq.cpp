@@ -21,12 +21,12 @@ bool ConjugateGradientSeq::PreProcessingImpl() {
 }
 
 bool ConjugateGradientSeq::RunImpl() {
-  const auto &A = GetInput().A;
-  const auto &b = GetInput().b;
+  const auto &a_mat = GetInput().A;
+  const auto &b_vec = GetInput().b;
   const int n = GetInput().n;
 
   std::vector<double> x(n, 0.0);
-  std::vector<double> r = b;
+  std::vector<double> r = b_vec;
   std::vector<double> p = r;
 
   double rs_old = 0.0;
@@ -38,23 +38,23 @@ bool ConjugateGradientSeq::RunImpl() {
   const double epsilon = 1e-10;
 
   for (int k = 0; k < max_iter; ++k) {
-    std::vector<double> Ap(n, 0.0);
+    std::vector<double> ap(n, 0.0);
     for (int i = 0; i < n; ++i) {
       for (int j = 0; j < n; ++j) {
-        Ap[i] += A[i * n + j] * p[j];
+        ap[i] += (a_mat[i * n + j] * p[j]);
       }
     }
 
-    double pAp = 0.0;
+    double p_ap = 0.0;
     for (int i = 0; i < n; ++i) {
-      pAp += p[i] * Ap[i];
+      p_ap += (p[i] * ap[i]);
     }
 
-    const double alpha = rs_old / pAp;
+    const double alpha = rs_old / p_ap;
 
     for (int i = 0; i < n; ++i) {
-      x[i] += alpha * p[i];
-      r[i] -= alpha * Ap[i];
+      x[i] += (alpha * p[i]);
+      r[i] -= (alpha * ap[i]);
     }
 
     double rs_new = 0.0;
@@ -69,7 +69,7 @@ bool ConjugateGradientSeq::RunImpl() {
     const double beta = rs_new / rs_old;
 
     for (int i = 0; i < n; ++i) {
-      p[i] = r[i] + beta * p[i];
+      p[i] = r[i] + (beta * p[i]);
     }
 
     rs_old = rs_new;

@@ -3,6 +3,8 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
+#include <iostream>
 #include <numeric>
 #include <string>
 #include <tuple>
@@ -15,6 +17,11 @@
 #include "util/include/util.hpp"
 
 namespace shekhirev_v_cg_method {
+
+std::ostream &operator<<(std::ostream &os, const InputData &data) {
+  os << "n=" << data.n;
+  return os;
+}
 
 class ShekhirevVCGFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -52,8 +59,8 @@ class ShekhirevVCGFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType
   }
 
  private:
-  InType input_data_{};
-  OutType expected_output_{};
+  InType input_data_;
+  OutType expected_output_;
 };
 
 namespace {
@@ -62,21 +69,21 @@ TEST_P(ShekhirevVCGFuncTests, Test) {
   ExecuteTest(GetParam());
 }
 
-const std::vector<double> A1 = {1.0, 0.0, 0.0, 1.0};
+const std::vector<double> a1 = {1.0, 0.0, 0.0, 1.0};
 const std::vector<double> b1 = {5.0, -3.0};
 const std::vector<double> x1 = {5.0, -3.0};
 
-const std::vector<double> A2 = {4.0, 1.0, 1.0, 3.0};
+const std::vector<double> a2 = {4.0, 1.0, 1.0, 3.0};
 const std::vector<double> b2 = {1.0, 2.0};
 const std::vector<double> x2 = {0.090909, 0.636363};
 
-const std::vector<double> A3 = {2.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 4.0};
+const std::vector<double> a3 = {2.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 4.0};
 const std::vector<double> b3 = {2.0, 9.0, 8.0};
 const std::vector<double> x3 = {1.0, 3.0, 2.0};
 
-const std::array<TestType, 3> kTestCases = {std::make_tuple(InputData(A1, b1, 2), x1, "Identity_2x2"),
-                                            std::make_tuple(InputData(A2, b2, 2), x2, "SPD_System_2x2"),
-                                            std::make_tuple(InputData(A3, b3, 3), x3, "Diagonal_3x3")};
+const std::array<TestType, 3> kTestCases = {std::make_tuple(InputData(a1, b1, 2), x1, "Identity_2x2"),
+                                            std::make_tuple(InputData(a2, b2, 2), x2, "SPD_System_2x2"),
+                                            std::make_tuple(InputData(a3, b3, 3), x3, "Diagonal_3x3")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<shekhirev_v_cg_method_seq::ConjugateGradientSeq, InType>(
