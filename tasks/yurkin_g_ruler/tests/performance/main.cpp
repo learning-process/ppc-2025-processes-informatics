@@ -8,11 +8,11 @@
 namespace yurkin_g_ruler {
 
 class YurkinGRulerPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int k_count = 100000000;
+  const int k_count_ = 100000000;
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = k_count;
+    input_data_ = k_count_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

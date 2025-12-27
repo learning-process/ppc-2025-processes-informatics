@@ -8,6 +8,45 @@
 
 namespace yurkin_g_ruler {
 
+namespace {
+
+struct Participation {
+  bool will_recv;
+  int recv_source;
+  bool will_send;
+  int send_target;
+  int send_val;
+};
+
+Participation ComputeParticipation(int rank, int src, int dst, int low, int high, int payload) {
+  Participation p{false, MPI_PROC_NULL, false, MPI_PROC_NULL, 0};
+  if (rank == src) {
+    int next = rank + ((dst > src) ? +1 : -1);
+    if (next >= low && next <= high) {
+      p.will_send = true;
+      p.send_target = next;
+      p.send_val = payload;
+    }
+    return p;
+  }
+  int direction = (dst > src) ? +1 : -1;
+  int prev = rank - direction;
+  if (prev >= low && prev <= high) {
+    p.will_recv = true;
+    p.recv_source = prev;
+  }
+  if (rank != dst) {
+    int next = rank + direction;
+    if (next >= low && next <= high) {
+      p.will_send = true;
+      p.send_target = next;
+    }
+  }
+  return p;
+}
+
+}  // namespace
+
 YurkinGRulerMPI::YurkinGRulerMPI(const InType &in) {
   SetTypeOfTask(YurkinGRulerMPI::GetStaticTypeOfTask());
   GetInput() = in;
@@ -66,48 +105,20 @@ bool YurkinGRulerMPI::RunImpl() {
     return true;
   }
 
-  const int direction = (dst > src) ? +1 : -1;
-
-  bool will_recv = false;
-  int recv_source = MPI_PROC_NULL;
-  bool will_send = false;
-  int send_target = MPI_PROC_NULL;
-  int send_val = 0;
-
-  if (rank == src) {
-    int next = rank + direction;
-    if (next >= low && next <= high) {
-      will_send = true;
-      send_target = next;
-      send_val = payload;
-    }
-  } else {
-    int prev = rank - direction;
-    if (prev >= low && prev <= high) {
-      will_recv = true;
-      recv_source = prev;
-    }
-    if (rank != dst) {
-      int next = rank + direction;
-      if (next >= low && next <= high) {
-        will_send = true;
-        send_target = next;
-      }
-    }
-  }
+  Participation p = ComputeParticipation(rank, src, dst, low, high, payload);
 
   int recv_val = 0;
-  if (will_recv) {
-    MPI_Recv(&recv_val, 1, MPI_INT, recv_source, 0, topo_comm, MPI_STATUS_IGNORE);
+  if (p.will_recv) {
+    MPI_Recv(&recv_val, 1, MPI_INT, p.recv_source, 0, topo_comm, MPI_STATUS_IGNORE);
     if (rank == dst) {
       GetOutput() = recv_val;
     } else {
-      send_val = recv_val;
+      p.send_val = recv_val;
     }
   }
 
-  if (will_send && send_target != MPI_PROC_NULL) {
-    MPI_Send(&send_val, 1, MPI_INT, send_target, 0, topo_comm);
+  if (p.will_send && p.send_target != MPI_PROC_NULL) {
+    MPI_Send(&p.send_val, 1, MPI_INT, p.send_target, 0, topo_comm);
   }
 
   MPI_Barrier(topo_comm);
