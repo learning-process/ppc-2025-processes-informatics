@@ -11,7 +11,6 @@
 namespace kruglova_a_2d_multistep_par_opt {
 
 class KruglovaA2DMultRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
   InType input_data_{};
 
   void SetUp() override {
