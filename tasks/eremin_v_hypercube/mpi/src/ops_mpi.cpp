@@ -1,5 +1,7 @@
 #include "eremin_v_hypercube/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
 #include <cmath>
 #include <tuple>
 
