@@ -1,7 +1,5 @@
 #include "eremin_v_hypercube/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
 #include <cmath>
 #include <tuple>
 
@@ -55,23 +53,7 @@ bool EreminVHypercubeMPI::RunImpl() {
     int cube_rank = 0;
     MPI_Comm_rank(cube_comm, &cube_rank);
 
-    for (int dim = ndims - 1; dim >= 0; --dim) {
-      int neighbor = cube_rank ^ (1 << dim);
-      const bool is_active = (cube_rank & ((1 << dim) - 1)) == 0;
-      const bool is_sender = (cube_rank & (1 << dim)) == 0;
-      if (!is_active) {
-        continue;
-      }
-      if (is_sender) {
-        MPI_Send(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, cube_comm);
-        MPI_Send(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, cube_comm);
-        MPI_Send(&steps, 1, MPI_INT, neighbor, 2, cube_comm);
-      } else {
-        MPI_Recv(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, cube_comm, MPI_STATUS_IGNORE);
-        MPI_Recv(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, cube_comm, MPI_STATUS_IGNORE);
-        MPI_Recv(&steps, 1, MPI_INT, neighbor, 2, cube_comm, MPI_STATUS_IGNORE);
-      }
-    }
+    BroadcastBoundsOverHypercube(cube_comm, cube_rank, ndims, lower_bound, upper_bound, steps);
 
     const auto in_function = std::get<3>(GetInput());
     double step_size = (upper_bound - lower_bound) / static_cast<double>(steps);
@@ -104,6 +86,29 @@ bool EreminVHypercubeMPI::RunImpl() {
 
 bool EreminVHypercubeMPI::PostProcessingImpl() {
   return true;
+}
+
+void EreminVHypercubeMPI::BroadcastBoundsOverHypercube(MPI_Comm cube_comm, int cube_rank, int ndims,
+                                                       double &lower_bound, double &upper_bound, int &steps) {
+  for (int dim = ndims - 1; dim >= 0; --dim) {
+    int neighbor = cube_rank ^ (1 << dim);
+    const bool is_active = (cube_rank & ((1 << dim) - 1)) == 0;
+    const bool is_sender = (cube_rank & (1 << dim)) == 0;
+
+    if (!is_active) {
+      continue;
+    }
+
+    if (is_sender) {
+      MPI_Send(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, cube_comm);
+      MPI_Send(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, cube_comm);
+      MPI_Send(&steps, 1, MPI_INT, neighbor, 2, cube_comm);
+    } else {
+      MPI_Recv(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, cube_comm, MPI_STATUS_IGNORE);
+      MPI_Recv(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, cube_comm, MPI_STATUS_IGNORE);
+      MPI_Recv(&steps, 1, MPI_INT, neighbor, 2, cube_comm, MPI_STATUS_IGNORE);
+    }
+  }
 }
 
 }  // namespace eremin_v_hypercube

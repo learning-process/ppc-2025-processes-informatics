@@ -1,4 +1,5 @@
 #pragma once
+#include <mpi.h>
 
 #include "eremin_v_hypercube/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -17,6 +18,8 @@ class EreminVHypercubeMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+  void BroadcastBoundsOverHypercube(MPI_Comm cube_comm, int cube_rank, int ndims, double &lower_bound,
+                                    double &upper_bound, int &steps);
 };
 
 }  // namespace eremin_v_hypercube
