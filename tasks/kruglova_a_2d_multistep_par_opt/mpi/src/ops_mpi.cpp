@@ -81,12 +81,12 @@ bool KruglovaA2DMuitMPI::RunImpl() {
   };
   std::vector<Trial2D> trials;
   if (rank == 0) {
-    const int init_points = 40;
+    const int init_points = 20;
     for (int i = 0; i < init_points; ++i) {
       double x = in.x_min + (in.x_max - in.x_min) * i / (double)(init_points - 1);
       double y_best;
       double f = Solve1DStrongin([&](double y) { return ObjectiveFunction(x, y); }, in.y_min, in.y_max, in.eps,
-                                 std::max(50, in.max_iters / 10), y_best);
+                                 std::max(20, in.max_iters / 20), y_best);
       trials.push_back({x, y_best, f});
     }
     std::sort(trials.begin(), trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
@@ -143,7 +143,7 @@ bool KruglovaA2DMuitMPI::RunImpl() {
     double x_new = 0.5 * (my_interval.x1 + my_interval.x2) - (my_interval.f2 - my_interval.f1) / (2.0 * m_local);
     double y_res;
     double f_res = Solve1DStrongin([&](double y) { return ObjectiveFunction(x_new, y); }, in.y_min, in.y_max, in.eps,
-                                   std::max(50, in.max_iters / 10), y_res);
+                                   std::max(25, in.max_iters / 20), y_res);
     double send_res[3] = {x_new, y_res, f_res};
     std::vector<double> recv_res(size * 3);
     MPI_Gather(send_res, 3, MPI_DOUBLE, recv_res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);

@@ -99,7 +99,7 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
   };
 
   std::vector<Trial2D> x_trials;
-  const int init_points = 40;
+  const int init_points = 20;
 
   for (int i = 0; i < init_points; ++i) {
     double x = in.x_min + (in.x_max - in.x_min) * i / (double)(init_points - 1);
