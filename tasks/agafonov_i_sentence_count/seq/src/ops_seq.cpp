@@ -1,45 +1,48 @@
 #include "agafonov_i_sentence_count/seq/include/ops_seq.hpp"
 
-#include <algorithm>
 #include <cctype>
+#include <string>
 
 namespace agafonov_i_sentence_count {
 
 SentenceCountSEQ::SentenceCountSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool SentenceCountSEQ::ValidationImpl() {
-  return !GetInput().empty();
+  return true;
 }
 
 bool SentenceCountSEQ::PreProcessingImpl() {
-  GetOutput() = 0;
   return true;
 }
 
 bool SentenceCountSEQ::RunImpl() {
   const std::string &text = GetInput();
+  if (text.empty()) {
+    GetOutput() = 0;
+    return true;
+  }
+
   int count = 0;
-  bool in_sentence = false;
+  bool in_word = false;
+  int len = static_cast<int>(text.length());
 
-  for (size_t i = 0; i < text.length(); ++i) {
-    char c = text[i];
-
-    if (std::isalpha(c) || std::isdigit(c)) {
-      in_sentence = true;
-    } else if (c == '.' && in_sentence) {
+  for (int i = 0; i < len; ++i) {
+    unsigned char c = static_cast<unsigned char>(text[i]);
+    if (std::isalnum(c)) {
+      in_word = true;
+    } else if ((c == '.' || c == '!' || c == '?') && in_word) {
+      if (c == '.' && i + 1 < len && text[i + 1] == '.') {
+        continue;
+      }
       count++;
-      in_sentence = false;
-    } else if ((c == '!' || c == '?') && in_sentence) {
-      count++;
-      in_sentence = false;
+      in_word = false;
     }
   }
 
-  if (in_sentence) {
+  if (in_word) {
     count++;
   }
 
@@ -48,7 +51,7 @@ bool SentenceCountSEQ::RunImpl() {
 }
 
 bool SentenceCountSEQ::PostProcessingImpl() {
-  return GetOutput() >= 0;
+  return true;
 }
 
 }  // namespace agafonov_i_sentence_count

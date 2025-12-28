@@ -4,22 +4,21 @@
 
 #include <algorithm>
 #include <cctype>
-#include <vector>
+#include <string>
 
 namespace agafonov_i_sentence_count {
 
 SentenceCountMPI::SentenceCountMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool SentenceCountMPI::ValidationImpl() {
-  return !GetInput().empty();
+  return true;
 }
 
 bool SentenceCountMPI::PreProcessingImpl() {
-  return GetOutput() >= 0;
+  return true;
 }
 
 bool SentenceCountMPI::RunImpl() {
@@ -27,94 +26,63 @@ bool SentenceCountMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
-  int total_length;
+  int total_length = 0;
   if (world_rank == 0) {
     total_length = static_cast<int>(GetInput().length());
   }
   MPI_Bcast(&total_length, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::string text = (world_rank == 0) ? GetInput() : std::string(total_length, ' ');
-  if (total_length > 0) {
-    MPI_Bcast(const_cast<char *>(text.data()), total_length, MPI_CHAR, 0, MPI_COMM_WORLD);
-  }
-
-  int chunk_size = total_length / world_size;
-  int remainder = total_length % world_size;
-
-  int start = world_rank * chunk_size + std::min(world_rank, remainder);
-  int end = start + chunk_size + (world_rank < remainder ? 1 : 0);
-
-  if (start >= total_length) {
-    int local_count = 0;
-    int global_count = 0;
-    MPI_Reduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&global_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    GetOutput() = global_count;
+  if (total_length == 0) {
+    GetOutput() = 0;
     return true;
   }
 
-  int local_count = 0;
-  bool local_in_sentence = false;
-
-  if (world_rank > 0 && start > 0) {
-    char prev_char = text[start - 1];
-    local_in_sentence = std::isalnum(static_cast<unsigned char>(prev_char));
+  std::string text;
+  if (world_rank == 0) {
+    text = GetInput();
+  } else {
+    text.resize(total_length);
   }
+  MPI_Bcast(const_cast<char *>(text.data()), total_length, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  for (int i = start; i < end && i < total_length; ++i) {
-    char c = text[i];
+  int chunk_size = total_length / world_size;
+  int remainder = total_length % world_size;
+  int start = world_rank * chunk_size + std::min(world_rank, remainder);
+  int end = start + chunk_size + (world_rank < remainder ? 1 : 0);
 
-    if (std::isalnum(static_cast<unsigned char>(c))) {
-      local_in_sentence = true;
-    } else if (c == '.' && local_in_sentence) {
-      if (i + 1 < total_length && text[i + 1] == '.') {
-        continue;
+  int local_count = 0;
+  if (start < end) {
+    bool in_word = false;
+    if (start > 0) {
+      in_word = std::isalnum(static_cast<unsigned char>(text[start - 1]));
+    }
+    for (int i = start; i < end; ++i) {
+      unsigned char c = static_cast<unsigned char>(text[i]);
+      if (std::isalnum(c)) {
+        in_word = true;
+      } else if ((c == '.' || c == '!' || c == '?') && in_word) {
+        if (c == '.' && i + 1 < total_length && text[i + 1] == '.') {
+          continue;
+        }
+        local_count++;
+        in_word = false;
       }
-      local_count++;
-      local_in_sentence = false;
-    } else if ((c == '!' || c == '?') && local_in_sentence) {
-      local_count++;
-      local_in_sentence = false;
     }
   }
 
   int global_count = 0;
-  MPI_Reduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_count, &global_count, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  if (world_rank == 0) {
-    for (int i = 1; i < world_size; ++i) {
-      int boundary_idx = (i * chunk_size + std::min(i, remainder)) - 1;
-
-      if (boundary_idx >= 0 && boundary_idx < total_length - 1) {
-        char left_char = text[boundary_idx];
-        char right_char = text[boundary_idx + 1];
-
-        if (std::isalnum(static_cast<unsigned char>(left_char)) &&
-            (right_char == '.' || right_char == '!' || right_char == '?')) {
-          if (!(right_char == '.' && boundary_idx + 2 < total_length && text[boundary_idx + 2] == '.')) {
-            global_count--;
-          }
-        }
-      }
-    }
-
-    if (total_length > 0) {
-      char last_char = text[total_length - 1];
-      if (std::isalnum(static_cast<unsigned char>(last_char))) {
-        global_count++;
-      }
-    }
+  if (std::isalnum(static_cast<unsigned char>(text[total_length - 1]))) {
+    global_count++;
   }
-
-  MPI_Bcast(&global_count, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   GetOutput() = global_count;
 
   return true;
 }
 
 bool SentenceCountMPI::PostProcessingImpl() {
-  return GetOutput() >= 0;
+  return true;
 }
 
 }  // namespace agafonov_i_sentence_count
