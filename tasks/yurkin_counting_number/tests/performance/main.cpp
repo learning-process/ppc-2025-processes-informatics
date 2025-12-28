@@ -2,7 +2,6 @@
 
 #include <cctype>
 #include <cstddef>
-#include <string>
 
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
@@ -12,11 +11,11 @@
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  static constexpr int kCount_ = 100000;
+  static constexpr int kCount = 100000;
   InType input_data_;
 
   void SetUp() override {
-    input_data_ = InType(static_cast<std::size_t>(kCount_), 'a');
+    input_data_ = InType(static_cast<std::size_t>(kCount), 'a');
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
