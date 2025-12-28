@@ -15,7 +15,9 @@
 namespace chaschin_v_sobel_operator {
 
 ChaschinVSobelOperatorMPI::ChaschinVSobelOperatorMPI(const InType &in) {
-  GetInput() = in;
+  auto in_copy = in;
+
+  GetInput() = std::move(in_copy);
   GetOutput().clear();
 
   int height = std::get<1>(in);
