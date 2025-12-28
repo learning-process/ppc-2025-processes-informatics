@@ -118,7 +118,7 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    /*std::cout<<"Output check: ";
+    std::cout<<"Output check: ";
     for (size_t i = 0; i < output_data.size(); i++) {
       for (size_t j = 0; j < output_data[0].size(); j++) {
         std::cout<< "{" <<
@@ -138,7 +138,7 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
       }
       std::cout << "\n";
     }
-    std::cout << "\n";*/
+    std::cout << "\n";
 
     if (output_data.size() != expected_output_.size()) {
       return false;
@@ -167,10 +167,14 @@ TEST_P(ChaschinVRunFuncTestsProcessesSO, SobelOperator) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 10> kTestParam = {
+const std::array<TestType, 20> kTestParam1 = {
     std::make_tuple(4, "4"),   std::make_tuple(5, "5"),   std::make_tuple(7, "7"),   std::make_tuple(8, "8"),
     std::make_tuple(9, "9"),   std::make_tuple(10, "10"), std::make_tuple(11, "11"), std::make_tuple(13, "13"),
-    std::make_tuple(15, "15"), std::make_tuple(17, "17")};
+    std::make_tuple(15, "15"), std::make_tuple(17, "17"), std::make_tuple(19, "19"), std::make_tuple(21, "21"),
+    std::make_tuple(23, "23"), std::make_tuple(25, "25"), std::make_tuple(27, "27"), std::make_tuple(29, "29"),
+    std::make_tuple(31, "31"), std::make_tuple(33, "33"), std::make_tuple(35, "35"), std::make_tuple(37, "37")};
+const std::array<TestType, 3> kTestParam = {
+    std::make_tuple(4, "4"),   std::make_tuple(5, "5"),   std::make_tuple(7, "7")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ChaschinVSobelOperatorMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),
