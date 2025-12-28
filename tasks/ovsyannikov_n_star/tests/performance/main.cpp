@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <vector>
-
 #include "ovsyannikov_n_star/common/include/common.hpp"
 #include "ovsyannikov_n_star/mpi/include/ops_mpi.hpp"
 #include "ovsyannikov_n_star/seq/include/ops_seq.hpp"
