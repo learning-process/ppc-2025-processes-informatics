@@ -8,7 +8,7 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
-    : limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {}
+    : BaseTask(in), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {}
 
 unsigned int FrolovaSMultIntTrapezMPI::CalculationOfCoefficient(const std::vector<double> &point) {
   unsigned int coefficient = 1;
@@ -83,7 +83,7 @@ bool FrolovaSMultIntTrapezMPI::PreProcessingImpl() {
   for (unsigned int i = start_index; i < end_index; ++i) {
     std::vector<double> point = GetPointFromNumber(i);
     unsigned int coefficient = CalculationOfCoefficient(point);
-    double value = input_.function(point);  // предположим, что input_ сохранен
+    double value = GetInput().function(point);
     local_result += static_cast<double>(coefficient) * value;
   }
 
