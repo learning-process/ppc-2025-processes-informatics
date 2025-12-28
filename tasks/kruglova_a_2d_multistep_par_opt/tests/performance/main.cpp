@@ -17,7 +17,7 @@ class KruglovaA2DMultRunPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
 
   void SetUp() override {
     input_data_ = {-5.12, 5.12, -5.12, 5.12,
-                   1e-3,  500
+                   1e-6,  2000
 
     };
   }
@@ -32,9 +32,6 @@ class KruglovaA2DMultRunPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
 };
 
 TEST_P(KruglovaA2DMultRunPerfTest, RunPerfModes) {
-#ifdef USE_PERF_TESTS
-  std::this_thread::sleep_for(std::chrono::milliseconds(2));
-#endif
   ExecuteTest(GetParam());
 }
 
