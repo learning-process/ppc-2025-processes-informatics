@@ -15,7 +15,7 @@ ChaschinVSobelOperatorSEQ::ChaschinVSobelOperatorSEQ(const InType &in) {
   this->GetOutput().clear();
 }
 
-bool ChaschinVSobelOperatorMPI::ValidationImpl() {
+bool ChaschinVSobelOperatorSEQ::ValidationImpl() {
   const auto &in = GetInput();
 
   const auto &image = std::get<0>(in);
@@ -39,7 +39,8 @@ bool ChaschinVSobelOperatorSEQ::RunImpl() {
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < m; ++j) {
-      gray[i][j] = mat[i][j];
+      Pixel p = mat[i][j];
+      gray[i][j] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
     }
   }
 
