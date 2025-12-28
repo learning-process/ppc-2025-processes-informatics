@@ -21,10 +21,12 @@ bool MorozovaSBroadcastSEQ::ValidationImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  if (size <= 0) {
+    return false;
+  }
   if (rank == 0 && GetInput().empty()) {
     return false;
   }
-
   return true;
 }
 
@@ -37,9 +39,18 @@ bool MorozovaSBroadcastSEQ::RunImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  GetOutput().clear();
-  GetOutput().reserve(GetInput().size());
-  std::copy(GetInput().begin(), GetInput().end(), std::back_inserter(GetOutput()));
+  int data_size = 0;
+  if (rank == 0) {
+    data_size = static_cast<int>(GetInput().size());
+  }
+  MPI_Bcast(&data_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  GetOutput().resize(data_size);
+  if (data_size > 0) {
+    if (rank == 0) {
+      std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
+    }
+    MPI_Bcast(GetOutput().data(), data_size, MPI_INT, 0, MPI_COMM_WORLD);
+  }
 
   return true;
 }
