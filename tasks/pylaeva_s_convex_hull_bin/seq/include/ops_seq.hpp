@@ -17,6 +17,11 @@ class PylaevaSConvexHullBinSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void FindConnectedComponents();
+  static std::vector<Point> GrahamScan(const std::vector<Point> &points);
+
+  ImageData processed_data_;
 };
 
 }  // namespace pylaeva_s_convex_hull_bin
