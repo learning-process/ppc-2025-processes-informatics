@@ -15,9 +15,12 @@ ChaschinVSobelOperatorSEQ::ChaschinVSobelOperatorSEQ(const InType &in) {
   this->GetOutput().clear();
 }
 
-bool ChaschinVSobelOperatorSEQ::ValidationImpl() {
+bool ChaschinVSobelOperatorMPI::ValidationImpl() {
   const auto &in = GetInput();
-  return !in.empty() && !in[0].empty();
+
+  const auto &image = std::get<0>(in);
+
+  return !image.empty();
 }
 
 bool ChaschinVSobelOperatorSEQ::PreProcessingImpl() {
@@ -25,11 +28,13 @@ bool ChaschinVSobelOperatorSEQ::PreProcessingImpl() {
 }
 
 bool ChaschinVSobelOperatorSEQ::RunImpl() {
-  const auto &mat = GetInput();
+  const auto &in = GetInput();
+
+  const auto &mat = std::get<0>(in);
   auto &out = GetOutput();
 
-  int n = mat.size();
-  int m = mat[0].size();
+  int n = std::get<1>(in);
+  int m = std::get<2>(in);
   std::vector<std::vector<float>> gray(n, std::vector<float>(m, 0.0f));
 
   for (int i = 0; i < n; ++i) {
