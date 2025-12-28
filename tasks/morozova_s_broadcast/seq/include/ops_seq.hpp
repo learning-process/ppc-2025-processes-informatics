@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mpi.h>
+
 #include "morozova_s_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
 
