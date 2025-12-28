@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mpi.h>
+#include <vector>
 
 #include "morozova_s_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
@@ -12,6 +12,7 @@ class MorozovaSBroadcastSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+
   explicit MorozovaSBroadcastSEQ(const InType &in);
 
  private:
@@ -21,5 +22,7 @@ class MorozovaSBroadcastSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-void SequentialBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+// Заглушка для SEQ — объявление
+void SequentialBroadcast(void *, int, int, int, int);
+
 }  // namespace morozova_s_broadcast

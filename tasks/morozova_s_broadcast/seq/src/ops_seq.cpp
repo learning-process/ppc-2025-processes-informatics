@@ -1,9 +1,6 @@
 #include "morozova_s_broadcast/seq/include/ops_seq.hpp"
 
-#include <mpi.h>
-
 #include <algorithm>
-#include <vector>
 
 #include "morozova_s_broadcast/common/include/common.hpp"
 
@@ -11,23 +8,12 @@ namespace morozova_s_broadcast {
 
 MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = InType(in);
-  GetOutput() = std::vector<int>();
+  GetInput() = in;
+  GetOutput().clear();
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if (size <= 0) {
-    return false;
-  }
-  const int root = 0;
-  if (root < 0 || root >= size) {
-    return false;
-  }
-  if (rank == root && GetInput().empty()) {
+  if (GetInput().empty()) {
     return false;
   }
   return true;
@@ -37,49 +23,18 @@ bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
   return true;
 }
 
-void SequentialBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
-  if (size <= 1) {
-    return;
-  }
-  if (rank == root) {
-    for (int dest = 0; dest < size; ++dest) {
-      if (dest != root) {
-        MPI_Send(data, count, datatype, dest, 0, comm);
-      }
-    }
-  } else {
-    MPI_Recv(data, count, datatype, root, 0, comm, MPI_STATUS_IGNORE);
-  }
-}
-
 bool MorozovaSBroadcastSEQ::RunImpl() {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  const int root = 0;
-  int data_size = 0;
-  if (rank == root) {
-    data_size = static_cast<int>(GetInput().size());
-  }
-  SequentialBroadcast(&data_size, 1, MPI_INT, root, MPI_COMM_WORLD);
-  GetOutput().resize(data_size);
-  if (data_size > 0) {
-    if (rank == root) {
-      std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
-    }
-    SequentialBroadcast(GetOutput().data(), data_size, MPI_INT, root, MPI_COMM_WORLD);
-  }
-
+  GetOutput() = GetInput();
   return true;
 }
 
 bool MorozovaSBroadcastSEQ::PostProcessingImpl() {
   return true;
+}
+
+// Реализация заглушки broadcast для SEQ
+void SequentialBroadcast(void *, int, int, int, int) {
+  // Ничего делать не нужно
 }
 
 }  // namespace morozova_s_broadcast
