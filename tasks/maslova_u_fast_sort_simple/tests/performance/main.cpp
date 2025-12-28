@@ -47,7 +47,7 @@ class MaslovaUFastSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     int rank = 0;
     int is_mpi = 0;
     MPI_Initialized(&is_mpi);
-    if (is_mpi) {
+    if (is_mpi != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
       if (rank != 0) {
         return true;
