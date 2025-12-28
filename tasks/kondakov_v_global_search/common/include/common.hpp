@@ -9,7 +9,7 @@
 namespace kondakov_v_global_search {
 
 struct Params {
-  std::function<double(double)> func;
+  std::function<double(double)> func = nullptr;
   double left = 0.0;
   double right = 0.0;
   double accuracy = 1e-6;

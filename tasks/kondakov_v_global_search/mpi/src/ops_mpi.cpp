@@ -174,32 +174,33 @@ bool KondakovVGlobalSearchMPI::CheckConvergence(const Params &cfg,
 
 void KondakovVGlobalSearchMPI::GatherAndBroadcastTrialResults(const std::vector<std::pair<double, std::size_t>> &merits,
                                                               int num_trials, double l_est, const Params &cfg) {
-  double local_x = 0.0;
-  double local_fx = 0.0;
-  bool has_local_trial = false;
+  double local_x_val = 0.0;
+  double local_fx_val = 0.0;
+  int local_count = 0;
 
   if (world_rank_ < num_trials) {
     std::size_t interval_idx = merits[world_rank_].second;
-    local_x = ProposeTrialPoint(interval_idx, l_est);
-    local_fx = cfg.func(local_x);
-    has_local_trial = std::isfinite(local_fx);
+    double x = ProposeTrialPoint(interval_idx, l_est);
+    double fx = cfg.func(x);
+    if (std::isfinite(fx)) {
+      local_x_val = x;
+      local_fx_val = fx;
+      local_count = 2;
+    }
   }
 
   std::vector<int> send_counts(world_size_);
-  std::vector<int> send_displs(world_size_);
-  std::vector<double> local_pair = has_local_trial ? std::vector<double>{local_x, local_fx} : std::vector<double>{};
-
-  int local_count = static_cast<int>(local_pair.size());
   MPI_Allgather(&local_count, 1, MPI_INT, send_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-  send_displs[0] = 0;
+  std::vector<int> send_displs(world_size_, 0);
   for (int i = 1; i < world_size_; ++i) {
     send_displs[i] = send_displs[i - 1] + send_counts[i - 1];
   }
-  int total_recv = send_displs.back() + send_counts.back();
+  int total_recv = (world_size_ > 0) ? (send_displs.back() + send_counts.back()) : 0;
+  double local_data[2] = {local_x_val, local_fx_val};
 
   std::vector<double> recv_buf(total_recv);
-  MPI_Allgatherv(local_pair.data(), local_count, MPI_DOUBLE, recv_buf.data(), send_counts.data(), send_displs.data(),
+  MPI_Allgatherv(local_data, local_count, MPI_DOUBLE, recv_buf.data(), send_counts.data(), send_displs.data(),
                  MPI_DOUBLE, MPI_COMM_WORLD);
 
   if (IsRoot()) {
@@ -210,7 +211,6 @@ void KondakovVGlobalSearchMPI::GatherAndBroadcastTrialResults(const std::vector<
     }
   }
 }
-
 bool KondakovVGlobalSearchMPI::RunImpl() {
   const auto &cfg = GetInput();
   std::vector<std::pair<double, std::size_t>> merits;
