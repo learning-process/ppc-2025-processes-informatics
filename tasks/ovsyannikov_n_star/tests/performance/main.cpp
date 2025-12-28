@@ -35,7 +35,9 @@ TEST_P(OvsyannikovNRunPerfTestStar, RunPerfModes) {
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, OvsyannikovNStarMPI, OvsyannikovNStarSEQ>(PPC_SETTINGS_ovsyannikov_n_star);
 
-INSTANTIATE_TEST_SUITE_P(StarPerfTests, OvsyannikovNRunPerfTestStar, ppc::util::TupleToGTestValues(kAllPerfTasks),
-                         OvsyannikovNRunPerfTestStar::CustomPerfTestName);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kPerfTestName = OvsyannikovNRunPerfTestStar::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(StarPerfTests, OvsyannikovNRunPerfTestStar, kGtestValues, kPerfTestName);
 
 }  // namespace ovsyannikov_n_star

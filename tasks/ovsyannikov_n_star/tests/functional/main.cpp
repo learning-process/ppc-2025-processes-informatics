@@ -13,7 +13,7 @@
 
 namespace ovsyannikov_n_star {
 
-class OvsyannikovNRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class OvsyannikovNStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -37,7 +37,7 @@ class OvsyannikovNRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InT
   InType input_data_ = 1;
 };
 
-TEST_P(OvsyannikovNRunFuncTestsProcesses, StarTopologyTest) {
+TEST_P(OvsyannikovNStarFuncTests, StarTopologyTest) {
   ExecuteTest(GetParam());
 }
 
@@ -48,8 +48,8 @@ const auto kTestTasksList =
                    ppc::util::AddFuncTask<OvsyannikovNStarSEQ, InType>(kTestParam, PPC_SETTINGS_ovsyannikov_n_star));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kPerfTestName = OvsyannikovNRunFuncTestsProcesses::PrintFuncTestName<OvsyannikovNRunFuncTestsProcesses>;
+const auto kPerfTestName = OvsyannikovNStarFuncTests::PrintFuncTestName<OvsyannikovNStarFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(StarTopologyTests, OvsyannikovNRunFuncTestsProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(StarTopologyTests, OvsyannikovNStarFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace ovsyannikov_n_star
