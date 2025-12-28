@@ -3,11 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <utility>
 #include <vector>
-
-#include "maslova_u_fast_sort_simple/common/include/common.hpp"
 
 namespace maslova_u_fast_sort_simple {
 
@@ -21,7 +17,7 @@ bool MaslovaUFastSortSimpleMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int flag = 0;
   if (rank == 0) {
-    if (GetInput().size() > static_cast<size_t>(2147483647)) {
+    if (GetInput().size() > 2147483647LL) {
       flag = 1;
     }
   }
@@ -41,11 +37,13 @@ void MaslovaUFastSortSimpleMPI::TreeMerge(std::vector<int> &local_vec, int rank,
         MPI_Status status;
         MPI_Probe(rank + step, 0, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &recv_size);
+
         std::vector<int> received(recv_size);
         MPI_Recv(received.data(), recv_size, MPI_INT, rank + step, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-        std::vector<int> merged(local_vec.size() + received.size());
-        std::ranges::merge(local_vec, received, merged.begin());
+        std::vector<int> merged;
+        merged.reserve(local_vec.size() + received.size());
+        std::merge(local_vec.begin(), local_vec.end(), received.begin(), received.end(), std::back_inserter(merged));
         local_vec = std::move(merged);
       }
     } else {
@@ -57,8 +55,7 @@ void MaslovaUFastSortSimpleMPI::TreeMerge(std::vector<int> &local_vec, int rank,
 }
 
 bool MaslovaUFastSortSimpleMPI::RunImpl() {
-  int rank = 0;
-  int size = 0;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -74,10 +71,10 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
 
   std::vector<int> send_counts(size);
   std::vector<int> displs(size);
-  int part = total_size / size;
-  int rem = total_size % size;
+  int q = total_size / size;
+  int r = total_size % size;
   for (int i = 0; i < size; ++i) {
-    send_counts[i] = part + (i < rem ? 1 : 0);
+    send_counts[i] = q + (i < r ? 1 : 0);
     displs[i] = (i == 0) ? 0 : displs[i - 1] + send_counts[i - 1];
   }
 
@@ -85,7 +82,9 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
   MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_vec.data(),
                send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::ranges::sort(local_vec);
+  if (!local_vec.empty()) {
+    QuickSort(local_vec.data(), 0, static_cast<int>(local_vec.size()) - 1);
+  }
 
   TreeMerge(local_vec, rank, size);
 

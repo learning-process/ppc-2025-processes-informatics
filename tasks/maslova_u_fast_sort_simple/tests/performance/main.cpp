@@ -47,25 +47,17 @@ class MaslovaUFastSortPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     int rank = 0;
     int is_mpi = 0;
     MPI_Initialized(&is_mpi);
-
-    if (is_mpi != 0) {
+    if (is_mpi) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
-    if (rank != 0) {
-      return true;
+      if (rank != 0) {
+        return true;
+      }
     }
 
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
-
-    for (size_t i = 0; i < output_data.size(); ++i) {
-      if (output_data[i] != expected_output_[i]) {
-        return false;
-      }
-    }
-    return true;
+    return std::equal(output_data.begin(), output_data.end(), expected_output_.begin());
   }
 
  private:
@@ -80,7 +72,10 @@ TEST_P(MaslovaUFastSortPerfTests, RunPerfModes) {
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, MaslovaUFastSortSimpleMPI, MaslovaUFastSortSimpleSEQ>(
     PPC_SETTINGS_maslova_u_fast_sort_simple);
 
-INSTANTIATE_TEST_SUITE_P(fastSortPerf, MaslovaUFastSortPerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
-                         MaslovaUFastSortPerfTests::CustomPerfTestName);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = MaslovaUFastSortPerfTests::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(fastSortPerf, MaslovaUFastSortPerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace maslova_u_fast_sort_simple

@@ -1,8 +1,5 @@
 #include "maslova_u_fast_sort_simple/seq/include/ops_seq.hpp"
 
-#include <algorithm>
-#include <vector>
-
 #include "maslova_u_fast_sort_simple/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -25,8 +22,9 @@ bool MaslovaUFastSortSimpleSEQ::RunImpl() {
   GetOutput() = GetInput();
 
   // Сортируем
+  GetOutput() = GetInput();
   if (!GetOutput().empty()) {
-    std::sort(GetOutput().begin(), GetOutput().end());
+    QuickSort(GetOutput().data(), 0, static_cast<int>(GetOutput().size()) - 1);
   }
   return true;
 }

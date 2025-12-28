@@ -15,10 +15,10 @@
 - OutPut: std::vector<int> (отсортированный).
 
 ## 3. Baseline Algorithm (Sequential)
-Последовательная версия просто копирует входные данные и вызывает стандартную функцию std::sort.
+Последовательная версия алгоритма использует итеративную реализацию быстрой сортировки (QuickSort) с использованием вспомогательного стека для управления границами подмассивов. Опорный элемент выбирается по центру диапазона.
 
 ## 4. Parallelization Scheme
-Сначала главный процесс берет исходный большой массив и разделяет его на равные части. Эти кусочки раздаются всем доступным процессам. Далее каждый процесс сортирует полученную часть данных. Затем происходит сборка результатов. Процессы разбиваются на пары: один передает свои данные соседу, а сосед аккуратно соединяет два отсортированных списка в один общий, сохраняя порядок элементов. На следующем шаге оставшиеся процессы снова объединяются в пары. Это повторяется до тех пор, пока весь полностью отсортированный массив не соберется у главного процесса.
+Сначала главный процесс берет исходный большой массив и разделяет его на равные части. Эти кусочки раздаются всем доступным процессам. Каждый процесс независимо сортирует свою часть данных с помощью функции QuickSort. Затем происходит сборка результатов. Процессы разбиваются на пары: один передает свои данные соседу, а сосед аккуратно соединяет два отсортированных списка в один общий, сохраняя порядок элементов. На следующем шаге оставшиеся процессы снова объединяются в пары. Это повторяется до тех пор, пока весь полностью отсортированный массив не соберется у главного процесса.
 
 ## 5. Implementation Details
 - common: Определяет общие типы данных (InType, OutType).
@@ -44,13 +44,13 @@
 
 | Mode | Count | Time, s   | Speedup | Efficiency |
 |------|-------|-----------|---------|------------|
-| seq  | 1     | 1.710     | 1.00    | N/A        |
-| mpi  | 2     | 0.985     | 1.74    | 87.0%      |
-| mpi  | 4     | 0.622     | 2.75    | 68.8%      |
-| mpi  | 8     | 0.461     | 3.71    | 46.4%      |
+| seq  | 1     | 1.150     | 1.00    | N/A        |
+| mpi  | 2     | 0.655     | 1.76    | 88.0%      |
+| mpi  | 4     | 0.415     | 2.77    | 69.2%      |
+| mpi  | 8     | 0.276     | 4.17    | 52.1%      |
 
 ## 8. Conclusions
-Реализация параллельной сортировки продемонстрировала уверенное ускорение на больших объемах данных (20 млн элементов). С увеличением числа процессов время выполнения стабильно снижается. На 2 процессах достигнуто ускорение 1.74x. На 4 процессах — 2.75x. На 8 процессах — 3.71x. Это отличный результат.
+Реализация параллельной сортировки продемонстрировала уверенное ускорение на больших объемах данных (20 млн элементов). С увеличением числа процессов время выполнения стабильно снижается. На 2 процессах достигнуто ускорение 1.76x. На 4 процессах — 2.77x. На 8 процессах — 4.17x. Это отличный результат.
 
 
 ## 9. References
@@ -64,21 +64,17 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int total_size = 0;
-  if (rank == 0) {
-    total_size = static_cast<int>(GetInput().size());
-  }
+  if (rank == 0) total_size = static_cast<int>(GetInput().size());
   MPI_Bcast(&total_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (total_size == 0) {
-    return true;
-  }
+  if (total_size == 0) return true;
 
   std::vector<int> send_counts(size);
   std::vector<int> displs(size);
-  int part = total_size / size;
-  int rem = total_size % size;
+  int q = total_size / size;
+  int r = total_size % size;
   for (int i = 0; i < size; ++i) {
-    send_counts[i] = part + (i < rem ? 1 : 0);
+    send_counts[i] = q + (i < r ? 1 : 0);
     displs[i] = (i == 0) ? 0 : displs[i - 1] + send_counts[i - 1];
   }
 
@@ -86,30 +82,11 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
   MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts.data(), displs.data(), MPI_INT, local_vec.data(),
                send_counts[rank], MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::sort(local_vec.begin(), local_vec.end());
-
-  int step = 1;
-  while (step < size) {
-    if (rank % (2 * step) == 0) {
-      if (rank + step < size) {
-        int recv_size = 0;
-        MPI_Status status;
-        MPI_Probe(rank + step, 0, MPI_COMM_WORLD, &status);
-        MPI_Get_count(&status, MPI_INT, &recv_size);
-        std::vector<int> received(recv_size);
-        MPI_Recv(received.data(), recv_size, MPI_INT, rank + step, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        std::vector<int> merged(local_vec.size() + received.size());
-        std::merge(local_vec.begin(), local_vec.end(), received.begin(), received.end(), merged.begin());
-        local_vec = std::move(merged);
-      }
-    } else {
-      int target = rank - step;
-      MPI_Send(local_vec.data(), (int)local_vec.size(), MPI_INT, target, 0, MPI_COMM_WORLD);
-      break;
-    }
-    step *= 2;
+  if (!local_vec.empty()) {
+    QuickSort(local_vec.data(), 0, static_cast<int>(local_vec.size()) - 1);
   }
+
+  TreeMerge(local_vec, rank, size);
 
   if (rank == 0) {
     GetOutput() = std::move(local_vec);
