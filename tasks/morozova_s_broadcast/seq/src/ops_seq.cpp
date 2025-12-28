@@ -17,12 +17,9 @@ MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  if (GetExecutionMode() == ppc::util::ExecutionMode::kPipeline) {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    return rank == 0;
-  }
-  return true;
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  return rank == 0;
 }
 
 bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
@@ -30,6 +27,11 @@ bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
 }
 
 bool MorozovaSBroadcastSEQ::RunImpl() {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank != 0) {
+    return true;
+  }
   GetOutput().reserve(GetInput().size());
   std::copy(GetInput().begin(), GetInput().end(), std::back_inserter(GetOutput()));
   return true;
