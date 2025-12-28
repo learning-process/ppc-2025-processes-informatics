@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "kruglova_a_2d_multistep_par_opt/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,7 +20,7 @@ class KruglovaA2DMuitMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double Solve1DSequential(std::function<double(double)> func, double a, double b, double eps, int max_iters);
+  double Solve1DSequential(const std::function<double(double)> &func, double a, double b, double eps, int max_iters);
 };
 
 }  // namespace kruglova_a_2d_multistep_par_opt

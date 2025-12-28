@@ -1,9 +1,9 @@
 #pragma once
 
-#include <algorithm>
 #include <cmath>
-#include <limits>
-#include <vector>
+#include <functional>
+#include <string>
+#include <tuple>
 
 #ifndef M_PI
 #  define M_PI 3.14159265358979323846
@@ -46,7 +46,7 @@ using BaseTask = ppc::task::Task<InType, OutType>;
 inline double ObjectiveFunction(double x, double y) {
   constexpr double kA = 10.0;
   constexpr double kN = 2.0;
-  return (kA * kN) + (x * x) + (y * y) - kA * (std::cos(2.0 * M_PI * x) + std::cos(2.0 * M_PI * y));
+  return (kA * kN) + (x * x) + (y * y) - (kA * (std::cos(2.0 * M_PI * x) + std::cos(2.0 * M_PI * y)));
 }
 
 }  // namespace kruglova_a_2d_multistep_par_opt
