@@ -105,25 +105,9 @@ bool ValidateTemporaryArrays(const std::vector<double> &temporary_row_values, co
          row_marker_array.size() == static_cast<std::size_t>(column_count);
 }
 
-bool ValidateMatrixBElement(int matrix_b_row, int column_count, const std::vector<int> &column_pointers) {
-  if (matrix_b_row < 0 || matrix_b_row >= column_count) {
-    return false;
-  }
-
-  if (matrix_b_row + 1 >= static_cast<int>(column_pointers.size())) {
-    return false;
-  }
-
-  return true;
-}
-
 bool ValidateTransposedRange(int transposed_start, int transposed_end, const std::vector<double> &transposed_values) {
   return transposed_start >= 0 && static_cast<std::size_t>(transposed_end) <= transposed_values.size() &&
          transposed_start <= transposed_end;
-}
-
-bool ValidateMatrixAElement(int matrix_a_row, int column_count) {
-  return matrix_a_row >= 0 && matrix_a_row < column_count;
 }
 
 void ProcessTransposedElement(int matrix_a_row, int column_index, double matrix_a_value, double matrix_b_value,
@@ -201,26 +185,6 @@ bool ValidateMatrixB(const CompressedColumnMatrix &matrix_b) {
   }
 
   return true;
-}
-
-bool ValidateColumnIndex(int col_index, int column_count) {
-  return col_index >= 0 && col_index < column_count;
-}
-
-bool ValidateColumnPointerBounds(int col_index, const std::vector<int> &column_pointers) {
-  return !(col_index + 1 >= static_cast<int>(column_pointers.size()));
-}
-
-bool ValidateColumnRange(int col_start, int col_end) {
-  return col_start >= 0 && col_end >= 0 && col_start <= col_end;
-}
-
-bool ValidateDataBounds(int col_end, const std::vector<double> &values, const std::vector<int> &row_indices) {
-  return static_cast<std::size_t>(col_end) <= values.size() && static_cast<std::size_t>(col_end) <= row_indices.size();
-}
-
-bool ValidateRowIndex(int row_idx, int row_count) {
-  return row_idx >= 0 && row_idx < row_count;
 }
 
 int ExtractSingleColumnData(int col_index, const CompressedColumnMatrix &matrix_b, std::vector<double> &local_values,
