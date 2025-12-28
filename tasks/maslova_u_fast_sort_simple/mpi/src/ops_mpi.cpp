@@ -3,7 +3,11 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <iterator>
+#include <utility>
 #include <vector>
+
+#include "maslova_u_fast_sort_simple/common/include/common.hpp"
 
 namespace maslova_u_fast_sort_simple {
 
@@ -43,7 +47,7 @@ void MaslovaUFastSortSimpleMPI::TreeMerge(std::vector<int> &local_vec, int rank,
 
         std::vector<int> merged;
         merged.reserve(local_vec.size() + received.size());
-        std::merge(local_vec.begin(), local_vec.end(), received.begin(), received.end(), std::back_inserter(merged));
+        std::ranges::merge(local_vec, received, std::back_inserter(merged));
         local_vec = std::move(merged);
       }
     } else {
@@ -55,7 +59,8 @@ void MaslovaUFastSortSimpleMPI::TreeMerge(std::vector<int> &local_vec, int rank,
 }
 
 bool MaslovaUFastSortSimpleMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 

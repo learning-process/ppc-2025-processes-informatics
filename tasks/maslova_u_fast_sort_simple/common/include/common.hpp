@@ -15,6 +15,26 @@ using OutType = std::vector<int>;
 using TestType = std::tuple<InType, OutType, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
+inline auto Partition(int *data, int low, int high) {
+  int pivot = data[low + ((high - low) / 2)];
+  int i = low;
+  int j = high;
+  while (i <= j) {
+    while (data[i] < pivot) {
+      i++;
+    }
+    while (data[j] > pivot) {
+      j--;
+    }
+    if (i <= j) {
+      std::swap(data[i], data[j]);
+      i++;
+      j--;
+    }
+  }
+  return std::make_pair(i, j);
+}
+
 inline void QuickSort(int *data, int left, int right) {
   if (data == nullptr || left >= right) {
     return;
@@ -28,23 +48,7 @@ inline void QuickSort(int *data, int left, int right) {
     auto [low, high] = stack.back();
     stack.pop_back();
 
-    int i = low;
-    int j = high;
-    int pivot = data[low + (high - low) / 2];
-
-    while (i <= j) {
-      while (data[i] < pivot) {
-        i++;
-      }
-      while (data[j] > pivot) {
-        j--;
-      }
-      if (i <= j) {
-        std::swap(data[i], data[j]);
-        i++;
-        j--;
-      }
-    }
+    auto [i, j] = Partition(data, low, high);
 
     if (high - i > j - low) {
       if (low < j) {
