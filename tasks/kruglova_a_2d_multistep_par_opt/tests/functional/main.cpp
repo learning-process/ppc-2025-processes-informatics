@@ -61,8 +61,6 @@ const InType test_large_range = {-10.0, 10.0, -10.0, 10.0, 0.05, 300};
 
 const InType test_asymmetric = {-5.12, 2.0, -1.0, 5.12, 0.01, 150};
 
-const InType test_low_iters = {-5.12, 5.12, -5.12, 5.12, 0.001, 10};
-
 const std::array<TestType, 6> kTestParam = {
     std::make_tuple("Rastrigin_Standard", test_1),          std::make_tuple("Rastrigin_Narrow", test_2),
     std::make_tuple("High_Precision", test_high_precision), std::make_tuple("Narrow_Range_Exit", test_narrow_range),
