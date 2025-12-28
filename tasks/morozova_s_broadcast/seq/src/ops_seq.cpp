@@ -23,7 +23,11 @@ bool MorozovaSBroadcastSEQ::ValidationImpl() {
   if (size <= 0) {
     return false;
   }
-  if (rank == 0 && GetInput().empty()) {
+  const int root = 0;
+  if (root < 0 || root >= size) {
+    return false;
+  }
+  if (rank == root && GetInput().empty()) {
     return false;
   }
   return true;
@@ -33,22 +37,42 @@ bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
   return true;
 }
 
+void SequentialBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm) {
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+  if (size <= 1) {
+    return;
+  }
+  if (rank == root) {
+    for (int dest = 0; dest < size; ++dest) {
+      if (dest != root) {
+        MPI_Send(data, count, datatype, dest, 0, comm);
+      }
+    }
+  } else {
+    MPI_Recv(data, count, datatype, root, 0, comm, MPI_STATUS_IGNORE);
+  }
+}
+
 bool MorozovaSBroadcastSEQ::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  const int root = 0;
   int data_size = 0;
-  if (rank == 0) {
+  if (rank == root) {
     data_size = static_cast<int>(GetInput().size());
   }
-  MPI_Bcast(&data_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  SequentialBroadcast(&data_size, 1, MPI_INT, root, MPI_COMM_WORLD);
   GetOutput().resize(data_size);
   if (data_size > 0) {
-    if (rank == 0) {
+    if (rank == root) {
       std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
     }
-    MPI_Bcast(GetOutput().data(), data_size, MPI_INT, 0, MPI_COMM_WORLD);
+    SequentialBroadcast(GetOutput().data(), data_size, MPI_INT, root, MPI_COMM_WORLD);
   }
 
   return true;
