@@ -157,17 +157,16 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   int n = std::get<0>(Size);
   int m = std::get<1>(Size);
 
-  // sendcounts и displs уже подготовлены в PreProcessingImpl
-  const auto &in = PreProcessGray;
-  /*if (rank ==0){
-  for (int i = 0; i < 8; i++) {
+  std::cout << "sendcounts и displs уже подготовлены в PreProcessingImpl\n" const auto &in = PreProcessGray;
+  if (rank == 0) {
+    for (int i = 0; i < 8; i++) {
       for (int j = 0; j < 6; j++) {
-        std::cout<<PreProcessGray[i*(m+2)+j]<<" ";
+        std::cout << PreProcessGray[i * (m + 2) + j] << " ";
       }
       std::cout << "\n";
     }
     std::cout << "\n";
-  }*/
+  }
 
   // Локальные параметры
   int base = n / size;
