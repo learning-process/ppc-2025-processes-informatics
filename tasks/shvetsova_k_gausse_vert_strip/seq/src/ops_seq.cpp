@@ -44,7 +44,7 @@ bool ShvetsovaKGaussVertStripSEQ::PreProcessingImpl() {
 }
 
 void ShvetsovaKGaussVertStripSEQ::ProcessRow(int i, int row_end, std::vector<std::vector<double>> &a,
-                                             std::vector<double> &x, const double eps) const {
+                                             std::vector<double> &x, double eps) {
   double pivot = a[i][i];
   if (std::abs(pivot) < eps) {
     pivot = (pivot >= 0) ? eps : -eps;

@@ -24,8 +24,7 @@ class ShvetsovaKGaussVertStripSEQ : public BaseTask {
   void ForwardElimination(int n, std::vector<std::vector<double>> &a, std::vector<double> &x) const;
   [[nodiscard]] std::vector<double> BackSubstitution(int n, const std::vector<std::vector<double>> &a,
                                                      const std::vector<double> &x) const;
-  void ProcessRow(int i, int row_end, std::vector<std::vector<double>> &a, std::vector<double> &x,
-                  const double eps) const;
+  static void ProcessRow(int i, int row_end, std::vector<std::vector<double>> &a, std::vector<double> &x, double eps);
 };
 
 }  // namespace shvetsova_k_gausse_vert_strip

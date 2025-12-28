@@ -26,7 +26,7 @@ class ShvetsovaKGaussVertStripMPI : public BaseTask {
   static int GetOwnerOfColumn(int k, int n, int size);
   static int GetColumnStartIndex(int rank, int n, int size);
   static int GetColumnEndIndex(int rank, int n, int size);
-  [[nodiscard]] int CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n) const;
+  static int CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n);
   void ForwardElimination(int n, int rank, int size, int c0, int local_cols, std::vector<std::vector<double>> &a_local,
                           std::vector<double> &b) const;
   [[nodiscard]] std::vector<double> BackSubstitution(int n, int rank, int size, int c0,

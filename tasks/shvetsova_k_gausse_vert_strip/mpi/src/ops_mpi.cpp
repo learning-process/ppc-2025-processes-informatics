@@ -30,7 +30,7 @@ int ShvetsovaKGaussVertStripMPI::GetColumnEndIndex(int rank, int n, int size) {
   return GetColumnStartIndex(rank + 1, n, size);
 }
 
-int ShvetsovaKGaussVertStripMPI::CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n) const {
+int ShvetsovaKGaussVertStripMPI::CalculateRibWidth(const std::vector<std::vector<double>> &matrix, int n) {
   int rib_width = 1;
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < n; ++j) {
