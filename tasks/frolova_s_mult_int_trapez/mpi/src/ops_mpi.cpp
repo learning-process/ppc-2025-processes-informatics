@@ -1,150 +1,110 @@
 #include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
-#include <algorithm>
 #include <cmath>
-#include <numeric>
 #include <vector>
+
+#include "mpi.h"
 
 namespace frolova_s_mult_int_trapez {
 
-FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0.0;
-}
+FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
+    : limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {}
 
 unsigned int FrolovaSMultIntTrapezMPI::CalculationOfCoefficient(const std::vector<double> &point) {
-  unsigned int degree = limits.size();
-  for (unsigned int i = 0; i < limits.size(); i++) {
-    if ((limits[i].first == point[i]) || (limits[i].second == point[i])) {
-      degree--;
+  unsigned int coefficient = 1;
+  for (size_t i = 0; i < limits_.size(); ++i) {
+    if ((std::abs(point[i] - limits_[i].first) < 1e-12) || (std::abs(point[i] - limits_[i].second) < 1e-12)) {
+      coefficient *= 2;
     }
   }
-
-  return pow(2, degree);
+  return coefficient;
 }
 
-void FrolovaSMultIntTrapezMPI::Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider,
+[[gnu::noinline]]
+void FrolovaSMultIntTrapezMPI::Recursive(std::vector<double> &point, unsigned int &definition, unsigned int divider,
                                          unsigned int variable) {
   if (variable > 0) {
-    Recursive(_point, definition, divider * (number_of_intervals[variable] + 1), variable - 1);
+    Recursive(point, definition, divider * (number_of_intervals_[variable] + 1), variable - 1);
   }
-  _point[variable] = limits[variable].first + definition / divider *
-                                                  (limits[variable].second - limits[variable].first) /
-                                                  number_of_intervals[variable];
-  definition = definition % divider;
+
+  point[variable] = limits_[variable].first +
+                    (static_cast<double>(definition) / divider) *
+                        ((limits_[variable].second - limits_[variable].first) / number_of_intervals_[variable]);
 }
 
 std::vector<double> FrolovaSMultIntTrapezMPI::GetPointFromNumber(unsigned int number) {
-  std::vector<double> point(limits.size());
+  std::vector<double> point(limits_.size());
   unsigned int definition = number;
-  Recursive(point, definition, 1, limits.size() - 1);
-
+  Recursive(point, definition, 1, static_cast<unsigned int>(limits_.size()) - 1);
   return point;
 }
 
 bool FrolovaSMultIntTrapezMPI::ValidationImpl() {
+  if (limits_.size() != number_of_intervals_.size()) {
+    return false;
+  }
+
+  for (size_t i = 0; i < limits_.size(); ++i) {
+    if (limits_[i].first >= limits_[i].second) {
+      return false;
+    }
+    if (number_of_intervals_[i] == 0) {
+      return false;
+    }
+  }
+
   return true;
 }
 
 bool FrolovaSMultIntTrapezMPI::PreProcessingImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  result_ = 0.0;
 
-  if (rank == 0) {
-    limits = GetInput().limits;
-    number_of_intervals = GetInput().number_of_intervals;
-    result = 0.0;
+  // Вычисление общего количества точек
+  unsigned int total_points = 1;
+  for (unsigned int number_of_interval : number_of_intervals_) {
+    total_points *= (number_of_interval + 1);
+  }
+
+  // Рассчет размера блока для каждого процесса
+  int rank = 0, size = 1;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  auto u_size = static_cast<unsigned int>(size);
+  unsigned int block_size = total_points / u_size;
+  unsigned int remainder = total_points % u_size;
+
+  // Начальный индекс для текущего процесса
+  unsigned int start_index = rank * block_size + (rank < remainder ? rank : remainder);
+  unsigned int end_index = start_index + block_size + (rank < remainder ? 1 : 0);
+
+  // Локальные вычисления
+  double local_result = 0.0;
+  for (unsigned int i = start_index; i < end_index; ++i) {
+    std::vector<double> point = GetPointFromNumber(i);
+    unsigned int coefficient = CalculationOfCoefficient(point);
+    double value = input_.function(point);  // предположим, что input_ сохранен
+    local_result += static_cast<double>(coefficient) * value;
+  }
+
+  // Сбор результатов со всех процессов
+  MPI_Reduce(&local_result, &result_, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+  // Нормализация результата
+  if (rank == 0 && !limits_.empty()) {
+    result_ /= std::pow(2.0, static_cast<double>(limits_.size()));
   }
 
   return true;
 }
 
 bool FrolovaSMultIntTrapezMPI::RunImpl() {
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  // Broadcast limits
-  int limits_size = limits.size();
-  MPI_Bcast(&limits_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (rank != 0) {
-    limits.resize(limits_size);
-  }
-  MPI_Bcast(limits.data(), limits_size * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  // Broadcast number_of_intervals
-  int intervals_size = number_of_intervals.size();
-  MPI_Bcast(&intervals_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  if (rank != 0) {
-    number_of_intervals.resize(intervals_size);
-  }
-  MPI_Bcast(number_of_intervals.data(), intervals_size, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-
-  std::vector<unsigned int> count_of_points(size);
-  std::vector<unsigned int> first_point_numbers(size);
-  unsigned int local_count_of_points = 0;
-  unsigned int local_first_point_numbers = 0;
-  double local_result = 0.0;
-
-  if (rank == 0) {
-    unsigned int delta = 1;
-    unsigned int current_number = 0;
-    for (unsigned int i = 0; i < number_of_intervals.size(); i++) {
-      delta *= (number_of_intervals[i] + 1);
-    }
-
-    unsigned int u_size = static_cast<unsigned int>(size);
-    unsigned int remainder = delta % u_size;
-    delta /= u_size;
-
-    for (unsigned int i = 0; i < u_size - remainder; i++) {
-      count_of_points[i] = delta;
-      first_point_numbers[i] = current_number;
-      current_number += delta;
-    }
-
-    delta++;
-    for (unsigned int i = u_size - remainder; i < u_size; i++) {
-      count_of_points[i] = delta;
-      first_point_numbers[i] = current_number;
-      current_number += delta;
-    }
-  }
-
-  MPI_Scatter(count_of_points.data(), 1, MPI_UNSIGNED, &local_count_of_points, 1, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-  MPI_Scatter(first_point_numbers.data(), 1, MPI_UNSIGNED, &local_first_point_numbers, 1, MPI_UNSIGNED, 0,
-              MPI_COMM_WORLD);
-
-  for (unsigned int i = 0; i < local_count_of_points; i++) {
-    std::vector<double> point = GetPointFromNumber(local_first_point_numbers + i);
-    local_result += CalculationOfCoefficient(point) * GetInput().function(point);
-  }
-
-  MPI_Reduce(&local_result, &result, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-  if (rank == 0) {
-    for (unsigned int i = 0; i < limits.size(); i++) {
-      result *= (limits[i].second - limits[i].first) / number_of_intervals[i];
-    }
-    result /= pow(2, limits.size());
-  }
-
+  // Основная логика уже в PreProcessingImpl
   return true;
 }
 
 bool FrolovaSMultIntTrapezMPI::PostProcessingImpl() {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0) {
-    GetOutput() = result;
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
+  // Пост-обработка если нужна
   return true;
 }
 

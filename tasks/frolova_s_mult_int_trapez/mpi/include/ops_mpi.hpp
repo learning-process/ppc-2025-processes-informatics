@@ -1,9 +1,6 @@
 #pragma once
 
-#include <mpi.h>
-
 #include <cmath>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -29,9 +26,9 @@ class FrolovaSMultIntTrapezMPI : public BaseTask {
   void Recursive(std::vector<double> &_point, unsigned int &definition, unsigned int divider, unsigned int variable);
   std::vector<double> GetPointFromNumber(unsigned int number);
 
-  std::vector<std::pair<double, double>> limits;
-  std::vector<unsigned int> number_of_intervals;
-  double result;
+  std::vector<std::pair<double, double>> limits_;
+  std::vector<unsigned int> number_of_intervals_;
+  double result_();
 };
 
 }  // namespace frolova_s_mult_int_trapez
