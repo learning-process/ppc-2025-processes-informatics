@@ -21,7 +21,7 @@ class ChaschinVSobelOperatorMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<float> preprocess_to_grayscale(const std::vector<std::vector<Pixel>> &image)
+  std::vector<float> preprocess_to_grayscale(const std::vector<std::vector<Pixel>> &image);
 
       std::vector<float> PreProcessGray;
   std::vector<float> PostProcessGray;
