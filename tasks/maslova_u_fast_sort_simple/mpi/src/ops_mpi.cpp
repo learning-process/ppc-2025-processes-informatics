@@ -21,7 +21,7 @@ bool MaslovaUFastSortSimpleMPI::ValidationImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   int flag = 0;
   if (rank == 0) {
-    if (GetInput().size() > 2147483647LL) {
+    if (GetInput().size() > static_cast<size_t>(2147483647)) {
       flag = 1;
     }
   }
@@ -35,13 +35,12 @@ bool MaslovaUFastSortSimpleMPI::PreProcessingImpl() {
 
 void MaslovaUFastSortSimpleMPI::TreeMerge(std::vector<int> &local_vec, int rank, int size) {
   for (int step = 1; step < size; step *= 2) {
-    if (rank % (2 * step) == 0) {
-      if (rank + step < size) {
+    if ((rank % (2 * step)) == 0) {
+      if ((rank + step) < size) {
         int recv_size = 0;
         MPI_Status status;
         MPI_Probe(rank + step, 0, MPI_COMM_WORLD, &status);
         MPI_Get_count(&status, MPI_INT, &recv_size);
-
         std::vector<int> received(recv_size);
         MPI_Recv(received.data(), recv_size, MPI_INT, rank + step, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
@@ -76,10 +75,10 @@ bool MaslovaUFastSortSimpleMPI::RunImpl() {
 
   std::vector<int> send_counts(size);
   std::vector<int> displs(size);
-  int q = total_size / size;
-  int r = total_size % size;
+  int part = total_size / size;
+  int rem = total_size % size;
   for (int i = 0; i < size; ++i) {
-    send_counts[i] = q + (i < r ? 1 : 0);
+    send_counts[i] = part + (i < rem ? 1 : 0);
     displs[i] = (i == 0) ? 0 : displs[i - 1] + send_counts[i - 1];
   }
 

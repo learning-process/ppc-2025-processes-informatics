@@ -35,20 +35,20 @@ inline auto Partition(int *data, int low, int high) {
   return std::make_pair(i, j);
 }
 
-inline void UpdateStack(std::vector<std::pair<int, int>> &stack, int low, int j, int i, int high) {
-  if (high - i > j - low) {
+inline void PushToStack(std::vector<std::pair<int, int>> *stack, int low, int j, int i, int high) {
+  if ((high - i) > (j - low)) {
     if (low < j) {
-      stack.emplace_back(low, j);
+      stack->emplace_back(low, j);
     }
     if (i < high) {
-      stack.emplace_back(i, high);
+      stack->emplace_back(i, high);
     }
   } else {
     if (i < high) {
-      stack.emplace_back(i, high);
+      stack->emplace_back(i, high);
     }
     if (low < j) {
-      stack.emplace_back(low, j);
+      stack->emplace_back(low, j);
     }
   }
 }
@@ -67,7 +67,7 @@ inline void QuickSort(int *data, int left, int right) {
     stack.pop_back();
 
     auto [i, j] = Partition(data, low, high);
-    UpdateStack(stack, low, j, i, high);
+    PushToStack(&stack, low, j, i, high);
   }
 }
 
