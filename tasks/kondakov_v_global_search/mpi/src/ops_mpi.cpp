@@ -32,7 +32,7 @@ bool KondakovVGlobalSearchMPI::ValidationImpl() {
       cfg.func && cfg.left < cfg.right && cfg.accuracy > 0.0 && cfg.reliability > 0.0 && cfg.max_iterations > 0;
 
   bool global_valid = false;
-  MPI_Allreduce(&local_valid, &global_valid, 1, MPI_CXX_BOOL, MPI_LAND, MPI_COMM_WORLD);
+  MPI_Allreduce(&local_valid, &global_valid, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
   return global_valid;
 }
 
