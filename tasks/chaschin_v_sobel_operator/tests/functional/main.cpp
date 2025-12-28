@@ -46,11 +46,11 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
     }
 
     // Преобразуем в градации серого
-    std::vector<std::vector<float>> gray(height, std::vector<float>(width));
+    std::vector<std::vector<float>> gray(height + 2, std::vector<float>(width + 2, 0.0f));
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
         const auto &p = image[i][j];
-        gray[i][j] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
+        gray[i + 1][j + 1] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
       }
     }
 
