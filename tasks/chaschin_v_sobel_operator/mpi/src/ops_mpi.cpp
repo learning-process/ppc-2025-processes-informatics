@@ -157,7 +157,8 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   int n = std::get<0>(Size);
   int m = std::get<1>(Size);
 
-  std::cout << "sendcounts и displs уже подготовлены в PreProcessingImpl\n" const auto &in = PreProcessGray;
+  std::cout << "sendcounts и displs уже подготовлены в PreProcessingImpl\n" << std::flush;
+  const auto &in = PreProcessGray;
   if (rank == 0) {
     for (int i = 0; i < 8; i++) {
       for (int j = 0; j < 6; j++) {
@@ -168,20 +169,20 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
     std::cout << "\n";
   }
 
-  // Локальные параметры
+  std::cout << "Локальные параметры\n" << std::flush;
   int base = n / size;
   int rem = n % size;
   int local_rows = (base + 2) + (rank < rem ? 1 : 0);
   int padded_m = m + 2;
 
-  // Локальный буфер с padding сверху и снизу (все уже подготовлено)
+  std::cout << "Локальный буфер с padding сверху и снизу (все уже подготовлено)\n" << std::flush;
   std::vector<float> local_block(local_rows * padded_m);
 
-  // Scatterv центральных строк (вверх/низ уже в PreProcessGray)
+  std::cout << "Scatterv центральных строк (вверх/низ уже в PreProcessGray)\n" << std::flush;
   MPI_Scatterv(rank == 0 ? in.data() : nullptr, ScatterSendCounts.data(), ScatterDispls.data(), MPI_FLOAT,
                local_block.data(), (local_rows)*padded_m, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-  // --- Локальный Sobel ---
+  std::cout << " --- Локальный Sobel ---\n" << std::flush;
   std::vector<float> local_output(local_rows * m);
 
   // #pragma omp parallel for collapse(2)
