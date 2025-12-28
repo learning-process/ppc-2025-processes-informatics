@@ -21,10 +21,7 @@ bool MorozovaSBroadcastSEQ::ValidationImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if (size > 1 && rank != 0) {
-    return true;
-  }
-  if (GetInput().empty()) {
+  if (rank == 0 && GetInput().empty()) {
     return false;
   }
 
@@ -40,11 +37,10 @@ bool MorozovaSBroadcastSEQ::RunImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if (size == 1 || rank == 0) {
-    GetOutput().clear();
-    GetOutput().reserve(GetInput().size());
-    std::copy(GetInput().begin(), GetInput().end(), std::back_inserter(GetOutput()));
-  }
+  GetOutput().clear();
+  GetOutput().reserve(GetInput().size());
+  std::copy(GetInput().begin(), GetInput().end(), std::back_inserter(GetOutput()));
+
   return true;
 }
 
