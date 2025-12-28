@@ -19,6 +19,6 @@ class ChaschinVSobelOperatorSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-std::vector<float> sobel_seq(const std::vector<std::vector<float>>& image);
+std::vector<float> sobel_seq(const std::vector<std::vector<float>> &image);
 
 }  // namespace chaschin_v_sobel_operator
