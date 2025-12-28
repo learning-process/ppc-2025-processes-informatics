@@ -18,7 +18,6 @@ ChaschinVSobelOperatorMPI::ChaschinVSobelOperatorMPI(const InType &in) {
   GetInput() = in;
   GetOutput().clear();
 
-  const auto &image = std::get<0>(in);
   int height = std::get<1>(in);
   int width = std::get<2>(in);
 
@@ -33,7 +32,7 @@ bool ChaschinVSobelOperatorMPI::ValidationImpl() {
   return !image.empty();
 }
 
-std::vector<float> PreprocessToGrayscaleWithOverlap(
+std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
     const std::vector<std::vector<Pixel>> &image, int n_procs,
     std::vector<int> &sendcounts,  // выход: количество элементов для каждого процесса
     std::vector<int> &displs       // выход: смещения в массиве
@@ -126,7 +125,7 @@ bool ChaschinVSobelOperatorMPI::PreProcessingImpl() {
   return true;
 }
 
-float sobel_at(const std::vector<float> &img, int i, int j, int stride) {
+float ChaschinVSobelOperatorMPI::sobel_at(const std::vector<float> &img, int i, int j, int stride) {
   static const int Kx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
   static const int Ky[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
