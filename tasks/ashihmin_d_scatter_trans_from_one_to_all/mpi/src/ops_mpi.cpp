@@ -30,15 +30,15 @@ bool AshihminDScatterTransFromOneToAllMPI<T>::PreProcessingImpl() {
 
 namespace {
 
-// ===== helpers to reduce cognitive complexity =====
-
 template <typename T>
 MPI_Datatype GetMPIDataType() {
-  if constexpr (std::is_same_v<T, int>) {
+  if (std::is_same_v<T, int>) {
     return MPI_INT;
-  } else if constexpr (std::is_same_v<T, float>) {
+  }
+  if (std::is_same_v<T, float>) {
     return MPI_FLOAT;
-  } else if constexpr (std::is_same_v<T, double>) {
+  }
+  if (std::is_same_v<T, double>) {
     return MPI_DOUBLE;
   }
   return MPI_DATATYPE_NULL;
@@ -114,12 +114,10 @@ bool AshihminDScatterTransFromOneToAllMPI<T>::RunImpl() {
 }
 
 template <typename T>
-
 bool AshihminDScatterTransFromOneToAllMPI<T>::PostProcessingImpl() {
   return !this->GetOutput().empty();
 }
 
-// explicit instantiations
 template class AshihminDScatterTransFromOneToAllMPI<int>;
 template class AshihminDScatterTransFromOneToAllMPI<float>;
 template class AshihminDScatterTransFromOneToAllMPI<double>;
