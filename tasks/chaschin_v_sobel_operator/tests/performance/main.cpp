@@ -13,7 +13,6 @@ namespace chaschin_v_sobel_operator {
 class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   static constexpr int k_count = 5000;
-  InType input_data_;
 
   void SetUp() override {
     const int size = k_count;
@@ -100,7 +99,7 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
