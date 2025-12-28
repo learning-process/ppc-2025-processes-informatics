@@ -19,4 +19,5 @@ class MorozovaSBroadcastSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
+void SequentialBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 }  // namespace morozova_s_broadcast
