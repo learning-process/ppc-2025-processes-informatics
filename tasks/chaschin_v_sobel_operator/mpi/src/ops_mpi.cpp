@@ -214,10 +214,6 @@ bool ChaschinVSobelOperatorMPI::PostProcessingImpl() {
   int n = std::get<0>(Size);
   int m = std::get<1>(Size);
 
-  if (static_cast<int>(PostProcessGray.size()) != n * m) {
-    throw std::runtime_error("PostProcessingImpl: size mismatch");
-  }
-
   out.resize(n);
   float max_val = 0.0f;
 

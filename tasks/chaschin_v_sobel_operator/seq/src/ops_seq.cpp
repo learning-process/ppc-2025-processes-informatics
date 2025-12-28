@@ -44,7 +44,26 @@ bool ChaschinVSobelOperatorSEQ::RunImpl() {
     }
   }
 
-  out = sobel_seq(gray);
+  std::vector<float> PostProcessGray = sobel_seq(gray);
+
+  out.resize(n);
+  float max_val = 0.0f;
+
+  // Найдем максимум для нормализации
+  for (float v : PostProcessGray) {
+    max_val = std::max(max_val, v);
+  }
+
+  float inv = (max_val > 0.0f) ? (255.0f / max_val) : 0.0f;
+
+  for (int i = 0; i < n; ++i) {
+    out[i].resize(m);
+    for (int j = 0; j < m; ++j) {
+      float v = PostProcessGray[i * m + j] * inv;
+      unsigned char c = static_cast<unsigned char>(std::clamp(v, 0.0f, 255.0f));
+      out[i][j] = Pixel{c, c, c};
+    }
+  }
 
   return true;
 }
