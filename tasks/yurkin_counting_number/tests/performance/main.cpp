@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cctype>
+#include <cstddef>
+#include <string>
+
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_counting_number/common/include/common.hpp"
 #include "yurkin_counting_number/mpi/include/ops_mpi.hpp"
@@ -8,16 +12,21 @@
 namespace yurkin_counting_number {
 
 class YurkinCountingNumberPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+  static constexpr int kCount_ = 100000;
   InType input_data_;
 
   void SetUp() override {
-    input_data_ = InType(kCount_, 'a');
+    input_data_ = InType(static_cast<std::size_t>(kCount_), 'a');
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    (void)output_data;
-    return true;
+    int expected = 0;
+    for (char c : input_data_) {
+      if (std::isalpha(static_cast<unsigned char>(c)) != 0) {
+        ++expected;
+      }
+    }
+    return expected == output_data;
   }
 
   InType GetTestInputData() final {
