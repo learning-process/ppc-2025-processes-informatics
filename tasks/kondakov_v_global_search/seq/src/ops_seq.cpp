@@ -17,24 +17,25 @@ KondakovVGlobalSearchSEQ::KondakovVGlobalSearchSEQ(const InType &in) {
   GetOutput() = {};
 }
 
+double KondakovVGlobalSearchSEQ::EvaluateFunction(double x) {
+  const auto &cfg = GetInput();
+  switch (cfg.func_type) {
+    case FunctionType::kQuadratic: {
+      double t = cfg.func_param;
+      return (x - t) * (x - t);
+    }
+    case FunctionType::kSine:
+      return std::sin(x) + (0.1 * x);
+    case FunctionType::kAbs:
+      return std::abs(x);
+    default:
+      return std::numeric_limits<double>::quiet_NaN();
+  }
+}
+
 bool KondakovVGlobalSearchSEQ::ValidationImpl() {
   const auto &cfg = GetInput();
-  if (!cfg.func) {
-    return false;
-  }
-  if (cfg.left >= cfg.right) {
-    return false;
-  }
-  if (cfg.accuracy <= 0.0) {
-    return false;
-  }
-  if (cfg.reliability <= 0.0) {
-    return false;
-  }
-  if (cfg.max_iterations <= 0) {
-    return false;
-  }
-  return true;
+  return cfg.left < cfg.right && cfg.accuracy > 0.0 && cfg.reliability > 0.0 && cfg.max_iterations > 0;
 }
 
 bool KondakovVGlobalSearchSEQ::PreProcessingImpl() {
@@ -45,17 +46,15 @@ bool KondakovVGlobalSearchSEQ::PreProcessingImpl() {
   points_x_.reserve(cfg.max_iterations + 10);
   values_y_.reserve(cfg.max_iterations + 10);
 
-  double f_a = cfg.func(cfg.left);
-  double f_b = cfg.func(cfg.right);
+  double f_a = EvaluateFunction(cfg.left);
+  double f_b = EvaluateFunction(cfg.right);
 
   if (!std::isfinite(f_a) || !std::isfinite(f_b)) {
     return false;
   }
 
-  points_x_.push_back(cfg.left);
-  points_x_.push_back(cfg.right);
-  values_y_.push_back(f_a);
-  values_y_.push_back(f_b);
+  points_x_ = {cfg.left, cfg.right};
+  values_y_ = {f_a, f_b};
 
   if (f_a < f_b) {
     best_point_ = cfg.left;
@@ -109,13 +108,13 @@ double KondakovVGlobalSearchSEQ::ProposeTrialPoint(std::size_t i, double l_est) 
   double x_r = points_x_[i];
   double f_l = values_y_[i - 1];
   double f_r = values_y_[i];
-  double midpoint = 0.5 * (x_l + x_r);
-  double asymmetry = (f_r - f_l) / (2.0 * l_est);
-  double candidate = midpoint - asymmetry;
-  if (candidate <= x_l || candidate >= x_r) {
-    candidate = midpoint;
+  double mid = 0.5 * (x_l + x_r);
+  double asym = (f_r - f_l) / (2.0 * l_est);
+  double cand = mid - asym;
+  if (cand <= x_l || cand >= x_r) {
+    cand = mid;
   }
-  return candidate;
+  return cand;
 }
 
 std::size_t KondakovVGlobalSearchSEQ::LocateInsertionIndex(double x) const {
@@ -124,10 +123,9 @@ std::size_t KondakovVGlobalSearchSEQ::LocateInsertionIndex(double x) const {
 }
 
 void KondakovVGlobalSearchSEQ::InsertEvaluation(double x, double fx) {
-  std::size_t idx = LocateInsertionIndex(x);
-  auto pos = static_cast<std::vector<double>::difference_type>(idx);
-  points_x_.insert(points_x_.begin() + pos, x);
-  values_y_.insert(values_y_.begin() + pos, fx);
+  auto idx = LocateInsertionIndex(x);
+  points_x_.insert(points_x_.begin() + static_cast<std::vector<double>::difference_type>(idx), x);
+  values_y_.insert(values_y_.begin() + static_cast<std::vector<double>::difference_type>(idx), fx);
   if (fx < best_value_) {
     best_value_ = fx;
     best_point_ = x;
@@ -140,41 +138,37 @@ bool KondakovVGlobalSearchSEQ::RunImpl() {
     return false;
   }
 
-  double lipschitz_estimate = ComputeAdaptiveLipschitzEstimate(cfg.reliability);
+  double l_est = ComputeAdaptiveLipschitzEstimate(cfg.reliability);
 
   for (int step = 0; step < cfg.max_iterations; ++step) {
-    total_evals_ = step + 1;
-    if ((step % 10) == 0) {
-      lipschitz_estimate = ComputeAdaptiveLipschitzEstimate(cfg.reliability);
-    }
-    if (points_x_.size() < 2) {
-      has_converged_ = false;
-      break;
+    if (step % 10 == 0) {
+      l_est = ComputeAdaptiveLipschitzEstimate(cfg.reliability);
     }
 
-    std::size_t best_interval = 1;
+    std::size_t best_i = 1;
     double max_merit = -std::numeric_limits<double>::infinity();
     for (std::size_t i = 1; i < points_x_.size(); ++i) {
-      double merit = IntervalMerit(i, lipschitz_estimate);
-      if (merit > max_merit) {
-        max_merit = merit;
-        best_interval = i;
+      double m = IntervalMerit(i, l_est);
+      if (m > max_merit) {
+        max_merit = m;
+        best_i = i;
       }
     }
 
-    double interval_width = points_x_[best_interval] - points_x_[best_interval - 1];
-    if (interval_width <= cfg.accuracy) {
+    double width = points_x_[best_i] - points_x_[best_i - 1];
+    if (width <= cfg.accuracy) {
       has_converged_ = true;
       break;
     }
 
-    double trial_x = ProposeTrialPoint(best_interval, lipschitz_estimate);
-    double trial_f = cfg.func(trial_x);
-    if (!std::isfinite(trial_f)) {
+    double x = ProposeTrialPoint(best_i, l_est);
+    double fx = EvaluateFunction(x);
+    if (!std::isfinite(fx)) {
       continue;
     }
 
-    InsertEvaluation(trial_x, trial_f);
+    InsertEvaluation(x, fx);
+    total_evals_++;
   }
 
   GetOutput() =

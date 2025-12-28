@@ -4,7 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <functional>
 #include <string>
 #include <tuple>
 
@@ -16,31 +15,6 @@
 
 namespace kondakov_v_global_search {
 
-class QuadraticFunction {
- public:
-  explicit QuadraticFunction(double target) : target_(target) {}
-  double operator()(double x) const {
-    return (x - target_) * (x - target_);
-  }
-
- private:
-  double target_;
-};
-
-class SineFunction {
- public:
-  double operator()(double x) const {
-    return std::sin(x) + (0.1 * x);
-  }
-};
-
-class AbsFunction {
- public:
-  double operator()(double x) const {
-    return std::abs(x);
-  }
-};
-
 class KondakovVGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &param) {
@@ -49,14 +23,13 @@ class KondakovVGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InT
 
  protected:
   void SetUp() override {
-    const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-
-    test_func_ = std::get<0>(params);
-    description_ = std::get<1>(params);
+    const auto &params_tuple = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    test_params_ = std::get<0>(params_tuple);
+    description_ = std::get<1>(params_tuple);
   }
 
   InType GetTestInputData() override {
-    return test_func_;
+    return test_params_;
   }
 
   bool CheckTestOutputData(OutType &output) override {
@@ -71,16 +44,27 @@ class KondakovVGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InT
       }
     }
 
-    const auto &p = test_func_;
-    const double &argmin = output.argmin;
-    const double &value = output.value;
+    const auto &p = test_params_;
 
-    double recomputed = p.func(argmin);
-    if (!std::isfinite(recomputed) || std::abs(recomputed - value) > 1e-6) {
+    auto func = [p](double x) -> double {
+      switch (p.func_type) {
+        case FunctionType::kQuadratic:
+          return (x - p.func_param) * (x - p.func_param);
+        case FunctionType::kSine:
+          return std::sin(x) + (0.1 * x);
+        case FunctionType::kAbs:
+          return std::abs(x);
+        default:
+          return 0.0;
+      }
+    };
+
+    double recomputed = func(output.argmin);
+    if (!std::isfinite(recomputed) || std::abs(recomputed - output.value) > 1e-6) {
       return false;
     }
 
-    if (argmin < p.left - 1e-9 || argmin > p.right + 1e-9) {
+    if (output.argmin < p.left - 1e-9 || output.argmin > p.right + 1e-9) {
       return false;
     }
 
@@ -88,7 +72,7 @@ class KondakovVGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InT
   }
 
  private:
-  Params test_func_;
+  Params test_params_;
   std::string description_;
 };
 
@@ -99,28 +83,32 @@ TEST_P(KondakovVGlobalSearchRunFuncTests, GlobalSearchCorrectness) {
 }
 
 const std::array<TestType, 4> kTestParams = {{
-    {Params{.func = QuadraticFunction(2.5),
+    {Params{.func_type = FunctionType::kQuadratic,
+            .func_param = 2.5,
             .left = 0.0,
             .right = 5.0,
             .accuracy = 1e-3,
             .reliability = 2.0,
             .max_iterations = 1000},
      "Quadratic_min_2_5"},
-    {Params{.func = SineFunction{},
+    {Params{.func_type = FunctionType::kSine,
+            .func_param = 0.0,
             .left = -10.0,
             .right = 10.0,
             .accuracy = 1e-2,
             .reliability = 2.0,
             .max_iterations = 2000},
      "Sine_func_neg10_to_10"},
-    {Params{.func = AbsFunction{},
+    {Params{.func_type = FunctionType::kAbs,
+            .func_param = 0.0,
             .left = -3.0,
             .right = 3.0,
             .accuracy = 1e-3,
             .reliability = 1.5,
             .max_iterations = 1000},
      "Absolute_value_minimum"},
-    {Params{.func = QuadraticFunction(-1.0),
+    {Params{.func_type = FunctionType::kQuadratic,
+            .func_param = -1.0,
             .left = -5.0,
             .right = 0.0,
             .accuracy = 1e-3,

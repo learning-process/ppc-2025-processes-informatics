@@ -10,10 +10,11 @@
 namespace kondakov_v_global_search {
 
 class KondakovVGlobalSearchRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
-    input_data_.func = [](double x) { return ((x - 3.14) * (x - 3.14)) + (0.1 * std::sin(50.0 * x)); };
+    input_data_.func_type = FunctionType::kQuadratic;
+    input_data_.func_param = 3.14;
     input_data_.left = 0.0;
     input_data_.right = 6.28;
     input_data_.accuracy = 1e-7;

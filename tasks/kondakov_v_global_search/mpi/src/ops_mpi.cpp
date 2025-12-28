@@ -3,9 +3,10 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cassert>
+#include <array>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <limits>
 #include <utility>
 #include <vector>
@@ -22,14 +23,29 @@ KondakovVGlobalSearchMPI::KondakovVGlobalSearchMPI(const InType &in) {
   GetOutput() = {};
 }
 
+double KondakovVGlobalSearchMPI::EvaluateFunction(double x) {
+  const auto &cfg = GetInput();
+  switch (cfg.func_type) {
+    case FunctionType::kQuadratic: {
+      double t = cfg.func_param;
+      return (x - t) * (x - t);
+    }
+    case FunctionType::kSine:
+      return std::sin(x) + (0.1 * x);
+    case FunctionType::kAbs:
+      return std::abs(x);
+    default:
+      return std::numeric_limits<double>::quiet_NaN();
+  }
+}
+
 bool KondakovVGlobalSearchMPI::IsRoot() const {
   return world_rank_ == 0;
 }
 
 bool KondakovVGlobalSearchMPI::ValidationImpl() {
   const auto &cfg = GetInput();
-  bool local_valid =
-      cfg.func && cfg.left < cfg.right && cfg.accuracy > 0.0 && cfg.reliability > 0.0 && cfg.max_iterations > 0;
+  bool local_valid = cfg.left < cfg.right && cfg.accuracy > 0.0 && cfg.reliability > 0.0 && cfg.max_iterations > 0;
 
   bool global_valid = false;
   MPI_Allreduce(&local_valid, &global_valid, 1, MPI_C_BOOL, MPI_LAND, MPI_COMM_WORLD);
@@ -45,15 +61,14 @@ bool KondakovVGlobalSearchMPI::PreProcessingImpl() {
     points_x_.reserve(cfg.max_iterations + (world_size_ * 10));
     values_y_.reserve(cfg.max_iterations + (world_size_ * 10));
 
-    double f_a = cfg.func(cfg.left);
-    double f_b = cfg.func(cfg.right);
+    double f_a = EvaluateFunction(cfg.left);
+    double f_b = EvaluateFunction(cfg.right);
     if (!std::isfinite(f_a) || !std::isfinite(f_b)) {
       return false;
     }
 
     points_x_ = {cfg.left, cfg.right};
     values_y_ = {f_a, f_b};
-
     best_point_ = (f_a < f_b) ? cfg.left : cfg.right;
     best_value_ = std::min(f_a, f_b);
   }
@@ -67,8 +82,8 @@ void KondakovVGlobalSearchMPI::SyncGlobalState() {
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (!IsRoot()) {
-    points_x_.resize(static_cast<std::size_t>(n));
-    values_y_.resize(static_cast<std::size_t>(n));
+    points_x_.resize(n);
+    values_y_.resize(n);
   }
 
   if (n > 0) {
@@ -134,14 +149,14 @@ double KondakovVGlobalSearchMPI::ProposeTrialPoint(std::size_t i, double l_est) 
 }
 
 std::size_t KondakovVGlobalSearchMPI::LocateInsertionIndex(double x) const {
-  return std::ranges::lower_bound(points_x_, x) - points_x_.begin();
+  auto it = std::ranges::lower_bound(points_x_, x);
+  return static_cast<std::size_t>(std::distance(points_x_.begin(), it));
 }
 
 void KondakovVGlobalSearchMPI::InsertEvaluation(double x, double fx) {
   auto idx = LocateInsertionIndex(x);
-  auto pos = static_cast<std::vector<double>::difference_type>(idx);
-  points_x_.insert(points_x_.begin() + pos, x);
-  values_y_.insert(values_y_.begin() + pos, fx);
+  points_x_.insert(points_x_.begin() + static_cast<std::vector<double>::difference_type>(idx), x);
+  values_y_.insert(values_y_.begin() + static_cast<std::vector<double>::difference_type>(idx), fx);
   if (fx < best_value_) {
     best_value_ = fx;
     best_point_ = x;
@@ -152,8 +167,7 @@ void KondakovVGlobalSearchMPI::SelectIntervalsToRefine(double l_est,
                                                        std::vector<std::pair<double, std::size_t>> &merits) {
   merits.clear();
   for (std::size_t i = 1; i < points_x_.size(); ++i) {
-    double m = IntervalMerit(i, l_est);
-    merits.emplace_back(m, i);
+    merits.emplace_back(IntervalMerit(i, l_est), i);
   }
   std::ranges::sort(merits, [](const auto &a, const auto &b) { return a.first > b.first; });
 }
@@ -163,8 +177,7 @@ bool KondakovVGlobalSearchMPI::CheckConvergence(const Params &cfg,
   if (merits.empty()) {
     return false;
   }
-  std::size_t best_i = merits[0].second;
-  double width = points_x_[best_i] - points_x_[best_i - 1];
+  double width = points_x_[merits[0].second] - points_x_[merits[0].second - 1];
   if (width <= cfg.accuracy) {
     has_converged_ = true;
     return true;
@@ -173,44 +186,45 @@ bool KondakovVGlobalSearchMPI::CheckConvergence(const Params &cfg,
 }
 
 void KondakovVGlobalSearchMPI::GatherAndBroadcastTrialResults(const std::vector<std::pair<double, std::size_t>> &merits,
-                                                              int num_trials, double l_est, const Params &cfg) {
-  double local_x_val = 0.0;
-  double local_fx_val = 0.0;
+                                                              int num_trials, double l_est) {
+  double local_x = 0.0;
+  double local_fx = 0.0;
   int local_count = 0;
 
-  if (world_rank_ < num_trials) {
-    std::size_t interval_idx = merits[world_rank_].second;
-    double x = ProposeTrialPoint(interval_idx, l_est);
-    double fx = cfg.func(x);
+  if (world_rank_ < num_trials && !merits.empty()) {
+    std::size_t idx = merits[world_rank_].second;
+    double x = ProposeTrialPoint(idx, l_est);
+    double fx = EvaluateFunction(x);
     if (std::isfinite(fx)) {
-      local_x_val = x;
-      local_fx_val = fx;
+      local_x = x;
+      local_fx = fx;
       local_count = 2;
     }
   }
 
-  std::vector<int> send_counts(world_size_);
-  MPI_Allgather(&local_count, 1, MPI_INT, send_counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
+  std::vector<int> counts(world_size_);
+  MPI_Allgather(&local_count, 1, MPI_INT, counts.data(), 1, MPI_INT, MPI_COMM_WORLD);
 
-  std::vector<int> send_displs(world_size_, 0);
+  std::vector<int> displs(world_size_);
   for (int i = 1; i < world_size_; ++i) {
-    send_displs[i] = send_displs[i - 1] + send_counts[i - 1];
+    displs[i] = displs[i - 1] + counts[i - 1];
   }
-  int total_recv = (world_size_ > 0) ? (send_displs.back() + send_counts.back()) : 0;
-  double local_data[2] = {local_x_val, local_fx_val};
+  int total = (world_size_ > 0) ? (displs.back() + counts.back()) : 0;
 
-  std::vector<double> recv_buf(total_recv);
-  MPI_Allgatherv(local_data, local_count, MPI_DOUBLE, recv_buf.data(), send_counts.data(), send_displs.data(),
-                 MPI_DOUBLE, MPI_COMM_WORLD);
+  std::vector<double> recv_buf(total);
+  std::array<double, 2> send_buf = {local_x, local_fx};
+  const double *send_ptr = (local_count > 0) ? send_buf.data() : nullptr;
+
+  MPI_Allgatherv(send_ptr, local_count, MPI_DOUBLE, recv_buf.data(), counts.data(), displs.data(), MPI_DOUBLE,
+                 MPI_COMM_WORLD);
 
   if (IsRoot()) {
-    for (int i = 0; i < total_recv; i += 2) {
-      double x = recv_buf[i];
-      double fx = recv_buf[i + 1];
-      InsertEvaluation(x, fx);
+    for (int i = 0; i < total; i += 2) {
+      InsertEvaluation(recv_buf[i], recv_buf[i + 1]);
     }
   }
 }
+
 bool KondakovVGlobalSearchMPI::RunImpl() {
   const auto &cfg = GetInput();
   std::vector<std::pair<double, std::size_t>> merits;
@@ -227,8 +241,7 @@ bool KondakovVGlobalSearchMPI::RunImpl() {
     }
 
     int num_trials = std::min(static_cast<int>(merits.size()), world_size_);
-    GatherAndBroadcastTrialResults(merits, num_trials, l_est, cfg);
-
+    GatherAndBroadcastTrialResults(merits, num_trials, l_est);
     SyncGlobalState();
     total_evals_ += num_trials;
   }
@@ -237,12 +250,11 @@ bool KondakovVGlobalSearchMPI::RunImpl() {
     GetOutput() =
         Solution{.argmin = best_point_, .value = best_value_, .iterations = total_evals_, .converged = has_converged_};
   }
-
   return true;
 }
 
 bool KondakovVGlobalSearchMPI::PostProcessingImpl() {
-  Solution sol{};
+  Solution sol;
   if (IsRoot()) {
     sol = GetOutput();
   }
@@ -250,9 +262,9 @@ bool KondakovVGlobalSearchMPI::PostProcessingImpl() {
   MPI_Bcast(&sol.argmin, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&sol.value, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&sol.iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  int converged_int = sol.converged ? 1 : 0;
-  MPI_Bcast(&converged_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  sol.converged = (converged_int != 0);
+  int converged = sol.converged ? 1 : 0;
+  MPI_Bcast(&converged, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  sol.converged = (converged != 0);
 
   GetOutput() = sol;
   return true;

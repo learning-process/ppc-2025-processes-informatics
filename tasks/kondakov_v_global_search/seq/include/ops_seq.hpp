@@ -8,7 +8,7 @@
 
 namespace kondakov_v_global_search {
 
-class KondakovVGlobalSearchSEQ : public BaseTask {
+class KondakovVGlobalSearchSEQ : public ppc::task::Task<InType, OutType> {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
@@ -20,6 +20,8 @@ class KondakovVGlobalSearchSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  double EvaluateFunction(double x);
 
   std::vector<double> points_x_;
   std::vector<double> values_y_;
