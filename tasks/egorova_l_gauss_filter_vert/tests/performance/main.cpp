@@ -27,7 +27,7 @@ class EgorovaLGaussFilterVertRunPerfTests : public ppc::util::BaseRunPerfTests<I
         static_cast<std::size_t>(kRows) * static_cast<size_t>(kCols) * static_cast<size_t>(kChannels), 128);
   }
 
-  bool CheckTestOutputData(OutType& output_data) final {
+  bool CheckTestOutputData(OutType &output_data) final {
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank != 0) {
@@ -39,10 +39,14 @@ class EgorovaLGaussFilterVertRunPerfTests : public ppc::util::BaseRunPerfTests<I
                static_cast<std::size_t>(kRows) * static_cast<size_t>(kCols) * static_cast<size_t>(kChannels);
   }
 
-  InType GetTestInputData() final { return input_data_; }
+  InType GetTestInputData() final {
+    return input_data_;
+  }
 };
 
-TEST_P(EgorovaLGaussFilterVertRunPerfTests, EgorovaLGaussPerfModes) { ExecuteTest(GetParam()); }
+TEST_P(EgorovaLGaussFilterVertRunPerfTests, EgorovaLGaussPerfModes) {
+  ExecuteTest(GetParam());
+}
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, EgorovaLGaussFilterVertMPI, EgorovaLGaussFilterVertSEQ>(
     PPC_SETTINGS_egorova_l_gauss_filter_vert);

@@ -1,11 +1,10 @@
 #pragma once
 
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <cstdint>
 #include <vector>
-
-#include <mpi.h>
 
 #include "egorova_l_gauss_filter_vert/common/include/common.hpp"
 #include "task/include/task.hpp"
