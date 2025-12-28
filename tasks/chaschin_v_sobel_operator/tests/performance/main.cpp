@@ -99,17 +99,26 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     return true;
   }
 
-  TEST_P(ChaschinVRunPerfTestProcessesSO, RunPerfModesSO) {
-    ExecuteTest(GetParam());
+  InType GetTestInputData() final {
+    return input_data;
   }
 
-  const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVSobelOperatorMPI, ChaschinVSobelOperatorSEQ>(
-      PPC_SETTINGS_example_processes);
+ private:
+  InType input_data_;
+  OutType expected_output_;
+};
 
-  const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+TEST_P(ChaschinVRunPerfTestProcessesSO, RunPerfModesSO) {
+  ExecuteTest(GetParam());
+}
 
-  const auto kPerfTestName = ChaschinVRunPerfTestProcessesSO::CustomPerfTestName;
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVSobelOperatorMPI, ChaschinVSobelOperatorSEQ>(
+    PPC_SETTINGS_example_processes);
 
-  INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcessesSO, kGtestValues, kPerfTestName);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = ChaschinVRunPerfTestProcessesSO::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcessesSO, kGtestValues, kPerfTestName);
 
 }  // namespace chaschin_v_sobel_operator
