@@ -17,29 +17,6 @@ namespace lobanov_d_multiply_matrix_ccs {
 namespace {
 constexpr double kEpsilonThreshold = 1e-10;
 
-bool ValidateSourceMatrix(const CompressedColumnMatrix &source_matrix) {
-  if (source_matrix.row_count <= 0 || source_matrix.column_count <= 0) {
-    return false;
-  }
-
-  if (source_matrix.column_pointer_data.size() != static_cast<std::size_t>(source_matrix.column_count) + 1) {
-    return false;
-  }
-
-  if (source_matrix.non_zero_count < 0) {
-    return false;
-  }
-
-  if (source_matrix.non_zero_count > 0) {
-    if (source_matrix.value_data.size() != static_cast<std::size_t>(source_matrix.non_zero_count) ||
-        source_matrix.row_index_data.size() != static_cast<std::size_t>(source_matrix.non_zero_count)) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 std::vector<int> CountElementsPerRow(const CompressedColumnMatrix &source_matrix, int column_count) {
   std::vector<int> row_element_count(column_count, 0);
 
