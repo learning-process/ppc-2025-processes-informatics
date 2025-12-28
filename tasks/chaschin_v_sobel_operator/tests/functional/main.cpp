@@ -41,9 +41,19 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
     for (int i = 0; i < height; ++i) {
       image[i].resize(width);
       for (int j = 0; j < width; ++j) {
-        image[i][j] = Pixel{static_cast<uint8_t>((i + 1) % 256), static_cast<uint8_t>((j + 2) % 256), 0};
+        image[i][j] = Pixel{static_cast<uint8_t>((i + 1) % 256), static_cast<uint8_t>((j + 2) % 256),
+                            static_cast<uint8_t>(((i + 4272) * (j + 422)) % 256)};
       }
     }
+    /*std::cout<<"Input: ";
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height; j++) {
+        std::cout<< "{" <<
+    static_cast<int>(image[i][j].r)<<","<<static_cast<int>(image[i][j].g)<<","<<static_cast<int>(image[i][j].b)<< "}";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";*/
 
     // Преобразуем в градации серого
     std::vector<std::vector<float>> gray(height + 2, std::vector<float>(width + 2, 0.0f));
@@ -53,6 +63,15 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
         gray[i + 1][j + 1] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
       }
     }
+
+    /*std::cout<<"gray: ";
+    for (int i = 0; i < width+2; i++) {
+      for (int j = 0; j < height+2; j++) {
+        std::cout<<gray[i][j]<< ' ';
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";*/
 
     // Маски Sobel
     static const int Kx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
@@ -69,32 +88,58 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
       for (int j = 0; j < width; ++j) {
         float gx = 0.0f, gy = 0.0f;
 
+        // С учётом паддинга в gray[width+2][height+2]
         for (int di = -1; di <= 1; ++di) {
-          int ni = i + di;
-          if (ni < 0 || ni >= height) {
-            continue;
-          }
-
           for (int dj = -1; dj <= 1; ++dj) {
-            int nj = j + dj;
-            if (nj < 0 || nj >= width) {
-              continue;
-            }
-
-            float val = gray[ni][nj];
+            float val = gray[i + 1 + di][j + 1 + dj];  // +1 для сдвига на паддинг
             gx += val * Kx[di + 1][dj + 1];
             gy += val * Ky[di + 1][dj + 1];
           }
         }
 
         float grad = std::sqrt(gx * gx + gy * gy);
+        // std::cout << grad << "\n";
+
         uint8_t intensity = static_cast<uint8_t>(std::min(255.0f, grad));
         expected_output_[i][j] = Pixel{intensity, intensity, intensity};
       }
     }
+
+    /*std::cout<<"Output: ";
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height; j++) {
+        std::cout<< "{" <<
+    static_cast<int>(expected_output_[i][j].r)<<","<<static_cast<int>(expected_output_[i][j].g)<<","<<static_cast<int>(expected_output_[i][j].b)<<
+    "}";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";*/
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    /*std::cout<<"Output check: ";
+    for (size_t i = 0; i < output_data.size(); i++) {
+      for (size_t j = 0; j < output_data[0].size(); j++) {
+        std::cout<< "{" <<
+    static_cast<int>(output_data[i][j].r)<<","<<static_cast<int>(output_data[i][j].g)<<","<<static_cast<int>(output_data[i][j].b)<<
+    "}";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";
+
+    std::cout<<"Exp check: ";
+    for (size_t i = 0; i < expected_output_.size(); i++) {
+      for (size_t j = 0; j < expected_output_[0].size(); j++) {
+        std::cout<< "{" <<
+    static_cast<int>(expected_output_[i][j].r)<<","<<static_cast<int>(expected_output_[i][j].g)<<","<<static_cast<int>(expected_output_[i][j].b)<<
+    "}";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";*/
+
     if (output_data.size() != expected_output_.size()) {
       return false;
     }

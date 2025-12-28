@@ -35,65 +35,57 @@ bool ChaschinVSobelOperatorMPI::ValidationImpl() {
 }
 
 std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
-    const std::vector<std::vector<Pixel>> &image, int n_procs,
-    std::vector<int> &sendcounts,  // выход: количество элементов для каждого процесса
-    std::vector<int> &displs       // выход: смещения в массиве
-) {
-  int n = image.size();
-  int m = image[0].size();
+    const std::vector<std::vector<Pixel>> &image, int n_procs, std::vector<int> &sendcounts, std::vector<int> &displs) {
+  int n = image.size();     // количество строк
+  int m = image[0].size();  // количество столбцов
 
-  int padded_m = m + 2;
+  int padded_m = m + 2;  // padding слева и справа
 
-  // Расчет блоков для каждого процесса
+  // --- Расчет блоков для каждого процесса ---
   sendcounts.resize(n_procs);
   displs.resize(n_procs);
 
   int base = n / n_procs;
   int rem = n % n_procs;
 
-  // Считаем общее количество строк с «верхней и нижней» для scatter
-  int total_rows = 0;
+  int total_real_rows = 0;  // без паддинга
   for (int rank = 0; rank < n_procs; ++rank) {
-    int local_rows = base + (rank < rem ? 1 : 0);
-    sendcounts[rank] = (local_rows + 2) * padded_m;  // +2 — верхняя и нижняя строки
-    displs[rank] = total_rows * padded_m;
-    total_rows += local_rows;  // только реальные строки, без двойного учета паддинга
+    int local_rows = (base + 2) + (rank < rem ? 1 : 0);
+    sendcounts[rank] = (local_rows)*padded_m;   // +2 для верхней и нижней строк
+    displs[rank] = total_real_rows * padded_m;  // смещение относительно первых реальных строк
+    total_real_rows += local_rows;
   }
 
-  // Общий одномерный буфер для scatterv
-  std::vector<float> buffer(total_rows * padded_m + 2 * padded_m, 0.0f);  // добавим верх/низ для первого/последнего
+  // --- Создаем общий буфер с нулевым паддингом сверху/снизу ---
+  std::vector<float> buffer((n + 2 + (n_procs - 1) * 2) * padded_m, 0.0f);
 
-  // Заполняем buffer с padding и overlap
-  for (int rank = 0; rank < n_procs; ++rank) {
-    int local_rows = base + (rank < rem ? 1 : 0);
-    int offset = base * rank + std::min(rank, rem);
+  std::vector<int> l_r(n_procs + 1, 0);
 
-    // Буфер начала блока в общем массиве
-    int start_idx = displs[rank];
+  for (int rank = 0; rank < n_procs + 1; ++rank) {
+    l_r[rank + 1] = l_r[rank] + (base) + (rank < rem ? 1 : 0);
+  }
 
-    // Верхняя строка: если rank==0, нулевая, иначе повторяем последнюю строку предыдущего блока
-    if (rank == 0) {
-      // уже 0
-    } else {
-      for (int j = 0; j < m; ++j) {
-        buffer[start_idx + j + 1] = 0;  // или можно скопировать реальные значения предыдущей строки
+  // std::cout<<"Prep:\n";
+  //  --- Заполняем центральные строки ---
+  for (int i = 0; i < n_procs; i++) {
+    for (int x = -1; x < sendcounts[i] / padded_m - 1; x++) {
+      for (int y = 0; y < m; y++) {
+        float val;
+        if (x + l_r[i] < 0 || x + l_r[i] >= n) {
+          val = 0.0f;
+        } else {
+          const Pixel &p = image[x + l_r[i]][y];
+          val = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
+        }
+        buffer[displs[i] + (x + 1) * padded_m + y + 1] = val;
+        // std::cout<<val<<" "<<i<<" "<<x+l_r[i]<<" "<<y<<" "<<displs[i] + (x+1) * padded_m + y + 1<<" \n";
       }
-    }
-
-    // Центральные строки
-    for (int i = 0; i < local_rows; ++i) {
-      for (int j = 0; j < m; ++j) {
-        const Pixel &p = image[offset + i][j];
-        float val = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
-        buffer[start_idx + (i + 1) * padded_m + (j + 1)] = val;
-      }
-    }
-
-    // Нижняя строка: если rank==n_procs-1, нулевая, иначе повторяем первую строку следующего блока
-    if (rank == n_procs - 1) {
-      // уже 0
+      // std::cout<<"\n";
     }
   }
+
+  // --- Добавляем overlap для MPI (повтор верхней и нижней строки блока) ---
+  // Сделаем это в Scatterv каждый процесс будет брать свои строки, включая верх/низ для свёртки
 
   return buffer;
 }
@@ -109,6 +101,16 @@ bool ChaschinVSobelOperatorMPI::PreProcessingImpl() {
 
   if (rank == 0) {
     const auto &image = std::get<0>(in);
+    /*
+    for (int i = 0; i < std::get<1>(in); i++) {
+      for (int j = 0; j < std::get<2>(in); j++) {
+        std::cout<< "{" <<
+    static_cast<int>(image[i][j].r)<<","<<static_cast<int>(image[i][j].g)<<","<<static_cast<int>(image[i][j].b)<< "}";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";*/
+
     int n_procs = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
 
@@ -157,11 +159,20 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
 
   // sendcounts и displs уже подготовлены в PreProcessingImpl
   const auto &in = PreProcessGray;
+  /*if (rank ==0){
+  for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 6; j++) {
+        std::cout<<PreProcessGray[i*(m+2)+j]<<" ";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";
+  }*/
 
   // Локальные параметры
   int base = n / size;
   int rem = n % size;
-  int local_rows = base + (rank < rem ? 1 : 0);
+  int local_rows = (base + 2) + (rank < rem ? 1 : 0);
   int padded_m = m + 2;
 
   // Локальный буфер с padding сверху и снизу (все уже подготовлено)
@@ -169,18 +180,18 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
 
   // Scatterv центральных строк (вверх/низ уже в PreProcessGray)
   MPI_Scatterv(rank == 0 ? in.data() : nullptr, ScatterSendCounts.data(), ScatterDispls.data(), MPI_FLOAT,
-               local_block.data(), local_rows * padded_m, MPI_FLOAT, 0, MPI_COMM_WORLD);
+               local_block.data(), (local_rows)*padded_m, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
   // --- Локальный Sobel ---
   std::vector<float> local_output(local_rows * m);
 
-#pragma omp parallel for collapse(2)
+  // #pragma omp parallel for collapse(2)
   for (int i = 0; i < local_rows; ++i) {
     for (int j = 0; j < m; ++j) {
       // local_block уже содержит padding, поэтому смещаем на +1 строки и +1 столбцы
       local_output[i * m + j] = sobel_at(local_block, i + 1, j + 1, padded_m);
 
-      std::cout << "Process " << rank << "local_output" << local_output[i * m + j] << std::endl;
+      // std::cout << "Process " << rank << " local_output " << local_output[i * m + j] << std::endl;
     }
   }
 
@@ -198,8 +209,31 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
     PostProcessGray.resize(n * m);
   }
 
-  MPI_Gatherv(local_output.data(), local_rows * m, MPI_FLOAT, rank == 0 ? PostProcessGray.data() : nullptr,
+  /*for (int i = 0; i < local_output.size(); i++){
+    std::cout<<rank<<":"<<local_output[i]<<" ";
+  }
+  std::cout<<"\n";*/
+
+  MPI_Gatherv(local_output.data(), (local_rows - 2) * m, MPI_FLOAT, rank == 0 ? PostProcessGray.data() : nullptr,
               recvcounts.data(), displs_out.data(), MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+  /*if (rank == 0) {
+    const auto &inp = GetInput();
+    const auto &image = std::get<0>(inp);
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < m; j++) {
+        std::cout<< "{" << image[i][j].r<<","<<image[i][j].g<<","<<image[i][j].b<< "}";
+      }
+      std::cout << "\n";
+    }
+    std::cout << "\n";*/
+  /*for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      std::cout << PostProcessGray[i*m+j] << " ";
+    }
+    std::cout << "\n";
+  }
+}*/
 
   return true;
 }
@@ -208,30 +242,24 @@ bool ChaschinVSobelOperatorMPI::PostProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // Только rank 0 имеет данные
-  if (rank != 0) {
-    return true;
-  }
-
   auto &out = GetOutput();
-
   int n = std::get<0>(Size);
   int m = std::get<1>(Size);
+  if (rank != 0) {
+    PostProcessGray.resize(n * m);
+  }
+  MPI_Bcast(PostProcessGray.data(),  // буфер
+            n * m,                   // количество элементов
+            MPI_FLOAT,
+            0,  // root процесс
+            MPI_COMM_WORLD);
 
   out.resize(n);
-  float max_val = 0.0f;
-
-  // Найдем максимум для нормализации
-  for (float v : PostProcessGray) {
-    max_val = std::max(max_val, v);
-  }
-
-  float inv = (max_val > 0.0f) ? (255.0f / max_val) : 0.0f;
 
   for (int i = 0; i < n; ++i) {
     out[i].resize(m);
     for (int j = 0; j < m; ++j) {
-      float v = PostProcessGray[i * m + j] * inv;
+      float v = PostProcessGray[i * m + j];
       unsigned char c = static_cast<unsigned char>(std::clamp(v, 0.0f, 255.0f));
       out[i][j] = Pixel{c, c, c};
     }
