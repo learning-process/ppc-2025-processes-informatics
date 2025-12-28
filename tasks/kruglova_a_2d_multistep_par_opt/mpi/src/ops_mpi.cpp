@@ -143,6 +143,20 @@ bool KruglovaA2DMuitMPI::RunImpl() {
 
       std::sort(rates.begin(), rates.end(), [](const CharIdx &a, const CharIdx &b) { return a.R > b.R; });
 
+      if (rates.empty()) {
+        stop_flag = 1;
+      } else {
+        size_t idx0 = rates[0].idx;
+        if (idx0 + 1 < trials.size() && trials[idx0 + 1].x - trials[idx0].x < in.eps) {
+          stop_flag = 1;
+        } else {
+          for (int i = 0; i < size; ++i) {
+            size_t idx = (i < static_cast<int>(rates.size())) ? rates[i].idx : idx0;
+            selected_intervals[i] = {trials[idx].x, trials[idx + 1].x, trials[idx].f, trials[idx + 1].f};
+          }
+        }
+      }
+
       if (trials[rates[0].idx + 1].x - trials[rates[0].idx].x < in.eps) {
         stop_flag = 1;
       } else {
