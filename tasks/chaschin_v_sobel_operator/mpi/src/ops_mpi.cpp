@@ -105,7 +105,7 @@ bool ChaschinVSobelOperatorMPI::PreProcessingImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   // Вывод размеров изображения
-  std::cout << "Process " << rank << " get image " << std::get<1>(in) << "x" << std::get<2>(in) << std::endl;
+  // std::cout << "Process " << rank << " get image " << std::get<1>(in) << "x" << std::get<2>(in) << std::endl;
 
   if (rank == 0) {
     const auto &image = std::get<0>(in);
@@ -179,6 +179,8 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
     for (int j = 0; j < m; ++j) {
       // local_block уже содержит padding, поэтому смещаем на +1 строки и +1 столбцы
       local_output[i * m + j] = sobel_at(local_block, i + 1, j + 1, padded_m);
+
+      std::cout << "Process " << rank << "local_output" << local_output[i * m + j] << std::endl;
     }
   }
 
