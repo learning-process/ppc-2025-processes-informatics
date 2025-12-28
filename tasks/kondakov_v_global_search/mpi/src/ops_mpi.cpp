@@ -211,7 +211,10 @@ void KondakovVGlobalSearchMPI::GatherAndBroadcastTrialResults(const std::vector<
   }
   int total = (world_size_ > 0) ? (displs.back() + counts.back()) : 0;
 
-  std::vector<double> recv_buf(total);
+  std::vector<double> recv_buf;
+  if (total > 0) {
+    recv_buf.resize(total);
+  }
   std::array<double, 2> send_buf = {local_x, local_fx};
   const double *send_ptr = (local_count > 0) ? send_buf.data() : nullptr;
 
