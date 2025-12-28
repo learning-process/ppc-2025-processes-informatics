@@ -19,24 +19,20 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     // Генерация входного изображения
     input_data_.resize(size);
     for (int i = 0; i < size; ++i) {
-        input_data_[i].resize(size);
-        for (int j = 0; j < size; ++j) {
-            // Детерминированное значение пикселя (только красный канал для простоты)
-            input_data_[i][j] = Pixel{
-                static_cast<uint8_t>((i + 1) % 256),
-                static_cast<uint8_t>((j + 2) % 256),
-                0
-            };
-        }
+      input_data_[i].resize(size);
+      for (int j = 0; j < size; ++j) {
+        // Детерминированное значение пикселя (только красный канал для простоты)
+        input_data_[i][j] = Pixel{static_cast<uint8_t>((i + 1) % 256), static_cast<uint8_t>((j + 2) % 256), 0};
+      }
     }
 
     // Преобразуем в градации серого
     std::vector<std::vector<float>> gray(size, std::vector<float>(size, 0.0f));
     for (int i = 0; i < size; ++i) {
-        for (int j = 0; j < size; ++j) {
-            const auto &p = input_data_[i][j];
-            gray[i][j] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
-        }
+      for (int j = 0; j < size; ++j) {
+        const auto &p = input_data_[i][j];
+        gray[i][j] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
+      }
     }
 
     // Маски Sobel
@@ -46,24 +42,27 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     // Вычисляем Sobel (градиент) для каждого пикселя
     expected_output_.resize(size * size, 0.0f);
     for (int i = 0; i < size; ++i) {
-        for (int j = 0; j < size; ++j) {
-            float gx = 0.0f, gy = 0.0f;
-            for (int di = -1; di <= 1; ++di) {
-                int ni = i + di;
-                if (ni < 0 || ni >= size) continue;
-                for (int dj = -1; dj <= 1; ++dj) {
-                    int nj = j + dj;
-                    if (nj < 0 || nj >= size) continue;
-                    float val = gray[ni][nj];
-                    gx += val * Kx[di + 1][dj + 1];
-                    gy += val * Ky[di + 1][dj + 1];
-                }
+      for (int j = 0; j < size; ++j) {
+        float gx = 0.0f, gy = 0.0f;
+        for (int di = -1; di <= 1; ++di) {
+          int ni = i + di;
+          if (ni < 0 || ni >= size) {
+            continue;
+          }
+          for (int dj = -1; dj <= 1; ++dj) {
+            int nj = j + dj;
+            if (nj < 0 || nj >= size) {
+              continue;
             }
-            expected_output_[i * size + j] = std::sqrt(gx * gx + gy * gy);
+            float val = gray[ni][nj];
+            gx += val * Kx[di + 1][dj + 1];
+            gy += val * Ky[di + 1][dj + 1];
+          }
         }
+        expected_output_[i * size + j] = std::sqrt(gx * gx + gy * gy);
+      }
     }
-}
-
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (output_data.size() != expected_output_.size()) {
