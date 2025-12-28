@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <string>
 #include <tuple>
 
 #include "eremin_v_hypercube/common/include/common.hpp"
