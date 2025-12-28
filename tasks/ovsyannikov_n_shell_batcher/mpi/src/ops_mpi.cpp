@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <stdexcept>
 #include <vector>
 
 namespace ovsyannikov_n_shell_batcher {
@@ -24,6 +25,7 @@ void OvsyannikovNShellBatcherMPI::ShellSort(std::vector<int> &arr) {
   if (n < 2) {
     return;
   }
+
   for (int gap = n / 2; gap > 0; gap /= 2) {
     for (int i = gap; i < n; i++) {
       int temp = arr[i];
@@ -38,6 +40,13 @@ void OvsyannikovNShellBatcherMPI::ShellSort(std::vector<int> &arr) {
 }
 
 bool OvsyannikovNShellBatcherMPI::RunImpl() {
+  int mpi_flag = 0;
+  MPI_Initialized(&mpi_flag);
+  if (!mpi_flag) {
+    MPI_Init(nullptr, nullptr);
+    need_finalize_ = true;
+  }
+
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -82,12 +91,17 @@ bool OvsyannikovNShellBatcherMPI::RunImpl() {
   if (rank != 0) {
     this->GetOutput().resize(total_len);
   }
+
   MPI_Bcast(this->GetOutput().data(), total_len, MPI_INT, 0, MPI_COMM_WORLD);
 
   return true;
 }
 
 bool OvsyannikovNShellBatcherMPI::PostProcessingImpl() {
+  if (need_finalize_) {
+    MPI_Finalize();
+    need_finalize_ = false;
+  }
   return true;
 }
 

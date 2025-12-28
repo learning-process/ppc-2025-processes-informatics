@@ -1,7 +1,5 @@
 #include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
 
-#include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
-
 namespace ovsyannikov_n_shell_batcher {
 
 OvsyannikovNShellBatcherSEQ::OvsyannikovNShellBatcherSEQ(const InType &in) {
@@ -14,15 +12,15 @@ bool OvsyannikovNShellBatcherSEQ::ValidationImpl() {
 }
 
 bool OvsyannikovNShellBatcherSEQ::PreProcessingImpl() {
+  // Копируем входные данные в выходные
   this->GetOutput() = this->GetInput();
   return true;
 }
 
-bool OvsyannikovNShellBatcherSEQ::RunImpl() {
-  auto &arr = this->GetOutput();
+void OvsyannikovNShellBatcherSEQ::ShellSort(std::vector<int> &arr) {
   int n = static_cast<int>(arr.size());
   if (n < 2) {
-    return true;
+    return;
   }
 
   for (int gap = n / 2; gap > 0; gap /= 2) {
@@ -36,6 +34,11 @@ bool OvsyannikovNShellBatcherSEQ::RunImpl() {
       arr[j] = temp;
     }
   }
+}
+
+bool OvsyannikovNShellBatcherSEQ::RunImpl() {
+  auto &arr = this->GetOutput();
+  ShellSort(arr);
   return true;
 }
 
