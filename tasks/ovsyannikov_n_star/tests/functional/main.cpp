@@ -37,8 +37,6 @@ class OvsyannikovNRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InT
   InType input_data_ = 1;
 };
 
-namespace {
-
 TEST_P(OvsyannikovNRunFuncTestsProcesses, StarTopologyTest) {
   ExecuteTest(GetParam());
 }
@@ -54,5 +52,4 @@ const auto kPerfTestName = OvsyannikovNRunFuncTestsProcesses::PrintFuncTestName<
 
 INSTANTIATE_TEST_SUITE_P(StarTopologyTests, OvsyannikovNRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
-}  // namespace
 }  // namespace ovsyannikov_n_star
