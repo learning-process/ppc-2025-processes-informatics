@@ -23,7 +23,7 @@ class ChaschinVSobelOperatorMPI : public BaseTask {
 
   std::vector<float> preprocess_to_grayscale(const std::vector<std::vector<Pixel>> &image);
 
-      std::vector<float> PreProcessGray;
+  std::vector<float> PreProcessGray;
   std::vector<float> PostProcessGray;
   std::tuple<int, int> Size;
   std::vector<int> ScatterSendCounts;
