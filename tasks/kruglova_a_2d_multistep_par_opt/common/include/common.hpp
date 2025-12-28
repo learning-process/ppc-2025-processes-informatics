@@ -44,9 +44,9 @@ using TestType = std::tuple<std::string, InType>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 inline double ObjectiveFunction(double x, double y) {
-  constexpr double A = 10.0;
-  constexpr double n = 2.0;
-  return A * n + x * x + y * y - A * (std::cos(2.0 * M_PI * x) + std::cos(2.0 * M_PI * y));
+  constexpr double kA = 10.0;
+  constexpr double kN = 2.0;
+  return (kA * kN) + (x * x) + (y * y) - kA * (std::cos(2.0 * M_PI * x) + std::cos(2.0 * M_PI * y));
 }
 
 }  // namespace kruglova_a_2d_multistep_par_opt

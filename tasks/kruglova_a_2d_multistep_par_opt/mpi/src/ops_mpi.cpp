@@ -156,15 +156,6 @@ bool KruglovaA2DMuitMPI::RunImpl() {
           }
         }
       }
-
-      if (trials[rates[0].idx + 1].x - trials[rates[0].idx].x < in.eps) {
-        stop_flag = 1;
-      } else {
-        for (int i = 0; i < size; ++i) {
-          size_t idx = (i < (int)rates.size()) ? rates[i].idx : rates[0].idx;
-          selected_intervals[i] = {trials[idx].x, trials[idx + 1].x, trials[idx].f, trials[idx + 1].f};
-        }
-      }
     }
 
     MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);

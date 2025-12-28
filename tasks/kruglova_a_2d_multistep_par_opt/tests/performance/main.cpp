@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cmath>
+#include <thread>
 #include <vector>
 
 #include "kruglova_a_2d_multistep_par_opt/common/include/common.hpp"
@@ -30,6 +32,9 @@ class KruglovaA2DMultRunPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
 };
 
 TEST_P(KruglovaA2DMultRunPerfTest, RunPerfModes) {
+#ifdef USE_PERF_TESTS
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+#endif
   ExecuteTest(GetParam());
 }
 
