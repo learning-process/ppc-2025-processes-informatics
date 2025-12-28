@@ -24,7 +24,8 @@ class ChaschinVSobelOperatorMPI : public BaseTask {
   std::vector<float> PreprocessToGrayscaleWithOverlap(const std::vector<std::vector<Pixel>> &image, int n_procs,
                                                       std::vector<int> &sendcounts, std::vector<int> &displs);
 
-  float sobel_at(const std::vector<float> &img, int i, int j, int stride) std::vector<float> PreProcessGray;
+  float sobel_at(const std::vector<float> &img, int i, int j, int stride);
+  std::vector<float> PreProcessGray;
   std::vector<float> PostProcessGray;
   std::tuple<int, int> Size;
   std::vector<int> ScatterSendCounts;
