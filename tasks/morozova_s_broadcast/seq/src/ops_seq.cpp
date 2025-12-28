@@ -1,7 +1,5 @@
 #include "morozova_s_broadcast/seq/include/ops_seq.hpp"
 
-#include <algorithm>
-
 #include "morozova_s_broadcast/common/include/common.hpp"
 
 namespace morozova_s_broadcast {
@@ -13,10 +11,7 @@ MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
-  return true;
+  return !GetInput().empty();
 }
 
 bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
@@ -32,9 +27,12 @@ bool MorozovaSBroadcastSEQ::PostProcessingImpl() {
   return true;
 }
 
-// Реализация заглушки broadcast для SEQ
-void SequentialBroadcast(void *, int, int, int, int) {
-  // Ничего делать не нужно
+void SequentialBroadcast(void *data, int count, int datatype, int root, int comm) {
+  (void)data;
+  (void)count;
+  (void)datatype;
+  (void)root;
+  (void)comm;
 }
 
 }  // namespace morozova_s_broadcast

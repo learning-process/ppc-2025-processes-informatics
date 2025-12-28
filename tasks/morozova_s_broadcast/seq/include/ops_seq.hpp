@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "morozova_s_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -22,7 +20,6 @@ class MorozovaSBroadcastSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-// Заглушка для SEQ — объявление
-void SequentialBroadcast(void *, int, int, int, int);
+void SequentialBroadcast(void *data, int count, int datatype, int root, int comm);
 
 }  // namespace morozova_s_broadcast
