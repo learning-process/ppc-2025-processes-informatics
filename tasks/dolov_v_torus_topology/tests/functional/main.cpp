@@ -29,8 +29,6 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
       MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
 
-    bool is_seq = (std::get<1>(GetParam()).find("SEQ") != std::string::npos);
-
     TestType params = std::get<2>(GetParam());
     int test_type = std::get<0>(params);
 
@@ -38,46 +36,49 @@ class DolovVTorusTopologyFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     input_data_.sender_rank = 0;
     input_data_.total_procs = world_size;
     input_data_.message = message;
+
+    int r = static_cast<int>(std::sqrt(world_size));
+    while (world_size % r != 0) {
+      r--;
+    }
+    int c = world_size / r;
+
     expected_.received_message = message;
 
-    if (is_seq) {
-      input_data_.total_procs = 2;
-      input_data_.sender_rank = 0;
-      input_data_.receiver_rank = (test_type == 0) ? 0 : 1;
-    } else {
-      int r = static_cast<int>(std::sqrt(world_size));
-      while (world_size % r != 0) {
-        r--;
-      }
-      int c = world_size / r;
-
-      switch (test_type) {
-        case 0:
-          input_data_.receiver_rank = 0;
-          break;
-        case 1:
-          input_data_.receiver_rank = (c > 1) ? 1 : 0;
-          break;
-        case 2:
-          input_data_.receiver_rank = (r > 1) ? c : 0;
-          break;
-        case 3:
-          input_data_.receiver_rank = (c > 1) ? (c - 1) : 0;
-          break;
-        case 4:
-          input_data_.receiver_rank = (r > 1) ? (r - 1) * c : 0;
-          break;
-        case 5:
-          input_data_.receiver_rank = world_size - 1;
-          break;
-        case 6:
-          input_data_.sender_rank = world_size - 1;
-          input_data_.receiver_rank = 0;
-          break;
-        default:
-          input_data_.receiver_rank = 0;
-          break;
-      }
+    switch (test_type) {
+      case 0:
+        input_data_.receiver_rank = 0;
+        expected_.route = {0};
+        break;
+      case 1:
+        input_data_.receiver_rank = (c > 1) ? 1 : 0;
+        expected_.route.clear();
+        break;
+      case 2:
+        input_data_.receiver_rank = (r > 1) ? c : 0;
+        expected_.route.clear();
+        break;
+      case 3:
+        input_data_.receiver_rank = (c > 1) ? (c - 1) : 0;
+        expected_.route.clear();
+        break;
+      case 4:
+        input_data_.receiver_rank = (r > 1) ? (r - 1) * c : 0;
+        expected_.route.clear();
+        break;
+      case 5:
+        input_data_.receiver_rank = world_size - 1;
+        expected_.route.clear();
+        break;
+      case 6:
+        input_data_.sender_rank = world_size - 1;
+        input_data_.receiver_rank = 0;
+        expected_.route.clear();
+        break;
+      default:
+        input_data_.receiver_rank = 0;
+        expected_.route = {0};
+        break;
     }
   }
 

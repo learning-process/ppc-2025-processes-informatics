@@ -23,11 +23,8 @@ bool DolovVTorusTopologySEQ::PreProcessingImpl() {
 
 bool DolovVTorusTopologySEQ::RunImpl() {
   internal_output_.received_message = internal_input_.message;
-  internal_output_.route = {internal_input_.sender_rank};
+  internal_output_.route = {internal_input_.sender_rank, internal_input_.receiver_rank};
 
-  if (internal_input_.sender_rank != internal_input_.receiver_rank) {
-    internal_output_.route.push_back(internal_input_.receiver_rank);
-  }
   return true;
 }
 
