@@ -40,16 +40,6 @@ bool ValidateSourceMatrix(const CompressedColumnMatrix &source_matrix) {
   return true;
 }
 
-void InitializeEmptyTransposedResult(const CompressedColumnMatrix &source_matrix,
-                                     CompressedColumnMatrix &transposed_result) {
-  transposed_result.row_count = source_matrix.column_count;
-  transposed_result.column_count = source_matrix.row_count;
-  transposed_result.non_zero_count = 0;
-  transposed_result.value_data.clear();
-  transposed_result.row_index_data.clear();
-  transposed_result.column_pointer_data.assign(transposed_result.column_count + 1, 0);
-}
-
 std::vector<int> CountElementsPerRow(const CompressedColumnMatrix &source_matrix, int column_count) {
   std::vector<int> row_element_count(column_count, 0);
 
@@ -183,10 +173,6 @@ void ProcessMatrixBElement(int matrix_b_row, double matrix_b_value, const Compre
     int matrix_a_row = transposed_matrix_a.row_index_data[transposed_index];
     double matrix_a_value = transposed_matrix_a.value_data[transposed_index];
 
-    if (!ValidateMatrixAElement(matrix_a_row, transposed_matrix_a.column_count)) {
-      continue;
-    }
-
     ProcessTransposedElement(matrix_a_row, column_index, matrix_a_value, matrix_b_value, temporary_row_values,
                              row_marker_array);
   }
@@ -199,11 +185,6 @@ void ProcessLocalColumnElements(int column_start_position, int column_end_positi
   for (int element_index = column_start_position; element_index < column_end_position; element_index++) {
     int matrix_b_row = local_row_indices[element_index];
     double matrix_b_value = local_values[element_index];
-
-    if (!ValidateMatrixBElement(matrix_b_row, transposed_matrix_a.column_count,
-                                transposed_matrix_a.column_pointer_data)) {
-      continue;
-    }
 
     ProcessMatrixBElement(matrix_b_row, matrix_b_value, transposed_matrix_a, column_index, temporary_row_values,
                           row_marker_array);
@@ -267,31 +248,11 @@ bool ValidateRowIndex(int row_idx, int row_count) {
 
 int ExtractSingleColumnData(int col_index, const CompressedColumnMatrix &matrix_b, std::vector<double> &local_values,
                             std::vector<int> &local_row_indices) {
-  if (!ValidateColumnIndex(col_index, matrix_b.column_count)) {
-    return static_cast<int>(local_values.size());
-  }
-
-  if (!ValidateColumnPointerBounds(col_index, matrix_b.column_pointer_data)) {
-    return static_cast<int>(local_values.size());
-  }
-
   int col_start = matrix_b.column_pointer_data[col_index];
   int col_end = matrix_b.column_pointer_data[col_index + 1];
 
-  if (!ValidateColumnRange(col_start, col_end)) {
-    return static_cast<int>(local_values.size());
-  }
-
-  if (!ValidateDataBounds(col_end, matrix_b.value_data, matrix_b.row_index_data)) {
-    return static_cast<int>(local_values.size());
-  }
-
   for (int idx = col_start; idx < col_end; ++idx) {
     int row_idx = matrix_b.row_index_data[idx];
-
-    if (!ValidateRowIndex(row_idx, matrix_b.row_count)) {
-      continue;
-    }
 
     local_values.push_back(matrix_b.value_data[idx]);
     local_row_indices.push_back(row_idx);
@@ -437,18 +398,9 @@ void LobanovDMultiplyMatrixMPI::ComputeTransposedMatrixMPI(const CompressedColum
                                                            CompressedColumnMatrix &transposed_result) {
   transposed_result.ZeroInitialize();
 
-  if (!ValidateSourceMatrix(source_matrix)) {
-    return;
-  }
-
   transposed_result.row_count = source_matrix.column_count;
   transposed_result.column_count = source_matrix.row_count;
   transposed_result.non_zero_count = source_matrix.non_zero_count;
-
-  if (source_matrix.non_zero_count == 0) {
-    InitializeEmptyTransposedResult(source_matrix, transposed_result);
-    return;
-  }
 
   std::vector<int> row_element_count = CountElementsPerRow(source_matrix, transposed_result.column_count);
 
@@ -459,18 +411,6 @@ void LobanovDMultiplyMatrixMPI::ComputeTransposedMatrixMPI(const CompressedColum
 
 std::pair<int, int> LobanovDMultiplyMatrixMPI::DetermineColumnDistribution(int total_columns, int process_rank,
                                                                            int process_count) {
-  if (total_columns <= 0) {
-    return {0, 0};
-  }
-
-  if (process_count <= 0) {
-    return {0, 0};
-  }
-
-  if (process_rank < 0 || process_rank >= process_count) {
-    return {0, 0};
-  }
-
   int base_columns_per_process = total_columns / process_count;
   int remaining_columns = total_columns % process_count;
 
@@ -552,10 +492,6 @@ void LobanovDMultiplyMatrixMPI::MultiplyLocalMatricesMPI(const CompressedColumnM
   result_row_indices.clear();
   result_column_pointers.clear();
   result_column_pointers.push_back(0);
-
-  if (local_column_count <= 0) {
-    return;
-  }
 
   if (transposed_matrix_a.column_count <= 0) {
     return;
@@ -714,13 +650,6 @@ bool LobanovDMultiplyMatrixMPI::RunImpl() {
   int start_column = columns_per_process[0];
   int end_column = columns_per_process[1];
   int local_column_count = end_column - start_column;
-
-  if (start_column < 0 || end_column < 0 || start_column >= end_column || end_column > matrix_b.column_count) {
-    start_column = std::max(0, std::min(start_column, matrix_b.column_count));
-    end_column = std::max(0, std::min(end_column, matrix_b.column_count));
-    start_column = std::min(start_column, end_column);
-    local_column_count = end_column - start_column;
-  }
 
   std::vector<double> local_values;
   std::vector<int> local_row_indices;
