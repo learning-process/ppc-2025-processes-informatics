@@ -16,33 +16,58 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
   InType input_data;
 
   void SetUp() override {
-    // Создаем квадратное изображение размером k_count x k_count
-    input_data.resize(k_count);
+    // Создаем квадратное изображение
+    input_data_.resize(k_count);
     for (int i = 0; i < k_count; ++i) {
-      input_data[i].resize(k_count);
+      input_data_[i].resize(k_count);
       for (int j = 0; j < k_count; ++j) {
-        // Детерминированное значение
-        input_data[i][j] = static_cast<float>((i + 1) * (j + 2));
+        // Детерминированное значение: только красный канал
+        input_data_[i][j] = Pixel{static_cast<uint8_t>((i + 1) % 256), static_cast<uint8_t>((j + 2) % 256), 0};
+      }
+    }
+
+    // Маски Sobel
+    static const int Kx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    static const int Ky[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+
+    // Вычисляем Sobel (градиент) для каждого пикселя
+    expected_output_.resize(k_count * k_count);
+    for (int i = 0; i < k_count; ++i) {
+      for (int j = 0; j < k_count; ++j) {
+        float gx = 0.0f, gy = 0.0f;
+        for (int di = -1; di <= 1; ++di) {
+          int ni = i + di;
+          if (ni < 0 || ni >= k_count) {
+            continue;
+          }
+          for (int dj = -1; dj <= 1; ++dj) {
+            int nj = j + dj;
+            if (nj < 0 || nj >= k_count) {
+              continue;
+            }
+            float val = static_cast<float>(input_data_[ni][nj].r);
+            gx += val * Kx[di + 1][dj + 1];
+            gy += val * Ky[di + 1][dj + 1];
+          }
+        }
+        expected_output_[i * k_count + j] = std::sqrt(gx * gx + gy * gy);
       }
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверка размера
-    if (output_data.size() != input_data.size()) {
+    if (output_data.size() != expected_output_.size()) {
       return false;
     }
 
-    // Проверка значений: каждая строка должна содержать максимум строки
     for (size_t i = 0; i < output_data.size(); ++i) {
-      float expected_max = *std::max_element(input_data[i].begin(), input_data[i].end());
-      if (output_data[i] != expected_max) {
+      if (output_data[i] != expected_output_[i]) {
         return false;
       }
     }
 
     return true;
-  };
+  }
 
   TEST_P(ChaschinVRunPerfTestProcessesSO, RunPerfModesSO) {
     ExecuteTest(GetParam());

@@ -24,26 +24,46 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int size = std::get<0>(params);
-
-    // Генерация входных данных
-    input_data_.resize(size);
+    const int size = k_count;  // или параметр
+    auto &image = std::get<0>(input_data_);
+    image.resize(size);
     for (int i = 0; i < size; ++i) {
-      input_data_[i].resize(size);
+      image[i].resize(size);
     }
 
+    // Генерация детерминированного изображения
     for (int i = 0; i < size; ++i) {
       for (int j = 0; j < size; ++j) {
-        // Детерминированное значение
-        input_data_[i][j] = static_cast<float>((i + 1) * (j + 2));
+        image[i][j] = Pixel{static_cast<uint8_t>((i + 1) % 256), static_cast<uint8_t>((j + 2) % 256), 0};
       }
     }
 
-    // Генерация ожидаемого результата
-    expected_output_.resize(size);
-    for (int i = 0; i < size; i++) {
-      expected_output_[i] = *std::max_element(input_data_[i].begin(), input_data_[i].end());
+    // Вычисляем Sobel
+    expected_output_.resize(size * size);
+    static const int Kx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    static const int Ky[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+
+    for (int i = 0; i < size; ++i) {
+      for (int j = 0; j < size; ++j) {
+        float gx = 0.0f, gy = 0.0f;
+        for (int di = -1; di <= 1; ++di) {
+          int ni = i + di;
+          if (ni < 0 || ni >= size) {
+            continue;
+          }
+          for (int dj = -1; dj <= 1; ++dj) {
+            int nj = j + dj;
+            if (nj < 0 || nj >= size) {
+              continue;
+            }
+            const Pixel &p = image[ni][nj];
+            float val = static_cast<float>(p.r);  // используем только канал R
+            gx += val * Kx[di + 1][dj + 1];
+            gy += val * Ky[di + 1][dj + 1];
+          }
+        }
+        expected_output_[i * size + j] = std::sqrt(gx * gx + gy * gy);
+      }
     }
   }
 

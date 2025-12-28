@@ -10,6 +10,9 @@ namespace chaschin_v_sobel_operator {
 
 struct Pixel {
   uint8_t r, g, b;
+  bool operator==(const Pixel &other) const {
+    return r == other.r && g == other.g && b == other.b;
+  }
 };
 
 using InType = std::tuple<std::vector<std::vector<Pixel>>, int, int>;
