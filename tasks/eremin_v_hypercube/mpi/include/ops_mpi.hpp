@@ -1,5 +1,4 @@
 #pragma once
-#include <mpi.h>
 
 #include "eremin_v_hypercube/common/include/common.hpp"
 #include "task/include/task.hpp"
