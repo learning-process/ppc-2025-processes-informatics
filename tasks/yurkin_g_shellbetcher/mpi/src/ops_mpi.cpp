@@ -95,7 +95,6 @@ bool YurkinGShellBetcherMPI::RunImpl() {
   if (is_power_of_two(size)) {
     int stages = static_cast<int>(std::log2(size));
     for (int stage = 0; stage < stages; ++stage) {
-      int step = 1 << stage;
       for (int sub = stage; sub >= 0; --sub) {
         int partner_distance = 1 << sub;
         int partner = rank ^ partner_distance;
