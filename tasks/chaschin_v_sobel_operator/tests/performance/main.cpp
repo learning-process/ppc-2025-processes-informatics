@@ -10,7 +10,7 @@
 
 namespace chaschin_v_sobel_operator {
 
-class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   static constexpr int k_count = 5000;
 
@@ -107,7 +107,7 @@ class ChaschinVRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType,
   OutType expected_output_;
 };
 
-TEST_P(ChaschinVRunPerfTestProcesses, RunPerfModes) {
+TEST_P(ChaschinVRunPerfTestProcessesSO, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
@@ -116,8 +116,8 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, ChaschinVSobelOpe
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = ChaschinVRunPerfTestProcesses::CustomPerfTestName;
+const auto kPerfTestName = ChaschinVRunPerfTestProcessesSO::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, ChaschinVRunPerfTestProcessesSO, kGtestValues, kPerfTestName);
 
 }  // namespace chaschin_v_sobel_operator
