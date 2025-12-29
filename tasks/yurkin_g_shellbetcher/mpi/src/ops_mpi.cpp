@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -37,7 +36,7 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::ranges::merge(a, b, out.begin());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
@@ -70,12 +69,11 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
       OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
 
       std::size_t half = merged.size() / 2;
-      if (static_cast<int>(rank) < partner) {
+      if (rank < partner) {
         merged.resize(half);
       } else {
         std::vector<int> tmp;
-        using diff_t = std::vector<int>::difference_type;
-        diff_t dhalf = static_cast<diff_t>(half);
+        auto dhalf = static_cast<std::vector<int>::difference_type>(half);
         tmp.assign(merged.begin() + dhalf, merged.end());
         merged.swap(tmp);
       }
@@ -111,12 +109,11 @@ void DoOddEvenTransposition(std::vector<int> &local_data, int rank, int size) {
       OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
 
       std::size_t half = merged.size() / 2;
-      if (static_cast<int>(rank) < neighbor) {
+      if (rank < neighbor) {
         merged.resize(half);
       } else {
         std::vector<int> tmp;
-        using diff_t = std::vector<int>::difference_type;
-        diff_t dhalf = static_cast<diff_t>(half);
+        auto dhalf = static_cast<std::vector<int>::difference_type>(half);
         tmp.assign(merged.begin() + dhalf, merged.end());
         merged.swap(tmp);
       }
@@ -181,12 +178,12 @@ bool YurkinGShellBetcherMPI::RunImpl() {
     DoOddEvenTransposition(local_data, rank, size);
   }
 
-  std::int64_t local_checksum = 0;
+  long long local_checksum = 0;
   for (int v : local_data) {
-    local_checksum += static_cast<std::int64_t>(v);
+    local_checksum += static_cast<long long>(v);
   }
 
-  std::int64_t global_checksum = 0;
+  long long global_checksum = 0;
   MPI_Allreduce(&local_checksum, &global_checksum, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_checksum & 0x7FFFFFFF);

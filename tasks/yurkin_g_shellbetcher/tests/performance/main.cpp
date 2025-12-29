@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -13,7 +13,7 @@
 
 namespace yurkin_g_shellbetcher {
 
-static std::int64_t ComputeExpectedChecksumSeq(int n) {
+static long long ComputeExpectedChecksumSeq(int n) {
   std::vector<int> data;
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
@@ -22,7 +22,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
     data.push_back(dist(rng));
   }
 
-  auto ShellSortLocal = [](std::vector<int> &a) {
+  auto shell_sort_local = [](std::vector<int> &a) {
     std::size_t n_local = a.size();
     std::size_t gap = 1;
     while (gap < n_local / 3) {
@@ -42,15 +42,15 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
     }
   };
 
-  ShellSortLocal(data);
+  shell_sort_local(data);
   std::vector<int> left;
   std::vector<int> right;
   std::vector<int> merged;
-  std::size_t mid = data.size() / 2;
+  auto mid = data.size() / 2;
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   merged.resize(left.size() + right.size());
-  std::ranges::merge(left, right, merged.begin());
+  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
@@ -59,10 +59,10 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
       }
     }
   }
-  ShellSortLocal(merged);
-  std::int64_t checksum = 0;
+  shell_sort_local(merged);
+  long long checksum = 0;
   for (int v : merged) {
-    checksum += static_cast<std::int64_t>(v);
+    checksum += static_cast<long long>(v);
   }
   return checksum & 0x7FFFFFFF;
 }
@@ -76,8 +76,8 @@ class YurkinGShellBetcherPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
-    return static_cast<std::int64_t>(output_data) == expected;
+    long long expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
+    return static_cast<long long>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
