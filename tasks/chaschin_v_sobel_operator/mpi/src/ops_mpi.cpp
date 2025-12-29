@@ -229,7 +229,7 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
     PostProcessGray.resize(n * m);
   }
 
-  for (int i = 0; i < local_output.size(); i++) {
+  for (size_t i = 0; i < local_output.size(); i++) {
     std::cout << rank << ":" << local_output[i] << " " << std::flush;
   }
   std::cout << "\n" << std::flush;
