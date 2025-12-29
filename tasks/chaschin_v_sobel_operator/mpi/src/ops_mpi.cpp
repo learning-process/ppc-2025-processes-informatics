@@ -45,6 +45,10 @@ std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
   sendcounts.resize(n_procs);
   displs.resize(n_procs);
 
+  for (int i = 0; i < displs.size(); i++) {
+    displs[i] = 0;
+  }
+
   int base = n / n_procs;
   int rem = n % n_procs;
 
