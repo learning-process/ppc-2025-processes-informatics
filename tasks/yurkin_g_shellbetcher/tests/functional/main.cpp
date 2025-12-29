@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
 
 #include <algorithm>
 #include <array>
@@ -104,6 +103,6 @@ const auto kTestTasksList = std::tuple_cat(
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, YurkinGShellBetcherFuncTests, kGtestValues,
-                         YurkinGShellBetcherFuncTests::PrintTestParam);
+                         YurkinGShellBetcherFuncTests::PrintFuncTestName<YurkinGShellBetcherFuncTests>);
 
 }  // namespace yurkin_g_shellbetcher
