@@ -29,15 +29,11 @@ void FrolovaSMultIntTrapezMPI::Recursive(std::vector<double> &point, unsigned in
   if (variable > 0) {
     Recursive(point, definition, divider * (number_of_intervals_[variable] + 1), variable - 1);
   }
-
   if (number_of_intervals_[variable] != 0) {
     point[variable] = limits_[variable].first + static_cast<double>(definition / divider) *
                                                     (limits_[variable].second - limits_[variable].first) /
                                                     number_of_intervals_[variable];
-  } else {
-    point[variable] = limits_[variable].first;
   }
-
   definition = definition % divider;
 }
 
@@ -53,9 +49,10 @@ std::vector<double> FrolovaSMultIntTrapezMPI::GetPointFromNumber(unsigned int nu
 bool FrolovaSMultIntTrapezMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
   if (rank == 0) {
-    return !limits_.empty() && limits_.size() == number_of_intervals_.size();
+    auto &input = GetInput();
+    return !input.limits.empty() && input.limits.size() == input.number_of_intervals.size() &&
+           input.function != nullptr;
   }
   return true;
 }
@@ -75,27 +72,28 @@ bool FrolovaSMultIntTrapezMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Синхронизируем входные данные между всеми процессами
-  int limits_size = static_cast<int>(limits_.size());
-  MPI_Bcast(&limits_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  // 1. Синхронизируем метаданные
+  int dims = static_cast<int>(limits_.size());
+  MPI_Bcast(&dims, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (rank != 0) {
-    limits_.resize(limits_size);
-    number_of_intervals_.resize(limits_size);
+    limits_.resize(dims);
+    number_of_intervals_.resize(dims);
   }
+  MPI_Bcast(limits_.data(), dims * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(number_of_intervals_.data(), dims, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
 
-  MPI_Bcast(limits_.data(), limits_size * 2, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(number_of_intervals_.data(), limits_size, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-
-  if (limits_size == 0) {
+  if (dims == 0) {
     return true;
   }
 
+  // 2. Считаем общее число точек
   unsigned long long total_points = 1;
   for (unsigned int val : number_of_intervals_) {
     total_points *= (static_cast<unsigned long long>(val) + 1);
   }
 
+  // 3. Распределяем индексы
   unsigned int u_size = static_cast<unsigned int>(size);
   unsigned int base_delta = static_cast<unsigned int>(total_points / u_size);
   unsigned int remainder = static_cast<unsigned int>(total_points % u_size);
@@ -104,21 +102,28 @@ bool FrolovaSMultIntTrapezMPI::RunImpl() {
   unsigned int local_start =
       static_cast<unsigned int>(rank) * base_delta + (static_cast<unsigned int>(rank) < remainder ? rank : remainder);
 
-  double local_result = 0.0;
-  for (unsigned int i = 0; i < local_count; i++) {
-    std::vector<double> point = GetPointFromNumber(local_start + i);
-    local_result += static_cast<double>(CalculationOfCoefficient(point)) * GetInput().function(point);
+  // 4. Вычисления (Безопасный вызов функции)
+  double local_sum = 0.0;
+
+  auto input_data = GetInput();
+  auto func = input_data.function;
+
+  if (func != nullptr) {
+    for (unsigned int i = 0; i < local_count; i++) {
+      std::vector<double> point = GetPointFromNumber(local_start + i);
+      local_sum += static_cast<double>(CalculationOfCoefficient(point)) * func(point);
+    }
   }
 
-  MPI_Reduce(&local_result, &result_, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_sum, &result_, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+  // 5. Финализация на корне
   if (rank == 0) {
+    double step_prod = 1.0;
     for (unsigned int i = 0; i < limits_.size(); i++) {
-      if (number_of_intervals_[i] != 0) {
-        result_ *= (limits_[i].second - limits_[i].first) / number_of_intervals_[i];
-      }
+      step_prod *= (limits_[i].second - limits_[i].first) / number_of_intervals_[i];
     }
-    result_ /= std::pow(2, limits_.size());
+    result_ *= step_prod / std::pow(2, limits_.size());
   }
 
   return true;
