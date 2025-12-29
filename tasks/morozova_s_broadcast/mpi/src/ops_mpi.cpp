@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <vector>
 
 #include "morozova_s_broadcast/common/include/common.hpp"
 
@@ -35,6 +34,7 @@ bool MorozovaSBroadcastMPI::ValidationImpl() {
   if (!GetOutput().empty()) {
     return false;
   }
+
   return true;
 }
 
@@ -47,7 +47,9 @@ void MorozovaSBroadcastMPI::CustomBroadcast(void *data, int count, MPI_Datatype 
   int size = 0;
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
+
   int virtual_rank = (rank - root + size) % size;
+
   for (int step = 1; step < size; step <<= 1) {
     if (virtual_rank < step) {
       int dest = virtual_rank + step;
@@ -66,22 +68,27 @@ void MorozovaSBroadcastMPI::CustomBroadcast(void *data, int count, MPI_Datatype 
 bool MorozovaSBroadcastMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
   int data_size = 0;
   if (rank == root_) {
     data_size = static_cast<int>(GetInput().size());
   }
+
   CustomBroadcast(&data_size, 1, MPI_INT, root_, MPI_COMM_WORLD);
+
   if (data_size == 0) {
     GetOutput().clear();
     return true;
   }
+
   GetOutput().resize(data_size);
-  if (data_size > 0) {
-    if (rank == root_) {
-      std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
-    }
-    CustomBroadcast(GetOutput().data(), data_size, MPI_INT, root_, MPI_COMM_WORLD);
+
+  if (rank == root_) {
+    std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
   }
+
+  CustomBroadcast(GetOutput().data(), data_size, MPI_INT, root_, MPI_COMM_WORLD);
+
   return true;
 }
 

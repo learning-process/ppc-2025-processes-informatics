@@ -1,7 +1,6 @@
 #include "morozova_s_broadcast/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <vector>
 
 #include "morozova_s_broadcast/common/include/common.hpp"
 
@@ -9,14 +8,11 @@ namespace morozova_s_broadcast {
 
 MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = InType(in);
-  GetOutput() = std::vector<int>();
+  GetInput() = in;
+  GetOutput().clear();
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
   return true;
 }
 
@@ -25,11 +21,7 @@ bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
 }
 
 bool MorozovaSBroadcastSEQ::RunImpl() {
-  GetOutput().clear();
-  GetOutput().reserve(GetInput().size());
-  for (const auto &val : GetInput()) {
-    GetOutput().push_back(val);
-  }
+  GetOutput() = GetInput();
   return true;
 }
 
