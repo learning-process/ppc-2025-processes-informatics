@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <queue>
 #include <vector>
+#include <utility>
 
 #include "pylaeva_s_convex_hull_bin/common/include/common.hpp"
 
