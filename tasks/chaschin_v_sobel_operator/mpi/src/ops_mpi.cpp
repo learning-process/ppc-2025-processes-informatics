@@ -193,7 +193,7 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   }
   std::cout << "\n" << std::flush;
 
-  std::cout << "(local_rows)*padded_m, MPI_FLOAT: " << (local_rows)*padded_m, MPI_FLOAT << "\n" << std::flush;
+  std::cout << "(local_rows)*padded_m" << (local_rows)*padded_m<< "\n" << std::flush;
 
   MPI_Scatterv(rank == 0 ? in.data() : nullptr, ScatterSendCounts.data(), ScatterDispls.data(), MPI_FLOAT,
                local_block.data(), (local_rows)*padded_m, MPI_FLOAT, 0, MPI_COMM_WORLD);
