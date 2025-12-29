@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <cmath>
-#include <thread>
-#include <vector>
 
 #include "kruglova_a_2d_multistep_par_opt/common/include/common.hpp"
 #include "kruglova_a_2d_multistep_par_opt/mpi/include/ops_mpi.hpp"
@@ -13,14 +10,11 @@
 namespace kruglova_a_2d_multistep_par_opt {
 
 class KruglovaA2DMultRunPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  InType input_data_{};
+ public:
+  KruglovaA2DMultRunPerfTest() : input_data_(-5.12, 5.12, -5.12, 5.12, 1e-6, 2000) {}
 
-  void SetUp() override {
-    input_data_ = {-5.12, 5.12, -5.12, 5.12,
-                   1e-6,  2000
-
-    };
-  }
+ protected:
+  void SetUp() override {}
 
   bool CheckTestOutputData(OutType &output_data) final {
     return std::abs(output_data.f_value) < 1e-1;
@@ -29,6 +23,9 @@ class KruglovaA2DMultRunPerfTest : public ppc::util::BaseRunPerfTests<InType, Ou
   InType GetTestInputData() final {
     return input_data_;
   }
+
+ private:
+  InType input_data_;
 };
 
 TEST_P(KruglovaA2DMultRunPerfTest, RunPerfModes) {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <functional>
 #include <string>
 #include <tuple>
 
@@ -20,12 +19,21 @@ struct InType {
   double y_max;
   double eps;
   int max_iters;
+
+  InType() : x_min(0.0), x_max(0.0), y_min(0.0), y_max(0.0), eps(0.0), max_iters(0) {}
+
+  InType(double xmin, double xmax, double ymin, double ymax, double e, int iters)
+      : x_min(xmin), x_max(xmax), y_min(ymin), y_max(ymax), eps(e), max_iters(iters) {}
 };
 
 struct OutType {
   double x;
   double y;
   double f_value;
+
+  OutType() : x(0.0), y(0.0), f_value(0.0) {}
+
+  OutType(double x_val, double y_val, double f_val) : x(x_val), y(y_val), f_value(f_val) {}
 };
 
 struct Interval1D {
