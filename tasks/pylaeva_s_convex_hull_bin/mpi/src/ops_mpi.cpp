@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "pylaeva_s_convex_hull_bin/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace pylaeva_s_convex_hull_bin {
 
@@ -21,7 +20,7 @@ int Cross(const Point &o, const Point &a, const Point &b) {
 
 }  // namespace
 
-PylaevaSConvexHullBinMPI::PylaevaSConvexHullBinMPI(const InType &in) {
+PylaevaSConvexHullBinMPI::PylaevaSConvexHullBinMPI(const InType &in) : local_data_(in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
@@ -33,7 +32,8 @@ PylaevaSConvexHullBinMPI::PylaevaSConvexHullBinMPI(const InType &in) {
 }
 
 bool PylaevaSConvexHullBinMPI::ValidationImpl() {
-  return GetInput().width > 0 && GetInput().height > 0 && !GetInput().pixels.empty() && GetInput().pixels.size() == static_cast<size_t>(GetInput().width) * static_cast<size_t>(GetInput().height);
+  return GetInput().width > 0 && GetInput().height > 0 && !GetInput().pixels.empty() &&
+         GetInput().pixels.size() == static_cast<size_t>(GetInput().width) * static_cast<size_t>(GetInput().height);
 }
 
 bool PylaevaSConvexHullBinMPI::PreProcessingImpl() {
@@ -53,19 +53,6 @@ bool PylaevaSConvexHullBinMPI::PreProcessingImpl() {
   ScatterDataAndDistributeWork();
 
   return true;
-}
-
-bool PylaevaSConvexHullBinMPI::RunImpl() {
-  FindConnectedComponentsMpi();
-  ProcessComponentsAndComputeHulls();
-  GatherConvexHullsToRank0();
-  GetOutput() = local_data_;
-  return true;
-}
-
-bool PylaevaSConvexHullBinMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
 }
 
 void PylaevaSConvexHullBinMPI::ScatterDataAndDistributeWork() {
@@ -107,6 +94,14 @@ void PylaevaSConvexHullBinMPI::ScatterDataAndDistributeWork() {
 
   MPI_Scatterv(rank_ == 0 ? full_data_.pixels.data() : nullptr, send_counts.data(), displs.data(), MPI_UINT8_T,
                local_data_.pixels.data(), static_cast<int>(local_pixel_count), MPI_UINT8_T, 0, MPI_COMM_WORLD);
+}
+
+bool PylaevaSConvexHullBinMPI::RunImpl() {
+  FindConnectedComponentsMpi();
+  ProcessComponentsAndComputeHulls();
+  GatherConvexHullsToRank0();
+  GetOutput() = local_data_;
+  return true;
 }
 
 void PylaevaSConvexHullBinMPI::GatherConvexHullsToRank0() {
@@ -328,6 +323,10 @@ void PylaevaSConvexHullBinMPI::FilterLocalComponents(const std::vector<std::vect
   }
 }
 
+bool PylaevaSConvexHullBinMPI::PostProcessingImpl() {
+  return true;
+}
+
 std::vector<Point> PylaevaSConvexHullBinMPI::GrahamScan(const std::vector<Point> &points) {
   if (points.size() <= 3) {
     return points;
@@ -365,6 +364,5 @@ std::vector<Point> PylaevaSConvexHullBinMPI::GrahamScan(const std::vector<Point>
 
   return hull;
 }
-
 
 }  // namespace pylaeva_s_convex_hull_bin
