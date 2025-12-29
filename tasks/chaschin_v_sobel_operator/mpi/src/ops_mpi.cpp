@@ -15,6 +15,7 @@
 namespace chaschin_v_sobel_operator {
 
 ChaschinVSobelOperatorMPI::ChaschinVSobelOperatorMPI(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
   auto in_copy = in;
 
   GetInput() = std::move(in_copy);
@@ -106,14 +107,14 @@ bool ChaschinVSobelOperatorMPI::PreProcessingImpl() {
   if (rank == 0) {
     const auto &image = std::get<0>(in);
 
-    for (int i = 0; i < std::get<1>(in); i++) {
+    /*for (int i = 0; i < std::get<1>(in); i++) {
       for (int j = 0; j < std::get<2>(in); j++) {
         std::cout << "{" << static_cast<int>(image[i][j].r) << "," << static_cast<int>(image[i][j].g) << ","
                   << static_cast<int>(image[i][j].b) << "}" << std::flush;
       }
       std::cout << "\n" << std::flush;
     }
-    std::cout << "\n" << std::flush;
+    std::cout << "\n" << std::flush;*/
 
     int n_procs = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
@@ -160,10 +161,10 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
 
   int n = std::get<0>(Size);
   int m = std::get<1>(Size);
-  std::cout << "size: " << size << "\n";
-  std::cout << "Rank: " << rank << "sendcounts и displs уже подготовлены в PreProcessingImpl\n" << std::flush;
+  /// std::cout << "size: " << size << "\n";
+  // std::cout << "Rank: " << rank << "sendcounts и displs уже подготовлены в PreProcessingImpl\n" << std::flush;
   const auto &in = PreProcessGray;
-  if (rank == 0) {
+  /*if (rank == 0) {
     for (int i = 0; i < n + 2 + (size - 1) * 2; i++) {
       for (int j = 0; j < m + 2; j++) {
         std::cout << PreProcessGray[i * (m + 2) + j] << " " << std::flush;
@@ -171,18 +172,18 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
       std::cout << "\n" << std::flush;
     }
     std::cout << "\n" << std::flush;
-  }
+  }*/
 
-  std::cout << "Rank: " << rank << "Локальные параметры\n" << std::flush;
+  // std::cout << "Rank: " << rank << "Локальные параметры\n" << std::flush;
   int base = n / size;
   int rem = n % size;
   int local_rows = (base + 2) + (rank < rem ? 1 : 0);
   int padded_m = m + 2;
 
-  std::cout << "Rank: " << rank << "Локальный буфер с padding сверху и снизу (все уже подготовлено)\n" << std::flush;
+  // std::cout << "Rank: " << rank << "Локальный буфер с padding сверху и снизу (все уже подготовлено)\n" << std::flush;
   std::vector<float> local_block(local_rows * padded_m);
 
-  std::cout << "Rank: " << rank << "Scatterv центральных строк (вверх/низ уже в PreProcessGray)\n" << std::flush;
+  /*std::cout << "Rank: " << rank << "Scatterv центральных строк (вверх/низ уже в PreProcessGray)\n" << std::flush;
 
   std::cout << "Rank: " << rank << " in size: " << in.size() << "\n" << std::flush;
   std::cout << "Rank: " << rank << "ScatterSendCounts: " << "\n" << std::flush;
@@ -197,25 +198,25 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   }
   std::cout << "\n" << std::flush;
 
-  std::cout << "Rank: " << rank << "(local_rows)*padded_m" << (local_rows)*padded_m << "\n" << std::flush;
+  std::cout << "Rank: " << rank << "(local_rows)*padded_m" << (local_rows)*padded_m << "\n" << std::flush;*/
 
   MPI_Scatterv(rank == 0 ? in.data() : nullptr, ScatterSendCounts.data(), ScatterDispls.data(), MPI_FLOAT,
                local_block.data(), (local_rows)*padded_m, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-  std::cout << " --- Локальный Sobel ---\n" << std::flush;
+  // std::cout << " --- Локальный Sobel ---\n" << std::flush;
   std::vector<float> local_output(local_rows * m);
 
   // #pragma omp parallel for collapse(2)
   for (int i = 0; i < local_rows; ++i) {
     for (int j = 0; j < m; ++j) {
-      std::cout << "local_block уже содержит padding, поэтому смещаем на +1 строки и +1 столбцы\n" << std::flush;
+      // std::cout << "local_block уже содержит padding, поэтому смещаем на +1 строки и +1 столбцы\n" << std::flush;
       local_output[i * m + j] = sobel_at(local_block, i + 1, j + 1, padded_m);
 
-      std::cout << "Process " << rank << " local_output " << local_output[i * m + j] << std::endl << std::flush;
+      // std::cout << "Process " << rank << " local_output " << local_output[i * m + j] << std::endl << std::flush;
     }
   }
 
-  std::cout << " --- Сбор результатов ---" << std::flush;
+  // std::cout << " --- Сбор результатов ---" << std::flush;
   std::vector<int> recvcounts(size), displs_out(size);
   int offset_res = 0;
   for (int p = 0; p < size; ++p) {
@@ -229,10 +230,10 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
     PostProcessGray.resize(n * m);
   }
 
-  for (size_t i = 0; i < local_output.size(); i++) {
+  /*for (size_t i = 0; i < local_output.size(); i++) {
     std::cout << rank << ":" << local_output[i] << " " << std::flush;
   }
-  std::cout << "\n" << std::flush;
+  std::cout << "\n" << std::flush;*/
 
   MPI_Gatherv(local_output.data(), (local_rows - 2) * m, MPI_FLOAT, rank == 0 ? PostProcessGray.data() : nullptr,
               recvcounts.data(), displs_out.data(), MPI_FLOAT, 0, MPI_COMM_WORLD);

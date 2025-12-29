@@ -118,7 +118,7 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::cout << "Output check: ";
+    /*std::cout << "Output check: ";
     for (size_t i = 0; i < output_data.size(); i++) {
       for (size_t j = 0; j < output_data[0].size(); j++) {
         std::cout << "{" << static_cast<int>(output_data[i][j].r) << "," << static_cast<int>(output_data[i][j].g) << ","
@@ -137,7 +137,7 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
       }
       std::cout << "\n";
     }
-    std::cout << "\n";
+    std::cout << "\n";*/
 
     if (output_data.size() != expected_output_.size()) {
       return false;
