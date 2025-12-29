@@ -20,6 +20,4 @@ class MorozovaSBroadcastSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-void SequentialBroadcast(void *data, int count, int datatype, int root, int comm);
-
 }  // namespace morozova_s_broadcast

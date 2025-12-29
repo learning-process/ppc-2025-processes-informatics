@@ -1,7 +1,5 @@
 #include "morozova_s_broadcast/seq/include/ops_seq.hpp"
 
-#include <mpi.h>
-
 #include <algorithm>
 #include <vector>
 
@@ -16,13 +14,6 @@ MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  int size = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  if (size != 1) {
-    return false;
-  }
-
   return !GetInput().empty();
 }
 
@@ -31,7 +22,11 @@ bool MorozovaSBroadcastSEQ::PreProcessingImpl() {
 }
 
 bool MorozovaSBroadcastSEQ::RunImpl() {
-  GetOutput() = GetInput();
+  GetOutput().clear();
+  GetOutput().reserve(GetInput().size());
+  for (const auto &val : GetInput()) {
+    GetOutput().push_back(val);
+  }
   return true;
 }
 
