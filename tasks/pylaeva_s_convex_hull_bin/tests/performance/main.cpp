@@ -272,9 +272,8 @@ TEST_P(PylaevaSConvexHullBinPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, PylaevaSConvexHullBinSEQ, PylaevaSConvexHullBinMPI>(
-        PPC_SETTINGS_pylaeva_s_convex_hull_bin);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, PylaevaSConvexHullBinSEQ, PylaevaSConvexHullBinMPI>(
+    PPC_SETTINGS_pylaeva_s_convex_hull_bin);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

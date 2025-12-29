@@ -213,8 +213,8 @@ void PylaevaSConvexHullBinMPI::FindConnectedComponentsMpi() {
 }
 
 void PylaevaSConvexHullBinMPI::ExchangeBoundaryRows(int width, int local_rows, int extended_start_row,
-                                                              int extended_local_rows,
-                                                              std::vector<uint8_t> &extended_pixels) const {
+                                                    int extended_local_rows,
+                                                    std::vector<uint8_t> &extended_pixels) const {
   if (start_row_ > 0) {
     int prev_rank = rank_ - 1;
     int top_row_in_extended = 0;
@@ -249,11 +249,10 @@ void PylaevaSConvexHullBinMPI::ExchangeBoundaryRows(int width, int local_rows, i
   }
 }
 
-void PylaevaSConvexHullBinMPI::ProcessExtendedRegion(int width, int extended_start_row,
-                                                               int extended_local_rows,
-                                                               const std::vector<uint8_t> &extended_pixels,
-                                                               std::vector<bool> &visited_extended,
-                                                               std::vector<std::vector<Point>> &all_components) {
+void PylaevaSConvexHullBinMPI::ProcessExtendedRegion(int width, int extended_start_row, int extended_local_rows,
+                                                     const std::vector<uint8_t> &extended_pixels,
+                                                     std::vector<bool> &visited_extended,
+                                                     std::vector<std::vector<Point>> &all_components) {
   for (int ext_row = 0; ext_row < extended_local_rows; ++ext_row) {
     int global_row = extended_start_row + ext_row;
     for (int col = 0; col < width; ++col) {
@@ -283,10 +282,9 @@ void PylaevaSConvexHullBinMPI::ProcessExtendedRegion(int width, int extended_sta
 }
 
 void PylaevaSConvexHullBinMPI::ProcessExtendedNeighbors(const Point &p, int width, int extended_start_row,
-                                                                  int extended_local_rows,
-                                                                  const std::vector<uint8_t> &extended_pixels,
-                                                                  std::vector<bool> &visited_extended,
-                                                                  std::queue<Point> &q) {
+                                                        int extended_local_rows,
+                                                        const std::vector<uint8_t> &extended_pixels,
+                                                        std::vector<bool> &visited_extended, std::queue<Point> &q) {
   const std::vector<std::pair<int, int>> directions = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 
   for (const auto &dir : directions) {

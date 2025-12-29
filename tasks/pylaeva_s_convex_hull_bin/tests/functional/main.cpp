@@ -298,10 +298,9 @@ const std::array<TestType, 10> kTestParam = {std::make_tuple(1, "square"),     s
                                              std::make_tuple(7, "L_shape"),    std::make_tuple(8, "single_point"),
                                              std::make_tuple(9, "two_points"), std::make_tuple(10, "colinear_points")};
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<PylaevaSConvexHullBinMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_pylaeva_s_convex_hull_bin),
-                                           ppc::util::AddFuncTask<PylaevaSConvexHullBinSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_pylaeva_s_convex_hull_bin));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<PylaevaSConvexHullBinMPI, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_convex_hull_bin),
+    ppc::util::AddFuncTask<PylaevaSConvexHullBinSEQ, InType>(kTestParam, PPC_SETTINGS_pylaeva_s_convex_hull_bin));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
