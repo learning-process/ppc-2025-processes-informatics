@@ -1,6 +1,6 @@
 #include "goriacheva_k_violation_order_elem_vec/seq/include/ops_seq.hpp"
 
-#include <numeric>
+//#include <numeric>
 #include <vector>
 
 #include "goriacheva_k_violation_order_elem_vec/common/include/common.hpp"
@@ -15,46 +15,35 @@ GoriachevaKViolationOrderElemVecSEQ::GoriachevaKViolationOrderElemVecSEQ(const I
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  input_vec = GetInput();
+  result = 0;
+  return true;
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::RunImpl() {
-  if (GetInput() == 0) {
-    return false;
+  input_vec = GetInput();
+  result = 0;
+
+  if (input_vec.size() <= 1) { 
+    result = 0; 
   }
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
+  for(size_t i = 0; i + 1 < input_vec.size(); ++i){
+    if (input_vec[i] > input_vec[i + 1]){
+      ++result;
     }
   }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int counter = 0;
-  for (int i = 0; i < num_threads; i++) {
-    counter++;
-  }
-
-  if (counter != 0) {
-    GetOutput() /= counter;
-  }
-  return GetOutput() > 0;
+  //GetOutput() = result;
+  return true;
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  GetOutput() = result;
+  return true;
 }
 
 }  // namespace goriacheva_k_violation_order_elem_vec

@@ -17,6 +17,10 @@ class GoriachevaKViolationOrderElemVecMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  private:
+  std::vector<int>input_vec;
+  int result = 0;
 };
 
 }  // namespace goriacheva_k_violation_order_elem_vec

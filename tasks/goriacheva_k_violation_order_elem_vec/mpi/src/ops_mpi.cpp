@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <numeric>
+//#include <numeric>
 #include <vector>
 
 #include "goriacheva_k_violation_order_elem_vec/common/include/common.hpp"
@@ -17,56 +17,72 @@ GoriachevaKViolationOrderElemVecMPI::GoriachevaKViolationOrderElemVecMPI(const I
 }
 
 bool GoriachevaKViolationOrderElemVecMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool GoriachevaKViolationOrderElemVecMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  input_vec = GetInput();
+  result = 0;
+  return true;
 }
 
 bool GoriachevaKViolationOrderElemVecMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
+    int n = static_cast<int>(input_vec.size());
+
+    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (n <= 1) { 
+      result = 0; 
+      MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD); 
+      return true; 
+    }
+
+    int base = n / size, rem = n % size;
+    int local_size = base + (rank < rem ? 1 : 0);
+    std::vector<int> local(local_size);
+
+    if (rank == 0) {
+        std::copy(input_vec.begin(), input_vec.begin() + local_size, local.begin());
+        for (int r = 1; r < size; ++r) {
+            int sz = base + (r < rem ? 1 : 0);
+            if (sz){ 
+              MPI_Send(input_vec.data() + r*base + std::min(r, rem), sz, MPI_INT, r, 0, MPI_COMM_WORLD);
+            }
+        }
+    } else if (local_size) {
+        MPI_Recv(local.data(), local_size, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
+
+    int local_count = 0;
+
+    for (int i = 0; i + 1 < local_size; ++i){ 
+      if (local[i] > local[i+1]){
+        ++local_count;
       }
     }
-  }
 
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
+    int left_last = 0, send_val = local_size ? local.back() : 0;
 
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
+    MPI_Sendrecv(&send_val, 1, MPI_INT, rank+1 < size ? rank+1 : MPI_PROC_NULL, 1,
+                 &left_last, 1, MPI_INT, rank > 0 ? rank-1 : MPI_PROC_NULL, 1,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                 
+    if (local_size && rank > 0 && left_last > local.front()){ 
+      ++local_count;
     }
 
-    if (counter != 0) {
-      GetOutput() /= counter;
-    }
-  }
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+    MPI_Reduce(&local_count, &result, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    return true;
 }
 
 bool GoriachevaKViolationOrderElemVecMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+    GetOutput() = result;
+    return true;
 }
 
 }  // namespace goriacheva_k_violation_order_elem_vec
