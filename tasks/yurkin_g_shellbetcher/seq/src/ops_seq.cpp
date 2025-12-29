@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <utility>
+#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -34,9 +34,9 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
+  std::ranges::merge(a, b, out.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
+    std::size_t start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
@@ -87,9 +87,9 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
 
   ShellSort(merged);
 
-  long long checksum = 0;
+  std::int64_t checksum = 0;
   for (int v : merged) {
-    checksum += static_cast<long long>(v);
+    checksum += static_cast<std::int64_t>(v);
   }
 
   GetOutput() = static_cast<OutType>(checksum & 0x7FFFFFFF);

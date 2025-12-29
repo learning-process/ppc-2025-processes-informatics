@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -13,7 +14,7 @@
 
 namespace yurkin_g_shellbetcher {
 
-static long long ComputeExpectedChecksumSeq(int n) {
+static std::int64_t ComputeExpectedChecksumSeq(int n) {
   std::vector<int> data;
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
@@ -50,9 +51,9 @@ static long long ComputeExpectedChecksumSeq(int n) {
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   merged.resize(left.size() + right.size());
-  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
+  std::ranges::merge(left, right, merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
+    std::size_t start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
       if (merged[i] > merged[i + 1]) {
         std::swap(merged[i], merged[i + 1]);
@@ -60,28 +61,28 @@ static long long ComputeExpectedChecksumSeq(int n) {
     }
   }
   shell_sort_local(merged);
-  long long checksum = 0;
+  std::int64_t checksum = 0;
   for (int v : merged) {
-    checksum += static_cast<long long>(v);
+    checksum += static_cast<std::int64_t>(v);
   }
   return checksum & 0x7FFFFFFF;
 }
 
 class YurkinGShellBetcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
-  InType input_data_{};
+  InType input_data{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    long long expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
-    return static_cast<long long>(output_data) == expected;
+    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data));
+    return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
