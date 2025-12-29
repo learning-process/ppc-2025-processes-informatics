@@ -7,6 +7,8 @@
 #include <cstdint>
 #include <random>
 #include <ranges>
+#include <string>
+#include <tuple>
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
@@ -71,7 +73,14 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
 }
 
 class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  }
+
  protected:
+  void SetUp() override {}
+
   bool CheckTestOutputData(OutType &output_data) final {
     const int in = input_data_;
     std::int64_t expected = ComputeExpectedChecksumSeq(in);
@@ -82,6 +91,7 @@ class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     return input_data_;
   }
 
+ private:
   InType input_data_ = 0;
 };
 
@@ -97,7 +107,8 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, YurkinGShellBetcherFuncTests, kGtestValues,
-                         YurkinGShellBetcherFuncTests::PrintFuncTestName<YurkinGShellBetcherFuncTests>);
+const auto kPerfTestName = YurkinGShellBetcherFuncTests::PrintFuncTestName<YurkinGShellBetcherFuncTests>;
+
+INSTANTIATE_TEST_SUITE_P(PicMatrixTests, YurkinGShellBetcherFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace yurkin_g_shellbetcher
