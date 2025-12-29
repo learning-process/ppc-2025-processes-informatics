@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -169,8 +170,14 @@ bool YurkinGShellBetcherMPI::RunImpl() {
 
   std::vector<int> local_data;
   local_data.reserve(static_cast<std::size_t>(local_n));
-  std::mt19937 rng(static_cast<unsigned int>(n + rank));
+
+  std::mt19937 rng(static_cast<unsigned int>(n));
   std::uniform_int_distribution<int> dist(0, 1000000);
+
+  InType offset = base * rank + std::min<InType>(rank, rem);
+  for (InType i = 0; i < offset; ++i) {
+    (void)dist(rng);  // discard to reach the block for this rank
+  }
   for (InType i = 0; i < local_n; ++i) {
     local_data.push_back(dist(rng));
   }
