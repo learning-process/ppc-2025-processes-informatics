@@ -14,7 +14,10 @@ MorozovaSBroadcastSEQ::MorozovaSBroadcastSEQ(const InType &in) : BaseTask() {
 }
 
 bool MorozovaSBroadcastSEQ::ValidationImpl() {
-  return !GetInput().empty();
+  if (GetInput().empty()) {
+    return false;
+  }
+  return true;
 }
 
 bool MorozovaSBroadcastSEQ::PreProcessingImpl() {

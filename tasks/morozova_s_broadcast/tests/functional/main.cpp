@@ -24,7 +24,6 @@ class MorozovaSBroadcastSEQFuncTests : public ppc::util::BaseRunFuncTests<InType
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     int test_number = std::get<0>(params);
-
     switch (test_number) {
       case 1:
         input_data_ = {1, 2, 3, 4, 5};
@@ -51,6 +50,9 @@ class MorozovaSBroadcastSEQFuncTests : public ppc::util::BaseRunFuncTests<InType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    if (input_data_.empty()) {
+      return output_data.empty();
+    }
     return output_data == input_data_;
   }
 

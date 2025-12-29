@@ -32,9 +32,6 @@ bool MorozovaSBroadcastMPI::ValidationImpl() {
   if (root_ < 0 || root_ >= size) {
     return false;
   }
-  if (rank == root_ && GetInput().empty()) {
-    return true;
-  }
   if (!GetOutput().empty()) {
     return false;
   }
@@ -74,6 +71,10 @@ bool MorozovaSBroadcastMPI::RunImpl() {
     data_size = static_cast<int>(GetInput().size());
   }
   CustomBroadcast(&data_size, 1, MPI_INT, root_, MPI_COMM_WORLD);
+  if (data_size == 0) {
+    GetOutput().clear();
+    return true;
+  }
   GetOutput().resize(data_size);
   if (data_size > 0) {
     if (rank == root_) {
