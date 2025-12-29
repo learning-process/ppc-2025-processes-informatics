@@ -5,12 +5,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <queue>
+#include <utility>
 #include <vector>
 
 #include "pylaeva_s_convex_hull_bin/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace pylaeva_s_convex_hull_bin {
+
 namespace {
 
 int Cross(const Point &o, const Point &a, const Point &b) {
@@ -58,13 +59,14 @@ void ProcessConnectedComponent(int start_x, int start_y, int width, int height, 
 
 }  // namespace
 
-PylaevaSConvexHullBinSEQ::PylaevaSConvexHullBinSEQ(const InType &in) {
+PylaevaSConvexHullBinSEQ::PylaevaSConvexHullBinSEQ(const InType &in) : processed_data_(in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool PylaevaSConvexHullBinSEQ::ValidationImpl() {
-  return GetInput().width > 0 && GetInput().height > 0 && !GetInput().pixels.empty() && GetInput().pixels.size() == static_cast<size_t>(GetInput().width) * static_cast<size_t>(GetInput().height);
+  return GetInput().width > 0 && GetInput().height > 0 && !GetInput().pixels.empty() &&
+         GetInput().pixels.size() == static_cast<size_t>(GetInput().width) * static_cast<size_t>(GetInput().height);
 }
 
 bool PylaevaSConvexHullBinSEQ::PreProcessingImpl() {
@@ -88,7 +90,7 @@ bool PylaevaSConvexHullBinSEQ::RunImpl() {
   }
 
   GetOutput() = processed_data_;
-  return true;  
+  return true;
 }
 
 bool PylaevaSConvexHullBinSEQ::PostProcessingImpl() {
@@ -148,5 +150,4 @@ std::vector<Point> PylaevaSConvexHullBinSEQ::GrahamScan(const std::vector<Point>
 
   return hull;
 }
-
 }  // namespace pylaeva_s_convex_hull_bin

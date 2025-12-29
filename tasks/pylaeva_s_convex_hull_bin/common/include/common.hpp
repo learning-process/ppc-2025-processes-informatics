@@ -8,6 +8,7 @@
 #include "task/include/task.hpp"
 
 namespace pylaeva_s_convex_hull_bin {
+
 struct Point {
   int x, y;
   explicit Point(int x = 0, int y = 0) : x(x), y(y) {}

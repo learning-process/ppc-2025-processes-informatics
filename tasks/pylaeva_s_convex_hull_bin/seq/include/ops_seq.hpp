@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "pylaeva_s_convex_hull_bin/common/include/common.hpp"
 #include "task/include/task.hpp"
 
