@@ -1,7 +1,5 @@
 #include "morozova_s_broadcast/seq/include/ops_seq.hpp"
 
-#include <algorithm>
-
 #include "morozova_s_broadcast/common/include/common.hpp"
 
 namespace morozova_s_broadcast {
