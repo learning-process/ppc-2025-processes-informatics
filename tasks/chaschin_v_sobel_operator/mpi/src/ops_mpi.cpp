@@ -160,8 +160,8 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   std::cout << "sendcounts и displs уже подготовлены в PreProcessingImpl\n" << std::flush;
   const auto &in = PreProcessGray;
   if (rank == 0) {
-    for (int i = 0; i < 8; i++) {
-      for (int j = 0; j < 6; j++) {
+    for (int i = 0; i < n+2+(size-1)*2 ; i++) {
+      for (int j = 0; j < m+2; j++) {
         std::cout << PreProcessGray[i * (m + 2) + j] << " ";
       }
       std::cout << "\n";
