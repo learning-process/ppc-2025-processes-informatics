@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
+#include <utility>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -36,7 +38,7 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
+  std::ranges::merge(a, b, out.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
@@ -83,6 +85,7 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
   }
 }
 
+// NOLINT(readability-function-cognitive-complexity)
 void DoOddEvenTransposition(std::vector<int> &local_data, int rank, int size) {
   for (int phase = 0; phase < size; ++phase) {
     int neighbor = MPI_PROC_NULL;
@@ -178,12 +181,12 @@ bool YurkinGShellBetcherMPI::RunImpl() {
     DoOddEvenTransposition(local_data, rank, size);
   }
 
-  long long local_checksum = 0;
+  std::int64_t local_checksum = 0;
   for (int v : local_data) {
-    local_checksum += static_cast<long long>(v);
+    local_checksum += static_cast<std::int64_t>(v);
   }
 
-  long long global_checksum = 0;
+  std::int64_t global_checksum = 0;
   MPI_Allreduce(&local_checksum, &global_checksum, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
 
   GetOutput() = static_cast<OutType>(global_checksum & 0x7FFFFFFF);
