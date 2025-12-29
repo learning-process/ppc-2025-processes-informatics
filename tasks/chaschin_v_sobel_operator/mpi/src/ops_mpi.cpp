@@ -208,14 +208,14 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   // #pragma omp parallel for collapse(2)
   for (int i = 0; i < local_rows; ++i) {
     for (int j = 0; j < m; ++j) {
-      // local_block уже содержит padding, поэтому смещаем на +1 строки и +1 столбцы
+      std::cout << "local_block уже содержит padding, поэтому смещаем на +1 строки и +1 столбцы\n" << std::flush;
       local_output[i * m + j] = sobel_at(local_block, i + 1, j + 1, padded_m);
 
-      // std::cout << "Process " << rank << " local_output " << local_output[i * m + j] << std::endl;
+      std::cout << "Process " << rank << " local_output " << local_output[i * m + j] << std::endl << std::flush;
     }
   }
 
-  // --- Сбор результатов ---
+  std::cout << " --- Сбор результатов ---" << std::flush;
   std::vector<int> recvcounts(size), displs_out(size);
   int offset_res = 0;
   for (int p = 0; p < size; ++p) {
@@ -229,10 +229,10 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
     PostProcessGray.resize(n * m);
   }
 
-  /*for (int i = 0; i < local_output.size(); i++){
-    std::cout<<rank<<":"<<local_output[i]<<" ";
+  for (int i = 0; i < local_output.size(); i++) {
+    std::cout << rank << ":" << local_output[i] << " " << std::flush;
   }
-  std::cout<<"\n";*/
+  std::cout << "\n" << std::flush;
 
   MPI_Gatherv(local_output.data(), (local_rows - 2) * m, MPI_FLOAT, rank == 0 ? PostProcessGray.data() : nullptr,
               recvcounts.data(), displs_out.data(), MPI_FLOAT, 0, MPI_COMM_WORLD);
