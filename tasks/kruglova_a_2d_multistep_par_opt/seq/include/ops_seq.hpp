@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include "kruglova_a_2d_multistep_par_opt/common/include/common.hpp"
 #include "task/include/task.hpp"
 
