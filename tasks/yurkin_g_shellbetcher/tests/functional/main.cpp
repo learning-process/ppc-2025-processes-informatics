@@ -16,7 +16,7 @@
 
 namespace yurkin_g_shellbetcher {
 
-static std::int64_t ComputeExpectedChecksumSeq(int n) {
+static long long ComputeExpectedChecksumSeq(int n) {
   std::vector<int> data;
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
@@ -53,7 +53,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   merged.resize(left.size() + right.size());
-  std::ranges::merge(left, right, merged.begin());
+  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
@@ -63,9 +63,9 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
     }
   }
   shell_sort_local(merged);
-  std::int64_t checksum = 0;
+  long long checksum = 0;
   for (int v : merged) {
-    checksum += static_cast<std::int64_t>(v);
+    checksum += static_cast<long long>(v);
   }
   return checksum & 0x7FFFFFFF;
 }
@@ -78,16 +78,16 @@ class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   bool CheckTestOutputData(OutType &output_data) final {
-    const int in = input_data;
-    std::int64_t expected = ComputeExpectedChecksumSeq(in);
-    return static_cast<std::int64_t>(output_data) == expected;
+    const int in = input_data_;
+    long long expected = ComputeExpectedChecksumSeq(in);
+    return static_cast<long long>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
-  InType input_data = 0;
+  InType input_data_ = 0;
 };
 
 TEST_P(YurkinGShellBetcherFuncTests, MatmulFromPic) {
