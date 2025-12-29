@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -34,7 +33,7 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::ranges::merge(a, b, out.begin());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {

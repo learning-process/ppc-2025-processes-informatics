@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -54,7 +53,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   merged.resize(left.size() + right.size());
-  std::ranges::merge(left, right, merged.begin());
+  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
@@ -79,16 +78,16 @@ class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
  protected:
   bool CheckTestOutputData(OutType &output_data) final {
-    const int in = input_data_;
+    const int in = input_data;
     std::int64_t expected = ComputeExpectedChecksumSeq(in);
     return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 
-  InType input_data_ = 0;
+  InType input_data = 0;
 };
 
 TEST_P(YurkinGShellBetcherFuncTests, MatmulFromPic) {
