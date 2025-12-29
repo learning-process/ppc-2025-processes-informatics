@@ -179,6 +179,22 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   std::vector<float> local_block(local_rows * padded_m);
 
   std::cout << "Scatterv центральных строк (вверх/низ уже в PreProcessGray)\n" << std::flush;
+
+  std::cout << "in size: " << in.size() << "\n" << std::flush;
+  std::cout << "ScatterSendCounts: " << "\n" << std::flush;
+  for (auto v : ScatterSendCounts) {
+    std::cout << v << " " << std::flush;
+  }
+  std::cout << "\n" << std::flush;
+
+  std::cout << "ScatterDispls: " << "\n" << std::flush;
+  for (auto v : ScatterDispls) {
+    std::cout << v << " " << std::flush;
+  }
+  std::cout << "\n" << std::flush;
+
+  std::cout << "(local_rows)*padded_m, MPI_FLOAT: " << (local_rows)*padded_m, MPI_FLOAT << "\n" << std::flush;
+
   MPI_Scatterv(rank == 0 ? in.data() : nullptr, ScatterSendCounts.data(), ScatterDispls.data(), MPI_FLOAT,
                local_block.data(), (local_rows)*padded_m, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
