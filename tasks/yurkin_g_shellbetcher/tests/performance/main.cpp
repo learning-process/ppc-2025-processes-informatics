@@ -69,19 +69,19 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
 
 class YurkinGShellBetcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
-  InType input_data = 0;
+  InType input_data_ = 0;
 
   void SetUp() override {
-    input_data = kCount_;
+    input_data_ = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data));
+    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
     return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 };
 
