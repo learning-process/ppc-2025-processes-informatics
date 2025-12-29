@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -70,19 +69,19 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
 
 class YurkinGShellBetcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
-  InType input_data_ = 0;
+  InType input_data = 0;
 
   void SetUp() override {
-    input_data_ = kCount_;
+    input_data = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
+    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data));
     return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
