@@ -63,7 +63,7 @@ std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
   // --- Создаем общий буфер с нулевым паддингом сверху/снизу ---
   std::vector<float> buffer((n + 2 + (n_procs - 1) * 2) * padded_m, 0.0f);
 
-  std::vector<int> l_r(n_procs + 1, 0);
+  std::vector<int> l_r(n_procs + 2, 0);
 
   for (int rank = 0; rank < n_procs + 1; ++rank) {
     l_r[rank + 1] = l_r[rank] + (base) + (rank < rem ? 1 : 0);
