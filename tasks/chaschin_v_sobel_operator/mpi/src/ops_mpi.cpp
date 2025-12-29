@@ -121,7 +121,7 @@ bool ChaschinVSobelOperatorMPI::PreProcessingImpl() {
     // Препроцессинг: формируем одномерный массив с padding и overlap для scatterv
     PreProcessGray = PreprocessToGrayscaleWithOverlap(image, n_procs, sendcounts, displs);
 
-    // Можно сохранить sendcounts и displs для RunImpl, если нужно
+    // Можно сохранить sendcounts и displs для RunImpl, если нужн
     ScatterSendCounts = sendcounts;
     ScatterDispls = displs;
   }
