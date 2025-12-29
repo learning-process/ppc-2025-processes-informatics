@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -50,7 +51,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   merged.resize(left.size() + right.size());
-  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
+  std::ranges::merge(left, right, merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
@@ -69,19 +70,19 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
 
 class YurkinGShellBetcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 100;
-  InType input_data{};
+  InType input_data_ = 0;
 
   void SetUp() override {
-    input_data = kCount_;
+    input_data_ = kCount_;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data));
+    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
     return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 };
 
