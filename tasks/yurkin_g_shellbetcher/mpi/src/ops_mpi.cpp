@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -37,15 +36,44 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::ranges::merge(a, b, out.begin());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    std::size_t start = static_cast<std::size_t>(phase);
+    auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
       }
     }
   }
+}
+
+int ComputeNeighbor(int rank, int phase, int size) {
+  int neighbor = MPI_PROC_NULL;
+  if (phase % 2 == 0) {
+    neighbor = (rank % 2 == 0) ? rank + 1 : rank - 1;
+  } else {
+    neighbor = (rank % 2 == 0) ? rank - 1 : rank + 1;
+  }
+  if (neighbor < 0 || neighbor >= size) {
+    neighbor = MPI_PROC_NULL;
+  }
+  return neighbor;
+}
+
+void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor) {
+  int send_count = static_cast<int>(local_data.size());
+  int recv_count = 0;
+  MPI_Sendrecv(&send_count, 1, MPI_INT, neighbor, 10, &recv_count, 1, MPI_INT, neighbor, 10, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+
+  std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
+  MPI_Sendrecv(local_data.data(), send_count, MPI_INT, neighbor, 11, recv_buf.data(), recv_count, MPI_INT, neighbor, 11,
+               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  std::vector<int> merged;
+  OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
+
+  local_data.swap(merged);
 }
 
 void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int stages) {
@@ -84,55 +112,20 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
   }
 }
 
-int ComputeNeighbor(int rank, int phase, int size) {
-  int neighbor = MPI_PROC_NULL;
-  if (phase % 2 == 0) {
-    neighbor = (rank % 2 == 0) ? rank + 1 : rank - 1;
-  } else {
-    neighbor = (rank % 2 == 0) ? rank - 1 : rank + 1;
-  }
-  if (neighbor < 0 || neighbor >= size) {
-    neighbor = MPI_PROC_NULL;
-  }
-  return neighbor;
-}
-
-void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor) {
-  int send_count = static_cast<int>(local_data.size());
-  int recv_count = 0;
-  MPI_Sendrecv(&send_count, 1, MPI_INT, neighbor, 10, &recv_count, 1, MPI_INT, neighbor, 10, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-
-  std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
-  MPI_Sendrecv(local_data.data(), send_count, MPI_INT, neighbor, 11, recv_buf.data(), recv_count, MPI_INT, neighbor, 11,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  std::vector<int> merged;
-  OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
-
-  std::size_t half = merged.size() / 2;
-  if (static_cast<int>(local_data.size()) == 0) {
-    local_data.swap(merged);
-    return;
-  }
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  if (rank < neighbor) {
-    merged.resize(half);
-  } else {
-    std::vector<int> tmp;
-    auto dhalf = static_cast<std::vector<int>::difference_type>(half);
-    tmp.assign(merged.begin() + dhalf, merged.end());
-    merged.swap(tmp);
-  }
-  local_data.swap(merged);
-}
-
 void DoOddEvenTransposition(std::vector<int> &local_data, int rank, int size) {
   for (int phase = 0; phase < size; ++phase) {
     int neighbor = ComputeNeighbor(rank, phase, size);
     if (neighbor != MPI_PROC_NULL) {
       ExchangeAndMergeWithNeighbor(local_data, neighbor);
+      std::size_t half = local_data.size() / 2;
+      if (rank < neighbor) {
+        local_data.resize(half);
+      } else {
+        std::vector<int> tmp;
+        auto dhalf = static_cast<std::vector<int>::difference_type>(half);
+        tmp.assign(local_data.begin() + dhalf, local_data.end());
+        local_data.swap(tmp);
+      }
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
