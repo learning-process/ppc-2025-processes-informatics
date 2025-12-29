@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -73,7 +74,28 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor) {
   std::vector<int> merged;
   OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
 
-  local_data.swap(merged);
+  if (static_cast<int>(merged.size()) < send_count) {
+    local_data.swap(merged);
+    return;
+  }
+
+  if (neighbor == MPI_PROC_NULL) {
+    local_data.swap(merged);
+    return;
+  }
+
+  int my_rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+  if (my_rank < neighbor) {
+    merged.resize(static_cast<std::size_t>(send_count));
+    local_data.swap(merged);
+  } else {
+    std::vector<int> tmp;
+    auto start_it = merged.begin() + static_cast<std::vector<int>::difference_type>(
+                                         merged.size() - static_cast<std::size_t>(send_count));
+    tmp.assign(start_it, merged.end());
+    local_data.swap(tmp);
+  }
 }
 
 void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int stages) {
@@ -97,16 +119,20 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
       std::vector<int> merged;
       OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
 
-      std::size_t half = merged.size() / 2;
-      if (rank < partner) {
-        merged.resize(half);
+      if (static_cast<int>(merged.size()) < send_count) {
+        local_data.swap(merged);
       } else {
-        std::vector<int> tmp;
-        auto dhalf = static_cast<std::vector<int>::difference_type>(half);
-        tmp.assign(merged.begin() + dhalf, merged.end());
-        merged.swap(tmp);
+        if (rank < partner) {
+          merged.resize(static_cast<std::size_t>(send_count));
+          local_data.swap(merged);
+        } else {
+          std::vector<int> tmp;
+          auto start_it = merged.begin() + static_cast<std::vector<int>::difference_type>(
+                                               merged.size() - static_cast<std::size_t>(send_count));
+          tmp.assign(start_it, merged.end());
+          local_data.swap(tmp);
+        }
       }
-      local_data.swap(merged);
       MPI_Barrier(MPI_COMM_WORLD);
     }
   }
@@ -117,15 +143,6 @@ void DoOddEvenTransposition(std::vector<int> &local_data, int rank, int size) {
     int neighbor = ComputeNeighbor(rank, phase, size);
     if (neighbor != MPI_PROC_NULL) {
       ExchangeAndMergeWithNeighbor(local_data, neighbor);
-      std::size_t half = local_data.size() / 2;
-      if (rank < neighbor) {
-        local_data.resize(half);
-      } else {
-        std::vector<int> tmp;
-        auto dhalf = static_cast<std::vector<int>::difference_type>(half);
-        tmp.assign(local_data.begin() + dhalf, local_data.end());
-        local_data.swap(tmp);
-      }
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
