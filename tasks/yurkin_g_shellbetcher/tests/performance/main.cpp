@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
 #include <random>
+#include <ranges>
+#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -9,24 +13,25 @@
 
 namespace yurkin_g_shellbetcher {
 
-static long long ComputeExpectedChecksumSeq(int n) {
+static std::int64_t ComputeExpectedChecksumSeq(int n) {
   std::vector<int> data;
-  data.reserve(static_cast<size_t>(n));
+  data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
   std::uniform_int_distribution<int> dist(0, 1000000);
   for (int i = 0; i < n; ++i) {
     data.push_back(dist(rng));
   }
-  auto shell_sort = [](std::vector<int> &a) {
-    size_t N = a.size();
-    size_t gap = 1;
-    while (gap < N / 3) {
-      gap = gap * 3 + 1;
+
+  auto ShellSortLocal = [](std::vector<int> &a) {
+    std::size_t n_local = a.size();
+    std::size_t gap = 1;
+    while (gap < n_local / 3) {
+      gap = (gap * 3) + 1;
     }
     while (gap > 0) {
-      for (size_t i = gap; i < N; ++i) {
+      for (std::size_t i = gap; i < n_local; ++i) {
         int tmp = a[i];
-        size_t j = i;
+        std::size_t j = i;
         while (j >= gap && a[j - gap] > tmp) {
           a[j] = a[j - gap];
           j -= gap;
@@ -36,25 +41,28 @@ static long long ComputeExpectedChecksumSeq(int n) {
       gap = (gap - 1) / 3;
     }
   };
-  shell_sort(data);
-  std::vector<int> left, right, merged;
-  size_t mid = data.size() / 2;
-  left.assign(data.begin(), data.begin() + mid);
-  right.assign(data.begin() + mid, data.end());
+
+  ShellSortLocal(data);
+  std::vector<int> left;
+  std::vector<int> right;
+  std::vector<int> merged;
+  std::size_t mid = data.size() / 2;
+  left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
+  right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   merged.resize(left.size() + right.size());
-  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
+  std::ranges::merge(left, right, merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    size_t start = static_cast<size_t>(phase);
-    for (size_t i = start; i + 1 < merged.size(); i += 2) {
+    auto start = static_cast<std::size_t>(phase);
+    for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
       if (merged[i] > merged[i + 1]) {
         std::swap(merged[i], merged[i + 1]);
       }
     }
   }
-  shell_sort(merged);
-  long long checksum = 0;
+  ShellSortLocal(merged);
+  std::int64_t checksum = 0;
   for (int v : merged) {
-    checksum += v;
+    checksum += static_cast<std::int64_t>(v);
   }
   return checksum & 0x7FFFFFFF;
 }
@@ -68,8 +76,8 @@ class YurkinGShellBetcherPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    long long expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
-    return static_cast<long long>(output_data) == expected;
+    std::int64_t expected = ComputeExpectedChecksumSeq(static_cast<int>(input_data_));
+    return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
@@ -86,8 +94,7 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, YurkinGShellBetch
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = YurkinGShellBetcherPerfTests::CustomPerfTestName;
+INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinGShellBetcherPerfTests, kGtestValues,
+                         YurkinGShellBetcherPerfTests::CustomPerfTestName);
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, YurkinGShellBetcherPerfTests, kGtestValues, kPerfTestName);
-
-}  // namespace  yurkin_g_shellbetcher
+}  // namespace yurkin_g_shellbetcher
