@@ -25,12 +25,15 @@ bool MorozovaSBroadcastMPI::ValidationImpl() {
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+
   if (size <= 0) {
     return false;
   }
+
   if (root_ < 0 || root_ >= size) {
     return false;
   }
+
   if (!GetOutput().empty()) {
     return false;
   }
@@ -39,6 +42,12 @@ bool MorozovaSBroadcastMPI::ValidationImpl() {
 }
 
 bool MorozovaSBroadcastMPI::PreProcessingImpl() {
+  int size = 0;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  int dummy = 0;
+  CustomBroadcast(&dummy, 1, MPI_INT, root_, MPI_COMM_WORLD);
+
   return true;
 }
 
@@ -47,6 +56,10 @@ void MorozovaSBroadcastMPI::CustomBroadcast(void *data, int count, MPI_Datatype 
   int size = 0;
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
+
+  if (size <= 1) {
+    return;
+  }
 
   int virtual_rank = (rank - root + size) % size;
 
