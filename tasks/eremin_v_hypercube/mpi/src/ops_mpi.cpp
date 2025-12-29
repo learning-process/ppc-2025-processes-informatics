@@ -35,10 +35,6 @@ bool EreminVHypercubeMPI::RunImpl() {
   int ndims = static_cast<int>(std::floor(std::log2(world_size)));
   int hypercube_size = (1 << ndims);
 
-  int color = (world_rank < hypercube_size) ? 0 : MPI_UNDEFINED;
-  MPI_Comm cube_comm = MPI_COMM_NULL;
-  MPI_Comm_split(MPI_COMM_WORLD, color, world_rank, &cube_comm);
-
   double lower_bound = 0.0;
   double upper_bound = 0.0;
   double final_result = 0.0;
@@ -51,11 +47,10 @@ bool EreminVHypercubeMPI::RunImpl() {
     steps = std::get<2>(input);
   }
 
-  if (cube_comm != MPI_COMM_NULL) {
-    int cube_rank = 0;
-    MPI_Comm_rank(cube_comm, &cube_rank);
+  if (world_rank < hypercube_size) {
+    int cube_rank = world_rank;
 
-    BroadcastBoundsOverHypercube(cube_comm, cube_rank, ndims, lower_bound, upper_bound, steps);
+    BroadcastBoundsOverHypercube(cube_rank, ndims, lower_bound, upper_bound, steps);
 
     const auto in_function = std::get<3>(GetInput());
     double step_size = (upper_bound - lower_bound) / static_cast<double>(steps);
@@ -71,13 +66,11 @@ bool EreminVHypercubeMPI::RunImpl() {
       int neighbor = cube_rank ^ (1 << dim);
       double received_sum = 0.0;
       MPI_Status status;
-      MPI_Sendrecv(&current_sum, 1, MPI_DOUBLE, neighbor, 10, &received_sum, 1, MPI_DOUBLE, neighbor, 10, cube_comm,
-                   &status);
+      MPI_Sendrecv(&current_sum, 1, MPI_DOUBLE, neighbor, 10, &received_sum, 1, MPI_DOUBLE, neighbor, 10,
+                   MPI_COMM_WORLD, &status);
       current_sum += received_sum;
     }
     final_result = current_sum;
-
-    MPI_Comm_free(&cube_comm);
   }
 
   MPI_Bcast(&final_result, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -90,8 +83,8 @@ bool EreminVHypercubeMPI::PostProcessingImpl() {
   return true;
 }
 
-void EreminVHypercubeMPI::BroadcastBoundsOverHypercube(MPI_Comm cube_comm, int cube_rank, int ndims,
-                                                       double &lower_bound, double &upper_bound, int &steps) {
+void EreminVHypercubeMPI::BroadcastBoundsOverHypercube(int cube_rank, int ndims, double &lower_bound,
+                                                       double &upper_bound, int &steps) {
   for (int dim = ndims - 1; dim >= 0; --dim) {
     int neighbor = cube_rank ^ (1 << dim);
     const bool is_active = (cube_rank & ((1 << dim) - 1)) == 0;
@@ -102,13 +95,13 @@ void EreminVHypercubeMPI::BroadcastBoundsOverHypercube(MPI_Comm cube_comm, int c
     }
 
     if (is_sender) {
-      MPI_Send(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, cube_comm);
-      MPI_Send(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, cube_comm);
-      MPI_Send(&steps, 1, MPI_INT, neighbor, 2, cube_comm);
+      MPI_Send(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, MPI_COMM_WORLD);
+      MPI_Send(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, MPI_COMM_WORLD);
+      MPI_Send(&steps, 1, MPI_INT, neighbor, 2, MPI_COMM_WORLD);
     } else {
-      MPI_Recv(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, cube_comm, MPI_STATUS_IGNORE);
-      MPI_Recv(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, cube_comm, MPI_STATUS_IGNORE);
-      MPI_Recv(&steps, 1, MPI_INT, neighbor, 2, cube_comm, MPI_STATUS_IGNORE);
+      MPI_Recv(&lower_bound, 1, MPI_DOUBLE, neighbor, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(&upper_bound, 1, MPI_DOUBLE, neighbor, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(&steps, 1, MPI_INT, neighbor, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
   }
 }

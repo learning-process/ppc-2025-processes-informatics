@@ -18,8 +18,8 @@ class EreminVHypercubeMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  static void BroadcastBoundsOverHypercube(MPI_Comm cube_comm, int cube_rank, int ndims, double &lower_bound,
-                                           double &upper_bound, int &steps);
+  static void BroadcastBoundsOverHypercube(int cube_rank, int ndims, double &lower_bound, double &upper_bound,
+                                           int &steps);
 };
 
 }  // namespace eremin_v_hypercube
