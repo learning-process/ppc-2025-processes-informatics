@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
+
+#include <algorithm>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 #include "dolov_v_qsort_batcher/mpi/include/ops_mpi.hpp"
@@ -8,15 +11,29 @@
 namespace dolov_v_qsort_batcher {
 
 class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 100;
+ protected:
   InType input_data_{};
 
   void SetUp() override {
-    input_data_ = kCount_;
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank == 0) {
+      const int kCount = 10000000;
+      input_data_.resize(kCount);
+      for (int i = 0; i < kCount; ++i) {
+        input_data_[i] = (i % 2 == 0) ? static_cast<double>(i) : static_cast<double>(kCount - i);
+      }
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) {
+      return std::is_sorted(output_data.begin(), output_data.end());
+    }
+    return true;
   }
 
   InType GetTestInputData() final {

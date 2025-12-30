@@ -1,12 +1,11 @@
 #include <gtest/gtest.h>
-#include <stb/stb_image.h>
+#include <mpi.h>
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <numeric>
-#include <stdexcept>
+#include <random>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -23,36 +22,50 @@ namespace dolov_v_qsort_batcher {
 class DolovVQsortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+    return std::get<1>(test_param) + "_" + std::to_string(std::get<0>(test_param));
   }
 
  protected:
   void SetUp() override {
-    int width = -1;
-    int height = -1;
-    int channels = -1;
-    std::vector<uint8_t> img;
-    // Read image in RGB to ensure consistent channel count
-    {
-      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_dolov_v_qsort_batcher, "pic.jpg");
-      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
-      if (data == nullptr) {
-        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
-      }
-      channels = STBI_rgb;
-      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
-      stbi_image_free(data);
-      if (std::cmp_not_equal(width, height)) {
-        throw std::runtime_error("width != height: ");
-      }
-    }
+    int rank = 0;
+    int size_to_broadcast = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+    int size = std::get<0>(params);
+    std::string type = std::get<1>(params);
+
+    if (rank == 0) {
+      input_data_.resize(size);
+      if (type == "Random") {
+        std::mt19937 gen(42);
+        std::uniform_real_distribution<double> dis(-100.0, 100.0);
+        std::generate(input_data_.begin(), input_data_.end(), [&]() { return dis(gen); });
+      } else if (type == "Reverse") {
+        std::iota(input_data_.begin(), input_data_.end(), 0.0);
+        std::reverse(input_data_.begin(), input_data_.end());
+      } else if (type == "Sorted" || type == "Single" || type == "Large") {
+        std::iota(input_data_.begin(), input_data_.end(), 0.0);
+      }
+
+      expected_res_ = input_data_;
+      std::sort(expected_res_.begin(), expected_res_.end());
+      size_to_broadcast = static_cast<int>(input_data_.size());
+    }
+
+    MPI_Bcast(&size_to_broadcast, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (rank != 0) {
+      input_data_.resize(size_to_broadcast);
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return (input_data_ == output_data);
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) {
+      return output_data == expected_res_;
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -60,27 +73,28 @@ class DolovVQsortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, O
   }
 
  private:
-  InType input_data_ = 0;
+  InType input_data_;
+  OutType expected_res_;
 };
 
 namespace {
 
-TEST_P(DolovVQsortBatcherFuncTests, MatmulFromPic) {
+TEST_P(DolovVQsortBatcherFuncTests, QsortBatcherTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {std::make_tuple(3, "3"), std::make_tuple(5, "5"), std::make_tuple(7, "7")};
+const std::array<TestType, 5> kTestParam = {std::make_tuple(12, "Random"), std::make_tuple(2, "Reverse"),
+                                            std::make_tuple(15, "Sorted"), std::make_tuple(1, "Single"),
+                                            std::make_tuple(128, "Large")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<DolovVQsortBatcherMPI, InType>(kTestParam, PPC_SETTINGS_dolov_v_qsort_batcher),
     ppc::util::AddFuncTask<DolovVQsortBatcherSEQ, InType>(kTestParam, PPC_SETTINGS_dolov_v_qsort_batcher));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-
 const auto kPerfTestName = DolovVQsortBatcherFuncTests::PrintFuncTestName<DolovVQsortBatcherFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(PicMatrixTests, DolovVQsortBatcherFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(QsortBatcherTests, DolovVQsortBatcherFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
-
 }  // namespace dolov_v_qsort_batcher

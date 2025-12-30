@@ -17,6 +17,9 @@ class DolovVQsortBatcherSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  void applyQuicksort(double *array, int low, int high);
+  int getHoarePartition(double *array, int low, int high);
 };
 
 }  // namespace dolov_v_qsort_batcher
