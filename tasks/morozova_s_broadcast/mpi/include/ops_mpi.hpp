@@ -9,9 +9,7 @@ namespace morozova_s_broadcast {
 
 class MorozovaSBroadcastMPI : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kMPI;
-  }
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask();
 
   explicit MorozovaSBroadcastMPI(const InType &in);
   explicit MorozovaSBroadcastMPI(const InType &in, int root);
@@ -22,7 +20,7 @@ class MorozovaSBroadcastMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void CustomBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
+  void CustomBroadcast(void *data, int count, MPI_Datatype datatype, int root, MPI_Comm comm);
 
   int root_;
 };
