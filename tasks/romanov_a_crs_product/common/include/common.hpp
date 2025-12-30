@@ -17,16 +17,16 @@ constexpr double kEps = 1e-6;
 struct Dense {
   size_t n;
   size_t m;
+
   std::vector<double> data;
 
-  Dense(size_t n, size_t m) : n(n), m(m), data(n * m, 0.0) {}
-
-  Dense(size_t n) : n(n), m(n), data(n * n, 0.0) {}
+  Dense(size_t n, size_t m): n(n), m(m), data(n * m, 0.0) {}
+  Dense(size_t n): n(n), m(n), data(n * n, 0.0) {}
 
   size_t getRows() const {
     return n;
   }
-
+  
   size_t getCols() const {
     return m;
   }
@@ -48,15 +48,9 @@ struct CRS {
   std::vector<size_t> column;
   std::vector<size_t> row_index;
 
-  CRS() : n(0), m(0), row_index(1, 0) {}
-
-  CRS(size_t n, size_t m) : n(n), m(m) {
-    row_index.resize(n + 1, 0);
-  }
-
-  CRS(size_t n) : n(n), m(n) {
-    row_index.resize(n + 1, 0);
-  }
+  CRS(): n(0), m(0), row_index(1, 0) {}
+  CRS(size_t n, size_t m): n(n), m(m), row_index(n + 1, 0) {}
+  CRS(size_t n): n(n), m(n), row_index(n + 1, 0) {}
 
   size_t getRows() const {
     return n;
@@ -71,41 +65,41 @@ struct CRS {
   }
 
   bool operator==(const CRS &other) const {
-    if (n != other.n || m != other.m || column != other.column || row_index != other.row_index) {
+    if (n != other.n || m != other.m) {
       return false;
     }
+    
+    if (row_index != other.row_index || column != other.column) {
+      return false;
+    }
+    
     for (size_t i = 0; i < value.size(); ++i) {
       if (std::abs(value[i] - other.value[i]) > kEps) {
         return false;
       }
     }
+
     return true;
   }
 
   void transpose() {
-    size_t nnz = this->nnz();
+    size_t nnz_val = this->nnz();
 
-    std::vector<double> new_value(nnz);
-    std::vector<size_t> new_column(nnz);
+    std::vector<double> new_value(nnz_val);
+    std::vector<size_t> new_column(nnz_val);
     std::vector<size_t> new_row_index(m + 1, 0);
 
-    std::vector<size_t> columns_count(m, static_cast<size_t>(0));
-    for (size_t i = 0; i < nnz; ++i) {
-      ++columns_count[column[i]];
+    for (size_t i = 0; i < nnz_val; ++i) {
+      ++new_row_index[column[i] + 1];
     }
 
-    new_row_index[0] = 0;
-    for (size_t i = 0; i < m; ++i) {
-      new_row_index[i + 1] = new_row_index[i] + columns_count[i];
+    for (size_t i = 1; i <= m; ++i) {
+      new_row_index[i] += new_row_index[i - 1];
     }
 
     std::vector<size_t> offset = new_row_index;
-
     for (size_t row = 0; row < n; ++row) {
-      size_t start = row_index[row];
-      size_t end = row_index[row + static_cast<size_t>(1)];
-
-      for (size_t idx = start; idx < end; ++idx) {
+      for (size_t idx = row_index[row]; idx < row_index[row + 1]; ++idx) {
         size_t col = column[idx];
         size_t pos = offset[col]++;
 
@@ -114,14 +108,14 @@ struct CRS {
       }
     }
 
-    value = std::move(new_value);
-    column = std::move(new_column);
-    row_index = std::move(new_row_index);
-
+    value.swap(new_value);
+    column.swap(new_column);
+    row_index.swap(new_row_index);
+    
     std::swap(n, m);
   }
 
-  CRS transpose() const {
+  CRS getTransposed() const {
     CRS result = *this;
     result.transpose();
     return result;
@@ -140,23 +134,82 @@ struct CRS {
     std::uniform_real_distribution<double> prob(0.0, 1.0);
     std::uniform_real_distribution<double> val(-1.0, 1.0);
 
-    value.reserve(static_cast<size_t>(n * m * density));
-    column.reserve(static_cast<size_t>(n * m * density));
-
     for (size_t row = 0; row < n; ++row) {
-      std::vector<size_t> cols;
+      row_index[row + 1] = row_index[row];
       for (size_t col = 0; col < m; ++col) {
         if (prob(gen) < density) {
-          cols.push_back(col);
+          value.push_back(val(gen));
+          column.push_back(col);
+          ++row_index[row + 1];
         }
       }
-      for (size_t col : cols) {
-        column.push_back(col);
-        value.push_back(val(gen));
+    }
+  }
+
+  CRS ExtractRows(size_t start, size_t end) const {
+    if (start >= end || start >= n) {
+      return CRS(0, m);
+    }
+
+    end = std::min(end, n);
+    size_t new_n = end - start;
+
+    size_t nnz_start = row_index[start];
+    size_t nnz_end = row_index[end];
+    size_t nnz_count = nnz_end - nnz_start;
+
+    CRS result(new_n, m);
+    result.value.resize(nnz_count);
+    result.column.resize(nnz_count);
+    result.row_index.resize(new_n + 1);
+
+    std::copy(value.begin() + nnz_start, value.begin() + nnz_end,
+              result.value.begin());
+    std::copy(column.begin() + nnz_start, column.begin() + nnz_end,
+              result.column.begin());
+
+    for (size_t i = 0; i <= new_n; ++i) {
+      result.row_index[i] = row_index[start + i] - nnz_start;
+    }
+
+    return result;
+  }
+
+  static CRS ConcatRows(const std::vector<CRS> &parts) {
+    if (parts.empty()) return CRS();
+
+    size_t total_n = 0;
+    size_t total_nnz = 0;
+    size_t m = parts[0].m;
+
+    for (const auto &part : parts) {
+      total_n += part.n;
+      total_nnz += part.nnz();
+    }
+
+    CRS result(total_n, m);
+    result.value.resize(total_nnz);
+    result.column.resize(total_nnz);
+    result.row_index.resize(total_n + 1);
+
+    size_t row_offset = 0;
+    size_t nnz_offset = 0;
+
+    for (const auto &part : parts) {
+      std::copy(part.value.begin(), part.value.end(),
+                result.value.begin() + nnz_offset);
+      std::copy(part.column.begin(), part.column.end(),
+                result.column.begin() + nnz_offset);
+
+      for (size_t i = 0; i <= part.n; ++i) {
+        result.row_index[row_offset + i] = part.row_index[i] + nnz_offset;
       }
 
-      row_index[row + 1] = column.size();
+      row_offset += part.n;
+      nnz_offset += part.nnz();
     }
+
+    return result;
   }
 };
 
@@ -169,7 +222,7 @@ inline CRS operator*(const CRS &A, const CRS &B) {
   size_t n_cols = B.getCols();
 
   CRS C(n_rows, n_cols);
-  CRS BT = B.transpose();
+  CRS BT = B.getTransposed();
 
   std::vector<std::pair<size_t, double>> row;
 
@@ -201,17 +254,19 @@ inline CRS operator*(const CRS &A, const CRS &B) {
         }
       }
 
-      if (sum != 0.0) {
+      if (std::abs(sum) > kEps) {
         row.emplace_back(j, sum);
       }
     }
 
     C.row_index[i] = C.column.size();
+    
     for (auto &[col, val] : row) {
       C.column.push_back(col);
       C.value.push_back(val);
     }
   }
+  
   C.row_index[n_rows] = C.column.size();
 
   return C;
@@ -223,20 +278,21 @@ inline CRS ToCRS(const Dense &A) {
   CRS crs(rows, cols);
 
   for (size_t i = 0; i < rows; ++i) {
+    crs.row_index[i + 1] = crs.row_index[i];
     for (size_t j = 0; j < cols; ++j) {
       if (std::abs(A(i, j)) > kEps) {
         crs.value.push_back(A(i, j));
         crs.column.push_back(j);
+        ++crs.row_index[i + 1];
       }
     }
-    crs.row_index[i + 1] = crs.value.size();
   }
   return crs;
 }
 
 using InType = std::tuple<CRS, CRS>;
 using OutType = CRS;
-using TestType = std::tuple<CRS, CRS, CRS>;
+using TestType = std::tuple<CRS, CRS, CRS>
 ;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
