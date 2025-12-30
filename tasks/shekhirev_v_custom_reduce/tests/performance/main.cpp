@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <numeric>
-#include <vector>
-
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/ops_mpi.hpp"
 #include "../../seq/include/ops_seq.hpp"
@@ -34,7 +31,7 @@ class ShekhirevVCustomReducePerfTests : public ppc::util::BaseRunPerfTests<InTyp
   }
 
  private:
-  InType input_data_;
+  InType input_data_ = 0;
 };
 
 namespace {
@@ -51,6 +48,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ShekhirevVCustomReducePerfTests::CustomPerfTestName;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CustomReducePerf, ShekhirevVCustomReducePerfTests, kGtestValues, kPerfTestName);
 
 }  // namespace

@@ -2,10 +2,9 @@
 #include <mpi.h>
 
 #include <array>
-#include <numeric>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/ops_mpi.hpp"
@@ -23,7 +22,7 @@ class ShekhirevVCustomReduceFuncTests : public ppc::util::BaseRunFuncTests<InTyp
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const TestType &params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_data_ = std::get<0>(params);
   }
 
@@ -66,6 +65,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kTestName = ShekhirevVCustomReduceFuncTests::PrintFuncTestName<ShekhirevVCustomReduceFuncTests>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(CustomReduceTests, ShekhirevVCustomReduceFuncTests, kGtestValues, kTestName);
 
 }  // namespace
