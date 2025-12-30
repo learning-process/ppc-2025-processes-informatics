@@ -77,6 +77,24 @@ int ComputeNeighbor(int rank, int phase, int size) {
   return neighbor;
 }
 
+void KeepBlockFromMerged(std::vector<int> &local_data, std::vector<int> &merged, int keep_count, int rank,
+                         int partner) {
+  if (merged.size() <= static_cast<std::size_t>(keep_count)) {
+    local_data.swap(merged);
+    return;
+  }
+  if (rank < partner) {
+    merged.resize(static_cast<std::size_t>(keep_count));
+    local_data.swap(merged);
+  } else {
+    std::vector<int> tmp;
+    auto start_it = merged.begin() + static_cast<std::vector<int>::difference_type>(
+                                         merged.size() - static_cast<std::size_t>(keep_count));
+    tmp.assign(start_it, merged.end());
+    local_data.swap(tmp);
+  }
+}
+
 void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor) {
   int send_count = static_cast<int>(local_data.size());
   int recv_count = 0;
@@ -87,7 +105,7 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor) {
                101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   std::vector<int> merged;
   OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
-  if (static_cast<int>(merged.size()) <= 0) {
+  if (merged.empty()) {
     local_data.clear();
     return;
   }
@@ -97,16 +115,7 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor) {
   }
   int my_rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-  if (my_rank < neighbor) {
-    merged.resize(static_cast<std::size_t>(send_count));
-    local_data.swap(merged);
-  } else {
-    std::vector<int> tmp;
-    auto start_it = merged.begin() + static_cast<std::vector<int>::difference_type>(
-                                         merged.size() - static_cast<std::size_t>(send_count));
-    tmp.assign(start_it, merged.end());
-    local_data.swap(tmp);
-  }
+  KeepBlockFromMerged(local_data, merged, send_count, my_rank, neighbor);
 }
 
 void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int stages) {
@@ -126,20 +135,7 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
                    partner, 300 + stage, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       std::vector<int> merged;
       OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
-      if (static_cast<int>(merged.size()) < send_count) {
-        local_data.swap(merged);
-      } else {
-        if (rank < partner) {
-          merged.resize(static_cast<std::size_t>(send_count));
-          local_data.swap(merged);
-        } else {
-          std::vector<int> tmp;
-          auto start_it = merged.begin() + static_cast<std::vector<int>::difference_type>(
-                                               merged.size() - static_cast<std::size_t>(send_count));
-          tmp.assign(start_it, merged.end());
-          local_data.swap(tmp);
-        }
-      }
+      KeepBlockFromMerged(local_data, merged, send_count, rank, partner);
       MPI_Barrier(MPI_COMM_WORLD);
     }
   }
