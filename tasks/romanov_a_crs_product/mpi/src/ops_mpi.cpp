@@ -15,7 +15,7 @@ RomanovACRSProductMPI::RomanovACRSProductMPI(const InType &in) {
 }
 
 bool RomanovACRSProductMPI::ValidationImpl() {
-  return (std::get<0>(GetInput()).size() == std::get<1>(GetInput()).size());
+  return (std::get<0>(GetInput()).getCols() == std::get<1>(GetInput()).getRows());
 }
 
 bool RomanovACRSProductMPI::PreProcessingImpl() {
@@ -23,14 +23,14 @@ bool RomanovACRSProductMPI::PreProcessingImpl() {
 }
 
 bool RomanovACRSProductMPI::RunImpl() {
-    const CRS &A = std::get<0>(GetInput());
-    const CRS &B = std::get<1>(GetInput());
+  const CRS &A = std::get<0>(GetInput());
+  const CRS &B = std::get<1>(GetInput());
 
-    CRS C = A * B;
+  CRS C = A * B;
 
-    GetOutput() = std::move(C);
+  GetOutput() = std::move(C);
 
-    return true;
+  return true;
 }
 
 bool RomanovACRSProductMPI::PostProcessingImpl() {

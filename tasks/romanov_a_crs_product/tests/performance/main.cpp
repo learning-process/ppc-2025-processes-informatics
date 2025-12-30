@@ -12,8 +12,8 @@
 namespace romanov_a_crs_product {
 
 class RomanovACRSProductPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t n_ = static_cast<size_t>(3000);
-  const double density_ = 0.01;
+  const size_t n_ = static_cast<size_t>(1000);
+  const double density_ = 0.1;
 
   InType input_data_;
   OutType expected_;
@@ -40,9 +40,8 @@ TEST_P(RomanovACRSProductPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, RomanovACRSProductMPI, RomanovACRSProductSEQ>(
-        PPC_SETTINGS_romanov_a_crs_product);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, RomanovACRSProductMPI, RomanovACRSProductSEQ>(
+    PPC_SETTINGS_romanov_a_crs_product);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

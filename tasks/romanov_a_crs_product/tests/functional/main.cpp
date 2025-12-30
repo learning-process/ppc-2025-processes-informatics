@@ -4,9 +4,9 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <initializer_list>
 #include <string>
 #include <tuple>
-#include <initializer_list>
 
 #include "romanov_a_crs_product/common/include/common.hpp"
 #include "romanov_a_crs_product/mpi/include/ops_mpi.hpp"
@@ -20,7 +20,7 @@ class RomanovACRSProductFuncTests : public ppc::util::BaseRunFuncTests<InType, O
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     const auto &[A, B, C] = test_param;
-    return "_n" + std::to_string(A.size()) + "_nnzA" + std::to_string(A.nnz()) + "_nnzB" + std::to_string(B.nnz());
+    return "_n" + std::to_string(A.getRows()) + "_nnzA" + std::to_string(A.nnz()) + "_nnzB" + std::to_string(B.nnz());
   }
 
  protected:
@@ -52,18 +52,18 @@ TEST_P(RomanovACRSProductFuncTests, MatmulFromPic) {
 }
 
 CRS MakeDenseCRS(std::initializer_list<std::initializer_list<double>> rows) {
-    size_t n = rows.size();
-    Dense D(n);
-    size_t i = 0;
-    for (auto &r : rows) {
-        size_t j = 0;
-        for (auto &v : r) {
-            D(i, j) = v;
-            ++j;
-        }
-        ++i;
+  size_t n = rows.size();
+  Dense D(n);
+  size_t i = 0;
+  for (auto &r : rows) {
+    size_t j = 0;
+    for (auto &v : r) {
+      D(i, j) = v;
+      ++j;
     }
-    return ToCRS(D);
+    ++i;
+  }
+  return ToCRS(D);
 }
 
 const std::array<TestType, 5> kTestParam = {
@@ -73,60 +73,34 @@ const std::array<TestType, 5> kTestParam = {
         MakeDenseCRS({{6.0}}),
     },
     TestType{
-        MakeDenseCRS({{1.0, 0.0},
-                      {0.0, 1.0}}),
-        MakeDenseCRS({{5.0, 6.0},
-                      {7.0, 8.0}}),
-        MakeDenseCRS({{5.0, 6.0},
-                      {7.0, 8.0}}),
+        MakeDenseCRS({{1.0, 0.0}, {0.0, 1.0}}),
+        MakeDenseCRS({{5.0, 6.0}, {7.0, 8.0}}),
+        MakeDenseCRS({{5.0, 6.0}, {7.0, 8.0}}),
     },
     TestType{
-        MakeDenseCRS({{1.0, 0.0, 2.0},
-                      {0.0, 0.0, 0.0},
-                      {3.0, 0.0, 4.0}}),
-        MakeDenseCRS({{0.0, 5.0, 0.0},
-                      {0.0, 0.0, 0.0},
-                      {0.0, 6.0, 0.0}}),
-        MakeDenseCRS({{0.0, 17.0, 0.0},
-                      {0.0,  0.0, 0.0},
-                      {0.0, 39.0, 0.0}}),
+        MakeDenseCRS({{1.0, 0.0, 2.0}, {0.0, 0.0, 0.0}, {3.0, 0.0, 4.0}}),
+        MakeDenseCRS({{0.0, 5.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 6.0, 0.0}}),
+        MakeDenseCRS({{0.0, 17.0, 0.0}, {0.0, 0.0, 0.0}, {0.0, 39.0, 0.0}}),
     },
     TestType{
-        MakeDenseCRS({{0.0, 2.0, 0.0, 1.0},
-                      {0.0, 0.0, 0.0, 0.0},
-                      {0.0, 0.0, 3.0, 0.0},
-                      {4.0, 0.0, 0.0, 0.0}}),
-        MakeDenseCRS({{0.0, 5.0, 0.0, 0.0},
-                      {7.0, 0.0, 0.0, 0.0},
-                      {0.0, 0.0, 6.0, 0.0},
-                      {0.0, 0.0, 0.0, 8.0}}),
-        MakeDenseCRS({{14.0, 0.0, 0.0, 8.0},
-                      {0.0,  0.0, 0.0, 0.0},
-                      {0.0, 0.0, 18.0, 0.0},
-                      {0.0, 20.0, 0.0, 0.0}}),
+        MakeDenseCRS({{0.0, 2.0, 0.0, 1.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 3.0, 0.0}, {4.0, 0.0, 0.0, 0.0}}),
+        MakeDenseCRS({{0.0, 5.0, 0.0, 0.0}, {7.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 6.0, 0.0}, {0.0, 0.0, 0.0, 8.0}}),
+        MakeDenseCRS({{14.0, 0.0, 0.0, 8.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 18.0, 0.0}, {0.0, 20.0, 0.0, 0.0}}),
     },
-      TestType{
-        MakeDenseCRS({{1.0, 2.0, 3.0},
-                      {4.0, 5.0, 6.0},
-                      {7.0, 8.0, 9.0}}),
-        MakeDenseCRS({{1.0, 4.0, 7.0},
-                      {2.0, 5.0, 8.0},
-                      {3.0, 6.0, 9.0}}),
-        MakeDenseCRS({{14.0, 32.0, 50.0},
-                      {32.0, 77.0, 122.0},
-                      {50.0, 122.0, 194.0}}),
+    TestType{
+        MakeDenseCRS({{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}, {7.0, 8.0, 9.0}}),
+        MakeDenseCRS({{1.0, 4.0, 7.0}, {2.0, 5.0, 8.0}, {3.0, 6.0, 9.0}}),
+        MakeDenseCRS({{14.0, 32.0, 50.0}, {32.0, 77.0, 122.0}, {50.0, 122.0, 194.0}}),
     },
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<RomanovACRSProductMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_romanov_a_crs_product),
-                                           ppc::util::AddFuncTask<RomanovACRSProductSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_romanov_a_crs_product));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<RomanovACRSProductMPI, InType>(kTestParam, PPC_SETTINGS_romanov_a_crs_product),
+    ppc::util::AddFuncTask<RomanovACRSProductSEQ, InType>(kTestParam, PPC_SETTINGS_romanov_a_crs_product));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName =
-    RomanovACRSProductFuncTests::PrintFuncTestName<RomanovACRSProductFuncTests>;
+const auto kPerfTestName = RomanovACRSProductFuncTests::PrintFuncTestName<RomanovACRSProductFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(PicMatrixTests, RomanovACRSProductFuncTests, kGtestValues, kPerfTestName);
 
