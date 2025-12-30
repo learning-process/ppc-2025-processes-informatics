@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include <algorithm>
+
 #include "morozova_s_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -9,7 +11,7 @@ namespace morozova_s_broadcast {
 
 class MorozovaSBroadcastMPI : public BaseTask {
  public:
-  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask();
+  static ppc::task::TypeOfTask GetStaticTypeOfTask();
 
   explicit MorozovaSBroadcastMPI(const InType &in);
   explicit MorozovaSBroadcastMPI(const InType &in, int root);

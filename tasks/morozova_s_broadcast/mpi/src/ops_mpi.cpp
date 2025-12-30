@@ -1,9 +1,5 @@
 #include "morozova_s_broadcast/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
-#include <algorithm>
-
 namespace morozova_s_broadcast {
 
 ppc::task::TypeOfTask MorozovaSBroadcastMPI::GetStaticTypeOfTask() {
@@ -46,11 +42,14 @@ bool MorozovaSBroadcastMPI::PreProcessingImpl() {
 bool MorozovaSBroadcastMPI::RunImpl() {
   int data_size = static_cast<int>(GetInput().size());
   CustomBroadcast(&data_size, 1, MPI_INT, root_, MPI_COMM_WORLD);
+
   GetOutput().resize(data_size);
+
   if (data_size > 0) {
     std::copy(GetInput().begin(), GetInput().end(), GetOutput().begin());
     CustomBroadcast(GetOutput().data(), data_size, MPI_INT, root_, MPI_COMM_WORLD);
   }
+
   return true;
 }
 
@@ -63,7 +62,9 @@ void MorozovaSBroadcastMPI::CustomBroadcast(void *data, int count, MPI_Datatype 
   int size = 0;
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
+
   int virtual_rank = (rank - root + size) % size;
+
   for (int step = 1; step < size; step <<= 1) {
     if (virtual_rank < step) {
       int dest = virtual_rank + step;
