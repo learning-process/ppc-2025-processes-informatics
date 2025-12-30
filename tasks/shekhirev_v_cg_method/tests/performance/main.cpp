@@ -16,7 +16,7 @@ namespace shekhirev_v_cg_method {
 class ShekhirevVCGPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    int n = 100;
+    int n = 10000;
     input_data_.n = n;
     input_data_.A.resize(static_cast<size_t>(n) * n, 0.0);
     input_data_.b.resize(n, 2.0);
