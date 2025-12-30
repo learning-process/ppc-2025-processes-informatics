@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <utility>
 
 #include "kruglova_a_2d_multistep_par_opt/common/include/common.hpp"
 #include "kruglova_a_2d_multistep_par_opt/mpi/include/ops_mpi.hpp"
