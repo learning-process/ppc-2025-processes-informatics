@@ -24,7 +24,8 @@ struct Trial2D {
   double z = 0.0;
 };
 
-double CalculateM1D(const std::vector<Trial1D> &trials) {
+template <typename T>
+double CalculateM(const std::vector<T> &trials) {
   double m_max = 0.0;
   for (size_t i = 0; (i + 1) < trials.size(); ++i) {
     double dx = trials[i + 1].x - trials[i].x;
@@ -36,6 +37,21 @@ double CalculateM1D(const std::vector<Trial1D> &trials) {
   return m_max;
 }
 
+size_t FindBestInterval(const std::vector<Trial2D> &trials, double m_scaled) {
+  double max_rate = -std::numeric_limits<double>::infinity();
+  size_t best_idx = 0;
+  for (size_t i = 0; (i + 1) < trials.size(); ++i) {
+    double dx = trials[i + 1].x - trials[i].x;
+    double dz = trials[i + 1].z - trials[i].z;
+    double rate = (m_scaled * dx) + ((dz * dz) / (m_scaled * dx)) - (2.0 * (trials[i + 1].z + trials[i].z));
+    if (rate > max_rate) {
+      max_rate = rate;
+      best_idx = i;
+    }
+  }
+  return best_idx;
+}
+
 double Solve1DStrongin(const std::function<double(double)> &func, double a, double b, double eps, int max_iters,
                        double &best_x) {
   const double r_param = 2.0;
@@ -45,12 +61,11 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
   }
 
   for (int iter = 0; iter < max_iters; ++iter) {
-    double m_val = CalculateM1D(trials);
+    double m_val = CalculateM(trials);
     double m_scaled = (m_val > 0.0) ? (r_param * m_val) : 1.0;
 
     double max_rate = -std::numeric_limits<double>::infinity();
     size_t best_idx = 0;
-
     for (size_t i = 0; (i + 1) < trials.size(); ++i) {
       double dx = trials[i + 1].x - trials[i].x;
       double dz = trials[i + 1].z - trials[i].z;
@@ -111,7 +126,7 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
   const int init_points = 20;
 
   for (int i = 0; i < init_points; ++i) {
-    double x_val = in.x_min + (in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1);
+    double x_val = in.x_min + ((in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1));
     double y_res = 0.0;
     double z_res = compute_z(x_val, y_res);
     x_trials.push_back({x_val, y_res, z_res});
@@ -120,28 +135,10 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
   std::sort(x_trials.begin(), x_trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
 
   for (int iter = 0; iter < in.max_iters; ++iter) {
-    double m_max = 0.0;
-    for (size_t i = 0; (i + 1) < x_trials.size(); ++i) {
-      double dx = x_trials[i + 1].x - x_trials[i].x;
-      if (dx > 1e-15) {
-        m_max = std::max(m_max, std::abs(x_trials[i + 1].z - x_trials[i].z) / dx);
-      }
-    }
+    double m_val = CalculateM(x_trials);
+    double m_scaled = (m_val > 0.0) ? (r_param * m_val) : 1.0;
 
-    double m_scaled = (m_max > 0.0) ? (r_param * m_max) : 1.0;
-    double max_rate = -std::numeric_limits<double>::infinity();
-    size_t best_idx = 0;
-
-    for (size_t i = 0; (i + 1) < x_trials.size(); ++i) {
-      double dx = x_trials[i + 1].x - x_trials[i].x;
-      double dz = x_trials[i + 1].z - x_trials[i].z;
-      double rate = (m_scaled * dx) + ((dz * dz) / (m_scaled * dx)) - (2.0 * (x_trials[i + 1].z + x_trials[i].z));
-
-      if (rate > max_rate) {
-        max_rate = rate;
-        best_idx = i;
-      }
-    }
+    size_t best_idx = FindBestInterval(x_trials, m_scaled);
 
     if ((x_trials[best_idx + 1].x - x_trials[best_idx].x) < in.eps) {
       break;
