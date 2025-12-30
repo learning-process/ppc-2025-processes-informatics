@@ -16,7 +16,7 @@ CustomReduceMPI::CustomReduceMPI(const shekhirev_v_custom_reduce::InType &in) {
 }
 
 bool CustomReduceMPI::ValidationImpl() {
-  return GetInput() >= 0;
+  return GetInput() > 0;
 }
 
 bool CustomReduceMPI::PreProcessingImpl() {
@@ -41,22 +41,26 @@ bool CustomReduceMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (size == 0) {
-    return false;
-  }
-
   const int count_per_process = GetInput() / size;
   const int remainder = GetInput() % size;
   const int local_count = count_per_process + (rank < remainder ? 1 : 0);
 
   const std::vector<int> local_vec(local_count, 1);
   const int local_sum = std::accumulate(local_vec.begin(), local_vec.end(), 0);
-  int global_sum = 0;
-
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
+    int global_sum = local_sum;
+
+    for (int i = 1; i < size; ++i) {
+      int recv_val = 0;
+      MPI_Status status;
+      MPI_Recv(&recv_val, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+      global_sum += recv_val;
+    }
+
     GetOutput() = global_sum;
+  } else {
+    MPI_Send(&local_sum, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   }
 
   return true;
