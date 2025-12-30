@@ -2,8 +2,6 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-
 #include "morozova_s_broadcast/common/include/common.hpp"
 #include "task/include/task.hpp"
 

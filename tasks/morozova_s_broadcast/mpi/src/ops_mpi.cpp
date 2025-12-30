@@ -1,5 +1,12 @@
 #include "morozova_s_broadcast/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
+#include <algorithm>
+
+#include "morozova_s_broadcast/common/include/common.hpp"
+#include "task/include/task.hpp"
+
 namespace morozova_s_broadcast {
 
 ppc::task::TypeOfTask MorozovaSBroadcastMPI::GetStaticTypeOfTask() {
