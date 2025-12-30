@@ -27,8 +27,7 @@ inline void BroadcastCRS(CRS &M, int root, MPI_Comm comm) {
   int rank;
   MPI_Comm_rank(comm, &rank);
 
-  unsigned long dims[2] = {static_cast<unsigned long>(M.n),
-                           static_cast<unsigned long>(M.m)};
+  unsigned long dims[2] = {static_cast<unsigned long>(M.n), static_cast<unsigned long>(M.m)};
   MPI_Bcast(dims, 2, MPI_UNSIGNED_LONG, root, comm);
 
   if (rank != root) {
@@ -48,37 +47,35 @@ inline void BroadcastCRS(CRS &M, int root, MPI_Comm comm) {
   if (nnz > 0) {
     MPI_Bcast(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, root, comm);
     if (nnz > 0) {
-      MPI_Bcast(reinterpret_cast<unsigned long *>(M.column.data()),
-                static_cast<int>(nnz), MPI_UNSIGNED_LONG, root, comm);
+      MPI_Bcast(reinterpret_cast<unsigned long *>(M.column.data()), static_cast<int>(nnz), MPI_UNSIGNED_LONG, root,
+                comm);
     }
   }
 
   if (M.n + 1 > 0) {
-    MPI_Bcast(reinterpret_cast<unsigned long *>(M.row_index.data()),
-              static_cast<int>(M.n + 1), MPI_UNSIGNED_LONG, root, comm);
+    MPI_Bcast(reinterpret_cast<unsigned long *>(M.row_index.data()), static_cast<int>(M.n + 1), MPI_UNSIGNED_LONG, root,
+              comm);
   }
 }
 
 inline void SendCRS(const CRS &M, int dest, int tag, MPI_Comm comm) {
-  unsigned long dims[2] = {static_cast<unsigned long>(M.n),
-                           static_cast<unsigned long>(M.m)};
+  unsigned long dims[2] = {static_cast<unsigned long>(M.n), static_cast<unsigned long>(M.m)};
   MPI_Send(dims, 2, MPI_UNSIGNED_LONG, dest, tag, comm);
 
   unsigned long nnz = static_cast<unsigned long>(M.nnz());
   MPI_Send(&nnz, 1, MPI_UNSIGNED_LONG, dest, tag + 1, comm);
 
   if (nnz > 0) {
-    MPI_Send(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, dest, tag + 2,
-             comm);
+    MPI_Send(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, dest, tag + 2, comm);
     if (nnz > 0) {
-      MPI_Send(reinterpret_cast<const unsigned long*>(M.column.data()),
-               static_cast<int>(nnz), MPI_UNSIGNED_LONG, dest, tag + 3, comm);
+      MPI_Send(reinterpret_cast<const unsigned long *>(M.column.data()), static_cast<int>(nnz), MPI_UNSIGNED_LONG, dest,
+               tag + 3, comm);
     }
   }
 
   if (M.n + 1 > 0) {
-    MPI_Send(reinterpret_cast<const unsigned long*>(M.row_index.data()),
-             static_cast<int>(M.n + 1), MPI_UNSIGNED_LONG, dest, tag + 4, comm);
+    MPI_Send(reinterpret_cast<const unsigned long *>(M.row_index.data()), static_cast<int>(M.n + 1), MPI_UNSIGNED_LONG,
+             dest, tag + 4, comm);
   }
 }
 
@@ -96,19 +93,16 @@ inline void RecvCRS(CRS &M, int src, int tag, MPI_Comm comm) {
   M.row_index.resize(M.n + 1);
 
   if (nnz > 0) {
-    MPI_Recv(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, src, tag + 2,
-             comm, MPI_STATUS_IGNORE);
+    MPI_Recv(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, src, tag + 2, comm, MPI_STATUS_IGNORE);
     if (nnz > 0) {
-      MPI_Recv(reinterpret_cast<unsigned long *>(M.column.data()),
-               static_cast<int>(nnz), MPI_UNSIGNED_LONG, src, tag + 3, comm,
-               MPI_STATUS_IGNORE);
+      MPI_Recv(reinterpret_cast<unsigned long *>(M.column.data()), static_cast<int>(nnz), MPI_UNSIGNED_LONG, src,
+               tag + 3, comm, MPI_STATUS_IGNORE);
     }
   }
 
   if (M.n + 1 > 0) {
-    MPI_Recv(reinterpret_cast<unsigned long *>(M.row_index.data()),
-             static_cast<int>(M.n + 1), MPI_UNSIGNED_LONG, src, tag + 4, comm,
-             MPI_STATUS_IGNORE);
+    MPI_Recv(reinterpret_cast<unsigned long *>(M.row_index.data()), static_cast<int>(M.n + 1), MPI_UNSIGNED_LONG, src,
+             tag + 4, comm, MPI_STATUS_IGNORE);
   }
 }
 
@@ -165,7 +159,7 @@ bool RomanovACRSProductMPI::RunImpl() {
   if (rank == 0) {
     std::vector<CRS> parts;
     parts.reserve(static_cast<size_t>(num_processes));
-    
+
     parts.push_back(std::move(C_local));
 
     for (int p = 1; p < num_processes; p++) {

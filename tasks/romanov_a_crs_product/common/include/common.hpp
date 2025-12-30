@@ -20,13 +20,13 @@ struct Dense {
 
   std::vector<double> data;
 
-  Dense(size_t n, size_t m): n(n), m(m), data(n * m, 0.0) {}
-  Dense(size_t n): n(n), m(n), data(n * n, 0.0) {}
+  Dense(size_t n, size_t m) : n(n), m(m), data(n * m, 0.0) {}
+  Dense(size_t n) : n(n), m(n), data(n * n, 0.0) {}
 
   size_t getRows() const {
     return n;
   }
-  
+
   size_t getCols() const {
     return m;
   }
@@ -48,9 +48,9 @@ struct CRS {
   std::vector<size_t> column;
   std::vector<size_t> row_index;
 
-  CRS(): n(0), m(0), row_index(1, 0) {}
-  CRS(size_t n, size_t m): n(n), m(m), row_index(n + 1, 0) {}
-  CRS(size_t n): n(n), m(n), row_index(n + 1, 0) {}
+  CRS() : n(0), m(0), row_index(1, 0) {}
+  CRS(size_t n, size_t m) : n(n), m(m), row_index(n + 1, 0) {}
+  CRS(size_t n) : n(n), m(n), row_index(n + 1, 0) {}
 
   size_t getRows() const {
     return n;
@@ -68,11 +68,11 @@ struct CRS {
     if (n != other.n || m != other.m) {
       return false;
     }
-    
+
     if (row_index != other.row_index || column != other.column) {
       return false;
     }
-    
+
     for (size_t i = 0; i < value.size(); ++i) {
       if (std::abs(value[i] - other.value[i]) > kEps) {
         return false;
@@ -111,7 +111,7 @@ struct CRS {
     value.swap(new_value);
     column.swap(new_column);
     row_index.swap(new_row_index);
-    
+
     std::swap(n, m);
   }
 
@@ -163,10 +163,8 @@ struct CRS {
     result.column.resize(nnz_count);
     result.row_index.resize(new_n + 1);
 
-    std::copy(value.begin() + nnz_start, value.begin() + nnz_end,
-              result.value.begin());
-    std::copy(column.begin() + nnz_start, column.begin() + nnz_end,
-              result.column.begin());
+    std::copy(value.begin() + nnz_start, value.begin() + nnz_end, result.value.begin());
+    std::copy(column.begin() + nnz_start, column.begin() + nnz_end, result.column.begin());
 
     for (size_t i = 0; i <= new_n; ++i) {
       result.row_index[i] = row_index[start + i] - nnz_start;
@@ -176,7 +174,9 @@ struct CRS {
   }
 
   static CRS ConcatRows(const std::vector<CRS> &parts) {
-    if (parts.empty()) return CRS();
+    if (parts.empty()) {
+      return CRS();
+    }
 
     size_t total_n = 0;
     size_t total_nnz = 0;
@@ -196,10 +196,8 @@ struct CRS {
     size_t nnz_offset = 0;
 
     for (const auto &part : parts) {
-      std::copy(part.value.begin(), part.value.end(),
-                result.value.begin() + nnz_offset);
-      std::copy(part.column.begin(), part.column.end(),
-                result.column.begin() + nnz_offset);
+      std::copy(part.value.begin(), part.value.end(), result.value.begin() + nnz_offset);
+      std::copy(part.column.begin(), part.column.end(), result.column.begin() + nnz_offset);
 
       for (size_t i = 0; i <= part.n; ++i) {
         result.row_index[row_offset + i] = part.row_index[i] + nnz_offset;
@@ -260,13 +258,13 @@ inline CRS operator*(const CRS &A, const CRS &B) {
     }
 
     C.row_index[i] = C.column.size();
-    
+
     for (auto &[col, val] : row) {
       C.column.push_back(col);
       C.value.push_back(val);
     }
   }
-  
+
   C.row_index[n_rows] = C.column.size();
 
   return C;
@@ -292,8 +290,7 @@ inline CRS ToCRS(const Dense &A) {
 
 using InType = std::tuple<CRS, CRS>;
 using OutType = CRS;
-using TestType = std::tuple<CRS, CRS, CRS>
-;
+using TestType = std::tuple<CRS, CRS, CRS>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace romanov_a_crs_product
