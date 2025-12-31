@@ -13,7 +13,12 @@ namespace egashin_k_iterative_simple {
 
 EgashinKIterativeSimpleMPI::EgashinKIterativeSimpleMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  auto &input = GetInput();
+  input.A = in.A;
+  input.b = in.b;
+  input.x0 = in.x0;
+  input.tolerance = in.tolerance;
+  input.max_iterations = in.max_iterations;
   GetOutput() = std::vector<double>(in.A.size(), 0.0);
 }
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "egashin_k_iterative_simple/common/include/common.hpp"
@@ -11,7 +12,12 @@ namespace egashin_k_iterative_simple {
 
 EgashinKIterativeSimpleSEQ::EgashinKIterativeSimpleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  auto &input = GetInput();
+  input.A = in.A;
+  input.b = in.b;
+  input.x0 = in.x0;
+  input.tolerance = in.tolerance;
+  input.max_iterations = in.max_iterations;
   GetOutput() = std::vector<double>(in.A.size(), 0.0);
 }
 
