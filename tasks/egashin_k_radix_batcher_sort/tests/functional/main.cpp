@@ -88,13 +88,14 @@ TEST_P(EgashinKRunFuncTestsRadixBatcherSort, Sorting) {
   ExecuteTest(GetParam());
 }
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<EgashinKRadixBatcherSortSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort),
-                   ppc::util::AddFuncTask<EgashinKRadixBatcherSortMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<EgashinKRadixBatcherSortSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort),
+    ppc::util::AddFuncTask<EgashinKRadixBatcherSortMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = EgashinKRunFuncTestsRadixBatcherSort::PrintFuncTestName<EgashinKRunFuncTestsRadixBatcherSort>;
+const auto kPerfTestName =
+    EgashinKRunFuncTestsRadixBatcherSort::PrintFuncTestName<EgashinKRunFuncTestsRadixBatcherSort>;
 
 INSTANTIATE_TEST_SUITE_P(SortingTests, EgashinKRunFuncTestsRadixBatcherSort, kGtestValues, kPerfTestName);
 

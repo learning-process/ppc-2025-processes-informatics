@@ -157,7 +157,8 @@ std::vector<std::pair<int, int>> EgashinKRadixBatcherSortMPI::GenerateBatcherNet
   return comparators;
 }
 
-void EgashinKRadixBatcherSortMPI::MergeWithPartner(std::vector<double> &local_data, int partner_rank, int /*rank*/, bool keep_lower) {
+void EgashinKRadixBatcherSortMPI::MergeWithPartner(std::vector<double> &local_data, int partner_rank, int /*rank*/,
+                                                   bool keep_lower) {
   int local_size = static_cast<int>(local_data.size());
   int partner_size = 0;
 
@@ -206,7 +207,8 @@ void EgashinKRadixBatcherSortMPI::MergeWithPartner(std::vector<double> &local_da
 }
 
 void EgashinKRadixBatcherSortMPI::DistributeData(int total_size, int world_size, int rank, std::vector<double> &data,
-                                 std::vector<int> &counts, std::vector<int> &displs, std::vector<double> &local_data) {
+                                                 std::vector<int> &counts, std::vector<int> &displs,
+                                                 std::vector<double> &local_data) {
   int base_count = total_size / world_size;
   int remainder = total_size % world_size;
 
@@ -233,8 +235,8 @@ void EgashinKRadixBatcherSortMPI::PerformBatcherMerge(std::vector<double> &local
   }
 }
 
-void EgashinKRadixBatcherSortMPI::GatherResults(std::vector<double> &local_data, int total_size, int world_size, int rank,
-                                std::vector<double> &sorted_data) {
+void EgashinKRadixBatcherSortMPI::GatherResults(std::vector<double> &local_data, int total_size, int world_size,
+                                                int rank, std::vector<double> &sorted_data) {
   if (rank == 0) {
     sorted_data.resize(total_size);
   }

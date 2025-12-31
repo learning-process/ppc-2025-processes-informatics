@@ -31,8 +31,8 @@ class EgashinKRadixBatcherSortMPI : public BaseTask {
   static void CompareExchange(std::vector<double> &arr, int i, int j);
   static std::vector<std::pair<int, int>> GenerateBatcherNetwork(int n);
   static void MergeWithPartner(std::vector<double> &local_data, int partner_rank, int rank, bool keep_lower);
-  void DistributeData(int total_size, int world_size, int rank, std::vector<double> &data,
-                      std::vector<int> &counts, std::vector<int> &displs, std::vector<double> &local_data);
+  void DistributeData(int total_size, int world_size, int rank, std::vector<double> &data, std::vector<int> &counts,
+                      std::vector<int> &displs, std::vector<double> &local_data);
   void PerformBatcherMerge(std::vector<double> &local_data, int world_size, int rank);
   void GatherResults(std::vector<double> &local_data, int total_size, int world_size, int rank,
                      std::vector<double> &sorted_data);

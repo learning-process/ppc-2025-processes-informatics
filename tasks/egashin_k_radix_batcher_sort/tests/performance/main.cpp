@@ -58,7 +58,8 @@ TEST_P(EgashinKRunPerfTestRadixBatcherSort, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, EgashinKRadixBatcherSortMPI, EgashinKRadixBatcherSortSEQ>(PPC_SETTINGS_egashin_k_radix_batcher_sort);
+    ppc::util::MakeAllPerfTasks<InType, EgashinKRadixBatcherSortMPI, EgashinKRadixBatcherSortSEQ>(
+        PPC_SETTINGS_egashin_k_radix_batcher_sort);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
