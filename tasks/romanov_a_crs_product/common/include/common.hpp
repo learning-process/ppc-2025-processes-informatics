@@ -123,7 +123,7 @@ struct CRS {
     return result;
   }
 
-  void FillRandom(double density, unsigned seed = 0) {
+  void FillRandom(double density, unsigned int seed = 0) {
     if (density < 0.0 || density > 1.0) {
       throw std::invalid_argument("Density must be within [0, 1]!");
     }
@@ -148,16 +148,16 @@ struct CRS {
     }
   }
 
-  [[nodiscard]] CRS ExtractRows(uint64_t start, uint64_t end) const {
-    if (start >= end || start >= n) {
+  [[nodiscard]] CRS ExtractRows(uint64_t start_r, uint64_t end_r) const {
+    if (start_r >= end_r || start_r >= n) {
       return CRS{0, m};
     }
 
-    end = std::min(end, n);
-    uint64_t new_n = end - start;
+    end_r = std::min(end_r, n);
+    uint64_t new_n = end_r - start_r;
 
-    uint64_t nnz_start = row_index[start];
-    uint64_t nnz_end = row_index[end];
+    uint64_t nnz_start = row_index[start_r];
+    uint64_t nnz_end = row_index[end_r];
     uint64_t nnz_count = nnz_end - nnz_start;
 
     CRS result(new_n, m);
@@ -171,7 +171,7 @@ struct CRS {
               column.begin() + static_cast<std::ptrdiff_t>(nnz_end), result.column.begin());
 
     for (uint64_t i = 0; i <= new_n; ++i) {
-      result.row_index[i] = row_index[start + i] - nnz_start;
+      result.row_index[i] = row_index[start_r + i] - nnz_start;
     }
 
     return result;
