@@ -39,7 +39,6 @@ struct CharIdx {
   size_t idx;
 };
 
-// Вычисление максимального наклона
 template <typename T>
 double CalculateM(const std::vector<T> &trials) {
   double m_max = 0.0;
@@ -68,33 +67,6 @@ size_t FindBestInterval1D(const std::vector<Trial1D> &trials, double m_scaled) {
   }
 
   return best_idx;
-}
-
-size_t FindBestInterval2D(const std::vector<Trial2D> &trials, double m_scaled) {
-  double max_rate = -std::numeric_limits<double>::infinity();
-  size_t best_idx = 0;
-
-  for (size_t i = 0; i + 1 < trials.size(); ++i) {
-    double dx = trials[i + 1].x - trials[i].x;
-    double dz = trials[i + 1].z - trials[i].z;
-    double rate = (m_scaled * dx) + ((dz * dz) / (m_scaled * dx)) - (2.0 * (trials[i + 1].z + trials[i].z));
-    if (rate > max_rate) {
-      max_rate = rate;
-      best_idx = i;
-    }
-  }
-
-  return best_idx;
-}
-
-size_t FindBestZ1D(const std::vector<Trial1D> &trials) {
-  size_t best = 0;
-  for (size_t i = 1; i < trials.size(); ++i) {
-    if (trials[i].z < trials[best].z) {
-      best = i;
-    }
-  }
-  return best;
 }
 
 size_t FindBestZ2D(const std::vector<Trial2D> &trials) {
