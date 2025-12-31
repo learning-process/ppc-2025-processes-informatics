@@ -56,7 +56,8 @@ void EgashinKIterativeSimpleMPI::CalculateDistribution(int size, int n, std::vec
   }
 }
 
-double EgashinKIterativeSimpleMPI::CalculateTau(const std::vector<std::vector<double>> &matrix, int start_row, int end_row) {
+double EgashinKIterativeSimpleMPI::CalculateTau(const std::vector<std::vector<double>> &matrix, int start_row,
+                                                int end_row) {
   double local_max_row_sum = 0.0;
   std::size_t n = matrix[0].size();
 
@@ -85,8 +86,8 @@ double EgashinKIterativeSimpleMPI::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool EgashinKIterativeSimpleMPI::CheckConvergence(const std::vector<double> &x_old,
-                                                   const std::vector<double> &x_new, double tol) {
+bool EgashinKIterativeSimpleMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new,
+                                                  double tol) {
   double diff_norm = 0.0;
   for (std::size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
