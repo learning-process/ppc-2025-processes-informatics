@@ -18,7 +18,7 @@ void ShellSort(std::vector<int> &a) {
   }
   std::size_t gap = 1;
   while (gap < n / 3) {
-    gap = gap * 3 + 1;
+    gap = (gap * 3) + 1;
   }
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
@@ -53,7 +53,7 @@ void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, s
     *it++ = *it2++;
   }
   for (int phase = 0; phase < 2; ++phase) {
-    const std::size_t start = static_cast<std::size_t>(phase);
+    auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);

@@ -38,7 +38,7 @@ void ShellSort(std::vector<int> &a) {
   }
   std::size_t gap = 1;
   while (gap < n / 3) {
-    gap = gap * 3 + 1;
+    gap = (gap * 3) + 1;
   }
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
@@ -58,7 +58,7 @@ void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> 
   out.resize(a.size() + b.size());
   MergeSortedRanges(a.begin(), a.end(), b.begin(), b.end(), out.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    const std::size_t start = static_cast<std::size_t>(phase);
+    auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
@@ -82,7 +82,7 @@ int ComputeNeighbor(int rank, int phase, int size) {
 
 void KeepBlockFromMerged(std::vector<int> &local_data, std::vector<int> &merged, int keep_count, int rank,
                          int partner) {
-  const std::size_t k = static_cast<std::size_t>(keep_count);
+  auto k = static_cast<std::size_t>(keep_count);
   if (merged.size() <= k) {
     local_data.swap(merged);
     return;
@@ -128,8 +128,8 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
       }
       int send_count = static_cast<int>(local_data.size());
       int recv_count = 0;
-      const int tag_count = 2000 + stage * 16 + sub;
-      const int tag_data = 3000 + stage * 16 + sub;
+      const int tag_count = 2000 + (stage * 16) + sub;
+      const int tag_data = 3000 + (stage * 16) + sub;
       MPI_Sendrecv(&send_count, 1, MPI_INT, partner, tag_count, &recv_count, 1, MPI_INT, partner, tag_count,
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
@@ -193,7 +193,7 @@ bool YurkinGShellBetcherMPI::RunImpl() {
 
   std::mt19937 rng(static_cast<unsigned int>(n));
   std::uniform_int_distribution<int> dist(0, 1000000);
-  const InType offset = base * static_cast<InType>(rank) + std::min<InType>(static_cast<InType>(rank), rem);
+  const InType offset = (base * static_cast<InType>(rank)) + std::min<InType>(static_cast<InType>(rank), rem);
   for (InType i = 0; i < offset; ++i) {
     (void)dist(rng);
   }

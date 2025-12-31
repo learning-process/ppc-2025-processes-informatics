@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <random>
-#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -31,7 +32,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
     }
     std::size_t gap = 1;
     while (gap < n_local / 3) {
-      gap = gap * 3 + 1;
+      gap = (gap * 3) + 1;
     }
     while (gap > 0) {
       for (std::size_t i = gap; i < n_local; ++i) {
@@ -56,9 +57,9 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
 
   merged.resize(left.size() + right.size());
-  std::ranges::merge(left, right, merged.begin());
+  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    const std::size_t start = static_cast<std::size_t>(phase);
+    auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
       if (merged[i] > merged[i + 1]) {
         std::swap(merged[i], merged[i + 1]);
@@ -82,21 +83,21 @@ class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data = static_cast<InType>(std::get<0>(params));
+    input_data_ = static_cast<InType>(std::get<0>(params));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const int in = input_data;
+    const int in = input_data_;
     std::int64_t expected = ComputeExpectedChecksumSeq(in);
     return static_cast<std::int64_t>(output_data) == expected;
   }
 
   InType GetTestInputData() final {
-    return input_data;
+    return input_data_;
   }
 
  private:
-  InType input_data = 0;
+  InType input_data_ = 0;
 };
 
 TEST_P(YurkinGShellBetcherFuncTests, MatmulFromPic) {
