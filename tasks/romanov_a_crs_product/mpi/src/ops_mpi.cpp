@@ -3,7 +3,9 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 #include "romanov_a_crs_product/common/include/common.hpp"
@@ -24,12 +26,14 @@ bool RomanovACRSProductMPI::PreProcessingImpl() {
   return true;
 }
 
-static void BroadcastCRS(CRS &m, int root, MPI_Comm comm) {
+namespace {
+
+void BroadcastCRS(CRS &m, int root, MPI_Comm comm) {
   int rank = 0;
   MPI_Comm_rank(comm, &rank);
 
-  uint64_t dims[2] = {m.n, m.m};
-  MPI_Bcast(&dims[0], 2, MPI_UINT64_T, root, comm);
+  std::array<uint64_t, 2> dims{m.n, m.m};
+  MPI_Bcast(dims.data(), dims.size(), MPI_UINT64_T, root, comm);
 
   if (rank != root) {
     m.n = dims[0];
@@ -57,9 +61,9 @@ static void BroadcastCRS(CRS &m, int root, MPI_Comm comm) {
   }
 }
 
-static void SendCRS(const CRS &m, int dest, int tag, MPI_Comm comm) {
-  uint64_t dims[2] = {m.n, m.m};
-  MPI_Send(&dims[0], 2, MPI_UINT64_T, dest, tag, comm);
+void SendCRS(const CRS &m, int dest, int tag, MPI_Comm comm) {
+  std::array<uint64_t, 2> dims{m.n, m.m};
+  MPI_Send(dims.data(), dims.size(), MPI_UINT64_T, dest, tag, comm);
 
   uint64_t nnz = m.Nnz();
   MPI_Send(&nnz, 1, MPI_UINT64_T, dest, tag + 1, comm);
@@ -78,9 +82,9 @@ static void SendCRS(const CRS &m, int dest, int tag, MPI_Comm comm) {
   }
 }
 
-static void RecvCRS(CRS &m, int src, int tag, MPI_Comm comm) {
-  uint64_t dims[2];
-  MPI_Recv(&dims[0], 2, MPI_UINT64_T, src, tag, comm, MPI_STATUS_IGNORE);
+void RecvCRS(CRS &m, int src, int tag, MPI_Comm comm) {
+  std::array<uint64_t, 2> dims;
+  MPI_Recv(dims.data(), dims.size(), MPI_UINT64_T, src, tag, comm, MPI_STATUS_IGNORE);
   m.n = dims[0];
   m.m = dims[1];
 
@@ -105,6 +109,8 @@ static void RecvCRS(CRS &m, int src, int tag, MPI_Comm comm) {
   }
 }
 
+}  // namespace
+
 bool RomanovACRSProductMPI::RunImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -112,7 +118,8 @@ bool RomanovACRSProductMPI::RunImpl() {
   int num_processes = 1;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
-  CRS a, b;
+  CRS a;
+  CRS b;
 
   if (rank == 0) {
     a = std::get<0>(GetInput());
@@ -161,9 +168,9 @@ bool RomanovACRSProductMPI::RunImpl() {
 
     parts.push_back(std::move(c_local));
 
-    for (int p = 1; p < num_processes; p++) {
+    for (int pn = 1; pn < num_processes; pn++) {
       CRS temp;
-      RecvCRS(temp, p, 200 + p, MPI_COMM_WORLD);
+      RecvCRS(temp, pn, 200 + pn, MPI_COMM_WORLD);
       parts.push_back(std::move(temp));
     }
 

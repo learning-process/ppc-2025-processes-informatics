@@ -20,17 +20,17 @@ namespace romanov_a_crs_product {
 class RomanovACRSProductFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    const auto &[A, B, C] = test_param;
-    return "_n" + std::to_string(A.GetRows()) + "_nnzA" + std::to_string(A.Nnz()) + "_nnzB" + std::to_string(B.Nnz());
+    const auto &[a, b, c] = test_param;
+    return "_n" + std::to_string(a.GetRows()) + "_nnzA" + std::to_string(a.Nnz()) + "_nnzB" + std::to_string(b.Nnz());
   }
 
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::uint64_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    const auto &[A, B, C] = params;
-    input_data_ = std::make_tuple(A, B);
-    expected_ = C;
+    const auto &[a, b, c] = params;
+    input_data_ = std::make_tuple(a, b);
+    expected_ = c;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -54,17 +54,17 @@ TEST_P(RomanovACRSProductFuncTests, MatmulFromPic) {
 
 CRS MakeDenseCRS(std::initializer_list<std::initializer_list<double>> rows) {
   uint64_t n = rows.size();
-  Dense D(n);
+  Dense d(n);
   uint64_t i = 0;
-  for (auto &r : rows) {
+  for (const auto &r : rows) {
     uint64_t j = 0;
-    for (auto &v : r) {
-      D(i, j) = v;
+    for (const auto &v : r) {
+      d(i, j) = v;
       ++j;
     }
     ++i;
   }
-  return ToCRS(D);
+  return ToCRS(d);
 }
 
 const std::array<TestType, 5> kTestParam = {

@@ -1,10 +1,12 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <random>
+#include <ranges>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -199,9 +201,8 @@ struct CRS {
     uint64_t nnz_offset = 0;
 
     for (const auto &part : parts) {
-      std::copy(part.value.begin(), part.value.end(), result.value.begin() + static_cast<std::ptrdiff_t>(nnz_offset));
-      std::copy(part.column.begin(), part.column.end(),
-                result.column.begin() + static_cast<std::ptrdiff_t>(nnz_offset));
+      std::ranges::copy(part.value, result.value.begin() + static_cast<std::ptrdiff_t>(nnz_offset));
+      std::ranges::copy(part.column, result.column.begin() + static_cast<std::ptrdiff_t>(nnz_offset));
 
       for (uint64_t i = 0; i <= part.n; ++i) {
         result.row_index[row_offset + i] = part.row_index[i] + nnz_offset;

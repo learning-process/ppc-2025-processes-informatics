@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <functional>
 #include <tuple>
 
 #include "romanov_a_crs_product/common/include/common.hpp"
@@ -20,12 +19,13 @@ class RomanovACRSProductPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   OutType expected_;
 
   void SetUp() override {
-    CRS A(n_), B(n_);
-    A.FillRandom(density_);
-    B.FillRandom(density_);
+    CRS a(n_);
+    CRS b(n_);
+    a.FillRandom(density_);
+    b.FillRandom(density_);
 
-    input_data_ = std::make_tuple(A, B);
-    expected_ = A * B;
+    input_data_ = std::make_tuple(a, b);
+    expected_ = a * b;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
