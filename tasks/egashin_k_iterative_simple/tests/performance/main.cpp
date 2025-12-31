@@ -13,41 +13,38 @@
 
 namespace egashin_k_iterative_simple {
 
-class EgashinKIterativeSimplePerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kN_ = 5000;
-  InType input_;
-  OutType expected_;
+class EgashinKRunPerfTestIterativeSimple : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kCount_ = 5000;
+  InType input_data_{};
 
   void SetUp() override {
-    std::vector<std::vector<double>> matrix(kN_, std::vector<double>(kN_, 0.0));
-    std::vector<double> x0(kN_, 0.0);
+    std::vector<std::vector<double>> matrix(kCount_, std::vector<double>(kCount_, 0.0));
+    std::vector<double> x0(kCount_, 0.0);
 
-    for (int i = 0; i < kN_; ++i) {
+    for (int i = 0; i < kCount_; ++i) {
       matrix[i][i] = 4.0;
       if (i > 0) {
         matrix[i][i - 1] = -1.0;
       }
-      if (i < kN_ - 1) {
+      if (i < kCount_ - 1) {
         matrix[i][i + 1] = -1.0;
       }
     }
 
-    std::vector<double> b(kN_, 2.0);
-    if (kN_ > 0) {
+    std::vector<double> b(kCount_, 2.0);
+    if (kCount_ > 0) {
       b[0] = 3.0;
-      b[static_cast<std::size_t>(kN_ - 1)] = 3.0;
+      b[static_cast<std::size_t>(kCount_ - 1)] = 3.0;
     }
 
-    input_.A = matrix;
-    input_.b = b;
-    input_.x0 = x0;
-    input_.tolerance = 1e-6;
-    input_.max_iterations = 10000;
-
-    expected_.resize(kN_, 1.0);
+    input_data_.A = matrix;
+    input_data_.b = b;
+    input_data_.x0 = x0;
+    input_data_.tolerance = 1e-6;
+    input_data_.max_iterations = 10000;
   }
 
-  bool CheckTestOutputData(OutType &output) override {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -56,31 +53,36 @@ class EgashinKIterativeSimplePerfTest : public ppc::util::BaseRunPerfTests<InTyp
       }
     }
 
-    if (output.size() != expected_.size()) {
+    OutType expected_data(kCount_, 1.0);
+    if (output_data.size() != expected_data.size()) {
       return false;
     }
 
-    double tolerance = input_.tolerance * 100;
-    for (std::size_t i = 0; i < output.size(); ++i) {
-      if (std::abs(output[i] - expected_[i]) > tolerance) {
+    double tolerance = input_data_.tolerance * 100;
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(output_data[i] - expected_data[i]) > tolerance) {
         return false;
       }
     }
     return true;
   }
 
-  InType GetTestInputData() override {
-    return input_;
+  InType GetTestInputData() final {
+    return input_data_;
   }
 };
 
-TEST_P(EgashinKIterativeSimplePerfTest, Performance) {
+TEST_P(EgashinKRunPerfTestIterativeSimple, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerfParams =
-    ppc::util::MakeAllPerfTasks<InType, TestTaskMPI, TestTaskSEQ>(PPC_SETTINGS_egashin_k_iterative_simple);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, EgashinKIterativeSimpleMPI, EgashinKIterativeSimpleSEQ>(PPC_SETTINGS_egashin_k_iterative_simple);
 
-INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimplePerf, EgashinKIterativeSimplePerfTest, ppc::util::TupleToGTestValues(kPerfParams));
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = EgashinKRunPerfTestIterativeSimple::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, EgashinKRunPerfTestIterativeSimple, kGtestValues, kPerfTestName);
 
 }  // namespace egashin_k_iterative_simple

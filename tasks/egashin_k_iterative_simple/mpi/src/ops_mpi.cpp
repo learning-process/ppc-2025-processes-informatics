@@ -11,13 +11,13 @@
 
 namespace egashin_k_iterative_simple {
 
-TestTaskMPI::TestTaskMPI(const InType &in) {
+EgashinKIterativeSimpleMPI::EgashinKIterativeSimpleMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>(in.A.size(), 0.0);
 }
 
-bool TestTaskMPI::ValidationImpl() {
+bool EgashinKIterativeSimpleMPI::ValidationImpl() {
   const auto &input = GetInput();
   std::size_t n = input.A.size();
 
@@ -42,11 +42,11 @@ bool TestTaskMPI::ValidationImpl() {
   return true;
 }
 
-bool TestTaskMPI::PreProcessingImpl() {
+bool EgashinKIterativeSimpleMPI::PreProcessingImpl() {
   return true;
 }
 
-void TestTaskMPI::CalculateDistribution(int size, int n, std::vector<int> &counts, std::vector<int> &displs) {
+void EgashinKIterativeSimpleMPI::CalculateDistribution(int size, int n, std::vector<int> &counts, std::vector<int> &displs) {
   int delta = n / size;
   int remainder = n % size;
   for (int i = 0; i < size; ++i) {
@@ -84,7 +84,7 @@ double TestTaskMPI::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
+bool EgashinKIterativeSimpleMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
   double diff_norm = 0.0;
   for (std::size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
@@ -93,7 +93,7 @@ bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::
   return std::sqrt(diff_norm) < tol;
 }
 
-void TestTaskMPI::BroadcastInputData(int n, std::vector<std::vector<double>> &a_local, std::vector<double> &b,
+void EgashinKIterativeSimpleMPI::BroadcastInputData(int n, std::vector<std::vector<double>> &a_local, std::vector<double> &b,
                                       std::vector<double> &x, double &tolerance, int &max_iterations) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -116,7 +116,7 @@ void TestTaskMPI::BroadcastInputData(int n, std::vector<std::vector<double>> &a_
   MPI_Bcast(&max_iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-void TestTaskMPI::PerformIteration(const std::vector<std::vector<double>> &a_local, const std::vector<double> &b,
+void EgashinKIterativeSimpleMPI::PerformIteration(const std::vector<std::vector<double>> &a_local, const std::vector<double> &b,
                                    const std::vector<double> &x, std::vector<double> &x_new, int start_row,
                                    int local_rows, int n, double tau, const std::vector<int> &counts,
                                    const std::vector<int> &displs) {
@@ -135,7 +135,7 @@ void TestTaskMPI::PerformIteration(const std::vector<std::vector<double>> &a_loc
                  MPI_COMM_WORLD);
 }
 
-bool TestTaskMPI::RunImpl() {
+bool EgashinKIterativeSimpleMPI::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -194,7 +194,7 @@ bool TestTaskMPI::RunImpl() {
   return true;
 }
 
-bool TestTaskMPI::PostProcessingImpl() {
+bool EgashinKIterativeSimpleMPI::PostProcessingImpl() {
   return true;
 }
 

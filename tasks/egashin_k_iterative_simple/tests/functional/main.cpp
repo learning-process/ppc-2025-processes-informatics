@@ -16,15 +16,21 @@
 
 namespace egashin_k_iterative_simple {
 
-class EgashinKIterativeSimpleFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class EgashinKRunFuncTestsIterativeSimple : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ protected:
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
+
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_ = std::get<0>(param);
-    expected_ = std::get<1>(param);
+    input_data_ = std::get<0>(param);
+    expected_data_ = std::get<1>(param);
   }
 
-  bool CheckTestOutputData(OutType &output) override {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -33,26 +39,26 @@ class EgashinKIterativeSimpleFuncTest : public ppc::util::BaseRunFuncTests<InTyp
       }
     }
 
-    if (output.size() != expected_.size()) {
+    if (output_data.size() != expected_data_.size()) {
       return false;
     }
 
-    double tolerance = input_.tolerance;
-    for (std::size_t i = 0; i < output.size(); ++i) {
-      if (std::abs(output[i] - expected_[i]) > tolerance * 10) {
+    double tolerance = input_data_.tolerance;
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(output_data[i] - expected_data_[i]) > tolerance * 10) {
         return false;
       }
     }
     return true;
   }
 
-  InType GetTestInputData() override {
-    return input_;
+  InType GetTestInputData() final {
+    return input_data_;
   }
 
  private:
-  InType input_;
-  OutType expected_;
+  InType input_data_{};
+  OutType expected_data_{};
 };
 
 namespace {
@@ -69,11 +75,11 @@ TestType CreateTestCase(const std::vector<std::vector<double>> &matrix, const st
   return std::make_tuple(input, expected, name);
 }
 
-TEST_P(EgashinKIterativeSimpleFuncTest, IterativeMethod) {
+TEST_P(EgashinKRunFuncTestsIterativeSimple, IterativeMethod) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTests = {
+const std::array<TestType, 5> kTestParam = {
     CreateTestCase({{2.0, 1.0}, {1.0, 2.0}}, {3.0, 3.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Basic"),
     CreateTestCase({{4.0, 1.0, 0.0}, {1.0, 4.0, 1.0}, {0.0, 1.0, 4.0}}, {5.0, 6.0, 5.0}, {0.0, 0.0, 0.0}, 1e-6, 1000,
                    {1.0, 1.0, 1.0}, "Tridiag3x3"),
@@ -81,11 +87,15 @@ const std::array<TestType, 5> kTests = {
     CreateTestCase({{5.0, 2.0}, {2.0, 5.0}}, {7.0, 7.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Strong"),
     CreateTestCase({{10.0, 1.0}, {1.0, 10.0}}, {11.0, 11.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Dominant")};
 
-const auto kTaskParams =
-    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTests, PPC_SETTINGS_egashin_k_iterative_simple),
-                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTests, PPC_SETTINGS_egashin_k_iterative_simple));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<EgashinKIterativeSimpleSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple),
+                   ppc::util::AddFuncTask<EgashinKIterativeSimpleMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple));
 
-INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimpleFunc, EgashinKIterativeSimpleFuncTest, ppc::util::ExpandToValues(kTaskParams));
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kPerfTestName = EgashinKRunFuncTestsIterativeSimple::PrintFuncTestName<EgashinKRunFuncTestsIterativeSimple>;
+
+INSTANTIATE_TEST_SUITE_P(IterativeMethodTests, EgashinKRunFuncTestsIterativeSimple, kGtestValues, kPerfTestName);
 
 }  // namespace
 

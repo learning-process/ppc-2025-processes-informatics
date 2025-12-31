@@ -7,13 +7,13 @@
 
 namespace egashin_k_iterative_simple {
 
-class TestTaskMPI : public BaseTask {
+class EgashinKIterativeSimpleMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
 
-  explicit TestTaskMPI(const InType &in);
+  explicit EgashinKIterativeSimpleMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

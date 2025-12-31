@@ -7,12 +7,12 @@
 
 namespace egashin_k_iterative_simple {
 
-class TestTaskSEQ : public BaseTask {
+class EgashinKIterativeSimpleSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit TestTaskSEQ(const InType &in);
+  explicit EgashinKIterativeSimpleSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

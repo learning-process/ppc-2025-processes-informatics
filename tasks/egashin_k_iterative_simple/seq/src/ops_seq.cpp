@@ -9,13 +9,13 @@
 
 namespace egashin_k_iterative_simple {
 
-TestTaskSEQ::TestTaskSEQ(const InType &in) {
+EgashinKIterativeSimpleSEQ::TestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>(in.A.size(), 0.0);
 }
 
-bool TestTaskSEQ::ValidationImpl() {
+bool EgashinKIterativeSimpleSEQ::ValidationImpl() {
   const auto &input = GetInput();
   std::size_t n = input.A.size();
 
@@ -40,11 +40,11 @@ bool TestTaskSEQ::ValidationImpl() {
   return true;
 }
 
-bool TestTaskSEQ::PreProcessingImpl() {
+bool EgashinKIterativeSimpleSEQ::PreProcessingImpl() {
   return true;
 }
 
-double TestTaskSEQ::CalculateTau(const std::vector<std::vector<double>> &matrix) {
+double EgashinKIterativeSimpleSEQ::CalculateTau(const std::vector<std::vector<double>> &matrix) {
   double max_row_sum = 0.0;
   std::size_t n = matrix.size();
 
@@ -62,7 +62,7 @@ double TestTaskSEQ::CalculateTau(const std::vector<std::vector<double>> &matrix)
   return 1.0 / (max_row_sum + 1.0);
 }
 
-double TestTaskSEQ::CalculateNorm(const std::vector<double> &v) {
+double EgashinKIterativeSimpleSEQ::CalculateNorm(const std::vector<double> &v) {
   double norm = 0.0;
   for (double val : v) {
     norm += val * val;
@@ -70,7 +70,7 @@ double TestTaskSEQ::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool TestTaskSEQ::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
+bool EgashinKIterativeSimpleSEQ::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
   double diff_norm = 0.0;
   for (std::size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
@@ -79,7 +79,7 @@ bool TestTaskSEQ::CheckConvergence(const std::vector<double> &x_old, const std::
   return std::sqrt(diff_norm) < tol;
 }
 
-bool TestTaskSEQ::RunImpl() {
+bool EgashinKIterativeSimpleSEQ::RunImpl() {
   const auto &input = GetInput();
   std::size_t n = input.A.size();
 
@@ -109,7 +109,7 @@ bool TestTaskSEQ::RunImpl() {
   return true;
 }
 
-bool TestTaskSEQ::PostProcessingImpl() {
+bool EgashinKIterativeSimpleSEQ::PostProcessingImpl() {
   return true;
 }
 
