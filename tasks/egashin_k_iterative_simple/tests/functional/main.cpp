@@ -17,11 +17,6 @@
 namespace egashin_k_iterative_simple {
 
 class EgashinKIterativeSimpleFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param);
-  }
-
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -78,7 +73,7 @@ TEST_P(EgashinKIterativeSimpleFuncTest, IterativeMethod) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
+const std::array<TestType, 5> kTests = {
     CreateTestCase({{2.0, 1.0}, {1.0, 2.0}}, {3.0, 3.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Basic"),
     CreateTestCase({{4.0, 1.0, 0.0}, {1.0, 4.0, 1.0}, {0.0, 1.0, 4.0}}, {5.0, 6.0, 5.0}, {0.0, 0.0, 0.0}, 1e-6, 1000,
                    {1.0, 1.0, 1.0}, "Tridiag3x3"),
@@ -87,15 +82,10 @@ const std::array<TestType, 5> kTestParam = {
     CreateTestCase({{10.0, 1.0}, {1.0, 10.0}}, {11.0, 11.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Dominant")};
 
 const auto kTaskParams =
-    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple),
-                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple));
+    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTests, PPC_SETTINGS_egashin_k_iterative_simple),
+                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTests, PPC_SETTINGS_egashin_k_iterative_simple));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTaskParams);
-
-const auto kFuncTestName = EgashinKIterativeSimpleFuncTest::PrintFuncTestName<EgashinKIterativeSimpleFuncTest>;
-
-// NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimpleFunc, EgashinKIterativeSimpleFuncTest, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(EgashinKIterativeSimpleFunc, EgashinKIterativeSimpleFuncTest, ppc::util::ExpandToValues(kTaskParams));
 
 }  // namespace
 
