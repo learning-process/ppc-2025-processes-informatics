@@ -1,7 +1,6 @@
 #pragma once
 
 #include "levonychev_i_multistep_2d_optimization/common/include/common.hpp"
-#include "levonychev_i_multistep_2d_optimization/common/include/optimization_common.hpp"
 #include "task/include/task.hpp"
 
 namespace levonychev_i_multistep_2d_optimization {
