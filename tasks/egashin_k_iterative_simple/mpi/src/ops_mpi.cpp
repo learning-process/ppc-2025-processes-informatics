@@ -93,7 +93,48 @@ bool TestTaskMPI::CheckConvergence(const std::vector<double> &x_old, const std::
   return std::sqrt(diff_norm) < tol;
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+void TestTaskMPI::BroadcastInputData(int n, std::vector<std::vector<double>> &a_local, std::vector<double> &b,
+                                      std::vector<double> &x, double &tolerance, int &max_iterations) {
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  const auto &input = GetInput();
+
+  if (rank == 0) {
+    a_local = input.A;
+    b = input.b;
+    x = input.x0;
+    tolerance = input.tolerance;
+    max_iterations = input.max_iterations;
+  }
+
+  for (int i = 0; i < n; ++i) {
+    MPI_Bcast(a_local[i].data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  }
+  MPI_Bcast(b.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(x.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&tolerance, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&max_iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
+}
+
+void TestTaskMPI::PerformIteration(const std::vector<std::vector<double>> &a_local, const std::vector<double> &b,
+                                   const std::vector<double> &x, std::vector<double> &x_new, int start_row,
+                                   int local_rows, int n, double tau, const std::vector<int> &counts,
+                                   const std::vector<int> &displs) {
+  std::vector<double> local_x_new(local_rows);
+
+  for (int i = 0; i < local_rows; ++i) {
+    int global_i = start_row + i;
+    double ax_i = 0.0;
+    for (int j = 0; j < n; ++j) {
+      ax_i += a_local[global_i][j] * x[j];
+    }
+    local_x_new[i] = x[global_i] + (tau * (b[global_i] - ax_i));
+  }
+
+  MPI_Allgatherv(local_x_new.data(), local_rows, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,
+                 MPI_COMM_WORLD);
+}
+
 bool TestTaskMPI::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -117,48 +158,19 @@ bool TestTaskMPI::RunImpl() {
   int local_rows = counts[rank];
 
   std::vector<std::vector<double>> a_local(n, std::vector<double>(n));
-  if (rank == 0) {
-    a_local = input.A;
-  }
-
-  for (int i = 0; i < n; ++i) {
-    MPI_Bcast(a_local[i].data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  }
-
   std::vector<double> b(n);
-  if (rank == 0) {
-    b = input.b;
-  }
-  MPI_Bcast(b.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
   std::vector<double> x(n);
-  if (rank == 0) {
-    x = input.x0;
-  }
-  MPI_Bcast(x.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  double tolerance = 0.0;
+  int max_iterations = 0;
 
-  double tolerance = input.tolerance;
-  int max_iterations = input.max_iterations;
-  MPI_Bcast(&tolerance, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&max_iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  BroadcastInputData(n, a_local, b, x, tolerance, max_iterations);
 
   double tau = CalculateTau(a_local, start_row, start_row + local_rows);
 
   std::vector<double> x_new(n);
-  std::vector<double> local_x_new(local_rows);
 
   for (int iter = 0; iter < max_iterations; ++iter) {
-    for (int i = 0; i < local_rows; ++i) {
-      int global_i = start_row + i;
-      double ax_i = 0.0;
-      for (int j = 0; j < n; ++j) {
-        ax_i += a_local[global_i][j] * x[j];
-      }
-      local_x_new[i] = x[global_i] + (tau * (b[global_i] - ax_i));
-    }
-
-    MPI_Allgatherv(local_x_new.data(), local_rows, MPI_DOUBLE, x_new.data(), counts.data(), displs.data(), MPI_DOUBLE,
-                   MPI_COMM_WORLD);
+    PerformIteration(a_local, b, x, x_new, start_row, local_rows, n, tau, counts, displs);
 
     bool converged = false;
     if (rank == 0) {
