@@ -22,6 +22,11 @@ bool GoriachevaKReduceSEQ::PreProcessingImpl() {
 }
 
 bool GoriachevaKReduceSEQ::RunImpl() {
+  const auto input = GetInput();
+  if (input.empty()) {
+    GetOutput()[0] = 0;
+    return true;
+  }
   GetOutput()[0] = std::accumulate(GetInput().begin(), GetInput().end(), 0);
   return true;
 }

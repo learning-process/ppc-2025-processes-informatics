@@ -2,10 +2,7 @@
 
 #include <fstream>
 #include <nlohmann/json.hpp>
-#include <sstream>
 #include <string>
-#include <tuple>
-#include <utility>
 #include <vector>
 
 #include "goriacheva_k_reduce/common/include/common.hpp"
