@@ -245,9 +245,8 @@ void EgashinKRadixBatcherSortMPI::GatherResults(std::vector<double> &local_data,
   std::vector<int> new_counts(world_size);
   MPI_Gather(&new_local_size, 1, MPI_INT, new_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> new_displs(world_size);
+  std::vector<int> new_displs(world_size, 0);
   if (rank == 0) {
-    new_displs[0] = 0;
     for (int i = 1; i < world_size; ++i) {
       new_displs[i] = new_displs[i - 1] + new_counts[i - 1];
     }
