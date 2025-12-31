@@ -15,7 +15,7 @@ namespace egashin_k_radix_batcher_sort {
 
 class EgashinKRunPerfTestRadixBatcherSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kCount_ = 1000000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
@@ -65,6 +65,7 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = EgashinKRunPerfTestRadixBatcherSort::CustomPerfTestName;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,misc-use-anonymous-namespace,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(RunModeTests, EgashinKRunPerfTestRadixBatcherSort, kGtestValues, kPerfTestName);
 
 }  // namespace egashin_k_radix_batcher_sort

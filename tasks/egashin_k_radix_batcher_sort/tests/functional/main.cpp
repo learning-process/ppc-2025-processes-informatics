@@ -53,7 +53,7 @@ class EgashinKRunFuncTestsRadixBatcherSort : public ppc::util::BaseRunFuncTests<
 
  private:
   InType input_data_{};
-  OutType expected_data_{};
+  OutType expected_data_;
 };
 
 namespace {
@@ -97,6 +97,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName =
     EgashinKRunFuncTestsRadixBatcherSort::PrintFuncTestName<EgashinKRunFuncTestsRadixBatcherSort>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(SortingTests, EgashinKRunFuncTestsRadixBatcherSort, kGtestValues, kPerfTestName);
 
 }  // namespace

@@ -283,14 +283,14 @@ bool EgashinKRadixBatcherSortMPI::RunImpl() {
   std::vector<int> displs(world_size);
   std::vector<double> local_data;
 
-  DistributeData(total_size, world_size, rank, data, counts, displs, local_data);
+  EgashinKRadixBatcherSortMPI::DistributeData(total_size, world_size, rank, data, counts, displs, local_data);
 
   RadixSort(local_data);
 
-  PerformBatcherMerge(local_data, world_size, rank);
+  EgashinKRadixBatcherSortMPI::PerformBatcherMerge(local_data, world_size, rank);
 
   std::vector<double> sorted_data;
-  GatherResults(local_data, total_size, world_size, rank, sorted_data);
+  EgashinKRadixBatcherSortMPI::GatherResults(local_data, total_size, world_size, rank, sorted_data);
 
   if (rank == 0) {
     GetOutput() = sorted_data;
