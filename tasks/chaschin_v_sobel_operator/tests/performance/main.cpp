@@ -12,7 +12,7 @@ namespace chaschin_v_sobel_operator {
 
 class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  static constexpr int k_count = 500;
+  static constexpr int k_count = 1000;
 
   void SetUp() override {
     const int size = k_count;
