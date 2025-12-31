@@ -89,7 +89,7 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
       break;
     }
 
-    double x_new = 0.5 * (trials[best_idx + 1].x + trials[best_idx].x) -
+    double x_new = (0.5 * (trials[best_idx + 1].x + trials[best_idx].x)) -
                    ((trials[best_idx + 1].z - trials[best_idx].z) / (2.0 * m_scaled));
 
     Trial1D new_trial;
@@ -162,7 +162,7 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
       break;
     }
 
-    double x_new = 0.5 * (x_trials[best_idx + 1].x + x_trials[best_idx].x) -
+    double x_new = (0.5 * (x_trials[best_idx + 1].x + x_trials[best_idx].x)) -
                    ((x_trials[best_idx + 1].z - x_trials[best_idx].z) / (2.0 * m_scaled));
     double y_new = 0.0;
     double z_new = compute_z(x_new, y_new);
