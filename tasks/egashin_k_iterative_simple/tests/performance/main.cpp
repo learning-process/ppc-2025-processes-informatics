@@ -76,8 +76,8 @@ TEST_P(EgashinKRunPerfTestIterativeSimple, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, EgashinKIterativeSimpleMPI, EgashinKIterativeSimpleSEQ>(PPC_SETTINGS_egashin_k_iterative_simple);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, EgashinKIterativeSimpleMPI, EgashinKIterativeSimpleSEQ>(
+    PPC_SETTINGS_egashin_k_iterative_simple);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

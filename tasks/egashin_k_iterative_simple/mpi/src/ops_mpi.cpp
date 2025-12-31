@@ -46,7 +46,8 @@ bool EgashinKIterativeSimpleMPI::PreProcessingImpl() {
   return true;
 }
 
-void EgashinKIterativeSimpleMPI::CalculateDistribution(int size, int n, std::vector<int> &counts, std::vector<int> &displs) {
+void EgashinKIterativeSimpleMPI::CalculateDistribution(int size, int n, std::vector<int> &counts,
+                                                       std::vector<int> &displs) {
   int delta = n / size;
   int remainder = n % size;
   for (int i = 0; i < size; ++i) {
@@ -84,7 +85,8 @@ double TestTaskMPI::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool EgashinKIterativeSimpleMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
+bool EgashinKIterativeSimpleMPI::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new,
+                                                  double tol) {
   double diff_norm = 0.0;
   for (std::size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
@@ -93,8 +95,9 @@ bool EgashinKIterativeSimpleMPI::CheckConvergence(const std::vector<double> &x_o
   return std::sqrt(diff_norm) < tol;
 }
 
-void EgashinKIterativeSimpleMPI::BroadcastInputData(int n, std::vector<std::vector<double>> &a_local, std::vector<double> &b,
-                                      std::vector<double> &x, double &tolerance, int &max_iterations) {
+void EgashinKIterativeSimpleMPI::BroadcastInputData(int n, std::vector<std::vector<double>> &a_local,
+                                                    std::vector<double> &b, std::vector<double> &x, double &tolerance,
+                                                    int &max_iterations) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   const auto &input = GetInput();
@@ -116,10 +119,11 @@ void EgashinKIterativeSimpleMPI::BroadcastInputData(int n, std::vector<std::vect
   MPI_Bcast(&max_iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-void EgashinKIterativeSimpleMPI::PerformIteration(const std::vector<std::vector<double>> &a_local, const std::vector<double> &b,
-                                   const std::vector<double> &x, std::vector<double> &x_new, int start_row,
-                                   int local_rows, int n, double tau, const std::vector<int> &counts,
-                                   const std::vector<int> &displs) {
+void EgashinKIterativeSimpleMPI::PerformIteration(const std::vector<std::vector<double>> &a_local,
+                                                  const std::vector<double> &b, const std::vector<double> &x,
+                                                  std::vector<double> &x_new, int start_row, int local_rows, int n,
+                                                  double tau, const std::vector<int> &counts,
+                                                  const std::vector<int> &displs) {
   std::vector<double> local_x_new(local_rows);
 
   for (int i = 0; i < local_rows; ++i) {

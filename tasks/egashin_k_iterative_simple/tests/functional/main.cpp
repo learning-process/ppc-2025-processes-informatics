@@ -87,9 +87,9 @@ const std::array<TestType, 5> kTestParam = {
     CreateTestCase({{5.0, 2.0}, {2.0, 5.0}}, {7.0, 7.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Strong"),
     CreateTestCase({{10.0, 1.0}, {1.0, 10.0}}, {11.0, 11.0}, {0.0, 0.0}, 1e-6, 1000, {1.0, 1.0}, "Diag2x2Dominant")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<EgashinKIterativeSimpleSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple),
-                   ppc::util::AddFuncTask<EgashinKIterativeSimpleMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<EgashinKIterativeSimpleSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple),
+    ppc::util::AddFuncTask<EgashinKIterativeSimpleMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_iterative_simple));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -70,7 +70,8 @@ double EgashinKIterativeSimpleSEQ::CalculateNorm(const std::vector<double> &v) {
   return std::sqrt(norm);
 }
 
-bool EgashinKIterativeSimpleSEQ::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new, double tol) {
+bool EgashinKIterativeSimpleSEQ::CheckConvergence(const std::vector<double> &x_old, const std::vector<double> &x_new,
+                                                  double tol) {
   double diff_norm = 0.0;
   for (std::size_t i = 0; i < x_old.size(); ++i) {
     double diff = x_new[i] - x_old[i];
