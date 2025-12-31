@@ -64,8 +64,11 @@ inline Point LocalOptimization(const std::function<double(double, double)> &func
 
 inline void SearchInRegion(std::vector<Point> &grid_points, const std::function<double(double, double)> &func,
                            const SearchRegion &region, int grid_size, int size) {
-  double step_x = (region.x_max - region.x_min) / (grid_size / size - 1);
-  double step_y = (region.y_max - region.y_min) / (grid_size - 1);
+  double grid_size_double = static_cast<double>(grid_size);
+  double size_double = static_cast<double>(size);
+
+  double step_x = (region.x_max - region.x_min) / (grid_size_double / size_double - 1.0);
+  double step_y = (region.y_max - region.y_min) / (grid_size_double - 1.0);
 
   for (int i = 0; i < grid_size / size; ++i) {
     for (int j = 0; j < grid_size; ++j) {

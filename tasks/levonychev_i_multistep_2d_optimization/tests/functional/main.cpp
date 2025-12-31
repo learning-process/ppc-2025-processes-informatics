@@ -122,18 +122,9 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
     }
 
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    int test_id = std::get<0>(params);
 
-    double tolerance_coord = 0.1;
+    double tolerance_coord = 0.01;
     double tolerance_value = 0.01;
-
-    if (test_id == 2) {
-      tolerance_coord = 2;
-      tolerance_value = 1;
-    } else if (test_id == 3) {
-      tolerance_coord = 3;
-      tolerance_value = 5;
-    }
     bool x_ok = std::abs(output_data.x_min - expected_x_min_) < tolerance_coord;
     bool y_ok = std::abs(output_data.y_min - expected_y_min_) < tolerance_coord;
     bool value_ok = std::abs(output_data.value - expected_value_) < tolerance_value;

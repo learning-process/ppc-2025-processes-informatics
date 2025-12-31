@@ -48,8 +48,8 @@ class LevonychevIMultistep2dOptimizationPerfTests : public ppc::util::BaseRunPer
     if (!std::isfinite(output_data.value)) {
       return false;
     }
-    const double tolerance_coord = 0.5;
-    const double tolerance_value = 2.0;
+    const double tolerance_coord = 0.01;
+    const double tolerance_value = 0.01;
     bool x_ok = std::abs(output_data.x_min - expected_x_min_) < tolerance_coord;
     bool y_ok = std::abs(output_data.y_min - expected_y_min_) < tolerance_coord;
     bool value_ok = std::abs(output_data.value - expected_value_min_) < tolerance_value;

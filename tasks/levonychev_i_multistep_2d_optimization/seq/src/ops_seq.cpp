@@ -87,7 +87,8 @@ bool LevonychevIMultistep2dOptimizationSEQ::RunImpl() {
     int grid_size = params.grid_size_step1 * (1 << step);
 
     std::vector<Point> local_points;
-    local_points.reserve(grid_size * grid_size);
+    size_t total_points = static_cast<size_t>(grid_size) * static_cast<size_t>(grid_size);
+    local_points.reserve(total_points);
     SearchInRegion(local_points, params.func, current_region, grid_size, 1);
 
     std::vector<Point> local_candidates;
@@ -116,8 +117,9 @@ bool LevonychevIMultistep2dOptimizationSEQ::RunImpl() {
                               std::max(params.y_min, cand.y - margin_y), std::min(params.y_max, cand.y + margin_y));
       new_regions.push_back(new_region);
     }
-
-    current_region = new_regions[0];
+    if (!new_regions.empty()) {
+      current_region = new_regions[0];
+    }
   }
 
   int power_of_2 = 1;
@@ -126,7 +128,7 @@ bool LevonychevIMultistep2dOptimizationSEQ::RunImpl() {
   }
   int final_grid_size = params.grid_size_step1 * power_of_2;
   std::vector<Point> local_points;
-  local_points.reserve(final_grid_size * final_grid_size);
+  local_points.reserve(static_cast<size_t>(final_grid_size) * static_cast<size_t>(final_grid_size));
   SearchInRegion(local_points, params.func, current_region, final_grid_size, 1);
 
   Point best_point;
