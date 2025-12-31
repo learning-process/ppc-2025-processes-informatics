@@ -205,7 +205,56 @@ void TestTaskMPI::MergeWithPartner(std::vector<double> &local_data, int partner_
   }
 }
 
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+void TestTaskMPI::DistributeData(int total_size, int world_size, int rank, std::vector<double> &data,
+                                 std::vector<int> &counts, std::vector<int> &displs, std::vector<double> &local_data) {
+  int base_count = total_size / world_size;
+  int remainder = total_size % world_size;
+
+  for (int i = 0; i < world_size; ++i) {
+    counts[i] = base_count + ((i < remainder) ? 1 : 0);
+    displs[i] = (i == 0) ? 0 : (displs[i - 1] + counts[i - 1]);
+  }
+
+  local_data.resize(counts[rank]);
+  MPI_Scatterv(data.data(), counts.data(), displs.data(), MPI_DOUBLE, local_data.data(), counts[rank], MPI_DOUBLE, 0,
+               MPI_COMM_WORLD);
+}
+
+void TestTaskMPI::PerformBatcherMerge(std::vector<double> &local_data, int world_size, int rank) {
+  auto comparators = GenerateBatcherNetwork(world_size);
+
+  for (const auto &[proc1, proc2] : comparators) {
+    if (rank == proc1) {
+      MergeWithPartner(local_data, proc2, rank, true);
+    } else if (rank == proc2) {
+      MergeWithPartner(local_data, proc1, rank, false);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+}
+
+void TestTaskMPI::GatherResults(std::vector<double> &local_data, int total_size, int world_size, int rank,
+                                std::vector<double> &sorted_data) {
+  if (rank == 0) {
+    sorted_data.resize(total_size);
+  }
+
+  int new_local_size = static_cast<int>(local_data.size());
+  std::vector<int> new_counts(world_size);
+  MPI_Gather(&new_local_size, 1, MPI_INT, new_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> new_displs(world_size);
+  if (rank == 0) {
+    new_displs[0] = 0;
+    for (int i = 1; i < world_size; ++i) {
+      new_displs[i] = new_displs[i - 1] + new_counts[i - 1];
+    }
+  }
+
+  MPI_Gatherv(local_data.data(), new_local_size, MPI_DOUBLE, sorted_data.data(), new_counts.data(), new_displs.data(),
+              MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
+
 bool TestTaskMPI::RunImpl() {
   int rank = 0;
   int world_size = 0;
@@ -229,58 +278,18 @@ bool TestTaskMPI::RunImpl() {
     return true;
   }
 
-  // Calculate distribution
   std::vector<int> counts(world_size);
   std::vector<int> displs(world_size);
-  int base_count = total_size / world_size;
-  int remainder = total_size % world_size;
+  std::vector<double> local_data;
 
-  for (int i = 0; i < world_size; ++i) {
-    counts[i] = base_count + ((i < remainder) ? 1 : 0);
-    displs[i] = (i == 0) ? 0 : (displs[i - 1] + counts[i - 1]);
-  }
+  DistributeData(total_size, world_size, rank, data, counts, displs, local_data);
 
-  // Scatter data to all processes
-  std::vector<double> local_data(counts[rank]);
-  MPI_Scatterv(data.data(), counts.data(), displs.data(), MPI_DOUBLE, local_data.data(), counts[rank], MPI_DOUBLE, 0,
-               MPI_COMM_WORLD);
-
-  // Local radix sort
   RadixSort(local_data);
 
-  // Batcher odd-even merge across processes
-  auto comparators = GenerateBatcherNetwork(world_size);
+  PerformBatcherMerge(local_data, world_size, rank);
 
-  for (const auto &[proc1, proc2] : comparators) {
-    if (rank == proc1) {
-      MergeWithPartner(local_data, proc2, rank, true);
-    } else if (rank == proc2) {
-      MergeWithPartner(local_data, proc1, rank, false);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
-
-  // Gather sorted data back to root
   std::vector<double> sorted_data;
-  if (rank == 0) {
-    sorted_data.resize(total_size);
-  }
-
-  // Recalculate counts after merging
-  int new_local_size = static_cast<int>(local_data.size());
-  std::vector<int> new_counts(world_size);
-  MPI_Gather(&new_local_size, 1, MPI_INT, new_counts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  std::vector<int> new_displs(world_size);
-  if (rank == 0) {
-    new_displs[0] = 0;
-    for (int i = 1; i < world_size; ++i) {
-      new_displs[i] = new_displs[i - 1] + new_counts[i - 1];
-    }
-  }
-
-  MPI_Gatherv(local_data.data(), new_local_size, MPI_DOUBLE, sorted_data.data(), new_counts.data(), new_displs.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  GatherResults(local_data, total_size, world_size, rank, sorted_data);
 
   if (rank == 0) {
     GetOutput() = sorted_data;
