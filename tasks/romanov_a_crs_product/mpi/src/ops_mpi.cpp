@@ -83,7 +83,7 @@ void SendCRS(const CRS &m, int dest, int tag, MPI_Comm comm) {
 }
 
 void RecvCRS(CRS &m, int src, int tag, MPI_Comm comm) {
-  std::array<uint64_t, 2> dims;
+  std::array<uint64_t, 2> dims{};
   MPI_Recv(dims.data(), dims.size(), MPI_UINT64_T, src, tag, comm, MPI_STATUS_IGNORE);
   m.n = dims[0];
   m.m = dims[1];

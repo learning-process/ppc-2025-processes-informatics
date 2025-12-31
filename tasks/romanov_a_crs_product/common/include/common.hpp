@@ -4,9 +4,8 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <exception>
 #include <random>
-#include <ranges>
+#include <stdexcept>
 #include <tuple>
 #include <utility>
 #include <vector>
