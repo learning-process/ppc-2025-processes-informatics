@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
@@ -18,10 +19,10 @@ KiselevITestTaskSEQ::KiselevITestTaskSEQ(const InType &in) {
 }
 
 bool KiselevITestTaskSEQ::ValidationImpl() {
-  const auto &a = std::get<0>(GetInput());
-  const auto &b = std::get<1>(GetInput());
+  const auto &a_v = std::get<0>(GetInput());
+  const auto &b_v = std::get<1>(GetInput());
 
-  return !a.empty() && a.size() == b.size() && GetOutput().empty();
+  return !a_v.empty() && a_v.size() == b_v.size() && GetOutput().empty();
 }
 
 bool KiselevITestTaskSEQ::PreProcessingImpl() {
@@ -34,48 +35,48 @@ bool KiselevITestTaskSEQ::RunImpl() {
   auto rhs = std::get<1>(GetInput());
   const std::size_t band = std::get<2>(GetInput());
 
-  const std::size_t n = mat.size();
-  GetOutput().assign(n, 0.0);
+  const std::size_t num = mat.size();
+  GetOutput().assign(num, 0.0);
 
-  constexpr double eps = 1e-12;
+  constexpr double Eps = 1e-12;
 
-  for (std::size_t k = 0; k < n; ++k) {
-    double diag = mat[k][k];
-    if (std::fabs(diag) < eps) {
+  for (std::size_t k_index = 0; k_index < num; ++k_index) {
+    double diag = mat[k_index][k_index];
+    if (std::fabs(diag) < Eps) {
       return false;
     }
 
-    std::size_t col_end = std::min(n, k + band + 1);
+    std::size_t col_end = std::min(num, k_index + band + 1);
 
-    for (std::size_t j = k; j < col_end; ++j) {
-      mat[k][j] /= diag;
+    for (std::size_t j_index = k_index; j_index < col_end; ++j_index) {
+      mat[k_index][j_index] /= diag;
     }
-    rhs[k] /= diag;
+    rhs[k_index] /= diag;
 
-    std::size_t row_end = std::min(n, k + band + 1);
-    for (std::size_t i = k + 1; i < row_end; ++i) {
-      double factor = mat[i][k];
+    std::size_t row_end = std::min(num, k_index + band + 1);
+    for (std::size_t index = k_index + 1; index < row_end; ++index) {
+      double factor = mat[index][k_index];
       if (factor == 0.0) {
         continue;
       }
 
-      for (std::size_t j = k; j < col_end; ++j) {
-        mat[i][j] -= factor * mat[k][j];
+      for (std::size_t j_index = k_index; j_index < col_end; ++j_index) {
+        mat[index][j_index] -= factor * mat[k_index][j_index];
       }
-      rhs[i] -= factor * rhs[k];
+      rhs[index] -= factor * rhs[k_index];
     }
   }
 
-  for (std::size_t step = 0; step < n; ++step) {
-    std::size_t i = n - 1 - step;
-    double acc = rhs[i];
+  for (std::size_t step = 0; step < num; ++step) {
+    std::size_t index = num - 1 - step;
+    double acc = rhs[index];
 
-    std::size_t col_end = std::min(n, i + band + 1);
-    for (std::size_t j = i + 1; j < col_end; ++j) {
-      acc -= mat[i][j] * GetOutput()[j];
+    std::size_t col_end = std::min(num, index + band + 1);
+    for (std::size_t j_index = index + 1; j_index < col_end; ++j_index) {
+      acc -= mat[index][j_index] * GetOutput()[j_index];
     }
 
-    GetOutput()[i] = acc;
+    GetOutput()[index] = acc;
   }
 
   return true;

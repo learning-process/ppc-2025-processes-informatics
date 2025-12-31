@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace kiselev_i_gauss_method_horizontal_tape_scheme {
@@ -18,9 +20,9 @@ KiselevITestTaskMPI::KiselevITestTaskMPI(const InType &in) {
 }
 
 bool KiselevITestTaskMPI::ValidationImpl() {
-  const auto &a = std::get<0>(GetInput());
-  const auto &b = std::get<1>(GetInput());
-  return !a.empty() && a.size() == b.size() && GetOutput().empty();
+  const auto &a_v = std::get<0>(GetInput());
+  const auto &b_v = std::get<1>(GetInput());
+  return !a_v.empty() && a_v.size() == b_v.size() && GetOutput().empty();
 }
 
 bool KiselevITestTaskMPI::PreProcessingImpl() {
@@ -30,54 +32,54 @@ bool KiselevITestTaskMPI::PreProcessingImpl() {
 
 namespace {
 
-void make_partition(int p, int n, std::vector<int> &cnt, std::vector<int> &disp) {
-  cnt.assign(p, 0);
-  disp.assign(p, 0);
+void Make_partition(int proc, int num, std::vector<int> &cnt, std::vector<int> &disp) {
+  cnt.assign(proc, 0);
+  disp.assign(proc, 0);
 
-  int q = n / p;
-  int r = n % p;
+  int q_coef = num / proc;
+  int r_coef = num % proc;
   int pos = 0;
 
-  for (int i = 0; i < p; ++i) {
-    cnt[i] = q + (i < r ? 1 : 0);
-    disp[i] = pos;
-    pos += cnt[i];
+  for (int index = 0; index < proc; ++index) {
+    cnt[index] = q_coef + (index < r_coef ? 1 : 0);
+    disp[index] = pos;
+    pos += cnt[index];
   }
 }
 
-int owner_of(int row, const std::vector<int> &cnt, const std::vector<int> &disp) {
-  for (int p = 0; p < static_cast<int>(cnt.size()); ++p) {
-    if (row >= disp[p] && row < disp[p] + cnt[p]) {
-      return p;
+int Owner_of(int row, const std::vector<int> &cnt, const std::vector<int> &disp) {
+  for (int proc = 0; proc < static_cast<int>(cnt.size()); ++proc) {
+    if (row >= disp[proc] && row < disp[proc] + cnt[proc]) {
+      return proc;
     }
   }
   return 0;
 }
 
-bool eliminate_forward(int n, int band, int w, int rank, int row0, int local_rows, const std::vector<int> &cnt,
-                       const std::vector<int> &disp, std::vector<double> &a, std::vector<double> &b) {
+bool Eliminate_forward(int num, int band, int w_coef, int rank, int row0, int local_rows, const std::vector<int> &cnt,
+                       const std::vector<int> &disp, std::vector<double> &a_v, std::vector<double> &b_v) {
   std::vector<double> pivot;
 
-  for (int k = 0; k < n; ++k) {
-    int owner = owner_of(k, cnt, disp);
-    int right = std::min(n - 1, k + band);
-    int len = right - k + 1;
+  for (int k_index = 0; k_index < num; ++k_index) {
+    int owner = Owner_of(k_index, cnt, disp);
+    int right = std::min(num - 1, k_index + band);
+    int len = right - k_index + 1;
 
     pivot.assign(len, 0.0);
     double rhs_pivot = 0.0;
 
     if (rank == owner) {
-      int lk = k - row0;
-      double *row = &a[static_cast<std::size_t>(lk) * w];
+      int lk = k_index - row0;
+      double *row = &a_v[static_cast<std::size_t>(lk) * w_coef];
       double diag = row[band];
       if (diag == 0.0) {
         return false;
       }
 
-      for (int j = k; j <= right; ++j) {
-        pivot[j - k] = row[j - (k - band)];
+      for (int j_index = k_index; j_index <= right; ++j_index) {
+        pivot[j_index - k_index] = row[j_index - (k_index - band)];
       }
-      rhs_pivot = b[static_cast<std::size_t>(lk)];
+      rhs_pivot = b_v[static_cast<std::size_t>(lk)];
     }
 
     MPI_Bcast(pivot.data(), len, MPI_DOUBLE, owner, MPI_COMM_WORLD);
@@ -88,51 +90,51 @@ bool eliminate_forward(int n, int band, int w, int rank, int row0, int local_row
       return false;
     }
 
-    for (int i = std::max(row0, k + 1); i <= std::min(row0 + local_rows - 1, k + band); ++i) {
-      int li = i - row0;
-      double *row = &a[static_cast<std::size_t>(li) * w];
+    for (int index = std::max(row0, k_index + 1); index <= std::min(row0 + local_rows - 1, k_index + band); ++index) {
+      int li = index - row0;
+      double *row = &a_v[static_cast<std::size_t>(li) * w_coef];
 
-      int col = k - (i - band);
-      if (col < 0 || col >= w) {
+      int col = k_index - (index - band);
+      if (col < 0 || col >= w_coef) {
         continue;
       }
 
-      double m = row[col] / diag;
+      double m_coef = row[col] / diag;
       row[col] = 0.0;
 
-      for (int j = k + 1; j <= right; ++j) {
-        int idx = j - (i - band);
-        if (idx >= 0 && idx < w) {
-          row[idx] -= m * pivot[j - k];
+      for (int j_index = k_index + 1; j_index <= right; ++j_index) {
+        int idx = j_index - (index - band);
+        if (idx >= 0 && idx < w_coef) {
+          row[idx] -= m_coef * pivot[j_index - k_index];
         }
       }
 
-      b[static_cast<std::size_t>(li)] -= m * rhs_pivot;
+      b_v[static_cast<std::size_t>(li)] -= m_coef * rhs_pivot;
     }
   }
   return true;
 }
 
-bool eliminate_backward(int n, int band, int w, int rank, int row0, const std::vector<int> &cnt,
-                        const std::vector<int> &disp, const std::vector<double> &a, const std::vector<double> &b,
-                        std::vector<double> &x) {
-  x.assign(n, 0.0);
+bool Eliminate_backward(int num, int band, int w_coef, int rank, int row0, const std::vector<int> &cnt,
+                        const std::vector<int> &disp, const std::vector<double> &a_v, const std::vector<double> &b_v,
+                        std::vector<double> &x_v) {
+  x_v.assign(num, 0.0);
 
-  for (int k = n - 1; k >= 0; --k) {
-    int owner = owner_of(k, cnt, disp);
-    int right = std::min(n - 1, k + band);
+  for (int k_index = num - 1; k_index >= 0; --k_index) {
+    int owner = Owner_of(k_index, cnt, disp);
+    int right = std::min(num - 1, k_index + band);
 
     double val = 0.0;
 
     if (rank == owner) {
-      int lk = k - row0;
-      const double *row = &a[static_cast<std::size_t>(lk) * w];
+      int lk = k_index - row0;
+      const double *row = &a_v[static_cast<std::size_t>(lk) * w_coef];
 
       double sum = 0.0;
-      for (int j = k + 1; j <= right; ++j) {
-        int idx = j - (k - band);
-        if (idx >= 0 && idx < w) {
-          sum += row[idx] * x[j];
+      for (int j_index = k_index + 1; j_index <= right; ++j_index) {
+        int idx = j_index - (k_index - band);
+        if (idx >= 0 && idx < w_coef) {
+          sum += row[idx] * x_v[j_index];
         }
       }
 
@@ -141,11 +143,11 @@ bool eliminate_backward(int n, int band, int w, int rank, int row0, const std::v
         return false;
       }
 
-      val = (b[static_cast<std::size_t>(lk)] - sum) / diag;
+      val = (b_v[static_cast<std::size_t>(lk)] - sum) / diag;
     }
 
     MPI_Bcast(&val, 1, MPI_DOUBLE, owner, MPI_COMM_WORLD);
-    x[k] = val;
+    x_v[k_index] = val;
   }
   return true;
 }
@@ -155,45 +157,53 @@ bool eliminate_backward(int n, int band, int w, int rank, int row0, const std::v
 bool KiselevITestTaskMPI::RunImpl() {
   const auto &[a_in, b_in, band_in] = GetInput();
 
-  int rank = 0, size = 1;
+  int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int n = 0, band = 0;
+  int num = 0, band = 0;
   if (rank == 0) {
-    n = static_cast<int>(a_in.size());
+    num = static_cast<int>(a_in.size());
     band = static_cast<int>(band_in);
   }
 
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&num, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&band, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  int w = 2 * band + 1;
+  int w_coef = (2 * band) + 1;
 
-  std::vector<int> cnt, disp;
-  make_partition(size, n, cnt, disp);
+  std::vector<int> cnt;
+  std::vector<int> disp;
+  Make_partition(size, num, cnt, disp);
 
   int local_rows = cnt[rank];
   int row0 = disp[rank];
 
-  std::vector<double> a_loc(static_cast<std::size_t>(local_rows * w), 0.0);
+  std::vector<double> a_loc(static_cast < std::size_t(local_rows) * static_cast < std::size_t(w_coef), 0.0);
   std::vector<double> b_loc(static_cast<std::size_t>(local_rows), 0.0);
 
   std::vector<int> cntA(size), dispA(size);
-  for (int i = 0; i < size; ++i) {
-    cntA[i] = cnt[i] * w;
-    dispA[i] = disp[i] * w;
+  for (int index = 0; index < size; ++index) {
+    cntA[index] = cnt[index] * w_coef;
+    dispA[index] = disp[index] * w_coef;
   }
 
   std::vector<double> sendA, sendB;
   if (rank == 0) {
-    sendA.assign(static_cast<std::size_t>(n * w), 0.0);
+    sendA.assign(static_cast<std::size_t>(num) * static_cast < std::size_t(w_coef), 0.0);
     sendB = b_in;
 
-    for (int i = 0; i < n; ++i) {
-      for (int j = std::max(0, i - band); j <= std::min(n - 1, i + band); ++j) {
-        sendA[static_cast<std::size_t>(i * w + (j - (i - band)))] =
-            a_in[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+    for (int index = 0; index < num; ++index) {
+      for (int j_index = std::max(0, index - band); j_index <= std::min(num - 1, index + band); ++j_index) {
+        /*sendA[static_cast<std::size_t>(index * w_coef + (j_index - (index - band)))] =
+         * a_in[static_cast<std::size_t>(index)][static_cast<std::size_t>(j_index)];*/
+        const std::size_t rowIndex = static_cast<std::size_t>(index);
+        const std::size_t colIndex = static_cast<std::size_t>(j_index);
+        const std::size_t bandOffset = static_cast<std::size_t>(j_index - (index - band));
+        const std::size_t linearIndex = rowIndex * static_cast<std::size_t>(w_coef) + bandOffset;
+
+        sendA[linearIndex] = a_in[rowIndex][colIndex];
       }
     }
   }
@@ -204,16 +214,16 @@ bool KiselevITestTaskMPI::RunImpl() {
   MPI_Scatterv(rank == 0 ? sendB.data() : nullptr, cnt.data(), disp.data(), MPI_DOUBLE, b_loc.data(), local_rows,
                MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  if (!eliminate_forward(n, band, w, rank, row0, local_rows, cnt, disp, a_loc, b_loc)) {
+  if (!Eliminate_forward(num, band, w_coef, rank, row0, local_rows, cnt, disp, a_loc, b_loc)) {
     return false;
   }
 
-  std::vector<double> x;
-  if (!eliminate_backward(n, band, w, rank, row0, cnt, disp, a_loc, b_loc, x)) {
+  std::vector<double> x_v;
+  if (!Eliminate_backward(num, band, w_coef, rank, row0, cnt, disp, a_loc, b_loc, x_v)) {
     return false;
   }
 
-  GetOutput().swap(x);
+  GetOutput().swap(x_v);
   return true;
 }
 

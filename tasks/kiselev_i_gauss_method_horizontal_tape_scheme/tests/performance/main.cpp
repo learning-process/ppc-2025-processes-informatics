@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <utility>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -16,72 +17,72 @@ namespace kiselev_i_gauss_method_horizontal_tape_scheme {
 class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    const std::size_t n = 6000;
+    const std::size_t num = 6000;
     const std::size_t band = 6;
 
-    std::vector<std::vector<double>> a(n, std::vector<double>(n, 0.0));
+    std::vector<std::vector<double>> a_v(num, std::vector<double>(num, 0.0));
 
-    for (std::size_t i = 0; i < n; ++i) {
-      const std::size_t j_begin = (i > band) ? (i - band) : 0;
-      const std::size_t j_end = std::min(n, i + band + 1);
+    for (std::size_t index = 0; index < num; ++index) {
+      const std::size_t j_begin = (index > band) ? (index - band) : 0;
+      const std::size_t j_end = std::min(num, index + band + 1);
 
       double sum_abs = 0.0;
-      for (std::size_t j = j_begin; j < j_end; ++j) {
-        if (j == i) {
+      for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
+        if (j_index == index) {
           continue;
         }
 
-        const double val = (j < i) ? 0.5 : 1.5;
-        a[i][j] = val;
+        const double val = (j_index < index) ? 0.5 : 1.5;
+        a_v[index][j_index] = val;
         sum_abs += std::abs(val);
       }
 
-      a[i][i] = sum_abs + 8.0 + static_cast<double>(i % 3);
+      a_v[index][index] = sum_abs + 8.0 + static_cast<double>(index % 3);
     }
 
-    std::vector<double> x_true(n);
-    for (std::size_t i = 0; i < n; ++i) {
-      x_true[i] = 1.0 + static_cast<double>((i * 3) % 11);
+    std::vector<double> x_true(num);
+    for (std::size_t index = 0; index < num; ++index) {
+      x_true[index] = 1.0 + static_cast<double>((index * 3) % 11);
     }
 
-    std::vector<double> b(n, 0.0);
-    for (std::size_t i = 0; i < n; ++i) {
-      const std::size_t j_begin = (i > band) ? (i - band) : 0;
-      const std::size_t j_end = std::min(n, i + band + 1);
+    std::vector<double> b_v(num, 0.0);
+    for (std::size_t index = 0; index < num; ++index) {
+      const std::size_t j_begin = (index > band) ? (index - band) : 0;
+      const std::size_t j_end = std::min(num, index + band + 1);
 
       double s = 0.0;
-      for (std::size_t j = j_begin; j < j_end; ++j) {
-        s += a[i][j] * x_true[j];
+      for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
+        s += a_v[index][j_index] * x_true[j_index];
       }
-      b[i] = s;
+      b_v[index] = s;
     }
 
-    input_data_ = std::make_tuple(std::move(a), std::move(b), band);
+    input_data_ = std::make_tuple(std::move(a_v), std::move(b_v), band);
   }
 
   bool CheckTestOutputData(OutType &output) final {
-    const auto &a = std::get<0>(input_data_);
-    const auto &b = std::get<1>(input_data_);
+    const auto &a_v = std::get<0>(input_data_);
+    const auto &b_v = std::get<1>(input_data_);
     const std::size_t band = std::get<2>(input_data_);
 
-    const std::size_t n = a.size();
-    if (output.size() != n) {
+    const std::size_t num = a_v.size();
+    if (output.size() != num) {
       return false;
     }
 
     double max_residual = 0.0;
 
-    for (std::size_t i = 0; i < n; ++i) {
+    for (std::size_t index = 0; index < num; ++index) {
       double s = 0.0;
 
-      const std::size_t j_begin = (i > band) ? (i - band) : 0;
-      const std::size_t j_end = std::min(n, i + band + 1);
+      const std::size_t j_begin = (index > band) ? (index - band) : 0;
+      const std::size_t j_end = std::min(num, index + band + 1);
 
-      for (std::size_t j = j_begin; j < j_end; ++j) {
-        s += a[i][j] * output[j];
+      for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
+        s += a_v[index][j_index] * output[j_index];
       }
 
-      max_residual = std::max(max_residual, std::abs(s - b[i]));
+      max_residual = std::max(max_residual, std::abs(s - b_v[index]));
     }
 
     return max_residual < 1e-7;
