@@ -180,7 +180,7 @@ bool KiselevITestTaskMPI::RunImpl() {
   int local_rows = cnt[rank];
   int row0 = disp[rank];
 
-  std::vector<double> a_loc(static_cast < std::size_t(local_rows) * static_cast < std::size_t(w_coef), 0.0);
+  std::vector<double> a_loc(static_cast<std::size_t>(local_rows) * static_cast<std::size_t>(w_coef), 0.0);
   std::vector<double> b_loc(static_cast<std::size_t>(local_rows), 0.0);
 
   std::vector<int> cntA(size), dispA(size);
