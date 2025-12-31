@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <initializer_list>
 #include <string>
 #include <tuple>
@@ -25,7 +26,7 @@ class RomanovACRSProductFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType params = std::get<static_cast<std::uint64_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     const auto &[A, B, C] = params;
     input_data_ = std::make_tuple(A, B);
@@ -52,11 +53,11 @@ TEST_P(RomanovACRSProductFuncTests, MatmulFromPic) {
 }
 
 CRS MakeDenseCRS(std::initializer_list<std::initializer_list<double>> rows) {
-  size_t n = rows.size();
+  uint64_t n = rows.size();
   Dense D(n);
-  size_t i = 0;
+  uint64_t i = 0;
   for (auto &r : rows) {
-    size_t j = 0;
+    uint64_t j = 0;
     for (auto &v : r) {
       D(i, j) = v;
       ++j;

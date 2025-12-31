@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <tuple>
 
@@ -12,7 +13,7 @@
 namespace romanov_a_crs_product {
 
 class RomanovACRSProductPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const size_t n_ = static_cast<size_t>(1000);
+  const uint64_t n_ = static_cast<uint64_t>(1000);
   const double density_ = 0.1;
 
   InType input_data_;
