@@ -27,13 +27,13 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
       const std::size_t j_end = std::min(num, index + band + 1);
 
       double sum_abs = 0.0;
-      for (std::size_t jIndex = j_begin; jIndex < j_end; ++jIndex) {
-        if (jIndex == index) {
+      for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
+        if (j_index == index) {
           continue;
         }
 
-        const double val = (jIndex < index) ? 0.5 : 1.5;
-        aVector[index][jIndex] = val;
+        const double val = (j_index < index) ? 0.5 : 1.5;
+        aVector[index][j_index] = val;
         sum_abs += std::abs(val);
       }
 
@@ -51,8 +51,8 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
       const std::size_t j_end = std::min(num, index + band + 1);
 
       double s = 0.0;
-      for (std::size_t jIndex = j_begin; jIndex < j_end; ++jIndex) {
-        s += aVector[index][jIndex] * x_true[jIndex];
+      for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
+        s += aVector[index][j_index] * x_true[j_index];
       }
       bVector[index] = s;
     }
@@ -78,8 +78,8 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
       const std::size_t j_begin = (index > band) ? (index - band) : 0;
       const std::size_t j_end = std::min(num, index + band + 1);
 
-      for (std::size_t jIndex = j_begin; jIndex < j_end; ++jIndex) {
-        s += aVector[index][jIndex] * output[jIndex];
+      for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
+        s += aVector[index][j_index] * output[j_index];
       }
 
       max_residual = std::max(max_residual, std::abs(s - bVector[index]));
