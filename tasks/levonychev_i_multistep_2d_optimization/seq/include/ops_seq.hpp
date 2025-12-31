@@ -20,12 +20,6 @@ class LevonychevIMultistep2dOptimizationSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  void GenerateGridPoints(std::vector<Point> &grid_points, double x_min, double x_max, double y_min, double y_max,
-                          int grid_size);
-  [[nodiscard]] static std::vector<Point> SelectTopCandidates(const std::vector<Point> &points, int num_candidates);
-  void BuildNewRegionsFromCandidates(const std::vector<Point> &candidates, int step,
-                                     std::vector<SearchRegion> &new_regions);
 };
 
 }  // namespace levonychev_i_multistep_2d_optimization

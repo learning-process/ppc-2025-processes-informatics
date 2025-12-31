@@ -30,53 +30,6 @@ bool LevonychevIMultistep2dOptimizationSEQ::PreProcessingImpl() {
   return true;
 }
 
-void LevonychevIMultistep2dOptimizationSEQ::GenerateGridPoints(std::vector<Point> &grid_points, double x_min,
-                                                               double x_max, double y_min, double y_max,
-                                                               int grid_size) {
-  const auto &params = GetInput();
-
-  double step_x = (x_max - x_min) / (grid_size - 1);
-  double step_y = (y_max - y_min) / (grid_size - 1);
-
-  for (int i = 0; i < grid_size; ++i) {
-    double x = x_min + (i * step_x);
-    for (int j = 0; j < grid_size; ++j) {
-      double y = y_min + (j * step_y);
-      double value = params.func(x, y);
-      grid_points.emplace_back(x, y, value);
-    }
-  }
-}
-
-std::vector<Point> LevonychevIMultistep2dOptimizationSEQ::SelectTopCandidates(const std::vector<Point> &points,
-                                                                              int num_candidates) {
-  std::vector<Point> sorted_points = points;
-  std::ranges::sort(sorted_points, [](const Point &a, const Point &b) { return a.value < b.value; });
-
-  int num_to_select = std::min(num_candidates, static_cast<int>(sorted_points.size()));
-  return {sorted_points.begin(), sorted_points.begin() + num_to_select};
-}
-
-void LevonychevIMultistep2dOptimizationSEQ::BuildNewRegionsFromCandidates(const std::vector<Point> &candidates,
-                                                                          int step,
-                                                                          std::vector<SearchRegion> &new_regions) {
-  const auto &params = GetInput();
-
-  if (candidates.empty()) {
-    new_regions.emplace_back(params.x_min, params.x_max, params.y_min, params.y_max);
-    return;
-  }
-
-  for (const auto &cand : candidates) {
-    double margin_x = (params.x_max - params.x_min) * 0.05 / (1 << step);
-    double margin_y = (params.y_max - params.y_min) * 0.05 / (1 << step);
-
-    SearchRegion new_region(std::max(params.x_min, cand.x - margin_x), std::min(params.x_max, cand.x + margin_x),
-                            std::max(params.y_min, cand.y - margin_y), std::min(params.y_max, cand.y + margin_y));
-    new_regions.push_back(new_region);
-  }
-}
-
 bool LevonychevIMultistep2dOptimizationSEQ::RunImpl() {
   const auto &params = GetInput();
   auto &result = GetOutput();
