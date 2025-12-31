@@ -21,7 +21,7 @@ class RomanovACRSProductFuncTests : public ppc::util::BaseRunFuncTests<InType, O
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     const auto &[A, B, C] = test_param;
-    return "_n" + std::to_string(A.getRows()) + "_nnzA" + std::to_string(A.nnz()) + "_nnzB" + std::to_string(B.nnz());
+    return "_n" + std::to_string(A.GetRows()) + "_nnzA" + std::to_string(A.Nnz()) + "_nnzB" + std::to_string(B.Nnz());
   }
 
  protected:

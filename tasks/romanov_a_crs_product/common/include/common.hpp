@@ -22,13 +22,13 @@ struct Dense {
   std::vector<double> data;
 
   Dense(uint64_t n, uint64_t m) : n(n), m(m), data(n * m, 0.0) {}
-  Dense(uint64_t n) : n(n), m(n), data(n * n, 0.0) {}
+  explicit Dense(uint64_t n) : n(n), m(n), data(n * n, 0.0) {}
 
-  uint64_t getRows() const {
+  [[nodiscard]] uint64_t GetRows() const {
     return n;
   }
 
-  uint64_t getCols() const {
+  [[nodiscard]] uint64_t GetCols() const {
     return m;
   }
 
@@ -51,17 +51,17 @@ struct CRS {
 
   CRS() : n(0), m(0), row_index(1, 0) {}
   CRS(uint64_t n, uint64_t m) : n(n), m(m), row_index(n + 1, 0) {}
-  CRS(uint64_t n) : n(n), m(n), row_index(n + 1, 0) {}
+  explicit CRS(uint64_t n) : n(n), m(n), row_index(n + 1, 0) {}
 
-  uint64_t getRows() const {
+  [[nodiscard]] uint64_t GetRows() const {
     return n;
   }
 
-  uint64_t getCols() const {
+  [[nodiscard]] uint64_t GetCols() const {
     return m;
   }
 
-  uint64_t nnz() const {
+  [[nodiscard]]uint64_t Nnz() const {
     return value.size();
   }
 
@@ -83,8 +83,8 @@ struct CRS {
     return true;
   }
 
-  void transpose() {
-    uint64_t nnz_val = this->nnz();
+  void Transpose() {
+    uint64_t nnz_val = this->Nnz();
 
     std::vector<double> new_value(nnz_val);
     std::vector<uint64_t> new_column(nnz_val);
@@ -116,13 +116,13 @@ struct CRS {
     std::swap(n, m);
   }
 
-  CRS getTransposed() const {
+  [[nodiscard]] CRS GetTransposed() const {
     CRS result = *this;
-    result.transpose();
+    result.Transpose();
     return result;
   }
 
-  void fillRandom(double density, unsigned seed = 0) {
+  void FillRandom(double density, unsigned seed = 0) {
     if (density < 0.0 || density > 1.0) {
       throw std::invalid_argument("Density must be within [0, 1]!");
     }
@@ -147,9 +147,9 @@ struct CRS {
     }
   }
 
-  CRS ExtractRows(uint64_t start, uint64_t end) const {
+  [[nodiscard]] CRS ExtractRows(uint64_t start, uint64_t end) const {
     if (start >= end || start >= n) {
-      return CRS(0, m);
+      return CRS{0, m};
     }
 
     end = std::min(end, n);
@@ -164,8 +164,12 @@ struct CRS {
     result.column.resize(nnz_count);
     result.row_index.resize(new_n + 1);
 
-    std::copy(value.begin() + nnz_start, value.begin() + nnz_end, result.value.begin());
-    std::copy(column.begin() + nnz_start, column.begin() + nnz_end, result.column.begin());
+    std::copy(value.begin() + static_cast<std::ptrdiff_t>(nnz_start), 
+              value.begin() + static_cast<std::ptrdiff_t>(nnz_end), 
+              result.value.begin());
+    std::copy(column.begin() + static_cast<std::ptrdiff_t>(nnz_start), 
+              column.begin() + static_cast<std::ptrdiff_t>(nnz_end), 
+              result.column.begin());
 
     for (uint64_t i = 0; i <= new_n; ++i) {
       result.row_index[i] = row_index[start + i] - nnz_start;
@@ -176,7 +180,7 @@ struct CRS {
 
   static CRS ConcatRows(const std::vector<CRS> &parts) {
     if (parts.empty()) {
-      return CRS();
+      return CRS{};
     }
 
     uint64_t total_n = 0;
@@ -185,7 +189,7 @@ struct CRS {
 
     for (const auto &part : parts) {
       total_n += part.n;
-      total_nnz += part.nnz();
+      total_nnz += part.Nnz();
     }
 
     CRS result(total_n, m);
@@ -197,90 +201,132 @@ struct CRS {
     uint64_t nnz_offset = 0;
 
     for (const auto &part : parts) {
-      std::copy(part.value.begin(), part.value.end(), result.value.begin() + nnz_offset);
-      std::copy(part.column.begin(), part.column.end(), result.column.begin() + nnz_offset);
+      std::copy(part.value.begin(), part.value.end(), 
+                result.value.begin() + static_cast<std::ptrdiff_t>(nnz_offset));
+      std::copy(part.column.begin(), part.column.end(), 
+                result.column.begin() + static_cast<std::ptrdiff_t>(nnz_offset));
 
       for (uint64_t i = 0; i <= part.n; ++i) {
         result.row_index[row_offset + i] = part.row_index[i] + nnz_offset;
       }
 
       row_offset += part.n;
-      nnz_offset += part.nnz();
+      nnz_offset += part.Nnz();
     }
 
     return result;
   }
 };
 
-inline CRS operator*(const CRS &A, const CRS &B) {
-  if (A.getCols() != B.getRows()) {
-    throw std::runtime_error("Matrix dimensions do not match for multiplication!");
-  }
-
-  uint64_t n_rows = A.getRows();
-  uint64_t n_cols = B.getCols();
-
-  CRS C(n_rows, n_cols);
-  CRS BT = B.getTransposed();
-
-  std::vector<std::pair<uint64_t, double>> row;
-
-  for (uint64_t i = 0; i < n_rows; ++i) {
-    row.clear();
-    uint64_t a_begin = A.row_index[i];
-    uint64_t a_end = A.row_index[i + 1];
-
-    for (uint64_t j = 0; j < n_cols; ++j) {
-      uint64_t b_begin = BT.row_index[j];
-      uint64_t b_end = BT.row_index[j + 1];
-
-      uint64_t a_pos = a_begin;
-      uint64_t b_pos = b_begin;
-
-      double sum = 0.0;
-      while (a_pos < a_end && b_pos < b_end) {
-        uint64_t a_col = A.column[a_pos];
-        uint64_t b_col = BT.column[b_pos];
-
-        if (a_col == b_col) {
-          sum += A.value[a_pos] * BT.value[b_pos];
-          ++a_pos;
-          ++b_pos;
-        } else if (a_col < b_col) {
-          ++a_pos;
+inline double ComputeDotProduct(
+    uint64_t a_begin, uint64_t a_end,
+    const std::vector<uint64_t>& a_col, const std::vector<double>& a_val,
+    uint64_t b_begin, uint64_t b_end,
+    const std::vector<uint64_t>& b_col, const std::vector<double>& b_val) {
+    
+    double sum = 0.0;
+    uint64_t a_pos = a_begin;
+    uint64_t b_pos = b_begin;
+    
+    while (a_pos < a_end && b_pos < b_end) {
+        uint64_t a_col_idx = a_col[a_pos];
+        uint64_t b_col_idx = b_col[b_pos];
+        
+        if (a_col_idx == b_col_idx) {
+            sum += a_val[a_pos] * b_val[b_pos];
+            ++a_pos;
+            ++b_pos;
+        } else if (a_col_idx < b_col_idx) {
+            ++a_pos;
         } else {
-          ++b_pos;
+            ++b_pos;
         }
-      }
-
-      if (std::abs(sum) > kEps) {
-        row.emplace_back(j, sum);
-      }
     }
-
-    C.row_index[i] = C.column.size();
-
-    for (auto &[col, val] : row) {
-      C.column.push_back(col);
-      C.value.push_back(val);
-    }
-  }
-
-  C.row_index[n_rows] = C.column.size();
-
-  return C;
+    
+    return sum;
 }
 
-inline CRS ToCRS(const Dense &A) {
-  uint64_t rows = A.getRows();
-  uint64_t cols = A.getCols();
+inline std::vector<std::pair<uint64_t, double>> ComputeResultRow(
+    const CRS& a, uint64_t row_idx, 
+    const CRS& b_transposed, uint64_t num_cols) {
+    
+    std::vector<std::pair<uint64_t, double>> result_row;
+    result_row.reserve(num_cols);
+    
+    uint64_t a_begin = a.row_index[row_idx];
+    uint64_t a_end = a.row_index[row_idx + 1];
+    
+    if (a_begin == a_end) {
+        return result_row;
+    }
+    
+    for (uint64_t j = 0; j < num_cols; ++j) {
+        uint64_t b_begin = b_transposed.row_index[j];
+        uint64_t b_end = b_transposed.row_index[j + 1];
+        
+        if (b_begin == b_end) {
+            continue;
+        }
+        
+        double sum = ComputeDotProduct(
+            a_begin, a_end, a.column, a.value,
+            b_begin, b_end, b_transposed.column, b_transposed.value
+        );
+        
+        if (std::abs(sum) > kEps) {
+            result_row.emplace_back(j, sum);
+        }
+    }
+    
+    return result_row;
+}
+
+inline void AppendRowToCRS(CRS& result, 
+                          const std::vector<std::pair<uint64_t, double>>& row_data,
+                          uint64_t row_index) {
+    
+    result.row_index[row_index] = result.column.size();
+    
+    for (const auto& [col, val] : row_data) {
+        result.column.push_back(col);
+        result.value.push_back(val);
+    }
+}
+
+inline CRS operator*(const CRS &a, const CRS &b) {
+    if (a.GetCols() != b.GetRows()) {
+        throw std::runtime_error("Matrix dimensions do not match for multiplication!");
+    }
+    
+    uint64_t n_rows = a.GetRows();
+    uint64_t n_cols = b.GetCols();
+    
+    CRS result{n_rows, n_cols};
+    CRS b_transposed = b.GetTransposed();
+    
+    result.row_index.resize(n_rows + 1);
+    result.row_index[0] = 0;
+    
+    for (uint64_t i = 0; i < n_rows; ++i) {
+        auto row_result = ComputeResultRow(a, i, b_transposed, n_cols);
+        AppendRowToCRS(result, row_result, i);
+    }
+    
+    result.row_index[n_rows] = result.column.size();
+    
+    return result;
+}
+
+inline CRS ToCRS(const Dense &a) {
+  uint64_t rows = a.GetRows();
+  uint64_t cols = a.GetCols();
   CRS crs(rows, cols);
 
   for (uint64_t i = 0; i < rows; ++i) {
     crs.row_index[i + 1] = crs.row_index[i];
     for (uint64_t j = 0; j < cols; ++j) {
-      if (std::abs(A(i, j)) > kEps) {
-        crs.value.push_back(A(i, j));
+      if (std::abs(a(i, j)) > kEps) {
+        crs.value.push_back(a(i, j));
         crs.column.push_back(j);
         ++crs.row_index[i + 1];
       }

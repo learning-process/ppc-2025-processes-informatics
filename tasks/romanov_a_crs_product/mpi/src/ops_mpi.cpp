@@ -17,7 +17,7 @@ RomanovACRSProductMPI::RomanovACRSProductMPI(const InType &in) {
 }
 
 bool RomanovACRSProductMPI::ValidationImpl() {
-  return (std::get<0>(GetInput()).getCols() == std::get<1>(GetInput()).getRows());
+  return (std::get<0>(GetInput()).GetCols() == std::get<1>(GetInput()).GetRows());
 }
 
 bool RomanovACRSProductMPI::PreProcessingImpl() {
@@ -37,7 +37,7 @@ inline void BroadcastCRS(CRS &M, int root, MPI_Comm comm) {
     M.row_index.resize(M.n + 1);
   }
 
-  uint64_t nnz = static_cast<uint64_t>(M.nnz());
+  uint64_t nnz = static_cast<uint64_t>(M.Nnz());
   MPI_Bcast(&nnz, 1, MPI_UINT64_T, root, comm);
 
   if (rank != root) {
@@ -61,7 +61,7 @@ inline void SendCRS(const CRS &M, int dest, int tag, MPI_Comm comm) {
   uint64_t dims[2] = {static_cast<uint64_t>(M.n), static_cast<uint64_t>(M.m)};
   MPI_Send(dims, 2, MPI_UINT64_T, dest, tag, comm);
 
-  uint64_t nnz = static_cast<uint64_t>(M.nnz());
+  uint64_t nnz = static_cast<uint64_t>(M.Nnz());
   MPI_Send(&nnz, 1, MPI_UINT64_T, dest, tag + 1, comm);
 
   if (nnz > 0) {
@@ -112,54 +112,54 @@ bool RomanovACRSProductMPI::RunImpl() {
   int num_processes;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
-  CRS A, B;
+  CRS a, b;
 
   if (rank == 0) {
-    A = std::get<0>(GetInput());
-    B = std::get<1>(GetInput());
+    a = std::get<0>(GetInput());
+    b = std::get<1>(GetInput());
   }
 
-  BroadcastCRS(B, 0, MPI_COMM_WORLD);
+  BroadcastCRS(b, 0, MPI_COMM_WORLD);
 
-  CRS A_local;
+  CRS a_local;
 
   if (rank == 0) {
-    uint64_t n = A.n;
+    uint64_t n = a.n;
     uint64_t rows_per_proc = (n + num_processes - 1) / num_processes;
 
     for (int p = 1; p < num_processes; p++) {
       uint64_t start = p * rows_per_proc;
       if (start >= n) {
-        CRS empty(0, A.m);
+        CRS empty(0, a.m);
         SendCRS(empty, p, 100 + p, MPI_COMM_WORLD);
         continue;
       }
       uint64_t end = std::min(n, start + rows_per_proc);
-      CRS part = A.ExtractRows(start, end);
+      CRS part = a.ExtractRows(start, end);
       SendCRS(part, p, 100 + p, MPI_COMM_WORLD);
     }
 
-    uint64_t end0 = std::min(A.n, rows_per_proc);
-    A_local = A.ExtractRows(0, end0);
+    uint64_t end0 = std::min(a.n, rows_per_proc);
+    a_local = a.ExtractRows(0, end0);
 
   } else {
-    RecvCRS(A_local, 0, 100 + rank, MPI_COMM_WORLD);
+    RecvCRS(a_local, 0, 100 + rank, MPI_COMM_WORLD);
   }
 
-  CRS C_local;
-  if (A_local.n > 0 && B.n > 0) {
-    C_local = A_local * B;
+  CRS c_local;
+  if (a_local.n > 0 && b.n > 0) {
+    c_local = a_local * b;
   } else {
-    C_local = CRS(0, B.m);
+    c_local = CRS(0, b.m);
   }
 
-  CRS C_total;
+  CRS c_total;
 
   if (rank == 0) {
     std::vector<CRS> parts;
     parts.reserve(static_cast<uint64_t>(num_processes));
 
-    parts.push_back(std::move(C_local));
+    parts.push_back(std::move(c_local));
 
     for (int p = 1; p < num_processes; p++) {
       CRS temp;
@@ -167,15 +167,15 @@ bool RomanovACRSProductMPI::RunImpl() {
       parts.push_back(std::move(temp));
     }
 
-    C_total = CRS::ConcatRows(parts);
+    c_total = CRS::ConcatRows(parts);
 
   } else {
-    SendCRS(C_local, 0, 200 + rank, MPI_COMM_WORLD);
+    SendCRS(c_local, 0, 200 + rank, MPI_COMM_WORLD);
   }
 
-  BroadcastCRS(C_total, 0, MPI_COMM_WORLD);
+  BroadcastCRS(c_total, 0, MPI_COMM_WORLD);
 
-  GetOutput() = C_total;
+  GetOutput() = c_total;
 
   return true;
 }

@@ -14,7 +14,7 @@ RomanovACRSProductSEQ::RomanovACRSProductSEQ(const InType &in) {
 }
 
 bool RomanovACRSProductSEQ::ValidationImpl() {
-  return (std::get<0>(GetInput()).getCols() == std::get<1>(GetInput()).getRows());
+  return (std::get<0>(GetInput()).GetCols() == std::get<1>(GetInput()).GetRows());
 }
 
 bool RomanovACRSProductSEQ::PreProcessingImpl() {

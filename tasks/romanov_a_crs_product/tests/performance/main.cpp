@@ -21,8 +21,8 @@ class RomanovACRSProductPerfTests : public ppc::util::BaseRunPerfTests<InType, O
 
   void SetUp() override {
     CRS A(n_), B(n_);
-    A.fillRandom(density_);
-    B.fillRandom(density_);
+    A.FillRandom(density_);
+    B.FillRandom(density_);
 
     input_data_ = std::make_tuple(A, B);
     expected_ = A * B;
