@@ -1,7 +1,7 @@
 #pragma once
 
+#include <cstdint>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "chaschin_v_sobel_operator/common/include/common.hpp"

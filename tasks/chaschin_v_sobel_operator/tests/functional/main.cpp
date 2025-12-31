@@ -62,7 +62,8 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
         const auto &p = image[i][j];
-        gray[i + 1][j + 1] = (0.299F * p.r) + (0.587F * p.g) + (0.114F * p.b);
+        gray[i + 1][j + 1] = (0.299F * static_cast<float>(p.r)) + (0.587F * static_cast<float>(p.g)) +
+                             (0.114F * static_cast<float>(p.b));
       }
     }
 
@@ -76,9 +77,9 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
     std::cout << "\n";*/
 
     // Маски Sobel
-    static constexpr std::array<std::array<int, 3>, 3> kKx{{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
+    std::vector<std::vector<int>> kKx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
 
-    static constexpr std::array<std::array<int, 3>, 3> kKy{{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
+    std::vector<std::vector<int>> kKy = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
     // Подготовка expected_output_
     expected_output_.resize(height);

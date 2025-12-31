@@ -4,6 +4,7 @@
 #include <array>
 #include <cassert>
 #include <cmath>
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -74,9 +75,9 @@ std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
   const int m = static_cast<int>(image[0].size());
   assert(m > 0);
 
-  static constexpr std::array<std::array<int, 3>, 3> kKx{{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
+  std::vector<std::vector<int>> kKx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
 
-  static constexpr std::array<std::array<int, 3>, 3> kKy{{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
+  std::vector<std::vector<int>> kKy = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
   std::vector<float> out(static_cast<size_t>(n) * static_cast<size_t>(m), 0.0F);
 

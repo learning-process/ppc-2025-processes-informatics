@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -53,7 +54,7 @@ std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
   for (int rank = 0; rank < n_procs; ++rank) {
     bool local_tale = (rank < rem);
     int local_rows = (base + 2) + static_cast<int>(local_tale);
-    sendcounts[rank] = (local_rows)*padded_m;
+    sendcounts[rank] = (local_rows) * static_cast<int>(padded_m);
     displs[rank] = total_real_rows * static_cast<int>(padded_m);
     total_real_rows += local_rows;
   }
@@ -107,9 +108,8 @@ bool ChaschinVSobelOperatorMPI::PreProcessingImpl() {
 }
 
 float ChaschinVSobelOperatorMPI::SobelAt(const std::vector<float> &img, int i, int j, int stride) {
-  static constexpr std::array<float, 9> kKx = {-1.0F, 0.0F, 1.0F, -2.0F, 0.0F, 2.0F, -1.0F, 0.0F, 1.0F};
-
-  static constexpr std::array<float, 9> kKy = {-1.0F, -2.0F, -1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 1.0F};
+  std::vector<float> kKx = {-1.0F, 0.0F, 1.0F, -2.0F, 0.0F, 2.0F, -1.0F, 0.0F, 1.0F};
+  std::vector<float> kKy = {-1.0F, -2.0F, -1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 2.0F, 1.0F};
 
   float gx = 0.0F;
   float gy = 0.0F;
@@ -119,8 +119,9 @@ float ChaschinVSobelOperatorMPI::SobelAt(const std::vector<float> &img, int i, i
     int ni = i + di;
     for (int dj = -1; dj <= 1; ++dj) {
       int nj = j + dj;
-      size_t idx = static_cast<size_t>((di + 1) * 3 + (dj + 1));
-      float val = img[static_cast<size_t>(ni) * stride + static_cast<size_t>(nj)];
+      auto idx = (static_cast<size_t>(di + 1) * static_cast<size_t>(3)) + static_cast<size_t>(dj + 1);
+
+      float val = img[(static_cast<size_t>(ni) * stride) + static_cast<size_t>(nj)];
       gx += val * kKx[idx];
       gy += val * kKy[idx];
     }
@@ -162,7 +163,7 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   // #pragma omp parallel for collapse(2)
   for (int i = 0; std::cmp_less(i, local_rows); ++i) {
     for (int j = 0; std::cmp_less(j, m); ++j) {
-      local_output[i * m + j] = SobelAt(local_block, i + 1, j + 1, static_cast<int>(padded_m));
+      local_output[(i * m) + j] = SobelAt(local_block, i + 1, j + 1, static_cast<int>(padded_m));
     }
   }
 
@@ -194,10 +195,10 @@ bool ChaschinVSobelOperatorMPI::PostProcessingImpl() {
   // std::cout << "Rank" << rank <<" PostProcessingImpl init sucsess \n" << std::flush;
 
   auto &out = GetOutput();
-  size_t n = std::get<0>(Size_);
-  size_t m = std::get<1>(Size_);
+  int n = static_cast<int>(std::get<0>(Size_));
+  int m = static_cast<int>(std::get<1>(Size_));
   if (rank != 0) {
-    PostProcessGray_.resize(static_cast<int>(n) * static_cast<int>(m));
+    PostProcessGray_.resize(n * m);
   }
   // std::cout << "Rank" << rank <<" PostProcessingImpl resize sucsess \n" << std::flush;
   MPI_Bcast(PostProcessGray_.data(),  // буфер
