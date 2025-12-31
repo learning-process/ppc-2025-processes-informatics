@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <utility>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "kiselev_i_gauss_method_horizontal_tape_scheme/common/include/common.hpp"

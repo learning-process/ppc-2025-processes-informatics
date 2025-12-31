@@ -196,8 +196,7 @@ bool KiselevITestTaskMPI::RunImpl() {
 
     for (int index = 0; index < num; ++index) {
       for (int j_index = std::max(0, index - band); j_index <= std::min(num - 1, index + band); ++j_index) {
-        /*sendA[static_cast<std::size_t>(index * w_coef + (j_index - (index - band)))] =
-         * a_in[static_cast<std::size_t>(index)][static_cast<std::size_t>(j_index)];*/
+        // tmp
         const std::size_t rowIndex = static_cast<std::size_t>(index);
         const std::size_t colIndex = static_cast<std::size_t>(j_index);
         const std::size_t bandOffset = static_cast<std::size_t>(j_index - (index - band));
