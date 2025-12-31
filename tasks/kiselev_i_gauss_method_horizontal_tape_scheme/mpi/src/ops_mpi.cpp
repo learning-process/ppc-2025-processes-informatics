@@ -191,7 +191,7 @@ bool KiselevITestTaskMPI::RunImpl() {
 
   std::vector<double> sendA, sendB;
   if (rank == 0) {
-    sendA.assign(static_cast<std::size_t>(num) * static_cast < std::size_t(w_coef), 0.0);
+    sendA.assign(static_cast<std::size_t>(num) * static_cast<std::size_t>(w_coef), 0.0);
     sendB = b_in;
 
     for (int index = 0; index < num; ++index) {
