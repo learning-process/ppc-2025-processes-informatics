@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -13,7 +11,6 @@ class DolovVQsortBatcherMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
   explicit DolovVQsortBatcherMPI(const InType &in);
-  ~DolovVQsortBatcherMPI() override = default;
 
  private:
   bool ValidationImpl() override;
@@ -21,15 +18,20 @@ class DolovVQsortBatcherMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // Оставляем только то, что реально нужно для текущего алгоритма
-  void SetupWorkload(int total_size, int proc_count, std::vector<int> &counts, std::vector<int> &offsets);
-  void RunBatcherMerge(int rank, int proc_count, std::vector<double> &local_vec);
-  void ExchangeAndMerge(int partner, std::vector<double> &local_vec, bool keep_smaller);
+  static void FastSort(double *data, int low, int high);
+  static int GetSplitIndex(double *data, int low, int high);
 
-  std::vector<double> local_data_;
-  std::vector<int> send_counts_;
-  std::vector<int> displacements_;
-  int total_elements_ = 0;
+  void DistributeData(int world_rank, int world_size);
+  void CollectData(int world_rank, int world_size);
+
+  void ExecuteBatcherParallel(int world_rank, int world_size);
+  static void MergeSequences(const std::vector<double> &first, const std::vector<double> &second,
+                             std::vector<double> &result, bool take_low);
+
+  std::vector<double> local_buffer_;
+  std::vector<int> part_sizes_;
+  std::vector<int> part_offsets_;
+  int total_count_ = 0;
 };
 
 }  // namespace dolov_v_qsort_batcher

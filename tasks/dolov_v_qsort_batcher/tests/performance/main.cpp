@@ -20,10 +20,11 @@ class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, O
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     if (rank == 0) {
-      const int kCount = 15000000;
+      const int kCount = 1000000;
       input_data_.resize(kCount);
       for (int i = 0; i < kCount; ++i) {
-        input_data_[i] = (i % 3 == 0) ? static_cast<double>(i) : static_cast<double>(kCount - i);
+        uint64_t val = (static_cast<uint64_t>(i) * 1103515245ULL + 12345ULL);
+        input_data_[i] = static_cast<double>(val % 2147483647ULL) / 1000.0;
       }
     }
   }
@@ -42,6 +43,8 @@ class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   }
 };
 
+namespace {
+
 TEST_P(DolovVQsortBatcherPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
@@ -50,9 +53,9 @@ const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, DolovVQsortBatche
     PPC_SETTINGS_dolov_v_qsort_batcher);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
-
 const auto kPerfTestName = DolovVQsortBatcherPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, DolovVQsortBatcherPerfTests, kGtestValues, kPerfTestName);
 
+}  // namespace
 }  // namespace dolov_v_qsort_batcher

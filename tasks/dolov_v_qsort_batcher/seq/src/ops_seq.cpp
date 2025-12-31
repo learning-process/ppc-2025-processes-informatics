@@ -53,11 +53,15 @@ int DolovVQsortBatcherSEQ::GetHoarePartition(double *array, int low, int high) {
 }
 
 void DolovVQsortBatcherSEQ::ApplyQuicksort(double *array, int low, int high) {
-  if (low < high) {
+  while (low < high) {
     int p = GetHoarePartition(array, low, high);
-
-    ApplyQuicksort(array, low, p);
-    ApplyQuicksort(array, p + 1, high);
+    if (p - low < high - p) {
+      ApplyQuicksort(array, low, p);
+      low = p + 1;
+    } else {
+      ApplyQuicksort(array, p + 1, high);
+      high = p;
+    }
   }
 }
 
