@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <vector>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 #include "dolov_v_qsort_batcher/mpi/include/ops_mpi.hpp"
@@ -13,14 +12,14 @@ namespace dolov_v_qsort_batcher {
 
 class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  InType input_data_{};
+  InType input_data;
 
   void SetUp() override {
-    const int kCount = 1000000;
-    input_data_.resize(kCount);
-    for (int i = 0; i < kCount; ++i) {
-      uint64_t val = (static_cast<uint64_t>(i) * 1103515245ULL + 12345ULL);
-      input_data_[i] = static_cast<double>(val % 2147483647ULL) / 1000.0;
+    const int k_count = 1000000;
+    input_data.resize(k_count);
+    for (int i = 0; i < k_count; ++i) {
+      uint64_t val = ((static_cast<uint64_t>(i) * 1103515245ULL) + 12345ULL);
+      input_data[i] = static_cast<double>(val % 2147483647ULL) / 1000.0;
     }
   }
 
@@ -28,11 +27,11 @@ class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, O
     if (output_data.empty()) {
       return true;
     }
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::is_sorted(output_data.data(), output_data.data() + output_data.size());
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 

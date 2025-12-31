@@ -3,6 +3,10 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cstddef>
+#include <stack>
+#include <utility>
+#include <vector>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 
@@ -88,19 +92,10 @@ void DolovVQsortBatcherMPI::ExecuteBatcherParallel(int world_rank, int world_siz
 
   for (int step = 0; step < world_size; ++step) {
     int partner = -1;
-
     if (step % 2 == 0) {
-      if (world_rank % 2 == 0) {
-        partner = world_rank + 1;
-      } else {
-        partner = world_rank - 1;
-      }
+      partner = (world_rank % 2 == 0) ? world_rank + 1 : world_rank - 1;
     } else {
-      if (world_rank % 2 != 0) {
-        partner = world_rank + 1;
-      } else {
-        partner = world_rank - 1;
-      }
+      partner = (world_rank % 2 != 0) ? world_rank + 1 : world_rank - 1;
     }
 
     if (partner >= 0 && partner < world_size) {
@@ -127,10 +122,11 @@ void DolovVQsortBatcherMPI::MergeSequences(const std::vector<double> &first, con
   std::merge(first.begin(), first.end(), second.begin(), second.end(), combined.begin());
 
   result.resize(n1);
+  auto diff_n1 = static_cast<std::ptrdiff_t>(n1);
   if (take_low) {
-    std::copy(combined.begin(), combined.begin() + n1, result.begin());
+    std::copy(combined.begin(), combined.begin() + diff_n1, result.begin());
   } else {
-    std::copy(combined.end() - n1, combined.end(), result.begin());
+    std::copy(combined.end() - diff_n1, combined.end(), result.begin());
   }
 }
 
@@ -149,16 +145,18 @@ void DolovVQsortBatcherMPI::CollectData(int world_rank, int /*world_size*/) {
 }
 
 int DolovVQsortBatcherMPI::GetSplitIndex(double *data, int low, int high) {
-  double pivot = data[low + (high - low) / 2];
+  double pivot = data[low + ((high - low) / 2)];
   int i = low - 1;
   int j = high + 1;
   while (true) {
-    do {
+    i++;
+    while (data[i] < pivot) {
       i++;
-    } while (data[i] < pivot);
-    do {
+    }
+    j--;
+    while (data[j] > pivot) {
       j--;
-    } while (data[j] > pivot);
+    }
     if (i >= j) {
       return j;
     }
@@ -167,10 +165,16 @@ int DolovVQsortBatcherMPI::GetSplitIndex(double *data, int low, int high) {
 }
 
 void DolovVQsortBatcherMPI::FastSort(double *data, int low, int high) {
-  if (low < high) {
-    int split_point = GetSplitIndex(data, low, high);
-    FastSort(data, low, split_point);
-    FastSort(data, split_point + 1, high);
+  std::stack<std::pair<int, int>> s;
+  s.push({low, high});
+  while (!s.empty()) {
+    std::pair<int, int> range = s.top();
+    s.pop();
+    if (range.first < range.second) {
+      int split_point = GetSplitIndex(data, range.first, range.second);
+      s.push({range.first, split_point});
+      s.push({split_point + 1, range.second});
+    }
   }
 }
 

@@ -1,6 +1,9 @@
 #include "dolov_v_qsort_batcher/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <stack>
+#include <utility>
+#include <vector>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 
@@ -34,17 +37,19 @@ bool DolovVQsortBatcherSEQ::PostProcessingImpl() {
 }
 
 int DolovVQsortBatcherSEQ::GetHoarePartition(double *array, int low, int high) {
-  double pivot = array[low + (high - low) / 2];
+  double pivot = array[low + ((high - low) / 2)];
   int i = low - 1;
   int j = high + 1;
 
   while (true) {
-    do {
+    i++;
+    while (array[i] < pivot) {
       i++;
-    } while (array[i] < pivot);
-    do {
+    }
+    j--;
+    while (array[j] > pivot) {
       j--;
-    } while (array[j] > pivot);
+    }
     if (i >= j) {
       return j;
     }
@@ -53,14 +58,22 @@ int DolovVQsortBatcherSEQ::GetHoarePartition(double *array, int low, int high) {
 }
 
 void DolovVQsortBatcherSEQ::ApplyQuicksort(double *array, int low, int high) {
-  while (low < high) {
-    int p = GetHoarePartition(array, low, high);
-    if (p - low < high - p) {
-      ApplyQuicksort(array, low, p);
-      low = p + 1;
-    } else {
-      ApplyQuicksort(array, p + 1, high);
-      high = p;
+  std::stack<std::pair<int, int>> stack;
+  stack.push({low, high});
+
+  while (!stack.empty()) {
+    std::pair<int, int> range = stack.top();
+    stack.pop();
+
+    if (range.first < range.second) {
+      int p = GetHoarePartition(array, range.first, range.second);
+      if (p - range.first < range.second - p) {
+        stack.push({p + 1, range.second});
+        stack.push({range.first, p});
+      } else {
+        stack.push({range.first, p});
+        stack.push({p + 1, range.second});
+      }
     }
   }
 }

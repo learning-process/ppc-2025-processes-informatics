@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 #include "task/include/task.hpp"
 

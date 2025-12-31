@@ -2,13 +2,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
-#include <numeric>
-#include <random>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 #include "dolov_v_qsort_batcher/mpi/include/ops_mpi.hpp"
@@ -36,7 +33,6 @@ class DolovVQsortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     std::string type = params.substr(0, underscore_pos);
     int size = std::stoi(params.substr(underscore_pos + 1));
 
-    // Генерируем данные на всех процессах одинаково
     input_data_.resize(size);
     if (type == "Random") {
       for (int i = 0; i < size; ++i) {
@@ -59,7 +55,9 @@ class DolovVQsortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     }
 
     expected_res_ = input_data_;
-    std::sort(expected_res_.begin(), expected_res_.end());
+    if (!expected_res_.empty()) {
+      std::sort(expected_res_.data(), expected_res_.data() + expected_res_.size());
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
