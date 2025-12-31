@@ -2,6 +2,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <vector>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
 #include "dolov_v_qsort_batcher/mpi/include/ops_mpi.hpp"
@@ -19,10 +20,10 @@ class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, O
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     if (rank == 0) {
-      const int kCount = 10000000;
+      const int kCount = 15000000;
       input_data_.resize(kCount);
       for (int i = 0; i < kCount; ++i) {
-        input_data_[i] = (i % 2 == 0) ? static_cast<double>(i) : static_cast<double>(kCount - i);
+        input_data_[i] = (i % 3 == 0) ? static_cast<double>(i) : static_cast<double>(kCount - i);
       }
     }
   }

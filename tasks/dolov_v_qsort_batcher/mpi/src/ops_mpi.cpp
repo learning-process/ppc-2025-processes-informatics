@@ -5,8 +5,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "dolov_v_qsort_batcher/common/include/common.hpp"
-
 namespace dolov_v_qsort_batcher {
 
 DolovVQsortBatcherMPI::DolovVQsortBatcherMPI(const InType &in) {
@@ -15,167 +13,116 @@ DolovVQsortBatcherMPI::DolovVQsortBatcherMPI(const InType &in) {
 }
 
 bool DolovVQsortBatcherMPI::ValidationImpl() {
-  return !GetInput().empty();
+  return true;
 }
 
 bool DolovVQsortBatcherMPI::PreProcessingImpl() {
+  int rank, proc_count;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
+
+  if (rank == 0) {
+    total_elements_ = static_cast<int>(GetInput().size());
+  }
+  MPI_Bcast(&total_elements_, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  send_counts_.resize(proc_count);
+  displacements_.resize(proc_count);
+  SetupWorkload(total_elements_, proc_count, send_counts_, displacements_);
+
+  local_data_.resize(send_counts_[rank]);
   return true;
 }
 
 bool DolovVQsortBatcherMPI::RunImpl() {
-  int procCount = 0;
-  int rank = 0;
-  MPI_Comm_size(MPI_COMM_WORLD, &procCount);
+  int rank, proc_count;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
 
-  int totalSize = 0;
-  if (rank == 0) {
-    totalSize = static_cast<int>(GetInput().size());
-  }
-  MPI_Bcast(&totalSize, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (totalSize == 0) {
+  if (total_elements_ <= 0) {
     return true;
   }
 
-  std::vector<int> counts(procCount);
-  std::vector<int> offsets(procCount);
-  setupWorkload(totalSize, procCount, counts, offsets);
+  MPI_Scatterv(rank == 0 ? GetInput().data() : nullptr, send_counts_.data(), displacements_.data(), MPI_DOUBLE,
+               local_data_.data(), send_counts_[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  std::vector<double> localVec(counts[rank]);
-  splitData(GetInput(), localVec, counts, offsets);
-
-  if (!localVec.empty()) {
-    applyQuicksort(localVec.data(), 0, static_cast<int>(localVec.size()) - 1);
+  if (!local_data_.empty()) {
+    std::sort(local_data_.begin(), local_data_.end());
   }
 
-  runBatcherProcess(rank, procCount, localVec);
+  RunBatcherMerge(rank, proc_count, local_data_);
 
-  std::vector<double> globalRes;
+  std::vector<double> global_res;
   if (rank == 0) {
-    globalRes.resize(totalSize);
+    global_res.resize(total_elements_);
   }
 
-  collectData(globalRes, localVec, totalSize, counts, offsets);
+  MPI_Gatherv(local_data_.data(), static_cast<int>(local_data_.size()), MPI_DOUBLE, global_res.data(),
+              send_counts_.data(), displacements_.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    GetOutput() = std::move(globalRes);
+    GetOutput() = std::move(global_res);
   }
 
   return true;
 }
 
-void DolovVQsortBatcherMPI::setupWorkload(int totalSize, int procCount, std::vector<int> &counts,
+void DolovVQsortBatcherMPI::SetupWorkload(int total_size, int proc_count, std::vector<int> &counts,
                                           std::vector<int> &offsets) {
-  int base = totalSize / procCount;
-  int rem = totalSize % procCount;
-  for (int i = 0; i < procCount; ++i) {
+  int base = total_size / proc_count;
+  int rem = total_size % proc_count;
+  for (int i = 0; i < proc_count; ++i) {
     counts[i] = base + (i < rem ? 1 : 0);
     offsets[i] = (i == 0) ? 0 : offsets[i - 1] + counts[i - 1];
   }
 }
 
-void DolovVQsortBatcherMPI::splitData(const std::vector<double> &source, std::vector<double> &local,
-                                      const std::vector<int> &counts, const std::vector<int> &offsets) {
-  MPI_Scatterv(source.data(), counts.data(), offsets.data(), MPI_DOUBLE, local.data(), static_cast<int>(local.size()),
-               MPI_DOUBLE, 0, MPI_COMM_WORLD);
-}
-
-int DolovVQsortBatcherMPI::getHoarePartition(double *array, int low, int high) {
-  double pivot = array[low + (high - low) / 2];
-  int i = low - 1;
-  int j = high + 1;
-
-  while (true) {
-    while (array[++i] < pivot);
-    while (array[--j] > pivot);
-    if (i >= j) {
-      return j;
+void DolovVQsortBatcherMPI::RunBatcherMerge(int rank, int proc_count, std::vector<double> &local_vec) {
+  for (int phase = 0; phase < proc_count; ++phase) {
+    int partner;
+    if (phase % 2 == 0) {
+      // Четная фаза: пары (0,1), (2,3)...
+      partner = (rank % 2 == 0) ? rank + 1 : rank - 1;
+    } else {
+      // Нечетная фаза: пары (1,2), (3,4)...
+      partner = (rank % 2 != 0) ? rank + 1 : rank - 1;
     }
-    std::swap(array[i], array[j]);
-  }
-}
 
-void DolovVQsortBatcherMPI::applyQuicksort(double *array, int low, int high) {
-  if (low < high) {
-    int p = getHoarePartition(array, low, high);
-    applyQuicksort(array, low, p);
-    applyQuicksort(array, p + 1, high);
-  }
-}
-
-void DolovVQsortBatcherMPI::runBatcherProcess(int rank, int procCount, std::vector<double> &localVec) {
-  for (int p = 1; p < procCount; p <<= 1) {
-    for (int k = p; k >= 1; k >>= 1) {
-      for (int j = k % p; j <= procCount - 1 - k; j += (k << 1)) {
-        for (int i = 0; i < k; ++i) {
-          int left = j + i;
-          int right = j + i + k;
-          if (left / (p << 1) == right / (p << 1)) {
-            if (rank == left) {
-              exchangeAndMerge(rank, right, localVec, true);
-            } else if (rank == right) {
-              exchangeAndMerge(rank, left, localVec, false);
-            }
-          }
-        }
-      }
-      MPI_Barrier(MPI_COMM_WORLD);
+    if (partner >= 0 && partner < proc_count) {
+      ExchangeAndMerge(partner, local_vec, rank < partner);
     }
   }
 }
 
-void DolovVQsortBatcherMPI::exchangeAndMerge(int /*rank*/, int partner, std::vector<double> &localVec, bool keepSmall) {
-  int localSize = static_cast<int>(localVec.size());
-  int partnerSize = 0;
+void DolovVQsortBatcherMPI::ExchangeAndMerge(int partner, std::vector<double> &local_vec, bool keep_smaller) {
+  int local_size = static_cast<int>(local_vec.size());
+  int partner_size;
 
-  MPI_Sendrecv(&localSize, 1, MPI_INT, partner, 0, &partnerSize, 1, MPI_INT, partner, 0, MPI_COMM_WORLD,
+  MPI_Sendrecv(&local_size, 1, MPI_INT, partner, 0, &partner_size, 1, MPI_INT, partner, 0, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
 
-  std::vector<double> remoteVec(partnerSize);
-  MPI_Sendrecv(localVec.data(), localSize, MPI_DOUBLE, partner, 1, remoteVec.data(), partnerSize, MPI_DOUBLE, partner,
-               1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if (local_size == 0 && partner_size == 0) {
+    return;
+  }
 
-  std::vector<double> merged = mergeTwoSortedArrays(localVec, remoteVec);
+  std::vector<double> remote_vec(partner_size);
+  MPI_Sendrecv(local_vec.data(), local_size, MPI_DOUBLE, partner, 1, remote_vec.data(), partner_size, MPI_DOUBLE,
+               partner, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  localVec.clear();
-  if (keepSmall) {
-    localVec.assign(merged.begin(), merged.begin() + localSize);
+  std::vector<double> merged(local_size + partner_size);
+  std::merge(local_vec.begin(), local_vec.end(), remote_vec.begin(), remote_vec.end(), merged.begin());
+
+  if (keep_smaller) {
+    local_vec.assign(merged.begin(), merged.begin() + local_size);
   } else {
-    localVec.assign(merged.end() - localSize, merged.end());
+    local_vec.assign(merged.begin() + partner_size, merged.end());
   }
-}
-
-std::vector<double> DolovVQsortBatcherMPI::mergeTwoSortedArrays(const std::vector<double> &first,
-                                                                const std::vector<double> &second) {
-  std::vector<double> res;
-  res.reserve(first.size() + second.size());
-  size_t i = 0;
-  size_t j = 0;
-  while (i < first.size() && j < second.size()) {
-    if (first[i] <= second[j]) {
-      res.push_back(first[i++]);
-    } else {
-      res.push_back(second[j++]);
-    }
-  }
-  while (i < first.size()) {
-    res.push_back(first[i++]);
-  }
-  while (j < second.size()) {
-    res.push_back(second[j++]);
-  }
-  return res;
-}
-
-void DolovVQsortBatcherMPI::collectData(std::vector<double> &globalRes, const std::vector<double> &local,
-                                        int /*totalSize*/, const std::vector<int> &counts,
-                                        const std::vector<int> &offsets) {
-  MPI_Gatherv(local.data(), static_cast<int>(local.size()), MPI_DOUBLE, globalRes.data(), counts.data(), offsets.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 bool DolovVQsortBatcherMPI::PostProcessingImpl() {
+  local_data_.clear();
+  send_counts_.clear();
+  displacements_.clear();
   return true;
 }
 

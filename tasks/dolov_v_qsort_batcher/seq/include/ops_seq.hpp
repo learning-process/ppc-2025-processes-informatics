@@ -18,8 +18,10 @@ class DolovVQsortBatcherSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  void applyQuicksort(double *array, int low, int high);
-  int getHoarePartition(double *array, int low, int high);
+  void ApplyQuicksort(double *array, int low, int high);
+  int GetHoarePartition(double *array, int low, int high);
+
+  std::vector<double> res_array_;
 };
 
 }  // namespace dolov_v_qsort_batcher
