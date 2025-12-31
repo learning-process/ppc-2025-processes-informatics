@@ -176,7 +176,7 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   }
 
   if (rank == 0) {
-    PostProcessGray_.resize(static_cast<int>(n) * static_cast<int>(m));
+    PostProcessGray_.resize(static_cast<size_t>(n) * static_cast<size_t>(m));
   }
 
   MPI_Gatherv(local_output.data(), (local_rows - 2) * m, MPI_FLOAT, rank == 0 ? PostProcessGray_.data() : nullptr,
@@ -195,7 +195,7 @@ bool ChaschinVSobelOperatorMPI::PostProcessingImpl() {
   int n = std::get<0>(Size_);
   int m = std::get<1>(Size_);
   if (rank != 0) {
-    PostProcessGray_.resize(n * m);
+    PostProcessGray_.resize(static_cast<size_t>(n) * static_cast<size_t>(m));
   }
   // std::cout << "Rank" << rank <<" PostProcessingImpl resize sucsess \n" << std::flush;
   MPI_Bcast(PostProcessGray_.data(),  // буфер

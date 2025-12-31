@@ -77,9 +77,9 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
     std::cout << "\n";*/
 
     // Маски Sobel
-    std::vector<std::vector<float>> k_Kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
+    std::vector<std::vector<float>> k_kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
 
-    std::vector<std::vector<float>> k_Ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
+    std::vector<std::vector<float>> k_ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
 
     // Подготовка expected_output_
     expected_output_.resize(height);
@@ -97,8 +97,8 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
         for (int di = -1; di <= 1; ++di) {
           for (int dj = -1; dj <= 1; ++dj) {
             float val = gray[i + 1 + di][j + 1 + dj];  // +1 для сдвига на паддинг
-            gx += val * k_Kx[di + 1][dj + 1];
-            gy += val * k_Ky[di + 1][dj + 1];
+            gx += val * k_kx[di + 1][dj + 1];
+            gy += val * k_ky[di + 1][dj + 1];
           }
         }
 
