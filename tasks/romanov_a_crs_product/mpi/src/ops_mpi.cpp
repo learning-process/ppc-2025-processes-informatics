@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <cstddef>
+#include <algorithm>
 #include <cstdint>
 #include <vector>
 
@@ -24,92 +24,92 @@ bool RomanovACRSProductMPI::PreProcessingImpl() {
   return true;
 }
 
-inline void BroadcastCRS(CRS &M, int root, MPI_Comm comm) {
-  int rank;
+static void BroadcastCRS(CRS &m, int root, MPI_Comm comm) {
+  int rank = 0;
   MPI_Comm_rank(comm, &rank);
 
-  uint64_t dims[2] = {static_cast<uint64_t>(M.n), static_cast<uint64_t>(M.m)};
-  MPI_Bcast(dims, 2, MPI_UINT64_T, root, comm);
+  uint64_t dims[2] = {m.n, m.m};
+  MPI_Bcast(&dims[0], 2, MPI_UINT64_T, root, comm);
 
   if (rank != root) {
-    M.n = static_cast<uint64_t>(dims[0]);
-    M.m = static_cast<uint64_t>(dims[1]);
-    M.row_index.resize(M.n + 1);
+    m.n = dims[0];
+    m.m = dims[1];
+    m.row_index.resize(m.n + 1);
   }
 
-  uint64_t nnz = static_cast<uint64_t>(M.Nnz());
+  uint64_t nnz = m.Nnz();
   MPI_Bcast(&nnz, 1, MPI_UINT64_T, root, comm);
 
   if (rank != root) {
-    M.value.resize(static_cast<uint64_t>(nnz));
-    M.column.resize(static_cast<uint64_t>(nnz));
+    m.value.resize(nnz);
+    m.column.resize(nnz);
   }
 
   if (nnz > 0) {
-    MPI_Bcast(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, root, comm);
+    MPI_Bcast(m.value.data(), static_cast<int>(nnz), MPI_DOUBLE, root, comm);
     if (nnz > 0) {
-      MPI_Bcast(reinterpret_cast<uint64_t *>(M.column.data()), static_cast<int>(nnz), MPI_UINT64_T, root, comm);
+      MPI_Bcast(reinterpret_cast<uint64_t *>(m.column.data()), static_cast<int>(nnz), MPI_UINT64_T, root, comm);
     }
   }
 
-  if (M.n + 1 > 0) {
-    MPI_Bcast(reinterpret_cast<uint64_t *>(M.row_index.data()), static_cast<int>(M.n + 1), MPI_UINT64_T, root, comm);
+  if (m.n + 1 > 0) {
+    MPI_Bcast(reinterpret_cast<uint64_t *>(m.row_index.data()), static_cast<int>(m.n + 1), MPI_UINT64_T, root, comm);
   }
 }
 
-inline void SendCRS(const CRS &M, int dest, int tag, MPI_Comm comm) {
-  uint64_t dims[2] = {static_cast<uint64_t>(M.n), static_cast<uint64_t>(M.m)};
-  MPI_Send(dims, 2, MPI_UINT64_T, dest, tag, comm);
+static void SendCRS(const CRS &m, int dest, int tag, MPI_Comm comm) {
+  uint64_t dims[2] = {m.n, m.m};
+  MPI_Send(&dims[0], 2, MPI_UINT64_T, dest, tag, comm);
 
-  uint64_t nnz = static_cast<uint64_t>(M.Nnz());
+  uint64_t nnz = m.Nnz();
   MPI_Send(&nnz, 1, MPI_UINT64_T, dest, tag + 1, comm);
 
   if (nnz > 0) {
-    MPI_Send(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, dest, tag + 2, comm);
+    MPI_Send(m.value.data(), static_cast<int>(nnz), MPI_DOUBLE, dest, tag + 2, comm);
     if (nnz > 0) {
-      MPI_Send(reinterpret_cast<const uint64_t *>(M.column.data()), static_cast<int>(nnz), MPI_UINT64_T, dest, tag + 3,
+      MPI_Send(reinterpret_cast<const uint64_t *>(m.column.data()), static_cast<int>(nnz), MPI_UINT64_T, dest, tag + 3,
                comm);
     }
   }
 
-  if (M.n + 1 > 0) {
-    MPI_Send(reinterpret_cast<const uint64_t *>(M.row_index.data()), static_cast<int>(M.n + 1), MPI_UINT64_T, dest,
+  if (m.n + 1 > 0) {
+    MPI_Send(reinterpret_cast<const uint64_t *>(m.row_index.data()), static_cast<int>(m.n + 1), MPI_UINT64_T, dest,
              tag + 4, comm);
   }
 }
 
-inline void RecvCRS(CRS &M, int src, int tag, MPI_Comm comm) {
+static void RecvCRS(CRS &m, int src, int tag, MPI_Comm comm) {
   uint64_t dims[2];
-  MPI_Recv(dims, 2, MPI_UINT64_T, src, tag, comm, MPI_STATUS_IGNORE);
-  M.n = static_cast<uint64_t>(dims[0]);
-  M.m = static_cast<uint64_t>(dims[1]);
+  MPI_Recv(&dims[0], 2, MPI_UINT64_T, src, tag, comm, MPI_STATUS_IGNORE);
+  m.n = dims[0];
+  m.m = dims[1];
 
-  uint64_t nnz;
+  uint64_t nnz = 0;
   MPI_Recv(&nnz, 1, MPI_UINT64_T, src, tag + 1, comm, MPI_STATUS_IGNORE);
 
-  M.value.resize(static_cast<uint64_t>(nnz));
-  M.column.resize(static_cast<uint64_t>(nnz));
-  M.row_index.resize(M.n + 1);
+  m.value.resize(nnz);
+  m.column.resize(nnz);
+  m.row_index.resize(m.n + 1);
 
   if (nnz > 0) {
-    MPI_Recv(M.value.data(), static_cast<int>(nnz), MPI_DOUBLE, src, tag + 2, comm, MPI_STATUS_IGNORE);
+    MPI_Recv(m.value.data(), static_cast<int>(nnz), MPI_DOUBLE, src, tag + 2, comm, MPI_STATUS_IGNORE);
     if (nnz > 0) {
-      MPI_Recv(reinterpret_cast<uint64_t *>(M.column.data()), static_cast<int>(nnz), MPI_UINT64_T, src, tag + 3, comm,
+      MPI_Recv(reinterpret_cast<uint64_t *>(m.column.data()), static_cast<int>(nnz), MPI_UINT64_T, src, tag + 3, comm,
                MPI_STATUS_IGNORE);
     }
   }
 
-  if (M.n + 1 > 0) {
-    MPI_Recv(reinterpret_cast<uint64_t *>(M.row_index.data()), static_cast<int>(M.n + 1), MPI_UINT64_T, src, tag + 4,
+  if (m.n + 1 > 0) {
+    MPI_Recv(reinterpret_cast<uint64_t *>(m.row_index.data()), static_cast<int>(m.n + 1), MPI_UINT64_T, src, tag + 4,
              comm, MPI_STATUS_IGNORE);
   }
 }
 
 bool RomanovACRSProductMPI::RunImpl() {
-  int rank;
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int num_processes;
+  int num_processes = 1;
   MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
 
   CRS a, b;
@@ -127,16 +127,16 @@ bool RomanovACRSProductMPI::RunImpl() {
     uint64_t n = a.n;
     uint64_t rows_per_proc = (n + num_processes - 1) / num_processes;
 
-    for (int p = 1; p < num_processes; p++) {
-      uint64_t start = p * rows_per_proc;
+    for (int pn = 1; pn < num_processes; pn++) {
+      uint64_t start = pn * rows_per_proc;
       if (start >= n) {
         CRS empty(0, a.m);
-        SendCRS(empty, p, 100 + p, MPI_COMM_WORLD);
+        SendCRS(empty, pn, 100 + pn, MPI_COMM_WORLD);
         continue;
       }
       uint64_t end = std::min(n, start + rows_per_proc);
       CRS part = a.ExtractRows(start, end);
-      SendCRS(part, p, 100 + p, MPI_COMM_WORLD);
+      SendCRS(part, pn, 100 + pn, MPI_COMM_WORLD);
     }
 
     uint64_t end0 = std::min(a.n, rows_per_proc);

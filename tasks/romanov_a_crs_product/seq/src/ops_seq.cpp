@@ -22,12 +22,12 @@ bool RomanovACRSProductSEQ::PreProcessingImpl() {
 }
 
 bool RomanovACRSProductSEQ::RunImpl() {
-  const CRS &A = std::get<0>(GetInput());
-  const CRS &B = std::get<1>(GetInput());
+  const CRS &a = std::get<0>(GetInput());
+  const CRS &b = std::get<1>(GetInput());
 
-  CRS C = A * B;
+  CRS c = a * b;
 
-  GetOutput() = std::move(C);
+  GetOutput() = std::move(c);
 
   return true;
 }
