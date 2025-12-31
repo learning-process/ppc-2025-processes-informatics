@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstddef>
 #include <utility>
 #include <vector>
+#include <array>
 
 #include "chaschin_v_sobel_operator/common/include/common.hpp"
 
@@ -55,7 +55,7 @@ bool ChaschinVSobelOperatorSEQ::RunImpl() {
   for (int i = 0; i < n; ++i) {
     out[i].resize(m);
     for (int j = 0; j < m; ++j) {
-      float v = post_process_gray[i * m + j];
+      float v = post_process_gray[(i * m) + j];
       unsigned char c = static_cast<unsigned char>(std::clamp(v, 0.0F, 255.0F));
       out[i][j] = Pixel{.r = c, .g = c, .b = c};
     }
@@ -69,16 +69,16 @@ bool ChaschinVSobelOperatorSEQ::PostProcessingImpl() {
 }
 
 std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
-  const int n = image.size();
+  const int n = static_cast<int>(image.size());
   assert(n > 0);
-  const int m = image[0].size();
+  const int m = static_cast<int>(image[0].size());
   assert(m > 0);
 
   static constexpr std::array<std::array<int, 3>, 3> kKx{{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
 
   static constexpr std::array<std::array<int, 3>, 3> kKy{{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
 
-  std::vector<float> out(n * m, 0.0F);
+  std::vector<float> out(static_cast<size_t>(n) * static_cast<size_t>(m), 0.0F);
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < m; ++j) {
@@ -100,8 +100,8 @@ std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
           volatile int vi = i;
           volatile int vj = j;
           if ((vi + vj) > -1) {
-            gx += v * kKx[di + 1][dj + 1];
-            gy += v * kKy[di + 1][dj + 1];
+            gx += v * static_cast<float>(kKx[di + 1][dj + 1]);
+            gy += v *static_cast<float>(kKy[di + 1][dj + 1]);
           }
         }
       }
