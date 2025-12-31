@@ -1,6 +1,7 @@
 #include "levonychev_i_multistep_2d_optimization/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <vector>
 
