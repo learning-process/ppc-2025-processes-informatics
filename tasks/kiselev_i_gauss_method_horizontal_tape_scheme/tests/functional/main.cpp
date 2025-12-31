@@ -145,11 +145,10 @@ const std::array<TestType, 14> kTestParam = {
                            std::vector<double>{5.0, 6.0, 6.0, 6.0, 6.0, 5.0}, std::size_t{1}},
                     "laplacian_1d_6")};
 
-const auto ktesttaskslist =
-    std::tuple_cat(ppc::util::AddFuncTask<KiselevITestTaskMPI, InType>(
-                       kTestParam, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme),
-                   ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(
-                       kTestParam, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme));
+const auto ktesttaskslist = std::tuple_cat(ppc::util::AddFuncTask<KiselevITestTaskMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme),
+                                           ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme));
 
 const auto kGTestValues = ppc::util::ExpandToValues(ktesttaskslist);
 const auto kPerfTestName = KiselevIRunFuncTestsProcesses2::PrintFuncTestName<KiselevIRunFuncTestsProcesses2>;
