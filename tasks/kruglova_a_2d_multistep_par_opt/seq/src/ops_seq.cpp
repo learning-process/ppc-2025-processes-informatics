@@ -1,9 +1,11 @@
 #include "kruglova_a_2d_multistep_par_opt/seq/include/ops_seq.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <functional>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include "kruglova_a_2d_multistep_par_opt/common/include/common.hpp"
@@ -11,10 +13,6 @@
 namespace kruglova_a_2d_multistep_par_opt {
 
 namespace {
-
-// =======================
-// Data structures
-// =======================
 
 struct Trial1D {
   double x;
@@ -31,10 +29,6 @@ struct Trial2D {
   Trial2D(double x_val, double y_val, double z_val) : x(x_val), y(y_val), z(z_val) {}
 };
 
-// =======================
-// Utility functions
-// =======================
-
 template <typename T>
 double CalculateM(const std::vector<T> &trials) {
   double m_max = 0.0;
@@ -43,9 +37,7 @@ double CalculateM(const std::vector<T> &trials) {
     if (dx > 1e-15) {
       const double dz = std::abs(trials[i + 1].z - trials[i].z);
       const double ratio = dz / dx;
-      if (ratio > m_max) {
-        m_max = ratio;
-      }
+      m_max = std::max(ratio, m_max);
     }
   }
   return m_max;
@@ -134,10 +126,6 @@ void InsertSorted2D(std::vector<Trial2D> &trials, const Trial2D &value) {
   }
 }
 
-// =======================
-// Strongin 1D
-// =======================
-
 double Solve1DStrongin(const std::function<double(double)> &func, double a, double b, double eps, int max_iters,
                        double &best_x) {
   const double r_param = 2.0;
@@ -175,10 +163,6 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
 
 }  // namespace
 
-// =======================
-// KruglovaA2DMuitSEQ
-// =======================
-
 KruglovaA2DMuitSEQ::KruglovaA2DMuitSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -208,14 +192,13 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
 
   for (int i = 0; i < init_points; ++i) {
     const double t = static_cast<double>(i) / static_cast<double>(init_points - 1);
-    const double x = in.x_min + (in.x_max - in.x_min) * t;
+    const double x = in.x_min + ((in.x_max - in.x_min) * t);
 
     double y = 0.0;
     double z = compute_z(x, y);
     x_trials.emplace_back(x, y, z);
   }
 
-  // ручная сортировка
   for (size_t i = 0; i < x_trials.size(); ++i) {
     size_t min_idx = i;
     for (size_t j = i + 1; j < x_trials.size(); ++j) {
