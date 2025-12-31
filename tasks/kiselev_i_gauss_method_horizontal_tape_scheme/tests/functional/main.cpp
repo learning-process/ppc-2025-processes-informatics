@@ -29,14 +29,14 @@ class KiselevIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    const auto &a_v = std::get<0>(input_data_);
-    const auto &b_v = std::get<1>(input_data_);
+    const auto &aVector = std::get<0>(input_data_);
+    const auto &bVector = std::get<1>(input_data_);
 
-    if (a_v.empty() || b_v.empty()) {
+    if (aVector.empty() || bVector.empty()) {
       return false;
     }
 
-    const std::size_t num = a_v.size();
+    const std::size_t num = aVector.size();
     if (output_data.size() != num) {
       return false;
     }
@@ -44,11 +44,11 @@ class KiselevIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType
     double max_abs_residual = 0.0;
     for (std::size_t index = 0; index < num; ++index) {
       double s = 0.0;
-      for (std::size_t j_index = 0; j_index < num; ++j_index) {
-        s += a_v[index][j_index] * output_data[j_index];
+      for (std::size_t jIndex = 0; jIndex < num; ++jIndex) {
+        s += aVector[index][jIndex] * output_data[jIndex];
       }
-      const double r_coef = std::abs(s - b_v[index]);
-      max_abs_residual = std::max(max_abs_residual, r_coef);
+      const double rCoef = std::abs(s - bVector[index]);
+      max_abs_residual = std::max(max_abs_residual, rCoef);
     }
 
     return max_abs_residual < 1e-7;
