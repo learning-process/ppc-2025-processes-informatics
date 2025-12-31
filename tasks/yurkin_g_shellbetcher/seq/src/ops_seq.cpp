@@ -33,9 +33,9 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::ranges::merge(a, b, out.begin());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
+    std::size_t start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
@@ -65,7 +65,6 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   if (n <= 0) {
     return false;
   }
-
   std::vector<int> data;
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
@@ -73,9 +72,7 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   for (InType i = 0; i < n; ++i) {
     data.push_back(dist(rng));
   }
-
   ShellSort(data);
-
   std::vector<int> left;
   std::vector<int> right;
   std::vector<int> merged;
@@ -83,14 +80,11 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
   OddEvenBatcherMerge(left, right, merged);
-
   ShellSort(merged);
-
   std::int64_t checksum = 0;
   for (int v : merged) {
     checksum += static_cast<std::int64_t>(v);
   }
-
   GetOutput() = static_cast<OutType>(checksum & 0x7FFFFFFF);
   return true;
 }
