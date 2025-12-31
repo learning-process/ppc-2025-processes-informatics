@@ -16,7 +16,7 @@ void ShellSort(std::vector<int> &a) {
   std::size_t n = a.size();
   std::size_t gap = 1;
   while (gap < n / 3) {
-    gap = (gap * 3) + 1;
+    gap = gap * 3 + 1;
   }
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
@@ -28,7 +28,7 @@ void ShellSort(std::vector<int> &a) {
       }
       a[j] = tmp;
     }
-    gap = (gap - 1) / 3;
+    gap /= 3;
   }
 }
 
