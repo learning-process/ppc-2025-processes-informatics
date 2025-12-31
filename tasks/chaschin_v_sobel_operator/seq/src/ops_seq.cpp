@@ -1,11 +1,11 @@
 #include "chaschin_v_sobel_operator/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <utility>
 #include <vector>
-#include <array>
 
 #include "chaschin_v_sobel_operator/common/include/common.hpp"
 
@@ -101,7 +101,7 @@ std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
           volatile int vj = j;
           if ((vi + vj) > -1) {
             gx += v * static_cast<float>(kKx[di + 1][dj + 1]);
-            gy += v *static_cast<float>(kKy[di + 1][dj + 1]);
+            gy += v * static_cast<float>(kKy[di + 1][dj + 1]);
           }
         }
       }

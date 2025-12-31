@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
-#include <array>
-#include <cmath>
 
 #include "chaschin_v_sobel_operator/common/include/common.hpp"
 #include "chaschin_v_sobel_operator/mpi/include/ops_mpi.hpp"
@@ -35,7 +35,7 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     for (int i = 0; i < height; ++i) {
       image[i].resize(width);
       for (int j = 0; j < width; ++j) {
-        image[i][j] = Pixel{.r=static_cast<uint8_t>((i + 1) % 256), .g=static_cast<uint8_t>((j + 2) % 256), .b=0};
+        image[i][j] = Pixel{.r = static_cast<uint8_t>((i + 1) % 256), .g = static_cast<uint8_t>((j + 2) % 256), .b = 0};
       }
     }
 
@@ -51,7 +51,7 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     // Маски Sobel
     static constexpr std::array<std::array<int, 3>, 3> kKx{{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
 
-  static constexpr std::array<std::array<int, 3>, 3> kKy{{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
+    static constexpr std::array<std::array<int, 3>, 3> kKy{{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
 
     // Подготовка expected_output_
     expected_output_.resize(height);
@@ -85,7 +85,7 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
 
         float grad = std::sqrt(gx * gx + gy * gy);
         uint8_t intensity = static_cast<uint8_t>(std::min(255.0F, grad));
-        expected_output_[i][j] = Pixel{.r=intensity, .g=intensity, .b=intensity};
+        expected_output_[i][j] = Pixel{.r = intensity, .g = intensity, .b = intensity};
       }
     }
   }
