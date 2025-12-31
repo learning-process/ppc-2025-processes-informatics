@@ -36,11 +36,14 @@ struct CharIdx {
 
 double CalculateM1D(const std::vector<Trial1D> &trials) {
   double m_max = 0.0;
-  for (size_t i = 0; i + 1 < trials.size(); ++i) {
+  for (size_t i = 0; (i + 1) < trials.size(); ++i) {
     const double dx = trials[i + 1].x - trials[i].x;
     if (dx > 1e-15) {
       const double dz = std::abs(trials[i + 1].z - trials[i].z);
-      m_max = std::max(m_max, dz / dx);
+      const double ratio = dz / dx;
+      if (ratio > m_max) {
+        m_max = ratio;
+      }
     }
   }
   return m_max;
@@ -48,27 +51,34 @@ double CalculateM1D(const std::vector<Trial1D> &trials) {
 
 double CalculateM2D(const std::vector<Trial2D> &trials) {
   double m_max = 0.0;
-  for (size_t i = 0; i + 1 < trials.size(); ++i) {
+  for (size_t i = 0; (i + 1) < trials.size(); ++i) {
     const double dx = trials[i + 1].x - trials[i].x;
     if (dx > 1e-15) {
       const double df = std::abs(trials[i + 1].f - trials[i].f);
-      m_max = std::max(m_max, df / dx);
+      const double ratio = df / dx;
+      if (ratio > m_max) {
+        m_max = ratio;
+      }
     }
   }
   return m_max;
 }
 
 void InsertSorted1D(std::vector<Trial1D> &trials, const Trial1D &value) {
-  auto it = std::lower_bound(trials.begin(), trials.end(), value,
-                             [](const Trial1D &a, const Trial1D &b) { return a.x < b.x; });
-  trials.insert(it, value);
+  size_t pos = 0;
+  while (pos < trials.size() && trials[pos].x < value.x) {
+    ++pos;
+  }
+  trials.insert(trials.begin() + static_cast<std::ptrdiff_t>(pos), value);
 }
 
 void InsertSorted2D(std::vector<Trial2D> &trials, const Trial2D &value) {
-  auto it = std::lower_bound(trials.begin(), trials.end(), value,
-                             [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
-  if (it == trials.end() || (std::abs(it->x - value.x) > 1e-12)) {
-    trials.insert(it, value);
+  size_t pos = 0;
+  while (pos < trials.size() && trials[pos].x < value.x) {
+    ++pos;
+  }
+  if (pos == trials.size() || (std::abs(trials[pos].x - value.x) > 1e-12)) {
+    trials.insert(trials.begin() + static_cast<std::ptrdiff_t>(pos), value);
   }
 }
 
@@ -88,7 +98,7 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
 
     double max_rate = -std::numeric_limits<double>::infinity();
     size_t idx = 0;
-    for (size_t i = 0; i + 1 < trials.size(); ++i) {
+    for (size_t i = 0; (i + 1) < trials.size(); ++i) {
       const double dx = trials[i + 1].x - trials[i].x;
       const double dz = trials[i + 1].z - trials[i].z;
       const double rate = (m_scaled * dx) + ((dz * dz) / (m_scaled * dx)) - (2.0 * (trials[i + 1].z + trials[i].z));
@@ -117,18 +127,26 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
   return trials[best].z;
 }
 
-// Вынесено для уменьшения сложности RunImpl
 void PrepareIntervals(const std::vector<Trial2D> &trials, std::vector<double> &buf, int size, double eps, int &stop) {
   const double m_max = CalculateM2D(trials);
   const double m_v = (m_max > 0.0) ? (2.0 * m_max) : 1.0;
   std::vector<CharIdx> rates;
-  for (size_t i = 0; i + 1 < trials.size(); ++i) {
+  for (size_t i = 0; (i + 1) < trials.size(); ++i) {
     const double dx = trials[i + 1].x - trials[i].x;
     const double df = trials[i + 1].f - trials[i].f;
     const double r = (m_v * dx) + ((df * df) / (m_v * dx)) - (2.0 * (trials[i + 1].f + trials[i].f));
     rates.push_back({r, i});
   }
-  std::sort(rates.begin(), rates.end(), [](const CharIdx &a, const CharIdx &b) { return a.r_val > b.r_val; });
+
+  for (size_t i = 0; i < rates.size(); ++i) {
+    size_t max_idx = i;
+    for (size_t j = i + 1; j < rates.size(); ++j) {
+      if (rates[j].r_val > rates[max_idx].r_val) {
+        max_idx = j;
+      }
+    }
+    std::swap(rates[i], rates[max_idx]);
+  }
 
   if (rates.empty() || (trials[rates[0].idx + 1].x - trials[rates[0].idx].x < eps)) {
     stop = 1;
@@ -214,9 +232,13 @@ bool KruglovaA2DMuitMPI::RunImpl() {
 
   std::array<double, 3> res = {0.0, 0.0, 0.0};
   if (rank == 0) {
-    auto best =
-        std::min_element(trials.begin(), trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.f < b.f; });
-    res = {best->x, best->y, best->f};
+    size_t best_idx = 0;
+    for (size_t i = 1; i < trials.size(); ++i) {
+      if (trials[i].f < trials[best_idx].f) {
+        best_idx = i;
+      }
+    }
+    res = {trials[best_idx].x, trials[best_idx].y, trials[best_idx].f};
   }
   MPI_Bcast(res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   GetOutput() = {res[0], res[1], res[2]};

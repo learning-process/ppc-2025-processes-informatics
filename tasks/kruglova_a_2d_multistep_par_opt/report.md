@@ -328,50 +328,57 @@ bool KruglovaA2DMuitMPI::RunImpl() {
   std::vector<Trial2D> trials;
 
   if (rank == 0) {
-    trials = InitTrials(in, 20);
+    for (int i = 0; i < 15; ++i) {
+      const double x = in.x_min + ((in.x_max - in.x_min) * (static_cast<double>(i) / 14.0));
+      double y_b = 0.0;
+      const double f = Solve1DStrongin([&](double y) { return ObjectiveFunction(x, y); }, in.y_min, in.y_max, in.eps,
+                                       std::max(40, in.max_iters / 15), y_b);
+      InsertSorted2D(trials, Trial2D(x, y_b, f));
+    }
   }
 
   for (int iter = 0; iter < in.max_iters; ++iter) {
-    int stop_flag = 0;
-    std::vector<IntervalData> selected_intervals(static_cast<size_t>(size));
+    int stop_f = 0;
+    std::vector<double> intervals_buf(static_cast<size_t>(size) * 4, 0.0);
+    if (rank == 0) PrepareIntervals(trials, intervals_buf, size, in.eps, stop_f);
+
+    MPI_Bcast(&stop_f, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if (stop_f != 0) break;
+
+    std::array<double, 4> my_int{};
+    MPI_Scatter(intervals_buf.data(), 4, MPI_DOUBLE, my_int.data(), 4, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    const double dx_l = my_int[1] - my_int[0];
+    const double m_l = std::max(1.0, 2.0 * (std::abs(my_int[3] - my_int[2]) / dx_l));
+    const double x_n = (0.5 * (my_int[0] + my_int[1])) - ((my_int[3] - my_int[2]) / (2.0 * m_l));
+    double y_res = 0.0;
+    const double f_res = Solve1DStrongin([&](double y) { return ObjectiveFunction(x_n, y); }, in.y_min, in.y_max, in.eps,
+                                         std::max(50, in.max_iters / 15), y_res);
+
+    std::array<double, 3> send_v = {x_n, y_res, f_res};
+    std::vector<double> recv_v(static_cast<size_t>(size) * 3);
+    MPI_Gather(send_v.data(), 3, MPI_DOUBLE, recv_v.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
-      MasterCalculateIntervals(trials, selected_intervals, size, in.eps, stop_flag);
-    }
-
-    MPI_Bcast(&stop_flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    if (stop_flag != 0) {
-      break;
-    }
-
-    IntervalData my_interval{};
-    MPI_Scatter(selected_intervals.data(), sizeof(IntervalData), MPI_BYTE, &my_interval, sizeof(IntervalData), MPI_BYTE,
-                0, MPI_COMM_WORLD);
-
-    Trial2D local_trial = ComputeLocalTrial(my_interval, in);
-    std::array<double, 3> send_res = {local_trial.x, local_trial.y, local_trial.f};
-    std::vector<double> recv_res(static_cast<size_t>(size) * 3);
-    MPI_Gather(send_res.data(), 3, MPI_DOUBLE, recv_res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    if (rank == 0) {
-      std::vector<Trial2D> new_trials;
       for (int i = 0; i < size; ++i) {
-        size_t base = static_cast<size_t>(i) * 3;
-        new_trials.push_back({.x = recv_res[base], .y = recv_res[base + 1], .f = recv_res[base + 2]});
+        const size_t base = static_cast<size_t>(i) * 3;
+        InsertSorted2D(trials, Trial2D(recv_v[base + 0], recv_v[base + 1], recv_v[base + 2]));
       }
-      UpdateTrialsOnMaster(trials, new_trials);
     }
   }
 
-  std::array<double, 3> final_res = {0.0, 0.0, 0.0};
+  std::array<double, 3> res = {0.0, 0.0, 0.0};
   if (rank == 0) {
-    Trial2D best = FindBestTrial(trials);
-    final_res = {best.x, best.y, best.f};
+    size_t best_idx = 0;
+    for (size_t i = 1; i < trials.size(); ++i) {
+      if (trials[i].f < trials[best_idx].f) best_idx = i;
+    }
+    res = {trials[best_idx].x, trials[best_idx].y, trials[best_idx].f};
   }
-
-  MPI_Bcast(final_res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  GetOutput() = {final_res[0], final_res[1], final_res[2]};
+  MPI_Bcast(res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  GetOutput() = {res[0], res[1], res[2]};
   return true;
 }
+
   
 ```
