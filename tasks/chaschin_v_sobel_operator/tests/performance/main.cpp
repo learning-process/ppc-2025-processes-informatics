@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -50,9 +49,9 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     }
 
     // Маски Sobel
-    std::vector<std::vector<float>> k_Kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
+    std::vector<std::vector<float>> k_kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
 
-    std::vector<std::vector<float>> k_Ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
+    std::vector<std::vector<float>> k_ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
 
     // Подготовка expected_output_
     expected_output_.resize(height);
@@ -79,8 +78,8 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
             }
 
             float val = gray[ni][nj];
-            gx += val * k_Kx[di + 1][dj + 1];
-            gy += val * k_Ky[di + 1][dj + 1];
+            gx += val * k_kx[di + 1][dj + 1];
+            gy += val * k_ky[di + 1][dj + 1];
           }
         }
 

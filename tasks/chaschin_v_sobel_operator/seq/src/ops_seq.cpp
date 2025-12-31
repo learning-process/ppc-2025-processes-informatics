@@ -74,9 +74,9 @@ std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
   const int m = static_cast<int>(image[0].size());
   assert(m > 0);
 
-  std::vector<std::vector<int>> k_Kx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+  std::vector<std::vector<int>> k_kx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
 
-  std::vector<std::vector<int>> k_Ky = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+  std::vector<std::vector<int>> k_ky = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 
   std::vector<float> out(static_cast<size_t>(n) * static_cast<size_t>(m), 0.0F);
 
@@ -100,8 +100,8 @@ std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
           volatile int vi = i;
           volatile int vj = j;
           if ((vi + vj) > -1) {
-            gx += v * static_cast<float>(k_Kx[di + 1][dj + 1]);
-            gy += v * static_cast<float>(k_Ky[di + 1][dj + 1]);
+            gx += v * static_cast<float>(k_kx[di + 1][dj + 1]);
+            gy += v * static_cast<float>(k_ky[di + 1][dj + 1]);
           }
         }
       }
