@@ -50,9 +50,9 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     }
 
     // Маски Sobel
-    std::vector<std::vector<int>> kKx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+    std::vector<std::vector<float>> k_Kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
 
-    std::vector<std::vector<int>> kKy = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+    std::vector<std::vector<float>> k_Ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
 
     // Подготовка expected_output_
     expected_output_.resize(height);
@@ -63,8 +63,8 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
     // Вычисление градиента Sobel и реконструкция Pixel
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
-        float gx = 0.0f;
-        float gy = 0.0f;
+        float gx = 0.0F;
+        float gy = 0.0F;
 
         for (int di = -1; di <= 1; ++di) {
           int ni = i + di;
@@ -79,12 +79,12 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
             }
 
             float val = gray[ni][nj];
-            gx += val * static_cast<float>(kKx[di + 1][dj + 1]);
-            gy += val * static_cast<float>(kKy[di + 1][dj + 1]);
+            gx += val * k_Kx[di + 1][dj + 1];
+            gy += val * k_Ky[di + 1][dj + 1];
           }
         }
 
-        float grad = std::sqrt(gx * gx + gy * gy);
+        float grad = std::sqrt((gx * gx) + (gy * gy));
         uint8_t intensity = static_cast<uint8_t>(std::min(255.0F, grad));
         expected_output_[i][j] = Pixel{.r = intensity, .g = intensity, .b = intensity};
       }

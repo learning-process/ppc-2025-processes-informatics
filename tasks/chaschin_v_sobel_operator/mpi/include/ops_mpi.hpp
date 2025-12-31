@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <tuple>
 #include <vector>
 
@@ -28,7 +27,7 @@ class ChaschinVSobelOperatorMPI : public BaseTask {
   static float SobelAt(const std::vector<float> &img, int i, int j, int stride);
   std::vector<float> PreProcessGray_;
   std::vector<float> PostProcessGray_;
-  std::tuple<size_t, size_t> Size_;
+  std::tuple<int, int> Size_;
   std::vector<int> ScatterSendCounts_;
   std::vector<int> ScatterDispls_;
 };
