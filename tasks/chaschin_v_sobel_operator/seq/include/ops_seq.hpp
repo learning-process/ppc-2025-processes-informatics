@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "chaschin_v_sobel_operator/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -19,6 +21,6 @@ class ChaschinVSobelOperatorSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-std::vector<float> sobel_seq(const std::vector<std::vector<float>> &image);
+std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image);
 
 }  // namespace chaschin_v_sobel_operator

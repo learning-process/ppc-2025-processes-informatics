@@ -4,7 +4,10 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <utility>
 #include <vector>
+
+#include "chaschin_v_sobel_operator/common/include/common.hpp"
 
 namespace chaschin_v_sobel_operator {
 
@@ -35,25 +38,26 @@ bool ChaschinVSobelOperatorSEQ::RunImpl() {
 
   int n = std::get<1>(in);
   int m = std::get<2>(in);
-  std::vector<std::vector<float>> gray(n, std::vector<float>(m, 0.0f));
+  std::vector<std::vector<float>> gray(n, std::vector<float>(m, 0.0F));
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < m; ++j) {
       Pixel p = mat[i][j];
-      gray[i][j] = 0.299f * p.r + 0.587f * p.g + 0.114f * p.b;
+      gray[i][j] =
+          (0.299F * static_cast<float>(p.r)) + (0.587F * static_cast<float>(p.g)) + (0.114F * static_cast<float>(p.b));
     }
   }
 
-  std::vector<float> PostProcessGray = sobel_seq(gray);
+  std::vector<float> post_process_gray = SobelSeq(gray);
 
   out.resize(n);
 
   for (int i = 0; i < n; ++i) {
     out[i].resize(m);
     for (int j = 0; j < m; ++j) {
-      float v = PostProcessGray[i * m + j];
-      unsigned char c = static_cast<unsigned char>(std::clamp(v, 0.0f, 255.0f));
-      out[i][j] = Pixel{c, c, c};
+      float v = post_process_gray[i * m + j];
+      unsigned char c = static_cast<unsigned char>(std::clamp(v, 0.0F, 255.0F));
+      out[i][j] = Pixel{.r = c, .g = c, .b = c};
     }
   }
 
@@ -64,46 +68,44 @@ bool ChaschinVSobelOperatorSEQ::PostProcessingImpl() {
   return true;
 }
 
-std::vector<float> sobel_seq(const std::vector<std::vector<float>> &image) {
+std::vector<float> SobelSeq(const std::vector<std::vector<float>> &image) {
   const int n = image.size();
   assert(n > 0);
   const int m = image[0].size();
   assert(m > 0);
 
-  static const int Kx[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-  static const int Ky[3][3] = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+  static constexpr std::array<std::array<int, 3>, 3> kKx{{{{-1, 0, 1}}, {{-2, 0, 2}}, {{-1, 0, 1}}}};
 
-  std::vector<float> out(n * m, 0.0f);
+  static constexpr std::array<std::array<int, 3>, 3> kKy{{{{-1, -2, -1}}, {{0, 0, 0}}, {{1, 2, 1}}}};
+
+  std::vector<float> out(n * m, 0.0F);
 
   for (int i = 0; i < n; ++i) {
     for (int j = 0; j < m; ++j) {
-      float gx = 0.0f;
-      float gy = 0.0f;
+      float gx = 0.0F;
+      float gy = 0.0F;
 
-      for (int di = -1; di <= 1; ++di) {
-        int ni = i + di;
-        if (ni < 0 || ni >= n) {
-          continue;
-        }
+      const int i0 = std::max(0, i - 1);
+      const int i1 = std::min(n - 1, i + 1);
+      const int j0 = std::max(0, j - 1);
+      const int j1 = std::min(m - 1, j + 1);
 
-        for (int dj = -1; dj <= 1; ++dj) {
-          int nj = j + dj;
-          if (nj < 0 || nj >= m) {
-            continue;
-          }
+      for (int ni = i0; ni <= i1; ++ni) {
+        for (int nj = j0; nj <= j1; ++nj) {
+          const int di = ni - i;
+          const int dj = nj - j;
 
           float v = image[ni][nj];
 
           volatile int vi = i;
           volatile int vj = j;
           if ((vi + vj) > -1) {
-            gx += v * Kx[di + 1][dj + 1];
-            gy += v * Ky[di + 1][dj + 1];
+            gx += v * kKx[di + 1][dj + 1];
+            gy += v * kKy[di + 1][dj + 1];
           }
         }
       }
-
-      out[i * m + j] = std::sqrt(gx * gx + gy * gy);
+      out[(i * m) + j] = std::sqrt((gx * gx) + (gy * gy));
     }
   }
 

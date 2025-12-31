@@ -21,15 +21,15 @@ class ChaschinVSobelOperatorMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<float> PreprocessToGrayscaleWithOverlap(const std::vector<std::vector<Pixel>> &image, int n_procs,
-                                                      std::vector<int> &sendcounts, std::vector<int> &displs);
+  static std::vector<float> PreprocessToGrayscaleWithOverlap(const std::vector<std::vector<Pixel>> &image, int n_procs,
+                                                             std::vector<int> &sendcounts, std::vector<int> &displs);
 
-  float sobel_at(const std::vector<float> &img, int i, int j, int stride);
-  std::vector<float> PreProcessGray;
-  std::vector<float> PostProcessGray;
-  std::tuple<int, int> Size;
-  std::vector<int> ScatterSendCounts;
-  std::vector<int> ScatterDispls;
+  static float SobelAt(const std::vector<float> &img, int i, int j, int stride);
+  std::vector<float> PreProcessGray_;
+  std::vector<float> PostProcessGray_;
+  std::tuple<size_t, size_t> Size_;
+  std::vector<int> ScatterSendCounts_;
+  std::vector<int> ScatterDispls_;
 };
 
 }  // namespace chaschin_v_sobel_operator
