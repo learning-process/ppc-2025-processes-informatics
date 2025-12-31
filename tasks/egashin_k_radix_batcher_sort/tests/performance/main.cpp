@@ -64,11 +64,6 @@ TEST_P(EgashinKRadixBatcherSortPerfTest, Performance) {
 const auto kPerfParams =
     ppc::util::MakeAllPerfTasks<InType, TestTaskMPI, TestTaskSEQ>(PPC_SETTINGS_egashin_k_radix_batcher_sort);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kPerfParams);
-
-const auto kPerfTestName = EgashinKRadixBatcherSortPerfTest::CustomPerfTestName;
-
-// NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortPerf, EgashinKRadixBatcherSortPerfTest, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortPerf, EgashinKRadixBatcherSortPerfTest, ppc::util::TupleToGTestValues(kPerfParams));
 
 }  // namespace egashin_k_radix_batcher_sort

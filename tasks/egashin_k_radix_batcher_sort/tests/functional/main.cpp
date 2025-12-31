@@ -16,11 +16,6 @@
 namespace egashin_k_radix_batcher_sort {
 
 class EgashinKRadixBatcherSortFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
- public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::get<2>(test_param);
-  }
-
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -66,7 +61,7 @@ inline OutType SortedOutput(const InType &input) {
 }
 
 // Test cases with unique names
-const std::array<TestType, 15> kTestParam = {
+const std::array<TestType, 15> kTests = {
     std::make_tuple(InType{}, OutType{}, "EmptyArray"),
     std::make_tuple(InType{42.0}, OutType{42.0}, "SingleElement"),
     std::make_tuple(InType{1.0, 2.0}, OutType{1.0, 2.0}, "TwoElementsSorted"),
@@ -84,20 +79,15 @@ const std::array<TestType, 15> kTestParam = {
     std::make_tuple(InType{8.0, 4.0, 2.0, 6.0, 1.0, 5.0, 7.0, 3.0}, OutType{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0},
                     "PowerOf2Size")};
 
-TEST_P(EgashinKRadixBatcherSortFuncTest, RadixBatcherSort) {
+TEST_P(EgashinKRadixBatcherSortFuncTest, Sorting) {
   ExecuteTest(GetParam());
 }
 
 const auto kTaskParams =
-    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort),
-                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort));
+    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTests, PPC_SETTINGS_egashin_k_radix_batcher_sort),
+                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTests, PPC_SETTINGS_egashin_k_radix_batcher_sort));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTaskParams);
-
-const auto kFuncTestName = EgashinKRadixBatcherSortFuncTest::PrintFuncTestName<EgashinKRadixBatcherSortFuncTest>;
-
-// NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortFunc, EgashinKRadixBatcherSortFuncTest, kGtestValues, kFuncTestName);
+INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortFunc, EgashinKRadixBatcherSortFuncTest, ppc::util::ExpandToValues(kTaskParams));
 
 }  // namespace
 
