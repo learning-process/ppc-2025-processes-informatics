@@ -15,48 +15,40 @@
 namespace ovsyannikov_n_shell_batcher {
 
 class OvsyannikovNShellBatcherPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
+  InType input_data_;
+
   void SetUp() override {
-    const int size = 40000;
-    input_data_.resize(size);
-    std::ranges::iota(input_data_, 0);
-    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
-    std::ranges::shuffle(input_data_, gen);
-    expected_output_ = input_data_;
-    std::ranges::sort(expected_output_);
+    TestType param = 100000;
+    int seed = static_cast<int>(param % 100ULL);
+    std::mt19937 e(seed);
+    std::uniform_int_distribution<int> gen(-1000000, 1000000);
+    std::vector<int> &vec = input_data_;
+    vec.resize(param);
+    std::ranges::generate(vec.begin(), vec.end(), [&]() { return gen(e); });
   }
+
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank != 0) {
-      return true;
-    }
-    return output_data == expected_output_;
+    std::vector<int> example = input_data_;
+    std::ranges::sort(example.begin(), example.end());
+    return example == output_data;
   }
+
   InType GetTestInputData() final {
     return input_data_;
   }
-
- private:
-  InType input_data_;
-  OutType expected_output_;
 };
 
 TEST_P(OvsyannikovNShellBatcherPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    ovsyannikov_n_shell_batcher_mpi, OvsyannikovNShellBatcherPerfTest,
-    ppc::util::TupleToGTestValues(ppc::util::MakePerfTaskTuples<OvsyannikovNShellBatcherMPI, InType>("mpi")),
-    [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
-      return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
-    });
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, OvsyannikovNShellBatcherMPI, OvsyannikovNShellBatcherSEQ>(
+        PPC_SETTINGS_ovsyannikov_n_shell_batcher);
 
-INSTANTIATE_TEST_SUITE_P(
-    ovsyannikov_n_shell_batcher_seq, OvsyannikovNShellBatcherPerfTest,
-    ppc::util::TupleToGTestValues(ppc::util::MakePerfTaskTuples<OvsyannikovNShellBatcherSEQ, InType>("seq")),
-    [](const testing::TestParamInfo<OvsyannikovNShellBatcherPerfTest::ParamType> &info) {
-      return OvsyannikovNShellBatcherPerfTest::CustomPerfTestName(info);
-    });
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = OvsyannikovNShellBatcherPerfTest::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, OvsyannikovNShellBatcherPerfTest, kGtestValues, kPerfTestName);
 }  // namespace ovsyannikov_n_shell_batcher

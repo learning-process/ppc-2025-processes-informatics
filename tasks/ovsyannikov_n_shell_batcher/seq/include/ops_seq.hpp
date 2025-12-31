@@ -1,7 +1,8 @@
 #pragma once
 
+#include <vector>
+
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
-#include "task/include/task.hpp"
 
 namespace ovsyannikov_n_shell_batcher {
 
@@ -13,13 +14,13 @@ class OvsyannikovNShellBatcherSEQ : public BaseTask {
 
   explicit OvsyannikovNShellBatcherSEQ(const InType &in);
 
+ private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
- private:
-  static void ShellSort(std::vector<int> &arr);
+  InType data_;
 };
 
 }  // namespace ovsyannikov_n_shell_batcher

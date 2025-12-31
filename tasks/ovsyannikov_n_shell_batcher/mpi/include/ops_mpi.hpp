@@ -1,12 +1,8 @@
 #pragma once
 
-#include <mpi.h>
-
-#include <stdexcept>
 #include <vector>
 
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
-#include "task/include/task.hpp"
 
 namespace ovsyannikov_n_shell_batcher {
 
@@ -16,16 +12,23 @@ class OvsyannikovNShellBatcherMPI : public BaseTask {
     return ppc::task::TypeOfTask::kMPI;
   }
 
-  explicit OvsyannikovNShellBatcherMPI(const InType &in);
+  explicit OvsyannikovNShellBatcherMPI(const InType &in) {
+    SetTypeOfTask(GetStaticTypeOfTask());
+    GetInput() = in;
+    GetOutput() = {};
+  }
 
+ private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
- private:
-  static void ShellSort(std::vector<int> &arr);
-  bool need_finalize_ = false;
+  std::vector<int> local_;
+  std::vector<int> counts_;
+  std::vector<int> displs_;
+  int world_rank_{0};
+  int world_size_{1};
 };
 
 }  // namespace ovsyannikov_n_shell_batcher
