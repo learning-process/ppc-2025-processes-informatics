@@ -1,8 +1,9 @@
 #pragma once
 
+#include <vector>
+
 #include "goriacheva_k_violation_order_elem_vec/common/include/common.hpp"
 #include "task/include/task.hpp"
-#include <vector>
 
 namespace goriacheva_k_violation_order_elem_vec {
 
@@ -19,9 +20,8 @@ class GoriachevaKViolationOrderElemVecSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
- private:
-  std::vector<int>input_vec;
-  int result = 0;
+  std::vector<int> input_vec_;
+  int result_ = 0;
 };
 
 }  // namespace goriacheva_k_violation_order_elem_vec

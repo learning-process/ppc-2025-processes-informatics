@@ -1,10 +1,9 @@
 #include "goriacheva_k_violation_order_elem_vec/seq/include/ops_seq.hpp"
 
-//#include <numeric>
+#include <cstddef>
 #include <vector>
 
 #include "goriacheva_k_violation_order_elem_vec/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace goriacheva_k_violation_order_elem_vec {
 
@@ -19,30 +18,30 @@ bool GoriachevaKViolationOrderElemVecSEQ::ValidationImpl() {
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::PreProcessingImpl() {
-  input_vec = GetInput();
-  result = 0;
+  input_vec_ = GetInput();
+  result_ = 0;
   return true;
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::RunImpl() {
-  input_vec = GetInput();
-  result = 0;
+  input_vec_ = GetInput();
+  result_ = 0;
 
-  if (input_vec.size() <= 1) { 
-    result = 0; 
+  if (input_vec_.size() <= 1) {
+    result_ = 0;
   }
 
-  for(size_t i = 0; i + 1 < input_vec.size(); ++i){
-    if (input_vec[i] > input_vec[i + 1]){
-      ++result;
+  for (size_t i = 0; i + 1 < input_vec_.size(); ++i) {
+    if (input_vec_[i] > input_vec_[i + 1]) {
+      ++result_;
     }
   }
-  //GetOutput() = result;
+
   return true;
 }
 
 bool GoriachevaKViolationOrderElemVecSEQ::PostProcessingImpl() {
-  GetOutput() = result;
+  GetOutput() = result_;
   return true;
 }
 

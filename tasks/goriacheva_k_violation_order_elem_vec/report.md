@@ -42,10 +42,10 @@ a[i] > a[i+1]
 
 Алгоритм:
 
-result = 0;
-for(size_t i = 0; i + 1 < input_vec.size(); ++i){
-    if (input_vec[i] > input_vec[i + 1]){
-      ++result;
+result_ = 0;
+for(size_t i = 0; i + 1 < input_vec_.size(); ++i){
+    if (input_vec_[i] > input_vec_[i + 1]){
+      ++result_;
     }
 }
 
@@ -127,7 +127,7 @@ left_last > local.front()
 * массивы длины 0, 1 и 2;
 * различные комбинации локальных спадов и подъёмов.
 
-Всего выполнено 58 функциональных тестов, все из которых успешно пройдены как для SEQ, так и для MPI версии.
+Всего выполнено 60 функциональных тестов, все из которых успешно пройдены как для SEQ, так и для MPI версии.
 
 ---
 
@@ -139,18 +139,27 @@ left_last > local.front()
 
 | Реализация | Процессы | Режим    | Время (с) |
 | ---------- | -------- | -------- | --------- |
-| SEQ        | 1        | task_run | 1.2996    |
-| MPI        | 4        | task_run | 0.3351    |
+| SEQ        | 1        | task_run | 0.8988    |
+| MPI        | 2        | task_run | 0.3964    |
+| MPI        | 4        | task_run | 0.2755    |
 
 ### Расчёт ускорения и эффективности
 
-Ускорение:
+Ускорение на двух процессах:
 
-S = 1.2996 / 0.3351 ≈ 3.88
+S = 0.8988 / 0.3964 ≈ 2.26
 
-Эффективность:
+Эффективность на двух процессах:
 
-E = 3.88 / 4 ≈ 0.97
+E = 2.26 / 4 ≈ 0.57
+
+Ускорение на четырёх процессах:
+
+S = 0.8988 / 0.2755 ≈ 3.26
+
+Эффективность на четырёх процессах:
+
+E = 3.26 / 4 ≈ 0.82
 
 ---
 
@@ -177,15 +186,16 @@ E = 3.88 / 4 ≈ 0.97
 
 * подтверждена корректность алгоритма на широком наборе тестов;
 * реализована эффективная MPI-версия с учётом граничных условий;
-* достигнуто ускорение порядка 3.9 раз на 4 процессах;
+* достигнуто ускорение порядка 2.26 раз на 2 процессах;
+* достигнуто ускорение порядка 3.26 раз на 4 процессах;
 * показано, что для больших массивов MPI-реализация оправдана и эффективна.
 
 ---
 
 ## 9. Используемые источники
 
-1. Pacheco P. — *An Introduction to Parallel Programming*.
-2. Gropp W., Lusk E. — *Using MPI*.
-3. Документация MPI Standard.
+1.  Parallel Programming Course - [https://learning-process.github.io/parallel_programming_course/ru/](https://learning-process.github.io/parallel_programming_course/ru/)
+2.  Parallel Programming 2025-2026 Video-Records - [https://disk.yandex.ru/d/NvHFyhOJCQU65w](https://disk.yandex.ru/d/NvHFyhOJCQU65w)
+3.  Open MPI: Documentation — [https://www.open-mpi.org/doc/](https://www.open-mpi.org/doc/)
 
 ---

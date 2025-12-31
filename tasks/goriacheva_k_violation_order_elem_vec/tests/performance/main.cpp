@@ -1,13 +1,12 @@
 #include <gtest/gtest.h>
+
+#include <cstddef>
 #include <string>
-#include<vector>
-#include<cstddef>
 
 #include "goriacheva_k_violation_order_elem_vec/common/include/common.hpp"
 #include "goriacheva_k_violation_order_elem_vec/mpi/include/ops_mpi.hpp"
 #include "goriacheva_k_violation_order_elem_vec/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace goriacheva_k_violation_order_elem_vec {
 
@@ -17,29 +16,30 @@ class GoriachevaKViolationOrderElemVecPerfTests : public ppc::util::BaseRunPerfT
 
  protected:
   void SetUp() override {
-    input.resize(kPerfSize);
+    input_.resize(kPerfSize);
 
     for (std::size_t i = 0; i < kPerfSize; ++i) {
-      if (i % 3 == 0)
-        input[i] = static_cast<int>(kPerfSize - i);
-      else
-        input[i] = static_cast<int>(i % 1000);
+      if (i % 3 == 0) {
+        input_[i] = static_cast<int>(kPerfSize - i);
+      } else {
+        input_[i] = static_cast<int>(i % 1000);
+      }
     }
 
-    expected = 1;
+    expected_ = 1;
   }
 
   InType GetTestInputData() final {
-    return input;
+    return input_;
   }
 
-  bool CheckTestOutputData(OutType&) final {
+  bool CheckTestOutputData(OutType & /*output_data*/) final {
     return true;
   }
 
  private:
-  InType input;
-  OutType expected{};
+  InType input_;
+  OutType expected_{};
 };
 
 TEST_P(GoriachevaKViolationOrderElemVecPerfTests, RunPerfModes) {
@@ -57,11 +57,12 @@ auto BuildPerfParams() {
 
 const auto kPerfParams = BuildPerfParams();
 
-std::string MakePerfName(const ::testing::TestParamInfo<GoriachevaKViolationOrderElemVecPerfTests::ParamType>& info) {
+std::string MakePerfName(const ::testing::TestParamInfo<GoriachevaKViolationOrderElemVecPerfTests::ParamType> &info) {
   return GoriachevaKViolationOrderElemVecPerfTests::CustomPerfTestName(info);
 }
 
-INSTANTIATE_TEST_SUITE_P(PerfRunModes, GoriachevaKViolationOrderElemVecPerfTests, kPerfParams, MakePerfName);
+INSTANTIATE_TEST_SUITE_P(GoriachevaKViolationOrderElemVecPerfomanceTests, GoriachevaKViolationOrderElemVecPerfTests,
+                         kPerfParams, MakePerfName);
 
 }  // namespace
 }  // namespace goriacheva_k_violation_order_elem_vec
