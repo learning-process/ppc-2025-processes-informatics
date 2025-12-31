@@ -10,7 +10,7 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-EgashinKRadixBatcherSortSEQ::TestTaskSEQ(const InType &in) {
+EgashinKRadixBatcherSortSEQ::EgashinKRadixBatcherSortSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};

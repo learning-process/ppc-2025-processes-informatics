@@ -13,7 +13,7 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-EgashinKRadixBatcherSortMPI::TestTaskMPI(const InType &in) {
+EgashinKRadixBatcherSortMPI::EgashinKRadixBatcherSortMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
