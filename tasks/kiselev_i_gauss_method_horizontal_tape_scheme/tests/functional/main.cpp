@@ -68,7 +68,7 @@ TEST_P(KiselevIRunFuncTestsProcesses2, GaussHorizontalTapeTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 14> k_test_param = {
+const std::array<TestType, 14> kTestParam = {
     std::make_tuple(InType{std::vector<std::vector<double>>{{-2.0, 0.0, 0.0}, {0.0, -4.0, 0.0}, {0.0, 0.0, -8.0}},
                            std::vector<double>{-2.0, -8.0, -16.0}, std::size_t{0}},
                     "diag_negative_3"),
@@ -147,14 +147,14 @@ const std::array<TestType, 14> k_test_param = {
 
 const auto k_test_tasks_list =
     std::tuple_cat(ppc::util::AddFuncTask<KiselevITestTaskMPI, InType>(
-                       k_test_param, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme),
+                       kTestParam, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme),
                    ppc::util::AddFuncTask<KiselevITestTaskSEQ, InType>(
-                       k_test_param, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme));
+                       kTestParam, PPC_SETTINGS_kiselev_i_gauss_method_horizontal_tape_scheme));
 
-const auto k_gtest_values = ppc::util::ExpandToValues(k_test_tasks_list);
-const auto k_perf_test_name = KiselevIRunFuncTestsProcesses2::PrintFuncTestName<KiselevIRunFuncTestsProcesses2>;
+const auto kGTestValues = ppc::util::ExpandToValues(k_test_tasks_list);
+const auto kPerfTestName = KiselevIRunFuncTestsProcesses2::PrintFuncTestName<KiselevIRunFuncTestsProcesses2>;
 
-INSTANTIATE_TEST_SUITE_P(GaussTapeTests, KiselevIRunFuncTestsProcesses2, k_gtest_values, k_perf_test_name);
+INSTANTIATE_TEST_SUITE_P(GaussTapeTests, KiselevIRunFuncTestsProcesses2, kGTestValues, kPerfTestName);
 
 }  // namespace
 }  // namespace kiselev_i_gauss_method_horizontal_tape_scheme

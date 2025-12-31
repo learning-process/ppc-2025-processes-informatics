@@ -20,7 +20,7 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
     const std::size_t num = 6000;
     const std::size_t band = 6;
 
-    std::vector<std::vector<double>> aVector(num, std::vector<double>(num, 0.0));
+    std::vector<std::vector<double>> a_vector(num, std::vector<double>(num, 0.0));
 
     for (std::size_t index = 0; index < num; ++index) {
       const std::size_t j_begin = (index > band) ? (index - band) : 0;
@@ -33,11 +33,11 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
         }
 
         const double val = (j_index < index) ? 0.5 : 1.5;
-        aVector[index][j_index] = val;
+        a_vector[index][j_index] = val;
         sum_abs += std::abs(val);
       }
 
-      aVector[index][index] = sum_abs + 8.0 + static_cast<double>(index % 3);
+      a_vector[index][index] = sum_abs + 8.0 + static_cast<double>(index % 3);
     }
 
     std::vector<double> x_true(num);
@@ -45,27 +45,27 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
       x_true[index] = 1.0 + static_cast<double>((index * 3) % 11);
     }
 
-    std::vector<double> bVector(num, 0.0);
+    std::vector<double> b_vector(num, 0.0);
     for (std::size_t index = 0; index < num; ++index) {
       const std::size_t j_begin = (index > band) ? (index - band) : 0;
       const std::size_t j_end = std::min(num, index + band + 1);
 
       double s = 0.0;
       for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
-        s += aVector[index][j_index] * x_true[j_index];
+        s += a_vector[index][j_index] * x_true[j_index];
       }
-      bVector[index] = s;
+      b_vector[index] = s;
     }
 
-    input_data_ = std::make_tuple(std::move(aVector), std::move(bVector), band);
+    input_data_ = std::make_tuple(std::move(a_vector), std::move(b_vector), band);
   }
 
   bool CheckTestOutputData(OutType &output) final {
-    const auto &aVector = std::get<0>(input_data_);
-    const auto &bVector = std::get<1>(input_data_);
+    const auto &a_vector = std::get<0>(input_data_);
+    const auto &b_vector = std::get<1>(input_data_);
     const std::size_t band = std::get<2>(input_data_);
 
-    const std::size_t num = aVector.size();
+    const std::size_t num = a_vector.size();
     if (output.size() != num) {
       return false;
     }
@@ -79,10 +79,10 @@ class KiselevIPerfTests2 : public ppc::util::BaseRunPerfTests<InType, OutType> {
       const std::size_t j_end = std::min(num, index + band + 1);
 
       for (std::size_t j_index = j_begin; j_index < j_end; ++j_index) {
-        s += aVector[index][j_index] * output[j_index];
+        s += a_vector[index][j_index] * output[j_index];
       }
 
-      max_residual = std::max(max_residual, std::abs(s - bVector[index]));
+      max_residual = std::max(max_residual, std::abs(s - b_vector[index]));
     }
 
     return max_residual < 1e-7;

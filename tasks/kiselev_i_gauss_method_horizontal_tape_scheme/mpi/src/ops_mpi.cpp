@@ -50,9 +50,9 @@ void MakePartition(int proc, int num, std::vector<int> &cnt, std::vector<int> &d
 }
 
 int OwnerOf(int row, const std::vector<int> &cnt, const std::vector<int> &disp) {
-  for (int proc = 0; proc < static_cast<int>(cnt.size()); ++proc) {
+  for (std::size_t proc = 0; proc < cnt.size(); ++proc) {
     if (row >= disp[proc] && row < disp[proc] + cnt[proc]) {
-      return proc;
+      return static_cast<int>(proc);
     }
   }
   return 0;

@@ -59,11 +59,11 @@ bool KiselevITestTaskSEQ::RunImpl() {
   const std::size_t num = mat.size();
   GetOutput().assign(num, 0.0);
 
-  constexpr double k_eps = 1e-12;
+  constexpr double kEps = 1e-12;
 
   for (std::size_t k_index = 0; k_index < num; ++k_index) {
     const double diag = mat[k_index][k_index];
-    if (std::fabs(diag) < k_eps) {
+    if (std::fabs(diag) < kEps) {
       return false;
     }
 
