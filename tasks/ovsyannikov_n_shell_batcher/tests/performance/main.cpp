@@ -1,9 +1,6 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>
-#include <numeric>
 #include <random>
 #include <vector>
 

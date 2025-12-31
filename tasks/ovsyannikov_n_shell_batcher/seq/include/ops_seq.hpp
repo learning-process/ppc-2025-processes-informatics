@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace ovsyannikov_n_shell_batcher {
 

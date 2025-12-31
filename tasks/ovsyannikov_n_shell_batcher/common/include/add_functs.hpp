@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <cstddef>
+#include <utility>
 #include <vector>
 
 namespace ovsyannikov_n_shell_batcher {

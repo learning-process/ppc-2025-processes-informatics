@@ -1,6 +1,7 @@
 #include "ovsyannikov_n_shell_batcher/seq/include/ops_seq.hpp"
 
 #include "ovsyannikov_n_shell_batcher/common/include/add_functs.hpp"
+#include "ovsyannikov_n_shell_batcher/common/include/common.hpp"
 
 namespace ovsyannikov_n_shell_batcher {
 

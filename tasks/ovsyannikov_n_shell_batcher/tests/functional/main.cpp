@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <random>
 #include <ranges>
 #include <string>

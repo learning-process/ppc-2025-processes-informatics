@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "ovsyannikov_n_shell_batcher/common/include/add_functs.hpp"
