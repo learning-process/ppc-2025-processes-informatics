@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include "tasks/kiselev_i_gauss_method_horizontal_tape_scheme/common/include/common.hpp"
+#include "kiselev_i_gauss_method_horizontal_tape_scheme/common/include/common.hpp"
 
 namespace kiselev_i_gauss_method_horizontal_tape_scheme {
 
