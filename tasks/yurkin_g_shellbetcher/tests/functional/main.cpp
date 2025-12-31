@@ -57,7 +57,8 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
 
   merged.resize(left.size() + right.size());
-  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
+  std::ranges::merge(left, right, merged.begin());
+
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
