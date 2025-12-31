@@ -17,11 +17,6 @@ class GoriachevaKViolationOrderElemVecMPI : public BaseTask {
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
-
-  std::vector<int> GetLocalChunk(int rank, int size);
-  int CountLocalViolations(const std::vector<int> &local) const;
-  int CheckBoundaryViolation(int rank, int size, const std::vector<int> &local) const;
-
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
