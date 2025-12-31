@@ -29,8 +29,6 @@ struct OptimizationResult {
   double x_min = 0.0;
   double y_min = 0.0;
   double value = 0.0;
-
-  int iterations = 0;
 };
 
 using InType = OptimizationParams;

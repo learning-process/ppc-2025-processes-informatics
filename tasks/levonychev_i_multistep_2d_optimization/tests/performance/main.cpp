@@ -25,12 +25,12 @@ class LevonychevIMultistep2dOptimizationPerfTests : public ppc::util::BaseRunPer
     auto func = [](double x, double y) -> double { return RosenbrockFunction(x, y); };
 
     input_data_.func = func;
-    input_data_.x_min = -5.0;
-    input_data_.x_max = 5.0;
-    input_data_.y_min = -5.0;
-    input_data_.y_max = 5.0;
+    input_data_.x_min = -2.0;
+    input_data_.x_max = 2.0;
+    input_data_.y_min = -2.0;
+    input_data_.y_max = 2.0;
     input_data_.num_steps = 6;
-    input_data_.grid_size_step1 = 50;
+    input_data_.grid_size_step1 = 100;
     input_data_.candidates_per_step = 10;
     input_data_.use_local_optimization = true;
 
@@ -40,11 +40,6 @@ class LevonychevIMultistep2dOptimizationPerfTests : public ppc::util::BaseRunPer
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.iterations <= 0) {
-      return false;
-    }
-    std::cout << output_data.x_min << " " << output_data.y_min << " " << output_data.value << " "
-              << output_data.iterations << std::endl;
     if (output_data.x_min < input_data_.x_min || output_data.x_min > input_data_.x_max ||
         output_data.y_min < input_data_.y_min || output_data.y_min > input_data_.y_max) {
       return false;

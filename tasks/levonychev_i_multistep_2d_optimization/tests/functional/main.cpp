@@ -112,11 +112,6 @@ class LevonychevIMultistep2dOptimizationFuncTests : public ppc::util::BaseRunFun
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (output_data.iterations <= 0) {
-      return false;
-    }
-    std::cout << output_data.x_min << " " << output_data.y_min << " " << output_data.value << " "
-              << output_data.iterations << std::endl;
     if (output_data.x_min < input_data_.x_min || output_data.x_min > input_data_.x_max ||
         output_data.y_min < input_data_.y_min || output_data.y_min > input_data_.y_max) {
       return false;

@@ -45,50 +45,6 @@ void LevonychevIMultistep2dOptimizationMPI::InitializeRegions(int rank, int size
   double x_max_proc = (rank == size - 1) ? params.x_max : params.x_min + ((rank + 1) * width_per_process);
   my_region = SearchRegion(x_min_proc, x_max_proc, params.y_min, params.y_max);
 }
-
-void LevonychevIMultistep2dOptimizationMPI::BuildNewRegions(const OptimizationParams &params,
-                                                            const std::vector<Point> &all_candidates, int step,
-                                                            std::vector<SearchRegion> &new_regions) {
-  for (const auto &cand : all_candidates) {
-    double margin_x = (params.x_max - params.x_min) * 0.05 / (1 << step);
-    double margin_y = (params.y_max - params.y_min) * 0.05 / (1 << step);
-
-    SearchRegion new_region(std::max(params.x_min, cand.x - margin_x), std::min(params.x_max, cand.x + margin_x),
-                            std::max(params.y_min, cand.y - margin_y), std::min(params.y_max, cand.y + margin_y));
-    new_regions.push_back(new_region);
-  }
-}
-
-void LevonychevIMultistep2dOptimizationMPI::DistributeRegionsToProcesses(int rank, int size,
-                                                                         const OptimizationParams &params,
-                                                                         const std::vector<SearchRegion> &new_regions,
-                                                                         SearchRegion &my_region) {
-  std::vector<SearchRegion> regions_to_scatter(size);
-
-  if (rank == 0) {
-    for (int proc = 0; proc < size; ++proc) {
-      regions_to_scatter[proc] = new_regions[proc];
-    }
-  }
-
-  MPI_Scatter(regions_to_scatter.data(), sizeof(SearchRegion), MPI_BYTE, &my_region, sizeof(SearchRegion), MPI_BYTE, 0,
-              MPI_COMM_WORLD);
-
-  if (my_region.x_min >= my_region.x_max || my_region.y_min >= my_region.y_max) {
-    my_region = SearchRegion(params.x_min, params.x_max, params.y_min, params.y_max);
-  }
-}
-
-void LevonychevIMultistep2dOptimizationMPI::ScatterNewRegions(int rank, int size, const OptimizationParams &params,
-                                                              const std::vector<Point> &all_candidates, int step,
-                                                              SearchRegion &my_region) {
-  std::vector<SearchRegion> new_regions;
-  if (rank == 0) {
-    BuildNewRegions(params, all_candidates, step, new_regions);
-  }
-  DistributeRegionsToProcesses(rank, size, params, new_regions, my_region);
-}
-
 void LevonychevIMultistep2dOptimizationMPI::ProcessLocalCandidates(const OptimizationParams &params,
                                                                    const std::vector<Point> &local_points,
                                                                    std::vector<Point> &local_candidates) {
@@ -102,19 +58,17 @@ void LevonychevIMultistep2dOptimizationMPI::ProcessLocalCandidates(const Optimiz
 
 void LevonychevIMultistep2dOptimizationMPI::ExecuteOptimizationSteps(int rank, int size,
                                                                      const OptimizationParams &params,
-                                                                     SearchRegion &my_region,
-                                                                     OptimizationResult &result) {
+                                                                     SearchRegion &my_region) {
   for (int step = 0; step < params.num_steps; ++step) {
     int grid_size = params.grid_size_step1 * (1 << step);
     std::vector<Point> local_points;
-    local_points.reserve(grid_size * grid_size);
-    SearchInRegion(local_points, params.func, my_region, grid_size);
+    local_points.reserve(grid_size * grid_size / size);
+    SearchInRegion(local_points, params.func, my_region, grid_size, size);
 
     std::vector<Point> local_candidates;
     ProcessLocalCandidates(params, local_points, local_candidates);
 
     if (step >= params.num_steps - 1) {
-      result.iterations += grid_size * grid_size;
       continue;
     }
 
@@ -137,9 +91,22 @@ void LevonychevIMultistep2dOptimizationMPI::ExecuteOptimizationSteps(int rank, i
       all_candidates.assign(valid_candidates.begin(), valid_candidates.begin() + num_global_candidates);
     }
 
-    ScatterNewRegions(rank, size, params, all_candidates, step, my_region);
+    std::vector<Point> bcast_candidates(params.candidates_per_step);
+    if (rank == 0) {
+      bcast_candidates = all_candidates;
+    }
+    MPI_Bcast(bcast_candidates.data(), static_cast<int>(params.candidates_per_step * sizeof(Point)), MPI_BYTE, 0,
+              MPI_COMM_WORLD);
+    if (!bcast_candidates.empty()) {
+      int candidate_idx = rank % static_cast<int>(bcast_candidates.size());
+      const auto &cand = bcast_candidates[candidate_idx];
 
-    result.iterations += grid_size * grid_size;
+      double margin_x = (params.x_max - params.x_min) * 0.05 / (1 << step);
+      double margin_y = (params.y_max - params.y_min) * 0.05 / (1 << step);
+
+      my_region = SearchRegion(std::max(params.x_min, cand.x - margin_x), std::min(params.x_max, cand.x + margin_x),
+                               std::max(params.y_min, cand.y - margin_y), std::min(params.y_max, cand.y + margin_y));
+    }
   }
 }
 
@@ -185,8 +152,8 @@ Point LevonychevIMultistep2dOptimizationMPI::FindGlobalBest(int rank, int size, 
       power_of_2 *= 2;
     }
     std::vector<Point> local_points;
-    local_points.reserve(params.grid_size_step1 * power_of_2 * params.grid_size_step1 * power_of_2);
-    SearchInRegion(local_points, params.func, my_region, params.grid_size_step1 * power_of_2);
+    local_points.reserve(params.grid_size_step1 * power_of_2 * params.grid_size_step1 * power_of_2 / size);
+    SearchInRegion(local_points, params.func, my_region, params.grid_size_step1 * power_of_2, size);
 
     if (!local_points.empty()) {
       my_best = local_points[0];
@@ -217,36 +184,12 @@ bool LevonychevIMultistep2dOptimizationMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   SearchRegion my_region;
-  double t1 = MPI_Wtime();
   InitializeRegions(rank, size, params, my_region);
-  double t2 = MPI_Wtime();
-  std::cout << "Process " << rank << " initialized region in " << (t2 - t1) << " seconds." << std::endl;
-
-  t1 = MPI_Wtime();
-  ExecuteOptimizationSteps(rank, size, params, my_region, result);
-  t2 = MPI_Wtime();
-  std::cout << "Process " << rank << " executed optimization steps in " << (t2 - t1) << " seconds." << std::endl;
-
-  t1 = MPI_Wtime();
+  ExecuteOptimizationSteps(rank, size, params, my_region);
   Point global_best = FindGlobalBest(rank, size, params, my_region);
-  t2 = MPI_Wtime();
-  std::cout << "Process " << rank << " found global best in " << (t2 - t1) << " seconds." << std::endl;
   result.x_min = global_best.x;
   result.y_min = global_best.y;
   result.value = global_best.value;
-
-  int power_of_2 = 1;
-  for (int i = 0; i < params.num_steps - 1; ++i) {
-    power_of_2 *= 2;
-  }
-  int final_grid_size = params.grid_size_step1 * power_of_2;
-  result.iterations += final_grid_size * final_grid_size;
-
-  int local_iterations = result.iterations;
-  int global_iterations = 0;
-  MPI_Allreduce(&local_iterations, &global_iterations, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-  result.iterations = global_iterations;
-
   return true;
 }
 

@@ -62,13 +62,12 @@ inline Point LocalOptimization(const std::function<double(double, double)> &func
   return {x, y, current_value};
 }
 
-inline void SearchInRegion(std::vector<Point>& grid_points, const std::function<double(double, double)> &func, const SearchRegion &region,
-                           int grid_size) {
-
-  double step_x = (region.x_max - region.x_min) / (grid_size - 1);
+inline void SearchInRegion(std::vector<Point> &grid_points, const std::function<double(double, double)> &func,
+                           const SearchRegion &region, int grid_size, int size) {
+  double step_x = (region.x_max - region.x_min) / (grid_size / size - 1);
   double step_y = (region.y_max - region.y_min) / (grid_size - 1);
 
-  for (int i = 0; i < grid_size; ++i) {
+  for (int i = 0; i < grid_size / size; ++i) {
     for (int j = 0; j < grid_size; ++j) {
       double x = region.x_min + (i * step_x);
       double y = region.y_min + (j * step_y);
