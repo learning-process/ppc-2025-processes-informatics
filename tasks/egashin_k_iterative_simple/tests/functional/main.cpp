@@ -58,7 +58,7 @@ class EgashinKRunFuncTestsIterativeSimple : public ppc::util::BaseRunFuncTests<I
 
  private:
   InType input_data_{};
-  OutType expected_data_{};
+  OutType expected_data_;
 };
 
 namespace {
@@ -95,6 +95,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = EgashinKRunFuncTestsIterativeSimple::PrintFuncTestName<EgashinKRunFuncTestsIterativeSimple>;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables,misc-use-anonymous-namespace,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(IterativeMethodTests, EgashinKRunFuncTestsIterativeSimple, kGtestValues, kPerfTestName);
 
 }  // namespace
