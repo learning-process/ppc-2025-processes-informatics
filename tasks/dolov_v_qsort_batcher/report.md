@@ -70,7 +70,7 @@
   - Библиотека: OpenMPI
   - Тип сборки: Release
 * **Data:**
-  - Массив случайных чисел типа `double`.
+  - Массив из 1000000 случайных чисел типа `double`.
   - Измерения проводились на $P=4$ процессах.
 
 ---
@@ -105,7 +105,7 @@
 ---
 
 ## 9. References
-1. Документация worldgonesour: Понятие Решетка-тор - https://worldgonesour.ru/stati/16732-reshetka-topologiya-kompyuternoy-seti.html.
+1. Документация habr: Четно-нечетная сортировка слиянием Бэтчера - https://habr.com/ru/articles/261777/.
 2. Документация poznayka: Основные функции MPI - https://poznayka.org/s6430t1.html.
 3. Лекции ННГУ по курсу "Параллельное программирование".
 
