@@ -9,7 +9,7 @@
 
 namespace egashin_k_iterative_simple {
 
-EgashinKIterativeSimpleSEQ::TestTaskSEQ(const InType &in) {
+EgashinKIterativeSimpleSEQ::EgashinKIterativeSimpleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = std::vector<double>(in.A.size(), 0.0);
