@@ -52,7 +52,7 @@ class EgashinKRunFuncTestsRadixBatcherSort : public ppc::util::BaseRunFuncTests<
   }
 
  private:
-  InType input_data_{};
+  InType input_data_;
   OutType expected_data_;
 };
 
