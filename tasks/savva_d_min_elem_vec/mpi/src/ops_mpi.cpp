@@ -25,19 +25,21 @@ bool SavvaDMinElemVecMPI::PreProcessingImpl() {
 }
 
 bool SavvaDMinElemVecMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  int local_n, global_n;
-  int *local_data;
-  int *global_data = nullptr;
-  int *counts = new int[size];
-  int *displacements = new int[size];
+  int local_n = 0;
+  int global_n = 0;
+  int *local_data = nullptr;
+  const int *global_data = nullptr;
+  int *counts = new int[size]();
+  int *displacements = new int[size]();
 
   // если вектор - пустой, то false
   if (rank == 0) {
     global_data = GetInput().data();
-    global_n = GetInput().size();
+    global_n = static_cast<int>(GetInput().size());
     int elements_per_proc = global_n / size;
     int remainder = global_n % size;
     int offset = 0;
@@ -62,9 +64,7 @@ bool SavvaDMinElemVecMPI::RunImpl() {
 
   int local_min = std::numeric_limits<int>::max();
   for (int i = 0; i < local_n; ++i) {
-    if (local_data[i] < local_min) {
-      local_min = local_data[i];
-    }
+    local_min = std::min(local_data[i], local_min);
   }
 
   int global_min = 0;
