@@ -17,7 +17,7 @@ class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<
   void SetUp() override {
     double lower_bound_ = 0.0;
     double upper_bound_ = 10.0;
-    int steps_ = 100000000;
+    int steps_ = 20000;
     input_data_ = std::make_tuple(lower_bound_, upper_bound_, steps_, Function);
     expected_result_ = FindMinimum(Function, lower_bound_, upper_bound_, 1e-3);
   }
@@ -36,18 +36,25 @@ class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<
   OutType expected_result_{};
 
   static double Function(double x) {
+    double complexity = 0;
+    for (int i = 0; i < 5000; ++i) {
+      complexity += std::sin(x + i) * std::cos(x - i);
+    }
+    return (x * x * std::exp(x) * std::sin(x)) + (x * x * x * x * std::cos(2 * x)) + (complexity * 1e-9);
     return (x * x * std::exp(x) * std::sin(x)) + (x * x * x * x * std::cos(2 * x));
   }
 
   static double FindMinimum(const std::function<double(double)> &f, double a, double b, double step) {
     double min_val = std::numeric_limits<double>::infinity();
+    double min_x = a;
     for (double x = a; x <= b; x += step) {
       double fx = f(x);
       if (fx < min_val) {
         min_val = fx;
+        min_x = x;
       }
     }
-    return min_val;
+    return min_x;
   }
 };
 

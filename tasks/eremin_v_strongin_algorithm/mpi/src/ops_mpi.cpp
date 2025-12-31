@@ -4,8 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <list>
 #include <tuple>
-#include <vector>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 
@@ -29,18 +29,16 @@ bool EreminVStronginAlgorithmMPI::PreProcessingImpl() {
 }
 
 bool EreminVStronginAlgorithmMPI::RunImpl() {
-  int rank = 0, size = 1;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
+  auto &input = GetInput();
   double lower_bound = 0.0;
   double upper_bound = 0.0;
   int steps = 0;
-  auto &input = GetInput();
-  auto function = std::get<3>(input);
 
   if (rank == 0) {
-    auto &input = GetInput();
     lower_bound = std::get<0>(input);
     upper_bound = std::get<1>(input);
     steps = std::get<2>(input);
@@ -50,70 +48,89 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
   MPI_Bcast(&upper_bound, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&steps, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<double> points = {lower_bound, upper_bound};
-  std::vector<double> function_values = {function(lower_bound), function(upper_bound)};
+  auto function = std::get<3>(input);
+
+  std::list<double> points_list = {lower_bound, upper_bound};
+  std::list<double> values_list = {function(lower_bound), function(upper_bound)};
 
   const double r_constant = 2.0;
 
   for (int step = 0; step < steps; step++) {
-    int num_points = points.size();
+    int num_intervals = points_list.size() - 1;
 
     double local_max_slope = 0.0;
-    for (int i = rank; i < num_points; i += size) {
-      if (i == 0) {
-        continue;
+    auto it_x_left = points_list.begin();
+    auto it_y_left = values_list.begin();
+
+    for (int i = 0; i < num_intervals; ++i) {
+      auto it_x_right = std::next(it_x_left);
+      auto it_y_right = std::next(it_y_left);
+
+      if (i % size == rank) {
+        double slope = std::abs(*it_y_right - *it_y_left) / (*it_x_right - *it_x_left);
+        if (slope > local_max_slope) {
+          local_max_slope = slope;
+        }
       }
-      double slope = std::abs(function_values[i] - function_values[i - 1]) / (points[i] - points[i - 1]);
-      if (slope > local_max_slope) {
-        local_max_slope = slope;
-      }
+      it_x_left++;
+      it_y_left++;
     }
 
-    double global_max_slope = 0.0;
+    double global_max_slope;
     MPI_Allreduce(&local_max_slope, &global_max_slope, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    double max_slope_between_points = (global_max_slope > 0.0) ? r_constant * global_max_slope : 1.0;
+    double M = (global_max_slope > 0) ? r_constant * global_max_slope : 1.0;
 
-    double local_max_characteristic = -1e18;
-    int local_best_interval_idx = -1;
+    double local_max_char = -1e18;
+    int local_best_idx = -1;
 
-    for (int i = rank; i < num_points; i += size) {
-      if (i == 0) {
-        continue;
+    it_x_left = points_list.begin();
+    it_y_left = values_list.begin();
+
+    for (int i = 0; i < num_intervals; ++i) {
+      auto it_x_right = std::next(it_x_left);
+      auto it_y_right = std::next(it_y_left);
+
+      if (i % size == rank) {
+        double dx = *it_x_right - *it_x_left;
+        double dy = *it_y_right - *it_y_left;
+        double ch = M * dx + (dy * dy) / (M * dx) - 2.0 * (*it_y_right + *it_y_left);
+        if (ch > local_max_char) {
+          local_max_char = ch;
+          local_best_idx = i;
+        }
       }
-      double interval_length = points[i] - points[i - 1];
-      double function_diff = function_values[i] - function_values[i - 1];
-      double characteristic = max_slope_between_points * interval_length +
-                              (function_diff * function_diff) / (max_slope_between_points * interval_length) -
-                              2.0 * (function_values[i] + function_values[i - 1]);
-      if (characteristic > local_max_characteristic) {
-        local_max_characteristic = characteristic;
-        local_best_interval_idx = i;
-      }
+      it_x_left++;
+      it_y_left++;
     }
 
     struct {
       double val;
-      int idx;
-    } local_data{local_max_characteristic, local_best_interval_idx}, global_data;
-    MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+      int rank;
+    } local_res{local_max_char, rank}, global_res;
+    MPI_Allreduce(&local_res, &global_res, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
-    int best_interval_idx = global_data.idx;
-
-    if (best_interval_idx > 0) {
-      double new_point = 0.5 * (points[best_interval_idx] + points[best_interval_idx - 1]) -
-                         (function_values[best_interval_idx] - function_values[best_interval_idx - 1]) /
-                             (2.0 * max_slope_between_points);
-      double new_point_value = function(new_point);
-
-      points.insert(points.begin() + best_interval_idx, new_point);
-      function_values.insert(function_values.begin() + best_interval_idx, new_point_value);
+    int best_idx = -1;
+    if (rank == global_res.rank) {
+      best_idx = local_best_idx;
     }
-  }
-  double local_min_value = *std::min_element(function_values.begin(), function_values.end());
-  double global_min_value = 0.0;
-  MPI_Allreduce(&local_min_value, &global_min_value, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Bcast(&best_idx, 1, MPI_INT, global_res.rank, MPI_COMM_WORLD);
 
-  GetOutput() = global_min_value;
+    auto it_x_ins = std::next(points_list.begin(), best_idx);
+    auto it_y_ins = std::next(values_list.begin(), best_idx);
+
+    auto it_x_next = std::next(it_x_ins);
+    auto it_y_next = std::next(it_y_ins);
+
+    double x_new = 0.5 * (*it_x_next + *it_x_ins) - (*it_y_next - *it_y_ins) / (2.0 * M);
+    double y_new = function(x_new);
+
+    points_list.insert(it_x_next, x_new);
+    values_list.insert(it_y_next, y_new);
+  }
+
+  auto min_it = std::min_element(values_list.begin(), values_list.end());
+  auto dist = std::distance(values_list.begin(), min_it);
+  GetOutput() = *std::next(points_list.begin(), dist);
 
   return true;
 }

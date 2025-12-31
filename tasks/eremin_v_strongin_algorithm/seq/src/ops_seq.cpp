@@ -77,7 +77,8 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
 
   auto min_it = std::min_element(function_values.begin(), function_values.end());
   int min_index = std::distance(function_values.begin(), min_it);
-  GetOutput() = points[min_index];
+  double min_point = points[min_index];
+  GetOutput() = min_point;
 
   return true;
 }
