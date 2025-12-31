@@ -1,10 +1,11 @@
+#include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
+
 #include <mpi.h>
 
 #include <cstddef>
 #include <cstring>
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
-#include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
 
 namespace pikhotskiy_r_scatter {
 
