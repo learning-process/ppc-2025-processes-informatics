@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
 #include "yurkin_g_shellbetcher/mpi/include/ops_mpi.hpp"
 #include "yurkin_g_shellbetcher/seq/include/ops_seq.hpp"
