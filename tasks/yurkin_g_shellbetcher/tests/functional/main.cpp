@@ -1,10 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <random>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -26,10 +25,13 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   }
 
   auto shell_sort_local = [](std::vector<int> &a) {
-    std::size_t n_local = a.size();
+    const std::size_t n_local = a.size();
+    if (n_local < 2) {
+      return;
+    }
     std::size_t gap = 1;
     while (gap < n_local / 3) {
-      gap = (gap * 3) + 1;
+      gap = gap * 3 + 1;
     }
     while (gap > 0) {
       for (std::size_t i = gap; i < n_local; ++i) {
@@ -49,13 +51,14 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   std::vector<int> left;
   std::vector<int> right;
   std::vector<int> merged;
-  auto mid = data.size() / 2;
+  const auto mid = data.size() / 2;
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
+
   merged.resize(left.size() + right.size());
   std::ranges::merge(left, right, merged.begin());
   for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
+    const std::size_t start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
       if (merged[i] > merged[i + 1]) {
         std::swap(merged[i], merged[i + 1]);
@@ -77,6 +80,11 @@ class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
  protected:
+  void SetUp() override {
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data = static_cast<InType>(std::get<0>(params));
+  }
+
   bool CheckTestOutputData(OutType &output_data) final {
     const int in = input_data;
     std::int64_t expected = ComputeExpectedChecksumSeq(in);
@@ -87,6 +95,7 @@ class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     return input_data;
   }
 
+ private:
   InType input_data = 0;
 };
 

@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -13,7 +12,10 @@ namespace yurkin_g_shellbetcher {
 namespace {
 
 void ShellSort(std::vector<int> &a) {
-  std::size_t n = a.size();
+  const std::size_t n = a.size();
+  if (n < 2) {
+    return;
+  }
   std::size_t gap = 1;
   while (gap < n / 3) {
     gap = gap * 3 + 1;
@@ -28,15 +30,30 @@ void ShellSort(std::vector<int> &a) {
       }
       a[j] = tmp;
     }
-    gap /= 3;
+    gap = (gap - 1) / 3;
   }
 }
 
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::ranges::merge(a, b, out.begin());
+  auto it = out.begin();
+  auto it1 = a.begin();
+  auto it2 = b.begin();
+  while (it1 != a.end() && it2 != b.end()) {
+    if (*it1 <= *it2) {
+      *it++ = *it1++;
+    } else {
+      *it++ = *it2++;
+    }
+  }
+  while (it1 != a.end()) {
+    *it++ = *it1++;
+  }
+  while (it2 != b.end()) {
+    *it++ = *it2++;
+  }
   for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
+    const std::size_t start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
@@ -73,15 +90,20 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   for (InType i = 0; i < n; ++i) {
     data.push_back(dist(rng));
   }
+
   ShellSort(data);
+
+  const std::size_t mid = data.size() / 2;
   std::vector<int> left;
   std::vector<int> right;
-  std::vector<int> merged;
-  auto mid = data.size() / 2;
   left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
+
+  std::vector<int> merged;
   OddEvenBatcherMerge(left, right, merged);
+
   ShellSort(merged);
+
   std::int64_t checksum = 0;
   for (int v : merged) {
     checksum += static_cast<std::int64_t>(v);
