@@ -9,7 +9,6 @@
 #include <tuple>
 #include <vector>
 
-#include "modules/util/include/func_test_util.hpp"
 #include "util/include/func_test_util.hpp"
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
 #include "yurkin_g_shellbetcher/mpi/include/ops_mpi.hpp"
