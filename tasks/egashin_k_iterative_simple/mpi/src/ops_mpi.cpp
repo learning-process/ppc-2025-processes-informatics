@@ -14,9 +14,17 @@ namespace egashin_k_iterative_simple {
 EgashinKIterativeSimpleMPI::EgashinKIterativeSimpleMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   auto &input = GetInput();
-  input.A = in.A;
-  input.b = in.b;
-  input.x0 = in.x0;
+  input.A.clear();
+  input.A.reserve(in.A.size());
+  for (const auto &row : in.A) {
+    input.A.push_back(row);
+  }
+  input.b.clear();
+  input.b.reserve(in.b.size());
+  input.b.insert(input.b.end(), in.b.begin(), in.b.end());
+  input.x0.clear();
+  input.x0.reserve(in.x0.size());
+  input.x0.insert(input.x0.end(), in.x0.begin(), in.x0.end());
   input.tolerance = in.tolerance;
   input.max_iterations = in.max_iterations;
   GetOutput() = std::vector<double>(in.A.size(), 0.0);
