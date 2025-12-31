@@ -21,7 +21,7 @@ class DolovVQsortBatcherSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   void ApplyQuicksort(double *array, int low, int high);
-  int GetHoarePartition(double *array, int low, int high);
+  static int GetHoarePartition(double *array, int low, int high);
 
   std::vector<double> res_array_;
 };

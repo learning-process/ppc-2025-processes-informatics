@@ -59,7 +59,7 @@ int DolovVQsortBatcherSEQ::GetHoarePartition(double *array, int low, int high) {
 
 void DolovVQsortBatcherSEQ::ApplyQuicksort(double *array, int low, int high) {
   std::stack<std::pair<int, int>> stack;
-  stack.push({low, high});
+  stack.emplace(low, high);
 
   while (!stack.empty()) {
     std::pair<int, int> range = stack.top();
@@ -68,11 +68,11 @@ void DolovVQsortBatcherSEQ::ApplyQuicksort(double *array, int low, int high) {
     if (range.first < range.second) {
       int p = GetHoarePartition(array, range.first, range.second);
       if (p - range.first < range.second - p) {
-        stack.push({p + 1, range.second});
-        stack.push({range.first, p});
+        stack.emplace(p + 1, range.second);
+        stack.emplace(range.first, p);
       } else {
-        stack.push({range.first, p});
-        stack.push({p + 1, range.second});
+        stack.emplace(range.first, p);
+        stack.emplace(p + 1, range.second);
       }
     }
   }

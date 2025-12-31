@@ -119,7 +119,7 @@ void DolovVQsortBatcherMPI::MergeSequences(const std::vector<double> &first, con
   size_t n2 = second.size();
   std::vector<double> combined(n1 + n2);
 
-  std::merge(first.begin(), first.end(), second.begin(), second.end(), combined.begin());
+  std::merge(first.data(), first.data() + n1, second.data(), second.data() + n2, combined.data());
 
   result.resize(n1);
   auto diff_n1 = static_cast<std::ptrdiff_t>(n1);
@@ -166,14 +166,14 @@ int DolovVQsortBatcherMPI::GetSplitIndex(double *data, int low, int high) {
 
 void DolovVQsortBatcherMPI::FastSort(double *data, int low, int high) {
   std::stack<std::pair<int, int>> s;
-  s.push({low, high});
+  s.emplace(low, high);
   while (!s.empty()) {
     std::pair<int, int> range = s.top();
     s.pop();
     if (range.first < range.second) {
       int split_point = GetSplitIndex(data, range.first, range.second);
-      s.push({range.first, split_point});
-      s.push({split_point + 1, range.second});
+      s.emplace(range.first, split_point);
+      s.emplace(split_point + 1, range.second);
     }
   }
 }
