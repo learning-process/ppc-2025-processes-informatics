@@ -51,6 +51,8 @@ bool SavvaDMinElemVecMPI::RunImpl() {
 
   MPI_Bcast(&global_n, 1, MPI_INT, 0, MPI_COMM_WORLD);
   if (global_n == 0) {
+    delete[] counts;
+    delete[] displacements;
     return false;
   }
   MPI_Bcast(counts, size, MPI_INT, 0, MPI_COMM_WORLD);
@@ -69,6 +71,10 @@ bool SavvaDMinElemVecMPI::RunImpl() {
   MPI_Allreduce(&local_min, &global_min, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
 
   GetOutput() = global_min;
+
+  delete[] counts;
+  delete[] displacements;
+  delete[] local_data;
 
   // Синхронизация
   MPI_Barrier(MPI_COMM_WORLD);
