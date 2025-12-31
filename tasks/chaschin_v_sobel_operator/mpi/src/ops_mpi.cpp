@@ -69,7 +69,7 @@ std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
       for (int yy = 0; yy < static_cast<int>(m); yy++) {
         float val = 0.0F;
         buffer[displs[ii] + ((xx + 1) * padded_m) + yy + 1] = val;
-        if (!(xx + l_r[ii] < 0 || xx + l_r[ii] >= n)) {
+        if (!(xx + l_r[ii] < 0 || xx + l_r[ii] >= static_cast<int>(n))) {
           const Pixel &p = image[xx + l_r[ii]][yy];
           val = (0.299F * static_cast<float>(p.r)) + (0.587F * static_cast<float>(p.g)) +
                 (0.114F * static_cast<float>((p.b)));
