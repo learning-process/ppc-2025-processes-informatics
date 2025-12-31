@@ -77,8 +77,8 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
       break;
     }
 
-    double x_new = 0.5 * (trials[best_idx + 1].x + trials[best_idx].x) -
-                   (trials[best_idx + 1].z - trials[best_idx].z) / (2.0 * m_scaled);
+    double x_new = (0.5 * (trials[best_idx + 1].x + trials[best_idx].x)) -
+                   ((trials[best_idx + 1].z - trials[best_idx].z) / (2.0 * m_scaled));
 
     Trial1D new_trial{.x = x_new, .z = func(x_new)};
 
@@ -143,7 +143,7 @@ std::vector<Trial2D> InitTrials(const InType &in, int init_points) {
   std::vector<Trial2D> trials;
 
   for (int i = 0; i < init_points; ++i) {
-    double x = in.x_min + (in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1);
+    double x = in.x_min + ((in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1));
 
     double y_best = 0.0;
     double f = Solve1DStrongin([&](double y) { return ObjectiveFunction(x, y); }, in.y_min, in.y_max, in.eps,
@@ -170,7 +170,7 @@ Trial2D ComputeLocalTrial(const IntervalData &interval, const InType &in) {
   double m = std::abs(interval.f2 - interval.f1) / dx;
   m = (m > 0.0) ? (2.0 * m) : 1.0;
 
-  double x_new = 0.5 * (interval.x1 + interval.x2) - (interval.f2 - interval.f1) / (2.0 * m);
+  double x_new = (0.5 * (interval.x1 + interval.x2)) - ((interval.f2 - interval.f1) / (2.0 * m));
 
   double y_res = 0.0;
   double f_res = Solve1DStrongin([&](double y) { return ObjectiveFunction(x_new, y); }, in.y_min, in.y_max, in.eps,
