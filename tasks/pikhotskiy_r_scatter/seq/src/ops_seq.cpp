@@ -1,47 +1,63 @@
-#include "pikhotskiy_r_scatter/seq/include/ops_seq.hpp"
-
 #include <mpi.h>
 
-#include <cstdint>
+#include <cstddef>
 #include <cstring>
-#include <utility>  // Добавлено для std::move
-#include <vector>   // Добавлено для std::vector
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
+#include "pikhotskiy_r_scatter/seq/include/ops_seq.hpp"
 
 namespace pikhotskiy_r_scatter {
 
-PikhotskiyRScatterSEQ::PikhotskiyRScatterSEQ(const InputType &input_args) {
-  SetTypeOfTask(GetTaskType());
-  GetInput() = input_args;
+PikhotskiyRScatterSEQ::PikhotskiyRScatterSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = nullptr;
+}
+
+size_t PikhotskiyRScatterSEQ::GetTypeSize(MPI_Datatype datatype) {
+  if (datatype == MPI_INT) {
+    return sizeof(int);
+  }
+  if (datatype == MPI_FLOAT) {
+    return sizeof(float);
+  }
+  if (datatype == MPI_DOUBLE) {
+    return sizeof(double);
+  }
+  return 0;
 }
 
 bool PikhotskiyRScatterSEQ::ValidationImpl() {
-  const auto &args = GetInput();
+  const auto &input_data = GetInput();
+  int send_element_count = std::get<1>(input_data);
+  MPI_Datatype send_datatype = std::get<2>(input_data);
+  void *receive_data_ptr = std::get<3>(input_data);
+  int receive_element_count = std::get<4>(input_data);
+  MPI_Datatype receive_datatype = std::get<5>(input_data);
+  int root_process = std::get<6>(input_data);
+  MPI_Comm comm = std::get<7>(input_data);
 
-  if (args.elements_to_send <= 0) {
+  (void)receive_datatype;
+  (void)root_process;
+  (void)comm;
+
+  if (send_element_count < 0 || receive_element_count < 0) {
     return false;
   }
 
-  if (args.elements_to_send != args.elements_to_receive) {
+  if (send_element_count != receive_element_count) {
     return false;
   }
 
-  if (args.send_data_type != args.receive_data_type) {
+  if (send_datatype != receive_datatype) {
     return false;
   }
 
-  if (args.source_buffer == nullptr) {
+  if (receive_element_count > 0 && receive_data_ptr == nullptr) {
     return false;
   }
 
-  if (args.destination_buffer == nullptr) {
-    return false;
-  }
-
-  auto check_type = [](MPI_Datatype dt) { return dt == MPI_INT || dt == MPI_FLOAT || dt == MPI_DOUBLE; };
-
-  return check_type(args.send_data_type);
+  return true;
 }
 
 bool PikhotskiyRScatterSEQ::PreProcessingImpl() {
@@ -49,33 +65,34 @@ bool PikhotskiyRScatterSEQ::PreProcessingImpl() {
 }
 
 bool PikhotskiyRScatterSEQ::RunImpl() {
-  const auto &args = GetInput();
+  const auto &input_data = GetInput();
+  const void *send_data_ptr = std::get<0>(input_data);
+  int send_element_count = std::get<1>(input_data);
+  MPI_Datatype send_datatype = std::get<2>(input_data);
+  void *receive_data_ptr = std::get<3>(input_data);
+  int receive_element_count = std::get<4>(input_data);
+  MPI_Datatype receive_datatype = std::get<5>(input_data);
+  int root_process = std::get<6>(input_data);
+  MPI_Comm comm = std::get<7>(input_data);
 
-  // Определяем размер одного элемента
-  std::size_t element_size = 0;
-  if (args.send_data_type == MPI_INT) {
-    element_size = sizeof(int);
-  } else if (args.send_data_type == MPI_FLOAT) {
-    element_size = sizeof(float);
-  } else if (args.send_data_type == MPI_DOUBLE) {
-    element_size = sizeof(double);
+  (void)send_element_count;
+  (void)receive_datatype;
+  (void)root_process;
+  (void)comm;
+
+  size_t element_size = GetTypeSize(send_datatype);
+
+  size_t total_copy_size = static_cast<size_t>(receive_element_count) * element_size;
+
+  if (total_copy_size > 0) {
+    if (send_data_ptr != nullptr) {
+      std::memcpy(receive_data_ptr, send_data_ptr, total_copy_size);
+    } else {
+      std::memset(receive_data_ptr, 0, total_copy_size);
+    }
   }
 
-  // Вычисляем общий размер данных в байтах
-  std::size_t total_data_size = static_cast<std::size_t>(args.elements_to_send) * element_size;
-
-  // Копируем исходные данные
-  // ИСПРАВЛЕНО: добавлен const auto * для указателей
-  const auto *source_start = static_cast<const std::uint8_t *>(args.source_buffer);
-  const auto *source_end = source_start + total_data_size;
-
-  std::vector<std::uint8_t> processed_data(source_start, source_end);
-
-  // Копируем в буфер назначения
-  std::memcpy(args.destination_buffer, processed_data.data(), total_data_size);
-
-  // Сохраняем результат
-  GetOutput() = std::move(processed_data);
+  GetOutput() = receive_data_ptr;
 
   return true;
 }

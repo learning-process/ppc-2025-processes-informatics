@@ -1,82 +1,220 @@
-#include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
-
 #include <mpi.h>
 
+#include <cstddef>
 #include <cstring>
-#include <utility>
 
 #include "pikhotskiy_r_scatter/common/include/common.hpp"
+#include "pikhotskiy_r_scatter/mpi/include/ops_mpi.hpp"
 
 namespace pikhotskiy_r_scatter {
 
-PikhotskiyRScatterMPI::PikhotskiyRScatterMPI(const InputType &input_args) {
-  SetTypeOfTask(GetTaskType());
-  GetInput() = input_args;
-
-  MPI_Comm_rank(input_args.communicator, &mpi_rank_);
-  MPI_Comm_size(input_args.communicator, &mpi_size_);
-  is_root_process_ = (mpi_rank_ == input_args.root_process);  // NOLINT(cppcoreguidelines-prefer-member-initializer)
+PikhotskiyRScatterMPI::PikhotskiyRScatterMPI(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = nullptr;
 }
 
-bool PikhotskiyRScatterMPI::ValidationImpl() {  // NOLINT(readability-convert-member-functions-to-static)
-  const auto &params = GetInput();
+bool PikhotskiyRScatterMPI::ValidationImpl() {
+  InType input = GetInput();
+  MPI_Datatype sendtype = std::get<2>(input);
+  MPI_Datatype recvtype = std::get<5>(input);
 
-  if (params.elements_to_send <= 0 || params.elements_to_send != params.elements_to_receive) {
+  if (sendtype != recvtype) {
     return false;
   }
 
-  if (params.send_data_type != params.receive_data_type) {
+  int sendcount = std::get<1>(input);
+  int recvcount = std::get<4>(input);
+
+  if (sendcount < 0 || recvcount < 0) {
     return false;
   }
 
-  if (is_root_process_ && params.source_buffer == nullptr) {
+  if (sendcount != recvcount) {
     return false;
   }
 
-  if (params.destination_buffer == nullptr) {
+  void *recvbuf = std::get<3>(input);
+  if (recvcount > 0 && recvbuf == nullptr) {
     return false;
   }
 
-  auto validate_data_type = [](MPI_Datatype dt) { return dt == MPI_INT || dt == MPI_FLOAT || dt == MPI_DOUBLE; };
+  int root = std::get<6>(input);
+  MPI_Comm comm = std::get<7>(input);
 
-  return validate_data_type(params.send_data_type);
-}
+  int rank = 0;
+  MPI_Comm_rank(comm, &rank);
 
-bool PikhotskiyRScatterMPI::PreProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
-  return true;
-}
-
-bool PikhotskiyRScatterMPI::RunImpl() {  // NOLINT(readability-make-member-function-const)
-  auto &parameters = GetInput();
-
-  const void *send_ptr = is_root_process_ ? parameters.source_buffer : nullptr;
-  void *receive_ptr = parameters.destination_buffer;
-
-  int send_count = parameters.elements_to_send;
-  MPI_Datatype data_type = parameters.send_data_type;
-  int root = parameters.root_process;
-  MPI_Comm comm = parameters.communicator;
-
-  int mpi_result = MPI_Scatter(send_ptr, send_count, data_type, receive_ptr, send_count, data_type, root, comm);
-
-  if (mpi_result != MPI_SUCCESS) {
-    return false;
+  if (rank == root) {
+    const void *sendbuf = std::get<0>(input);
+    if (sendcount > 0 && sendbuf == nullptr) {
+      return false;
+    }
   }
-
-  // Сохраняем результат
-  int element_size = 0;
-  MPI_Type_size(data_type, &element_size);
-  std::size_t total_bytes = static_cast<std::size_t>(send_count) * element_size;
-
-  OutputType result(total_bytes);
-  std::memcpy(result.data(), receive_ptr, total_bytes);
-
-  GetOutput() = std::move(result);
 
   return true;
 }
 
-bool PikhotskiyRScatterMPI::PostProcessingImpl() {  // NOLINT(readability-convert-member-functions-to-static)
+bool PikhotskiyRScatterMPI::PreProcessingImpl() {
+  return true;
+}
+
+int PikhotskiyRScatterMPI::CustomScatterInt(const void *sendbuf, int sendcount, void *recvbuf, int recvcount, int root,
+                                            MPI_Comm comm) {
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+
+  int *recv_data = static_cast<int *>(recvbuf);
+
+  if (rank == root) {
+    const int *send_data = static_cast<const int *>(sendbuf);
+
+    if (recv_data != nullptr && sendcount > 0) {
+      std::memcpy(recv_data, send_data + (static_cast<ptrdiff_t>(rank) * sendcount),
+                  static_cast<size_t>(sendcount) * sizeof(int));
+    }
+
+    if (sendcount > 0) {
+      for (int i = 0; i < size; ++i) {
+        if (i != root) {
+          MPI_Send(send_data + (static_cast<ptrdiff_t>(i) * sendcount), sendcount, MPI_INT, i, 0, comm);
+        }
+      }
+    }
+  } else if (recvcount > 0) {
+    MPI_Recv(recv_data, recvcount, MPI_INT, root, 0, comm, MPI_STATUS_IGNORE);
+  }
+
+  return MPI_SUCCESS;
+}
+
+int PikhotskiyRScatterMPI::CustomScatterFloat(const void *sendbuf, int sendcount, void *recvbuf, int recvcount,
+                                              int root, MPI_Comm comm) {
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+
+  auto *recv_data = static_cast<float *>(recvbuf);
+
+  if (rank == root) {
+    const auto *send_data = static_cast<const float *>(sendbuf);
+
+    if (recv_data != nullptr && sendcount > 0) {
+      std::memcpy(recv_data, send_data + (static_cast<ptrdiff_t>(rank) * sendcount),
+                  static_cast<size_t>(sendcount) * sizeof(float));
+    }
+
+    if (sendcount > 0) {
+      for (int i = 0; i < size; ++i) {
+        if (i != root) {
+          MPI_Send(send_data + (static_cast<ptrdiff_t>(i) * sendcount), sendcount, MPI_FLOAT, i, 0, comm);
+        }
+      }
+    }
+  } else if (recvcount > 0) {
+    MPI_Recv(recv_data, recvcount, MPI_FLOAT, root, 0, comm, MPI_STATUS_IGNORE);
+  }
+
+  return MPI_SUCCESS;
+}
+
+int PikhotskiyRScatterMPI::CustomScatterDouble(const void *sendbuf, int sendcount, void *recvbuf, int recvcount,
+                                               int root, MPI_Comm comm) {
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_size(comm, &size);
+
+  auto *recv_data = static_cast<double *>(recvbuf);
+
+  if (rank == root) {
+    const auto *send_data = static_cast<const double *>(sendbuf);
+
+    if (recv_data != nullptr && sendcount > 0) {
+      std::memcpy(recv_data, send_data + (static_cast<ptrdiff_t>(rank) * sendcount),
+                  static_cast<size_t>(sendcount) * sizeof(double));
+    }
+
+    if (sendcount > 0) {
+      for (int i = 0; i < size; ++i) {
+        if (i != root) {
+          MPI_Send(send_data + (static_cast<ptrdiff_t>(i) * sendcount), sendcount, MPI_DOUBLE, i, 0, comm);
+        }
+      }
+    }
+  } else if (recvcount > 0) {
+    MPI_Recv(recv_data, recvcount, MPI_DOUBLE, root, 0, comm, MPI_STATUS_IGNORE);
+  }
+
+  return MPI_SUCCESS;
+}
+
+int PikhotskiyRScatterMPI::CustomScatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+                                         int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm) {
+  if (sendcount == 0 && recvcount == 0) {
+    return MPI_SUCCESS;
+  }
+
+  int sendtype_size = 0;
+  MPI_Type_size(sendtype, &sendtype_size);
+
+  int recvtype_size = 0;
+  MPI_Type_size(recvtype, &recvtype_size);
+
+  if (sendcount * sendtype_size < recvcount * recvtype_size) {
+    return MPI_ERR_ARG;
+  }
+
+  int rank = 0;
+  MPI_Comm_rank(comm, &rank);
+
+  if (rank == root && sendbuf == nullptr && sendcount > 0) {
+    return MPI_ERR_BUFFER;
+  }
+
+  if (recvbuf == nullptr && recvcount > 0) {
+    return MPI_ERR_BUFFER;
+  }
+
+  if (sendtype == MPI_INT) {
+    return CustomScatterInt(sendbuf, sendcount, recvbuf, recvcount, root, comm);
+  }
+  if (sendtype == MPI_FLOAT) {
+    return CustomScatterFloat(sendbuf, sendcount, recvbuf, recvcount, root, comm);
+  }
+  return CustomScatterDouble(sendbuf, sendcount, recvbuf, recvcount, root, comm);
+}
+
+bool PikhotskiyRScatterMPI::RunImpl() {
+  auto &input = GetInput();
+
+  const void *sendbuf = std::get<0>(input);
+  int sendcount = std::get<1>(input);
+  MPI_Datatype sendtype = std::get<2>(input);
+  void *recvbuf = std::get<3>(input);
+  int recvcount = std::get<4>(input);
+  MPI_Datatype recvtype = std::get<5>(input);
+  int root = std::get<6>(input);
+  MPI_Comm comm = std::get<7>(input);
+
+  MPI_Barrier(comm);
+
+  int result = CustomScatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+
+  MPI_Barrier(comm);
+
+  if (result != MPI_SUCCESS) {
+    return false;
+  }
+
+  GetOutput() = recvbuf;
+  return true;
+}
+
+bool PikhotskiyRScatterMPI::PostProcessingImpl() {
   return true;
 }
 
