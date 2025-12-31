@@ -121,6 +121,47 @@ void MasterCalculateIntervals(const std::vector<Trial2D> &trials, std::vector<In
   }
 }
 
+std::vector<Trial2D> InitTrials(const InType &in, int init_points) {
+  std::vector<Trial2D> trials;
+  for (int i = 0; i < init_points; ++i) {
+    double x = in.x_min + ((in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1));
+    double y_best = 0.0;
+    double f = Solve1DStrongin([&](double y) { return ObjectiveFunction(x, y); }, in.y_min, in.y_max, in.eps,
+                               std::max(20, in.max_iters / 20), y_best);
+    trials.push_back({.x = x, .y = y_best, .f = f});
+  }
+  std::sort(trials.begin(), trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
+  return trials;
+}
+
+Trial2D ComputeLocalTrial(const IntervalData &interval, const InType &in) {
+  double dx_local = interval.x2 - interval.x1;
+  double m_local = (std::abs(interval.f2 - interval.f1) / dx_local);
+  m_local = (m_local > 0.0) ? (2.0 * m_local) : 1.0;
+
+  double x_new = (0.5 * (interval.x1 + interval.x2)) - ((interval.f2 - interval.f1) / (2.0 * m_local));
+  double y_res = 0.0;
+  double f_res = Solve1DStrongin([&](double y) { return ObjectiveFunction(x_new, y); }, in.y_min, in.y_max, in.eps,
+                                 std::max(25, in.max_iters / 20), y_res);
+  return {.x = x_new, .y = y_res, .f = f_res};
+}
+
+void UpdateTrialsOnMaster(std::vector<Trial2D> &trials, const std::vector<Trial2D> &new_trials) {
+  for (const auto &res : new_trials) {
+    auto it = std::lower_bound(trials.begin(), trials.end(), res,
+                               [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
+    if (it == trials.end() || std::abs(it->x - res.x) > 1e-12) {
+      trials.insert(it, res);
+    }
+  }
+}
+
+Trial2D FindBestTrial(const std::vector<Trial2D> &trials) {
+  auto best_it =
+      std::min_element(trials.begin(), trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.f < b.f; });
+  return *best_it;
+}
+
 }  // namespace
 
 KruglovaA2DMuitMPI::KruglovaA2DMuitMPI(const InType &in) {
@@ -139,8 +180,7 @@ bool KruglovaA2DMuitMPI::PreProcessingImpl() {
 }
 
 bool KruglovaA2DMuitMPI::RunImpl() {
-  int rank = 0;
-  int size = 0;
+  int rank = 0, size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -148,15 +188,7 @@ bool KruglovaA2DMuitMPI::RunImpl() {
   std::vector<Trial2D> trials;
 
   if (rank == 0) {
-    const int init_points = 20;
-    for (int i = 0; i < init_points; ++i) {
-      double x = in.x_min + (in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1);
-      double y_best = 0.0;
-      double f = Solve1DStrongin([&](double y) { return ObjectiveFunction(x, y); }, in.y_min, in.y_max, in.eps,
-                                 std::max(20, in.max_iters / 20), y_best);
-      trials.push_back({.x = x, .y = y_best, .f = f});
-    }
-    std::sort(trials.begin(), trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
+    trials = InitTrials(in, 20);
   }
 
   for (int iter = 0; iter < in.max_iters; ++iter) {
@@ -176,37 +208,25 @@ bool KruglovaA2DMuitMPI::RunImpl() {
     MPI_Scatter(selected_intervals.data(), sizeof(IntervalData), MPI_BYTE, &my_interval, sizeof(IntervalData), MPI_BYTE,
                 0, MPI_COMM_WORLD);
 
-    double dx_local = my_interval.x2 - my_interval.x1;
-    double m_local = (std::abs(my_interval.f2 - my_interval.f1) / dx_local);
-    m_local = (m_local > 0.0) ? (2.0 * m_local) : 1.0;
-
-    double x_new = (0.5 * (my_interval.x1 + my_interval.x2)) - ((my_interval.f2 - my_interval.f1) / (2.0 * m_local));
-    double y_res = 0.0;
-    double f_res = Solve1DStrongin([&](double y) { return ObjectiveFunction(x_new, y); }, in.y_min, in.y_max, in.eps,
-                                   std::max(25, in.max_iters / 20), y_res);
-
-    std::array<double, 3> send_res = {x_new, y_res, f_res};
+    Trial2D local_trial = ComputeLocalTrial(my_interval, in);
+    std::array<double, 3> send_res = {local_trial.x, local_trial.y, local_trial.f};
     std::vector<double> recv_res(static_cast<size_t>(size) * 3);
     MPI_Gather(send_res.data(), 3, MPI_DOUBLE, recv_res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
+      std::vector<Trial2D> new_trials;
       for (int i = 0; i < size; ++i) {
         size_t base = static_cast<size_t>(i) * 3;
-        Trial2D res{.x = recv_res[base], .y = recv_res[base + 1], .f = recv_res[base + 2]};
-        auto it = std::lower_bound(trials.begin(), trials.end(), res,
-                                   [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
-        if (it == trials.end() || std::abs(it->x - res.x) > 1e-12) {
-          trials.insert(it, res);
-        }
+        new_trials.push_back({.x = recv_res[base], .y = recv_res[base + 1], .f = recv_res[base + 2]});
       }
+      UpdateTrialsOnMaster(trials, new_trials);
     }
   }
 
   std::array<double, 3> final_res = {0.0, 0.0, 0.0};
   if (rank == 0) {
-    auto best_it =
-        std::min_element(trials.begin(), trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.f < b.f; });
-    final_res = {best_it->x, best_it->y, best_it->f};
+    Trial2D best = FindBestTrial(trials);
+    final_res = {best.x, best.y, best.f};
   }
 
   MPI_Bcast(final_res.data(), 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
