@@ -15,15 +15,20 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-class EgashinKRadixBatcherSortFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class EgashinKRunFuncTestsRadixBatcherSort : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
+  }
+
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_ = std::get<0>(param);
-    expected_ = std::get<1>(param);
+    input_data_ = std::get<0>(param);
+    expected_data_ = std::get<1>(param);
   }
 
-  bool CheckTestOutputData(OutType &output) override {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -31,24 +36,24 @@ class EgashinKRadixBatcherSortFuncTest : public ppc::util::BaseRunFuncTests<InTy
         return true;
       }
     }
-    if (output.size() != expected_.size()) {
+    if (output_data.size() != expected_data_.size()) {
       return false;
     }
-    for (std::size_t i = 0; i < output.size(); ++i) {
-      if (output[i] != expected_[i]) {
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
+      if (output_data[i] != expected_data_[i]) {
         return false;
       }
     }
     return true;
   }
 
-  InType GetTestInputData() override {
-    return input_;
+  InType GetTestInputData() final {
+    return input_data_;
   }
 
  private:
-  InType input_;
-  OutType expected_;
+  InType input_data_{};
+  OutType expected_data_{};
 };
 
 namespace {
@@ -61,7 +66,7 @@ inline OutType SortedOutput(const InType &input) {
 }
 
 // Test cases with unique names
-const std::array<TestType, 15> kTests = {
+const std::array<TestType, 15> kTestParam = {
     std::make_tuple(InType{}, OutType{}, "EmptyArray"),
     std::make_tuple(InType{42.0}, OutType{42.0}, "SingleElement"),
     std::make_tuple(InType{1.0, 2.0}, OutType{1.0, 2.0}, "TwoElementsSorted"),
@@ -79,15 +84,19 @@ const std::array<TestType, 15> kTests = {
     std::make_tuple(InType{8.0, 4.0, 2.0, 6.0, 1.0, 5.0, 7.0, 3.0}, OutType{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0},
                     "PowerOf2Size")};
 
-TEST_P(EgashinKRadixBatcherSortFuncTest, Sorting) {
+TEST_P(EgashinKRunFuncTestsRadixBatcherSort, Sorting) {
   ExecuteTest(GetParam());
 }
 
-const auto kTaskParams =
-    std::tuple_cat(ppc::util::AddFuncTask<TestTaskSEQ, InType>(kTests, PPC_SETTINGS_egashin_k_radix_batcher_sort),
-                   ppc::util::AddFuncTask<TestTaskMPI, InType>(kTests, PPC_SETTINGS_egashin_k_radix_batcher_sort));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<EgashinKRadixBatcherSortSEQ, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort),
+                   ppc::util::AddFuncTask<EgashinKRadixBatcherSortMPI, InType>(kTestParam, PPC_SETTINGS_egashin_k_radix_batcher_sort));
 
-INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortFunc, EgashinKRadixBatcherSortFuncTest, ppc::util::ExpandToValues(kTaskParams));
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kPerfTestName = EgashinKRunFuncTestsRadixBatcherSort::PrintFuncTestName<EgashinKRunFuncTestsRadixBatcherSort>;
+
+INSTANTIATE_TEST_SUITE_P(SortingTests, EgashinKRunFuncTestsRadixBatcherSort, kGtestValues, kPerfTestName);
 
 }  // namespace
 

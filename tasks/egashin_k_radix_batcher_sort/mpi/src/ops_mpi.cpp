@@ -13,25 +13,25 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-TestTaskMPI::TestTaskMPI(const InType &in) {
+EgashinKRadixBatcherSortMPI::TestTaskMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
 }
 
-bool TestTaskMPI::ValidationImpl() {
+bool EgashinKRadixBatcherSortMPI::ValidationImpl() {
   return true;
 }
 
-bool TestTaskMPI::PreProcessingImpl() {
+bool EgashinKRadixBatcherSortMPI::PreProcessingImpl() {
   return true;
 }
 
-bool TestTaskMPI::PostProcessingImpl() {
+bool EgashinKRadixBatcherSortMPI::PostProcessingImpl() {
   return true;
 }
 
-uint64_t TestTaskMPI::DoubleToSortable(double value) {
+uint64_t EgashinKRadixBatcherSortMPI::DoubleToSortable(double value) {
   uint64_t bits = 0;
   std::memcpy(&bits, &value, sizeof(double));
   if ((bits & (1ULL << 63)) != 0) {
@@ -42,7 +42,7 @@ uint64_t TestTaskMPI::DoubleToSortable(double value) {
   return bits;
 }
 
-double TestTaskMPI::SortableToDouble(uint64_t bits) {
+double EgashinKRadixBatcherSortMPI::SortableToDouble(uint64_t bits) {
   if ((bits & (1ULL << 63)) != 0) {
     bits ^= (1ULL << 63);
   } else {
@@ -53,7 +53,7 @@ double TestTaskMPI::SortableToDouble(uint64_t bits) {
   return value;
 }
 
-void TestTaskMPI::RadixSort(std::vector<double> &arr) {
+void EgashinKRadixBatcherSortMPI::RadixSort(std::vector<double> &arr) {
   if (arr.size() <= 1) {
     return;
   }
@@ -100,7 +100,7 @@ void TestTaskMPI::RadixSort(std::vector<double> &arr) {
   }
 }
 
-void TestTaskMPI::CompareExchange(std::vector<double> &arr, int i, int j) {
+void EgashinKRadixBatcherSortMPI::CompareExchange(std::vector<double> &arr, int i, int j) {
   auto sz = static_cast<int>(arr.size());
   if (j < sz && i < sz && arr[i] > arr[j]) {
     std::swap(arr[i], arr[j]);
@@ -108,7 +108,7 @@ void TestTaskMPI::CompareExchange(std::vector<double> &arr, int i, int j) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-void TestTaskMPI::BatcherOddEvenMerge(std::vector<double> &arr, int lo, int n, int r) {
+void EgashinKRadixBatcherSortMPI::BatcherOddEvenMerge(std::vector<double> &arr, int lo, int n, int r) {
   int m = r * 2;
   if (m < n) {
     BatcherOddEvenMerge(arr, lo, n, m);
@@ -122,7 +122,7 @@ void TestTaskMPI::BatcherOddEvenMerge(std::vector<double> &arr, int lo, int n, i
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-void TestTaskMPI::BatcherOddEvenMergeSort(std::vector<double> &arr, int lo, int n) {
+void EgashinKRadixBatcherSortMPI::BatcherOddEvenMergeSort(std::vector<double> &arr, int lo, int n) {
   if (n > 1) {
     int m = n / 2;
     BatcherOddEvenMergeSort(arr, lo, m);
@@ -131,7 +131,7 @@ void TestTaskMPI::BatcherOddEvenMergeSort(std::vector<double> &arr, int lo, int 
   }
 }
 
-std::vector<std::pair<int, int>> TestTaskMPI::GenerateBatcherNetwork(int n) {
+std::vector<std::pair<int, int>> EgashinKRadixBatcherSortMPI::GenerateBatcherNetwork(int n) {
   std::vector<std::pair<int, int>> comparators;
   if (n <= 1) {
     return comparators;
@@ -157,7 +157,7 @@ std::vector<std::pair<int, int>> TestTaskMPI::GenerateBatcherNetwork(int n) {
   return comparators;
 }
 
-void TestTaskMPI::MergeWithPartner(std::vector<double> &local_data, int partner_rank, int /*rank*/, bool keep_lower) {
+void EgashinKRadixBatcherSortMPI::MergeWithPartner(std::vector<double> &local_data, int partner_rank, int /*rank*/, bool keep_lower) {
   int local_size = static_cast<int>(local_data.size());
   int partner_size = 0;
 
@@ -205,7 +205,7 @@ void TestTaskMPI::MergeWithPartner(std::vector<double> &local_data, int partner_
   }
 }
 
-void TestTaskMPI::DistributeData(int total_size, int world_size, int rank, std::vector<double> &data,
+void EgashinKRadixBatcherSortMPI::DistributeData(int total_size, int world_size, int rank, std::vector<double> &data,
                                  std::vector<int> &counts, std::vector<int> &displs, std::vector<double> &local_data) {
   int base_count = total_size / world_size;
   int remainder = total_size % world_size;
@@ -220,7 +220,7 @@ void TestTaskMPI::DistributeData(int total_size, int world_size, int rank, std::
                MPI_COMM_WORLD);
 }
 
-void TestTaskMPI::PerformBatcherMerge(std::vector<double> &local_data, int world_size, int rank) {
+void EgashinKRadixBatcherSortMPI::PerformBatcherMerge(std::vector<double> &local_data, int world_size, int rank) {
   auto comparators = GenerateBatcherNetwork(world_size);
 
   for (const auto &[proc1, proc2] : comparators) {
@@ -233,7 +233,7 @@ void TestTaskMPI::PerformBatcherMerge(std::vector<double> &local_data, int world
   }
 }
 
-void TestTaskMPI::GatherResults(std::vector<double> &local_data, int total_size, int world_size, int rank,
+void EgashinKRadixBatcherSortMPI::GatherResults(std::vector<double> &local_data, int total_size, int world_size, int rank,
                                 std::vector<double> &sorted_data) {
   if (rank == 0) {
     sorted_data.resize(total_size);
@@ -255,7 +255,7 @@ void TestTaskMPI::GatherResults(std::vector<double> &local_data, int total_size,
               MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-bool TestTaskMPI::RunImpl() {
+bool EgashinKRadixBatcherSortMPI::RunImpl() {
   int rank = 0;
   int world_size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

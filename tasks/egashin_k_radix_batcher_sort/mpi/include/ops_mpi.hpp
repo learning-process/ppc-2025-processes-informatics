@@ -9,13 +9,13 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-class TestTaskMPI : public BaseTask {
+class EgashinKRadixBatcherSortMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
 
-  explicit TestTaskMPI(const InType &in);
+  explicit EgashinKRadixBatcherSortMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;

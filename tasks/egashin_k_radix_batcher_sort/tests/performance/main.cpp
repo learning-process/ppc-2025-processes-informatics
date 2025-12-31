@@ -13,23 +13,21 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-class EgashinKRadixBatcherSortPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
+class EgashinKRunPerfTestRadixBatcherSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
+  const int kCount_ = 1000000;
+  InType input_data_{};
+
   void SetUp() override {
-    std::size_t arr_size = 1000000;
     std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_real_distribution<double> dist(-1e6, 1e6);
 
-    input_.resize(arr_size);
-    for (std::size_t i = 0; i < arr_size; ++i) {
-      input_[i] = dist(gen);
+    input_data_.resize(kCount_);
+    for (int i = 0; i < kCount_; ++i) {
+      input_data_[i] = dist(gen);
     }
-
-    expected_ = input_;
-    std::ranges::sort(expected_);
   }
 
-  bool CheckTestOutputData(OutType &output) override {
+  bool CheckTestOutputData(OutType &output_data) final {
     if (ppc::util::IsUnderMpirun()) {
       int rank = 0;
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -37,33 +35,35 @@ class EgashinKRadixBatcherSortPerfTest : public ppc::util::BaseRunPerfTests<InTy
         return true;
       }
     }
-    if (output.size() != expected_.size()) {
+    OutType expected_data = input_data_;
+    std::ranges::sort(expected_data);
+    if (output_data.size() != expected_data.size()) {
       return false;
     }
-    for (std::size_t i = 0; i < output.size(); ++i) {
-      if (output[i] != expected_[i]) {
+    for (std::size_t i = 0; i < output_data.size(); ++i) {
+      if (output_data[i] != expected_data[i]) {
         return false;
       }
     }
     return true;
   }
 
-  InType GetTestInputData() override {
-    return input_;
+  InType GetTestInputData() final {
+    return input_data_;
   }
-
- private:
-  InType input_;
-  OutType expected_;
 };
 
-TEST_P(EgashinKRadixBatcherSortPerfTest, Performance) {
+TEST_P(EgashinKRunPerfTestRadixBatcherSort, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerfParams =
-    ppc::util::MakeAllPerfTasks<InType, TestTaskMPI, TestTaskSEQ>(PPC_SETTINGS_egashin_k_radix_batcher_sort);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, EgashinKRadixBatcherSortMPI, EgashinKRadixBatcherSortSEQ>(PPC_SETTINGS_egashin_k_radix_batcher_sort);
 
-INSTANTIATE_TEST_SUITE_P(EgashinKRadixBatcherSortPerf, EgashinKRadixBatcherSortPerfTest, ppc::util::TupleToGTestValues(kPerfParams));
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+
+const auto kPerfTestName = EgashinKRunPerfTestRadixBatcherSort::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(RunModeTests, EgashinKRunPerfTestRadixBatcherSort, kGtestValues, kPerfTestName);
 
 }  // namespace egashin_k_radix_batcher_sort

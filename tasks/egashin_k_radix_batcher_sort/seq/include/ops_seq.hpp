@@ -8,12 +8,12 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-class TestTaskSEQ : public BaseTask {
+class EgashinKRadixBatcherSortSEQ : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  explicit TestTaskSEQ(const InType &in);
+  explicit EgashinKRadixBatcherSortSEQ(const InType &in);
 
  private:
   bool ValidationImpl() override;

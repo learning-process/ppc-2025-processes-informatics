@@ -10,25 +10,25 @@
 
 namespace egashin_k_radix_batcher_sort {
 
-TestTaskSEQ::TestTaskSEQ(const InType &in) {
+EgashinKRadixBatcherSortSEQ::TestTaskSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = {};
 }
 
-bool TestTaskSEQ::ValidationImpl() {
+bool EgashinKRadixBatcherSortSEQ::ValidationImpl() {
   return true;
 }
 
-bool TestTaskSEQ::PreProcessingImpl() {
+bool EgashinKRadixBatcherSortSEQ::PreProcessingImpl() {
   return true;
 }
 
-bool TestTaskSEQ::PostProcessingImpl() {
+bool EgashinKRadixBatcherSortSEQ::PostProcessingImpl() {
   return true;
 }
 
-uint64_t TestTaskSEQ::DoubleToSortable(double value) {
+uint64_t EgashinKRadixBatcherSortSEQ::DoubleToSortable(double value) {
   uint64_t bits = 0;
   std::memcpy(&bits, &value, sizeof(double));
   // For positive numbers: flip the sign bit
@@ -41,7 +41,7 @@ uint64_t TestTaskSEQ::DoubleToSortable(double value) {
   return bits;
 }
 
-double TestTaskSEQ::SortableToDouble(uint64_t bits) {
+double EgashinKRadixBatcherSortSEQ::SortableToDouble(uint64_t bits) {
   // Reverse the transformation
   if ((bits & (1ULL << 63)) != 0) {
     bits ^= (1ULL << 63);
@@ -53,7 +53,7 @@ double TestTaskSEQ::SortableToDouble(uint64_t bits) {
   return value;
 }
 
-void TestTaskSEQ::RadixSort(std::vector<double> &arr) {
+void EgashinKRadixBatcherSortSEQ::RadixSort(std::vector<double> &arr) {
   if (arr.size() <= 1) {
     return;
   }
@@ -106,7 +106,7 @@ void TestTaskSEQ::RadixSort(std::vector<double> &arr) {
   }
 }
 
-bool TestTaskSEQ::RunImpl() {
+bool EgashinKRadixBatcherSortSEQ::RunImpl() {
   std::vector<double> data = GetInput();
   RadixSort(data);
   GetOutput() = data;
