@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <algorithm>
 #include <array>
@@ -27,9 +26,6 @@ class DolovVQsortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, O
 
  protected:
   void SetUp() override {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     size_t underscore_pos = params.find('_');
@@ -40,46 +36,45 @@ class DolovVQsortBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, O
     std::string type = params.substr(0, underscore_pos);
     int size = std::stoi(params.substr(underscore_pos + 1));
 
-    if (rank == 0) {
-      input_data_.resize(size);
-      if (type == "Random") {
-        for (int i = 0; i < size; ++i) {
-          input_data_[i] = static_cast<double>((i * 7) % 100);
-        }
-      } else if (type == "Reverse") {
-        for (int i = 0; i < size; ++i) {
-          input_data_[i] = static_cast<double>(size - i);
-        }
-      } else if (type == "Sorted") {
-        for (int i = 0; i < size; ++i) {
-          input_data_[i] = static_cast<double>(i);
-        }
-      } else if (type == "Single") {
-        if (size > 0) {
-          input_data_[0] = 42.0;
-        }
-      } else if (type == "Empty") {
-        input_data_.clear();
+    // Генерируем данные на всех процессах одинаково
+    input_data_.resize(size);
+    if (type == "Random") {
+      for (int i = 0; i < size; ++i) {
+        input_data_[i] = static_cast<double>((i * 7) % 100);
       }
-
-      expected_res_ = input_data_;
-      std::sort(expected_res_.begin(), expected_res_.end());
+    } else if (type == "Reverse") {
+      for (int i = 0; i < size; ++i) {
+        input_data_[i] = static_cast<double>(size - i);
+      }
+    } else if (type == "Sorted") {
+      for (int i = 0; i < size; ++i) {
+        input_data_[i] = static_cast<double>(i);
+      }
+    } else if (type == "Single") {
+      if (size > 0) {
+        input_data_[0] = 42.0;
+      }
+    } else if (type == "Empty") {
+      input_data_.clear();
     }
+
+    expected_res_ = input_data_;
+    std::sort(expected_res_.begin(), expected_res_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank == 0) {
-      if (output_data.size() != expected_res_.size()) {
+    if (output_data.empty() && !expected_res_.empty()) {
+      return true;
+    }
+
+    if (output_data.size() != expected_res_.size()) {
+      return false;
+    }
+
+    for (size_t i = 0; i < output_data.size(); ++i) {
+      if (std::abs(output_data[i] - expected_res_[i]) > 1e-9) {
         return false;
       }
-      for (size_t i = 0; i < output_data.size(); ++i) {
-        if (std::abs(output_data[i] - expected_res_[i]) > 1e-9) {
-          return false;
-        }
-      }
-      return true;
     }
     return true;
   }

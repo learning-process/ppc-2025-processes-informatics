@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <vector>
 
 #include "dolov_v_qsort_batcher/common/include/common.hpp"
@@ -16,26 +16,19 @@ class DolovVQsortBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, O
   InType input_data_{};
 
   void SetUp() override {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    if (rank == 0) {
-      const int kCount = 1000000;
-      input_data_.resize(kCount);
-      for (int i = 0; i < kCount; ++i) {
-        uint64_t val = (static_cast<uint64_t>(i) * 1103515245ULL + 12345ULL);
-        input_data_[i] = static_cast<double>(val % 2147483647ULL) / 1000.0;
-      }
+    const int kCount = 1000000;
+    input_data_.resize(kCount);
+    for (int i = 0; i < kCount; ++i) {
+      uint64_t val = (static_cast<uint64_t>(i) * 1103515245ULL + 12345ULL);
+      input_data_[i] = static_cast<double>(val % 2147483647ULL) / 1000.0;
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank == 0) {
-      return std::is_sorted(output_data.begin(), output_data.end());
+    if (output_data.empty()) {
+      return true;
     }
-    return true;
+    return std::is_sorted(output_data.begin(), output_data.end());
   }
 
   InType GetTestInputData() final {
