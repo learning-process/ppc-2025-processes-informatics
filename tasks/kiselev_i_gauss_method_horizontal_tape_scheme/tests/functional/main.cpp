@@ -64,20 +64,6 @@ class KiselevIRunFuncTestsProcesses2 : public ppc::util::BaseRunFuncTests<InType
 
 namespace {
 
-std::vector<std::vector<double>> MakeTridiagonal(std::size_t n, double sub, double diag, double sup) {
-  std::vector<std::vector<double>> mat(n, std::vector<double>(n, 0.0));
-  for (std::size_t i = 0; i < n; ++i) {
-    mat[i][i] = diag;
-    if (i > 0) {
-      mat[i][i - 1] = sub;
-    }
-    if (i + 1 < n) {
-      mat[i][i + 1] = sup;
-    }
-  }
-  return mat;
-}
-
 TEST_P(KiselevIRunFuncTestsProcesses2, GaussHorizontalTapeTest) {
   ExecuteTest(GetParam());
 }
