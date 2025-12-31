@@ -27,7 +27,7 @@ struct Trial2D {
 template <typename T>
 double CalculateM(const std::vector<T> &trials) {
   double m_max = 0.0;
-  for (size_t i = 0; (i + 1) < trials.size(); ++i) {
+  for (size_t i = 0; i + 1 < trials.size(); ++i) {
     double dx = trials[i + 1].x - trials[i].x;
     double dz = std::abs(trials[i + 1].z - trials[i].z);
     if (dx > 1e-15) {
@@ -40,30 +40,28 @@ double CalculateM(const std::vector<T> &trials) {
 size_t FindBestInterval(const std::vector<Trial2D> &trials, double m_scaled) {
   double max_rate = -std::numeric_limits<double>::infinity();
   size_t best_idx = 0;
-  for (size_t i = 0; (i + 1) < trials.size(); ++i) {
+
+  for (size_t i = 0; i + 1 < trials.size(); ++i) {
     double dx = trials[i + 1].x - trials[i].x;
     double dz = trials[i + 1].z - trials[i].z;
     double rate = (m_scaled * dx) + ((dz * dz) / (m_scaled * dx)) - (2.0 * (trials[i + 1].z + trials[i].z));
+
     if (rate > max_rate) {
       max_rate = rate;
       best_idx = i;
     }
   }
+
   return best_idx;
 }
 
 double Solve1DStrongin(const std::function<double(double)> &func, double a, double b, double eps, int max_iters,
                        double &best_x) {
   const double r_param = 2.0;
+
   std::vector<Trial1D> trials;
-  Trial1D t0;
-  t0.x = a;
-  t0.z = func(a);
-  Trial1D t1;
-  t1.x = b;
-  t1.z = func(b);
-  trials.push_back(t0);
-  trials.push_back(t1);
+  trials.push_back({a, func(a)});
+  trials.push_back({b, func(b)});
 
   if (trials[0].x > trials[1].x) {
     std::swap(trials[0], trials[1]);
@@ -73,12 +71,14 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
     double m_val = CalculateM(trials);
     double m_scaled = (m_val > 0.0) ? (r_param * m_val) : 1.0;
 
-    size_t best_idx = 0;
     double max_rate = -std::numeric_limits<double>::infinity();
-    for (size_t i = 0; (i + 1) < trials.size(); ++i) {
+    size_t best_idx = 0;
+
+    for (size_t i = 0; i + 1 < trials.size(); ++i) {
       double dx = trials[i + 1].x - trials[i].x;
       double dz = trials[i + 1].z - trials[i].z;
       double rate = (m_scaled * dx) + ((dz * dz) / (m_scaled * dx)) - (2.0 * (trials[i + 1].z + trials[i].z));
+
       if (rate > max_rate) {
         max_rate = rate;
         best_idx = i;
@@ -89,22 +89,27 @@ double Solve1DStrongin(const std::function<double(double)> &func, double a, doub
       break;
     }
 
-    double x_new = (0.5 * (trials[best_idx + 1].x + trials[best_idx].x)) -
-                   ((trials[best_idx + 1].z - trials[best_idx].z) / (2.0 * m_scaled));
+    double x_new = 0.5 * (trials[best_idx + 1].x + trials[best_idx].x) -
+                   (trials[best_idx + 1].z - trials[best_idx].z) / (2.0 * m_scaled);
 
-    Trial1D new_trial;
-    new_trial.x = x_new;
-    new_trial.z = func(x_new);
+    Trial1D new_trial{x_new, func(x_new)};
 
-    auto it = std::lower_bound(trials.begin(), trials.end(), new_trial,
-                               [](const Trial1D &t1, const Trial1D &t2) { return t1.x < t2.x; });
-    trials.insert(it, new_trial);
+    size_t pos = 0;
+    while (pos < trials.size() && trials[pos].x < new_trial.x) {
+      ++pos;
+    }
+    trials.insert(trials.begin() + static_cast<std::ptrdiff_t>(pos), new_trial);
   }
 
-  auto best =
-      std::min_element(trials.begin(), trials.end(), [](const Trial1D &t1, const Trial1D &t2) { return t1.z < t2.z; });
-  best_x = best->x;
-  return best->z;
+  size_t best_idx = 0;
+  for (size_t i = 1; i < trials.size(); ++i) {
+    if (trials[i].z < trials[best_idx].z) {
+      best_idx = i;
+    }
+  }
+
+  best_x = trials[best_idx].x;
+  return trials[best_idx].z;
 }
 
 }  // namespace
@@ -138,19 +143,23 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
   const int init_points = 20;
 
   for (int i = 0; i < init_points; ++i) {
-    double x_val = in.x_min + ((in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1));
+    double x_val = in.x_min + (in.x_max - in.x_min) * static_cast<double>(i) / static_cast<double>(init_points - 1);
+
     double y_res = 0.0;
     double z_res = compute_z(x_val, y_res);
 
-    Trial2D t;
-    t.x = x_val;
-    t.y = y_res;
-    t.z = z_res;
-
-    x_trials.push_back(t);
+    x_trials.push_back({x_val, y_res, z_res});
   }
 
-  std::sort(x_trials.begin(), x_trials.end(), [](const Trial2D &a, const Trial2D &b) { return a.x < b.x; });
+  for (size_t i = 0; i < x_trials.size(); ++i) {
+    size_t min_idx = i;
+    for (size_t j = i + 1; j < x_trials.size(); ++j) {
+      if (x_trials[j].x < x_trials[min_idx].x) {
+        min_idx = j;
+      }
+    }
+    std::swap(x_trials[i], x_trials[min_idx]);
+  }
 
   for (int iter = 0; iter < in.max_iters; ++iter) {
     double m_val = CalculateM(x_trials);
@@ -162,27 +171,32 @@ bool KruglovaA2DMuitSEQ::RunImpl() {
       break;
     }
 
-    double x_new = (0.5 * (x_trials[best_idx + 1].x + x_trials[best_idx].x)) -
-                   ((x_trials[best_idx + 1].z - x_trials[best_idx].z) / (2.0 * m_scaled));
+    double x_new = 0.5 * (x_trials[best_idx + 1].x + x_trials[best_idx].x) -
+                   (x_trials[best_idx + 1].z - x_trials[best_idx].z) / (2.0 * m_scaled);
+
     double y_new = 0.0;
     double z_new = compute_z(x_new, y_new);
 
-    Trial2D new_trial;
-    new_trial.x = x_new;
-    new_trial.y = y_new;
-    new_trial.z = z_new;
+    Trial2D new_trial{x_new, y_new, z_new};
 
-    auto it = std::lower_bound(x_trials.begin(), x_trials.end(), new_trial,
-                               [](const Trial2D &t1, const Trial2D &t2) { return t1.x < t2.x; });
-    if (it == x_trials.end() || std::abs(it->x - x_new) > 1e-12) {
-      x_trials.insert(it, new_trial);
+    size_t pos = 0;
+    while (pos < x_trials.size() && x_trials[pos].x < x_new) {
+      ++pos;
+    }
+
+    if (pos == x_trials.size() || std::abs(x_trials[pos].x - x_new) > 1e-12) {
+      x_trials.insert(x_trials.begin() + static_cast<std::ptrdiff_t>(pos), new_trial);
     }
   }
 
-  auto best = std::min_element(x_trials.begin(), x_trials.end(),
-                               [](const Trial2D &t1, const Trial2D &t2) { return t1.z < t2.z; });
+  size_t best_idx = 0;
+  for (size_t i = 1; i < x_trials.size(); ++i) {
+    if (x_trials[i].z < x_trials[best_idx].z) {
+      best_idx = i;
+    }
+  }
 
-  GetOutput() = {best->x, best->y, best->z};
+  GetOutput() = {x_trials[best_idx].x, x_trials[best_idx].y, x_trials[best_idx].z};
   return true;
 }
 
