@@ -15,7 +15,7 @@
 
 namespace volkov_a_count_word_line {
 
-class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::string, OutType, TestType> {
+class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   VolkovACountWordLineFuncTests() = default;
 
@@ -54,12 +54,12 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::st
     return result == ref_count_;
   }
 
-  std::string GetTestInputData() override {
+  InType GetTestInputData() override {
     return test_str_;
   }
 
  private:
-  std::string test_str_;
+  InType test_str_;
   OutType ref_count_ = 0;
 };
 
@@ -100,8 +100,8 @@ const std::array<TestType, 29> kFixedTests = {{{"simple test", 2},
                                                {"ab cd ef gh ij kl mn op qr st uv wx yz", 13}}};
 
 const auto kTasks = std::tuple_cat(
-    ppc::util::AddFuncTask<VolkovACountWordLineMPI, std::string>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
-    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, std::string>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
+    ppc::util::AddFuncTask<VolkovACountWordLineMPI, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
+    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
 
 const auto kTestParams = ppc::util::ExpandToValues(kTasks);
 const auto kTestNameFunc = VolkovACountWordLineFuncTests::PrintTestName;

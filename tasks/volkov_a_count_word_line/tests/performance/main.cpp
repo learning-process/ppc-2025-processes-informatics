@@ -10,10 +10,10 @@
 
 namespace volkov_a_count_word_line {
 
-class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::string, OutType> {
+class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int words_count = 5000;
+    const int words_count = 25000000;
     const std::string word = "word ";
 
     input_data_.reserve(words_count * word.size());
@@ -24,7 +24,7 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::st
     expected_output_ = words_count;
   }
 
-  std::string GetTestInputData() override {
+  InType GetTestInputData() override {
     return input_data_;
   }
 
@@ -33,7 +33,7 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::st
   }
 
  private:
-  std::string input_data_;
+  InType input_data_;
   OutType expected_output_ = 0;
 };
 
@@ -41,7 +41,7 @@ TEST_P(VolkovACountWordLinePerfTests, RunPerformance) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerfTasks = ppc::util::MakeAllPerfTasks<std::string, VolkovACountWordLineMPI, VolkovACountWordLineSEQ>(
+const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, VolkovACountWordLineMPI, VolkovACountWordLineSEQ>(
     PPC_SETTINGS_volkov_a_count_word_line);
 
 const auto kTestParams = ppc::util::TupleToGTestValues(kPerfTasks);

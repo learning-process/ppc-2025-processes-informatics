@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cctype>
 #include <vector>
 
 #include "volkov_a_count_word_line/common/include/common.hpp"
