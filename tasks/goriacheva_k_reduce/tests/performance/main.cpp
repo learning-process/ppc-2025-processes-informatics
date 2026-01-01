@@ -22,15 +22,15 @@ class GoriachevaKReducePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
       input_[i] = static_cast<int>(i % 1000);
     }
 
-    expected_ = OutType{0}; 
+    expected_ = OutType{0};
   }
 
   InType GetTestInputData() final {
     return input_;
   }
 
-  bool CheckTestOutputData(OutType& /*output_data*/) final {
-    return true;  
+  bool CheckTestOutputData(OutType & /*output_data*/) final {
+    return true;
   }
 
  private:
@@ -46,24 +46,18 @@ namespace {
 
 auto BuildPerfParams() {
   const auto all_tasks =
-      ppc::util::MakeAllPerfTasks<InType, GoriachevaKReduceMPI, GoriachevaKReduceSEQ>(
-          PPC_SETTINGS_goriacheva_k_reduce);
+      ppc::util::MakeAllPerfTasks<InType, GoriachevaKReduceMPI, GoriachevaKReduceSEQ>(PPC_SETTINGS_goriacheva_k_reduce);
 
   return ppc::util::TupleToGTestValues(all_tasks);
 }
 
 const auto kPerfParams = BuildPerfParams();
 
-std::string MakePerfName(
-    const ::testing::TestParamInfo<GoriachevaKReducePerfTests::ParamType>& info) {
+std::string MakePerfName(const ::testing::TestParamInfo<GoriachevaKReducePerfTests::ParamType> &info) {
   return GoriachevaKReducePerfTests::CustomPerfTestName(info);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    GoriachevaKReducePerfomanceTests,
-    GoriachevaKReducePerfTests,
-    kPerfParams,
-    MakePerfName);
+INSTANTIATE_TEST_SUITE_P(GoriachevaKReducePerfomanceTests, GoriachevaKReducePerfTests, kPerfParams, MakePerfName);
 
 }  // namespace
 }  // namespace goriacheva_k_reduce
