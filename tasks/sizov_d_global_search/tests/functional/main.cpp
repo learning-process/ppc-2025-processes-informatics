@@ -708,8 +708,11 @@ TEST_P(SizovDGlobalSearchRunFuncTests, GlobalSearch) {
   ExecuteTest(GetParam());
 }
 
+// clang-tidy ругается на макрос gtest.
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(FunctionalTests, SizovDGlobalSearchRunFuncTests, ::testing::ValuesIn(kFuncParams),
                          SizovDGlobalSearchRunFuncTests::PrintTestParam);
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 }  // namespace
 
