@@ -1,5 +1,6 @@
 #include "kutuzov_i_torus_grid/seq/include/ops_seq.hpp"
 
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -27,7 +28,7 @@ bool KutuzovIThorusGridSEQ::RunImpl() {
   std::vector<int> route = {1, 2, 3, 4, 5};
 
   // Doing something to make perf tests work
-  std::string message = "";
+  std::string message;
   for (int i = 0; i < long_string_size; i++) {
     message += 'a';
   }

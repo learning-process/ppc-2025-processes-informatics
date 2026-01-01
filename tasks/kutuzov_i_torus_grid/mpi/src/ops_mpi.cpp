@@ -5,7 +5,6 @@
 #include <cmath>
 #include <string>
 #include <tuple>
-#include <unordered_map>
 #include <vector>
 
 #include "kutuzov_i_torus_grid/common/include/common.hpp"

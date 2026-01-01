@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <string>
 #include <tuple>
 #include <vector>
 
@@ -15,9 +16,15 @@ const int kLongStringSize = 10'000'000;
 class KutuzovIRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
     message_ = std::string(kLongStringSize, 'a');
-
     int process_count = -1;
-    MPI_Comm_size(MPI_COMM_WORLD, &process_count);
+
+    int mpi_used = 0;
+    MPI_Initialized(&mpi_used);
+    if (mpi_used == 1) {
+      MPI_Comm_size(MPI_COMM_WORLD, &process_count);
+    } else {
+      process_count = 1;
+    }
 
     if (process_count == 1) {
       input_data_ = std::make_tuple(0, 0, message_);

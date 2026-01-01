@@ -27,7 +27,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
   void SetUp() override {
     int process_count = 0;
 
-    int mpi_used = false;
+    int mpi_used = 0;
     MPI_Initialized(&mpi_used);
     if (mpi_used == 1) {
       MPI_Comm_size(MPI_COMM_WORLD, &process_count);

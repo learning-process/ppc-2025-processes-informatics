@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <vector>
 
 #include "kutuzov_i_torus_grid/common/include/common.hpp"
@@ -23,7 +22,7 @@ class KutuzovIThorusGridMPI : public BaseTask {
 
   static int GetNextStep(int current_x, int current_y, int dest_x, int dest_y, int columns, int rows);
 
-  static void GenerateTopology(int &columns, int &rows, int proc_count);
+  static void GenerateTopology(int &columns, int &rows, int process_count);
 };
 
 }  // namespace kutuzov_i_torus_grid
