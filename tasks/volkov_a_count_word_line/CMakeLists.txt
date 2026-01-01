@@ -1,0 +1,9 @@
+ppc_add_task(
+    volkov_a_count_word_line
+    seq/src/ops_seq.cpp
+    seq/include/ops_seq.hpp
+    mpi/src/ops_mpi.cpp
+    mpi/include/ops_mpi.hpp
+    func_tests/main.cpp
+    perf_tests/main.cpp
+)
