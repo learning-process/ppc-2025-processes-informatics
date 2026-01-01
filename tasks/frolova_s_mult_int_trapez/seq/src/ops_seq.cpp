@@ -10,7 +10,7 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezSEQ::FrolovaSMultIntTrapezSEQ(const InType &in)
-    : limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {
+    : limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;

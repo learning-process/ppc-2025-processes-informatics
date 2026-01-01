@@ -14,7 +14,7 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
-    : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_{0.0} {
+    : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_() {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -60,7 +60,7 @@ std::vector<double> FrolovaSMultIntTrapezMPI::GetPointFromNumber(unsigned int nu
   return point;
 }
 
-bool FrolovaSMultIntTrapezMPI::ValidateInputData(const InType &input) {
+static bool FrolovaSMultIntTrapezMPI::ValidateInputData(const InType &input) {
   if (input.limits.empty() || input.number_of_intervals.empty()) {
     return false;
   }
@@ -76,7 +76,7 @@ bool FrolovaSMultIntTrapezMPI::ValidateInputData(const InType &input) {
   return true;
 }
 
-bool FrolovaSMultIntTrapezMPI::ValidateLimitsAndIntervals(const InType &input) {
+static bool FrolovaSMultIntTrapezMPI::ValidateLimitsAndIntervals(const InType &input) {
   for (size_t i = 0; i < input.limits.size(); i++) {
     if (input.limits[i].first >= input.limits[i].second) {
       return false;
