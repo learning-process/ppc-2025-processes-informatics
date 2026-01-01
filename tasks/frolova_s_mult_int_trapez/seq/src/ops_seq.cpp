@@ -51,7 +51,7 @@ std::vector<double> FrolovaSMultIntTrapezSEQ::GetPointFromNumber(unsigned int nu
   unsigned int definition = number;
 
   if (!limits_.empty()) {
-    Recursive(point, definition, 1, static_cast<unsigned int>(limits_.size()) - 1);
+    Recursive(point, definition);
   }
 
   return point;
