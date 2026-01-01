@@ -22,8 +22,15 @@ bool KutuzovIThorusGridSEQ::PreProcessingImpl() {
 }
 
 bool KutuzovIThorusGridSEQ::RunImpl() {
+  const int long_string_size = 10'000'000;
+
   std::vector<int> route = {1, 2, 3, 4, 5};
-  std::string message = "msg";
+
+  // Doing something to make perf tests work
+  std::string message = "";
+  for (int i = 0; i < long_string_size; i++) {
+    message += 'a';
+  }
   GetOutput() = std::make_tuple(route, message);
 
   return true;
