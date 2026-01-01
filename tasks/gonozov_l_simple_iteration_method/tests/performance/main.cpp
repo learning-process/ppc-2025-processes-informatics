@@ -16,8 +16,7 @@ class GonozovLRunIterationMethodPerfTest : public ppc::util::BaseRunPerfTests<In
     std::vector<double> matrix(kCount_ * kCount_, 1.0);
     std::vector<double> b(kCount_, 1.0);
 
-    for (int i = 0; i < kCount_; i++)
-    {
+    for (int i = 0; i < kCount_; i++) {
       matrix[(i * kCount_) + i] = static_cast<double>(kCount_);
       b[i] = static_cast<double>(kCount_ * 2 - 1);
     }
@@ -28,12 +27,13 @@ class GonozovLRunIterationMethodPerfTest : public ppc::util::BaseRunPerfTests<In
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (desired_result_.size() != output_data.size())
+    if (desired_result_.size() != output_data.size()) {
       return false;
-    for (int i = 0; i < static_cast<int>(desired_result_.size()); i++)
-    {
-      if (std::abs(desired_result_[i] - output_data[i]) > 0.01)
+    }
+    for (int i = 0; i < static_cast<int>(desired_result_.size()); i++) {
+      if (std::abs(desired_result_[i] - output_data[i]) > 0.01) {
         return false;
+      }
     }
     return true;
   }
@@ -48,7 +48,8 @@ TEST_P(GonozovLRunIterationMethodPerfTest, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GonozovLSimpleIterationMethodMPI, GonozovLSimpleIterationMethodSEQ>(PPC_SETTINGS_gonozov_l_simple_iteration_method);
+    ppc::util::MakeAllPerfTasks<InType, GonozovLSimpleIterationMethodMPI, GonozovLSimpleIterationMethodSEQ>(
+        PPC_SETTINGS_gonozov_l_simple_iteration_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -56,4 +57,4 @@ const auto kPerfTestName = GonozovLRunIterationMethodPerfTest::CustomPerfTestNam
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, GonozovLRunIterationMethodPerfTest, kGtestValues, kPerfTestName);
 
-}  // gonozov_l_simple_iteration_method
+}  // namespace gonozov_l_simple_iteration_method

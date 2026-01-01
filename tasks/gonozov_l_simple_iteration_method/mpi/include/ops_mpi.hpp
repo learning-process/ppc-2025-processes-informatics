@@ -21,4 +21,4 @@ class GonozovLSimpleIterationMethodMPI : public BaseTask {
   int64_t number_unknowns;
 };
 
-}  // namespace gonozov_l_simple_iteration_method_2
+}  // namespace gonozov_l_simple_iteration_method

@@ -21,4 +21,4 @@ class GonozovLSimpleIterationMethodSEQ : public BaseTask {
   int64_t number_unknowns;
 };
 
-}  // gonozov_l_simple_iteration_method
+}  // namespace gonozov_l_simple_iteration_method
