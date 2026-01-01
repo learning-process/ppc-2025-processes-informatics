@@ -74,7 +74,7 @@ void AkimovIRadixBatcherSortSEQ::LsdRadixSort(std::vector<double> &arr) {
     cnt.assign(kBuckets + 1, 0U);
 
     for (std::size_t i = 0; i < n; ++i) {
-      std::size_t d = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
+      auto d = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
       ++cnt[d + 1];
     }
     for (int i = 0; i < kBuckets; ++i) {
@@ -82,7 +82,7 @@ void AkimovIRadixBatcherSortSEQ::LsdRadixSort(std::vector<double> &arr) {
     }
 
     for (std::size_t i = 0; i < n; ++i) {
-      std::size_t d = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
+      auto d = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
       std::size_t pos = cnt[d]++;
       tmp_keys[pos] = keys[i];
       tmp_vals[pos] = arr[i];

@@ -79,7 +79,7 @@ void AkimovIRadixBatcherSortMPI::LsdRadixSort(std::vector<double> &arr) {
     count.assign(kBuckets + 1, 0U);
 
     for (std::size_t i = 0; i < n; ++i) {
-      std::size_t digit = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
+      auto digit = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
       ++count[digit + 1];
     }
 
@@ -88,7 +88,7 @@ void AkimovIRadixBatcherSortMPI::LsdRadixSort(std::vector<double> &arr) {
     }
 
     for (std::size_t i = 0; i < n; ++i) {
-      std::size_t digit = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
+      auto digit = static_cast<std::size_t>((keys[i] >> shift) & (kBuckets - 1));
       std::size_t pos = count[digit]++;
       tmp_keys[pos] = keys[i];
       tmp_vals[pos] = arr[i];
@@ -174,7 +174,7 @@ void AkimovIRadixBatcherSortMPI::ExchangeAndSelect(std::vector<double> &local, i
   }
 
   std::vector<double> merged;
-  merged.reserve(static_cast<std::size_t>(local_size + partner_size));
+  merged.reserve(static_cast<std::size_t>(local_size) + static_cast<std::size_t>(partner_size));
 
   std::size_t i = 0U;
   std::size_t j = 0U;
@@ -193,9 +193,11 @@ void AkimovIRadixBatcherSortMPI::ExchangeAndSelect(std::vector<double> &local, i
   }
 
   if (keep_lower) {
-    local.assign(merged.begin(), merged.begin() + static_cast<std::size_t>(local_size));
+    auto mid_it = merged.begin() + static_cast<std::vector<double>::difference_type>(local_size);
+    local.assign(merged.begin(), mid_it);
   } else {
-    local.assign(merged.end() - static_cast<std::size_t>(local_size), merged.end());
+    auto start_it = merged.end() - static_cast<std::vector<double>::difference_type>(local_size);
+    local.assign(start_it, merged.end());
   }
 }
 

@@ -29,7 +29,9 @@ class AkimovIRadixBatcherSortMPI : public BaseTask {
 
   // Batcher / merge-network helpers
   static void CmpSwap(std::vector<double> &arr, int i, int j) noexcept;
+  // NOLINTNEXTLINE(misc-no-recursion)
   static void OddEvenMergeRec(std::vector<double> &arr, int start, int len, int stride);
+  // NOLINTNEXTLINE(misc-no-recursion)
   static void OddEvenMergeSortRec(std::vector<double> &arr, int start, int len);
 
   static std::vector<std::pair<int, int>> BuildOddEvenPhasePairs(int procs);
@@ -41,7 +43,6 @@ class AkimovIRadixBatcherSortMPI : public BaseTask {
                           std::vector<int> &displs, std::vector<double> &local);
   static void GatherData(std::vector<double> &local_data, int total_size, int world_size, int rank,
                          std::vector<double> &sorted_data);
-
   static void PerformNetworkMerge(std::vector<double> &local, int world, int rank);
 };
 
