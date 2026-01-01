@@ -26,8 +26,18 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
  protected:
   void SetUp() override {
     int process_count = 0;
-    MPI_Comm_size(MPI_COMM_WORLD, &process_count);
-    if (process_count == 1) {
+
+    int mpi_used = false;
+    MPI_Initialized(&mpi_used);
+    if (mpi_used == 1) {
+      MPI_Comm_size(MPI_COMM_WORLD, &process_count);
+      if (process_count == 1) {
+        input_data_ = std::make_tuple(0, 0, message_);
+        expected_ = std::make_tuple(std::vector<int>{}, message_);
+        return;
+      }
+    } else {
+      process_count = 1;
       input_data_ = std::make_tuple(0, 0, message_);
       expected_ = std::make_tuple(std::vector<int>{}, message_);
       return;
