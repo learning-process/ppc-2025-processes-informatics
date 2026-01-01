@@ -39,14 +39,14 @@ bool PotashnikMStarTopolMPI::RunImpl() {
   std::pair<int, int> src_dst = {0, 0};
 
   // If world_size = 1
-  // if (world_size == 1) {
-  //   int sum = 0;
-  //   for (int i = 0; i < size; i++) {
-  //     sum += input[i];
-  //   }
-  //   GetOutput() = sum;
-  //   return true;
-  // }
+  if (world_size == 1) {
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+      sum += input[i];
+    }
+    GetOutput() = sum;
+    return true;
+  }
 
   // Going through calls
   for (int i = 0; i < size; i++) {
