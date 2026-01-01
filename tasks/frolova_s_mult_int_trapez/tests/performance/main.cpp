@@ -3,118 +3,89 @@
 
 #include <chrono>
 #include <cmath>
-#include <cstdlib>
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"
 #include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
 #include "frolova_s_mult_int_trapez/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
-using namespace frolova_s_mult_int_trapez;
+namespace frolova_s_mult_int_trapez {
 
-// Объявления функций (прототипы)
-static double function1(std::vector<double> input);
-static double function2(std::vector<double> input);
+class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
+ protected:
+  void SetUp() override {
+    small_input_ = {.limits = {{0.0, 1.0}, {4.0, 6.0}},
+                    .number_of_intervals = {100, 100},
+                    .function = [](std::vector<double> input) {
+      return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
+    }};
 
-// Определения функций
-static double function1(std::vector<double> input) {
-  return pow(input[0], 3) + pow(input[1], 3);
-}
+    medium_input_ = {.limits = {{0.0, 1.0}, {4.0, 6.0}},
+                     .number_of_intervals = {300, 300},
+                     .function = [](std::vector<double> input) {
+      return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
+    }};
 
-static double function2(std::vector<double> input) {
-  return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2;
-}
-
-// SEQ Performance Tests
-TEST(frolova_s_mult_int_trapez_seq_perf, test_small_problem) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {100, 100};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function2};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  auto start = std::chrono::high_resolution_clock::now();
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-  auto end = std::chrono::high_resolution_clock::now();
-
-  double result = task.GetOutput();
-  EXPECT_NE(result, 0.0);
-
-  std::chrono::duration<double> duration = end - start;
-  std::cout << "SEQ Small problem time: " << duration.count() << " seconds" << std::endl;
-}
-
-TEST(frolova_s_mult_int_trapez_seq_perf, test_large_problem) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 2.0}, {0.0, 2.0}};
-  std::vector<unsigned int> intervals = {500, 500};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function1};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  auto start = std::chrono::high_resolution_clock::now();
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-  auto end = std::chrono::high_resolution_clock::now();
-
-  double result = task.GetOutput();
-  EXPECT_NE(result, 0.0);
-
-  std::chrono::duration<double> duration = end - start;
-  std::cout << "SEQ Medium problem time: " << duration.count() << " seconds" << std::endl;
-}
-
-// MPI Performance Tests
-TEST(frolova_s_mult_int_trapez_mpi_perf, test_large_problem) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 2.0}, {0.0, 2.0}};
-  std::vector<unsigned int> intervals = {500, 500};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function1};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  auto start = std::chrono::high_resolution_clock::now();
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-  auto end = std::chrono::high_resolution_clock::now();
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_NE(result, 0.0);
-    std::chrono::duration<double> duration = end - start;
-    std::cout << "MPI Small problem time: " << duration.count() << " seconds" << std::endl;
+    large_input_ = {
+        .limits = {{0.0, 2.0}, {0.0, 2.0}},
+        .number_of_intervals = {500, 500},
+        .function = [](std::vector<double> input) { return std::pow(input[0], 3) + std::pow(input[1], 3); }};
   }
-}
 
-TEST(frolova_s_mult_int_trapez_mpi_perf, test_medium_problem) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {300, 300};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function2};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  auto start = std::chrono::high_resolution_clock::now();
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-  auto end = std::chrono::high_resolution_clock::now();
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_NE(result, 0.0);
-    std::chrono::duration<double> duration = end - start;
-    std::cout << "MPI Medium problem time: " << duration.count() << " seconds" << std::endl;
+  bool CheckTestOutputData(OutType &output_data) final {
+    return std::isfinite(output_data);
   }
+
+  InType GetTestInputData() final {
+    auto test_param = GetParam();
+    std::string test_name = std::get<0>(test_param);
+
+    if (test_name.find("small") != std::string::npos) {
+      return small_input_;
+    } else if (test_name.find("medium") != std::string::npos) {
+      return medium_input_;
+    } else if (test_name.find("large") != std::string::npos) {
+      return large_input_;
+    }
+
+    return small_input_;
+  }
+
+ private:
+  InType small_input_;
+  InType medium_input_;
+  InType large_input_;
+};
+
+namespace {
+
+TEST_P(FrolovaRunPerfTestProcesses, RunPerfModes) {
+  ExecuteTest(GetParam());
 }
+
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, FrolovaSMultIntTrapezMPI, FrolovaSMultIntTrapezSEQ>(
+    PPC_SETTINGS_frolova_s_mult_int_trapez);
+и const auto kCustomPerfTasks = std::tuple_cat(
+    // Для MPI
+    ppc::util::AddPerfTask<FrolovaSMultIntTrapezMPI, InType>("small_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
+    ppc::util::AddPerfTask<FrolovaSMultIntTrapezMPI, InType>("medium_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
+    ppc::util::AddPerfTask<FrolovaSMultIntTrapezMPI, InType>("large_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
+    // Для SEQ
+    ppc::util::AddPerfTask<FrolovaSMultIntTrapezSEQ, InType>("small_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
+    ppc::util::AddPerfTask<FrolovaSMultIntTrapezSEQ, InType>("medium_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
+    ppc::util::AddPerfTask<FrolovaSMultIntTrapezSEQ, InType>("large_problem", PPC_SETTINGS_frolova_s_mult_int_trapez));
+
+const auto kGtestValues = ppc::util::TupleToGTestValues(kCustomPerfTasks);
+
+const auto kPerfTestName = FrolovaRunPerfTestProcesses::CustomPerfTestName;
+
+INSTANTIATE_TEST_SUITE_P(TrapezoidalIntegrationPerfTests, FrolovaRunPerfTestProcesses, kGtestValues, kPerfTestName);
+
+}  // namespace
+
+}  // namespace frolova_s_mult_int_trapez

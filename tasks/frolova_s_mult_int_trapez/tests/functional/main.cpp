@@ -1,390 +1,121 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <algorithm>
+#include <array>
 #include <cmath>
-#include <cstdlib>
+#include <cstddef>
+#include <cstdint>
 #include <random>
+#include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"
 #include "frolova_s_mult_int_trapez/mpi/include/ops_mpi.hpp"
 #include "frolova_s_mult_int_trapez/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
-using namespace frolova_s_mult_int_trapez;
+namespace frolova_s_mult_int_trapez {
 
-static std::pair<double, double> GetRandomLimit(double min_value, double max_value);
-static unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value);
-static double function1(std::vector<double> input);
-static double function2(std::vector<double> input);
-static double function3(std::vector<double> input);
-static double function4(std::vector<double> input);
-static double function5(std::vector<double> input);
-static double function6(std::vector<double> input);
+using TestType = std::tuple<std::string, unsigned int>;
 
-static std::pair<double, double> GetRandomLimit(double min_value, double max_value) {
-  std::random_device dev;
-  std::mt19937 gen(dev());
-  std::pair<double, double> result;
-  max_value = max_value * 1000 - 5;
-  min_value *= 1000;
-  result.first = (double)(gen() % (int)(max_value - min_value) + min_value) / 1000;
-  max_value += 5;
-  min_value = result.first * 1000;
-  result.second = (double)(gen() % (int)(max_value - min_value) + min_value) / 1000;
-  return result;
-}
-
-static unsigned int GetRandomIntegerData(unsigned int min_value, unsigned int max_value) {
-  std::random_device dev;
-  std::mt19937 gen(dev());
-  return gen() % (max_value - min_value) + min_value;
-}
-
-static double function1(std::vector<double> input) {
-  return pow(input[0], 3) + pow(input[1], 3);
-}
-
-static double function2(std::vector<double> input) {
-  return sin(input[0]) + sin(input[1]) + sin(input[2]);
-}
-
-static double function3(std::vector<double> input) {
-  return 8 * input[0] * input[1] * input[2];
-}
-
-static double function4(std::vector<double> input) {
-  return -1.0 / sqrt(1 - pow(input[0], 2));
-}
-
-static double function5(std::vector<double> input) {
-  return -(sin(input[0]) * cos(input[1]));
-}
-
-static double function6(std::vector<double> input) {
-  return (-3 * pow(input[1], 2) * sin(5 * input[0])) / 2;
-}
-
-// SEQ Tests
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_1) {
-  std::vector<std::pair<double, double>> limits = {{2.5, 4.5}, {1.0, 3.2}};
-  std::vector<unsigned int> intervals = {100, 100};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function1};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_GT(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_2) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
-  std::vector<unsigned int> intervals = {80, 80, 80};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function2};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_NE(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_3) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 3.0}, {0.0, 4.0}, {0.0, 5.0}};
-  std::vector<unsigned int> intervals = {80, 80, 80};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function3};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_GT(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_4) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 0.5}};
-  std::vector<unsigned int> intervals = {70};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function4};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_LT(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_5) {
-  std::vector<std::pair<double, double>> limits = {{1.0, 2.5}, {0.0, 1.0}, {2.0, 3.0}};
-  std::vector<unsigned int> intervals = {50, 50, 50};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function5};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_LT(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_6) {
-  std::vector<std::pair<double, double>> limits = {{-1.0, 1.0}, {-1.0, 1.0}};
-  std::vector<unsigned int> intervals = {60, 60};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function6};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_NE(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_random_limits) {
-  std::vector<std::pair<double, double>> limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0),
-                                                   GetRandomLimit(0.0, 10.0)};
-  std::vector<unsigned int> intervals = {80, 80, 80};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function3};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_GT(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_random_intervals) {
-  std::vector<std::pair<double, double>> limits = {{0.0, 2.0}, {0.0, 2.0}};
-  std::vector<unsigned int> intervals{GetRandomIntegerData(50, 100), GetRandomIntegerData(50, 100)};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function6};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_NE(result, 0.0);
-}
-
-TEST(frolova_s_mult_int_trapez_seq_functional, Test_of_functionality_random_limits_and_intervals) {
-  std::vector<std::pair<double, double>> limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0),
-                                                   GetRandomLimit(0.0, 10.0)};
-  std::vector<unsigned int> intervals = {GetRandomIntegerData(40, 60), GetRandomIntegerData(40, 60),
-                                         GetRandomIntegerData(40, 60)};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function3};
-  FrolovaSMultIntTrapezSEQ task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  double result = task.GetOutput();
-  EXPECT_GT(result, 0.0);
-}
-
-// MPI Tests
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_1) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{2.5, 4.5}, {1.0, 3.2}};
-  std::vector<unsigned int> intervals = {100, 100};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function1};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_GT(result, 0.0);
-  }
-}
-
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_2) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
-  std::vector<unsigned int> intervals = {80, 80, 80};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function2};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_NE(result, 0.0);
-  }
-}
-
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_3) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 3.0}, {0.0, 4.0}, {0.0, 5.0}};
-  std::vector<unsigned int> intervals = {80, 80, 80};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function3};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_GT(result, 0.0);
-  }
-}
-
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_4) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 0.5}};
-  std::vector<unsigned int> intervals = {1000};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function4};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_LT(result, 0.0);
-  }
-}
-
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_5) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {0.0, 1.0}};
-  std::vector<unsigned int> intervals = {100, 100};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function5};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_LT(result, 0.0);
-  }
-}
-
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_6) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals = {100, 100};
-
-  TrapezoidalIntegrationInput input{limits, intervals, function6};
-  FrolovaSMultIntTrapezMPI task(input);
-
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
-
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_NE(result, 0.0);
-  }
-}
-
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_random_limits) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-  std::vector<std::pair<double, double>> limits;
-  std::vector<unsigned int> intervals = {80, 80, 80};
-
-  if (rank == 0) {
-    limits = {GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0), GetRandomLimit(0.0, 10.0)};
+class FrolovaRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<0>(test_param) + "_" + std::to_string(std::get<1>(test_param));
   }
 
-  TrapezoidalIntegrationInput input{limits, intervals, function3};
-  FrolovaSMultIntTrapezMPI task(input);
+ protected:
+  void SetUp() override {
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    std::string test_name = std::get<0>(params);
+    unsigned int test_dim = std::get<1>(params);
 
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
+    std::random_device dev;
+    std::mt19937 gen(dev());
+    std::uniform_real_distribution<double> limit_dist(0.0, 10.0);
+    std::uniform_int_distribution<unsigned int> interval_dist(50, 150);
 
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_GT(result, 0.0);
+    // Инициализируем входные данные в зависимости от теста
+    input_data_.limits.clear();
+    input_data_.number_of_intervals.clear();
+
+    for (unsigned int i = 0; i < test_dim; ++i) {
+      double a = limit_dist(gen);
+      double b = limit_dist(gen);
+      if (a > b) {
+        std::swap(a, b);
+      }
+      input_data_.limits.emplace_back(a, b);
+      input_data_.number_of_intervals.push_back(interval_dist(gen));
+    }
+
+    // Устанавливаем функцию в зависимости от имени теста
+    if (test_name == "function1") {
+      input_data_.function = [](std::vector<double> input) { return std::pow(input[0], 3) + std::pow(input[1], 3); };
+    } else if (test_name == "function2") {
+      input_data_.function = [](std::vector<double> input) {
+        return std::sin(input[0]) + std::sin(input[1]) + std::sin(input[2]);
+      };
+    } else if (test_name == "function3") {
+      input_data_.function = [](std::vector<double> input) { return 8.0 * input[0] * input[1] * input[2]; };
+    } else if (test_name == "function4") {
+      input_data_.function = [](std::vector<double> input) { return -1.0 / std::sqrt(1.0 - std::pow(input[0], 2)); };
+    } else if (test_name == "function5") {
+      input_data_.function = [](std::vector<double> input) { return -(std::sin(input[0]) * std::cos(input[1])); };
+    } else if (test_name == "function6") {
+      input_data_.function = [](std::vector<double> input) {
+        return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
+      };
+    }
   }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    // Для функциональных тестов мы просто проверяем, что результат вычислен
+    // и не является NaN или бесконечностью
+    return std::isfinite(output_data);
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_;
+};
+
+namespace {
+
+TEST_P(FrolovaRunFuncTestsProcesses, TrapezoidalIntegration) {
+  ExecuteTest(GetParam());
 }
 
-TEST(frolova_s_mult_int_trapez_mpi_functional, Test_of_functionality_random_intervals) {
-  int rank = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+// Определяем тестовые параметры
+const std::array<TestType, 8> kTestParam = {
+    std::make_tuple("function1", 2U),  // 2D: x^3 + y^3
+    std::make_tuple("function2", 3U),  // 3D: sin(x) + sin(y) + sin(z)
+    std::make_tuple("function3", 3U),  // 3D: 8xyz
+    std::make_tuple("function4", 1U),  // 1D: -1/sqrt(1-x^2)
+    std::make_tuple("function5", 2U),  // 2D: -sin(x)cos(y)
+    std::make_tuple("function6", 2U),  // 2D: -3y^2 sin(5x)/2
+    std::make_tuple("function1", 2U),  // Еще раз 2D с другими интервалами
+    std::make_tuple("function3", 3U)   // Еще раз 3D с другими интервалами
+};
 
-  std::vector<std::pair<double, double>> limits = {{0.0, 1.0}, {4.0, 6.0}};
-  std::vector<unsigned int> intervals;
+// Добавляем задачи для SEQ и MPI версий
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<FrolovaSMultIntTrapezSEQ, InType>(kTestParam, PPC_SETTINGS_frolova_s_mult_int_trapez),
+    ppc::util::AddFuncTask<FrolovaSMultIntTrapezMPI, InType>(kTestParam, PPC_SETTINGS_frolova_s_mult_int_trapez));
 
-  if (rank == 0) {
-    intervals = {GetRandomIntegerData(100, 150), GetRandomIntegerData(100, 150)};
-  }
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-  TrapezoidalIntegrationInput input{limits, intervals, function6};
-  FrolovaSMultIntTrapezMPI task(input);
+const auto kPerfTestName = FrolovaRunFuncTestsProcesses::PrintFuncTestName<FrolovaRunFuncTestsProcesses>;
 
-  ASSERT_TRUE(task.ValidationImpl());
-  ASSERT_TRUE(task.PreProcessingImpl());
-  ASSERT_TRUE(task.RunImpl());
-  ASSERT_TRUE(task.PostProcessingImpl());
+INSTANTIATE_TEST_SUITE_P(TrapezoidalIntegrationTests, FrolovaRunFuncTestsProcesses, kGtestValues, kPerfTestName);
 
-  if (rank == 0) {
-    double result = task.GetOutput();
-    EXPECT_NE(result, 0.0);
-  }
-}
+}  // namespace
+
+}  // namespace frolova_s_mult_int_trapez
