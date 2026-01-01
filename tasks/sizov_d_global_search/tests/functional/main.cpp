@@ -572,96 +572,16 @@ struct LocalTestCase {
   ExpectedSolution expected;
 };
 
-using LocalTestType = LocalTestCase;
-using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestType>;
-
-std::vector<LocalTestType> LoadTestCasesFromData() {
-  namespace fs = std::filesystem;
-
-  fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
-  std::ifstream file(json_path);
-  if (!file) {
-    throw std::runtime_error("Cannot open tests.json");
-  }
-
-  nlohmann::json data;
-  file >> data;
-  if (!data.is_array()) {
-    throw std::runtime_error("tests.json must contain array");
-  }
-
-  std::vector<LocalTestType> cases;
-  cases.reserve(data.size());
-
-  for (const auto &item : data) {
-    LocalTestType t;
-    t.name = item.at("name").get<std::string>();
-
-    const auto &pj = item.at("problem");
-
-    Problem p{};
-    p.left = pj.at("left").get<double>();
-    p.right = pj.at("right").get<double>();
-
-    p.accuracy = 1e-4;
-    p.reliability = 3.0;
-    p.max_iterations = 300;
-
-    if (item.contains("settings")) {
-      const auto &s = item.at("settings");
-
-      if (s.contains("accuracy")) {
-        p.accuracy = s.at("accuracy").get<double>();
-      }
-      if (s.contains("reliability")) {
-        p.reliability = s.at("reliability").get<double>();
-      }
-      if (s.contains("max_iterations")) {
-        p.max_iterations = s.at("max_iterations").get<int>();
-      }
-    }
-
-    p.func = BuildFunction(item.at("function"));
-    t.problem = std::move(p);
-
-    const auto &ej = item.at("expected");
-    t.expected.argmins = ej.at("argmins").get<std::vector<double>>();
-    t.expected.value = ej.at("value").get<double>();
-
-    cases.push_back(std::move(t));
-  }
-
-  return cases;
-}
-
-std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
-  std::vector<FuncParam> tasks;
-  tasks.reserve(tests.size() * 2U);
-
-  const std::string settings_path = PPC_SETTINGS_sizov_d_global_search;
-
-  const std::string mpi_suffix =
-      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), settings_path);
-  const std::string seq_suffix =
-      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), settings_path);
-
-  for (const auto &t : tests) {
-    {
-      std::string name = t.name + "_" + mpi_suffix;
-      tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, std::move(name), t);
-    }
-    {
-      std::string name = t.name + "_" + seq_suffix;
-      tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, std::move(name), t);
-    }
-  }
-
-  return tasks;
-}
-
 }  // namespace
 
-class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestType> {
+using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestCase>;
+
+class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestCase> {
+ public:
+  static std::string PrintTestParam(const ::testing::TestParamInfo<FuncParam> &info) {
+    return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
+  }
+
  protected:
   void SetUp() override {
     const auto &tc = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -689,7 +609,7 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
     }
 
     double min_dx = std::numeric_limits<double>::infinity();
-    for (double a : expected_.argmins) {
+    for (const double a : expected_.argmins) {
       min_dx = std::min(min_dx, std::abs(o.argmin - a));
     }
 
@@ -708,12 +628,81 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
 
 namespace {
 
-std::vector<FuncParam> BuildFunctionalTestParams() {
-  const auto tests = LoadTestCasesFromData();
-  return BuildTestTasks(tests);
+std::vector<FuncParam> LoadTestParams() {
+  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
+  const std::string settings_path = PPC_SETTINGS_sizov_d_global_search;
+
+  const std::string mpi_suffix =
+      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), settings_path);
+  const std::string seq_suffix =
+      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), settings_path);
+
+  std::ifstream fin(path);
+  if (!fin.is_open()) {
+    throw std::runtime_error("Cannot open file: " + path);
+  }
+
+  nlohmann::json j;
+  fin >> j;
+
+  if (!j.is_array()) {
+    throw std::runtime_error("tests.json must contain array");
+  }
+
+  std::vector<FuncParam> cases;
+  cases.reserve(j.size() * 2U);
+
+  for (const auto &item : j) {
+    LocalTestCase tc{};
+    tc.name = item.at("name").get<std::string>();
+
+    const auto &pj = item.at("problem");
+
+    Problem p{};
+    p.left = pj.at("left").get<double>();
+    p.right = pj.at("right").get<double>();
+
+    // defaults
+    p.accuracy = 1e-4;
+    p.reliability = 3.0;
+    p.max_iterations = 300;
+
+    // optional per-test settings
+    if (item.contains("settings")) {
+      const auto &s = item.at("settings");
+      if (s.contains("accuracy")) {
+        p.accuracy = s.at("accuracy").get<double>();
+      }
+      if (s.contains("reliability")) {
+        p.reliability = s.at("reliability").get<double>();
+      }
+      if (s.contains("max_iterations")) {
+        p.max_iterations = s.at("max_iterations").get<int>();
+      }
+    }
+
+    p.func = BuildFunction(item.at("function"));
+    tc.problem = std::move(p);
+
+    const auto &ej = item.at("expected");
+    tc.expected.argmins = ej.at("argmins").get<std::vector<double>>();
+    tc.expected.value = ej.at("value").get<double>();
+
+    std::string mpi_name = tc.name;
+    mpi_name += '_';
+    mpi_name += mpi_suffix;
+    cases.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, std::move(mpi_name), tc);
+
+    std::string seq_name = tc.name;
+    seq_name += '_';
+    seq_name += seq_suffix;
+    cases.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, std::move(seq_name), tc);
+  }
+
+  return cases;
 }
 
-const std::vector<FuncParam> kFuncParams = BuildFunctionalTestParams();
+const std::vector<FuncParam> kFuncParams = LoadTestParams();
 
 TEST_P(SizovDGlobalSearchFunctionalTests, GlobalSearch) {
   ExecuteTest(GetParam());
@@ -721,10 +710,9 @@ TEST_P(SizovDGlobalSearchFunctionalTests, GlobalSearch) {
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(FunctionalTests, SizovDGlobalSearchFunctionalTests, ::testing::ValuesIn(kFuncParams),
-                         [](const ::testing::TestParamInfo<FuncParam> &info) {
-                           return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
-                         });
+                         SizovDGlobalSearchFunctionalTests::PrintTestParam);
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 }  // namespace
+
 }  // namespace sizov_d_global_search
