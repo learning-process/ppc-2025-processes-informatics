@@ -165,7 +165,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
 
 namespace {
 
-TEST_P(KutuzovIRunFuncTests, ThorTopology) {
+TEST_P(KutuzovIRunFuncTests, ThorusGrid) {
   ExecuteTest(GetParam());
 }
 
@@ -180,7 +180,7 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = KutuzovIRunFuncTests::PrintFuncTestName<KutuzovIRunFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(ThorTopologyTests, KutuzovIRunFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(ThorusGridTests, KutuzovIRunFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
