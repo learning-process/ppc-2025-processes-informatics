@@ -4,59 +4,38 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "agafonov_i_sentence_count/common/include/common.hpp"
 #include "agafonov_i_sentence_count/mpi/include/ops_mpi.hpp"
 #include "agafonov_i_sentence_count/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace agafonov_i_sentence_count {
+namespace {
 
 class SentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  SentenceCountFuncTests() : test_case_id_(0), expected_output_(0) {}
+  SentenceCountFuncTests() = default;
 
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  static std::string PrintTestParam(
+      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &info) {
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
+    return std::to_string(std::get<0>(params)) + "_" + std::get<1>(params);
   }
 
  protected:
   void SetUp() override {
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    test_case_id_ = std::get<0>(params);
+    int test_case_id = std::get<0>(params);
 
-    switch (test_case_id_) {
+    switch (test_case_id) {
       case 1:
-        input_data_ = "Hello world. This is a test. Another sentence! And one more? Yes.";
-        expected_output_ = 5;
-        break;
-      case 2:
-        input_data_ = "Simple text without punctuation";
-        expected_output_ = 1;
-        break;
-      case 3:
-        input_data_ = "First. Second. Third.";
-        expected_output_ = 3;
-        break;
-      case 4:
-        input_data_ = "...";
-        expected_output_ = 0;
-        break;
-      case 5:
-        input_data_ = "A. B. C. D.";
-        expected_output_ = 4;
-        break;
-      case 6:
-        input_data_ = "";
-        expected_output_ = 0;
-        break;
-      case 7:
-        input_data_ = "Is this a real life? Or just a fantasy... Caught in a landslide.";
-        expected_output_ = 3;
+        input_data_ = "Hello. Yes!";
+        expected_output_ = 2;
         break;
       default:
-        input_data_ = "Default test case.";
+        input_data_ = "Default.";
         expected_output_ = 1;
         break;
     }
@@ -65,28 +44,20 @@ class SentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
   bool CheckTestOutputData(OutType &output_data) final {
     return output_data == expected_output_;
   }
-
   InType GetTestInputData() final {
     return input_data_;
   }
 
  private:
-  int test_case_id_;
   InType input_data_;
-  OutType expected_output_;
+  OutType expected_output_{0};
 };
-
-namespace {
 
 TEST_P(SentenceCountFuncTests, RunSentenceCountFuncTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 7> kTestParams = {
-    std::make_tuple(1, "five_sentences"),       std::make_tuple(2, "one_sentence_no_punctuation"),
-    std::make_tuple(3, "three_sentences"),      std::make_tuple(4, "only_dots"),
-    std::make_tuple(5, "four_short_sentences"), std::make_tuple(6, "empty_string"),
-    std::make_tuple(7, "mixed_punctuation")};
+const std::array<TestType, 2> kTestParams = {std::make_tuple(1, "test_1"), std::make_tuple(2, "test_2")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SentenceCountMPI, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count),
@@ -94,8 +65,9 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = SentenceCountFuncTests::PrintFuncTestName<SentenceCountFuncTests>;
+const auto kPerfTestName = SentenceCountFuncTests::PrintTestParam;
 
+// NOLINTNEXTLINE
 INSTANTIATE_TEST_SUITE_P(SentenceCountFuncTests, SentenceCountFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace

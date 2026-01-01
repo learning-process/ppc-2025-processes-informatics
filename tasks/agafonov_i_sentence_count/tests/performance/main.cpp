@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -9,11 +10,10 @@
 #include "util/include/perf_test_util.hpp"
 
 namespace agafonov_i_sentence_count {
+namespace {
 
 class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kTextLength_ = 5000000;
-  InType input_data_;
-
+ public:
   void SetUp() override {
     input_data_ = GenerateLongText(kTextLength_);
   }
@@ -27,6 +27,9 @@ class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType
   }
 
  private:
+  const int kTextLength_ = 5000000;
+  InType input_data_;
+
   static std::string GenerateLongText(int length) {
     std::string text;
     text.reserve(length);
@@ -35,20 +38,20 @@ class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType
                                             "test",  "sentence", "for",  "performance"};
     const std::vector<std::string> endings = {".", "!", "?"};
 
-    size_t word_index = 0;
-    size_t end_index = 0;
+    std::size_t word_index = 0;
+    std::size_t end_index = 0;
 
-    while (text.length() < static_cast<size_t>(length)) {
+    while (text.length() < static_cast<std::size_t>(length)) {
       text += words[word_index] + " ";
       word_index = (word_index + 1) % words.size();
 
-      if (word_index % 7 == 0 && text.length() < static_cast<size_t>(length) - 2) {
+      if (word_index % 7 == 0 && text.length() < static_cast<std::size_t>(length) - 2) {
         text += endings[end_index] + " ";
         end_index = (end_index + 1) % endings.size();
       }
     }
 
-    if (text.back() != '.' && text.back() != '!' && text.back() != '?') {
+    if (!text.empty() && text.back() != '.' && text.back() != '!' && text.back() != '?') {
       text += ".";
     }
 
@@ -67,6 +70,9 @@ const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = SentenceCountPerfTest::CustomPerfTestName;
 
+// NOLINTNEXTLINE: макрос GTest генерирует неконстантные переменные
 INSTANTIATE_TEST_SUITE_P(SentenceCountPerfTests, SentenceCountPerfTest, kGtestValues, kPerfTestName);
+
+}  // namespace
 
 }  // namespace agafonov_i_sentence_count

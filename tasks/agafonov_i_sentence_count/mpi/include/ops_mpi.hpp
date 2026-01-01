@@ -17,6 +17,10 @@ class SentenceCountMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static int CountSentences(const std::string &text, int start, int end, int total_length);
+  static int CalculateStart(int rank, int chunk, int rem);
+  static int CalculateEnd(int rank, int chunk, int rem);
 };
 
 }  // namespace agafonov_i_sentence_count
