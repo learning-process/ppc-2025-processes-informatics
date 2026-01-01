@@ -37,6 +37,51 @@ bool GonozovLSimpleIterationMethodMPI::ValidationImpl() {
 bool GonozovLSimpleIterationMethodMPI::PreProcessingImpl() {
   return true;
 }
+namespace {
+void CalculatingNewApproximations(int my_first_row, std::vector<double> &local_matrix,
+                                  std::vector<double> &previous_approximations, std::vector<double> &local_current,
+                                  int local_size, int number_unknowns_, std::vector<double> &local_b) {
+  for (int i = 0; i < local_size; i++) {
+    int global_row = my_first_row + i;
+    double sum = 0.0;
+
+    // Суммируем все недиагональные элементы
+    for (int j = 0; j < number_unknowns_; j++) {
+      if (j != global_row) {
+        sum += local_matrix[(i * number_unknowns_) + j] * previous_approximations[j];
+      }
+    }
+
+    local_current[i] = (local_b[i] - sum) / local_matrix[(i * number_unknowns_) + global_row];
+  }
+}
+
+int CountingMyFirstRow(int proc_rank, int number_processed, int remainder) {
+  int my_first_row = 0;
+  for (int pl = 0; pl < proc_rank; pl++) {
+    my_first_row += number_processed + (pl < remainder ? 1 : 0);
+  }
+  return my_first_row;
+}
+
+int CountingLocalSize(int number_processed, int proc_rank, int remainder) {
+  return number_processed + (proc_rank < remainder ? 1 : 0);
+}
+
+int ConvergenceCheck(int my_first_row, std::vector<double> current_approximations,
+                     std::vector<double> previous_approximations, int local_size) {
+  int local_converged = 0;
+  for (int i = 0; i < local_size; i++) {
+    int global_row = my_first_row + i;
+    double diff = abs(current_approximations[global_row] - previous_approximations[global_row]);
+    double norm = abs(current_approximations[global_row]);
+    if (diff < 0.00001 * (norm + 1e-10)) {
+      local_converged++;
+    }
+  }
+  return local_converged;
+}
+}  // namespace
 
 bool GonozovLSimpleIterationMethodMPI::RunImpl() {
   int max_number_iteration = 10000;
@@ -57,13 +102,10 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
   // Распределение строк по процессам
   int number_processed = number_unknowns_ / proc_num;
   int remainder = number_unknowns_ % proc_num;
-  int local_size = number_processed + (proc_rank < remainder ? 1 : 0);
+  int local_size = CountingLocalSize(number_processed, proc_rank, remainder);
 
   // Определяем локально, какие строки обрабатывает какой из процессов
-  int my_first_row = 0;
-  for (int pl = 0; pl < proc_rank; pl++) {
-    my_first_row += number_processed + (pl < remainder ? 1 : 0);
-  }
+  int my_first_row = CountingMyFirstRow(proc_rank, number_processed, remainder);
 
   // Данные для Scatterv
   std::vector<int> sendcounts_for_matrix(proc_num, 0);
@@ -111,47 +153,30 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
     local_previous[i] = local_b[i] / local_matrix[(i * number_unknowns_) + global_row];
   }
 
-  // Отправка начальных приближений
+  // Отправка начальных  приближений
   MPI_Allgatherv(local_previous.data(), local_size, MPI_DOUBLE, previous_approximations.data(), sendcounts_for_b.data(),
                  displs_for_b.data(), MPI_DOUBLE, MPI_COMM_WORLD);
 
   // Основной цикл
   for (int iter = 0; iter < max_number_iteration; iter++) {
     // Каждый процесс вычисляет новые приближения для строк, которые у него имеются
-    for (int i = 0; i < local_size; i++) {
-      int global_row = my_first_row + i;
-      double sum = 0.0;
-
-      // Суммируем все недиагональные элементы
-      for (int j = 0; j < number_unknowns_; j++) {
-        if (j != global_row) {
-          sum += local_matrix[(i * number_unknowns_) + j] * previous_approximations[j];
-        }
-      }
-
-      local_current[i] = (local_b[i] - sum) / local_matrix[(i * number_unknowns_) + global_row];
-    }
+    CalculatingNewApproximations(my_first_row, local_matrix, previous_approximations, local_current, local_size,
+                                 number_unknowns_, local_b);
 
     MPI_Allgatherv(local_current.data(), local_size, MPI_DOUBLE, current_approximations.data(), sendcounts_for_b.data(),
                    displs_for_b.data(), MPI_DOUBLE, MPI_COMM_WORLD);
 
     // Проверка сходимости
-    int local_converged = 0;
-    for (int i = 0; i < local_size; i++) {
-      int global_row = my_first_row + i;
-      double diff = abs(current_approximations[global_row] - previous_approximations[global_row]);
-      double norm = abs(current_approximations[global_row]);
-      if (diff < 0.00001 * (norm + 1e-10)) {
-        local_converged++;
-      }
-    }
+    int local_converged = ConvergenceCheck(my_first_row, current_approximations, previous_approximations, local_size);
+
     int global_converged = 0;
     MPI_Allreduce(&local_converged, &global_converged, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     if (global_converged == number_unknowns_) {
       break;
     }
-    previous_approximations = current_approximations;
+
+    previous_approximations.swap(current_approximations);
     local_previous = local_current;
   }
 
