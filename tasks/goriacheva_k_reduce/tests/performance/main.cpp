@@ -35,7 +35,7 @@ class GoriachevaKReducePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
 
  private:
   InType input_;
-  OutType expected_{};
+  OutType expected_;
 };
 
 TEST_P(GoriachevaKReducePerfTests, RunPerfModes) {
