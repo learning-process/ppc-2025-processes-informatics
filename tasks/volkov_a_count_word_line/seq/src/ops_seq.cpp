@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 
 #include "volkov_a_count_word_line/common/include/common.hpp"
 
