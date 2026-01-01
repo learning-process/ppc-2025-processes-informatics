@@ -40,7 +40,6 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::st
       }
     }
 
-    // Добавляем индекс info.index, чтобы имена были уникальными
     return safe_name + "_Exp" + std::to_string(expected) + "_" + std::to_string(info.index);
   }
 
@@ -59,14 +58,8 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::st
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
-    // ИСПРАВЛЕНИЕ:
-    // MPI задача возвращает правильный ответ только на Rank 0.
-    // На остальных рангах результат может быть любым (обычно 0),
-    // поэтому мы пропускаем проверку (возвращаем true).
     if (rank == 0) {
       if (result != ref_count_) {
-        // Для отладки можно раскомментировать
-        // std::cerr << "Rank 0 Fail: Expected " << ref_count_ << " got " << result << std::endl;
         return false;
       }
       return true;

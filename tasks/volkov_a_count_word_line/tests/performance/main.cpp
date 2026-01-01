@@ -15,7 +15,6 @@ namespace volkov_a_count_word_line {
 class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::string, OutType> {
  protected:
   void SetUp() override {
-    // Генерируем данные программно, чтобы не зависеть от файлов
     const int words_count = 500000;
     const std::string word = "word ";
 
@@ -39,7 +38,6 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::st
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
-    // ИСПРАВЛЕНИЕ: Проверяем только на 0-м ранге.
     if (rank == 0) {
       return val == expected_output_;
     }
