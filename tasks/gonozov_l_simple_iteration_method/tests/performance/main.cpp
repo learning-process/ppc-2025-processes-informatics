@@ -8,7 +8,7 @@
 namespace gonozov_l_simple_iteration_method {
 
 class GonozovLRunIterationMethodPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 300;
+  const int kCount_ = 600;
   InType input_data_;
   OutType desired_result_;
 
