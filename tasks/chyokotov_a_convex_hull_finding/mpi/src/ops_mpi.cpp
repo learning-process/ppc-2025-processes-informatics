@@ -33,7 +33,7 @@ bool ChyokotovConvexHullFindingMPI::ValidationImpl() {
     if (!input.empty()) {
       for (size_t i = 0; i < input.size(); ++i) {
         for (size_t j = 0; j < input[0].size(); ++j) {
-          if (input[i][j] != 1 && input[i][j] != 0 || input[0].size() != input[i].size()) {
+          if ((input[i][j] != 1 && input[i][j] != 0) || (input[0].size() != input[i].size())) {
             is_valid = 0;
             break;
           }
@@ -477,16 +477,6 @@ bool ChyokotovConvexHullFindingMPI::RunImpl() {
   auto global_hulls = GatherHullsOnRank0(rank, size, convex_hulls);
 
   GetOutput() = BroadcastResultToAllRanks(rank, global_hulls);
-
-  const auto &out = GetOutput();
-  if (rank == 0) {
-    for (int i = 0; i < out.size(); i++) {
-      for (int j = 0; j < out[i].size(); j++) {
-        std::cout << out[i][j].first << ' ' << out[i][j].second << '\n';
-      }
-      std::cout << '\n';
-    }
-  }
 
   return true;
 }
