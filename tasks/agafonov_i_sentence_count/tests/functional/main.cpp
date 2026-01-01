@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <array>
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -13,13 +15,15 @@ namespace agafonov_i_sentence_count {
 
 class SentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
+  SentenceCountFuncTests() : test_case_id_(0), expected_output_(0) {}
+
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
   }
 
  protected:
   void SetUp() override {
-    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     test_case_id_ = std::get<0>(params);
 
     switch (test_case_id_) {
@@ -43,9 +47,18 @@ class SentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
         input_data_ = "A. B. C. D.";
         expected_output_ = 4;
         break;
+      case 6:
+        input_data_ = "";
+        expected_output_ = 0;
+        break;
+      case 7:
+        input_data_ = "Is this a real life? Or just a fantasy... Caught in a landslide.";
+        expected_output_ = 3;
+        break;
       default:
         input_data_ = "Default test case.";
         expected_output_ = 1;
+        break;
     }
   }
 
@@ -58,7 +71,7 @@ class SentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutTyp
   }
 
  private:
-  int test_case_id_ = 0;
+  int test_case_id_;
   InType input_data_;
   OutType expected_output_;
 };
@@ -69,9 +82,11 @@ TEST_P(SentenceCountFuncTests, RunSentenceCountFuncTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParams = {
-    std::make_tuple(1, "five_sentences"), std::make_tuple(2, "one_sentence_no_punctuation"),
-    std::make_tuple(3, "three_sentences"), std::make_tuple(4, "only_dots"), std::make_tuple(5, "four_short_sentences")};
+const std::array<TestType, 7> kTestParams = {
+    std::make_tuple(1, "five_sentences"),       std::make_tuple(2, "one_sentence_no_punctuation"),
+    std::make_tuple(3, "three_sentences"),      std::make_tuple(4, "only_dots"),
+    std::make_tuple(5, "four_short_sentences"), std::make_tuple(6, "empty_string"),
+    std::make_tuple(7, "mixed_punctuation")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<SentenceCountMPI, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count),

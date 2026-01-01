@@ -3,6 +3,8 @@
 #include <cctype>
 #include <string>
 
+#include "agafonov_i_sentence_count/common/include/common.hpp"
+
 namespace agafonov_i_sentence_count {
 
 SentenceCountSEQ::SentenceCountSEQ(const InType &in) {
@@ -30,8 +32,8 @@ bool SentenceCountSEQ::RunImpl() {
   int len = static_cast<int>(text.length());
 
   for (int i = 0; i < len; ++i) {
-    unsigned char c = static_cast<unsigned char>(text[i]);
-    if (std::isalnum(c)) {
+    auto c = static_cast<unsigned char>(text[i]);
+    if (std::isalnum(c) != 0) {
       in_word = true;
     } else if ((c == '.' || c == '!' || c == '?') && in_word) {
       if (c == '.' && i + 1 < len && text[i + 1] == '.') {

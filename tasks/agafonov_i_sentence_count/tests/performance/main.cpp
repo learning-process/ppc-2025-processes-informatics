@@ -12,7 +12,7 @@ namespace agafonov_i_sentence_count {
 
 class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const int kTextLength_ = 5000000;
-  InType input_data_{};
+  InType input_data_;
 
   void SetUp() override {
     input_data_ = GenerateLongText(kTextLength_);
@@ -27,7 +27,7 @@ class SentenceCountPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType
   }
 
  private:
-  std::string GenerateLongText(int length) {
+  static std::string GenerateLongText(int length) {
     std::string text;
     text.reserve(length);
 
