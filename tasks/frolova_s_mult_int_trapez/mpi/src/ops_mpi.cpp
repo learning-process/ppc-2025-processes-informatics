@@ -13,10 +13,10 @@ namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
     : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {
-  std::cout << "[MPI CONSTRUCTOR] Created FrolovaSMultIntTrapezMPI" << std::endl;
-  std::cout << "[MPI CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
-  std::cout << "[MPI CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
-  std::cout << "[MPI CONSTRUCTOR] Function is " << (in.function ? "NOT null" : "NULL") << std::endl;
+  // std::cout << "[MPI CONSTRUCTOR] Created FrolovaSMultIntTrapezMPI" << std::endl;
+  // std::cout << "[MPI CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
+  // std::cout << "[MPI CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
+  // std::cout << "[MPI CONSTRUCTOR] Function is " << (in.function ? "NOT null" : "NULL") << std::endl;
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
@@ -58,51 +58,53 @@ bool FrolovaSMultIntTrapezMPI::ValidationImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::cout << "[MPI VALIDATION] Rank " << rank << ": Starting validation" << std::endl;
+  // std::cout << "[MPI VALIDATION] Rank " << rank << ": Starting validation" << std::endl;
 
   if (rank == 0) {
     auto input = GetInput();
 
-    std::cout << "[MPI VALIDATION] Rank 0 checking input:" << std::endl;
-    std::cout << "[MPI VALIDATION]   limits.empty(): " << input.limits.empty() << std::endl;
-    std::cout << "[MPI VALIDATION]   number_of_intervals.empty(): " << input.number_of_intervals.empty() << std::endl;
+    // std::cout << "[MPI VALIDATION] Rank 0 checking input:" << std::endl;
+    // std::cout << "[MPI VALIDATION]   limits.empty(): " << input.limits.empty() << std::endl;
+    // std::cout << "[MPI VALIDATION]   number_of_intervals.empty(): " << input.number_of_intervals.empty() <<
+    // std::endl;
 
     if (input.limits.empty() || input.number_of_intervals.empty()) {
-      std::cout << "[MPI VALIDATION] Rank 0: FAILED - empty limits or intervals" << std::endl;
+      // std::cout << "[MPI VALIDATION] Rank 0: FAILED - empty limits or intervals" << std::endl;
       return false;
     }
 
-    std::cout << "[MPI VALIDATION]   limits.size(): " << input.limits.size() << std::endl;
-    std::cout << "[MPI VALIDATION]   intervals.size(): " << input.number_of_intervals.size() << std::endl;
+    // std::cout << "[MPI VALIDATION]   limits.size(): " << input.limits.size() << std::endl;
+    // std::cout << "[MPI VALIDATION]   intervals.size(): " << input.number_of_intervals.size() << std::endl;
 
     if (input.limits.size() != input.number_of_intervals.size()) {
-      std::cout << "[MPI VALIDATION] Rank 0: FAILED - sizes don't match" << std::endl;
+      // std::cout << "[MPI VALIDATION] Rank 0: FAILED - sizes don't match" << std::endl;
       return false;
     }
 
-    std::cout << "[MPI VALIDATION]   function pointer: " << (input.function ? "NOT null" : "NULL") << std::endl;
+    // std::cout << "[MPI VALIDATION]   function pointer: " << (input.function ? "NOT null" : "NULL") << std::endl;
 
     if (!input.function) {
-      std::cout << "[MPI VALIDATION] Rank 0: FAILED - function is null" << std::endl;
+      // std::cout << "[MPI VALIDATION] Rank 0: FAILED - function is null" << std::endl;
       return false;
     }
 
     for (size_t i = 0; i < input.limits.size(); i++) {
-      std::cout << "[MPI VALIDATION]   Limit " << i << ": [" << input.limits[i].first << ", " << input.limits[i].second
-                << "], intervals: " << input.number_of_intervals[i] << std::endl;
+      // std::cout << "[MPI VALIDATION]   Limit " << i << ": [" << input.limits[i].first << ", " <<
+      // input.limits[i].second
+      //  << "], intervals: " << input.number_of_intervals[i] << std::endl;
 
       if (input.limits[i].first >= input.limits[i].second) {
-        std::cout << "[MPI VALIDATION] Rank 0: FAILED - limit " << i << " has first >= second" << std::endl;
+        // std::cout << "[MPI VALIDATION] Rank 0: FAILED - limit " << i << " has first >= second" << std::endl;
         return false;
       }
 
       if (input.number_of_intervals[i] == 0) {
-        std::cout << "[MPI VALIDATION] Rank 0: FAILED - interval " << i << " is zero" << std::endl;
+        // std::cout << "[MPI VALIDATION] Rank 0: FAILED - interval " << i << " is zero" << std::endl;
         return false;
       }
     }
 
-    std::cout << "[MPI VALIDATION] Rank 0: PASSED validation" << std::endl;
+    // std::cout << "[MPI VALIDATION] Rank 0: PASSED validation" << std::endl;
 
     bool validation_result = true;
     MPI_Bcast(&validation_result, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
@@ -110,8 +112,8 @@ bool FrolovaSMultIntTrapezMPI::ValidationImpl() {
   } else {
     bool validation_result = false;
     MPI_Bcast(&validation_result, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    std::cout << "[MPI VALIDATION] Rank " << rank
-              << ": received validation result: " << (validation_result ? "PASSED" : "FAILED") << std::endl;
+    // std::cout << "[MPI VALIDATION] Rank " << rank
+    //           << ": received validation result: " << (validation_result ? "PASSED" : "FAILED") << std::endl;
     return validation_result;
   }
 }
@@ -120,7 +122,7 @@ bool FrolovaSMultIntTrapezMPI::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::cout << "[MPI PRE_PROCESSING] Rank " << rank << ": Starting pre-processing" << std::endl;
+  // std::cout << "[MPI PRE_PROCESSING] Rank " << rank << ": Starting pre-processing" << std::endl;
 
   if (rank == 0) {
     auto input = GetInput();
@@ -128,11 +130,11 @@ bool FrolovaSMultIntTrapezMPI::PreProcessingImpl() {
     number_of_intervals_ = input.number_of_intervals;
     result_ = 0.0;
 
-    std::cout << "[MPI PRE_PROCESSING] Rank 0: Initialized with limits size = " << limits_.size()
-              << ", intervals size = " << number_of_intervals_.size() << std::endl;
+    // std::cout << "[MPI PRE_PROCESSING] Rank 0: Initialized with limits size = " << limits_.size()
+    << ", intervals size = " << number_of_intervals_.size() << std::endl;
   }
 
-  std::cout << "[MPI PRE_PROCESSING] Rank " << rank << ": Finished pre-processing" << std::endl;
+  // std::cout << "[MPI PRE_PROCESSING] Rank " << rank << ": Finished pre-processing" << std::endl;
   return true;
 }
 

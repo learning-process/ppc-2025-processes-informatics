@@ -14,10 +14,10 @@ FrolovaSMultIntTrapezSEQ::FrolovaSMultIntTrapezSEQ(const InType &in)
   GetInput() = in;
   GetOutput() = 0.0;
 
-  std::cout << "[SEQ CONSTRUCTOR] Created FrolovaSMultIntTrapezSEQ" << std::endl;
-  std::cout << "[SEQ CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
-  std::cout << "[SEQ CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
-  std::cout << "[SEQ CONSTRUCTOR] Function is " << (in.function ? "NOT null" : "NULL") << std::endl;
+  // std::cout << "[SEQ CONSTRUCTOR] Created FrolovaSMultIntTrapezSEQ" << std::endl;
+  // std::cout << "[SEQ CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
+  // std::cout << "[SEQ CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
+  // std::cout << "[SEQ CONSTRUCTOR] Function is " << (in.function ? "NOT null" : "NULL") << std::endl;
 }
 
 unsigned int FrolovaSMultIntTrapezSEQ::CalculationOfCoefficient(const std::vector<double> &point) {
@@ -51,65 +51,65 @@ std::vector<double> FrolovaSMultIntTrapezSEQ::GetPointFromNumber(unsigned int nu
 }
 
 bool FrolovaSMultIntTrapezSEQ::ValidationImpl() {
-  std::cout << "[SEQ VALIDATION] Starting validation" << std::endl;
+  // std::cout << "[SEQ VALIDATION] Starting validation" << std::endl;
 
   auto input = GetInput();
 
-  std::cout << "[SEQ VALIDATION] Checking input:" << std::endl;
-  std::cout << "[SEQ VALIDATION]   limits.empty(): " << input.limits.empty() << std::endl;
-  std::cout << "[SEQ VALIDATION]   number_of_intervals.empty(): " << input.number_of_intervals.empty() << std::endl;
+  // std::cout << "[SEQ VALIDATION] Checking input:" << std::endl;
+  // std::cout << "[SEQ VALIDATION]   limits.empty(): " << input.limits.empty() << std::endl;
+  // std::cout << "[SEQ VALIDATION]   number_of_intervals.empty(): " << input.number_of_intervals.empty() << std::endl;
 
   if (input.limits.empty() || input.number_of_intervals.empty()) {
-    std::cout << "[SEQ VALIDATION] FAILED - empty limits or intervals" << std::endl;
+    // std::cout << "[SEQ VALIDATION] FAILED - empty limits or intervals" << std::endl;
     return false;
   }
 
-  std::cout << "[SEQ VALIDATION]   limits.size(): " << input.limits.size() << std::endl;
-  std::cout << "[SEQ VALIDATION]   intervals.size(): " << input.number_of_intervals.size() << std::endl;
+  // std::cout << "[SEQ VALIDATION]   limits.size(): " << input.limits.size() << std::endl;
+  // std::cout << "[SEQ VALIDATION]   intervals.size(): " << input.number_of_intervals.size() << std::endl;
 
   if (input.limits.size() != input.number_of_intervals.size()) {
-    std::cout << "[SEQ VALIDATION] FAILED - sizes don't match" << std::endl;
+    // std::cout << "[SEQ VALIDATION] FAILED - sizes don't match" << std::endl;
     return false;
   }
 
-  std::cout << "[SEQ VALIDATION]   function pointer: " << (input.function ? "NOT null" : "NULL") << std::endl;
+  // std::cout << "[SEQ VALIDATION]   function pointer: " << (input.function ? "NOT null" : "NULL") << std::endl;
 
   if (!input.function) {
-    std::cout << "[SEQ VALIDATION] FAILED - function is null" << std::endl;
+    // std::cout << "[SEQ VALIDATION] FAILED - function is null" << std::endl;
     return false;
   }
 
   // Check each limit
   for (size_t i = 0; i < input.limits.size(); i++) {
-    std::cout << "[SEQ VALIDATION]   Limit " << i << ": [" << input.limits[i].first << ", " << input.limits[i].second
-              << "], intervals: " << input.number_of_intervals[i] << std::endl;
+    // std::cout << "[SEQ VALIDATION]   Limit " << i << ": [" << input.limits[i].first << ", " << input.limits[i].second
+    //           << "], intervals: " << input.number_of_intervals[i] << std::endl;
 
     if (input.limits[i].first >= input.limits[i].second) {
-      std::cout << "[SEQ VALIDATION] FAILED - limit " << i << " has first >= second" << std::endl;
+      // std::cout << "[SEQ VALIDATION] FAILED - limit " << i << " has first >= second" << std::endl;
       return false;
     }
 
     if (input.number_of_intervals[i] == 0) {
-      std::cout << "[SEQ VALIDATION] FAILED - interval " << i << " is zero" << std::endl;
+      // std::cout << "[SEQ VALIDATION] FAILED - interval " << i << " is zero" << std::endl;
       return false;
     }
   }
 
-  std::cout << "[SEQ VALIDATION] PASSED validation" << std::endl;
+  // std::cout << "[SEQ VALIDATION] PASSED validation" << std::endl;
   return true;
 }
 
 bool FrolovaSMultIntTrapezSEQ::PreProcessingImpl() {
-  std::cout << "[SEQ PRE_PROCESSING] Starting pre-processing" << std::endl;
+  // std::cout << "[SEQ PRE_PROCESSING] Starting pre-processing" << std::endl;
 
   auto input = GetInput();
   limits_ = input.limits;
   number_of_intervals_ = input.number_of_intervals;
   result_ = 0.0;
 
-  std::cout << "[SEQ PRE_PROCESSING] Initialized with limits size = " << limits_.size()
-            << ", intervals size = " << number_of_intervals_.size() << std::endl;
-  std::cout << "[SEQ PRE_PROCESSING] Function is " << (input.function ? "NOT null" : "NULL") << std::endl;
+  // std::cout << "[SEQ PRE_PROCESSING] Initialized with limits size = " << limits_.size()
+  //           << ", intervals size = " << number_of_intervals_.size() << std::endl;
+  // std::cout << "[SEQ PRE_PROCESSING] Function is " << (input.function ? "NOT null" : "NULL") << std::endl;
 
   return true;
 }
