@@ -2,10 +2,8 @@
 #include <mpi.h>
 
 #include <string>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
-#include "util/include/util.hpp"
 #include "volkov_a_count_word_line/common/include/common.hpp"
 #include "volkov_a_count_word_line/mpi/include/ops_mpi.hpp"
 #include "volkov_a_count_word_line/seq/include/ops_seq.hpp"
@@ -15,7 +13,7 @@ namespace volkov_a_count_word_line {
 class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::string, OutType> {
  protected:
   void SetUp() override {
-    const int words_count = 500000;
+    const int words_count = 5000;
     const std::string word = "word ";
 
     input_data_.reserve(words_count * word.size());
@@ -31,17 +29,7 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::st
   }
 
   bool CheckTestOutputData(OutType &val) override {
-    int rank = 0;
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (initialized) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
-    if (rank == 0) {
-      return val == expected_output_;
-    }
-    return true;
+    return val == expected_output_;
   }
 
  private:

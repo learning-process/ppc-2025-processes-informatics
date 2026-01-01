@@ -2,7 +2,8 @@
 
 #include <mpi.h>
 
-#include <cstdint>
+#include <algorithm>
+#include <cctype>
 #include <vector>
 
 #include "volkov_a_count_word_line/common/include/common.hpp"
@@ -94,9 +95,7 @@ bool VolkovACountWordLineMPI::RunImpl() {
   MPI_Bcast(&total_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (total_len == 0) {
-    if (rank == 0) {
-      GetOutput() = 0;
-    }
+    GetOutput() = 0;
     return true;
   }
 
@@ -120,11 +119,10 @@ bool VolkovACountWordLineMPI::RunImpl() {
 
   int local_words = CountWordsInChunk(local_data, prev_char);
   int total_words = 0;
-  MPI_Reduce(&local_words, &total_words, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-  if (rank == 0) {
-    GetOutput() = total_words;
-  }
+  MPI_Allreduce(&local_words, &total_words, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  GetOutput() = total_words;
 
   return true;
 }

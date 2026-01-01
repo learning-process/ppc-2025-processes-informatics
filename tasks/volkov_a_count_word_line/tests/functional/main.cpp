@@ -3,9 +3,9 @@
 
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -51,20 +51,7 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::st
   }
 
   bool CheckTestOutputData(OutType &result) override {
-    int rank = 0;
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (initialized) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
-    if (rank == 0) {
-      if (result != ref_count_) {
-        return false;
-      }
-      return true;
-    }
-    return true;
+    return result == ref_count_;
   }
 
   std::string GetTestInputData() override {
