@@ -572,89 +572,30 @@ struct LocalTestCase {
   ExpectedSolution expected;
 };
 
-}  // namespace
+using LocalTestType = LocalTestCase;
+using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestType>;
 
-using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestCase>;
+std::vector<LocalTestType> LoadTestCasesFromData() {
+  namespace fs = std::filesystem;
 
-class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestCase> {
- public:
-  static std::string PrintTestParam(const ::testing::TestParamInfo<FuncParam> &info) {
-    return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
+  fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
+  std::ifstream file(json_path);
+  if (!file) {
+    throw std::runtime_error("Cannot open tests.json");
   }
 
- protected:
-  void SetUp() override {
-    const auto &tc = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_ = tc.problem;
-    expected_ = tc.expected;
-  }
-
-  InType GetTestInputData() final {
-    return input_;
-  }
-
-  bool CheckTestOutputData(OutType &o) final {
-    if (!std::isfinite(o.value)) {
-      return false;
-    }
-
-    const double dv = std::abs(o.value - expected_.value);
-    const double dv_tol = 20.0 * input_.accuracy;
-    if (dv > dv_tol) {
-      return false;
-    }
-
-    if (expected_.argmins.empty()) {
-      return true;
-    }
-
-    double min_dx = std::numeric_limits<double>::infinity();
-    for (const double a : expected_.argmins) {
-      min_dx = std::min(min_dx, std::abs(o.argmin - a));
-    }
-
-    const double dx_tol = 5.0 * input_.accuracy;
-    if (expected_.argmins.size() == 1U) {
-      return min_dx <= dx_tol;
-    }
-
-    return true;
-  }
-
- private:
-  InType input_{};
-  ExpectedSolution expected_{};
-};
-
-namespace {
-
-std::vector<FuncParam> LoadTestParams() {
-  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
-  const std::string settings_path = PPC_SETTINGS_sizov_d_global_search;
-
-  const std::string mpi_suffix =
-      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), settings_path);
-  const std::string seq_suffix =
-      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), settings_path);
-
-  std::ifstream fin(path);
-  if (!fin.is_open()) {
-    throw std::runtime_error("Cannot open file: " + path);
-  }
-
-  nlohmann::json j;
-  fin >> j;
-
-  if (!j.is_array()) {
+  nlohmann::json data;
+  file >> data;
+  if (!data.is_array()) {
     throw std::runtime_error("tests.json must contain array");
   }
 
-  std::vector<FuncParam> cases;
-  cases.reserve(j.size() * 2U);
+  std::vector<LocalTestType> cases;
+  cases.reserve(data.size());
 
-  for (const auto &item : j) {
-    LocalTestCase tc{};
-    tc.name = item.at("name").get<std::string>();
+  for (const auto &item : data) {
+    LocalTestType t{};
+    t.name = item.at("name").get<std::string>();
 
     const auto &pj = item.at("problem");
 
@@ -670,6 +611,7 @@ std::vector<FuncParam> LoadTestParams() {
     // optional per-test settings
     if (item.contains("settings")) {
       const auto &s = item.at("settings");
+
       if (s.contains("accuracy")) {
         p.accuracy = s.at("accuracy").get<double>();
       }
@@ -682,36 +624,144 @@ std::vector<FuncParam> LoadTestParams() {
     }
 
     p.func = BuildFunction(item.at("function"));
-    tc.problem = std::move(p);
+    t.problem = std::move(p);
 
     const auto &ej = item.at("expected");
-    tc.expected.argmins = ej.at("argmins").get<std::vector<double>>();
-    tc.expected.value = ej.at("value").get<double>();
+    t.expected.argmins = ej.at("argmins").get<std::vector<double>>();
+    t.expected.value = ej.at("value").get<double>();
 
-    std::string mpi_name = tc.name;
-    mpi_name += '_';
-    mpi_name += mpi_suffix;
-    cases.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, std::move(mpi_name), tc);
-
-    std::string seq_name = tc.name;
-    seq_name += '_';
-    seq_name += seq_suffix;
-    cases.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, std::move(seq_name), tc);
+    cases.push_back(std::move(t));
   }
 
   return cases;
 }
 
-const std::vector<FuncParam> kFuncParams = LoadTestParams();
+std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
+  std::vector<FuncParam> tasks;
+  tasks.reserve(tests.size() * 2U);
 
-TEST_P(SizovDGlobalSearchFunctionalTests, GlobalSearch) {
-  ExecuteTest(GetParam());
+  std::string mpi_name =
+      std::string(ppc::util::GetNamespace<SizovDGlobalSearchMPI>()) + "_" +
+      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
+  std::string seq_name =
+      std::string(ppc::util::GetNamespace<SizovDGlobalSearchSEQ>()) + "_" +
+      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
+
+  for (const auto &t : tests) {
+    tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, mpi_name, t);
+    tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, seq_name, t);
+  }
+
+  return tasks;
 }
 
-// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
-INSTANTIATE_TEST_SUITE_P(FunctionalTests, SizovDGlobalSearchFunctionalTests, ::testing::ValuesIn(kFuncParams),
-                         SizovDGlobalSearchFunctionalTests::PrintTestParam);
-// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+}  // namespace
+
+class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestType> {
+ public:
+  void RunFunctionalTestCase(const FuncParam &param) {
+    PrepareTestCase(param);
+    ExecuteTest(param);
+  }
+
+  void TestBody() override {}
+
+  static std::string PrintTestParam(const LocalTestType &t) {
+    return t.name;
+  }
+
+  bool CheckTestOutputData(OutType &o) final {
+    if (!std::isfinite(o.value)) {
+      return false;
+    }
+
+    const double dv = std::abs(o.value - expected_.value);
+    const double dv_tol = 20.0 * input_.accuracy;
+
+    if (dv > dv_tol) {
+      return false;
+    }
+
+    if (expected_.argmins.empty()) {
+      return true;
+    }
+
+    double min_dx = std::numeric_limits<double>::infinity();
+    for (double a : expected_.argmins) {
+      const double dx = std::abs(o.argmin - a);
+      min_dx = std::min(min_dx, dx);
+    }
+
+    const double dx_tol = 5.0 * input_.accuracy;
+
+    if (expected_.argmins.size() == 1U) {
+      return min_dx <= dx_tol;
+    }
+
+    return true;
+  }
+
+  InType GetTestInputData() final {
+    return input_;
+  }
+
+ private:
+  void PrepareTestCase(const FuncParam &param) {
+    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+    input_ = test_case_.problem;
+    expected_ = test_case_.expected;
+  }
+
+  LocalTestType test_case_{};
+  InType input_{};
+  ExpectedSolution expected_{};
+};
+
+namespace {
+
+std::vector<FuncParam> BuildFunctionalTestParams() {
+  const auto tests = LoadTestCasesFromData();
+  return BuildTestTasks(tests);
+}
+
+class FunctionalTestInstance : public SizovDGlobalSearchFunctionalTests {
+ public:
+  explicit FunctionalTestInstance(FuncParam param) : param_(std::move(param)) {}
+
+  void TestBody() override {
+    RunFunctionalTestCase(param_);
+  }
+
+ private:
+  FuncParam param_;
+};
+
+struct FunctionalTestRegistrar {
+  explicit FunctionalTestRegistrar(std::vector<FuncParam> tasks) : tasks_(std::move(tasks)) {
+    test_names_.reserve(tasks_.size());
+    std::size_t idx = 0;
+    for (const auto &param : tasks_) {
+      const LocalTestType &local = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+      const std::string &test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
+      test_names_.push_back(test_name + "_" + local.name);
+      const std::size_t current_idx = idx++;
+
+      ::testing::RegisterTest(
+          "GlobalSearchFunctionalTests", test_names_.back().c_str(), nullptr, nullptr, __FILE__, __LINE__,
+          [this, current_idx]() -> ::testing::Test * { return new FunctionalTestInstance(tasks_[current_idx]); });
+    }
+  }
+
+ private:
+  std::vector<FuncParam> tasks_;
+  std::vector<std::string> test_names_;
+};
+
+const bool kRegisteredFunctionalTests = []() {
+  static const FunctionalTestRegistrar kRegistrar(BuildFunctionalTestParams());
+  (void)kRegistrar;
+  return true;
+}();
 
 }  // namespace
 
