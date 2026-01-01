@@ -18,7 +18,6 @@ struct TrapezoidalIntegrationInput {
 
 using InType = TrapezoidalIntegrationInput;
 using OutType = double;
-// ИЗМЕНИ ЭТУ СТРОКУ:
 using TestType = std::tuple<unsigned int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

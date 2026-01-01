@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <chrono>
 #include <cmath>
-#include <iostream>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -17,20 +15,26 @@
 namespace frolova_s_mult_int_trapez {
 
 class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, OutType> {
- protected:
+  InType small_input_{};
+  InType medium_input_{};
+  InType large_input_{};
+
   void SetUp() override {
+    // Small problem
     small_input_ = {.limits = {{0.0, 1.0}, {4.0, 6.0}},
                     .number_of_intervals = {100, 100},
                     .function = [](std::vector<double> input) {
       return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
     }};
 
+    // Medium problem
     medium_input_ = {.limits = {{0.0, 1.0}, {4.0, 6.0}},
                      .number_of_intervals = {300, 300},
                      .function = [](std::vector<double> input) {
       return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
     }};
 
+    // Large problem
     large_input_ = {
         .limits = {{0.0, 2.0}, {0.0, 2.0}},
         .number_of_intervals = {500, 500},
@@ -43,7 +47,8 @@ class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
 
   InType GetTestInputData() final {
     auto test_param = GetParam();
-    std::string test_name = std::get<0>(test_param);
+    unsigned int test_id = std::get<0>(test_param);
+    std::string test_name = std::get<1>(test_param);
 
     if (test_name.find("small") != std::string::npos) {
       return small_input_;
@@ -55,14 +60,7 @@ class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
 
     return small_input_;
   }
-
- private:
-  InType small_input_;
-  InType medium_input_;
-  InType large_input_;
 };
-
-namespace {
 
 TEST_P(FrolovaRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
@@ -70,22 +68,11 @@ TEST_P(FrolovaRunPerfTestProcesses, RunPerfModes) {
 
 const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, FrolovaSMultIntTrapezMPI, FrolovaSMultIntTrapezSEQ>(
     PPC_SETTINGS_frolova_s_mult_int_trapez);
-и const auto kCustomPerfTasks = std::tuple_cat(
-    // Для MPI
-    ppc::util::AddPerfTask<FrolovaSMultIntTrapezMPI, InType>("small_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
-    ppc::util::AddPerfTask<FrolovaSMultIntTrapezMPI, InType>("medium_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
-    ppc::util::AddPerfTask<FrolovaSMultIntTrapezMPI, InType>("large_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
-    // Для SEQ
-    ppc::util::AddPerfTask<FrolovaSMultIntTrapezSEQ, InType>("small_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
-    ppc::util::AddPerfTask<FrolovaSMultIntTrapezSEQ, InType>("medium_problem", PPC_SETTINGS_frolova_s_mult_int_trapez),
-    ppc::util::AddPerfTask<FrolovaSMultIntTrapezSEQ, InType>("large_problem", PPC_SETTINGS_frolova_s_mult_int_trapez));
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kCustomPerfTasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = FrolovaRunPerfTestProcesses::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(TrapezoidalIntegrationPerfTests, FrolovaRunPerfTestProcesses, kGtestValues, kPerfTestName);
-
-}  // namespace
 
 }  // namespace frolova_s_mult_int_trapez
