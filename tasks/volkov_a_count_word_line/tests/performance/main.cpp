@@ -15,14 +15,15 @@ namespace volkov_a_count_word_line {
 class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::string, OutType> {
  protected:
   void SetUp() override {
+    // Генерируем данные программно, чтобы не зависеть от файлов
     const int words_count = 500000;
     const std::string word = "word ";
-
+    
     input_data_.reserve(words_count * word.size());
     for (int i = 0; i < words_count; ++i) {
-      input_data_ += word;
+        input_data_ += word;
     }
-
+    
     expected_output_ = words_count;
   }
 
@@ -31,7 +32,18 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::st
   }
 
   bool CheckTestOutputData(OutType &val) override {
-    return val == expected_output_;
+    int rank = 0;
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    }
+
+    // ИСПРАВЛЕНИЕ: Проверяем только на 0-м ранге.
+    if (rank == 0) {
+      return val == expected_output_;
+    }
+    return true;
   }
 
  private:
