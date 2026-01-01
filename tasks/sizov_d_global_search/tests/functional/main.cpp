@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <limits>
 #include <memory>
@@ -52,11 +53,13 @@ class Lexer {
   Token Next() {
     SkipWhitespace();
     if (pos_ >= expression_.size()) {
-      return Token{.type = TokenType::kEnd, .text = {}, .number_value = 0.0};
+      Token t;
+      t.type = TokenType::kEnd;
+      return t;
     }
 
     const char ch = expression_[pos_];
-    if ((std::isdigit(static_cast<unsigned char>(ch)) != 0) || (ch == '.')) {
+    if ((std::isdigit(static_cast<unsigned char>(ch)) != 0) || ch == '.') {
       return ParseNumber();
     }
     if (IsIdentifierStart(ch)) {
@@ -64,23 +67,41 @@ class Lexer {
     }
 
     ++pos_;
-    switch (ch) {
-      case '+':
-        return Token{.type = TokenType::kPlus, .text = "+", .number_value = 0.0};
-      case '-':
-        return Token{.type = TokenType::kMinus, .text = "-", .number_value = 0.0};
-      case '*':
-        return Token{.type = TokenType::kStar, .text = "*", .number_value = 0.0};
-      case '/':
-        return Token{.type = TokenType::kSlash, .text = "/", .number_value = 0.0};
-      case '^':
-        return Token{.type = TokenType::kCaret, .text = "^", .number_value = 0.0};
-      case '(':
-        return Token{.type = TokenType::kLParen, .text = "(", .number_value = 0.0};
-      case ')':
-        return Token{.type = TokenType::kRParen, .text = ")", .number_value = 0.0};
-      default:
-        break;
+    Token t;
+    if (ch == '+') {
+      t.type = TokenType::kPlus;
+      t.text = "+";
+      return t;
+    }
+    if (ch == '-') {
+      t.type = TokenType::kMinus;
+      t.text = "-";
+      return t;
+    }
+    if (ch == '*') {
+      t.type = TokenType::kStar;
+      t.text = "*";
+      return t;
+    }
+    if (ch == '/') {
+      t.type = TokenType::kSlash;
+      t.text = "/";
+      return t;
+    }
+    if (ch == '^') {
+      t.type = TokenType::kCaret;
+      t.text = "^";
+      return t;
+    }
+    if (ch == '(') {
+      t.type = TokenType::kLParen;
+      t.text = "(";
+      return t;
+    }
+    if (ch == ')') {
+      t.type = TokenType::kRParen;
+      t.text = ")";
+      return t;
     }
 
     throw std::runtime_error("Unexpected character");
@@ -102,7 +123,11 @@ class Lexer {
     }
 
     pos_ = static_cast<std::size_t>(end - expression_.c_str());
-    return Token{.type = TokenType::kNumber, .text = {}, .number_value = value};
+
+    Token t;
+    t.type = TokenType::kNumber;
+    t.number_value = value;
+    return t;
   }
 
   Token ParseIdentifier() {
@@ -111,15 +136,18 @@ class Lexer {
       ++pos_;
     }
 
-    return Token{.type = TokenType::kIdentifier, .text = expression_.substr(start, pos_ - start), .number_value = 0.0};
+    Token token;
+    token.type = TokenType::kIdentifier;
+    token.text = expression_.substr(start, pos_ - start);
+    return token;
   }
 
   static bool IsIdentifierStart(char ch) {
-    return (std::isalpha(static_cast<unsigned char>(ch)) != 0) || (ch == '_');
+    return (std::isalpha(static_cast<unsigned char>(ch)) != 0) || ch == '_';
   }
 
   static bool IsIdentifierChar(char ch) {
-    return (std::isalnum(static_cast<unsigned char>(ch)) != 0) || (ch == '_');
+    return (std::isalnum(static_cast<unsigned char>(ch)) != 0) || ch == '_';
   }
 
   std::string expression_;
@@ -270,7 +298,7 @@ class Parser {
   }
 
   static bool IsRightAssociative(const OperatorEntry &op) {
-    return (op.kind == OperatorEntry::Kind::kPow) || (op.kind == OperatorEntry::Kind::kUnaryMinus);
+    return op.kind == OperatorEntry::Kind::kPow || op.kind == OperatorEntry::Kind::kUnaryMinus;
   }
 
   static void ApplyOperator(std::vector<ExprPtr> &values, const OperatorEntry &op) {
@@ -344,38 +372,36 @@ class Parser {
   }
 
   static void PushUnaryMinus(std::vector<OperatorEntry> &ops) {
-    ops.push_back(OperatorEntry{.kind = OperatorEntry::Kind::kUnaryMinus, .func = nullptr});
+    ops.push_back({OperatorEntry::Kind::kUnaryMinus, nullptr});
   }
 
   static void PushLParen(std::vector<OperatorEntry> &ops) {
-    ops.push_back(OperatorEntry{.kind = OperatorEntry::Kind::kLParen, .func = nullptr});
+    ops.push_back({OperatorEntry::Kind::kLParen, nullptr});
   }
 
   static void PushFunction(std::vector<OperatorEntry> &ops, const std::string &id) {
-    ops.push_back(OperatorEntry{.kind = OperatorEntry::Kind::kFunc, .func = ResolveFunction(id)});
+    ops.push_back({OperatorEntry::Kind::kFunc, ResolveFunction(id)});
     PushLParen(ops);
   }
 
   static void PushBinaryOperator(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops,
                                  OperatorEntry::Kind kind) {
     OperatorEntry new_op{.kind = kind, .func = nullptr};
-
-    while (!ops.empty() && (ops.back().kind != OperatorEntry::Kind::kLParen)) {
+    while (!ops.empty() && ops.back().kind != OperatorEntry::Kind::kLParen) {
       const int top = Precedence(ops.back());
       const int now = Precedence(new_op);
-      if ((top > now) || (!IsRightAssociative(new_op) && (top == now))) {
+      if (top > now || (!IsRightAssociative(new_op) && top == now)) {
         ApplyOperator(values, ops.back());
         ops.pop_back();
       } else {
         break;
       }
     }
-
     ops.push_back(new_op);
   }
 
   void HandleIdentifierToken(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops, bool &expect_value) {
-    const std::string id = current_.text;
+    std::string id = current_.text;
     Advance();
 
     if (Check(TokenType::kLParen)) {
@@ -390,7 +416,6 @@ class Parser {
       expect_value = false;
       return;
     }
-
     if (id == "pi") {
       values.push_back(std::make_unique<ConstantExpr>(std::acos(-1.0)));
       expect_value = false;
@@ -408,19 +433,16 @@ class Parser {
       expect_value = false;
       return;
     }
-
     if (Check(TokenType::kIdentifier)) {
       HandleIdentifierToken(values, ops, expect_value);
       return;
     }
-
     if (Check(TokenType::kLParen)) {
       PushLParen(ops);
       Advance();
       expect_value = true;
       return;
     }
-
     if (Check(TokenType::kPlus) || Check(TokenType::kMinus)) {
       if (Check(TokenType::kMinus)) {
         PushUnaryMinus(ops);
@@ -434,18 +456,16 @@ class Parser {
   }
 
   static void HandleRParen(std::vector<ExprPtr> &values, std::vector<OperatorEntry> &ops) {
-    while (!ops.empty() && (ops.back().kind != OperatorEntry::Kind::kLParen)) {
+    while (!ops.empty() && ops.back().kind != OperatorEntry::Kind::kLParen) {
       ApplyOperator(values, ops.back());
       ops.pop_back();
     }
-
     if (ops.empty()) {
       throw std::runtime_error("Mismatched parentheses");
     }
-
     ops.pop_back();
 
-    if (!ops.empty() && (ops.back().kind == OperatorEntry::Kind::kFunc)) {
+    if (!ops.empty() && ops.back().kind == OperatorEntry::Kind::kFunc) {
       ApplyOperator(values, ops.back());
       ops.pop_back();
     }
@@ -455,37 +475,18 @@ class Parser {
     if (Check(TokenType::kPlus) || Check(TokenType::kMinus) || Check(TokenType::kStar) || Check(TokenType::kSlash) ||
         Check(TokenType::kCaret)) {
       OperatorEntry::Kind kind = OperatorEntry::Kind::kPlus;
-
-      switch (current_.type) {
-        case TokenType::kPlus: {
-          kind = OperatorEntry::Kind::kPlus;
-          break;
-        }
-        case TokenType::kMinus: {
-          kind = OperatorEntry::Kind::kMinus;
-          break;
-        }
-        case TokenType::kStar: {
-          kind = OperatorEntry::Kind::kMul;
-          break;
-        }
-        case TokenType::kSlash: {
-          kind = OperatorEntry::Kind::kDiv;
-          break;
-        }
-        case TokenType::kCaret: {
-          kind = OperatorEntry::Kind::kPow;
-          break;
-        }
-
-        case TokenType::kEnd:
-        case TokenType::kNumber:
-        case TokenType::kIdentifier:
-        case TokenType::kLParen:
-        case TokenType::kRParen: {
-          break;
-        }
+      if (Check(TokenType::kPlus)) {
+        kind = OperatorEntry::Kind::kPlus;
+      } else if (Check(TokenType::kMinus)) {
+        kind = OperatorEntry::Kind::kMinus;
+      } else if (Check(TokenType::kStar)) {
+        kind = OperatorEntry::Kind::kMul;
+      } else if (Check(TokenType::kSlash)) {
+        kind = OperatorEntry::Kind::kDiv;
+      } else {
+        kind = OperatorEntry::Kind::kPow;
       }
+
       PushBinaryOperator(values, ops, kind);
       Advance();
       expect_value = true;
@@ -495,7 +496,6 @@ class Parser {
     if (Check(TokenType::kRParen)) {
       HandleRParen(values, ops);
       Advance();
-      expect_value = false;
       return true;
     }
 
@@ -514,8 +514,7 @@ class Parser {
       ApplyOperator(values, ops.back());
       ops.pop_back();
     }
-
-    if (values.size() != 1U) {
+    if (values.size() != 1) {
       throw std::runtime_error("Invalid expression");
     }
   }
@@ -554,7 +553,7 @@ struct SharedExprFunctor {
 };
 
 Function BuildFunction(const nlohmann::json &json) {
-  const std::string expr = json.at("expression").get<std::string>();
+  const std::string expr = json.at("expression");
   Lexer lex(expr);
   Parser parser(std::move(lex));
   ExprPtr ast = parser.Parse();
@@ -573,100 +572,83 @@ struct LocalTestCase {
   ExpectedSolution expected;
 };
 
-using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestCase>;
+using LocalTestType = LocalTestCase;
+using FuncParam = ppc::util::FuncTestParam<InType, OutType, LocalTestType>;
 
-std::vector<FuncParam> LoadTestParams() {
-  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
+std::vector<LocalTestType> LoadTestCasesFromData() {
+  namespace fs = std::filesystem;
 
-  const std::string settings_path = PPC_SETTINGS_sizov_d_global_search;
-  const std::string mpi_suffix =
-      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), settings_path);
-  const std::string seq_suffix =
-      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), settings_path);
-
-  std::ifstream fin(path);
-  if (!fin.is_open()) {
-    throw std::runtime_error("Cannot open file: " + path);
+  fs::path json_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_sizov_d_global_search, "tests.json");
+  std::ifstream file(json_path);
+  if (!file) {
+    throw std::runtime_error("Cannot open tests.json");
   }
 
-  nlohmann::json j;
-  fin >> j;
-
-  if (!j.is_array()) {
+  nlohmann::json data;
+  file >> data;
+  if (!data.is_array()) {
     throw std::runtime_error("tests.json must contain array");
   }
 
-  std::vector<FuncParam> cases;
-  cases.reserve(j.size() * 2U);
+  std::vector<LocalTestType> cases;
+  cases.reserve(data.size());
 
-  for (const auto &item : j) {
-    LocalTestCase tc{};
-    tc.name = item.at("name").get<std::string>();
+  for (auto &item : data) {
+    LocalTestType t;
+    t.name = item.at("name");
 
     const auto &pj = item.at("problem");
-
     Problem p{};
-    p.left = pj.at("left").get<double>();
-    p.right = pj.at("right").get<double>();
-
-    p.accuracy = kDefaultAccuracy;
-    p.reliability = kDefaultReliability;
-    p.max_iterations = kDefaultMaxIterations;
-
-    if (item.contains("settings")) {
-      const auto &s = item.at("settings");
-
-      if (s.contains("accuracy")) {
-        p.accuracy = s.at("accuracy").get<double>();
-      }
-      if (s.contains("reliability")) {
-        p.reliability = s.at("reliability").get<double>();
-      }
-      if (s.contains("max_iterations")) {
-        p.max_iterations = s.at("max_iterations").get<int>();
-      }
-    }
-
+    p.left = pj.at("left");
+    p.right = pj.at("right");
+    p.accuracy = 1e-4;
+    p.reliability = 3.0;
+    p.max_iterations = 300;
     p.func = BuildFunction(item.at("function"));
-    tc.problem = p;
+    t.problem = p;
 
     const auto &ej = item.at("expected");
-    tc.expected.argmins = ej.at("argmins").get<std::vector<double>>();
-    tc.expected.value = ej.at("value").get<double>();
+    t.expected.argmins = ej.at("argmins").get<std::vector<double>>();
+    t.expected.value = ej.at("value");
 
-    const std::string base_name = tc.name;
-
-    std::string mpi_name = base_name;
-    mpi_name += '_';
-    mpi_name += mpi_suffix;
-    cases.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, std::move(mpi_name), tc);
-
-    std::string seq_name = base_name;
-    seq_name += '_';
-    seq_name += seq_suffix;
-    cases.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, std::move(seq_name), tc);
+    cases.push_back(std::move(t));
   }
 
   return cases;
 }
 
-const std::vector<FuncParam> kFuncParams = LoadTestParams();
+std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
+  std::vector<FuncParam> tasks;
+  tasks.reserve(tests.size() * 2U);
 
-class SizovDGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestCase> {
+  std::string mpi_name =
+      std::string(ppc::util::GetNamespace<SizovDGlobalSearchMPI>()) + "_" +
+      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
+  std::string seq_name =
+      std::string(ppc::util::GetNamespace<SizovDGlobalSearchSEQ>()) + "_" +
+      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
+
+  for (const auto &t : tests) {
+    tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, mpi_name, t);
+    tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, seq_name, t);
+  }
+
+  return tasks;
+}
+
+}  // namespace
+
+class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestType> {
  public:
-  static std::string PrintTestParam(const ::testing::TestParamInfo<FuncParam> &info) {
-    return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
+  void RunFunctionalTestCase(const FuncParam &param) {
+    PrepareTestCase(param);
+    ExecuteTest(param);
   }
 
- protected:
-  void SetUp() override {
-    const auto &tc = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_ = tc.problem;
-    expected_ = tc.expected;
-  }
+  void TestBody() override {}
 
-  InType GetTestInputData() final {
-    return input_;
+  static std::string PrintTestParam(const LocalTestType &t) {
+    return t.name;
   }
 
   bool CheckTestOutputData(OutType &o) final {
@@ -676,6 +658,7 @@ class SizovDGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InType
 
     const double dv = std::abs(o.value - expected_.value);
     const double dv_tol = 20.0 * input_.accuracy;
+
     if (dv > dv_tol) {
       return false;
     }
@@ -685,7 +668,7 @@ class SizovDGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InType
     }
 
     double min_dx = std::numeric_limits<double>::infinity();
-    for (const double a : expected_.argmins) {
+    for (double a : expected_.argmins) {
       const double dx = std::abs(o.argmin - a);
       min_dx = std::min(min_dx, dx);
     }
@@ -699,20 +682,67 @@ class SizovDGlobalSearchRunFuncTests : public ppc::util::BaseRunFuncTests<InType
     return true;
   }
 
+  InType GetTestInputData() final {
+    return input_;
+  }
+
  private:
+  void PrepareTestCase(const FuncParam &param) {
+    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+    input_ = test_case_.problem;
+    expected_ = test_case_.expected;
+  }
+
+  LocalTestType test_case_{};
   InType input_{};
   ExpectedSolution expected_{};
 };
 
-TEST_P(SizovDGlobalSearchRunFuncTests, GlobalSearch) {
-  ExecuteTest(GetParam());
+namespace {
+
+std::vector<FuncParam> BuildFunctionalTestParams() {
+  const auto tests = LoadTestCasesFromData();
+  return BuildTestTasks(tests);
 }
 
-// clang-tidy ругается на макрос gtest.
-// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
-INSTANTIATE_TEST_SUITE_P(FunctionalTests, SizovDGlobalSearchRunFuncTests, ::testing::ValuesIn(kFuncParams),
-                         SizovDGlobalSearchRunFuncTests::PrintTestParam);
-// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+class FunctionalTestInstance : public SizovDGlobalSearchFunctionalTests {
+ public:
+  explicit FunctionalTestInstance(FuncParam param) : param_(std::move(param)) {}
+
+  void TestBody() override {
+    RunFunctionalTestCase(param_);
+  }
+
+ private:
+  FuncParam param_;
+};
+
+struct FunctionalTestRegistrar {
+  explicit FunctionalTestRegistrar(std::vector<FuncParam> tasks) : tasks_(std::move(tasks)) {
+    test_names_.reserve(tasks_.size());
+    std::size_t idx = 0;
+    for (const auto &param : tasks_) {
+      const LocalTestType &local = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
+      const std::string &test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
+      test_names_.push_back(test_name + "_" + local.name);
+      const std::size_t current_idx = idx++;
+
+      ::testing::RegisterTest(
+          "GlobalSearchFunctionalTests", test_names_.back().c_str(), nullptr, nullptr, __FILE__, __LINE__,
+          [this, current_idx]() -> ::testing::Test * { return new FunctionalTestInstance(tasks_[current_idx]); });
+    }
+  }
+
+ private:
+  std::vector<FuncParam> tasks_;
+  std::vector<std::string> test_names_;
+};
+
+const bool kRegisteredFunctionalTests = []() {
+  static const FunctionalTestRegistrar kRegistrar(BuildFunctionalTestParams());
+  (void)kRegistrar;
+  return true;
+}();
 
 }  // namespace
 
