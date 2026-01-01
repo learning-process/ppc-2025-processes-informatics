@@ -47,7 +47,7 @@ class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
 
   InType GetTestInputData() final {
     auto test_param = GetParam();
-    unsigned int test_id = std::get<0>(test_param);
+
     std::string test_name = std::get<1>(test_param);
 
     if (test_name.find("small") != std::string::npos) {
