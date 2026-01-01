@@ -38,6 +38,16 @@ bool PotashnikMStarTopolMPI::RunImpl() {
   std::vector<int> received_data;
   std::pair<int, int> src_dst = {0, 0};
 
+  // If world_size = 1
+  if (world_size == 1) {
+    int sum = 0;
+    for (int i = 0; i < size; i++) {
+      sum += input[i];
+    }
+    GetOutput() = sum;
+    return true;
+  }
+
   // Going through calls
   for (int i = 0; i < size; i++) {
     src_dst = potashnik_m_star_topol::GetCyclicSrcDst(world_size, i);
