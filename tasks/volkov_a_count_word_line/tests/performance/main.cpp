@@ -18,12 +18,12 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::st
     // Генерируем данные программно, чтобы не зависеть от файлов
     const int words_count = 500000;
     const std::string word = "word ";
-    
+
     input_data_.reserve(words_count * word.size());
     for (int i = 0; i < words_count; ++i) {
-        input_data_ += word;
+      input_data_ += word;
     }
-    
+
     expected_output_ = words_count;
   }
 

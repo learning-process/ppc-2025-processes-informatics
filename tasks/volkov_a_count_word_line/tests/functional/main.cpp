@@ -61,13 +61,13 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::st
 
     // ИСПРАВЛЕНИЕ:
     // MPI задача возвращает правильный ответ только на Rank 0.
-    // На остальных рангах результат может быть любым (обычно 0), 
+    // На остальных рангах результат может быть любым (обычно 0),
     // поэтому мы пропускаем проверку (возвращаем true).
     if (rank == 0) {
       if (result != ref_count_) {
-          // Для отладки можно раскомментировать
-          // std::cerr << "Rank 0 Fail: Expected " << ref_count_ << " got " << result << std::endl;
-          return false;
+        // Для отладки можно раскомментировать
+        // std::cerr << "Rank 0 Fail: Expected " << ref_count_ << " got " << result << std::endl;
+        return false;
       }
       return true;
     }
