@@ -12,7 +12,7 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
-    : BaseTask(), result_(0.0), limits_(in.limits), number_of_intervals_(in.number_of_intervals) {
+    : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {
   std::cout << "[MPI CONSTRUCTOR] Created FrolovaSMultIntTrapezMPI" << std::endl;
   std::cout << "[MPI CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
   std::cout << "[MPI CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
