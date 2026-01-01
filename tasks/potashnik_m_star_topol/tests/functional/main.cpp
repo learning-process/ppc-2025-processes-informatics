@@ -17,7 +17,8 @@ namespace potashnik_m_star_topol {
 class PotashnikMStarTopolFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(test_param);;
+    return std::to_string(test_param);
+    ;
   }
 
  protected:
