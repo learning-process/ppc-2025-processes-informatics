@@ -29,10 +29,10 @@ bool KutuzovIThorusGridMPI::ValidationImpl() {
   int process_count = -1;
   MPI_Comm_size(MPI_COMM_WORLD, &process_count);
 
-  if (start <= process_count - 1) {
+  if (start > process_count - 1) {
     return false;
   }
-  if (end <= process_count - 1) {
+  if (end > process_count - 1) {
     return false;
   }
 
