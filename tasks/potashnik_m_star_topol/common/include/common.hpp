@@ -10,7 +10,7 @@
 namespace potashnik_m_star_topol {
 
 using InType = std::vector<int>;
-using OutType = int;
+using OutType = std::tuple<int, int>;  // Second int = 0 if number of processes = 1 (or sequential version)
 using TestType = int;
 using BaseTask = ppc::task::Task<InType, OutType>;
 

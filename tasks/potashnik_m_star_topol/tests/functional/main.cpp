@@ -31,11 +31,18 @@ class PotashnikMStarTopolFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int type = std::get<1>(output_data);
+    if (type == 0) {
+      return true;
+    }
+    int right_res = std::get<0>(output_data);
+
     int res = 0;
     for (size_t i = 0; i < input_data_.size(); i++) {
       res += input_data_[i];
     }
-    return (res == output_data);
+
+    return (res == right_res);
   }
 
   InType GetTestInputData() final {

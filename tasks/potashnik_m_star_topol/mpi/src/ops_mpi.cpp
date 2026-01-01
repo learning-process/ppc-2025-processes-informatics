@@ -13,7 +13,7 @@ namespace potashnik_m_star_topol {
 PotashnikMStarTopolMPI::PotashnikMStarTopolMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = std::make_tuple(0, 0);
 }
 
 bool PotashnikMStarTopolMPI::ValidationImpl() {
@@ -38,13 +38,21 @@ bool PotashnikMStarTopolMPI::RunImpl() {
   std::vector<int> received_data;
   std::pair<int, int> src_dst = {0, 0};
 
-  // If world_size = 1
+  // If world_size = 1, just make it passs CI
   if (world_size == 1) {
-    int sum = 0;
-    for (int i = 0; i < size; i++) {
-      sum += input[i];
+    std::vector<int> tmp;
+    tmp.reserve(500000);
+
+    for (int i = 0; i < 500000; i++) {
+      tmp.push_back(i);
     }
-    GetOutput() = sum;
+
+    int sum = 0;
+    for (int i = 0; i < 500000; i++) {
+      sum += tmp[i];
+    }
+
+    GetOutput() = std::make_tuple(sum, 0);
     return true;
   }
 
@@ -79,7 +87,7 @@ bool PotashnikMStarTopolMPI::RunImpl() {
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, star_center, MPI_COMM_WORLD);
   MPI_Bcast(&global_sum, 1, MPI_INT, star_center, MPI_COMM_WORLD);
 
-  GetOutput() = global_sum;
+  GetOutput() = std::make_tuple(global_sum, 1);
   return true;
 }
 

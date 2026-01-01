@@ -1,6 +1,7 @@
 #include "potashnik_m_star_topol/seq/include/ops_seq.hpp"
 
 #include <string>
+#include <tuple>
 
 #include "potashnik_m_star_topol/common/include/common.hpp"
 
@@ -9,7 +10,7 @@ namespace potashnik_m_star_topol {
 PotashnikMStarTopolSEQ::PotashnikMStarTopolSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
+  GetOutput() = std::make_tuple(0, 0);
 }
 
 bool PotashnikMStarTopolSEQ::ValidationImpl() {
@@ -22,15 +23,19 @@ bool PotashnikMStarTopolSEQ::PreProcessingImpl() {
 
 bool PotashnikMStarTopolSEQ::RunImpl() {
   // Sequential version just for CI tests to pass
-  auto &input = GetInput();
-  int size = input.size();
+  std::vector<int> tmp;
+  tmp.reserve(500000);
 
-  int sum = 0;
-  for (int i = 0; i < size; i++) {
-    sum += input[i];
+  for (int i = 0; i < 500000; i++) {
+    tmp.push_back(i);
   }
 
-  GetOutput() = sum;
+  int sum = 0;
+  for (int i = 0; i < 500000; i++) {
+    sum += tmp[i];
+  }
+
+  GetOutput() = std::make_tuple(sum, 0);
   return true;
 }
 

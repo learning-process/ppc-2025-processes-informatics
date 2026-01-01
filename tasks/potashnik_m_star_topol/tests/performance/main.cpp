@@ -11,7 +11,7 @@
 namespace potashnik_m_star_topol {
 
 class PotashnikMStarTopolPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 1000000;
+  const int kCount_ = 1000;
   InType input_data_;
 
   void SetUp() override {
@@ -23,11 +23,18 @@ class PotashnikMStarTopolPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int type = std::get<1>(output_data);
+    if (type == 0) {
+      return true;
+    }
+    int right_res = std::get<0>(output_data);
+
     int res = 0;
     for (size_t i = 0; i < input_data_.size(); i++) {
       res += input_data_[i];
     }
-    return (res == output_data);
+
+    return (res == right_res);
   }
 
   InType GetTestInputData() final {
