@@ -18,7 +18,8 @@ class AkimovIRunPerfTestRadixBatcherSort : public ppc::util::BaseRunPerfTests<In
   InType input_data_;
 
   void SetUp() override {
-    std::mt19937 gen(42);  // deterministic seed
+    std::random_device rd;
+    std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dist(-1e6, 1e6);
 
     input_data_.resize(kCount_);

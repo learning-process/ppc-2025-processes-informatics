@@ -21,8 +21,8 @@ class AkimovIRadixBatcherSortSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static uint64_t packDouble(double v) noexcept;
-  static double unpackDouble(uint64_t k) noexcept;
-  static void lsdRadixSort(std::vector<double> &arr);
+  static uint64_t PackDouble(double v) noexcept;
+  static double UnpackDouble(uint64_t k) noexcept;
+  static void LsdRadixSort(std::vector<double> &arr);
 };
 }  // namespace akimov_i_radix_sort_double_batcher_merge
