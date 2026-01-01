@@ -23,7 +23,7 @@ class FrolovaSMultIntTrapezMPI : public BaseTask {
 
  private:
   unsigned int CalculationOfCoefficient(const std::vector<double> &point);
-  void Recursive(std::vector<double> &point, unsigned int &definition, unsigned int divider, unsigned int variable);
+  void Recursive(std::vector<double> &point, unsigned int &definition);
   bool ValidateInputData(const InType &input);
   bool ValidateLimitsAndIntervals(const InType &input);
   std::vector<double> GetPointFromNumber(unsigned int number);

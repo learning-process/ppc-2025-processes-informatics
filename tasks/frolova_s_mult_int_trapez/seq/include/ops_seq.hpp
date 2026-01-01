@@ -22,7 +22,7 @@ class FrolovaSMultIntTrapezSEQ : public BaseTask {
 
  private:
   unsigned int CalculationOfCoefficient(const std::vector<double> &point);
-  void Recursive(std::vector<double> &point, unsigned int &definition, unsigned int divider, unsigned int variable);
+  void Recursive(std::vector<double> &point, unsigned int &definition);
   std::vector<double> GetPointFromNumber(unsigned int number);
 
   std::vector<std::pair<double, double>> limits_;
