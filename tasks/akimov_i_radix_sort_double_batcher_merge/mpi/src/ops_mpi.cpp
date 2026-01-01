@@ -110,7 +110,7 @@ void AkimovIRadixBatcherSortMPI::CmpSwap(std::vector<double> &arr, int i, int j)
   }
 }
 
-// recursive odd-even merge (Batcher-like)
+// NOLINTNEXTLINE(misc-no-recursion)
 void AkimovIRadixBatcherSortMPI::OddEvenMergeRec(std::vector<double> &arr, int start, int len, int stride) {
   int step = stride * 2;
   if (step < len) {
@@ -124,6 +124,7 @@ void AkimovIRadixBatcherSortMPI::OddEvenMergeRec(std::vector<double> &arr, int s
   }
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
 void AkimovIRadixBatcherSortMPI::OddEvenMergeSortRec(std::vector<double> &arr, int start, int len) {
   if (len > 1) {
     int mid = len / 2;
