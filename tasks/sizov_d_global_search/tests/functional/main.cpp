@@ -638,16 +638,22 @@ std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
   std::vector<FuncParam> tasks;
   tasks.reserve(tests.size() * 2U);
 
-  std::string mpi_name =
-      std::string(ppc::util::GetNamespace<SizovDGlobalSearchMPI>()) + "_" +
-      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
-  std::string seq_name =
-      std::string(ppc::util::GetNamespace<SizovDGlobalSearchSEQ>()) + "_" +
-      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), PPC_SETTINGS_sizov_d_global_search);
+  const std::string settings_path = PPC_SETTINGS_sizov_d_global_search;
+
+  const std::string mpi_suffix =
+      ppc::task::GetStringTaskType(SizovDGlobalSearchMPI::GetStaticTypeOfTask(), settings_path);
+  const std::string seq_suffix =
+      ppc::task::GetStringTaskType(SizovDGlobalSearchSEQ::GetStaticTypeOfTask(), settings_path);
 
   for (const auto &t : tests) {
-    tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, mpi_name, t);
-    tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, seq_name, t);
+    {
+      std::string name = t.name + "_" + mpi_suffix;
+      tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchMPI, InType>, std::move(name), t);
+    }
+    {
+      std::string name = t.name + "_" + seq_suffix;
+      tasks.emplace_back(ppc::task::TaskGetter<SizovDGlobalSearchSEQ, InType>, std::move(name), t);
+    }
   }
 
   return tasks;
@@ -656,16 +662,15 @@ std::vector<FuncParam> BuildTestTasks(const std::vector<LocalTestType> &tests) {
 }  // namespace
 
 class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InType, OutType, LocalTestType> {
- public:
-  void RunFunctionalTestCase(const FuncParam &param) {
-    PrepareTestCase(param);
-    ExecuteTest(param);
+ protected:
+  void SetUp() override {
+    const auto &tc = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_ = tc.problem;
+    expected_ = tc.expected;
   }
 
-  void TestBody() override {}
-
-  static std::string PrintTestParam(const LocalTestType &t) {
-    return t.name;
+  InType GetTestInputData() final {
+    return input_;
   }
 
   bool CheckTestOutputData(OutType &o) final {
@@ -675,7 +680,6 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
 
     const double dv = std::abs(o.value - expected_.value);
     const double dv_tol = 20.0 * input_.accuracy;
-
     if (dv > dv_tol) {
       return false;
     }
@@ -686,12 +690,10 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
 
     double min_dx = std::numeric_limits<double>::infinity();
     for (double a : expected_.argmins) {
-      const double dx = std::abs(o.argmin - a);
-      min_dx = std::min(min_dx, dx);
+      min_dx = std::min(min_dx, std::abs(o.argmin - a));
     }
 
     const double dx_tol = 5.0 * input_.accuracy;
-
     if (expected_.argmins.size() == 1U) {
       return min_dx <= dx_tol;
     }
@@ -699,18 +701,7 @@ class SizovDGlobalSearchFunctionalTests : public ppc::util::BaseRunFuncTests<InT
     return true;
   }
 
-  InType GetTestInputData() final {
-    return input_;
-  }
-
  private:
-  void PrepareTestCase(const FuncParam &param) {
-    test_case_ = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
-    input_ = test_case_.problem;
-    expected_ = test_case_.expected;
-  }
-
-  LocalTestType test_case_{};
   InType input_{};
   ExpectedSolution expected_{};
 };
@@ -731,11 +722,7 @@ TEST_P(SizovDGlobalSearchFunctionalTests, GlobalSearch) {
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 INSTANTIATE_TEST_SUITE_P(FunctionalTests, SizovDGlobalSearchFunctionalTests, ::testing::ValuesIn(kFuncParams),
                          [](const ::testing::TestParamInfo<FuncParam> &info) {
-                           const auto &tc =
-                               std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
-                           const auto &name =
-                               std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
-                           return name + "_" + tc.name;
+                           return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
                          });
 // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
