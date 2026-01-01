@@ -47,11 +47,11 @@ bool PotashnikMStarTopolMPI::RunImpl() {
       int data = 0;
       MPI_Recv(&data, 1, MPI_INT, src, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       MPI_Send(&data, 1, MPI_INT, dst, i, MPI_COMM_WORLD);
-    } 
+    }
     if (rank == src) {  // Source sends data to center
       int data = input[i];
       MPI_Send(&data, 1, MPI_INT, star_center, i, MPI_COMM_WORLD);
-    } 
+    }
     if (rank == dst) {  // Destination receives data from center
       int data = 0;
       MPI_Recv(&data, 1, MPI_INT, star_center, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
