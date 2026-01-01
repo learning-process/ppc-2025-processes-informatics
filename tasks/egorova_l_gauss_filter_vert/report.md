@@ -41,24 +41,31 @@
 - **Инструментарий:** Clang-21, MPI, CMake, Release build.
 
 ### 5.2 Производительность
-Замеры проводились в режиме `task_run`. Ускорение рассчитано относительно последовательной реализации (SEQ).
+
+Замеры проводились в режиме `task_run`. Ускорение ($S$) рассчитано относительно последовательной реализации (SEQ), где $T_{SEQ} = 0.03340$ сек.
+
+$$S = \frac{T_{SEQ}}{T_P} \quad E = \frac{S}{P} \times 100\%$$
 
 **Таблица 1. Результаты измерений производительности**
 
 | Реализация | Процессы ($P$) | Время $T$ (сек) | Ускорение $S$ | Эффективность $E$ |
 | :--------- | :------------: | :-------------: | :-----------: | :---------------: |
-| **SEQ**    |       1        |     0.06014     |     1.00      |       100%        |
-| **MPI**    |       2        |     0.03325     |     1.81      |        90%        |
-| **MPI**    |       3        |     0.02509     |     2.40      |        80%        |
-| **MPI**    |       4        |     0.02552     |     2.36      |        59%        |
+| **SEQ**    |       1        |     0.03340     |     1.00      |       100%        |
+| **MPI**    |       2        |     0.02341     |     1.43      |       71%         |
+| **MPI**    |       3        |     0.01699     |     1.97      |       66%         |
+| **MPI**    |       4        |     0.01979     |     1.69      |       42%         |
 
 ### 5.3 Анализ результатов
-- **Ускорение:** Максимальное ускорение (**2.40×**) достигнуто на **3 процессах**. 
-- **Эффективность:** Высокая эффективность на 2 и 3 процессах (80-90%) подтверждает, что вычислительная нагрузка значительно превосходит затраты на пересылку halo-зон.
-- **Масштабируемость:** На 4 процессах время выполнения практически не изменилось относительно 3 процессов (0.0255с против 0.0251с). Это указывает на то, что на данном объеме данных накладные расходы на коллективные операции MPI и конкуренция за общую шину памяти начинают ограничивать дальнейший рост скорости.
+
+* **Максимальное ускорение** (**1.97×**) достигнуто на **3 процессах**. Параллельная реализация стабильно работает быстрее последовательной на конфигурациях с 2 и 3 ядрами.
+* **Эффективность** снижается с ростом числа процессов (с 71% до 42%). Это указывает на то, что, хотя вычисления параллелизуются, накладные расходы на коммуникацию (обмен **halo-зонами** и коллективные операции `MPI_Scatterv`/`MPI_Gatherv`) становятся существенными при дальнейшем дроблении задачи.
+* **Масштабируемость:** На 4 процессах наблюдается **падение производительности** по сравнению с 3 процессами (0.01979с против 0.01699с). Это ключевой признак того, что на данном объеме данных коммуникационные издержки начинают доминировать над выгодой от параллелизма.
 
 ## 6. Заключение
-Разработанный параллельный алгоритм вертикального фильтра Гаусса демонстрирует стабильное ускорение. Для текущей задачи оптимальным является использование 3 процессов, так как это обеспечивает лучший баланс между временем вычислений и коммуникационными издержками. Применение halo-зон позволило избежать артефактов на стыках данных.
+
+Разработанный параллельный алгоритм вертикального фильтра Гаусса с использованием MPI подтвердил свою работоспособность и эффективность.
+
+Оптимальное количество процессов для предоставленных тестовых данных — 3. При этом достигается наилучший баланс между временем вычислений и накладными расходами на коммуникацию, обеспечивая ускорение, близкое к линейному (1.97×). Реализованный механизм обмена `halo`-зонами обеспечивает корректную обработку границ между данными процессов.
 
 ## 7. Источники
 1. Open MPI Documentation: [https://www.open-mpi.org/doc/](https://www.open-mpi.org/doc/)
@@ -69,20 +76,17 @@
 ## Приложение (код)
 
 ```cpp
+
 bool EgorovaLGaussFilterVertMPI::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int rr = 0;
-  int cc = 0;
-  int ch = 0;
-  if (rank == 0) {
-    rr = GetInput().rows;
-    cc = GetInput().cols;
-    ch = GetInput().channels;
-  }
+  int rr = GetInput().rows;
+  int cc = GetInput().cols;
+  int ch = GetInput().channels;
+
   MPI_Bcast(&rr, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&cc, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&ch, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -96,9 +100,9 @@ bool EgorovaLGaussFilterVertMPI::RunImpl() {
   CalculateCountsAndDispls(size, qq, rem, rr, ch, counts, displs);
 
   std::vector<uint8_t> local_data(static_cast<size_t>(rr) * local_cols * ch);
-  void* send_ptr = (rank == 0) ? GetInput().data.data() : nullptr;
-  MPI_Scatterv(send_ptr, counts.data(), displs.data(), MPI_BYTE, local_data.data(),
-               counts[static_cast<size_t>(rank)], MPI_BYTE, 0, MPI_COMM_WORLD);
+
+  MPI_Scatterv(rank == 0 ? GetInput().data.data() : nullptr, counts.data(), displs.data(), MPI_BYTE, local_data.data(),
+               static_cast<int>(local_data.size()), MPI_BYTE, 0, MPI_COMM_WORLD);
 
   int left_rank = (rank > 0) ? rank - 1 : MPI_PROC_NULL;
   int right_rank = (rank < size - 1) ? rank + 1 : MPI_PROC_NULL;
@@ -106,10 +110,10 @@ bool EgorovaLGaussFilterVertMPI::RunImpl() {
   int right_h = (right_rank != MPI_PROC_NULL) ? 1 : 0;
   int total_lc = local_cols + left_h + right_h;
 
-  std::vector<uint8_t> local_with_halo(static_cast<size_t>(rr) * total_lc * ch, 0);
+  std::vector<uint8_t> local_with_halo(static_cast<size_t>(rr) * total_lc * ch);
   FillLocalWithHalo(local_data, local_with_halo, rr, local_cols, total_lc, left_h, ch);
-  
-  ExchangeHalo(local_with_halo, right_rank, rr, total_lc, ch, static_cast<size_t>(left_h + local_cols - 1), 
+
+  ExchangeHalo(local_with_halo, right_rank, rr, total_lc, ch, static_cast<size_t>(left_h + local_cols - 1),
                static_cast<size_t>(left_h + local_cols));
   ExchangeHalo(local_with_halo, left_rank, rr, total_lc, ch, static_cast<size_t>(left_h), 0);
 
@@ -123,9 +127,8 @@ bool EgorovaLGaussFilterVertMPI::RunImpl() {
     GetOutput().data.resize(static_cast<size_t>(rr) * cc * ch);
   }
 
-  void* recv_ptr = (rank == 0) ? GetOutput().data.data() : nullptr;
   MPI_Gatherv(local_out.data(), static_cast<int>(local_out.size()), MPI_BYTE,
-              recv_ptr, counts.data(), displs.data(), MPI_BYTE, 0, MPI_COMM_WORLD);
+              rank == 0 ? GetOutput().data.data() : nullptr, counts.data(), displs.data(), MPI_BYTE, 0, MPI_COMM_WORLD);
 
   return true;
 }
