@@ -18,7 +18,7 @@ struct TrapezoidalIntegrationInput {
 
 using InType = TrapezoidalIntegrationInput;
 using OutType = double;
-using TestType = std::tuple<TrapezoidalIntegrationInput, double>;
+using TestType = std::tuple<TrapezoidalIntegrationInput, unsigned int>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace frolova_s_mult_int_trapez
