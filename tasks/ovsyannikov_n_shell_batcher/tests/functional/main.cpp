@@ -24,7 +24,7 @@ class OvsyannikovNShellBatcherFuncTest : public ppc::util::BaseRunFuncTests<InTy
 
  protected:
   void SetUp() override {
-    TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    TestType param = std::get<2>(GetParam());
 
     int seed = static_cast<int>(param % 100);
     std::mt19937 gen(seed);
