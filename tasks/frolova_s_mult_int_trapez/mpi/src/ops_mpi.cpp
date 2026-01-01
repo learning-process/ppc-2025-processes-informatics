@@ -131,7 +131,7 @@ bool FrolovaSMultIntTrapezMPI::PreProcessingImpl() {
     result_ = 0.0;
 
     // std::cout << "[MPI PRE_PROCESSING] Rank 0: Initialized with limits size = " << limits_.size()
-    << ", intervals size = " << number_of_intervals_.size() << std::endl;
+    // << ", intervals size = " << number_of_intervals_.size() << std::endl;
   }
 
   // std::cout << "[MPI PRE_PROCESSING] Rank " << rank << ": Finished pre-processing" << std::endl;
