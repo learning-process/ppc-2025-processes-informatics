@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "kutuzov_i_torus_grid/common/include/common.hpp"
 #include "task/include/task.hpp"
 
