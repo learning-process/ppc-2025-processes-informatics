@@ -20,25 +20,26 @@ class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
   InType large_input_{};
 
   void SetUp() override {
-    // Small problem
-    small_input_ = {.limits = {{0.0, 1.0}, {4.0, 6.0}},
-                    .number_of_intervals = {100, 100},
-                    .function = [](std::vector<double> input) {
-      return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
-    }};
-
-    // Medium problem
-    medium_input_ = {.limits = {{0.0, 1.0}, {4.0, 6.0}},
-                     .number_of_intervals = {300, 300},
-                     .function = [](std::vector<double> input) {
-      return (-3.0 * std::pow(input[1], 2) * std::sin(5.0 * input[0])) / 2.0;
-    }};
-
-    // Large problem
-    large_input_ = {
+    small_input_ = {
         .limits = {{0.0, 2.0}, {0.0, 2.0}},
         .number_of_intervals = {500, 500},
         .function = [](std::vector<double> input) { return std::pow(input[0], 3) + std::pow(input[1], 3); }};
+
+    medium_input_ = {.limits = {{0.0, 2.0}, {0.0, 2.0}, {0.0, 2.0}},
+                     .number_of_intervals = {200, 200, 200},
+                     .function = [](std::vector<double> input) {
+      return std::pow(input[0], 2) + std::pow(input[1], 2) + std::pow(input[2], 2);
+    }};
+
+    large_input_ = {.limits = {{0.0, 2.0}, {0.0, 2.0}, {0.0, 2.0}, {0.0, 2.0}},
+                    .number_of_intervals = {100, 100, 100, 100},
+                    .function = [](std::vector<double> input) {
+      double sum = 0.0;
+      for (size_t i = 0; i < input.size(); i++) {
+        sum += std::pow(input[i], 2);
+      }
+      return sum;
+    }};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
