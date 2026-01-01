@@ -31,25 +31,30 @@ EgashinKIterativeSimpleMPI::EgashinKIterativeSimpleMPI(const InType &in) {
 }
 
 bool EgashinKIterativeSimpleMPI::ValidationImpl() {
-  const auto &input = GetInput();
-  std::size_t n = input.A.size();
+  int rank = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  if (n == 0) {
-    return false;
-  }
+  if (rank == 0) {
+    const auto &input = GetInput();
+    std::size_t n = input.A.size();
 
-  for (std::size_t i = 0; i < n; ++i) {
-    if (input.A[i].size() != n) {
+    if (n == 0) {
       return false;
     }
-  }
 
-  if (input.b.size() != n || input.x0.size() != n) {
-    return false;
-  }
+    for (std::size_t i = 0; i < n; ++i) {
+      if (input.A[i].size() != n) {
+        return false;
+      }
+    }
 
-  if (input.tolerance <= 0 || input.max_iterations <= 0) {
-    return false;
+    if (input.b.size() != n || input.x0.size() != n) {
+      return false;
+    }
+
+    if (input.tolerance <= 0 || input.max_iterations <= 0) {
+      return false;
+    }
   }
 
   return true;
@@ -114,9 +119,9 @@ void EgashinKIterativeSimpleMPI::BroadcastInputData(int n, std::vector<std::vect
                                                     int &max_iterations) {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  const auto &input = GetInput();
 
   if (rank == 0) {
+    const auto &input = GetInput();
     a_local = input.A;
     b = input.b;
     x = input.x0;
@@ -159,8 +164,11 @@ bool EgashinKIterativeSimpleMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const auto &input = GetInput();
-  int n = static_cast<int>(input.A.size());
+  int n = 0;
+  if (rank == 0) {
+    const auto &input = GetInput();
+    n = static_cast<int>(input.A.size());
+  }
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
