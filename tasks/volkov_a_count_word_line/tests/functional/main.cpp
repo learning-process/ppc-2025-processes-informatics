@@ -3,11 +3,9 @@
 
 #include <array>
 #include <cctype>
-#include <cstddef>
-#include <iostream>
 #include <string>
 #include <tuple>
-#include <vector> // Added for std::vector
+#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -17,70 +15,44 @@
 
 namespace volkov_a_count_word_line {
 
-// Change InType template argument to std::vector<char> to ensure correct data serialization
-class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::vector<char>, OutType, TestType> {
+class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::string, OutType, TestType> {
  public:
   VolkovACountWordLineFuncTests() = default;
 
   static std::string PrintTestName(const testing::TestParamInfo<ParamType> &info) {
     const auto &params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
-
     std::string input_sub = std::get<0>(params);
     int expected = std::get<1>(params);
-
-    std::string res;
-    if (input_sub.empty()) {
-      res = "Empty";
-    } else {
-      if (input_sub.size() > 15) {
-        input_sub = input_sub.substr(0, 15);
-      }
-      for (char c : input_sub) {
-        if (std::isalnum(static_cast<unsigned char>(c)) != 0) {
-          res += c;
-        } else {
-          res += "_";
-        }
+    std::string safe_name = input_sub;
+    if (safe_name.size() > 20) {
+      safe_name = safe_name.substr(0, 20);
+    }
+    for (char &c : safe_name) {
+      if (!std::isalnum(static_cast<unsigned char>(c)) && c != '_') {
+        c = '_';
       }
     }
 
-    return res + "_Exp" + std::to_string(expected) + "_Idx" + std::to_string(info.index);
+    return safe_name + "_Exp" + std::to_string(expected);
   }
 
  protected:
   void SetUp() override {
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::string s_val = std::get<0>(params);
-    // Convert std::string to std::vector<char> for safe transfer to TaskData
-    test_str_ = std::vector<char>(s_val.begin(), s_val.end());
+    test_str_ = std::get<0>(params);
     ref_count_ = std::get<1>(params);
   }
 
   bool CheckTestOutputData(OutType &result) override {
-    int rank = 0;
-    int initialized = 0;
-    MPI_Initialized(&initialized);
-    if (initialized != 0) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    }
-
-    if (rank == 0) {
-      if (result != ref_count_) {
-        std::cerr << "[FAIL Rank 0] Expected: " << ref_count_ << ", Got: " << result << '\n';
-        return false;
-      }
-      return true;
-    }
-    return true;
+    return result == ref_count_;
   }
 
-  // Return the vector, which the framework handles correctly
-  std::vector<char> GetTestInputData() override {
+  std::string GetTestInputData() override {
     return test_str_;
   }
 
  private:
-  std::vector<char> test_str_;
+  std::string test_str_;
   OutType ref_count_ = 0;
 };
 
@@ -120,10 +92,9 @@ const std::array<TestType, 29> kFixedTests = {{{"simple test", 2},
                                                {"longwordlongwordlongword", 1},
                                                {"ab cd ef gh ij kl mn op qr st uv wx yz", 13}}};
 
-// Use std::vector<char> in the task declaration helper as well
 const auto kTasks = std::tuple_cat(
-    ppc::util::AddFuncTask<VolkovACountWordLineMPI, std::vector<char>>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
-    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, std::vector<char>>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
+    ppc::util::AddFuncTask<VolkovACountWordLineMPI, std::string>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
+    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, std::string>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
 
 const auto kTestParams = ppc::util::ExpandToValues(kTasks);
 const auto kTestNameFunc = VolkovACountWordLineFuncTests::PrintTestName;
