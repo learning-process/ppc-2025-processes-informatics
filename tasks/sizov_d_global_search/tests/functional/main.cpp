@@ -593,23 +593,40 @@ std::vector<LocalTestType> LoadTestCasesFromData() {
   std::vector<LocalTestType> cases;
   cases.reserve(data.size());
 
-  for (auto &item : data) {
+  for (const auto &item : data) {
     LocalTestType t;
-    t.name = item.at("name");
+    t.name = item.at("name").get<std::string>();
 
     const auto &pj = item.at("problem");
+
     Problem p{};
-    p.left = pj.at("left");
-    p.right = pj.at("right");
+    p.left = pj.at("left").get<double>();
+    p.right = pj.at("right").get<double>();
+
     p.accuracy = 1e-4;
     p.reliability = 3.0;
     p.max_iterations = 300;
+
+    if (item.contains("settings")) {
+      const auto &s = item.at("settings");
+
+      if (s.contains("accuracy")) {
+        p.accuracy = s.at("accuracy").get<double>();
+      }
+      if (s.contains("reliability")) {
+        p.reliability = s.at("reliability").get<double>();
+      }
+      if (s.contains("max_iterations")) {
+        p.max_iterations = s.at("max_iterations").get<int>();
+      }
+    }
+
     p.func = BuildFunction(item.at("function"));
-    t.problem = p;
+    t.problem = std::move(p);
 
     const auto &ej = item.at("expected");
     t.expected.argmins = ej.at("argmins").get<std::vector<double>>();
-    t.expected.value = ej.at("value");
+    t.expected.value = ej.at("value").get<double>();
 
     cases.push_back(std::move(t));
   }
@@ -705,45 +722,22 @@ std::vector<FuncParam> BuildFunctionalTestParams() {
   return BuildTestTasks(tests);
 }
 
-class FunctionalTestInstance : public SizovDGlobalSearchFunctionalTests {
- public:
-  explicit FunctionalTestInstance(FuncParam param) : param_(std::move(param)) {}
+const std::vector<FuncParam> kFuncParams = BuildFunctionalTestParams();
 
-  void TestBody() override {
-    RunFunctionalTestCase(param_);
-  }
+TEST_P(SizovDGlobalSearchFunctionalTests, GlobalSearch) {
+  ExecuteTest(GetParam());
+}
 
- private:
-  FuncParam param_;
-};
-
-struct FunctionalTestRegistrar {
-  explicit FunctionalTestRegistrar(std::vector<FuncParam> tasks) : tasks_(std::move(tasks)) {
-    test_names_.reserve(tasks_.size());
-    std::size_t idx = 0;
-    for (const auto &param : tasks_) {
-      const LocalTestType &local = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(param);
-      const std::string &test_name = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(param);
-      test_names_.push_back(test_name + "_" + local.name);
-      const std::size_t current_idx = idx++;
-
-      ::testing::RegisterTest(
-          "GlobalSearchFunctionalTests", test_names_.back().c_str(), nullptr, nullptr, __FILE__, __LINE__,
-          [this, current_idx]() -> ::testing::Test * { return new FunctionalTestInstance(tasks_[current_idx]); });
-    }
-  }
-
- private:
-  std::vector<FuncParam> tasks_;
-  std::vector<std::string> test_names_;
-};
-
-const bool kRegisteredFunctionalTests = []() {
-  static const FunctionalTestRegistrar kRegistrar(BuildFunctionalTestParams());
-  (void)kRegistrar;
-  return true;
-}();
+// NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
+INSTANTIATE_TEST_SUITE_P(FunctionalTests, SizovDGlobalSearchFunctionalTests, ::testing::ValuesIn(kFuncParams),
+                         [](const ::testing::TestParamInfo<FuncParam> &info) {
+                           const auto &tc =
+                               std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(info.param);
+                           const auto &name =
+                               std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
+                           return name + "_" + tc.name;
+                         });
+// NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables,modernize-type-traits)
 
 }  // namespace
-
 }  // namespace sizov_d_global_search
