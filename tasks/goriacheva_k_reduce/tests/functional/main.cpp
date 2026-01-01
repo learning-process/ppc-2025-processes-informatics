@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -18,63 +20,91 @@ using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
 
 class GoriachevaKReduceFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const testing::TestParamInfo<FuncParam> &info) {
-    const auto &tc = std::get<2>(info.param);
-    const auto &name = std::get<2>(tc);
-    return name + "_" + std::to_string(info.index);
+  static std::string PrintTestParam(const testing::TestParamInfo<FuncParam>& info) {
+    return std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kNameTest)>(info.param);
   }
 
  protected:
   void SetUp() override {
-    const auto &params = std::get<2>(GetParam());
+    const auto& params =
+        std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     input_ = std::get<0>(params);
     expected_ = std::get<1>(params);
-  }
-
-  bool CheckTestOutputData(OutType &output) final {
-    return output == expected_;
   }
 
   InType GetTestInputData() final {
     return input_;
   }
 
+  bool CheckTestOutputData(OutType& output_data) final {
+    return output_data == expected_;
+  }
+
  private:
   InType input_;
-  OutType expected_;
+  OutType expected_{};
 };
 
-static std::vector<FuncParam> LoadTests() {
-  const std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_goriacheva_k_reduce, "tests.json");
+namespace {
+
+std::vector<FuncParam> LoadTestParams() {
+  const std::string path =
+      ppc::util::GetAbsoluteTaskPath(PPC_ID_goriacheva_k_reduce, "tests.json");
 
   std::ifstream fin(path);
+  if (!fin.is_open()) {
+    throw std::runtime_error("Cannot open tests.json");
+  }
+
   nlohmann::json j;
   fin >> j;
 
-  std::vector<FuncParam> params;
+  std::vector<FuncParam> cases;
+  cases.reserve(j.size() * 2);
 
-  const std::string settings = PPC_SETTINGS_goriacheva_k_reduce;
-  const std::string mpi_suffix = ppc::task::GetStringTaskType(GoriachevaKReduceMPI::GetStaticTypeOfTask(), settings);
-  const std::string seq_suffix = ppc::task::GetStringTaskType(GoriachevaKReduceSEQ::GetStaticTypeOfTask(), settings);
+  const std::string settings_path = PPC_SETTINGS_goriacheva_k_reduce;
+  const std::string mpi_suffix =
+      ppc::task::GetStringTaskType(GoriachevaKReduceMPI::GetStaticTypeOfTask(), settings_path);
+  const std::string seq_suffix =
+      ppc::task::GetStringTaskType(GoriachevaKReduceSEQ::GetStaticTypeOfTask(), settings_path);
 
-  for (const auto &item : j) {
-    TestType tc{item.at("input").get<InType>(), item.at("result").get<OutType>(), item.at("name").get<std::string>()};
+  for (const auto& item : j) {
+    TestType tc{
+        item.at("input").get<InType>(),
+        item.at("result").get<OutType>(),
+        item.at("name").get<std::string>()
+    };
 
-    params.emplace_back(ppc::task::TaskGetter<GoriachevaKReduceMPI, InType>, std::get<2>(tc) + "_" + mpi_suffix, tc);
+    std::string mpi_name = std::get<2>(tc) + "_" + mpi_suffix;
+    cases.emplace_back(
+        ppc::task::TaskGetter<GoriachevaKReduceMPI, InType>,
+        mpi_name,
+        tc
+    );
 
-    params.emplace_back(ppc::task::TaskGetter<GoriachevaKReduceSEQ, InType>, std::get<2>(tc) + "_" + seq_suffix, tc);
+    std::string seq_name = std::get<2>(tc) + "_" + seq_suffix;
+    cases.emplace_back(
+        ppc::task::TaskGetter<GoriachevaKReduceSEQ, InType>,
+        seq_name,
+        tc
+    );
   }
 
-  return params;
+  return cases;
 }
 
-const auto kParams = LoadTests();
+const std::vector<FuncParam> kFuncParams = LoadTestParams();
 
 TEST_P(GoriachevaKReduceFuncTests, ReduceSum) {
   ExecuteTest(GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(GoriachevaKReduceFunctionalTests, GoriachevaKReduceFuncTests, testing::ValuesIn(kParams),
-                         GoriachevaKReduceFuncTests::PrintTestParam);
+INSTANTIATE_TEST_SUITE_P(
+    GoriachevaKReduceFunctionalTests,
+    GoriachevaKReduceFuncTests,
+    testing::ValuesIn(kFuncParams),
+    GoriachevaKReduceFuncTests::PrintTestParam);
+
+}  // namespace
 
 }  // namespace goriacheva_k_reduce
