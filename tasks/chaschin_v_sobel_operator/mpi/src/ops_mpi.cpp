@@ -112,7 +112,6 @@ float ChaschinVSobelOperatorMPI::SobelAt(const std::vector<float> &img, int i, i
   float gx = 0.0F;
   float gy = 0.0F;
 
-  // i,j — индексы в массиве с padding
   for (int di = -1; di <= 1; ++di) {
     int ni = i + di;
     for (int dj = -1; dj <= 1; ++dj) {
@@ -158,7 +157,6 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
 
   std::vector<float> local_output(static_cast<size_t>(local_rows) * static_cast<size_t>(m));
 
-  // #pragma omp parallel for collapse(2)
   for (int i = 0; std::cmp_less(i, local_rows); ++i) {
     for (int j = 0; std::cmp_less(j, m); ++j) {
       local_output[(i * m) + j] = SobelAt(local_block, i + 1, j + 1, padded_m);
@@ -189,24 +187,16 @@ bool ChaschinVSobelOperatorMPI::PostProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  // std::cout << "Rank" << rank <<" PostProcessingImpl init sucsess \n" << std::flush;
-
   auto &out = GetOutput();
   int n = std::get<0>(Size_);
   int m = std::get<1>(Size_);
   if (rank != 0) {
     PostProcessGray_.resize(static_cast<size_t>(n) * static_cast<size_t>(m));
   }
-  // std::cout << "Rank" << rank <<" PostProcessingImpl resize sucsess \n" << std::flush;
-  MPI_Bcast(PostProcessGray_.data(),  // буфер
-            n * m,                    // количество элементов
-            MPI_FLOAT,
-            0,  // root процесс
-            MPI_COMM_WORLD);
+
+  MPI_Bcast(PostProcessGray_.data(), n * m, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
   out.resize(n);
-
-  // std::cout << "Rank" << rank <<" PostProcessingImpl MPI_Bcast sucsess \n" << std::flush;
 
   for (int i = 0; i < n; ++i) {
     out[i].resize(m);
@@ -216,8 +206,6 @@ bool ChaschinVSobelOperatorMPI::PostProcessingImpl() {
       out[i][j] = Pixel{.r = c, .g = c, .b = c};
     }
   }
-
-  // std::cout << "Rank" << rank <<" PostProcessingImpl sucsess \n" << std::flush;
 
   return true;
 }

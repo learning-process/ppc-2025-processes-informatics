@@ -29,16 +29,13 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     const int size = std::get<0>(params);
 
-    // Доступ к tuple
-    auto &image = std::get<0>(input_data_);  // std::vector<std::vector<Pixel>>
+    auto &image = std::get<0>(input_data_);
     auto &width = std::get<1>(input_data_);
     auto &height = std::get<2>(input_data_);
 
-    // Задаём размеры
     width = size;
     height = size;
 
-    // Генерация входного изображения (детерминированные пиксели)
     image.resize(height);
     for (int i = 0; i < height; ++i) {
       image[i].resize(width);
@@ -48,15 +45,6 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
                             .b = static_cast<uint8_t>(((i + 4272) * (j + 422)) % 256)};
       }
     }
-    /*std::cout<<"Input: ";
-    for (int i = 0; i < width; i++) {
-      for (int j = 0; j < height; j++) {
-        std::cout<< "{" <<
-    static_cast<int>(image[i][j].r)<<","<<static_cast<int>(image[i][j].g)<<","<<static_cast<int>(image[i][j].b)<< "}";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";*/
 
     std::vector<std::vector<float>> gray(height + 2, std::vector<float>(width + 2, 0.0F));
     for (int i = 0; i < height; ++i) {
@@ -67,83 +55,37 @@ class ChaschinVRunFuncTestsProcessesSO : public ppc::util::BaseRunFuncTests<InTy
       }
     }
 
-    /*std::cout<<"gray: ";
-    for (int i = 0; i < width+2; i++) {
-      for (int j = 0; j < height+2; j++) {
-        std::cout<<gray[i][j]<< ' ';
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";*/
-
-    // Маски Sobel
     std::vector<std::vector<float>> k_kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
 
     std::vector<std::vector<float>> k_ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
 
-    // Подготовка expected_output_
     expected_output_.resize(height);
     for (int i = 0; i < height; ++i) {
       expected_output_[i].resize(width);
     }
 
-    // Вычисление градиента Sobel и реконструкция Pixel
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
         float gx = 0.0F;
         float gy = 0.0F;
 
-        // С учётом паддинга в gray[width+2][height+2]
         for (int di = -1; di <= 1; ++di) {
           for (int dj = -1; dj <= 1; ++dj) {
-            float val = gray[i + 1 + di][j + 1 + dj];  // +1 для сдвига на паддинг
+            float val = gray[i + 1 + di][j + 1 + dj];
             gx += val * k_kx[di + 1][dj + 1];
             gy += val * k_ky[di + 1][dj + 1];
           }
         }
 
         float grad = std::sqrt((gx * gx) + (gy * gy));
-        // std::cout << grad << "\n";
 
         uint8_t intensity = static_cast<uint8_t>(std::min(255.0F, grad));
         expected_output_[i][j] = Pixel{.r = intensity, .g = intensity, .b = intensity};
       }
     }
-
-    /*std::cout<<"Output: ";
-    for (int i = 0; i < width; i++) {
-      for (int j = 0; j < height; j++) {
-        std::cout<< "{" <<
-    static_cast<int>(expected_output_[i][j].r)<<","<<static_cast<int>(expected_output_[i][j].g)<<","<<static_cast<int>(expected_output_[i][j].b)<<
-    "}";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";*/
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    /*std::cout << "Output check: ";
-    for (size_t i = 0; i < output_data.size(); i++) {
-      for (size_t j = 0; j < output_data[0].size(); j++) {
-        std::cout << "{" << static_cast<int>(output_data[i][j].r) << "," << static_cast<int>(output_data[i][j].g) << ","
-                  << static_cast<int>(output_data[i][j].b) << "}";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";
-
-    std::cout << "Exp check: ";
-    for (size_t i = 0; i < expected_output_.size(); i++) {
-      for (size_t j = 0; j < expected_output_[0].size(); j++) {
-        std::cout << "{" << static_cast<int>(expected_output_[i][j].r) << ","
-                  << static_cast<int>(expected_output_[i][j].g) << "," << static_cast<int>(expected_output_[i][j].b)
-                  << "}";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "\n";*/
-
     if (output_data.size() != expected_output_.size()) {
       return false;
     }
@@ -171,15 +113,12 @@ TEST_P(ChaschinVRunFuncTestsProcessesSO, SobelOperator) {
   ExecuteTest(GetParam());
 }
 
-/*const std::array<TestType, 20> kTestParam = {
+const std::array<TestType, 20> kTestParam = {
     std::make_tuple(4, "4"),   std::make_tuple(5, "5"),   std::make_tuple(7, "7"),   std::make_tuple(8, "8"),
     std::make_tuple(9, "9"),   std::make_tuple(10, "10"), std::make_tuple(11, "11"), std::make_tuple(13, "13"),
     std::make_tuple(15, "15"), std::make_tuple(17, "17"), std::make_tuple(19, "19"), std::make_tuple(21, "21"),
     std::make_tuple(23, "23"), std::make_tuple(25, "25"), std::make_tuple(27, "27"), std::make_tuple(29, "29"),
-    std::make_tuple(31, "31"), std::make_tuple(33, "33"), std::make_tuple(35, "35"), std::make_tuple(37, "37")};*/
-
-const std::array<TestType, 4> kTestParam = {std::make_tuple(4, "4"), std::make_tuple(13, "13"), std::make_tuple(7, "7"),
-                                            std::make_tuple(8, "8")};
+    std::make_tuple(31, "31"), std::make_tuple(33, "33"), std::make_tuple(35, "35"), std::make_tuple(37, "37")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<ChaschinVSobelOperatorMPI, InType>(kTestParam, PPC_SETTINGS_example_processes),

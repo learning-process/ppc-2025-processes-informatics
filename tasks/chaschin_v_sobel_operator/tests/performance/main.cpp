@@ -20,16 +20,13 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
   void SetUp() override {
     const int size = kCount;
 
-    // Доступ к tuple
-    auto &image = std::get<0>(input_data_);  // std::vector<std::vector<Pixel>>
+    auto &image = std::get<0>(input_data_);
     auto &width = std::get<1>(input_data_);
     auto &height = std::get<2>(input_data_);
 
-    // Задаём размеры
     width = size;
     height = size;
 
-    // Генерация входного изображения (детерминированные пиксели)
     image.resize(height);
     for (int i = 0; i < height; ++i) {
       image[i].resize(width);
@@ -38,7 +35,6 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
       }
     }
 
-    // Преобразуем в градации серого
     std::vector<std::vector<float>> gray(height, std::vector<float>(width));
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
@@ -48,18 +44,15 @@ class ChaschinVRunPerfTestProcessesSO : public ppc::util::BaseRunPerfTests<InTyp
       }
     }
 
-    // Маски Sobel
     std::vector<std::vector<float>> k_kx = {{-1.0F, 0.0F, 1.0F}, {-2.0F, 0.0F, 2.0F}, {-1.0F, 0.0F, 1.0F}};
 
     std::vector<std::vector<float>> k_ky = {{-1.0F, -2.0F, -1.0F}, {0.0F, 0.0F, 0.0F}, {1.0F, 2.0F, 1.0F}};
 
-    // Подготовка expected_output_
     expected_output_.resize(height);
     for (int i = 0; i < height; ++i) {
       expected_output_[i].resize(width);
     }
 
-    // Вычисление градиента Sobel и реконструкция Pixel
     for (int i = 0; i < height; ++i) {
       for (int j = 0; j < width; ++j) {
         float gx = 0.0F;
