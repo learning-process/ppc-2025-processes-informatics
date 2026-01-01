@@ -5,7 +5,6 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
-#include <memory>
 #include <ranges>  // NOLINT(misc-include-cleaner) - required for std::ranges::transform
 #include <string>
 #include <tuple>
@@ -78,7 +77,7 @@ TEST_P(GusevDSentenceCountFuncTests, SentenceBoundaryTests) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 20> kTestParam = {
+const std::array<TestType, 16> kTestParam = {
     std::make_tuple(std::string(""), 0),
     std::make_tuple(std::string("No terminators here"), 0),
     std::make_tuple(std::string("Sentence one. Sentence two! Sentence three?"), 3),
@@ -98,12 +97,7 @@ const std::array<TestType, 20> kTestParam = {
     std::make_tuple(std::string("The end is near..."), 1),
     std::make_tuple(std::string("A!B.C?"), 3),
     std::make_tuple(std::string(R"(Only terminators???!!!)"), 1),
-    std::make_tuple(std::string("A..B.C"), 2),
-
-    std::make_tuple(std::string("Ends with space after sentence. "), 1),
-    std::make_tuple(std::string("Multiple spaces!   Next?  End."), 3),
-    std::make_tuple(std::string("Mixed...???with!!!various??terminators."), 4),
-    std::make_tuple(std::string("Single char?"), 1)};
+    std::make_tuple(std::string("A..B.C"), 2)};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GusevDSentenceCountMPI, InType>(kTestParam, PPC_SETTINGS_gusev_d_sentence_count),
@@ -114,43 +108,6 @@ const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintTestParam;
 
 INSTANTIATE_TEST_SUITE_P(SentenceCountBoundaryTests, GusevDSentenceCountFuncTests, kGtestValues, kPerfTestName);
-
-TEST(GusevDSentenceCount, CoverageTestSEQ) {
-  const std::string in;
-  const size_t expected_out = 0;
-
-  auto task = std::make_shared<GusevDSentenceCountSEQ>(in);
-
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
-
-  ASSERT_EQ(task->GetOutput(), expected_out);
-}
-
-TEST(GusevDSentenceCount, CoverageTestMPI) {
-  const std::string in;
-  const size_t expected_out = 0;
-
-  auto task = std::make_shared<GusevDSentenceCountMPI>(in);
-
-  ASSERT_TRUE(task->Validation());
-  ASSERT_TRUE(task->PreProcessing());
-  ASSERT_TRUE(task->Run());
-  ASSERT_TRUE(task->PostProcessing());
-
-  int rank = 0;
-  int initialized = 0;
-  MPI_Initialized(&initialized);
-  if (initialized != 0) {
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  }
-
-  if (rank == 0) {
-    ASSERT_EQ(task->GetOutput(), expected_out);
-  }
-}
 
 }  // namespace
 

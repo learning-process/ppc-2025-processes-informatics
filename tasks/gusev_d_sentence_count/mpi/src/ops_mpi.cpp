@@ -21,7 +21,7 @@ size_t CountSentencesInChunk(const std::vector<char> &local_chunk, int chunk_siz
 
   for (int i = 0; i < chunk_size; ++i) {
     if (IsTerminator(local_chunk[i])) {
-      if (i + 1 < chunk_size && !IsTerminator(local_chunk[i + 1])) {
+      if (!IsTerminator(local_chunk[i + 1])) {
         sentence_count++;
       }
     }
