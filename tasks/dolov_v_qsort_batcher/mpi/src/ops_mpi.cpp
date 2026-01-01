@@ -83,33 +83,37 @@ void DolovVQsortBatcherMPI::DistributeData(int world_rank, int /*world_size*/) {
                part_sizes_[world_rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
+void DolovVQsortBatcherMPI::BatcherStep(int p_step, int k, int j, int i, int world_rank, int world_size) {
+  int p1 = i + j;
+  int p2 = i + j + k;
+
+  if ((p1 / (p_step * 2)) == (p2 / (p_step * 2))) {
+    if (world_rank == p1 || world_rank == p2) {
+      int partner = (world_rank == p1) ? p2 : p1;
+      if (partner < world_size) {
+        std::vector<double> neighbor_data(part_sizes_[partner]);
+
+        MPI_Sendrecv(local_buffer_.data(), static_cast<int>(local_buffer_.size()), MPI_DOUBLE, partner, 0,
+                     neighbor_data.data(), part_sizes_[partner], MPI_DOUBLE, partner, 0, MPI_COMM_WORLD,
+                     MPI_STATUS_IGNORE);
+
+        std::vector<double> merged;
+        MergeSequences(local_buffer_, neighbor_data, merged, world_rank == p1);
+        local_buffer_ = std::move(merged);
+      }
+    }
+  }
+}
+
 void DolovVQsortBatcherMPI::ExecuteBatcherParallel(int world_rank, int world_size) {
   if (world_size <= 1 || total_count_ == 0) {
     return;
   }
-  for (int p = 1; p < world_size; p <<= 1) {
-    for (int k = p; k >= 1; k >>= 1) {
-      for (int j = k % p; j <= world_size - 1 - k; j += (k << 1)) {
+  for (int p_step = 1; p_step < world_size; p_step <<= 1) {
+    for (int k = p_step; k >= 1; k >>= 1) {
+      for (int j = k % p_step; j <= world_size - 1 - k; j += (k << 1)) {
         for (int i = 0; i < k; ++i) {
-          int p1 = i + j;
-          int p2 = i + j + k;
-
-          if ((p1 / (p * 2)) == (p2 / (p * 2))) {
-            if (world_rank == p1 || world_rank == p2) {
-              int partner = (world_rank == p1) ? p2 : p1;
-              if (partner < world_size) {
-                std::vector<double> neighbor_data(part_sizes_[partner]);
-
-                MPI_Sendrecv(local_buffer_.data(), static_cast<int>(local_buffer_.size()), MPI_DOUBLE, partner, 0,
-                             neighbor_data.data(), part_sizes_[partner], MPI_DOUBLE, partner, 0, MPI_COMM_WORLD,
-                             MPI_STATUS_IGNORE);
-
-                std::vector<double> merged;
-                MergeSequences(local_buffer_, neighbor_data, merged, world_rank == p1);
-                local_buffer_ = std::move(merged);
-              }
-            }
-          }
+          BatcherStep(p_step, k, j, i, world_rank, world_size);
         }
       }
       MPI_Barrier(MPI_COMM_WORLD);
@@ -127,7 +131,9 @@ void DolovVQsortBatcherMPI::MergeSequences(const std::vector<double> &first, con
   size_t n2 = second.size();
   result.resize(n1);
   std::vector<double> combined(n1 + n2);
-  size_t i = 0, j = 0, k = 0;
+  size_t i = 0;
+  size_t j = 0;
+  size_t k = 0;
 
   while (i < n1 && j < n2) {
     if (first[i] <= second[j]) {
@@ -142,10 +148,12 @@ void DolovVQsortBatcherMPI::MergeSequences(const std::vector<double> &first, con
   while (j < n2) {
     combined[k++] = second[j++];
   }
+
+  auto diff_n1 = static_cast<std::ptrdiff_t>(n1);
   if (take_low) {
-    std::copy(combined.begin(), combined.begin() + n1, result.begin());
+    std::copy(combined.begin(), combined.begin() + diff_n1, result.begin());
   } else {
-    std::copy(combined.end() - n1, combined.end(), result.begin());
+    std::copy(combined.end() - diff_n1, combined.end(), result.begin());
   }
 }
 

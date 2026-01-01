@@ -27,6 +27,7 @@ class DolovVQsortBatcherMPI : public BaseTask {
   void CollectData(int world_rank, int world_size);
 
   void ExecuteBatcherParallel(int world_rank, int world_size);
+  void BatcherStep(int p_step, int k, int j, int i, int world_rank, int world_size);
   static void MergeSequences(const std::vector<double> &first, const std::vector<double> &second,
                              std::vector<double> &result, bool take_low);
 
