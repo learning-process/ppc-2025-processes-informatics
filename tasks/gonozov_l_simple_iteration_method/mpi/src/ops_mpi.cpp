@@ -2,7 +2,7 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <cmath>
 #include <vector>
 
 #include "gonozov_l_simple_iteration_method/common/include/common.hpp"
@@ -14,19 +14,19 @@ GonozovLSimpleIterationMethodMPI::GonozovLSimpleIterationMethodMPI(const InType 
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = OutType();
-  number_unknowns = static_cast<int>(std::get<0>(GetInput()));
 }
 
 bool GonozovLSimpleIterationMethodMPI::ValidationImpl() {
   // д.б. |a11| > |a12|+|a13|, |a22| > |a21|+|a23|, |a33| > |a31|+|a32|
-  for (int i = 0; i < number_unknowns; i++) {
+  number_unknowns_ = static_cast<int>(std::get<0>(GetInput()));
+  for (int i = 0; i < number_unknowns_; i++) {
     double sum = 0.0;
-    for (int j = 0; j < number_unknowns; j++) {
+    for (int j = 0; j < number_unknowns_; j++) {
       if (j != i) {
-        sum += std::get<1>(GetInput())[(i * number_unknowns + j)];
+        sum += std::get<1>(GetInput())[(i * number_unknowns_) + j];
       }
     }
-    if (std::get<1>(GetInput())[i * number_unknowns + i] < sum) {
+    if (std::get<1>(GetInput())[(i * number_unknowns_) + i] < sum) {
       return false;
     }
   }
@@ -51,18 +51,18 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
   if (proc_rank == 0) {
     matrix = std::get<1>(GetInput());
     b = std::get<2>(GetInput());
-    number_unknowns = std::get<0>(GetInput());
+    number_unknowns_ = std::get<0>(GetInput());
   }
 
   // Распределение строк по процессам
-  int number_processed = number_unknowns / proc_num;
-  int remainder = number_unknowns % proc_num;
+  int number_processed = number_unknowns_ / proc_num;
+  int remainder = number_unknowns_ % proc_num;
   int local_size = number_processed + (proc_rank < remainder ? 1 : 0);
 
   // Определяем локально, какие строки обрабатывает какой из процессов
   int my_first_row = 0;
-  for (int p = 0; p < proc_rank; p++) {
-    my_first_row += number_processed + (p < remainder ? 1 : 0);
+  for (int pl = 0; pl < proc_rank; pl++) {
+    my_first_row += number_processed + (pl < remainder ? 1 : 0);
   }
 
   // Данные для Scatterv
@@ -76,7 +76,7 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
     int offset_b = 0;
     for (int p = 0; p < proc_num; p++) {
       int p_size = number_processed + (p < remainder ? 1 : 0);
-      sendcounts_for_matrix[p] = p_size * number_unknowns;
+      sendcounts_for_matrix[p] = p_size * number_unknowns_;
       sendcounts_for_b[p] = p_size;
 
       displs_for_matrix[p] = offset_matrix;
@@ -91,24 +91,24 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
   MPI_Bcast(sendcounts_for_b.data(), proc_num, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(displs_for_b.data(), proc_num, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<double> local_matrix(local_size * number_unknowns);
+  std::vector<double> local_matrix(local_size * number_unknowns_);
   std::vector<double> local_b(local_size);
 
   MPI_Scatterv((proc_rank == 0) ? matrix.data() : nullptr, sendcounts_for_matrix.data(), displs_for_matrix.data(),
-               MPI_DOUBLE, local_matrix.data(), local_size * number_unknowns, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+               MPI_DOUBLE, local_matrix.data(), local_size * number_unknowns_, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   MPI_Scatterv((proc_rank == 0) ? b.data() : nullptr, sendcounts_for_b.data(), displs_for_b.data(), MPI_DOUBLE,
                local_b.data(), local_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  std::vector<double> previous_approximations(number_unknowns, 0.0);
-  std::vector<double> current_approximations(number_unknowns, 0.0);
+  std::vector<double> previous_approximations(number_unknowns_, 0.0);
+  std::vector<double> current_approximations(number_unknowns_, 0.0);
   std::vector<double> local_previous(local_size, 0.0);
   std::vector<double> local_current(local_size, 0.0);
 
   // Подсчёт нулевого приближени
   for (int i = 0; i < local_size; i++) {
     int global_row = my_first_row + i;
-    local_previous[i] = local_b[i] / local_matrix[i * number_unknowns + global_row];
+    local_previous[i] = local_b[i] / local_matrix[(i * number_unknowns_) + global_row];
   }
 
   // Отправка начальных приближений
@@ -123,13 +123,13 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
       double sum = 0.0;
 
       // Суммируем все недиагональные элементы
-      for (int j = 0; j < number_unknowns; j++) {
+      for (int j = 0; j < number_unknowns_; j++) {
         if (j != global_row) {
-          sum += local_matrix[i * number_unknowns + j] * previous_approximations[j];
+          sum += local_matrix[(i * number_unknowns_) + j] * previous_approximations[j];
         }
       }
 
-      local_current[i] = (local_b[i] - sum) / local_matrix[i * number_unknowns + global_row];
+      local_current[i] = (local_b[i] - sum) / local_matrix[(i * number_unknowns_) + global_row];
     }
 
     MPI_Allgatherv(local_current.data(), local_size, MPI_DOUBLE, current_approximations.data(), sendcounts_for_b.data(),
@@ -148,7 +148,7 @@ bool GonozovLSimpleIterationMethodMPI::RunImpl() {
     int global_converged = 0;
     MPI_Allreduce(&local_converged, &global_converged, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-    if (global_converged == number_unknowns) {
+    if (global_converged == number_unknowns_) {
       break;
     }
     previous_approximations = current_approximations;

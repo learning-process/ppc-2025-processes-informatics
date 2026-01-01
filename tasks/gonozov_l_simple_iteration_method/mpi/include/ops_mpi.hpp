@@ -18,7 +18,7 @@ class GonozovLSimpleIterationMethodMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int64_t number_unknowns;
+  int number_unknowns_;
 };
 
 }  // namespace gonozov_l_simple_iteration_method

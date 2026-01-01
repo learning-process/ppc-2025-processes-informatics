@@ -1,7 +1,6 @@
 #include "gonozov_l_simple_iteration_method/seq/include/ops_seq.hpp"
 
 #include <cmath>
-#include <numeric>
 #include <tuple>
 #include <vector>
 
@@ -13,21 +12,21 @@ namespace gonozov_l_simple_iteration_method {
 GonozovLSimpleIterationMethodSEQ::GonozovLSimpleIterationMethodSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  number_unknowns = static_cast<int>(std::get<0>(GetInput()));
-  std::vector gOutp(number_unknowns, 0.0);
+  number_unknowns_ = static_cast<int>(std::get<0>(GetInput()));
+  std::vector gOutp(number_unknowns_, 0.0);
   GetOutput() = gOutp;
 }
 
 bool GonozovLSimpleIterationMethodSEQ::ValidationImpl() {
   // д.б. |a11| > |a12|+|a13|, |a22| > |a21|+|a23|, |a33| > |a31|+|a32|
-  for (int i = 0; i < number_unknowns; i++) {
+  for (int i = 0; i < number_unknowns_; i++) {
     double sum = 0.0;
-    for (int j = 0; j < number_unknowns; j++) {
+    for (int j = 0; j < number_unknowns_; j++) {
       if (j != i) {
-        sum += std::get<1>(GetInput())[(i * number_unknowns + j)];
+        sum += std::get<1>(GetInput())[(i * number_unknowns_ + j)];
       }
     }
-    if (std::get<1>(GetInput())[i * number_unknowns + i] < sum) {
+    if (std::get<1>(GetInput())[i * number_unknowns_ + i] < sum) {
       return false;
     }
   }
@@ -45,33 +44,33 @@ bool GonozovLSimpleIterationMethodSEQ::RunImpl() {
   std::vector<double> matrix = std::get<1>(GetInput());
   std::vector<double> b = std::get<2>(GetInput());
 
-  std::vector<double> previous_approximations(number_unknowns, 0.0);
-  std::vector<double> current_approximations(number_unknowns, 0.0);
+  std::vector<double> previous_approximations(number_unknowns_, 0.0);
+  std::vector<double> current_approximations(number_unknowns_, 0.0);
 
   // Нулевое приближение
-  for (int i = 0; i < number_unknowns; i++) {
-    previous_approximations[i] = b[i] / matrix[i * number_unknowns + i];
+  for (int i = 0; i < number_unknowns_; i++) {
+    previous_approximations[i] = b[i] / matrix[i * number_unknowns_ + i];
   }
 
   // Основной цикл
   for (int iter = 0; iter < max_number_iteration; iter++) {
     // Для каждой переменной вычисляем новое приближение
-    for (int i = 0; i < number_unknowns; i++) {
+    for (int i = 0; i < number_unknowns_; i++) {
       double sum = 0.0;
       // Суммируем все недиагональные элементы
-      for (int j = 0; j < number_unknowns; j++) {
+      for (int j = 0; j < number_unknowns_; j++) {
         if (j != i) {
-          sum += matrix[i * number_unknowns + j] * previous_approximations[j];
+          sum += matrix[i * number_unknowns_ + j] * previous_approximations[j];
         }
       }
 
       // Строим новое приближение
-      current_approximations[i] = (b[i] - sum) / matrix[i * number_unknowns + i];
+      current_approximations[i] = (b[i] - sum) / matrix[i * number_unknowns_ + i];
     }
 
     // Проверка сходимости
     int converged = 0;
-    for (int i = 0; i < number_unknowns; i++) {
+    for (int i = 0; i < number_unknowns_; i++) {
       double diff = fabs(current_approximations[i] - previous_approximations[i]);
       double norm = fabs(current_approximations[i]);
       if (diff < 0.00001 * (norm + 1e-10)) {
@@ -80,14 +79,14 @@ bool GonozovLSimpleIterationMethodSEQ::RunImpl() {
     }
 
     // Если все переменные сошлись
-    if (converged == number_unknowns) {
+    if (converged == number_unknowns_) {
       break;
     }
 
     previous_approximations = current_approximations;
   }
 
-  for (int i = 0; i < number_unknowns; i++) {
+  for (int i = 0; i < number_unknowns_; i++) {
     GetOutput()[i] = current_approximations[i];
   }
 
