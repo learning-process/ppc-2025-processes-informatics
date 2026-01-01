@@ -17,6 +17,8 @@ FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
   std::cout << "[MPI CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
   std::cout << "[MPI CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
   std::cout << "[MPI CONSTRUCTOR] Function is " << (in.function ? "NOT null" : "NULL") << std::endl;
+
+  GetInput() = in;
 }
 
 unsigned int FrolovaSMultIntTrapezMPI::CalculationOfCoefficient(const std::vector<double> &point) {
