@@ -44,7 +44,6 @@ bool KutuzovIThorusGridMPI::PreProcessingImpl() {
 }
 
 bool KutuzovIThorusGridMPI::RunImpl() {
-
   int start = std::get<0>(GetInput());
   int end = std::get<1>(GetInput());
 
@@ -94,7 +93,6 @@ bool KutuzovIThorusGridMPI::RunImpl() {
     }
     MPI_Bcast(&receiver, 1, MPI_INT, sender, MPI_COMM_WORLD);
     if (rank == sender) {
-
       MPI_Send(&message_size, 1, MPI_INT, receiver, 0, MPI_COMM_WORLD);
       MPI_Send(message.data(), message_size, MPI_CHAR, receiver, 1, MPI_COMM_WORLD);
       route.push_back(rank);
@@ -103,7 +101,6 @@ bool KutuzovIThorusGridMPI::RunImpl() {
       MPI_Send(route.data(), route_size, MPI_INT, receiver, 3, MPI_COMM_WORLD);
 
     } else if (rank == receiver) {
-
       MPI_Recv(&message_size, 1, MPI_INT, sender, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       message.resize(message_size);
       MPI_Recv(message.data(), message_size, MPI_CHAR, sender, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -144,7 +141,6 @@ void KutuzovIThorusGridMPI::GenerateTopology(int &columns, int &rows, int proces
 }
 
 int KutuzovIThorusGridMPI::GetNextStep(int current_x, int current_y, int dest_x, int dest_y, int columns, int rows) {
-  
   int up = (((current_y - 1 + rows) % rows) * columns) + current_x;
   int down = (((current_y + 1) % rows) * columns) + current_x;
   int left = (current_y * columns) + ((current_x - 1 + columns) % columns);

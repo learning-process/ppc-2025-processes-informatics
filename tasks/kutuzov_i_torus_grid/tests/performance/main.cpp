@@ -13,7 +13,6 @@ namespace kutuzov_i_torus_grid {
 const int kLongStringSize = 10'000'000;
 
 class KutuzovIRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-
   void SetUp() override {
     message_ = std::string(kLongStringSize, 'a');
 

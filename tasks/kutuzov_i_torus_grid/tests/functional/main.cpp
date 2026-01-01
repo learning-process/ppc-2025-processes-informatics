@@ -169,8 +169,8 @@ TEST_P(KutuzovIRunFuncTests, ThorusGrid) {
   ExecuteTest(GetParam());
 }
 
-const std::array<std::string, 9> kTestParam = {"self", "right", "right_loop", "left", "left_loop",
-                                               "down", "down_loop", "up", "up_loop"};
+const std::array<std::string, 9> kTestParam = {"self", "right",     "right_loop", "left",   "left_loop",
+                                               "down", "down_loop", "up",         "up_loop"};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<KutuzovIThorusGridMPI, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_torus_grid),
