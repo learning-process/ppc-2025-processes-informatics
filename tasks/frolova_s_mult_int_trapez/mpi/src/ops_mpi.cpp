@@ -11,7 +11,7 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
-    : BaseTask(), result_(0.0), limits_(in.limits), number_of_intervals_(in.number_of_intervals) {}
+    : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {}
 
 unsigned int FrolovaSMultIntTrapezMPI::CalculationOfCoefficient(const std::vector<double> &point) {
   auto degree = static_cast<unsigned int>(limits_.size());
