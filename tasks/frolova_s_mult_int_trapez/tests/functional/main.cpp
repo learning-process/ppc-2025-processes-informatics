@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
+// #include <mpi.h>
 
-#include <algorithm>
+// #include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
+// #include <cstdint>
 #include <random>
 #include <string>
 #include <tuple>
-#include <utility>
+// #include <utility>
 #include <vector>
 
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"
@@ -31,7 +31,7 @@ class FrolovaRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, 
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
     unsigned int test_id = std::get<0>(params);
-    std::string test_type = std::get<1>(params);
+    // std::string test_type = std::get<1>(params);
 
     std::random_device rd;
     std::mt19937 gen(rd());

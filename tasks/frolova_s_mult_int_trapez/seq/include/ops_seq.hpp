@@ -1,5 +1,8 @@
 #pragma once
 
+#include <utility>
+#include <vector>
+
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -24,7 +27,7 @@ class FrolovaSMultIntTrapezSEQ : public BaseTask {
 
   std::vector<std::pair<double, double>> limits_;
   std::vector<unsigned int> number_of_intervals_;
-  double result_;
+  double result_{0.0};
 };
 
 }  // namespace frolova_s_mult_int_trapez

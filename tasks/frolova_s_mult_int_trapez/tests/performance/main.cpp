@@ -1,10 +1,11 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
+// #include <mpi.h>
 
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <utility>
+// #include <utility>
 #include <vector>
 
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"
@@ -53,9 +54,11 @@ class FrolovaRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType, O
 
     if (test_name.find("small") != std::string::npos) {
       return small_input_;
-    } else if (test_name.find("medium") != std::string::npos) {
+    }
+    if (test_name.find("medium") != std::string::npos) {
       return medium_input_;
-    } else if (test_name.find("large") != std::string::npos) {
+    }
+    if (test_name.find("large") != std::string::npos) {
       return large_input_;
     }
 
