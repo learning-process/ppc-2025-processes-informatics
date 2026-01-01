@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <vector> // Added for std::vector
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/util.hpp"
@@ -16,7 +17,8 @@
 
 namespace volkov_a_count_word_line {
 
-class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+// Change InType template argument to std::vector<char> to ensure correct data serialization
+class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<std::vector<char>, OutType, TestType> {
  public:
   VolkovACountWordLineFuncTests() = default;
 
@@ -48,7 +50,9 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<InType,
  protected:
   void SetUp() override {
     auto params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    test_str_ = std::get<0>(params);
+    std::string s_val = std::get<0>(params);
+    // Convert std::string to std::vector<char> for safe transfer to TaskData
+    test_str_ = std::vector<char>(s_val.begin(), s_val.end());
     ref_count_ = std::get<1>(params);
   }
 
@@ -70,12 +74,13 @@ class VolkovACountWordLineFuncTests : public ppc::util::BaseRunFuncTests<InType,
     return true;
   }
 
-  InType GetTestInputData() override {
+  // Return the vector, which the framework handles correctly
+  std::vector<char> GetTestInputData() override {
     return test_str_;
   }
 
  private:
-  InType test_str_;
+  std::vector<char> test_str_;
   OutType ref_count_ = 0;
 };
 
@@ -115,9 +120,10 @@ const std::array<TestType, 29> kFixedTests = {{{"simple test", 2},
                                                {"longwordlongwordlongword", 1},
                                                {"ab cd ef gh ij kl mn op qr st uv wx yz", 13}}};
 
+// Use std::vector<char> in the task declaration helper as well
 const auto kTasks = std::tuple_cat(
-    ppc::util::AddFuncTask<VolkovACountWordLineMPI, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
-    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
+    ppc::util::AddFuncTask<VolkovACountWordLineMPI, std::vector<char>>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
+    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, std::vector<char>>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
 
 const auto kTestParams = ppc::util::ExpandToValues(kTasks);
 const auto kTestNameFunc = VolkovACountWordLineFuncTests::PrintTestName;

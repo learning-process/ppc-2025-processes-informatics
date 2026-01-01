@@ -7,6 +7,7 @@
 #include <ios>
 #include <stdexcept>
 #include <string>
+#include <vector> // Added for std::vector
 
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -16,7 +17,8 @@
 
 namespace volkov_a_count_word_line {
 
-class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+// Changed InType to std::vector<char>
+class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<std::vector<char>, OutType> {
  protected:
   void SetUp() override {
     std::string file_path =
@@ -28,7 +30,8 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType,
     }
 
     auto file_size = file.tellg();
-    std::string single_file_content(static_cast<size_t>(file_size), '\0');
+    // Read directly into vector
+    std::vector<char> single_file_content(static_cast<size_t>(file_size));
     file.seekg(0);
     file.read(single_file_content.data(), file_size);
     file.close();
@@ -36,8 +39,10 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType,
     const int repetition_count = 10;
     input_data_.reserve(single_file_content.size() * repetition_count);
     for (int i = 0; i < repetition_count; ++i) {
-      input_data_ += single_file_content;
+      input_data_.insert(input_data_.end(), single_file_content.begin(), single_file_content.end());
     }
+
+    // Logic verification on the vector data
     auto is_valid_char = [](char c) {
       return (std::isalnum(static_cast<unsigned char>(c)) != 0) || c == '-' || c == '_';
     };
@@ -61,7 +66,7 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType,
     expected_output_ = count;
   }
 
-  InType GetTestInputData() override {
+  std::vector<char> GetTestInputData() override {
     return input_data_;
   }
 
@@ -80,7 +85,7 @@ class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType,
   }
 
  private:
-  InType input_data_;
+  std::vector<char> input_data_;
   OutType expected_output_ = 0;
 };
 
@@ -88,7 +93,8 @@ TEST_P(VolkovACountWordLinePerfTests, RunPerformance) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerfTasks = ppc::util::MakeAllPerfTasks<InType, VolkovACountWordLineMPI, VolkovACountWordLineSEQ>(
+// Update MakeAllPerfTasks to use std::vector<char>
+const auto kPerfTasks = ppc::util::MakeAllPerfTasks<std::vector<char>, VolkovACountWordLineMPI, VolkovACountWordLineSEQ>(
     PPC_SETTINGS_volkov_a_count_word_line);
 
 const auto kTestParams = ppc::util::TupleToGTestValues(kPerfTasks);
