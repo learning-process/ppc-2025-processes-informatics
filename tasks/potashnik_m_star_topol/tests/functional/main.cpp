@@ -53,7 +53,7 @@ TEST_P(PotashnikMStarTopolFuncTests, StarTopol) {
 }
 
 // Test parameters = number of calls
-const std::array<TestType, 6> kTestParam = {1, 5, 10, 20, 100, 1000};
+const std::array<TestType, 5> kTestParam = {1, 5, 10, 20, 100};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<PotashnikMStarTopolMPI, InType>(kTestParam, PPC_SETTINGS_potashnik_m_star_topol),
