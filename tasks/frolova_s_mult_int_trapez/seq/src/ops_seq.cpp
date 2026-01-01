@@ -26,8 +26,7 @@ unsigned int FrolovaSMultIntTrapezSEQ::CalculationOfCoefficient(const std::vecto
   return static_cast<unsigned int>(std::pow(2.0, static_cast<double>(degree)));
 }
 
-void FrolovaSMultIntTrapezSEQ::Recursive(std::vector<double> &point, unsigned int &definition, unsigned int divider,
-                                         unsigned int variable) {
+void FrolovaSMultIntTrapezSEQ::Recursive(std::vector<double> &point, unsigned int &definition) {
   unsigned int temp_def = definition;
 
   std::vector<unsigned int> divisors(limits_.size(), 1);
