@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-// #include <string>
+#include <functional>
 #include <tuple>
 #include <utility>
 #include <vector>
@@ -13,12 +13,13 @@ namespace frolova_s_mult_int_trapez {
 struct TrapezoidalIntegrationInput {
   std::vector<std::pair<double, double>> limits;
   std::vector<unsigned int> number_of_intervals;
-  double (*function)(std::vector<double>);
+  std::function<double(std::vector<double>)> function;
 };
 
 using InType = TrapezoidalIntegrationInput;
 using OutType = double;
-using TestType = std::tuple<TrapezoidalIntegrationInput, unsigned int>;
+// ИЗМЕНИ ЭТУ СТРОКУ:
+using TestType = std::tuple<unsigned int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
 }  // namespace frolova_s_mult_int_trapez

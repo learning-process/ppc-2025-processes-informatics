@@ -30,60 +30,35 @@ class FrolovaRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, 
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    // Получаем параметры теста
     unsigned int test_id = std::get<0>(params);
     std::string test_type = std::get<1>(params);
 
-    // Создаем входные данные в зависимости от test_id
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dist(0.0, 10.0);
+    std::uniform_real_distribution<double> dist(0.0, 5.0);
 
-    // Пример: создаем простые тестовые данные
     input_data_.limits.clear();
     input_data_.number_of_intervals.clear();
 
-    // Разные размерности в зависимости от test_id
-    unsigned int dim = (test_id % 3) + 1;  // 1, 2 или 3 измерения
-
-    for (unsigned int i = 0; i < dim; ++i) {
-      double a = dist(gen);
-      double b = a + dist(gen) + 1.0;  // гарантируем b > a
-      input_data_.limits.emplace_back(a, b);
-      input_data_.number_of_intervals.push_back(50 + (test_id * 10) % 50);
-    }
-
-    // Задаем функцию в зависимости от test_type
-    if (test_type == "poly") {
-      input_data_.function = [](std::vector<double> input) {
-        double result = 1.0;
-        for (double val : input) {
-          result *= val;
-        }
-        return result;
-      };
-    } else if (test_type == "sin") {
-      input_data_.function = [](std::vector<double> input) {
-        double result = 0.0;
-        for (double val : input) {
-          result += std::sin(val);
-        }
-        return result;
-      };
+    if (test_id == 1 || test_id == 4) {
+      // 2D тест
+      input_data_.limits = {{0.0, 2.0}, {0.0, 3.0}};
+      input_data_.number_of_intervals = {50, 50};
+      input_data_.function = [](std::vector<double> input) { return std::pow(input[0], 2) + std::pow(input[1], 2); };
+    } else if (test_id == 2 || test_id == 5) {
+      // 3D тест
+      input_data_.limits = {{0.0, 1.0}, {0.0, 1.0}, {0.0, 1.0}};
+      input_data_.number_of_intervals = {30, 30, 30};
+      input_data_.function = [](std::vector<double> input) { return input[0] * input[1] * input[2]; };
     } else {
-      // Функция по умолчанию
-      input_data_.function = [](std::vector<double> input) {
-        double result = 0.0;
-        for (double val : input) {
-          result += val;
-        }
-        return result;
-      };
+      // 1D тест
+      input_data_.limits = {{0.0, 3.14}};
+      input_data_.number_of_intervals = {100};
+      input_data_.function = [](std::vector<double> input) { return std::sin(input[0]); };
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // Проверяем, что результат вычислен (не NaN и не бесконечность)
     return std::isfinite(output_data);
   }
 
@@ -101,10 +76,9 @@ TEST_P(FrolovaRunFuncTestsProcesses, TrapezoidalIntegration) {
   ExecuteTest(GetParam());
 }
 
-// Параметры тестов: (id, тип)
-const std::array<TestType, 6> kTestParam = {std::make_tuple(1, "poly"), std::make_tuple(2, "sin"),
-                                            std::make_tuple(3, "poly"), std::make_tuple(4, "sin"),
-                                            std::make_tuple(5, "poly"), std::make_tuple(6, "sin")};
+const std::array<TestType, 6> kTestParam = {std::make_tuple(1U, "quadratic"), std::make_tuple(2U, "cubic"),
+                                            std::make_tuple(3U, "sine"),      std::make_tuple(4U, "quadratic2"),
+                                            std::make_tuple(5U, "cubic2"),    std::make_tuple(6U, "sine2")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<FrolovaSMultIntTrapezMPI, InType>(kTestParam, PPC_SETTINGS_frolova_s_mult_int_trapez),
