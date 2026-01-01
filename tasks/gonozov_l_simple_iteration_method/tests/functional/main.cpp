@@ -1,16 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 #include "gonozov_l_simple_iteration_method/common/include/common.hpp"
@@ -37,12 +32,12 @@ class GonozovLRunIterationMethodFuncTests : public ppc::util::BaseRunFuncTests<I
 
   bool CheckTestOutputData(OutType &output_data) final {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    std::vector<double> ordered_data_ = static_cast<OutType>(std::get<4>(params));
-    if (static_cast<int>(ordered_data_.size()) != static_cast<int>(output_data.size())) {
+    std::vector<double> ordered_data = static_cast<OutType>(std::get<4>(params));
+    if (static_cast<int>(ordered_data.size()) != static_cast<int>(output_data.size())) {
       return false;
     }
-    for (int i = 0; i < static_cast<int>(ordered_data_.size()); i++) {
-      if (std::abs(ordered_data_[i] - output_data[i]) > 0.01) {
+    for (int i = 0; std::cmp_less(i, ordered_data_.size()); i++) {
+      if (std::abs(ordered_data[i] - output_data[i]) > 0.01) {
         return false;
       }
     }

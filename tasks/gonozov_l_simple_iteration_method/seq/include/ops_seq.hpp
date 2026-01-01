@@ -18,7 +18,7 @@ class GonozovLSimpleIterationMethodSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  int64_t number_unknowns_;
+  int number_unknowns_;
 };
 
 }  // namespace gonozov_l_simple_iteration_method

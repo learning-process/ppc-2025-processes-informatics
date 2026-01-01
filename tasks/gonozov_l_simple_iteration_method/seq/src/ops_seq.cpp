@@ -5,16 +5,16 @@
 #include <vector>
 
 #include "gonozov_l_simple_iteration_method/common/include/common.hpp"
-#include "util/include/util.hpp"
+// #include "util/include/util.hpp"
 
 namespace gonozov_l_simple_iteration_method {
 
-GonozovLSimpleIterationMethodSEQ::GonozovLSimpleIterationMethodSEQ(const InType &in) {
+GonozovLSimpleIterationMethodSEQ::GonozovLSimpleIterationMethodSEQ(const InType &in)
+    : number_unknowns_(static_cast<int>(std::get<0>(in))) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  number_unknowns_ = static_cast<int>(std::get<0>(GetInput()));
-  std::vector gOutp(number_unknowns_, 0.0);
-  GetOutput() = gOutp;
+  std::vector g_outp(number_unknowns_, 0.0);
+  GetOutput() = g_outp;
 }
 
 bool GonozovLSimpleIterationMethodSEQ::ValidationImpl() {
@@ -23,10 +23,10 @@ bool GonozovLSimpleIterationMethodSEQ::ValidationImpl() {
     double sum = 0.0;
     for (int j = 0; j < number_unknowns_; j++) {
       if (j != i) {
-        sum += std::get<1>(GetInput())[(i * number_unknowns_ + j)];
+        sum += std::get<1>(GetInput())[(i * number_unknowns_) + j];
       }
     }
-    if (std::get<1>(GetInput())[i * number_unknowns_ + i] < sum) {
+    if (std::get<1>(GetInput())[(i * number_unknowns_) + i] < sum) {
       return false;
     }
   }
@@ -38,6 +38,36 @@ bool GonozovLSimpleIterationMethodSEQ::PreProcessingImpl() {
   return true;
 }
 
+namespace {
+void CalculatingNewApproximations(std::vector<double> &matrix, std::vector<double> &previous_approximations,
+                                  std::vector<double> &current_approximations) {
+  for (int i = 0; i < number_unknowns_; i++) {
+    double sum = 0.0;
+    // Суммируем все недиагональные элементы
+    for (int j = 0; j < number_unknowns_; j++) {
+      if (j != i) {
+        sum += matrix[(i * number_unknowns_) + j] * previous_approximations[j];
+      }
+    }
+
+    // Строим новое приближение
+    current_approximations[i] = (b[i] - sum) / matrix[(i * number_unknowns_) + i];
+  }
+}
+
+int ConvergenceCheck(std::vector<double> &current_approximations, std::vector<double> &previous_approximations) {
+  int local_converged = 0;
+  for (int i = 0; i < local_size; i++) {
+    int global_row = my_first_row + i;
+    double diff = abs(current_approximations[global_row] - previous_approximations[global_row]);
+    double norm = abs(current_approximations[global_row]);
+    if (diff < 0.00001 * (norm + 1e-10)) {
+      local_converged++;
+    }
+  }
+  return local_converged;
+}
+}  // namespace
 bool GonozovLSimpleIterationMethodSEQ::RunImpl() {
   int max_number_iteration = 10000;
 
@@ -49,37 +79,19 @@ bool GonozovLSimpleIterationMethodSEQ::RunImpl() {
 
   // Нулевое приближение
   for (int i = 0; i < number_unknowns_; i++) {
-    previous_approximations[i] = b[i] / matrix[i * number_unknowns_ + i];
+    previous_approximations[i] = b[i] / matrix[(i * number_unknowns_) + i];
   }
 
   // Основной цикл
   for (int iter = 0; iter < max_number_iteration; iter++) {
     // Для каждой переменной вычисляем новое приближение
-    for (int i = 0; i < number_unknowns_; i++) {
-      double sum = 0.0;
-      // Суммируем все недиагональные элементы
-      for (int j = 0; j < number_unknowns_; j++) {
-        if (j != i) {
-          sum += matrix[i * number_unknowns_ + j] * previous_approximations[j];
-        }
-      }
+    CalculatingNewApproximations(matrix, previous_approximations, current_approximations)
 
-      // Строим новое приближение
-      current_approximations[i] = (b[i] - sum) / matrix[i * number_unknowns_ + i];
-    }
+        // Проверка сходимости
+        int converged = ConvergenceCheck(urrent_approximations, previous_approximations)
 
-    // Проверка сходимости
-    int converged = 0;
-    for (int i = 0; i < number_unknowns_; i++) {
-      double diff = fabs(current_approximations[i] - previous_approximations[i]);
-      double norm = fabs(current_approximations[i]);
-      if (diff < 0.00001 * (norm + 1e-10)) {
-        converged++;
-      }
-    }
-
-    // Если все переменные сошлись
-    if (converged == number_unknowns_) {
+        // Если все переменные сошлись
+        if (converged == number_unknowns_) {
       break;
     }
 
@@ -94,7 +106,7 @@ bool GonozovLSimpleIterationMethodSEQ::RunImpl() {
 }
 
 bool GonozovLSimpleIterationMethodSEQ::PostProcessingImpl() {
-  return GetOutput().size() > 0;
+  return !GetOutput().empty();
 }
 
 }  // namespace gonozov_l_simple_iteration_method

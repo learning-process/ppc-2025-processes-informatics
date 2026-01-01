@@ -1,5 +1,9 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+#include <tuple>
+#include <vector>
+
 #include "gonozov_l_simple_iteration_method/common/include/common.hpp"
 #include "gonozov_l_simple_iteration_method/mpi/include/ops_mpi.hpp"
 #include "gonozov_l_simple_iteration_method/seq/include/ops_seq.hpp"
@@ -13,24 +17,24 @@ class GonozovLRunIterationMethodPerfTest : public ppc::util::BaseRunPerfTests<In
   OutType desired_result_;
 
   void SetUp() override {
-    std::vector<double> matrix(kCount_ * kCount_, 1.0);
+    std::vector<double> matrix(static_cast<size_type>(kCount_ * kCount_), 1.0);
     std::vector<double> b(kCount_, 1.0);
 
     for (int i = 0; i < kCount_; i++) {
       matrix[(i * kCount_) + i] = static_cast<double>(kCount_);
-      b[i] = static_cast<double>(kCount_ * 2 - 1);
+      b[i] = static_cast<double>((kCount_ * 2) - 1);
     }
 
     input_data_ = std::make_tuple(kCount_, matrix, b);
-    std::vector<double> desired_(kCount_, 1.0);
-    desired_result_ = desired_;
+    std::vector<double> desired(kCount_, 1.0);
+    desired_result_ = desired;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     if (desired_result_.size() != output_data.size()) {
       return false;
     }
-    for (int i = 0; i < static_cast<int>(desired_result_.size()); i++) {
+    for (int i = 0; std::cmp_less(i, desired_result_.size()); i++) {
       if (std::abs(desired_result_[i] - output_data[i]) > 0.01) {
         return false;
       }
