@@ -43,7 +43,6 @@ std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
 
   sendcounts.resize(n_procs);
   displs.resize(n_procs, 0);
-
   int base = n / n_procs;
   int rem = n % n_procs;
 
@@ -68,7 +67,6 @@ std::vector<float> ChaschinVSobelOperatorMPI::PreprocessToGrayscaleWithOverlap(
     for (int xx = -1; xx < (sendcounts[ii] / padded_m) - 1; xx++) {
       for (int yy = 0; yy < m; yy++) {
         float val = 0.0F;
-        buffer[displs[ii] + ((xx + 1) * padded_m) + yy + 1] = val;
         if ((xx + l_r[ii] >= 0) && (xx + l_r[ii] < n)) {
           const Pixel &p = image[xx + l_r[ii]][yy];
           val = (0.299F * static_cast<float>(p.r)) + (0.587F * static_cast<float>(p.g)) +
@@ -155,11 +153,11 @@ bool ChaschinVSobelOperatorMPI::RunImpl() {
   MPI_Scatterv(rank == 0 ? in.data() : nullptr, ScatterSendCounts_.data(), ScatterDispls_.data(), MPI_FLOAT,
                local_block.data(), recvcount, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-  std::vector<float> local_output(static_cast<size_t>(local_rows) * static_cast<size_t>(m));
+  std::vector<float> local_output(static_cast<size_t>(local_rows - 2) * static_cast<size_t>(m));
 
-  for (int i = 0; std::cmp_less(i, local_rows); ++i) {
-    for (int j = 0; std::cmp_less(j, m); ++j) {
-      local_output[(i * m) + j] = SobelAt(local_block, i + 1, j + 1, padded_m);
+  for (int i = 1; i <= local_rows - 2; ++i) {
+    for (int j = 1; j <= m; ++j) {
+      local_output[((i - 1) * m) + (j - 1)] = SobelAt(local_block, i, j, padded_m);
     }
   }
 
