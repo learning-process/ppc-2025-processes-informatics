@@ -1,6 +1,7 @@
 #include "frolova_s_mult_int_trapez/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 #include "frolova_s_mult_int_trapez/common/include/common.hpp"
@@ -8,10 +9,15 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezSEQ::FrolovaSMultIntTrapezSEQ(const InType &in)
-    : limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_(0.0) {
+    : result_(0.0), limits_(in.limits), number_of_intervals_(in.number_of_intervals) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
+
+  std::cout << "[SEQ CONSTRUCTOR] Created FrolovaSMultIntTrapezSEQ" << std::endl;
+  std::cout << "[SEQ CONSTRUCTOR] Input limits size: " << in.limits.size() << std::endl;
+  std::cout << "[SEQ CONSTRUCTOR] Input intervals size: " << in.number_of_intervals.size() << std::endl;
+  std::cout << "[SEQ CONSTRUCTOR] Function is " << (in.function ? "NOT null" : "NULL") << std::endl;
 }
 
 unsigned int FrolovaSMultIntTrapezSEQ::CalculationOfCoefficient(const std::vector<double> &point) {
@@ -21,7 +27,6 @@ unsigned int FrolovaSMultIntTrapezSEQ::CalculationOfCoefficient(const std::vecto
       degree--;
     }
   }
-
   return static_cast<unsigned int>(std::pow(2.0, static_cast<double>(degree)));
 }
 
@@ -46,15 +51,67 @@ std::vector<double> FrolovaSMultIntTrapezSEQ::GetPointFromNumber(unsigned int nu
 }
 
 bool FrolovaSMultIntTrapezSEQ::ValidationImpl() {
+  std::cout << "[SEQ VALIDATION] Starting validation" << std::endl;
+
+  auto input = GetInput();
+
+  std::cout << "[SEQ VALIDATION] Checking input:" << std::endl;
+  std::cout << "[SEQ VALIDATION]   limits.empty(): " << input.limits.empty() << std::endl;
+  std::cout << "[SEQ VALIDATION]   number_of_intervals.empty(): " << input.number_of_intervals.empty() << std::endl;
+
+  if (input.limits.empty() || input.number_of_intervals.empty()) {
+    std::cout << "[SEQ VALIDATION] FAILED - empty limits or intervals" << std::endl;
+    return false;
+  }
+
+  std::cout << "[SEQ VALIDATION]   limits.size(): " << input.limits.size() << std::endl;
+  std::cout << "[SEQ VALIDATION]   intervals.size(): " << input.number_of_intervals.size() << std::endl;
+
+  if (input.limits.size() != input.number_of_intervals.size()) {
+    std::cout << "[SEQ VALIDATION] FAILED - sizes don't match" << std::endl;
+    return false;
+  }
+
+  std::cout << "[SEQ VALIDATION]   function pointer: " << (input.function ? "NOT null" : "NULL") << std::endl;
+
+  if (!input.function) {
+    std::cout << "[SEQ VALIDATION] FAILED - function is null" << std::endl;
+    return false;
+  }
+
+  // Check each limit
+  for (size_t i = 0; i < input.limits.size(); i++) {
+    std::cout << "[SEQ VALIDATION]   Limit " << i << ": [" << input.limits[i].first << ", " << input.limits[i].second
+              << "], intervals: " << input.number_of_intervals[i] << std::endl;
+
+    if (input.limits[i].first >= input.limits[i].second) {
+      std::cout << "[SEQ VALIDATION] FAILED - limit " << i << " has first >= second" << std::endl;
+      return false;
+    }
+
+    if (input.number_of_intervals[i] == 0) {
+      std::cout << "[SEQ VALIDATION] FAILED - interval " << i << " is zero" << std::endl;
+      return false;
+    }
+  }
+
+  std::cout << "[SEQ VALIDATION] PASSED validation" << std::endl;
   return true;
 }
 
 bool FrolovaSMultIntTrapezSEQ::PreProcessingImpl() {
-  limits_ = GetInput().limits;
-  number_of_intervals_ = GetInput().number_of_intervals;
+  std::cout << "[SEQ PRE_PROCESSING] Starting pre-processing" << std::endl;
+
+  auto input = GetInput();
+  limits_ = input.limits;
+  number_of_intervals_ = input.number_of_intervals;
   result_ = 0.0;
 
-  return (limits_.size() == number_of_intervals_.size()) && !limits_.empty();
+  std::cout << "[SEQ PRE_PROCESSING] Initialized with limits size = " << limits_.size()
+            << ", intervals size = " << number_of_intervals_.size() << std::endl;
+  std::cout << "[SEQ PRE_PROCESSING] Function is " << (input.function ? "NOT null" : "NULL") << std::endl;
+
+  return true;
 }
 
 bool FrolovaSMultIntTrapezSEQ::RunImpl() {
