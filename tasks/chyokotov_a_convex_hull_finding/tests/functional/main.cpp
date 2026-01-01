@@ -110,7 +110,7 @@ const std::array<TestType, 6> kTestParam = {
     std::make_tuple(kEmptyMatrix, kExpectedEmpty),
     std::make_tuple(kOneElement, kExpectedOneElement),
     std::make_tuple(kWithoutComponents, kExpectedWithoutComponents),
-    //std::make_tuple(kEdging, kExpectedEdging),
+    // std::make_tuple(kEdging, kExpectedEdging),
     std::make_tuple(kTwoComponets, kExpectedTwoComponents),
     std::make_tuple(kRectangle, kExpectedRectangle),
     std::make_tuple(kGrid, kExpectedGrid),

@@ -16,43 +16,40 @@ class ChyokotovConvexHullPerfTest : public ppc::util::BaseRunPerfTests<InType, O
   InType input_data_;
   OutType expected_;
 
-  void SetUp() override {
-  
-  }
+  void SetUp() override {}
 
-  bool CheckTestOutputData(OutType &output_data) final {    
+  bool CheckTestOutputData(OutType &output_data) final {
     size_t points_actual = 0;
     size_t points_expected = 0;
-    
-    for (const auto& i : output_data) {
+
+    for (const auto &i : output_data) {
       points_actual += i.size();
     }
-    
-    for (const auto& i : expected_) {
+
+    for (const auto &i : expected_) {
       points_expected += i.size();
     }
-    
+
     if (points_actual != points_expected) {
       return false;
     }
-    
+
     std::multiset<std::pair<int, int>> set_actual;
     std::multiset<std::pair<int, int>> set_expected;
-    
-    for (const auto& i : output_data) {
+
+    for (const auto &i : output_data) {
       set_actual.insert(i.begin(), i.end());
     }
-    
-    for (const auto& i : expected_) {
+
+    for (const auto &i : expected_) {
       set_expected.insert(i.begin(), i.end());
     }
-    
+
     if (set_actual != set_expected) {
       return false;
     }
     return true;
   }
-
 
   InType GetTestInputData() final {
     return input_data_;
