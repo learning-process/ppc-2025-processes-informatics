@@ -16,13 +16,6 @@ double Function(const std::vector<double> &coordinates) {
   }
   return total;
 }
-
-int SimpsonCoefficient(int node_index, int partitions) {
-  if (node_index == 0 || node_index == partitions) {
-    return 1;
-  }
-  return (node_index % 2 == 0) ? 2 : 4;
-}
 }  // namespace
 
 AshihminDCalculateIntegralsBySimpsonMPI::AshihminDCalculateIntegralsBySimpsonMPI(const InType &input) {
