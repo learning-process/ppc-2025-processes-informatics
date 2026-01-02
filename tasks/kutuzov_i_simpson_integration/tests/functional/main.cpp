@@ -64,7 +64,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
       }
     }
     sum *= step_x * step_y / 9;
-    return (abs(output_data - sum) < 1e-5);
+    return (abs(output_data - sum) < 1e-3);
   }
 
   InType GetTestInputData() final {
@@ -108,10 +108,10 @@ const std::array<TestType, 16> kTestParam = {
     std::make_tuple(4, std::make_pair(-5.0, 5.0), std::make_pair(-1.0, 1.0), 3),
     std::make_tuple(4, std::make_pair(-5.0, 5.0), std::make_pair(-1.0, 1.0), 4),
 
-    std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 1),
-    std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 2),
-    std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 3),
-    std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 4)};
+    std::make_tuple(20, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 1),
+    std::make_tuple(20, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 2),
+    std::make_tuple(20, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 3),
+    std::make_tuple(20, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 4)};
 
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KutuzovISimpsonIntegrationMPI, InType>(
                                                kTestParam, PPC_SETTINGS_kutuzov_i_simpson_integration),

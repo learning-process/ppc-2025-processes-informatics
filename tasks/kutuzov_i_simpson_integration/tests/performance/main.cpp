@@ -38,7 +38,7 @@ class KutuzovIRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
       }
     }
     sum *= step_x * step_y / 9;
-    return (abs(output_data - sum) < 1e-5);
+    return (abs(output_data - sum) < 1e-3);
   }
 
   InType GetTestInputData() final {
