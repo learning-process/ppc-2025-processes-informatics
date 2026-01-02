@@ -32,7 +32,7 @@ bool ShvetsovaKRadSortBatchMergeSEQ::RunImpl() {
   // Чётно-нечётное слияние Бэтчера
   BatcherOddEvenMergeSort(data_, 0, static_cast<int>(data_.size()));
 
-  GetOutput() = data_;
+  GetOutput().assign(data_.begin(), data_.end());
   return true;
 }
 
