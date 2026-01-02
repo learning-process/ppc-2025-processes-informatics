@@ -7,6 +7,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <iostream>
 
 #include "kutuzov_i_simpson_integration/common/include/common.hpp"
 #include "kutuzov_i_simpson_integration/mpi/include/ops_mpi.hpp"
@@ -64,7 +65,11 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
       }
     }
     sum *= step_x * step_y / 9;
-    return (abs(output_data - sum) < 1e-3);
+    bool result = (abs(output_data - sum) < 1e-3);
+    if (!result) {
+      std::cout << std::endl << output_data << ", " << sum << ", " << abs(output_data - sum) << std::endl;
+    }
+    return result;
   }
 
   InType GetTestInputData() final {
