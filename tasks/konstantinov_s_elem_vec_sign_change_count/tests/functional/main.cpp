@@ -6,7 +6,7 @@
 #include <cstddef>
 // #include <cstdint>
 // #include <numeric>
-// #include <stdexcept>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 // #include <utility>
@@ -102,7 +102,7 @@ class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunFuncTests<I
         break;
       }
 
-      case 10: {  // исходный пример
+      case 10: {
         std::array<EType, 15> arr = {1, -1, 23, -11, -12, -167, 13, 42, -12, 2, -43, 33, 44, -7, 1};
         input_data_ = InType(arr.begin(), arr.end());
         result_right_ = 10;
