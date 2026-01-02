@@ -1,3 +1,5 @@
+#include "kiselev_i_linear_histogram_stretch/mpi/include/ops_mpi.hpp"
+
 #include <mpi.h>
 
 #include <cstddef>
@@ -5,7 +7,6 @@
 #include <vector>
 
 #include "kiselev_i_linear_histogram_stretch/common/include/common.hpp"
-#include "kiselev_i_linear_histogram_stretch\mpi\include\ops_mpi.hpp"
 
 namespace kiselev_i_linear_histogram_stretch {
 
