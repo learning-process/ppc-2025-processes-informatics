@@ -35,28 +35,33 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-static void OddEvenMergeNetwork(std::vector<int> &a, int n) {
-  for (int p = 1; p < n; p <<= 1) {
-    for (int q = p; q > 0; q >>= 1) {
-      for (int i = 0; i < n; ++i) {
-        int j = i ^ q;
-        if (j > i) {
-          if ((i & p) == 0) {
-            if (a[i] > a[j]) {
-              std::swap(a[i], a[j]);
-            }
-          } else {
-            if (a[i] < a[j]) {
-              std::swap(a[i], a[j]);
-            }
-          }
+void CompareAndSwapPair(std::vector<int> &arr, int index, int partnerIndex, bool ascending) {
+  if (ascending) {
+    if (arr[index] > arr[partnerIndex]) {
+      std::swap(arr[index], arr[partnerIndex]);
+    }
+  } else {
+    if (arr[index] < arr[partnerIndex]) {
+      std::swap(arr[index], arr[partnerIndex]);
+    }
+  }
+}
+
+void OddEvenMergeNetwork(std::vector<int> &arr, int length) {
+  for (int step = 1; step < length; step <<= 1) {
+    for (int stride = step; stride > 0; stride >>= 1) {
+      for (int idx = 0; idx < length; ++idx) {
+        int partner = idx ^ stride;
+        if (partner > idx) {
+          bool ascending = ((idx & step) == 0);
+          CompareAndSwapPair(arr, idx, partner, ascending);
         }
       }
     }
   }
 }
 
-static void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out) {
+void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out) {
   const std::size_t orig_n = left.size() + right.size();
   out.clear();
   out.reserve(orig_n);
