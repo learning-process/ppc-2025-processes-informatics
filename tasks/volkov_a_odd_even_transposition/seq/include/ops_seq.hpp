@@ -9,7 +9,7 @@ class OddEvenSortSeq : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
-  
+
   explicit OddEvenSortSeq(const InType &in);
 
  private:

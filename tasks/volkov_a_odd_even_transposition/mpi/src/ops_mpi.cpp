@@ -32,7 +32,7 @@ bool OddEvenSortMPI::PreProcessingImpl() {
   return true;
 }
 
-void OddEvenSortMPI::CalculateDistribution(int n, int size, std::vector<int>& counts, std::vector<int>& displs) {
+void OddEvenSortMPI::CalculateDistribution(int n, int size, std::vector<int> &counts, std::vector<int> &displs) {
   int rem = n % size;
   int base = n / size;
   int offset = 0;
@@ -48,18 +48,16 @@ void OddEvenSortMPI::PerformCompareSplit(InType &local_data, int partner_rank, i
   int my_count = static_cast<int>(local_data.size());
   int partner_count = 0;
 
-  MPI_Sendrecv(&my_count, 1, MPI_INT, partner_rank, 0,
-               &partner_count, 1, MPI_INT, partner_rank, 0,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(&my_count, 1, MPI_INT, partner_rank, 0, &partner_count, 1, MPI_INT, partner_rank, 0, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
 
   InType partner_data(partner_count);
 
-  MPI_Sendrecv(local_data.data(), my_count, MPI_INT, partner_rank, 1,
-               partner_data.data(), partner_count, MPI_INT, partner_rank, 1,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(local_data.data(), my_count, MPI_INT, partner_rank, 1, partner_data.data(), partner_count, MPI_INT,
+               partner_rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   InType merged(my_count + partner_count);
-  
+
   std::ranges::merge(local_data, partner_data, merged.begin());
 
   if (my_rank < partner_rank) {
@@ -110,8 +108,8 @@ bool OddEvenSortMPI::RunImpl() {
   int local_n = counts[rank];
   InType local_vec(local_n);
 
-  MPI_Scatterv(GetInput().data(), counts.data(), displs.data(), MPI_INT,
-               local_vec.data(), local_n, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(GetInput().data(), counts.data(), displs.data(), MPI_INT, local_vec.data(), local_n, MPI_INT, 0,
+               MPI_COMM_WORLD);
 
   std::ranges::sort(local_vec);
 
@@ -122,9 +120,8 @@ bool OddEvenSortMPI::RunImpl() {
     }
   }
 
-  MPI_Gatherv(local_vec.data(), local_n, MPI_INT,
-              GetOutput().data(), counts.data(), displs.data(), MPI_INT,
-              0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_vec.data(), local_n, MPI_INT, GetOutput().data(), counts.data(), displs.data(), MPI_INT, 0,
+              MPI_COMM_WORLD);
 
   return true;
 }

@@ -20,7 +20,7 @@ class OddEvenSortMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  static void CalculateDistribution(int n, int size, std::vector<int>& counts, std::vector<int>& displs);
+  static void CalculateDistribution(int n, int size, std::vector<int> &counts, std::vector<int> &displs);
   static void PerformCompareSplit(InType &local_data, int partner_rank, int my_rank);
   static int GetNeighbor(int phase, int rank, int size);
 };
