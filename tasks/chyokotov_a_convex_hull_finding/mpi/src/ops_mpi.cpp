@@ -3,9 +3,11 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstddef>
 #include <queue>
+#include <utility>
 #include <vector>
 
 #include "chyokotov_a_convex_hull_finding/common/include/common.hpp"
@@ -23,6 +25,17 @@ ChyokotovConvexHullFindingMPI::ChyokotovConvexHullFindingMPI(const InType &in) {
   GetOutput().clear();
 }
 
+bool ChyokotovConvexHullFindingMPI::Check(const std::vector<std::vector<int>> &input) {
+  for (size_t i = 0; i < input.size(); ++i) {
+    for (size_t j = 0; j < input[0].size(); ++j) {
+      if ((input[i][j] != 1 && input[i][j] != 0) || (input[0].size() != input[i].size())) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool ChyokotovConvexHullFindingMPI::ValidationImpl() {
   int rank{};
   int is_valid = 1;
@@ -31,14 +44,7 @@ bool ChyokotovConvexHullFindingMPI::ValidationImpl() {
   if (rank == 0) {
     const auto &input = GetInput();
     if (!input.empty()) {
-      for (size_t i = 0; i < input.size(); ++i) {
-        for (size_t j = 0; j < input[0].size(); ++j) {
-          if ((input[i][j] != 1 && input[i][j] != 0) || (input[0].size() != input[i].size())) {
-            is_valid = 0;
-            break;
-          }
-        }
-      }
+      Check(input);
     }
   }
   MPI_Bcast(&is_valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -56,7 +62,7 @@ std::pair<std::vector<int>, int> ChyokotovConvexHullFindingMPI::DistributeImageD
   auto [start_row, end_row] = CalculateRowDistribution(rank, size, height);
   int local_rows = end_row - start_row;
 
-  std::vector<int> local_data(local_rows * width);
+  std::vector<int> local_data(static_cast<size_t>(local_rows) * static_cast<size_t>(width));
 
   if (rank == 0) {
     std::vector<int> send_counts(size);
@@ -101,9 +107,9 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Fin
 
   bool has_top = start_row > 0;
   bool has_bottom = end_row < height;
-  int extended_rows = local_rows + has_top + has_bottom;
+  int extended_rows = local_rows + (has_top ? 1 : 0) + (has_bottom ? 1 : 0);
 
-  std::vector<int> extended(extended_rows * width, 0);
+  std::vector<int> extended(static_cast<size_t>(extended_rows) * static_cast<size_t>(width), 0);
 
   int offset = has_top ? 1 : 0;
   for (int i = 0; i < local_rows; i++) {
@@ -114,10 +120,16 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Fin
 
   ExchangeBoundaryRows(has_top, has_bottom, rank, size, width, local_data, extended);
 
-  int global_y_offset = start_row - has_top;
+  int global_y_offset = start_row - (has_top ? 1 : 0);
   auto all = ProcessExtendedRegion(extended, extended_rows, width, global_y_offset);
 
   return FilterLocalComponents(all, start_row, end_row);
+}
+
+long long ChyokotovConvexHullFindingMPI::Cross(const std::pair<int, int> &a, const std::pair<int, int> &b,
+                                               const std::pair<int, int> &c) {
+  return static_cast<long long>(b.first - a.first) * (c.second - a.second) -
+         static_cast<long long>(b.second - a.second) * (c.first - a.first);
 }
 
 std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ConvexHullAndrew(
@@ -144,10 +156,7 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ConvexHullAndrew
       const auto &a = lower_hull[lower_hull.size() - 2];
       const auto &b = lower_hull[lower_hull.size() - 1];
 
-      long long cross = static_cast<long long>(b.first - a.first) * (p.second - a.second) -
-                        static_cast<long long>(b.second - a.second) * (p.first - a.first);
-
-      if (cross >= 0) {
+      if (Cross(a, b, p) >= 0) {
         lower_hull.pop_back();
       } else {
         break;
@@ -161,10 +170,7 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ConvexHullAndrew
       const auto &a = upper_hull[upper_hull.size() - 2];
       const auto &b = upper_hull[upper_hull.size() - 1];
 
-      long long cross = static_cast<long long>(b.first - a.first) * (it->second - a.second) -
-                        static_cast<long long>(b.second - a.second) * (it->first - a.first);
-
-      if (cross >= 0) {
+      if (Cross(a, b, *it) >= 0) {
         upper_hull.pop_back();
       } else {
         break;
@@ -244,7 +250,7 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ExtractComponent
       int ny = y + dy;
 
       if (nx >= 0 && nx < width && ny >= 0 && ny < extended_rows) {
-        size_t nidx = static_cast<size_t>(ny) * static_cast<size_t>(width) + static_cast<size_t>(nx);
+        size_t nidx = (static_cast<size_t>(ny) * static_cast<size_t>(width)) + static_cast<size_t>(nx);
 
         if (extended_pixels[nidx] == 1 && !visited[ny][nx]) {
           visited[ny][nx] = true;
@@ -268,9 +274,7 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Fil
 
     int min_y = component[0].second;
     for (const auto &[x, y] : component) {
-      if (y < min_y) {
-        min_y = y;
-      }
+      min_y = std::min(y, min_y);
     }
 
     if (min_y >= start_row && min_y < end_row) {
@@ -367,22 +371,15 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Gat
     }
 
     return all_hulls;
-  } else {
-    SendHullsToRank0(local_hulls);
-    return {};
   }
+  SendHullsToRank0(local_hulls);
+  return {};
 }
 
 std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::BroadcastResultToAllRanks(
     int rank, const std::vector<std::vector<std::pair<int, int>>> &global_hulls_on_rank0) {
-  int total_hulls = 0;
-
-  if (rank == 0) {
-    total_hulls = static_cast<int>(global_hulls_on_rank0.size());
-  }
-
+  int total_hulls = (rank == 0) ? static_cast<int>(global_hulls_on_rank0.size()) : 0;
   MPI_Bcast(&total_hulls, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   if (total_hulls == 0) {
     return {};
   }
@@ -393,7 +390,6 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
       all_sizes[i] = static_cast<int>(global_hulls_on_rank0[i].size());
     }
   }
-
   MPI_Bcast(all_sizes.data(), total_hulls, MPI_INT, 0, MPI_COMM_WORLD);
 
   int total_points = 0;
@@ -402,7 +398,6 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
       total_points += static_cast<int>(hull.size());
     }
   }
-
   MPI_Bcast(&total_points, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<int> flat_points(static_cast<size_t>(total_points) * 2);
@@ -415,19 +410,18 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
       }
     }
   }
-
   MPI_Bcast(flat_points.data(), total_points * 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<std::vector<std::pair<int, int>>> result;
   size_t idx = 0;
 
-  for (int i = 0; i < total_hulls; ++i) {
+  for (int hull_size : all_sizes) {
     std::vector<std::pair<int, int>> hull;
-    int hull_size = all_sizes[i];
     hull.reserve(static_cast<size_t>(hull_size));
 
-    for (int j = 0; j < hull_size; ++j, idx += 2) {
+    for (int j = 0; j < hull_size; ++j) {
       hull.emplace_back(flat_points[idx], flat_points[idx + 1]);
+      idx += 2;
     }
 
     result.push_back(std::move(hull));
@@ -435,6 +429,7 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
 
   return result;
 }
+
 bool ChyokotovConvexHullFindingMPI::RunImpl() {
   int rank{};
   int size{};

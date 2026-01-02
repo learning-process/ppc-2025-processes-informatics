@@ -1,5 +1,8 @@
 #pragma once
 
+#include <utility>
+#include <vector>
+
 #include "chyokotov_a_convex_hull_finding/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -18,12 +21,13 @@ class ChyokotovConvexHullFindingMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
+  bool Check(const std::vector<std::vector<int>> &input);
   std::pair<std::vector<int>, int> DistributeImageData(int rank, int size, int width, int height);
   std::pair<int, int> CalculateRowDistribution(int rank, int size, int height);
-
+  long long Cross(const std::pair<int, int> &a, const std::pair<int, int> &b, const std::pair<int, int> &c);
   std::vector<std::vector<std::pair<int, int>>> FindConnectedComponentsMPI(int rank, int size, int start_row,
                                                                            int end_row, int width, int height,
-                                                                           const std::vector<int> &local_pixels);
+                                                                           const std::vector<int> &local_data);
 
   std::vector<std::pair<int, int>> ConvexHullAndrew(const std::vector<std::pair<int, int>> &points);
 

@@ -1,9 +1,11 @@
 #include "chyokotov_a_convex_hull_finding/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <cstddef>
 #include <queue>
+#include <utility>
 #include <vector>
 
 #include "chyokotov_a_convex_hull_finding/common/include/common.hpp"
@@ -43,44 +45,53 @@ bool ChyokotovConvexHullFindingSEQ::PreProcessingImpl() {
   return true;
 }
 
+std::vector<std::pair<int, int>> ChyokotovConvexHullFindingSEQ::Bfs(int start_x, int start_y,
+                                                                    const std::vector<std::vector<int>> &picture,
+                                                                    std::vector<std::vector<bool>> &visited) {
+  std::vector<std::pair<int, int>> component;
+  std::queue<std::pair<int, int>> queue;
+
+  const std::array<std::pair<int, int>, 4> directions = {{{0, -1}, {0, 1}, {-1, 0}, {1, 0}}};
+
+  queue.emplace(start_x, start_y);
+  visited[start_y][start_x] = true;
+
+  while (!queue.empty()) {
+    auto [current_x, current_y] = queue.front();
+    queue.pop();
+
+    component.emplace_back(current_x, current_y);
+
+    for (const auto &[dx, dy] : directions) {
+      int neighbor_x = current_x + dx;
+      int neighbor_y = current_y + dy;
+
+      if (neighbor_x >= 0 && neighbor_x < static_cast<int>(picture[0].size()) && neighbor_y >= 0 &&
+          neighbor_y < static_cast<int>(picture.size())) {
+        if (picture[neighbor_y][neighbor_x] == 1 && !visited[neighbor_y][neighbor_x]) {
+          visited[neighbor_y][neighbor_x] = true;
+          queue.emplace(neighbor_x, neighbor_y);
+        }
+      }
+    }
+  }
+
+  return component;
+}
+
 std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingSEQ::FindComponent() {
   auto picture = GetInput();
-  int n = static_cast<int>(picture.size());
-  int m = static_cast<int>(picture[0].size());
+  int rows = static_cast<int>(picture.size());
+  int cols = static_cast<int>(picture[0].size());
+
   std::vector<std::vector<std::pair<int, int>>> components;
-  std::vector<std::vector<bool>> was(n, std::vector<bool>(m, false));
+  std::vector<std::vector<bool>> visited(rows, std::vector<bool>(cols, false));
 
-  const int directions[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
-
-  for (int y = 0; y < n; ++y) {
-    for (int x = 0; x < m; ++x) {
-      if (picture[y][x] == 1 && !was[y][x]) {
-        std::vector<std::pair<int, int>> component;
-        std::queue<std::pair<int, int>> q;
-
-        q.push({x, y});
-        was[y][x] = true;
-
-        while (!q.empty()) {
-          auto [cx, cy] = q.front();
-          q.pop();
-
-          component.push_back({cx, cy});
-
-          for (int i = 0; i < 4; ++i) {
-            int nx = cx + directions[i][0];
-            int ny = cy + directions[i][1];
-
-            if (nx >= 0 && nx < m && ny >= 0 && ny < n) {
-              if (picture[ny][nx] == 1 && !was[ny][nx]) {
-                was[ny][nx] = true;
-                q.push({nx, ny});
-              }
-            }
-          }
-        }
-
-        components.push_back(component);
+  for (int row_idx = 0; row_idx < rows; ++row_idx) {
+    for (int col_idx = 0; col_idx < cols; ++col_idx) {
+      if (picture[row_idx][col_idx] == 1 && !visited[row_idx][col_idx]) {
+        auto component = Bfs(col_idx, row_idx, picture, visited);
+        components.emplace_back(std::move(component));
       }
     }
   }
@@ -90,7 +101,7 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingSEQ::Fin
 
 int ChyokotovConvexHullFindingSEQ::Cross(const std::pair<int, int> &o, const std::pair<int, int> &a,
                                          const std::pair<int, int> &b) {
-  return (a.first - o.first) * (b.second - o.second) - (a.second - o.second) * (b.first - o.first);
+  return ((a.first - o.first) * (b.second - o.second)) - ((a.second - o.second) * (b.first - o.first));
 }
 
 std::vector<std::pair<int, int>> ChyokotovConvexHullFindingSEQ::ConvexHull(std::vector<std::pair<int, int>> x) {
@@ -100,9 +111,9 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingSEQ::ConvexHull(std::
     return x;
   }
 
-  std::sort(x.begin(), x.end());
+  std::ranges::sort(x.begin(), x.end());
 
-  std::vector<std::pair<int, int>> hull(2 * n);
+  std::vector<std::pair<int, int>> hull(2 * static_cast<size_t>(n));
   int k = 0;
 
   for (int i = 0; i < n; i++) {

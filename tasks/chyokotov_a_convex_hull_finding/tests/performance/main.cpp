@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <climits>
 #include <cstddef>
+#include <set>
+#include <utility>
 #include <vector>
 
 #include "chyokotov_a_convex_hull_finding/common/include/common.hpp"
@@ -16,7 +18,9 @@ class ChyokotovConvexHullPerfTest : public ppc::util::BaseRunPerfTests<InType, O
   InType input_data_;
   OutType expected_;
 
-  void SetUp() override {}
+  void SetUp() override {
+    
+  }
 
   bool CheckTestOutputData(OutType &output_data) final {
     size_t points_actual = 0;
@@ -45,10 +49,7 @@ class ChyokotovConvexHullPerfTest : public ppc::util::BaseRunPerfTests<InType, O
       set_expected.insert(i.begin(), i.end());
     }
 
-    if (set_actual != set_expected) {
-      return false;
-    }
-    return true;
+    return (set_actual == set_expected);
   }
 
   InType GetTestInputData() final {

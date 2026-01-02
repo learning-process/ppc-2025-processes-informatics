@@ -4,6 +4,7 @@
 #include <array>
 #include <climits>
 #include <cstddef>
+#include <set>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -61,11 +62,7 @@ class ChyokotovConvexHullFuncTest : public ppc::util::BaseRunFuncTests<InType, O
       set_expected.insert(i.begin(), i.end());
     }
 
-    if (set_actual != set_expected) {
-      return false;
-    }
-
-    return true;
+    return (set_actual == set_expected);
   }
 
   InType GetTestInputData() final {
