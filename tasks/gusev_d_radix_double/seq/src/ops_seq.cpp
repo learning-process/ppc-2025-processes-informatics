@@ -1,6 +1,7 @@
 #include "gusev_d_radix_double/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <vector>
@@ -27,12 +28,11 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
   }
 
   size_t n = data.size();
-
-  uint64_t *ptr = reinterpret_cast<uint64_t *>(data.data());
+  auto *ptr = reinterpret_cast<uint64_t *>(data.data());
 
   for (size_t i = 0; i < n; ++i) {
     uint64_t u = ptr[i];
-    if ((u & 0x8000000000000000ULL)) {
+    if ((u & 0x8000000000000000ULL) != 0) {
       ptr[i] = ~u;
     } else {
       ptr[i] |= 0x8000000000000000ULL;
@@ -44,7 +44,8 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
   uint64_t *dest = buffer.data();
 
   for (int shift = 0; shift < 64; shift += 8) {
-    size_t count[256] = {0};
+    std::array<size_t, 256> count{};
+    count.fill(0);
 
     for (size_t i = 0; i < n; ++i) {
       uint8_t byte = (source[i] >> shift) & 0xFF;
@@ -52,9 +53,9 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
     }
 
     size_t index = 0;
-    for (int i = 0; i < 256; ++i) {
-      size_t tmp = count[i];
-      count[i] = index;
+    for (size_t &i : count) {
+      size_t tmp = i;
+      i = index;
       index += tmp;
     }
 
@@ -72,7 +73,7 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
 
   for (size_t i = 0; i < n; ++i) {
     uint64_t u = ptr[i];
-    if ((u & 0x8000000000000000ULL)) {
+    if ((u & 0x8000000000000000ULL) != 0) {
       u ^= 0x8000000000000000ULL;
     } else {
       u = ~u;

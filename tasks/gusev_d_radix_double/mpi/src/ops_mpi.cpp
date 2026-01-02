@@ -3,8 +3,7 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cmath>
-#include <iterator>
+#include <utility>
 #include <vector>
 
 #include "gusev_d_radix_double/seq/include/ops_seq.hpp"
@@ -25,13 +24,14 @@ bool GusevDRadixDoubleMPI::PreProcessingImpl() {
 }
 
 bool GusevDRadixDoubleMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int n = 0;
   if (rank == 0) {
-    n = GetInput().size();
+    n = static_cast<int>(GetInput().size());
   }
 
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -68,7 +68,7 @@ bool GusevDRadixDoubleMPI::RunImpl() {
         MPI_Recv(local_data.data() + current_size, recv_count, MPI_DOUBLE, source, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
 
-        std::inplace_merge(local_data.begin(), local_data.begin() + current_size, local_data.end());
+        std::inplace_merge(local_data.begin(), local_data.begin() + static_cast<long>(current_size), local_data.end());
       }
     } else if (rank % (2 * step) == step) {
       int dest = rank - step;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "gusev_d_radix_double/common/include/common.hpp"
 #include "task/include/task.hpp"
 
