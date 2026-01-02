@@ -34,12 +34,12 @@ using TestType = std::tuple<std::string, int, double, double, double, double, do
 
 // 1. Кривая Гильберта: переводит t [0,1] -> (x, y) [0,1]x[0,1]
 inline void d2xy(double t, double &x, double &y) {
-  const int n = 1 << 16;  //
-  size_t curr_t = static_cast<size_t>(t * (static_cast<double>(n) * n - 1));
+  const long long n = 1 << 16;  //
+  long long curr_t = static_cast<long long>(t * (static_cast<double>(n) * n - 1));
 
-  int rx, ry, s;
-  int ix = 0;
-  int iy = 0;
+  long long rx, ry, s;
+  long long ix = 0;
+  long long iy = 0;
   for (s = 1; s < n; s *= 2) {
     rx = 1 & (curr_t / 2);
     ry = 1 & (curr_t ^ rx);
