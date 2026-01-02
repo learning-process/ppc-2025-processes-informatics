@@ -52,10 +52,6 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   int elemcount = 0;  // не пересылается, известен только корню
   if (rank == 0) {
     auto input = GetInput();  // получаем только на нулевом процессе - корне
-    if (input.empty()) {
-      // std::cout << "GOT EMPTY INPUT!!!!!!!!!!!!!\n";
-      return false;
-    }
     elemcount = static_cast<int>(input.size());
     // sendbuf = input.data(); //input инвалидируется позже????
     sendbuf = new EType[elemcount];

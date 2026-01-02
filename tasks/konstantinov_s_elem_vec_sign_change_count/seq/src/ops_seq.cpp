@@ -26,10 +26,6 @@ bool KonstantinovSElemVecSignChangeSEQ::PreProcessingImpl() {
 }
 
 bool KonstantinovSElemVecSignChangeSEQ::RunImpl() {
-  if (GetInput().empty()) {
-    return false;
-  }
-
   const auto invec = GetInput();
   int res = 0;
   size_t iterations = invec.size() - 1;
