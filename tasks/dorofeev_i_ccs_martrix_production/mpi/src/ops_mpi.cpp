@@ -4,7 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <map>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
@@ -70,11 +71,11 @@ bool DorofeevICCSMatrixProductionMPI::RunImpl() {  // NOLINT(readability-functio
   const int start_col = (rank * cols_per_proc) + std::min(rank, remainder);
   const int local_cols = cols_per_proc + (rank < remainder ? 1 : 0);
 
-  std::vector<std::map<int, double>> local_columns(local_cols);
+  std::vector<std::unordered_map<int, double>> local_columns(local_cols);
 
   for (int j = 0; j < local_cols; j++) {
     int global_col = start_col + j;
-    std::map<int, double> col_map;
+    std::unordered_map<int, double> col_map;
     int start = b.col_ptr[global_col];
     int end = b.col_ptr[global_col + 1];
     for (int idx = start; idx < end; ++idx) {
@@ -94,43 +95,59 @@ bool DorofeevICCSMatrixProductionMPI::RunImpl() {  // NOLINT(readability-functio
   if (rank == 0) {
     int col_offset = 0;
     for (int j = 0; j < local_cols; j++) {
-      c.col_ptr[col_offset + 1] = c.col_ptr[col_offset] + static_cast<int>(local_columns[j].size());
-      for (const auto &[row, value] : local_columns[j]) {
+      std::vector<std::pair<int, double>> sorted_col(local_columns[j].begin(), local_columns[j].end());
+      std::ranges::sort(sorted_col);
+      c.col_ptr[col_offset + 1] = c.col_ptr[col_offset] + static_cast<int>(sorted_col.size());
+      for (const auto &[row, value] : sorted_col) {
         c.row_indices.push_back(row);
         c.values.push_back(value);
       }
       col_offset++;
     }
 
-    for (int process_idx = 0; process_idx < size - 1; process_idx++) {
-      int recv_cols = cols_per_proc + (process_idx + 1 < remainder ? 1 : 0);
-      for (int j = 0; j < recv_cols; j++) {
-        int nnz = 0;
-        MPI_Recv(&nnz, 1, MPI_INT, process_idx + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        c.col_ptr[col_offset + 1] = c.col_ptr[col_offset] + nnz;
-        for (int k = 0; k < nnz; k++) {
-          int row = 0;
-          double val = 0.0;
-          MPI_Recv(&row, 1, MPI_INT, process_idx + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          MPI_Recv(&val, 1, MPI_DOUBLE, process_idx + 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-          c.row_indices.push_back(row);
-          c.values.push_back(val);
+    for (int process_idx = 1; process_idx < size; process_idx++) {
+      int num_cols = 0;
+      MPI_Recv(&num_cols, 1, MPI_INT, process_idx, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      std::vector<int> nnzs(num_cols);
+      MPI_Recv(nnzs.data(), num_cols, MPI_INT, process_idx, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      int total_nnz = 0;
+      for (int n : nnzs) {
+        total_nnz += n;
+      }
+      std::vector<int> all_rows(total_nnz);
+      MPI_Recv(all_rows.data(), total_nnz, MPI_INT, process_idx, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      std::vector<double> all_vals(total_nnz);
+      MPI_Recv(all_vals.data(), total_nnz, MPI_DOUBLE, process_idx, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      int idx = 0;
+      for (int n : nnzs) {
+        c.col_ptr[col_offset + 1] = c.col_ptr[col_offset] + n;
+        for (int k = 0; k < n; k++) {
+          c.row_indices.push_back(all_rows[idx]);
+          c.values.push_back(all_vals[idx]);
+          idx++;
         }
         col_offset++;
       }
     }
   } else {
+    int num_cols = static_cast<int>(local_columns.size());
+    MPI_Send(&num_cols, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    std::vector<int> nnzs;
+    std::vector<int> all_rows;
+    std::vector<double> all_vals;
     for (const auto &col : local_columns) {
-      int nnz = static_cast<int>(col.size());
-      MPI_Send(&nnz, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-      for (const auto &[row, val] : col) {
-        MPI_Send(&row, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-        MPI_Send(&val, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+      std::vector<std::pair<int, double>> sorted_col(col.begin(), col.end());
+      std::ranges::sort(sorted_col);
+      nnzs.push_back(static_cast<int>(sorted_col.size()));
+      for (const auto &[row, val] : sorted_col) {
+        all_rows.push_back(row);
+        all_vals.push_back(val);
       }
     }
+    MPI_Send(nnzs.data(), static_cast<int>(nnzs.size()), MPI_INT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(all_rows.data(), static_cast<int>(all_rows.size()), MPI_INT, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(all_vals.data(), static_cast<int>(all_vals.size()), MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
   }
-
-  MPI_Barrier(MPI_COMM_WORLD);
 
   // Broadcast the result to all processes
   MPI_Bcast(&c.rows, 1, MPI_INT, 0, MPI_COMM_WORLD);

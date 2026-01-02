@@ -1,6 +1,8 @@
 #include "dorofeev_i_ccs_martrix_production/seq/include/ops_seq.hpp"
 
-#include <map>
+#include <algorithm>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
@@ -43,7 +45,7 @@ bool DorofeevICCSMatrixProductionSEQ::RunImpl() {
   const auto &b = GetInput().second;
   auto &c = GetOutput();
 
-  std::vector<std::map<int, double>> columns(c.cols);
+  std::vector<std::unordered_map<int, double>> columns(c.cols);
 
   for (int j = 0; j < b.cols; j++) {
     for (int idx_b = b.col_ptr[j]; idx_b < b.col_ptr[j + 1]; idx_b++) {
@@ -59,8 +61,10 @@ bool DorofeevICCSMatrixProductionSEQ::RunImpl() {
   }
 
   for (int j = 0; j < c.cols; j++) {
-    c.col_ptr[j + 1] = c.col_ptr[j] + static_cast<int>(columns[j].size());
-    for (const auto &[row, value] : columns[j]) {
+    std::vector<std::pair<int, double>> sorted_col(columns[j].begin(), columns[j].end());
+    std::ranges::sort(sorted_col);
+    c.col_ptr[j + 1] = c.col_ptr[j] + static_cast<int>(sorted_col.size());
+    for (const auto &[row, value] : sorted_col) {
       c.row_indices.push_back(row);
       c.values.push_back(value);
     }
