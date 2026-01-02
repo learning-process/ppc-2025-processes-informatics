@@ -3,9 +3,9 @@
 
 #include <array>
 #include <cstddef>
+#include <string>
 #include <tuple>
 #include <vector>
-#include <string>
 
 #include "potashnik_m_star_topol/common/include/common.hpp"
 #include "potashnik_m_star_topol/mpi/include/ops_mpi.hpp"

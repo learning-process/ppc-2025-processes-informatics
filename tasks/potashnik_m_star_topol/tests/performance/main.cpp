@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <vector>
 #include <cstddef>
+#include <vector>
 
 #include "potashnik_m_star_topol/common/include/common.hpp"
 #include "potashnik_m_star_topol/mpi/include/ops_mpi.hpp"
