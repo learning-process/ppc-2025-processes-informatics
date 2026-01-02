@@ -182,76 +182,65 @@ bool KiselevITestTaskMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int kRoot = 0;
+  constexpr int kRoot = 0;
 
   std::size_t total_size = 0;
   if (rank == kRoot) {
     total_size = GetInput().pixels.size();
   }
 
-  // Рассылка общего количества элементов
   MPI_Bcast(&total_size, 1, MPI_UNSIGNED_LONG_LONG, kRoot, MPI_COMM_WORLD);
 
-  const std::size_t base = total_size / size;
-  const std::size_t extra = total_size % size;
+  const std::size_t base = total_size / static_cast<std::size_t>(size);
+  const std::size_t extra = total_size % static_cast<std::size_t>(size);
 
   std::vector<int> counts(size, 0);
   std::vector<int> offsets(size, 0);
 
   if (rank == kRoot) {
     std::size_t shift = 0;
-    for (int index = 0; index < size; ++index) {
-      counts[index] = static_cast<int>(base + (index < static_cast<int>(extra) ? 1 : 0));
-      offsets[index] = static_cast<int>(shift);
-      shift += counts[index];
+    const auto size_sz = static_cast<std::size_t>(size);
+
+    for (std::size_t index = 0; index < size_sz; ++index) {
+      const std::size_t add = (index < extra) ? 1 : 0;
+      counts[static_cast<int>(index)] = static_cast<int>(base + add);
+      offsets[static_cast<int>(index)] = static_cast<int>(shift);
+      shift += static_cast<std::size_t>(counts[static_cast<int>(index)]);
     }
   }
 
   int local_count = 0;
-  MPI_Scatter(counts.data(), 1, MPI_INT,
-              &local_count, 1, MPI_INT,
-              kRoot, MPI_COMM_WORLD);
+  MPI_Scatter(counts.data(), 1, MPI_INT, &local_count, 1, MPI_INT, kRoot, MPI_COMM_WORLD);
 
-  std::vector<uint8_t> local_pixels(local_count);
+  std::vector<unsigned char> local_pixels(static_cast<std::size_t>(local_count));
 
-  MPI_Scatterv(GetInput().pixels.data(),
-               counts.data(), offsets.data(), MPI_UNSIGNED_CHAR,
-               local_pixels.data(), local_count, MPI_UNSIGNED_CHAR,
-               kRoot, MPI_COMM_WORLD);
+  MPI_Scatterv(GetInput().pixels.data(), counts.data(), offsets.data(), MPI_UNSIGNED_CHAR, local_pixels.data(),
+               local_count, MPI_UNSIGNED_CHAR, kRoot, MPI_COMM_WORLD);
 
-  uint8_t local_min = std::numeric_limits<uint8_t>::max();
-  uint8_t local_max = std::numeric_limits<uint8_t>::min();
+  unsigned char local_min = std::numeric_limits<unsigned char>::max();
+  unsigned char local_max = std::numeric_limits<unsigned char>::min();
 
-  if (local_pixels.empty()) {
-    local_min = std::numeric_limits<uint8_t>::max();
-    local_max = std::numeric_limits<uint8_t>::min();
+  for (unsigned char px : local_pixels) {
+    local_min = std::min(local_min, px);
+    local_max = std::max(local_max, px);
   }
 
-
-  for (uint8_t px : local_pixels) {
-    if (px < local_min) local_min = px;
-    if (px > local_max) local_max = px;
-  }
-
-  uint8_t global_min = 0;
-  uint8_t global_max = 0;
+  unsigned char global_min = 0;
+  unsigned char global_max = 0;
 
   MPI_Allreduce(&local_min, &global_min, 1, MPI_UNSIGNED_CHAR, MPI_MIN, MPI_COMM_WORLD);
   MPI_Allreduce(&local_max, &global_max, 1, MPI_UNSIGNED_CHAR, MPI_MAX, MPI_COMM_WORLD);
 
   if (global_min != global_max) {
-    const double scale =
-        255.0 / static_cast<double>(global_max - global_min);
+    const double scale = 255.0 / static_cast<double>(global_max - global_min);
 
-    for (std::size_t index = 0; index < local_pixels.size(); ++index) {
-      const double value =
-          static_cast<double>(local_pixels[index] - global_min) * scale;
-      local_pixels[index] = static_cast<uint8_t>(value + 0.5);
+    for (unsigned char &px : local_pixels) {
+      const double value = static_cast<double>(px - global_min) * scale;
+      px = static_cast<unsigned char>(std::lround(value));
     }
   }
 
-  MPI_Gatherv(local_pixels.data(), local_count, MPI_UNSIGNED_CHAR,
-              GetOutput().data(), counts.data(), offsets.data(),
+  MPI_Gatherv(local_pixels.data(), local_count, MPI_UNSIGNED_CHAR, GetOutput().data(), counts.data(), offsets.data(),
               MPI_UNSIGNED_CHAR, kRoot, MPI_COMM_WORLD);
 
   return true;
