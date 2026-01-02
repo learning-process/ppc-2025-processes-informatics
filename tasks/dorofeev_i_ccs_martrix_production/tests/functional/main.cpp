@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -32,21 +35,21 @@ class DorofeevICCSMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType, O
                     [ 0 8 ]
     */
 
-    CCSMatrix A;
-    A.rows = 2;
-    A.cols = 2;
-    A.col_ptr = {0, 1, 2};
-    A.row_indices = {0, 1};
-    A.values = {1.0, 2.0};
+    CCSMatrix a;
+    a.rows = 2;
+    a.cols = 2;
+    a.col_ptr = {0, 1, 2};
+    a.row_indices = {0, 1};
+    a.values = {1.0, 2.0};
 
-    CCSMatrix B;
-    B.rows = 2;
-    B.cols = 2;
-    B.col_ptr = {0, 1, 2};
-    B.row_indices = {0, 1};
-    B.values = {3.0, 4.0};
+    CCSMatrix b;
+    b.rows = 2;
+    b.cols = 2;
+    b.col_ptr = {0, 1, 2};
+    b.row_indices = {0, 1};
+    b.values = {3.0, 4.0};
 
-    input_ = std::make_pair(A, B);
+    input_ = std::make_pair(a, b);
 
     expected_.rows = 2;
     expected_.cols = 2;

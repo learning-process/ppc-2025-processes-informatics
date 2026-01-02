@@ -1,6 +1,7 @@
 #include "dorofeev_i_ccs_martrix_production/seq/include/ops_seq.hpp"
 
 #include <map>
+#include <vector>
 
 #include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
 
@@ -12,18 +13,18 @@ DorofeevICCSMatrixProductionSEQ::DorofeevICCSMatrixProductionSEQ(const InType &i
 }
 
 bool DorofeevICCSMatrixProductionSEQ::ValidationImpl() {
-  const auto &A = GetInput().first;
-  const auto &B = GetInput().second;
+  const auto &a = GetInput().first;
+  const auto &b = GetInput().second;
 
-  if (A.cols != B.rows) {
+  if (a.cols != b.rows) {
     return false;
   }
 
-  if (A.col_ptr.size() != static_cast<size_t>(A.cols + 1)) {
+  if (static_cast<int>(a.col_ptr.size()) != a.cols + 1) {
     return false;
   }
 
-  if (B.col_ptr.size() != static_cast<size_t>(B.cols + 1)) {
+  if (static_cast<int>(b.col_ptr.size()) != b.cols + 1) {
     return false;
   }
 
@@ -38,30 +39,30 @@ bool DorofeevICCSMatrixProductionSEQ::PreProcessingImpl() {
 }
 
 bool DorofeevICCSMatrixProductionSEQ::RunImpl() {
-  const auto &A = GetInput().first;
-  const auto &B = GetInput().second;
-  auto &C = GetOutput();
+  const auto &a = GetInput().first;
+  const auto &b = GetInput().second;
+  auto &c = GetOutput();
 
-  std::vector<std::map<int, double>> columns(C.cols);
+  std::vector<std::map<int, double>> columns(c.cols);
 
-  for (int j = 0; j < B.cols; j++) {
-    for (int idxB = B.col_ptr[j]; idxB < B.col_ptr[j + 1]; idxB++) {
-      int rowB = B.row_indices[idxB];
-      double valB = B.values[idxB];
+  for (int j = 0; j < b.cols; j++) {
+    for (int idx_b = b.col_ptr[j]; idx_b < b.col_ptr[j + 1]; idx_b++) {
+      int row_b = b.row_indices[idx_b];
+      double val_b = b.values[idx_b];
 
-      for (int idxA = A.col_ptr[rowB]; idxA < A.col_ptr[rowB + 1]; idxA++) {
-        int rowA = A.row_indices[idxA];
-        double valA = A.values[idxA];
-        columns[j][rowA] += valA * valB;
+      for (int idx_a = a.col_ptr[row_b]; idx_a < a.col_ptr[row_b + 1]; idx_a++) {
+        int row_a = a.row_indices[idx_a];
+        double val_a = a.values[idx_a];
+        columns[j][row_a] += val_a * val_b;
       }
     }
   }
 
-  for (int j = 0; j < C.cols; j++) {
-    C.col_ptr[j + 1] = C.col_ptr[j] + columns[j].size();
+  for (int j = 0; j < c.cols; j++) {
+    c.col_ptr[j + 1] = c.col_ptr[j] + static_cast<int>(columns[j].size());
     for (const auto &[row, value] : columns[j]) {
-      C.row_indices.push_back(row);
-      C.values.push_back(value);
+      c.row_indices.push_back(row);
+      c.values.push_back(value);
     }
   }
 

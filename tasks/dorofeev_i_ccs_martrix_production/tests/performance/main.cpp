@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <utility>
 #include <vector>
 
 #include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
@@ -11,16 +12,16 @@ namespace dorofeev_i_ccs_martrix_production {
 
 class CCSMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  InType input_data_{};
+  InType input_data;
 
   void SetUp() override {
     // Пятидиагональная матрица 2000x2000
     const int n = 2000;
 
-    CCSMatrix A;
-    A.rows = n;
-    A.cols = n;
-    A.col_ptr.resize(n + 1, 0);
+    CCSMatrix a;
+    a.rows = n;
+    a.cols = n;
+    a.col_ptr.resize(n + 1, 0);
     std::vector<int> row_indices;
     std::vector<double> values;
 
@@ -32,25 +33,25 @@ class CCSMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
           values.push_back(1.0);
         }
       }
-      A.col_ptr[col + 1] = row_indices.size();
+      a.col_ptr[col + 1] = static_cast<int>(row_indices.size());
     }
 
-    A.row_indices = std::move(row_indices);
-    A.values = std::move(values);
+    a.row_indices = std::move(row_indices);
+    a.values = std::move(values);
 
-    CCSMatrix B = A;
+    CCSMatrix b = a;
 
-    input_data_ = std::make_pair(A, B);
+    input_data = std::make_pair(a, b);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     // Минимальная проверка корректности
     return output_data.rows > 0 && output_data.cols > 0 &&
-           output_data.col_ptr.size() == static_cast<size_t>(output_data.cols + 1);
+           static_cast<int>(output_data.col_ptr.size()) == output_data.cols + 1;
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 
