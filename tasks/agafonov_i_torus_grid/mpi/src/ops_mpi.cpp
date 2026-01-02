@@ -18,14 +18,9 @@ bool TorusGridTaskMPI::ValidationImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
   auto data = GetInput();
-  if (data.source_rank < 0 || data.source_rank >= world_size || data.dest_rank < 0 || data.dest_rank >= world_size) {
-    return false;
-  }
 
-  int dims = static_cast<int>(std::sqrt(world_size));
-  return dims * dims == world_size;
+  return (data.source_rank >= 0 && data.source_rank < world_size && data.dest_rank >= 0 && data.dest_rank < world_size);
 }
-
 bool TorusGridTaskMPI::PreProcessingImpl() {
   GetOutput() = 0;
   return true;

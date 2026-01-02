@@ -2,8 +2,6 @@
 
 #include <gtest/gtest.h>
 
-#include <vector>
-
 #include "agafonov_i_torus_grid/common/include/common.hpp"
 #include "task/include/task.hpp"
 
