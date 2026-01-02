@@ -63,7 +63,7 @@
 - 6 cores, 12 treads.
 - OS: Windows 11, 25Н2 version
 - compiler: clang version 21.1.0 build type Release
-- Data: Генерация матрицы 6000*6000.
+- Data: Генерация матрицы 8000*8000.
 
 ## 7. Results and Discussion
 
