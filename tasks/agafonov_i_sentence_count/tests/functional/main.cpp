@@ -59,16 +59,20 @@ TEST_P(SentenceCountFuncTests, RunSentenceCountFuncTests) {
 
 const std::array<TestType, 2> kTestParams = {std::make_tuple(1, "test_1"), std::make_tuple(2, "test_2")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<SentenceCountMPI, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count),
-    ppc::util::AddFuncTask<SentenceCountSEQ, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count));
+const auto kMpiTasks =
+    ppc::util::AddFuncTask<SentenceCountMPI, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count);
+const auto kSeqTasks =
+    ppc::util::AddFuncTask<SentenceCountSEQ, InType>(kTestParams, PPC_SETTINGS_agafonov_i_sentence_count);
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+const auto kMpiValues = ppc::util::ExpandToValues(kMpiTasks);
+const auto kSeqValues = ppc::util::ExpandToValues(kSeqTasks);
 
 const auto kPerfTestName = SentenceCountFuncTests::PrintTestParam;
+// NOLINTNEXTLINE
+INSTANTIATE_TEST_SUITE_P(MPI, SentenceCountFuncTests, kMpiValues, kPerfTestName);
 
 // NOLINTNEXTLINE
-INSTANTIATE_TEST_SUITE_P(SentenceCountFuncTests, SentenceCountFuncTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(SEQ, SentenceCountFuncTests, kSeqValues, kPerfTestName);
 
 }  // namespace
 
