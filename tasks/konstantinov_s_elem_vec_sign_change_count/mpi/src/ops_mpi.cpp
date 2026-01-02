@@ -61,7 +61,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     sendbuf = new EType[elemcount];
     std::memcpy(sendbuf, input.data(), input.size() * sizeof(EType));
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
-    step = (elemcount + 1) / pcount;
+    step = (elemcount + pcount - 1) / pcount;
     rem = elemcount - (step * (pcount - 1));
   }
   if (step < 2) {
@@ -76,6 +76,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   EType *recbuf = nullptr;
 
   if (rank == 0) {
+    //std::cout<<elemcount<<" "<<step<<" "<<step*(pcount-1)<<" "<<rem<<std::endl;
     sendcounts = new int[pcount];
     displs = new int[pcount];
     sendcounts[0] = 0;  // на корень не шлём
