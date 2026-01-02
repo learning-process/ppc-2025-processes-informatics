@@ -2,6 +2,8 @@
 
 #include <mpi.h>
 
+#include <vector>
+
 #include "potashnik_m_short_ways_bellford/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -24,11 +26,11 @@ class PotashnikMShortWaysBellfordMPI : public BaseTask {
 inline void BellmanFordAlgoIterationMpi(const Graph &g, const std::vector<int> &dist, std::vector<int> &dist_next,
                                         int start, int end) {
   dist_next = dist;
-  for (int u = start; u < end; u++) {
-    if (dist[u] == 1e9) {
+  for (int uidx = start; uidx < end; uidx++) {
+    if (dist[uidx] == 1e9) {
       continue;
     }
-    IterateThroughVertex(g, u, dist, dist_next);
+    IterateThroughVertex(g, uidx, dist, dist_next);
   }
 }
 

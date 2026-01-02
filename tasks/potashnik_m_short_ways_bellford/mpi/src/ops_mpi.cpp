@@ -1,9 +1,6 @@
 #include "potashnik_m_short_ways_bellford/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
 #include <cmath>
-#include <string>
 #include <vector>
 
 #include "potashnik_m_short_ways_bellford/common/include/common.hpp"

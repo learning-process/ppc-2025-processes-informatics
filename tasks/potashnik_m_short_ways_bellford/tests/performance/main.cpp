@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <string>
-#include <tuple>
+#include <cstddef>
+#include <vector>
 
 #include "potashnik_m_short_ways_bellford/common/include/common.hpp"
 #include "potashnik_m_short_ways_bellford/mpi/include/ops_mpi.hpp"
@@ -21,7 +21,7 @@ class PotashnikMShortWaysBellfordPerfTests : public ppc::util::BaseRunPerfTests<
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::vector<int> res_dist = output_data;
+    const std::vector<int> &res_dist = output_data;
     potashnik_m_short_ways_bellford::Graph g = input_data_;
 
     int source = 0;

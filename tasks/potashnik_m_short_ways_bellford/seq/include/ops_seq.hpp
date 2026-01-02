@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "potashnik_m_short_ways_bellford/common/include/common.hpp"
 #include "task/include/task.hpp"
 
@@ -22,11 +24,11 @@ class PotashnikMShortWaysBellfordSEQ : public BaseTask {
 inline void BellmanFordAlgoIterationSeq(const Graph &g, const std::vector<int> &dist, std::vector<int> &dist_next) {
   int n = g.n;
   dist_next = dist;
-  for (int u = 0; u < n; u++) {
-    if (dist[u] == 1e9) {
+  for (int uidx = 0; uidx < n; uidx++) {
+    if (dist[uidx] == 1e9) {
       continue;
     }
-    IterateThroughVertex(g, u, dist, dist_next);
+    IterateThroughVertex(g, uidx, dist, dist_next);
   }
 }
 

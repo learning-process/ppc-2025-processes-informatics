@@ -42,10 +42,10 @@ class Graph {
     }
   }
 
-  int Begin(int u) const {
+  [[nodiscard]] int Begin(int u) const {
     return row_ptr[u];
   }
-  int End(int u) const {
+  [[nodiscard]] int End(int u) const {
     return row_ptr[u + 1];
   }
 };
@@ -56,33 +56,31 @@ inline void IterateThroughVertex(const Graph &g, int u, const std::vector<int> &
     int w = g.weights[i];
 
     int new_dist = dist[u] + w;
-    if (new_dist < dist_out[v]) {
-      dist_out[v] = new_dist;
-    }
+    dist_out[v] = std::min(new_dist, dist_out[v]);
   }
 }
 
 inline Graph GenerateGraph(int n) {
   Graph g(n);
-  std::vector<int> src, dst, w;
+  std::vector<int> src;
+  std::vector<int> dst;
+  std::vector<int> w;
   int layers = static_cast<int>(std::sqrt(n));
-  if (layers < 1) {
-    layers = 1;
-  }
+  layers = std::max(layers, 1);
   int layer_size = n / layers;
-  for (int l = 0; l < layers - 1; l++) {
-    int start_u = l * layer_size;
-    int end_u = (l + 1) * layer_size;
-    int start_v = (l + 1) * layer_size;
-    int end_v = (l + 2) * layer_size;
+  for (int lidx = 0; lidx < layers - 1; lidx++) {
+    int start_u = lidx * layer_size;
+    int end_u = (lidx + 1) * layer_size;
+    int start_v = (lidx + 1) * layer_size;
+    int end_v = (lidx + 2) * layer_size;
     if (end_v > n) {
       end_v = n;
     }
-    for (int u = start_u; u < end_u; u++) {
-      for (int v = start_v; v < end_v; v++) {
-        src.push_back(u);
-        dst.push_back(v);
-        int weight = (u * 13 + v * 7) % 10 + 1;
+    for (int uidx = start_u; uidx < end_u; uidx++) {
+      for (int vidx = start_v; vidx < end_v; vidx++) {
+        src.push_back(uidx);
+        dst.push_back(vidx);
+        int weight = ((uidx * 13 + vidx * 7) % 10) + 1;
         w.push_back(weight);
       }
     }

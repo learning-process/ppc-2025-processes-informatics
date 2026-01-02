@@ -12,7 +12,6 @@
 #include "potashnik_m_short_ways_bellford/mpi/include/ops_mpi.hpp"
 #include "potashnik_m_short_ways_bellford/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace potashnik_m_short_ways_bellford {
 
@@ -30,7 +29,7 @@ class PotashnikMShortWaysBellfordFuncTests : public ppc::util::BaseRunFuncTests<
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    std::vector<int> res_dist = output_data;
+    const std::vector<int> &res_dist = output_data;
     potashnik_m_short_ways_bellford::Graph g = input_data_;
 
     int source = 0;
