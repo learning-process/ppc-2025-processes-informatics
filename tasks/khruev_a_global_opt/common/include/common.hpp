@@ -65,8 +65,8 @@ inline void d2xy(double t, double &x, double &y) {
   // Порядок кривой N = 32. Всего точек 2^64 (влезает в uint64_t).
   // Масштабируем t [0, 1] в целое число s [0, 2^64 - 1]
   // Используем (2^64 - 1) как множитель.
-  const uint64_t max_dist = static_cast<uint64_t>(-1);  // Все биты 1
-  const double two_to_64 = ldexp(1.0, 64);              // Exactly 2^64 as double
+  const uint64_t max_dist = static_cast<uint64_t>(-1);
+  const double two_to_64 = ldexp(1.0, 64);
   double val = t * two_to_64;
   uint64_t s;
   if (val >= two_to_64) {
@@ -100,18 +100,25 @@ inline void d2xy(double t, double &x, double &y) {
 }
 
 inline double target_function(int id, double x, double y) {
-  // x, y приходят из [0, 1]x[0, 1], нужно масштабировать внутри если надо
   if (id == 1) {
-    // Простая яма (x-0.5)^2 + (y-0.5)^2
+    // квадратичная
     return (x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5);
-  }
-  if (id == 2) {
+  } else if (id == 2) {
     // Rastrigin-like (многоэкстремальная)
     // Масштабируем [0,1] -> [-2, 2] для наглядности
     double sx = (x - 0.5) * 4.0;
     double sy = (y - 0.5) * 4.0;
     return (sx * sx - 10 * std::cos(2 * 3.14159 * sx)) + (sy * sy - 10 * std::cos(2 * 3.14159 * sy)) + 20;
+  } else if (id == 3) {
+    // BoothFunc
+    const double t1 = x + (2.0 * y) - 7.0;
+    const double t2 = (2.0 * x) + y - 5.0;
+    return (t1 * t1) + (t2 * t2);
+  } else if (id == 4) {
+    // MatyasFunc
+    return (0.26 * ((x * x) + (y * y))) - (0.48 * x * y);
   }
+
   return 0.0;
 }
 
