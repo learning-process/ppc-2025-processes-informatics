@@ -40,7 +40,8 @@ bool GonozovLSimpleIterationMethodSEQ::PreProcessingImpl() {
 
 namespace {
 void CalculatingNewApproximations(std::vector<double> &matrix, std::vector<double> &previous_approximations,
-                                  std::vector<double> &current_approximations, int number_unknowns_) {
+                                  std::vector<double> &current_approximations, int number_unknowns_,
+                                  std::vector<double> &b) {
   for (int i = 0; i < number_unknowns_; i++) {
     double sum = 0.0;
     // Суммируем все недиагональные элементы
@@ -55,15 +56,16 @@ void CalculatingNewApproximations(std::vector<double> &matrix, std::vector<doubl
   }
 }
 
-int ConvergenceCheck(std::vector<double> &current_approximations, std::vector<double> &previous_approximations) {
+int ConvergenceCheck(std::vector<double> &current_approximations, std::vector<double> &previous_approximations,
+                     int number_unknowns) {
   int converged = 0;
-        for (int i = 0; i < number_unknowns; i++) {
-            double diff = fabs(current_approximations[i] - previous_approximations[i]);
-            double norm = fabs(current_approximations[i]);
-            if (diff < 0.00001 * (norm + 1e-10)) {
-                converged++;
-            }
-        }
+  for (int i = 0; i < number_unknowns; i++) {
+    double diff = fabs(current_approximations[i] - previous_approximations[i]);
+    double norm = fabs(current_approximations[i]);
+    if (diff < 0.00001 * (norm + 1e-10)) {
+      converged++;
+    }
+  }
   return converged;
 }
 }  // namespace
@@ -84,13 +86,13 @@ bool GonozovLSimpleIterationMethodSEQ::RunImpl() {
   // Основной цикл
   for (int iter = 0; iter < max_number_iteration; iter++) {
     // Для каждой переменной вычисляем новое приближение
-    CalculatingNewApproximations(matrix, previous_approximations, current_approximations, number_unknowns_);
+    CalculatingNewApproximations(matrix, previous_approximations, current_approximations, number_unknowns_, b);
 
-        // Проверка сходимости
-        int converged = ConvergenceCheck(current_approximations, previous_approximations);
+    // Проверка сходимости
+    int converged = ConvergenceCheck(current_approximations, previous_approximations, number_unknowns);
 
-        // Если все переменные сошлись
-        if (converged == number_unknowns_) {
+    // Если все переменные сошлись
+    if (converged == number_unknowns_) {
       break;
     }
 
