@@ -2,8 +2,7 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-#include <cmath>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -35,7 +34,7 @@ int CountWordsInChunk(const std::vector<char> &data, int valid_size) {
     }
   }
 
-  if (in_word && valid_size < static_cast<int>(data.size()) && IsTokenChar(data[valid_size])) {
+  if (in_word && static_cast<size_t>(valid_size) < data.size() && IsTokenChar(data[valid_size])) {
     count--;
   }
 
@@ -96,9 +95,7 @@ bool VolkovACountWordLineMPI::RunImpl() {
   }
 
   size_t remainder = input_str.size() % static_cast<size_t>(world_size);
-
   size_t padding = (static_cast<size_t>(world_size) - remainder) % static_cast<size_t>(world_size);
-
   input_str.append(padding + static_cast<size_t>(world_size), ' ');
 
   int chunk_size = static_cast<int>(input_str.size() / static_cast<size_t>(world_size));

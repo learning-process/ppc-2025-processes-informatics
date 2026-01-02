@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <array>
 #include <cctype>
@@ -69,7 +68,8 @@ TEST_P(VolkovACountWordLineFuncTests, CountingLogic) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 29> kFixedTests = {{{"simple test", 2},
+const std::array<TestType, 30> kFixedTests = {{{"a", 1},
+                                               {"simple test", 2},
                                                {"one two three", 3},
                                                {"testing", 1},
                                                {"   leading space", 2},
@@ -99,14 +99,18 @@ const std::array<TestType, 29> kFixedTests = {{{"simple test", 2},
                                                {"longwordlongwordlongword", 1},
                                                {"ab cd ef gh ij kl mn op qr st uv wx yz", 13}}};
 
-const auto kTasks = std::tuple_cat(
-    ppc::util::AddFuncTask<VolkovACountWordLineMPI, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line),
-    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line));
+const auto kTasksMPI =
+    ppc::util::AddFuncTask<VolkovACountWordLineMPI, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line);
+const auto kTasksSEQ =
+    ppc::util::AddFuncTask<VolkovACountWordLineSEQ, InType>(kFixedTests, PPC_SETTINGS_volkov_a_count_word_line);
 
-const auto kTestParams = ppc::util::ExpandToValues(kTasks);
+const auto kTestParamsMPI = ppc::util::ExpandToValues(kTasksMPI);
+const auto kTestParamsSEQ = ppc::util::ExpandToValues(kTasksSEQ);
+
 const auto kTestNameFunc = VolkovACountWordLineFuncTests::PrintTestName;
 
-INSTANTIATE_TEST_SUITE_P(VolkovWordCount, VolkovACountWordLineFuncTests, kTestParams, kTestNameFunc);
+INSTANTIATE_TEST_SUITE_P(Volkov_mpi_WordCount, VolkovACountWordLineFuncTests, kTestParamsMPI, kTestNameFunc);
+INSTANTIATE_TEST_SUITE_P(Volkov_seq_WordCount, VolkovACountWordLineFuncTests, kTestParamsSEQ, kTestNameFunc);
 
 }  // namespace
 }  // namespace volkov_a_count_word_line
