@@ -54,7 +54,7 @@ class ChyokotovConvexHullFindingMPI : public BaseTask {
       int rank, int size, const std::vector<std::vector<std::pair<int, int>>> &local_hulls);
 
   static std::vector<std::vector<std::pair<int, int>>> ReconstructHulls(const std::vector<int> &hull_sizes,
-                                                                 const std::vector<int> &flat_points);
+                                                                        const std::vector<int> &flat_points);
   static std::vector<std::vector<std::pair<int, int>>> BroadcastResultToAllRanks(
       int rank, const std::vector<std::vector<std::pair<int, int>>> &global_hulls_on_rank0);
 };
