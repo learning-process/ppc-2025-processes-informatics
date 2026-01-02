@@ -13,22 +13,22 @@
 
 namespace khruev_a_global_opt {
 
-
-using TestParams = std::tuple<int, double, double, double, double, double>;
-
-class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestParams> {
+class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestParams &test_param) {
-    
-    return "FuncID_" + std::to_string(std::get<0>(test_param)) + 
-           "_Min_" + std::to_string(std::get<5>(test_param));
+  static std::string PrintTestParam(const TestType &test_param) {
+    // Берём параметры из кортежа, который генерирует ExpandToValues
+    // В структуре GTest это обычно 3-й элемент
+    auto params = std::get<2>(test_param.param);
+    int func_id = std::get<0>(params);
+
+    // Вместо double просто используем индекс, чтобы избежать точек и дубликатов
+    return "Func_" + std::to_string(func_id) + "_Iter_" + std::to_string(test_param.index);
   }
 
  protected:
   void SetUp() override {
-    
     const auto &param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    
+
     input_data_.func_id = std::get<0>(param);
     input_data_.ax = std::get<1>(param);
     input_data_.bx = std::get<2>(param);
@@ -36,14 +36,14 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     input_data_.by = std::get<4>(param);
     input_data_.epsilon = 0.0001;
     input_data_.max_iter = 5000;
-    input_data_.r = 2.5;         
+    input_data_.r = 2.5;
 
     expected_min_ = std::get<5>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
     // Проверяем, что найденное значение функции близко к теоретическому минимуму
-    const double tolerance = 1e-2; 
+    const double tolerance = 1e-2;
     return std::abs(output_data.value - expected_min_) < tolerance;
   }
 
@@ -65,23 +65,16 @@ TEST_P(KhruevAGlobalOptFuncTests, CorrectMinimumFound) {
 // Определяем кейсы для тестов
 // 1. Параболоид (ID=1) в [0, 1]x[0, 1]. Минимум в (0.5, 0.5) = 0.0
 // 2. Растригин (ID=2) в [0, 1]x[0, 1]. Минимум в (0.5, 0.5) = 0.0 (так как мы сдвигали функцию)
-// 3. Параболоид со смещенными границами [-0.5, 0.5]. 
+// 3. Параболоид со смещенными границами [-0.5, 0.5].
 //    У нас функция target_function(id=1) ожидает, что минимум в (0.5, 0.5) в локальных координатах.
 //    Если мы хотим протестировать общие границы, нужно убедиться, что target_function это поддерживает.
-//    В моей реализации target_function работает с реальными координатами. 
+//    В моей реализации target_function работает с реальными координатами.
 //    Параболоид: (x-0.5)^2 + (y-0.5)^2. Минимум всегда в 0.5, 0.5.
 //    Если границы [0, 1], точка 0.5 попадает. Если границы [0.6, 1.0], минимум будет на границе (0.6).
 
-const std::vector<TestParams> kTestCases = {
-    // ID, ax, bx, ay, by, ExpectedMin
-    // Простой параболоид, минимум внутри области
-    std::make_tuple(1, 0.0, 1.0, 0.0, 1.0, 0.0),
-    // Параболоид, минимум на границе (область смещена вправо)
-    // x in [0.6, 1.0]. (0.6 - 0.5)^2 = 0.01. y in [0.0, 1.0] -> term 0. Total 0.01
-    std::make_tuple(1, 0.6, 1.0, 0.0, 1.0, 0.01),
-    // Растригин (многоэкстремальная), минимум внутри
-    std::make_tuple(2, 0.0, 1.0, 0.0, 1.0, 0.0)
-};
+const std::array<TestParams, 3> kTestCases = {std::make_tuple(1, 0.0, 1.0, 0.0, 1.0, 0.0),
+                                              std::make_tuple(1, 0.6, 1.0, 0.0, 1.0, 0.01),
+                                              std::make_tuple(2, 0.0, 1.0, 0.0, 1.0, 0.0)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KhruevAGlobalOptMPI, InType>(kTestCases, PPC_SETTINGS_khruev_a_global_opt),
