@@ -16,7 +16,7 @@ class VolkovARadixBatcherPerfTests : public ppc::util::BaseRunPerfTests<InType, 
   OutType perf_expected;
 
   void SetUp() override {
-    size_t count = 2000000;  // 2 миллиона элементов
+    size_t count = 2000000;
     perf_input.resize(count);
 
     double sign = 1.0;
