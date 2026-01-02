@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -26,7 +27,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
     data.push_back(dist(rng));
   }
 
-  std::sort(data.begin(), data.end());
+  std::ranges::sort(data);
 
   std::int64_t checksum = 0;
   for (int v : data) {

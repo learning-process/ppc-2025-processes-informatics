@@ -35,48 +35,43 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void odd_even_merge(std::vector<int> &a, int lo, int n, int r) {
-  if (n > 1) {
-    int m = n / 2;
-    odd_even_merge(a, lo, m, 2 * r);
-    odd_even_merge(a, lo + r, m, 2 * r);
-    for (int i = lo + r; i + r < lo + n; i += 2 * r) {
-      if (a[i] > a[i + r]) {
-        std::swap(a[i], a[i + r]);
+static void OddEvenMergeNetwork(std::vector<int> &a, int n) {
+  for (int p = 1; p < n; p <<= 1) {
+    for (int q = p; q > 0; q >>= 1) {
+      for (int i = 0; i < n; ++i) {
+        int j = i ^ q;
+        if (j > i) {
+          if ((i & p) == 0) {
+            if (a[i] > a[j]) {
+              std::swap(a[i], a[j]);
+            }
+          } else {
+            if (a[i] < a[j]) {
+              std::swap(a[i], a[j]);
+            }
+          }
+        }
       }
     }
   }
 }
 
-void odd_even_merge_sort(std::vector<int> &a, int lo, int n) {
-  if (n > 1) {
-    int m = n / 2;
-    odd_even_merge_sort(a, lo, m);
-    odd_even_merge_sort(a, lo + m, m);
-    odd_even_merge(a, lo, n, 1);
-  }
-}
-
-void BatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
-  const std::size_t orig_n = a.size() + b.size();
+static void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out) {
+  const std::size_t orig_n = left.size() + right.size();
   out.clear();
   out.reserve(orig_n);
-  out.insert(out.end(), a.begin(), a.end());
-  out.insert(out.end(), b.begin(), b.end());
-
-  std::size_t n = out.size();
-  if (n == 0) {
+  out.insert(out.end(), left.begin(), left.end());
+  out.insert(out.end(), right.begin(), right.end());
+  if (orig_n == 0) {
     return;
   }
   std::size_t pow2 = 1;
-  while (pow2 < n) {
+  while (pow2 < orig_n) {
     pow2 <<= 1;
   }
   const int sentinel = std::numeric_limits<int>::max();
   out.resize(pow2, sentinel);
-
-  odd_even_merge_sort(out, 0, static_cast<int>(pow2));
-
+  OddEvenMergeNetwork(out, static_cast<int>(pow2));
   out.resize(orig_n);
 }
 
