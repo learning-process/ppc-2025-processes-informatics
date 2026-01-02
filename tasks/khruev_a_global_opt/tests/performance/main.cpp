@@ -14,11 +14,11 @@ class KhruevAGlobalOptPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   InType input_data_;
 
   void SetUp() override {
-    input_data_.func_id = 2;
-    input_data_.ax = 0.0;
-    input_data_.bx = 1.0;
-    input_data_.ay = 0.0;
-    input_data_.by = 1.0;
+    input_data_.func_id = 1;
+    input_data_.ax = -7.0;
+    input_data_.bx = 7.0;
+    input_data_.ay = -7.0;
+    input_data_.by = 7.0;
 
     input_data_.epsilon = 1e-7;
     input_data_.max_iter = 1000;
