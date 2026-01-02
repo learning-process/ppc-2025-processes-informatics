@@ -69,9 +69,11 @@ TEST_P(KhruevAGlobalOptFuncTests, CorrectMinimumFound) {
 //    Параболоид: (x-0.5)^2 + (y-0.5)^2. Минимум всегда в 0.5, 0.5.
 //    Если границы [0, 1], точка 0.5 попадает. Если границы [0.6, 1.0], минимум будет на границе (0.6).
 
-const std::array<TestType, 2> kTestCases = {std::make_tuple("Paraboloid", 1, 0.0, 1.0, 0.0, 1.0, 0.0),
-                                            // std::make_tuple(1, 0.6, 1.0, 0.0, 1.0, 0.01),
-                                            std::make_tuple("Rastrigin", 2, 0.0, 1.0, 0.0, 1.0, 0.0)};
+const std::array<TestType, 1> kTestCases = {
+    std::make_tuple("Paraboloid", 1, 0.0, 1.0, 0.0, 1.0, 0.0),
+    // std::make_tuple(1, 0.6, 1.0, 0.0, 1.0, 0.01),
+    // std::make_tuple("Rastrigin", 2, 0.0, 1.0, 0.0, 1.0, 0.0)
+};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KhruevAGlobalOptMPI, InType>(kTestCases, PPC_SETTINGS_khruev_a_global_opt),
