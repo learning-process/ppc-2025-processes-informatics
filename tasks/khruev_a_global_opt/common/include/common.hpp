@@ -117,6 +117,6 @@ struct Trial {
   bool operator<(const Trial &other) const {
     return x < other.x;
   }
-};
+};  //
 
 }  // namespace khruev_a_global_opt
