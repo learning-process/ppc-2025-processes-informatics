@@ -154,7 +154,7 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ConvexHullAndrew
     hull.push_back(p);
   }
 
-  int lower_size = hull.size();
+  size_t lower_size = hull.size();
   for (const auto &p : std::ranges::reverse_view(sorted_points)) {
     while (hull.size() > lower_size && Cross(hull[hull.size() - 2], hull.back(), p) >= 0) {
       hull.pop_back();
