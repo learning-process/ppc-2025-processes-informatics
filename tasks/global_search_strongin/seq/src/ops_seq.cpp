@@ -5,11 +5,14 @@
 #include <cstddef>
 #include <limits>
 #include <optional>
+#include <ranges>
 
 #include "global_search_strongin/common/include/common.hpp"
 
 namespace global_search_strongin {
 namespace {
+
+constexpr double kNearEps = 1e-12;
 
 double Evaluate(const InType &input, double x) {
   return input.objective ? input.objective(x) : 0.0;
@@ -44,6 +47,7 @@ bool StronginSearchSeq::ValidationImpl() {
 bool StronginSearchSeq::PreProcessingImpl() {
   points_.clear();
   const auto &input = GetInput();
+
   const SamplePoint left{.x = input.left, .value = Evaluate(input, input.left)};
   const SamplePoint right{.x = input.right, .value = Evaluate(input, input.right)};
   points_.push_back(left);
@@ -51,6 +55,7 @@ bool StronginSearchSeq::PreProcessingImpl() {
   if (!std::ranges::is_sorted(points_, Comparator)) {
     std::ranges::sort(points_, Comparator);
   }
+
   best_x_ = left.value < right.value ? left.x : right.x;
   best_value_ = std::min(left.value, right.value);
   iterations_done_ = 0;
@@ -59,14 +64,23 @@ bool StronginSearchSeq::PreProcessingImpl() {
 
 bool StronginSearchSeq::RunImpl() {
   const auto &input = GetInput();
+
   while (iterations_done_ < input.max_iterations) {
-    const auto interval_index = SelectInterval();
+    if (points_.size() < 2) {
+      break;
+    }
+
+    const double max_slope = ComputeMaxSlope();
+    const double m = max_slope > 0.0 ? input.reliability * max_slope : 1.0;
+    const auto interval_index = SelectInterval(m);
     if (!interval_index.has_value()) {
       break;
     }
-    if (!InsertMidpoint(input, *interval_index, input.epsilon)) {
+
+    if (!InsertPoint(input, *interval_index, input.epsilon, m)) {
       break;
     }
+
     ++iterations_done_;
   }
 
@@ -82,36 +96,60 @@ bool StronginSearchSeq::PostProcessingImpl() {
   return true;
 }
 
-std::optional<std::size_t> StronginSearchSeq::SelectInterval() const {
+double StronginSearchSeq::ComputeMaxSlope() const {
+  if (points_.size() < 2) {
+    return 0.0;
+  }
+  double max_slope = 0.0;
+  for (std::size_t i = 1; i < points_.size(); ++i) {
+    const auto &left = points_[i - 1];
+    const auto &right = points_[i];
+    const double delta = right.x - left.x;
+    if (delta <= 0.0) {
+      continue;
+    }
+    const double slope = std::fabs(right.value - left.value) / delta;
+    max_slope = std::max(max_slope, slope);
+  }
+  return max_slope;
+}
+
+std::optional<std::size_t> StronginSearchSeq::SelectInterval(double m) const {
   if (points_.size() < 2) {
     return std::nullopt;
   }
-  double best_interval_score = std::numeric_limits<double>::infinity();
-  double best_interval_length = 0.0;
-  std::size_t best_interval_index = 1;
+
+  double best_characteristic = -std::numeric_limits<double>::infinity();
+  std::optional<std::size_t> best_index = std::nullopt;
 
   for (std::size_t i = 1; i < points_.size(); ++i) {
-    const double length = points_[i].x - points_[i - 1].x;
-    if (length <= 0.0) {
+    const auto &left = points_[i - 1];
+    const auto &right = points_[i];
+    const double delta = right.x - left.x;
+    if (delta <= 0.0) {
       continue;
     }
-    const double score = std::min(points_[i - 1].value, points_[i].value);
-    const bool better_score = score < best_interval_score;
-    const bool longer_equal_score = std::fabs(score - best_interval_score) < 1e-12 && length > best_interval_length;
-    if (better_score || longer_equal_score) {
-      best_interval_score = score;
-      best_interval_length = length;
-      best_interval_index = i;
+
+    const double diff = right.value - left.value;
+    const double characteristic = (m * delta) + ((diff * diff) / (m * delta)) - (2.0 * (right.value + left.value));
+
+    if (characteristic > best_characteristic) {
+      best_characteristic = characteristic;
+      best_index = i;
     }
   }
 
-  if (!std::isfinite(best_interval_score)) {
+  if (!std::isfinite(best_characteristic)) {
     return std::nullopt;
   }
-  return best_interval_index;
+  return best_index;
 }
 
-bool StronginSearchSeq::InsertMidpoint(const InType &input, std::size_t interval_index, double epsilon) {
+bool StronginSearchSeq::InsertPoint(const InType &input, std::size_t interval_index, double epsilon, double m) {
+  if (interval_index == 0 || interval_index >= points_.size()) {
+    return false;
+  }
+
   const SamplePoint &left = points_[interval_index - 1];
   const SamplePoint &right = points_[interval_index];
   const double interval_length = right.x - left.x;
@@ -119,28 +157,34 @@ bool StronginSearchSeq::InsertMidpoint(const InType &input, std::size_t interval
     return false;
   }
 
-  const double midpoint = 0.5 * (left.x + right.x);
-  if (midpoint <= input.left || midpoint >= input.right) {
+  double x_new = (0.5 * (left.x + right.x)) - ((right.value - left.value) / (2.0 * m));
+  x_new = std::clamp(x_new, input.left, input.right);
+
+  if (x_new <= left.x + kNearEps || x_new >= right.x - kNearEps) {
+    x_new = 0.5 * (left.x + right.x);
+  }
+
+  if (x_new <= input.left || x_new >= input.right) {
     return false;
   }
 
-  const bool already_used = std::ranges::any_of(points_, [midpoint](const SamplePoint &point) {
-    return std::fabs(point.x - midpoint) < std::numeric_limits<double>::epsilon();
-  });
+  const bool already_used =
+      std::ranges::any_of(points_, [x_new](const SamplePoint &p) { return std::fabs(p.x - x_new) < kNearEps; });
   if (already_used) {
     return false;
   }
 
-  const double value = Evaluate(input, midpoint);
+  const double value = Evaluate(input, x_new);
   if (value < best_value_) {
     best_value_ = value;
-    best_x_ = midpoint;
+    best_x_ = x_new;
   }
 
-  SamplePoint new_point{.x = midpoint, .value = value};
+  SamplePoint new_point{.x = x_new, .value = value};
   auto insert_it = std::ranges::upper_bound(points_, new_point, Comparator);
   points_.insert(insert_it, new_point);
   return true;
 }
 
 }  // namespace global_search_strongin
+
