@@ -14,7 +14,7 @@
 namespace frolova_s_mult_int_trapez {
 
 FrolovaSMultIntTrapezMPI::FrolovaSMultIntTrapezMPI(const InType &in)
-    : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals), result_() {
+    : BaseTask(), limits_(in.limits), number_of_intervals_(in.number_of_intervals) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
