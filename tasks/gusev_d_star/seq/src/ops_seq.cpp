@@ -27,7 +27,6 @@ bool GusevDStarSEQ::RunImpl() {
 
   volatile int local_res = 0;
 
-  // O(N^3) без лишних аллокаций
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       for (int k = 0; k < n; k++) {
