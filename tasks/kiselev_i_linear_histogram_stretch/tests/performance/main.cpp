@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <cstddef>
-#include <random>
-#include <vector>
+#include <cstdint>
+// #include <vector>
 
 #include "kiselev_i_linear_histogram_stretch/common/include/common.hpp"
 #include "kiselev_i_linear_histogram_stretch/mpi/include/ops_mpi.hpp"
@@ -22,17 +22,12 @@ class KiselevIRunPerfTestProcesses3 : public ppc::util::BaseRunPerfTests<InType,
     input_data_.height = kHeight;
     input_data_.pixels.resize(image_size);
 
-    // Генерация псевдослучайного изображения
-    std::mt19937 gen(123);
-    std::uniform_int_distribution<int> dist(100, 150);
-
-    for (std::size_t i = 0; i < image_size; ++i) {
-      input_data_.pixels[i] = static_cast<uint8_t>(dist(gen));
+    for (std::size_t index = 0; index < image_size; ++index) {
+      input_data_.pixels[index] = static_cast<uint8_t>(100 + (index % 51));
     }
   }
 
   bool CheckTestOutputData([[maybe_unused]] OutType &output_data) override {
-    // Для perf-тестов корректность не проверяем
     return true;
   }
 

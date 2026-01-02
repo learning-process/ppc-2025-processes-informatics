@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "kiselev_i_linear_histogram_stretch/common/include/common.hpp"
 #include "task/include/task.hpp"
 

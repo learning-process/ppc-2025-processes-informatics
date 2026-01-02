@@ -1,6 +1,9 @@
 #include "kiselev_i_linear_histogram_stretch/seq/include/ops_seq.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <vector>
 
@@ -29,22 +32,17 @@ bool KiselevITestTaskSEQ::PreProcessingImpl() {
 bool KiselevITestTaskSEQ::RunImpl() {
   const auto &input = GetInput().pixels;
   auto &output = GetOutput();
+
   uint8_t min_val = std::numeric_limits<uint8_t>::max();
   uint8_t max_val = std::numeric_limits<uint8_t>::min();
 
   for (uint8_t value : input) {
-    if (value < min_val) {
-      min_val = value;
-    }
-    if (value > max_val) {
-      max_val = value;
-    }
+    min_val = std::min(min_val, value);
+    max_val = std::max(max_val, value);
   }
 
   if (min_val == max_val) {
-    for (std::size_t i = 0; i < input.size(); ++i) {
-      output[i] = input[i];
-    }
+    output = input;
     return true;
   }
 
@@ -52,8 +50,7 @@ bool KiselevITestTaskSEQ::RunImpl() {
 
   for (std::size_t i = 0; i < input.size(); ++i) {
     const double stretched = static_cast<double>(input[i] - min_val) * scale;
-
-    output[i] = static_cast<uint8_t>(stretched + 0.5);
+    output[i] = static_cast<uint8_t>(std::lround(stretched));
   }
 
   return true;

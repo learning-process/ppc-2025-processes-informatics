@@ -3,9 +3,10 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
-#include <vector>
+// #include <vector>
 
 #include "kiselev_i_linear_histogram_stretch/common/include/common.hpp"
 #include "kiselev_i_linear_histogram_stretch/mpi/include/ops_mpi.hpp"

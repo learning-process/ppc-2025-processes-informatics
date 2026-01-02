@@ -200,10 +200,10 @@ bool KiselevITestTaskMPI::RunImpl() {
 
   if (rank == root) {
     std::size_t shift = 0;
-    for (int i = 0; i < size; ++i) {
-      counts[i] = static_cast<int>(base + (i < static_cast<int>(extra) ? 1 : 0));
-      offsets[i] = static_cast<int>(shift);
-      shift += counts[i];
+    for (int index = 0; index < size; ++index) {
+      counts[index] = static_cast<int>(base + (index < static_cast<int>(extra) ? 1 : 0));
+      offsets[index] = static_cast<int>(shift);
+      shift += counts[index];
     }
   }
 
@@ -243,10 +243,10 @@ bool KiselevITestTaskMPI::RunImpl() {
     const double scale =
         255.0 / static_cast<double>(global_max - global_min);
 
-    for (std::size_t i = 0; i < local_pixels.size(); ++i) {
+    for (std::size_t index = 0; index < local_pixels.size(); ++index) {
       const double value =
-          static_cast<double>(local_pixels[i] - global_min) * scale;
-      local_pixels[i] = static_cast<uint8_t>(value + 0.5);
+          static_cast<double>(local_pixels[index] - global_min) * scale;
+      local_pixels[index] = static_cast<uint8_t>(value + 0.5);
     }
   }
 
