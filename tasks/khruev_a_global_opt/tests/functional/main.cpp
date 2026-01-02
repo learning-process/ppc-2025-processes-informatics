@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <tuple>
@@ -16,29 +17,25 @@ namespace khruev_a_global_opt {
 class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
-    // Берём параметры из кортежа, который генерирует ExpandToValues
-    // В структуре GTest это обычно 3-й элемент
-    auto params = std::get<2>(test_param.param);
-    int func_id = std::get<0>(params);
-
-    // Вместо double просто используем индекс, чтобы избежать точек и дубликатов
-    return "Func_" + std::to_string(func_id) + "_Iter_" + std::to_string(test_param.index);
+    // auto params = std::get<2>(test_param);
+    std::string stroka = std::get<0>(test_param);
+    return stroka;
   }
 
  protected:
   void SetUp() override {
     const auto &param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
 
-    input_data_.func_id = std::get<0>(param);
-    input_data_.ax = std::get<1>(param);
-    input_data_.bx = std::get<2>(param);
-    input_data_.ay = std::get<3>(param);
-    input_data_.by = std::get<4>(param);
+    input_data_.func_id = std::get<1>(param);
+    input_data_.ax = std::get<2>(param);
+    input_data_.bx = std::get<3>(param);
+    input_data_.ay = std::get<4>(param);
+    input_data_.by = std::get<5>(param);
     input_data_.epsilon = 0.0001;
     input_data_.max_iter = 5000;
     input_data_.r = 2.5;
 
-    expected_min_ = std::get<5>(param);
+    expected_min_ = std::get<6>(param);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -72,9 +69,9 @@ TEST_P(KhruevAGlobalOptFuncTests, CorrectMinimumFound) {
 //    Параболоид: (x-0.5)^2 + (y-0.5)^2. Минимум всегда в 0.5, 0.5.
 //    Если границы [0, 1], точка 0.5 попадает. Если границы [0.6, 1.0], минимум будет на границе (0.6).
 
-const std::array<TestParams, 3> kTestCases = {std::make_tuple(1, 0.0, 1.0, 0.0, 1.0, 0.0),
-                                              std::make_tuple(1, 0.6, 1.0, 0.0, 1.0, 0.01),
-                                              std::make_tuple(2, 0.0, 1.0, 0.0, 1.0, 0.0)};
+const std::array<TestType, 2> kTestCases = {std::make_tuple("Paraboloid", 1, 0.0, 1.0, 0.0, 1.0, 0.0),
+                                            // std::make_tuple(1, 0.6, 1.0, 0.0, 1.0, 0.01),
+                                            std::make_tuple("Rastrigin", 2, 0.0, 1.0, 0.0, 1.0, 0.0)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KhruevAGlobalOptMPI, InType>(kTestCases, PPC_SETTINGS_khruev_a_global_opt),

@@ -29,6 +29,7 @@ struct SearchResult {
 using InType = SearchData;
 using OutType = SearchResult;
 using BaseTask = ppc::task::Task<InType, OutType>;
+using TestType = std::tuple<std::string, int, double, double, double, double, double>;
 
 // 1. Кривая Гильберта: переводит t [0,1] -> (x, y) [0,1]x[0,1]
 inline void d2xy(double t, double &x, double &y) {

@@ -8,6 +8,10 @@ namespace khruev_a_global_opt {
 
 class KhruevAGlobalOptMPI : public BaseTask {
  public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kMPI;
+  }
+
   explicit KhruevAGlobalOptMPI(const InType &in);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;

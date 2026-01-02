@@ -9,6 +9,10 @@ namespace khruev_a_global_opt {
 
 class KhruevAGlobalOptSEQ : public BaseTask {
  public:
+  static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
+    return ppc::task::TypeOfTask::kSEQ;
+  }
+
   explicit KhruevAGlobalOptSEQ(const InType &in);
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
