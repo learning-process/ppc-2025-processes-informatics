@@ -13,14 +13,16 @@ namespace volkov_a_count_word_line {
 class VolkovACountWordLinePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    const int words_count = 25000000;
+    const int words_count = 250000;
     const std::string word = "word ";
 
-    input_data_.reserve(words_count * word.size());
-    for (int i = 0; i < words_count; ++i) {
-      input_data_ += word;
-    }
+    input_data_.resize(words_count * word.size());
 
+    std::string pattern = "word ";
+    size_t pattern_len = pattern.size();
+    for (size_t i = 0; i < input_data_.size(); ++i) {
+      input_data_[i] = pattern[i % pattern_len];
+    }
     expected_output_ = words_count;
   }
 

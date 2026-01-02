@@ -3,11 +3,14 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cmath>
+#include <string>
 #include <vector>
 
 #include "volkov_a_count_word_line/common/include/common.hpp"
 
 namespace volkov_a_count_word_line {
+
 namespace {
 
 bool IsTokenChar(char c) {
@@ -17,52 +20,42 @@ bool IsTokenChar(char c) {
   return is_alpha || is_digit || is_special;
 }
 
-int CountWordsInChunk(const std::vector<char> &data, char prev_char) {
-  if (data.empty()) {
-    return 0;
-  }
+int CountWordsInChunk(const std::vector<char> &data, int valid_size) {
+  int count = 0;
+  bool in_word = false;
 
-  enum class State : std::uint8_t { kInWord, kInSeparator };
-  int word_count = 0;
-
-  State current_state = IsTokenChar(prev_char) ? State::kInWord : State::kInSeparator;
-
-  for (const char c : data) {
-    if (current_state == State::kInSeparator) {
-      if (IsTokenChar(c)) {
-        word_count++;
-        current_state = State::kInWord;
+  for (int i = 0; i < valid_size; ++i) {
+    if (IsTokenChar(data[i])) {
+      if (!in_word) {
+        in_word = true;
+        count++;
       }
     } else {
-      if (!IsTokenChar(c)) {
-        current_state = State::kInSeparator;
-      }
+      in_word = false;
     }
   }
 
-  return word_count;
-}
-
-void PrepareScatterVArgs(int total_len, int world_size, std::vector<int> *send_counts, std::vector<int> *displs) {
-  const int base_chunk = total_len / world_size;
-  const int remainder = total_len % world_size;
-  int offset = 0;
-  for (int i = 0; i < world_size; ++i) {
-    (*send_counts)[i] = base_chunk + (i < remainder ? 1 : 0);
-    (*displs)[i] = offset;
-    offset += (*send_counts)[i];
+  if (in_word && valid_size < static_cast<int>(data.size()) && IsTokenChar(data[valid_size])) {
+    count--;
   }
+
+  return count;
 }
 
-char ExchangeBoundaryChars(int rank, int world_size, const std::vector<char> &local_data) {
-  char prev_char = ' ';
-  char my_last_char = local_data.empty() ? ' ' : local_data.back();
-  const int left_neighbor = (rank == 0) ? MPI_PROC_NULL : rank - 1;
-  const int right_neighbor = (rank == world_size - 1) ? MPI_PROC_NULL : rank + 1;
-
-  MPI_Sendrecv(&my_last_char, 1, MPI_CHAR, right_neighbor, 0, &prev_char, 1, MPI_CHAR, left_neighbor, 0, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
-  return prev_char;
+int CountWordsSeq(const std::string &str) {
+  int count = 0;
+  bool in_word = false;
+  for (char c : str) {
+    if (IsTokenChar(c)) {
+      if (!in_word) {
+        in_word = true;
+        count++;
+      }
+    } else {
+      in_word = false;
+    }
+  }
+  return count;
 }
 
 }  // namespace
@@ -87,36 +80,45 @@ bool VolkovACountWordLineMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  int total_len = 0;
-  if (rank == 0) {
-    total_len = static_cast<int>(GetInput().size());
-  }
-  MPI_Bcast(&total_len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  std::string &input_str = GetInput();
 
-  if (total_len == 0) {
+  if (input_str.empty()) {
     GetOutput() = 0;
     return true;
   }
 
-  const int base_chunk = total_len / world_size;
-  const int remainder = total_len % world_size;
-  const int my_count = base_chunk + (rank < remainder ? 1 : 0);
+  if (static_cast<size_t>(world_size) > input_str.size()) {
+    if (rank == 0) {
+      GetOutput() = CountWordsSeq(input_str);
+    }
+    MPI_Bcast(&GetOutput(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+    return true;
+  }
+
+  size_t remainder = input_str.size() % static_cast<size_t>(world_size);
+
+  size_t padding = (static_cast<size_t>(world_size) - remainder) % static_cast<size_t>(world_size);
+
+  input_str.append(padding + static_cast<size_t>(world_size), ' ');
+
+  int chunk_size = static_cast<int>(input_str.size() / static_cast<size_t>(world_size));
 
   std::vector<int> send_counts(world_size);
   std::vector<int> displs(world_size);
+
   if (rank == 0) {
-    PrepareScatterVArgs(total_len, world_size, &send_counts, &displs);
+    for (int i = 0; i < world_size; ++i) {
+      send_counts[i] = chunk_size + 1;
+      displs[i] = i * chunk_size;
+    }
   }
 
-  std::vector<char> local_data(my_count);
-  const char *send_buf = (rank == 0) ? GetInput().data() : nullptr;
+  std::vector<char> local_data(chunk_size + 1);
 
-  MPI_Scatterv(send_buf, (rank == 0 ? send_counts.data() : nullptr), (rank == 0 ? displs.data() : nullptr), MPI_CHAR,
-               local_data.data(), my_count, MPI_CHAR, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(input_str.data(), send_counts.data(), displs.data(), MPI_CHAR, local_data.data(), chunk_size + 1,
+               MPI_CHAR, 0, MPI_COMM_WORLD);
 
-  char prev_char = ExchangeBoundaryChars(rank, world_size, local_data);
-
-  int local_words = CountWordsInChunk(local_data, prev_char);
+  int local_words = CountWordsInChunk(local_data, chunk_size);
   int total_words = 0;
 
   MPI_Allreduce(&local_words, &total_words, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
