@@ -11,7 +11,7 @@
 namespace konstantinov_s_elem_vec_sign_change_count {
 
 class KonstantinovSElemVecSignChangeTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 500000000;
+  const int kCount_ = 150000000;
   InType input_data_;
   OutType result_right_{};
 

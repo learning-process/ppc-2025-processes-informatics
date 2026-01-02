@@ -76,7 +76,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   EType *recbuf = nullptr;
 
   if (rank == 0) {
-    //std::cout<<elemcount<<" "<<step<<" "<<step*(pcount-1)<<" "<<rem<<std::endl;
+    // std::cout<<elemcount<<" "<<step<<" "<<step*(pcount-1)<<" "<<rem<<std::endl;
     sendcounts = new int[pcount];
     displs = new int[pcount];
     sendcounts[0] = 0;  // на корень не шлём
@@ -93,7 +93,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   // существуют только буферы нужные получателям/отправителю, ненужные = nullptr (например sendbuf у некорней)
   // rank0: sendbuf, sendcounts, displs
   // rank1+: recbuf
-  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_SHORT, recbuf, rank == 0 ? 0 : chunksz, MPI_SHORT, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(sendbuf, sendcounts, displs, MPI_DOUBLE, recbuf, rank == 0 ? 0 : chunksz, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   // if(rank!=0){
   //   std::cout<<"RANK "<<rank<<" got: ";

@@ -33,7 +33,7 @@ bool KonstantinovSElemVecSignChangeSEQ::RunImpl() {
   const auto invec = GetInput();
   int res = 0;
   size_t iterations = invec.size() - 1;
-  const EType* v = invec.data();
+  const EType *v = invec.data();
   for (size_t i = 0; i < iterations; i++) {
     res += static_cast<int>((v[i] > 0) != (v[i + 1] > 0));  // + 1 если занки разные
   }
