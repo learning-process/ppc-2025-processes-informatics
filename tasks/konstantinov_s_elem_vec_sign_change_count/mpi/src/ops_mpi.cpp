@@ -28,6 +28,7 @@ bool KonstantinovSElemVecSignChangeMPI::PreProcessingImpl() {
 
 void KonstantinovSElemVecSignChangeMPI::CountSignChange(int &res, const EType *data, int start, int iterations) {
   for (int i = start; i < iterations; i++) {
+    // std::cout<<"C "<<data[i] << " | "<< data[i + 1]<<std::endl;
     res += static_cast<int>((data[i] > 0) != (data[i + 1] > 0));
   }
 
@@ -57,7 +58,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     sendbuf = new EType[elemcount];
     std::memcpy(sendbuf, input.data(), input.size() * sizeof(EType));
     //  нужно для перекрывающихся областей pcount= 3 [5] 6/3=2 -> 012 234 4
-    step = (elemcount + pcount - 1) / pcount;
+    step = elemcount / pcount;
     rem = elemcount - (step * (pcount - 1));
   }
   if (step < 2) {
@@ -72,7 +73,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   EType *recbuf = nullptr;
 
   if (rank == 0) {
-    // std::cout<<elemcount<<" "<<step<<" "<<step*(pcount-1)<<" "<<rem<<std::endl;
+    // std::cout<<"elems "<<elemcount<<" step "<<step<<" full "<<step*(pcount-1)<<" rem "<<rem<<std::endl;
     sendcounts = new int[pcount];
     displs = new int[pcount];
     sendcounts[0] = 0;  // на корень не шлём
@@ -81,6 +82,8 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
     for (int i = 1; i < pcount; i++) {
       sendcounts[i] = chunksz;
       displs[i] = (i - 1) * step;
+
+      // std::cout<<"R "<<i<<" > "<<sendbuf[displs[i]]<<std::endl;
     }
   } else {
     recbuf = new EType[chunksz];  // только некорни выыделяют буфер
@@ -93,7 +96,7 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
 
   // if(rank!=0){
   //   std::cout<<"RANK "<<rank<<" got: ";
-  //   for(int i=0;i<step;i++)
+  //   for(int i=0;i<chunksz;i++)
   //   {
   //     std::cout<<recbuf[i]<<" ";
   //   }
@@ -102,7 +105,12 @@ bool KonstantinovSElemVecSignChangeMPI::RunImpl() {
   //     std::cout<<"INPUT: ";
   //   for(int i=0;i<elemcount;i++)
   //       std::cout<<sendbuf[i]<<" ";
-  //     std::cout<<"\n\n";
+  //     std::cout<<"\n";
+  //   std::cout<<"ROOT "<<rank<<" got: ";
+  //   for(int i=elemcount-rem;i<elemcount;i++)
+  //     std::cout<<sendbuf[i]<<" ";
+  //   std::cout<<"\n";
+
   // }
 
   int local_res = 0;
