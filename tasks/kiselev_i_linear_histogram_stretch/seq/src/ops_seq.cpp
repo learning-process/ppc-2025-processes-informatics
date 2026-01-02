@@ -33,10 +33,10 @@ bool KiselevITestTaskSEQ::RunImpl() {
   const auto &input = GetInput().pixels;
   auto &output = GetOutput();
 
-  uint8_t min_val = std::numeric_limits<uint8_t>::max();
-  uint8_t max_val = std::numeric_limits<uint8_t>::min();
+  std::uint8_t min_val = std::numeric_limits<std::uint8_t>::max();
+  std::uint8_t max_val = std::numeric_limits<std::uint8_t>::min();
 
-  for (uint8_t value : input) {
+  for (std::uint8_t value : input) {
     min_val = std::min(min_val, value);
     max_val = std::max(max_val, value);
   }
@@ -50,7 +50,7 @@ bool KiselevITestTaskSEQ::RunImpl() {
 
   for (std::size_t i = 0; i < input.size(); ++i) {
     const double stretched = static_cast<double>(input[i] - min_val) * scale;
-    output[i] = static_cast<uint8_t>(std::lround(stretched));
+    output[i] = static_cast<std::uint8_t>(std::lround(stretched));
   }
 
   return true;

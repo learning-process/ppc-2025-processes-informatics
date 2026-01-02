@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <limits>
 #include <vector>
 
@@ -37,14 +36,14 @@ bool KiselevITestTaskMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  constexpr int root = 0;
+  constexpr int kRoot = 0;
 
   std::size_t total_size = 0;
-  if (rank == root) {
+  if (rank == kRoot) {
     total_size = GetInput().pixels.size();
   }
 
-  MPI_Bcast(&total_size, 1, MPI_UNSIGNED_LONG_LONG, root, MPI_COMM_WORLD);
+  MPI_Bcast(&total_size, 1, MPI_UNSIGNED_LONG_LONG, kRoot, MPI_COMM_WORLD);
 
   const std::size_t base = total_size / static_cast<std::size_t>(size);
   const std::size_t extra = total_size % static_cast<std::size_t>(size);
@@ -52,7 +51,7 @@ bool KiselevITestTaskMPI::RunImpl() {
   std::vector<int> counts(size, 0);
   std::vector<int> offsets(size, 0);
 
-  if (rank == root) {
+  if (rank == kRoot) {
     std::size_t shift = 0;
     for (int index = 0; index < size; ++index) {
       const std::size_t add = (static_cast<std::size_t>(index) < extra) ? 1 : 0;
@@ -63,12 +62,12 @@ bool KiselevITestTaskMPI::RunImpl() {
   }
 
   int local_count = 0;
-  MPI_Scatter(counts.data(), 1, MPI_INT, &local_count, 1, MPI_INT, root, MPI_COMM_WORLD);
+  MPI_Scatter(counts.data(), 1, MPI_INT, &local_count, 1, MPI_INT, kRoot, MPI_COMM_WORLD);
 
   std::vector<unsigned char> local_pixels(static_cast<std::size_t>(local_count));
 
   MPI_Scatterv(GetInput().pixels.data(), counts.data(), offsets.data(), MPI_UNSIGNED_CHAR, local_pixels.data(),
-               local_count, MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
+               local_count, MPI_UNSIGNED_CHAR, kRoot, MPI_COMM_WORLD);
 
   unsigned char local_min = std::numeric_limits<unsigned char>::max();
   unsigned char local_max = std::numeric_limits<unsigned char>::min();
@@ -94,7 +93,7 @@ bool KiselevITestTaskMPI::RunImpl() {
   }
 
   MPI_Gatherv(local_pixels.data(), local_count, MPI_UNSIGNED_CHAR, GetOutput().data(), counts.data(), offsets.data(),
-              MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
+              MPI_UNSIGNED_CHAR, kRoot, MPI_COMM_WORLD);
 
   return true;
 }

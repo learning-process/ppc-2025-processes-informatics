@@ -182,15 +182,15 @@ bool KiselevITestTaskMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const int root = 0;
+  const int kRoot = 0;
 
   std::size_t total_size = 0;
-  if (rank == root) {
+  if (rank == kRoot) {
     total_size = GetInput().pixels.size();
   }
 
   // Рассылка общего количества элементов
-  MPI_Bcast(&total_size, 1, MPI_UNSIGNED_LONG_LONG, root, MPI_COMM_WORLD);
+  MPI_Bcast(&total_size, 1, MPI_UNSIGNED_LONG_LONG, kRoot, MPI_COMM_WORLD);
 
   const std::size_t base = total_size / size;
   const std::size_t extra = total_size % size;
@@ -198,7 +198,7 @@ bool KiselevITestTaskMPI::RunImpl() {
   std::vector<int> counts(size, 0);
   std::vector<int> offsets(size, 0);
 
-  if (rank == root) {
+  if (rank == kRoot) {
     std::size_t shift = 0;
     for (int index = 0; index < size; ++index) {
       counts[index] = static_cast<int>(base + (index < static_cast<int>(extra) ? 1 : 0));
@@ -210,14 +210,14 @@ bool KiselevITestTaskMPI::RunImpl() {
   int local_count = 0;
   MPI_Scatter(counts.data(), 1, MPI_INT,
               &local_count, 1, MPI_INT,
-              root, MPI_COMM_WORLD);
+              kRoot, MPI_COMM_WORLD);
 
   std::vector<uint8_t> local_pixels(local_count);
 
   MPI_Scatterv(GetInput().pixels.data(),
                counts.data(), offsets.data(), MPI_UNSIGNED_CHAR,
                local_pixels.data(), local_count, MPI_UNSIGNED_CHAR,
-               root, MPI_COMM_WORLD);
+               kRoot, MPI_COMM_WORLD);
 
   uint8_t local_min = std::numeric_limits<uint8_t>::max();
   uint8_t local_max = std::numeric_limits<uint8_t>::min();
@@ -252,7 +252,7 @@ bool KiselevITestTaskMPI::RunImpl() {
 
   MPI_Gatherv(local_pixels.data(), local_count, MPI_UNSIGNED_CHAR,
               GetOutput().data(), counts.data(), offsets.data(),
-              MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
+              MPI_UNSIGNED_CHAR, kRoot, MPI_COMM_WORLD);
 
   return true;
 }
