@@ -3,9 +3,10 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <utility>
+#include <cstddef>
 #include <vector>
 
+#include "gusev_d_radix_double/common/include/common.hpp"
 #include "gusev_d_radix_double/seq/include/ops_seq.hpp"
 
 namespace gusev_d_radix_double {
@@ -42,7 +43,7 @@ bool GusevDRadixDoubleMPI::RunImpl() {
   int remainder = n % size;
   int sum = 0;
   for (int i = 0; i < size; ++i) {
-    send_counts[i] = n / size + (i < remainder ? 1 : 0);
+    send_counts[i] = (n / size) + (i < remainder ? 1 : 0);
     displs[i] = sum;
     sum += send_counts[i];
   }
@@ -68,7 +69,8 @@ bool GusevDRadixDoubleMPI::RunImpl() {
         MPI_Recv(local_data.data() + current_size, recv_count, MPI_DOUBLE, source, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
 
-        std::inplace_merge(local_data.begin(), local_data.begin() + static_cast<long>(current_size), local_data.end());
+        std::inplace_merge(local_data.begin(), local_data.begin() + static_cast<std::ptrdiff_t>(current_size),
+                           local_data.end());
       }
     } else if (rank % (2 * step) == step) {
       int dest = rank - step;

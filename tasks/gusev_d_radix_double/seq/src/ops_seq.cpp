@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <utility>
 #include <vector>
 
 namespace gusev_d_radix_double {
@@ -22,20 +24,21 @@ bool GusevDRadixDoubleSEQ::PreProcessingImpl() {
   return true;
 }
 
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
   if (data.size() < 2) {
     return;
   }
 
   size_t n = data.size();
-  auto *ptr = reinterpret_cast<uint64_t *>(data.data());
+  auto *ptr = reinterpret_cast<uint64_t *>(data.data());  // NOLINT
 
   for (size_t i = 0; i < n; ++i) {
-    uint64_t u = ptr[i];
+    uint64_t u = ptr[i];  // NOLINT
     if ((u & 0x8000000000000000ULL) != 0) {
-      ptr[i] = ~u;
+      ptr[i] = ~u;  // NOLINT
     } else {
-      ptr[i] |= 0x8000000000000000ULL;
+      ptr[i] |= 0x8000000000000000ULL;  // NOLINT
     }
   }
 
@@ -48,8 +51,8 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
     count.fill(0);
 
     for (size_t i = 0; i < n; ++i) {
-      uint8_t byte = (source[i] >> shift) & 0xFF;
-      count[byte]++;
+      uint8_t byte = (source[i] >> shift) & 0xFF;  // NOLINT
+      count[byte]++;                               // NOLINT
     }
 
     size_t index = 0;
@@ -60,8 +63,8 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
     }
 
     for (size_t i = 0; i < n; ++i) {
-      uint8_t byte = (source[i] >> shift) & 0xFF;
-      dest[count[byte]++] = source[i];
+      uint8_t byte = (source[i] >> shift) & 0xFF;  // NOLINT
+      dest[count[byte]++] = source[i];             // NOLINT
     }
 
     std::swap(source, dest);
@@ -72,13 +75,13 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
   }
 
   for (size_t i = 0; i < n; ++i) {
-    uint64_t u = ptr[i];
+    uint64_t u = ptr[i];  // NOLINT
     if ((u & 0x8000000000000000ULL) != 0) {
       u ^= 0x8000000000000000ULL;
     } else {
       u = ~u;
     }
-    ptr[i] = u;
+    ptr[i] = u;  // NOLINT
   }
 }
 

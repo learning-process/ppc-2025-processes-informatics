@@ -3,6 +3,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <functional>
 #include <random>
 #include <string>
 #include <tuple>
@@ -31,7 +33,7 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     std::string test_name = std::get<1>(params);
 
     input_data_ = std::vector<double>(count);
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
 
     if (test_name.find("Positive") != std::string::npos) {
       std::uniform_real_distribution<> dis(0.1, 1000.0);
@@ -55,7 +57,7 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     if (test_name.find("Sorted") != std::string::npos && test_name.find("Reverse") == std::string::npos) {
       std::sort(input_data_.begin(), input_data_.end());
     } else if (test_name.find("Reverse") != std::string::npos) {
-      std::sort(input_data_.begin(), input_data_.end(), std::greater<double>());
+      std::sort(input_data_.begin(), input_data_.end(), std::greater<>());
     }
 
     ref_output_data_ = input_data_;
@@ -86,20 +88,13 @@ TEST_P(GusevDRadixDoubleFuncTests, RunTests) {
 }
 
 const std::array<TestType, 15> kTestParams = {
-    // 1. Базовые тесты
-    std::make_tuple(10, "SmallVector"), std::make_tuple(100, "MediumVector"), std::make_tuple(500, "LargeVector"),
-    std::make_tuple(0, "EmptyVector"), std::make_tuple(1, "SingleElement"),
-
-    // 2. Специфические данные
-    std::make_tuple(100, "PositiveVector"), std::make_tuple(100, "NegativeVector"),
-    std::make_tuple(100, "SortedVector"), std::make_tuple(100, "ReverseSortedVector"),
-    std::make_tuple(50, "ZeroVector"),
-
-    // 3. Краевые случаи размеров
-    std::make_tuple(123, "OddSizeVector"),
-
-    // 4. Более "тяжелые" тесты
-    std::make_tuple(1000, "Size_1000"), std::make_tuple(2048, "Size_2048_Pow2"), std::make_tuple(2500, "Size_2500"),
+    std::make_tuple(10, "SmallVector"),          std::make_tuple(100, "MediumVector"),
+    std::make_tuple(500, "LargeVector"),         std::make_tuple(0, "EmptyVector"),
+    std::make_tuple(1, "SingleElement"),         std::make_tuple(100, "PositiveVector"),
+    std::make_tuple(100, "NegativeVector"),      std::make_tuple(100, "SortedVector"),
+    std::make_tuple(100, "ReverseSortedVector"), std::make_tuple(50, "ZeroVector"),
+    std::make_tuple(123, "OddSizeVector"),       std::make_tuple(1000, "Size_1000"),
+    std::make_tuple(2048, "Size_2048_Pow2"),     std::make_tuple(2500, "Size_2500"),
     std::make_tuple(5000, "Size_5000_MaxFunc")};
 
 const auto kTestTasksList = std::tuple_cat(

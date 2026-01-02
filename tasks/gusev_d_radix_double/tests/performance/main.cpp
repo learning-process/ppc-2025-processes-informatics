@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <random>
 #include <vector>
 
@@ -17,7 +18,7 @@ class GusevDRadixDoublePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
     size_t count = 25000000;
     input_data_ = std::vector<double>(count);
 
-    std::mt19937 gen(42);
+    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
     std::uniform_real_distribution<> dis(-1000000.0, 1000000.0);
 
     for (auto &val : input_data_) {
