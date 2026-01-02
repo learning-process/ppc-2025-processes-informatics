@@ -69,7 +69,7 @@ void ShvetsovaKRadSortBatchMergeSEQ::RadixSort(std::vector<double> &vec) {
       output[--count[digit]] = vec[i];
     }
 
-    vec = output;
+    vec = std::move(output);
   }
 }
 
