@@ -2,15 +2,13 @@
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <vector>
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
 namespace {
-static double Function(const std::vector<double> &coordinates) {
+double Function(const std::vector<double> &coordinates) {
   double total = 0.0;
   for (double value : coordinates) {
     total += value * value;

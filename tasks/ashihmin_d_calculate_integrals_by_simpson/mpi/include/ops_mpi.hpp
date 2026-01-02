@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "ashihmin_d_calculate_integrals_by_simpson/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
