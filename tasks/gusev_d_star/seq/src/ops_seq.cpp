@@ -21,10 +21,12 @@ bool GusevDStarSEQ::PreProcessingImpl() {
 
 bool GusevDStarSEQ::RunImpl() {
   auto n = GetInput();
-  if (n == 0) return false;
+  if (n == 0) {
+    return false;
+  }
 
   volatile int local_res = 0;
-  
+
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       for (int k = 0; k < n; k++) {
@@ -33,7 +35,7 @@ bool GusevDStarSEQ::RunImpl() {
       }
     }
   }
-  
+
   GetOutput() += local_res;
   return true;
 }

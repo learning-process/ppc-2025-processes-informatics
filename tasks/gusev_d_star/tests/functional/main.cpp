@@ -15,7 +15,8 @@ namespace gusev_d_star {
 
 class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &param_info) {
+  static std::string PrintTestParam(
+      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &param_info) {
     auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(param_info.param);
     return std::get<1>(params) + "_" + std::to_string(param_info.index);
   }
@@ -46,41 +47,29 @@ TEST_P(GusevDStarFuncTests, RunTests) {
 
 const std::array<TestType, 21> kTestParam = {
     // 1. Микро-тесты
-    std::make_tuple(1, "Size_1_Min"),
-    std::make_tuple(2, "Size_2_Tiny"),
-    
+    std::make_tuple(1, "Size_1_Min"), std::make_tuple(2, "Size_2_Tiny"),
+
     // 2. Простые числа (Prime Numbers) - стресс-тест для распределения остатков
-    std::make_tuple(7, "Size_7_Prime"),
-    std::make_tuple(13, "Size_13_Prime"),
-    std::make_tuple(17, "Size_17_Prime"),
-    std::make_tuple(29, "Size_29_Prime"),
-    std::make_tuple(41, "Size_41_Prime"),
-    std::make_tuple(53, "Size_53_Prime"),
+    std::make_tuple(7, "Size_7_Prime"), std::make_tuple(13, "Size_13_Prime"), std::make_tuple(17, "Size_17_Prime"),
+    std::make_tuple(29, "Size_29_Prime"), std::make_tuple(41, "Size_41_Prime"), std::make_tuple(53, "Size_53_Prime"),
     std::make_tuple(97, "Size_97_Prime"),
 
     // 3. Стандартные шаги
-    std::make_tuple(10, "Size_10"),
-    std::make_tuple(50, "Size_50"),
-    std::make_tuple(100, "Size_100_Medium"),
-    
+    std::make_tuple(10, "Size_10"), std::make_tuple(50, "Size_50"), std::make_tuple(100, "Size_100_Medium"),
+
     // 4. Степени двойки (Powers of 2)
-    std::make_tuple(32, "Size_32_Pow2"),
-    std::make_tuple(64, "Size_64_Pow2"),
-    std::make_tuple(128, "Size_128_Pow2"),
+    std::make_tuple(32, "Size_32_Pow2"), std::make_tuple(64, "Size_64_Pow2"), std::make_tuple(128, "Size_128_Pow2"),
     std::make_tuple(256, "Size_256_Pow2"),
 
     // 5. Крупные тесты (Large Scale)
     // Благодаря оптимизации O(N^3) без векторов, эти тесты пройдут быстро
-    std::make_tuple(150, "Size_150_Large"),
-    std::make_tuple(200, "Size_200_Large"),
-    std::make_tuple(300, "Size_300_Large"),
-    std::make_tuple(400, "Size_400_XLarge"),
-    std::make_tuple(500, "Size_500_Max")
-};
+    std::make_tuple(150, "Size_150_Large"), std::make_tuple(200, "Size_200_Large"),
+    std::make_tuple(300, "Size_300_Large"), std::make_tuple(400, "Size_400_XLarge"),
+    std::make_tuple(500, "Size_500_Max")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<GusevDStarMPI, InType>(kTestParam, PPC_SETTINGS_gusev_d_star),
-    ppc::util::AddFuncTask<GusevDStarSEQ, InType>(kTestParam, PPC_SETTINGS_gusev_d_star));
+const auto kTestTasksList =
+    std::tuple_cat(ppc::util::AddFuncTask<GusevDStarMPI, InType>(kTestParam, PPC_SETTINGS_gusev_d_star),
+                   ppc::util::AddFuncTask<GusevDStarSEQ, InType>(kTestParam, PPC_SETTINGS_gusev_d_star));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

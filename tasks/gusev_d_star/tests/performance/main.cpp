@@ -10,7 +10,7 @@ namespace gusev_d_star {
 class GusevDStarPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   void SetUp() override {
-    input_data_ = 500; 
+    input_data_ = 500;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -29,8 +29,7 @@ TEST_P(GusevDStarPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GusevDStarMPI, GusevDStarSEQ>(PPC_SETTINGS_gusev_d_star);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GusevDStarMPI, GusevDStarSEQ>(PPC_SETTINGS_gusev_d_star);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
