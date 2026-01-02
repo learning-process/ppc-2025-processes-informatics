@@ -15,15 +15,24 @@ namespace eremin_v_strongin_algorithm {
 
 class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<InType, OutType> {
   void SetUp() override {
-    double lower_bound_ = 0.0;
-    double upper_bound_ = 10.0;
-    int steps_ = 20000;
-    input_data_ = std::make_tuple(lower_bound_, upper_bound_, steps_, Function);
-    expected_result_ = FindMinimum(Function, lower_bound_, upper_bound_, 1e-3);
+    double lower_bound = -5.0;
+    double upper_bound = 5.0;
+    double epsilon = 1e-4;
+    int max_iters = 50000;
+    input_data_ = std::make_tuple(lower_bound, upper_bound, epsilon, max_iters, Function);
+    expected_result_ = -6.1;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    double tolerance = std::max(std::abs(expected_result_) * 0.01, 1e-8);
+    // double lower_bound = -5.0;
+    // double upper_bound = 5.0;
+    // double epsilon = 1e-4;
+    // int max_iters = 50000;
+    // std::cout << "Check: lower_bound: " << lower_bound << ", upper_bound: " << upper_bound << ", epsilon: " <<
+    // epsilon
+    //           << ", max_iters: " << max_iters << "\n";
+    double tolerance = 1e-2;
+    // std::cout << "Check: output_data: " << output_data << ", expected_result_: " << expected_result_ << "\n\n\n";
     return std::abs(output_data - expected_result_) <= tolerance;
   }
 
@@ -36,25 +45,9 @@ class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<
   OutType expected_result_{};
 
   static double Function(double x) {
-    double complexity = 0;
-    for (int i = 0; i < 5000; ++i) {
-      complexity += std::sin(x + i) * std::cos(x - i);
-    }
-    return (x * x * std::exp(x) * std::sin(x)) + (x * x * x * x * std::cos(2 * x)) + (complexity * 1e-9);
-    return (x * x * std::exp(x) * std::sin(x)) + (x * x * x * x * std::cos(2 * x));
-  }
-
-  static double FindMinimum(const std::function<double(double)> &f, double a, double b, double step) {
-    double min_val = std::numeric_limits<double>::infinity();
-    double min_x = a;
-    for (double x = a; x <= b; x += step) {
-      double fx = f(x);
-      if (fx < min_val) {
-        min_val = fx;
-        min_x = x;
-      }
-    }
-    return min_x;
+    return (0.002 * x * x) + (5.0 * std::sin(30.0 * x)) + std::sin(200.0 * std::sin(50.0 * x)) +
+           0.1 * std::cos(300.0 * x);
+    ;
   }
 };
 
