@@ -65,11 +65,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
       }
     }
     sum *= step_x * step_y / 9;
-    bool result = (abs(output_data - sum) < 1e-3);
-    if (!result) {
-      std::cout << std::endl << output_data << ", " << sum << ", " << abs(output_data - sum) << std::endl;
-    }
-    return result;
+    return (abs(output_data - sum) < 1e-3);
   }
 
   InType GetTestInputData() final {
