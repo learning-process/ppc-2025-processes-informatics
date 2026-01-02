@@ -46,7 +46,7 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
         input_data_[i] = dis(gen);
       }
     } else if (test_name.find("Zero") != std::string::npos) {
-      std::fill(input_data_.begin(), input_data_.end(), 0.0);
+      std::fill(input_data_.begin(), input_data_.end(), 0.0);  // NOLINT(modernize-use-ranges)
     } else {
       std::uniform_real_distribution<> dis(-1000.0, 1000.0);
       for (int i = 0; i < count; ++i) {
@@ -55,13 +55,13 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     }
 
     if (test_name.find("Sorted") != std::string::npos && test_name.find("Reverse") == std::string::npos) {
-      std::sort(input_data_.begin(), input_data_.end());
+      std::sort(input_data_.begin(), input_data_.end());  // NOLINT(modernize-use-ranges)
     } else if (test_name.find("Reverse") != std::string::npos) {
-      std::sort(input_data_.begin(), input_data_.end(), std::greater<>());
+      std::sort(input_data_.begin(), input_data_.end(), std::greater<>());  // NOLINT(modernize-use-ranges)
     }
 
     ref_output_data_ = input_data_;
-    std::sort(ref_output_data_.begin(), ref_output_data_.end());
+    std::sort(ref_output_data_.begin(), ref_output_data_.end());  // NOLINT(modernize-use-ranges)
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -88,14 +88,18 @@ TEST_P(GusevDRadixDoubleFuncTests, RunTests) {
 }
 
 const std::array<TestType, 15> kTestParams = {
-    std::make_tuple(10, "SmallVector"),          std::make_tuple(100, "MediumVector"),
-    std::make_tuple(500, "LargeVector"),         std::make_tuple(0, "EmptyVector"),
-    std::make_tuple(1, "SingleElement"),         std::make_tuple(100, "PositiveVector"),
-    std::make_tuple(100, "NegativeVector"),      std::make_tuple(100, "SortedVector"),
-    std::make_tuple(100, "ReverseSortedVector"), std::make_tuple(50, "ZeroVector"),
-    std::make_tuple(123, "OddSizeVector"),       std::make_tuple(1000, "Size_1000"),
-    std::make_tuple(2048, "Size_2048_Pow2"),     std::make_tuple(2500, "Size_2500"),
-    std::make_tuple(5000, "Size_5000_MaxFunc")};
+    std::make_tuple(10, "SmallVector"),     std::make_tuple(100, "MediumVector"),
+    std::make_tuple(500, "LargeVector"),    std::make_tuple(0, "EmptyVector"),
+    std::make_tuple(1, "SingleElement"),
+
+    std::make_tuple(100, "PositiveVector"), std::make_tuple(100, "NegativeVector"),
+    std::make_tuple(100, "SortedVector"),   std::make_tuple(100, "ReverseSortedVector"),
+    std::make_tuple(50, "ZeroVector"),
+
+    std::make_tuple(123, "OddSizeVector"),
+
+    std::make_tuple(1000, "Size_1000"),     std::make_tuple(2048, "Size_2048_Pow2"),
+    std::make_tuple(2500, "Size_2500"),     std::make_tuple(5000, "Size_5000_MaxFunc")};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GusevDRadixDoubleSEQ, InType>(kTestParams, PPC_SETTINGS_gusev_d_radix_double),

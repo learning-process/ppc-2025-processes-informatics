@@ -27,7 +27,7 @@ class GusevDRadixDoublePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());
+    return std::is_sorted(output_data.begin(), output_data.end());  // NOLINT(modernize-use-ranges)
   }
 
   InType GetTestInputData() final {

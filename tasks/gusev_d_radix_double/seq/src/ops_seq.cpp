@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include "gusev_d_radix_double/common/include/common.hpp"
+
 namespace gusev_d_radix_double {
 
 GusevDRadixDoubleSEQ::GusevDRadixDoubleSEQ(const InType &in) {
