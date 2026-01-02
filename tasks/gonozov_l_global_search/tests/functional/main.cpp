@@ -30,8 +30,8 @@ class GonozovLRunGlobalSearchFuncTests : public ppc::util::BaseRunFuncTests<InTy
  protected:
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::make_tuple(std::get<0>(params),
-                            std::get<1>(params), std::get<2>(params), std::get<3>(params), std::get<4>(params));
+    input_data_ = std::make_tuple(std::get<0>(params), std::get<1>(params), std::get<2>(params), std::get<3>(params),
+                                  std::get<4>(params));
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -55,20 +55,16 @@ TEST_P(GonozovLRunGlobalSearchFuncTests, MatmulFromPic) {
 }
 
 const std::array<TestType, 4> kTestParam = {
-    std::make_tuple([](double x) { return x * x; }, 2.0, -50.0, 50.0, 0.01,
-                    "minimizing_quadratic_function", 0.0),
-    std::make_tuple([](double x) { return std::sin(x); }, 2.0, 3.0, 6.0, 0.01,
-                    "minimizing_sine", 4.71404),
-    std::make_tuple([](double x) { return std::exp(x); }, 2.0, -10.0, 10.0, 0.01,
-                    "minimizing_exponent", -9.99512),   
+    std::make_tuple([](double x) { return x * x; }, 2.0, -50.0, 50.0, 0.01, "minimizing_quadratic_function", 0.0),
+    std::make_tuple([](double x) { return std::sin(x); }, 2.0, 3.0, 6.0, 0.01, "minimizing_sine", 4.71404),
+    std::make_tuple([](double x) { return std::exp(x); }, 2.0, -10.0, 10.0, 0.01, "minimizing_exponent", -9.99512),
     std::make_tuple([](double x) { return (x * x - 11) * (x * x - 11) + (x - 7) * (x - 7); }, 2.0, -5.0, 5.0, 0.01,
                     "minimizing_himmelblau_function", 3.3965),
 };
 
-const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<GonozovLGlobalSearchMPI, InType>(
-                                               kTestParam, PPC_SETTINGS_gonozov_l_global_search),
-                                           ppc::util::AddFuncTask<GonozovLGlobalSearchSEQ, InType>(
-                                               kTestParam, PPC_SETTINGS_gonozov_l_global_search));
+const auto kTestTasksList = std::tuple_cat(
+    ppc::util::AddFuncTask<GonozovLGlobalSearchMPI, InType>(kTestParam, PPC_SETTINGS_gonozov_l_global_search),
+    ppc::util::AddFuncTask<GonozovLGlobalSearchSEQ, InType>(kTestParam, PPC_SETTINGS_gonozov_l_global_search));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -1,11 +1,11 @@
 #pragma once
 
+#include <cstddef>
+#include <functional>
+#include <vector>
+
 #include "gonozov_l_global_search/common/include/common.hpp"
 #include "task/include/task.hpp"
-
-#include <vector>
-#include <functional>
-#include <cstddef>
 
 namespace gonozov_l_global_search {
 
@@ -21,7 +21,6 @@ class GonozovLGlobalSearchMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
 };
 
 }  // namespace gonozov_l_global_search

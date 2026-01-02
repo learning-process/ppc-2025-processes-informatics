@@ -1,30 +1,30 @@
 #include <gtest/gtest.h>
 
-#include "gonozov_l_global_search/common/include/common.hpp"
-#include "gonozov_l_global_search/mpi/include/ops_mpi.hpp"
-#include "gonozov_l_global_search/seq/include/ops_seq.hpp"
-#include "util/include/perf_test_util.hpp"
-
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <tuple>
 #include <vector>
 
+#include "gonozov_l_global_search/common/include/common.hpp"
+#include "gonozov_l_global_search/mpi/include/ops_mpi.hpp"
+#include "gonozov_l_global_search/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
+
 namespace gonozov_l_global_search {
 
 class GonozovLRunGlobalSearchPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
   const double eps = 1e-7;
   std::function<double(double)> minimized_function = [](double x) {
-  double s = 0.0;
-  for (int i = 0; i < 32; ++i) {
-    s += std::sin(10.0 * x) * std::sin(10.0 * x);
-  }
-  return x * x + 0.01 * s;
+    double s = 0.0;
+    for (int i = 0; i < 32; ++i) {
+      s += std::sin(10.0 * x) * std::sin(10.0 * x);
+    }
+    return x * x + 0.01 * s;
   };
 
-  double a = -1.0; 
-  double b = 1.0; 
+  double a = -1.0;
+  double b = 1.0;
   double r = 2.0;
   InType input_data_;
   OutType desired_result_;
@@ -48,9 +48,8 @@ TEST_P(GonozovLRunGlobalSearchPerfTest, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, GonozovLGlobalSearchMPI, GonozovLGlobalSearchSEQ>(
-        PPC_SETTINGS_gonozov_l_global_search);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, GonozovLGlobalSearchMPI, GonozovLGlobalSearchSEQ>(
+    PPC_SETTINGS_gonozov_l_global_search);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
