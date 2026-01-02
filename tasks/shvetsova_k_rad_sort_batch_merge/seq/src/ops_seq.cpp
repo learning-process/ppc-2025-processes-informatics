@@ -1,7 +1,9 @@
 #include "shvetsova_k_rad_sort_batch_merge/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <vector>
 
 namespace shvetsova_k_rad_sort_batch_merge {
 
@@ -56,20 +58,20 @@ void ShvetsovaKRadSortBatchMergeSEQ::RadixSort(std::vector<double> &vec) {
 
   for (int exp = 1; max_val / exp > 0; exp *= base) {
     std::vector<double> output(vec.size());
-    int count[base] = {0};
+    std::array<int, base> count{};
 
     for (double x : vec) {
       int digit = (static_cast<int>(std::abs(x)) / exp) % base;
-      count[digit]++;
+      count.at(digit)++;
     }
 
     for (int i = 1; i < base; i++) {
-      count[i] += count[i - 1];
+      count.at(i) += count.at(i - 1);
     }
 
     for (int i = static_cast<int>(vec.size()) - 1; i >= 0; i--) {
       int digit = (static_cast<int>(std::abs(vec[i])) / exp) % base;
-      output[--count[digit]] = vec[i];
+      output.at(--count.at(digit)) = vec.at(i);
     }
 
     vec = std::move(output);
@@ -99,13 +101,13 @@ void ShvetsovaKRadSortBatchMergeSEQ::OddEvenMerge(std::vector<double> &vec, int 
     OddEvenMerge(vec, left + step, right, dist);
 
     for (int i = left + step; i + step < right; i += dist) {
-      if (vec[i] > vec[i + step]) {
-        std::swap(vec[i], vec[i + step]);
+      if (vec.at(i) > vec.at(i + step)) {
+        std::swap(vec.at(i), vec.at(i + step));
       }
     }
   } else {
-    if (left + step < right && vec[left] > vec[left + step]) {
-      std::swap(vec[left], vec[left + step]);
+    if (left + step < right && vec.at(left) > vec.at(left + step)) {
+      std::swap(vec.at(left), vec.at(left + step));
     }
   }
 }

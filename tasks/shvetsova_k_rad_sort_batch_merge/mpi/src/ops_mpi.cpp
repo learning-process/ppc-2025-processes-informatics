@@ -40,69 +40,86 @@ bool ShvetsovaKRadSortBatchMergeMPI::RunImpl() {
     return true;
   }
 
-  // ---- Распределение данных (каждый процесс считает сам) ----
   std::vector<int> counts(proc_count);
   std::vector<int> displs(proc_count);
+  CreateDistribution(proc_count, size, counts, displs);
+
+  std::vector<double> local(counts[rank]);
+  ScatterData(data_, local, counts, displs, rank);
+
+  RadixSortLocal(local);
+  OddEvenMerge(local, counts, rank, proc_count);
+
+  data_.resize(size);
+  GatherAndBroadcast(data_, local, counts, displs, rank);
+
+  GetOutput() = data_;
+  return true;
+}
+
+// ==================== HELPERS ====================
+
+void ShvetsovaKRadSortBatchMergeMPI::CreateDistribution(int proc_count, int size, std::vector<int> &counts,
+                                                        std::vector<int> &displs) {
   int base = size / proc_count;
   int rem = size % proc_count;
   int offset = 0;
+
   for (int i = 0; i < proc_count; ++i) {
     counts[i] = base + (i < rem ? 1 : 0);
     displs[i] = offset;
     offset += counts[i];
   }
+}
 
-  int local_size = counts[rank];
-  std::vector<double> local(local_size);
+void ShvetsovaKRadSortBatchMergeMPI::ScatterData(const std::vector<double> &data, std::vector<double> &local,
+                                                 const std::vector<int> &counts, const std::vector<int> &displs,
+                                                 int rank) {
+  MPI_Scatterv(rank == 0 ? data.data() : nullptr, counts.data(), displs.data(), MPI_DOUBLE, local.data(),
+               static_cast<int>(local.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+}
 
-  MPI_Scatterv(rank == 0 ? data_.data() : nullptr, counts.data(), displs.data(), MPI_DOUBLE, local.data(), local_size,
-               MPI_DOUBLE, 0, MPI_COMM_WORLD);
+void ShvetsovaKRadSortBatchMergeMPI::OddEvenMerge(std::vector<double> &local, const std::vector<int> &counts, int rank,
+                                                  int proc_count) {
+  int local_size = static_cast<int>(local.size());
 
-  // ---- 1. Локальная поразрядная сортировка ----
-  RadixSortLocal(local);
-
-  // ---- 2. Глобальное слияние (Odd-Even Transposition Sort) ----
   for (int step = 0; step < proc_count; ++step) {
-    int partner;
-    if (step % 2 == 0) {  // Четный шаг
+    int partner = -1;
+
+    if (step % 2 == 0) {
       partner = (rank % 2 == 0) ? rank + 1 : rank - 1;
-    } else {  // Нечетный шаг
+    } else {
       partner = (rank % 2 == 0) ? rank - 1 : rank + 1;
     }
 
-    if (partner >= 0 && partner < proc_count) {
-      int partner_size = counts[partner];
-      std::vector<double> recv(partner_size);
+    if (partner < 0 || partner >= proc_count) {
+      continue;
+    }
 
-      MPI_Sendrecv(local.data(), local_size, MPI_DOUBLE, partner, 0, recv.data(), partner_size, MPI_DOUBLE, partner, 0,
-                   MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    int partner_size = counts[partner];
+    std::vector<double> recv(partner_size);
 
-      std::vector<double> merged(local_size + partner_size);
-      std::merge(local.begin(), local.end(), recv.begin(), recv.end(), merged.begin());
+    MPI_Sendrecv(local.data(), local_size, MPI_DOUBLE, partner, 0, recv.data(), partner_size, MPI_DOUBLE, partner, 0,
+                 MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      if (rank < partner) {
-        std::copy(merged.begin(), merged.begin() + local_size, local.begin());
-      } else {
-        std::copy(merged.end() - local_size, merged.end(), local.begin());
-      }
+    std::vector<double> merged(local_size + partner_size);
+    std::merge(local.begin(), local.end(), recv.begin(), recv.end(), merged.begin());
+
+    if (rank < partner) {
+      std::copy(merged.begin(), merged.begin() + local_size, local.begin());
+    } else {
+      std::copy(merged.end() - local_size, merged.end(), local.begin());
     }
   }
+}
 
-  // ---- 3. Сбор результата ----
-  // Важно: все процессы ресайзят свой вектор data_ перед получением/рассылкой данных
-  data_.resize(size);
+void ShvetsovaKRadSortBatchMergeMPI::GatherAndBroadcast(std::vector<double> &data, const std::vector<double> &local,
+                                                        const std::vector<int> &counts, const std::vector<int> &displs,
+                                                        int rank) {
+  MPI_Gatherv(local.data(), static_cast<int>(local.size()), MPI_DOUBLE, rank == 0 ? data.data() : nullptr,
+              counts.data(), displs.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-  MPI_Gatherv(local.data(), local_size, MPI_DOUBLE, rank == 0 ? data_.data() : nullptr, counts.data(), displs.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  // РЕШЕНИЕ ПРОБЛЕМЫ ТЕСТОВ: рассылаем финальный результат всем процессам
-  // Теперь CheckTestOutputData увидит отсортированные данные на всех рангах
-  MPI_Bcast(data_.data(), size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-  // Теперь GetOutput() на каждом процессе содержит правильный ответ
-  GetOutput() = data_;
-
-  return true;
+  MPI_Bcast(data.data(), static_cast<int>(data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
 void ShvetsovaKRadSortBatchMergeMPI::RadixSortLocal(std::vector<double> &vec) {
@@ -133,6 +150,7 @@ void ShvetsovaKRadSortBatchMergeMPI::RadixSortLocal(std::vector<double> &vec) {
       int digit = (static_cast<int>(std::abs(vec[i])) / exp) % base;
       output[--count[digit]] = vec[i];
     }
+
     vec = std::move(output);
   }
 }

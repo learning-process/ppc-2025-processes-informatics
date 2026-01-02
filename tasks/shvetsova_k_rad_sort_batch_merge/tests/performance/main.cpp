@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <cstddef>
 #include <random>
-#include <vector>
 
+#include "shvetsova_k_rad_sort_batch_merge/common/include/common.hpp"
 #include "shvetsova_k_rad_sort_batch_merge/mpi/include/ops_mpi.hpp"
 #include "shvetsova_k_rad_sort_batch_merge/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -18,7 +18,8 @@ class ShvetsovaKRadSortBatchMergeRunPerfTestProcesses : public ppc::util::BaseRu
     input_data_.resize(n);
 
     // Генерация случайных целых чисел
-    std::mt19937 gen(42);  // Фиксированный seed для воспроизводимости
+    std::seed_seq seed{std::random_device{}(), std::random_device{}()};
+    std::mt19937 gen(seed);  // Фиксированный seed для воспроизводимости
     std::uniform_int_distribution<int> dis(0, 1000000);
 
     for (int i = 0; i < n; ++i) {

@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "shvetsova_k_rad_sort_batch_merge/common/include/common.hpp"
 #include "shvetsova_k_rad_sort_batch_merge/mpi/include/ops_mpi.hpp"
@@ -80,8 +80,8 @@ TEST_P(ShvetsovaKRadSortBatchMergeRunFuncTestsProcesses, DataFromTest) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 1> kTestParam = {
-    "test1"
+const std::array<TestType, 5> kTestParam = {
+    "test1", "test2", "test3", "test4", "test5"
     // добавишь test2, test3 и т.д.
 };
 
