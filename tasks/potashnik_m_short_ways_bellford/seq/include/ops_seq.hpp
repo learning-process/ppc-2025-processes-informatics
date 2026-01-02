@@ -35,6 +35,7 @@ inline void BellmanFordAlgoIterationSeq(const Graph &g, const std::vector<int> &
 inline void BellmanFordAlgoSeq(const Graph &g, int source, std::vector<int> &dist) {
   int n = g.n;
 
+  // Compiler wont let it work without this lines (This should be just a warning, but I can't not fix it with this)
   if (n == 0) {
     return;
   }

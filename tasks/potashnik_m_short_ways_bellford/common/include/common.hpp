@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 #include "task/include/task.hpp"
 
@@ -73,9 +74,7 @@ inline Graph GenerateGraph(int n) {
     int end_u = (lidx + 1) * layer_size;
     int start_v = (lidx + 1) * layer_size;
     int end_v = (lidx + 2) * layer_size;
-    if (end_v > n) {
-      end_v = n;
-    }
+    end_v = std::min(end_v, n);
     for (int uidx = start_u; uidx < end_u; uidx++) {
       for (int vidx = start_v; vidx < end_v; vidx++) {
         src.push_back(uidx);
