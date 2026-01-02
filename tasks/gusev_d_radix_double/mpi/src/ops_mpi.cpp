@@ -1,10 +1,9 @@
 #include "gusev_d_radix_double/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
-
 #include <algorithm>
-#include <cmath>
 #include <vector>
+#include <cmath>
 
 #include "gusev_d_radix_double/seq/include/ops_seq.hpp"
 
@@ -32,12 +31,12 @@ bool GusevDRadixDoubleMPI::RunImpl() {
   if (rank == 0) {
     n = GetInput().size();
   }
-
+  
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<int> send_counts(size);
   std::vector<int> displs(size);
-
+  
   int remainder = n % size;
   int sum = 0;
   for (int i = 0; i < size; ++i) {
@@ -48,8 +47,8 @@ bool GusevDRadixDoubleMPI::RunImpl() {
 
   std::vector<double> local_data(send_counts[rank]);
 
-  MPI_Scatterv(GetInput().data(), send_counts.data(), displs.data(), MPI_DOUBLE, local_data.data(), send_counts[rank],
-               MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Scatterv(GetInput().data(), send_counts.data(), displs.data(), MPI_DOUBLE,
+               local_data.data(), send_counts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   GusevDRadixDoubleSEQ::RadixSort(local_data);
 
@@ -58,36 +57,46 @@ bool GusevDRadixDoubleMPI::RunImpl() {
     gathered_data.resize(n);
   }
 
-  MPI_Gatherv(local_data.data(), send_counts[rank], MPI_DOUBLE, gathered_data.data(), send_counts.data(), displs.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(local_data.data(), send_counts[rank], MPI_DOUBLE,
+              gathered_data.data(), send_counts.data(), displs.data(), MPI_DOUBLE,
+              0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    GetOutput().clear();
-    GetOutput().reserve(n);
-
-    std::vector<double> current_merged;
-
-    if (size > 0) {
-      auto start = gathered_data.begin();
-      auto end = gathered_data.begin() + send_counts[0];
-      current_merged.assign(start, end);
+    
+    struct Chunk {
+        size_t start; 
+        size_t len;   
+    };
+    
+    std::vector<Chunk> chunks;
+    chunks.reserve(size);
+    for(int i=0; i<size; ++i) {
+        if(send_counts[i] > 0) {
+            chunks.push_back({(size_t)displs[i], (size_t)send_counts[i]});
+        }
     }
 
-    for (int i = 1; i < size; ++i) {
-      if (send_counts[i] == 0) {
-        continue;
-      }
+    while(chunks.size() > 1) {
+        std::vector<Chunk> next_chunks;
+        next_chunks.reserve((chunks.size() + 1) / 2);
 
-      auto start = gathered_data.begin() + displs[i];
-      auto end = gathered_data.begin() + displs[i] + send_counts[i];
-
-      std::vector<double> temp_res;
-      temp_res.reserve(current_merged.size() + (end - start));
-      std::merge(current_merged.begin(), current_merged.end(), start, end, std::back_inserter(temp_res));
-
-      current_merged = std::move(temp_res);
+        for (size_t i = 0; i < chunks.size(); i += 2) {
+            if (i + 1 < chunks.size()) {
+                auto begin = gathered_data.begin() + chunks[i].start;
+                auto middle = gathered_data.begin() + chunks[i + 1].start; 
+                auto end = gathered_data.begin() + chunks[i + 1].start + chunks[i + 1].len;
+                
+                std::inplace_merge(begin, middle, end);
+                
+                next_chunks.push_back({chunks[i].start, chunks[i].len + chunks[i + 1].len});
+            } else {
+                next_chunks.push_back(chunks[i]);
+            }
+        }
+        chunks = std::move(next_chunks);
     }
-    GetOutput() = current_merged;
+    
+    GetOutput() = std::move(gathered_data);
   }
 
   return true;
