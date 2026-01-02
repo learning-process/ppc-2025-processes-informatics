@@ -2,7 +2,7 @@
 
 **Student:** Дорофеев Иван Денисович, group 3823Б1ФИ1
 **Technology:** SEQ | MPI
-**Variant:** 4
+**Variant:** 5
 
 ---
 
