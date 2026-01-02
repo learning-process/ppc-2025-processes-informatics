@@ -23,15 +23,32 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
   std::uniform_int_distribution<int> dist(0, 1000000);
-  for (int i = 0; i < n; ++i) {
-    data.push_back(dist(rng));
-  }
+  for (int i = 0; i < n; ++i) data.push_back(dist(rng));
   std::ranges::sort(data);
   std::int64_t checksum = 0;
-  for (int v : data) {
-    checksum += static_cast<std::int64_t>(v);
-  }
+  for (int v : data) checksum += static_cast<std::int64_t>(v);
   return checksum & 0x7FFFFFFF;
+}
+
+TEST(BatcherMergeUnitTests, MergesTwoSortedVectorsCorrectly) {
+  std::vector<int> a = {1, 3, 5, 7};
+  std::vector<int> b = {2, 4, 6, 8, 9};
+  std::vector<int> out;
+  yurkin_g_shellbetcher::BatcherMerge(a, b, out);
+  ASSERT_EQ(out.size(), a.size() + b.size());
+  ASSERT_TRUE(std::is_sorted(out.begin(), out.end()));
+  std::vector<int> expected;
+  expected.reserve(out.size());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(expected));
+  ASSERT_EQ(out, expected);
+}
+
+TEST(BatcherMergeUnitTests, HandlesEmptyInputs) {
+  std::vector<int> a;
+  std::vector<int> b;
+  std::vector<int> out;
+  yurkin_g_shellbetcher::BatcherMerge(a, b, out);
+  ASSERT_TRUE(out.empty());
 }
 
 class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
