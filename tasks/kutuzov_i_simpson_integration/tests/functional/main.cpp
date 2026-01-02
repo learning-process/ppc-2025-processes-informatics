@@ -4,10 +4,10 @@
 #include <array>
 #include <cmath>
 #include <format>
+#include <iostream>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <iostream>
 
 #include "kutuzov_i_simpson_integration/common/include/common.hpp"
 #include "kutuzov_i_simpson_integration/mpi/include/ops_mpi.hpp"
