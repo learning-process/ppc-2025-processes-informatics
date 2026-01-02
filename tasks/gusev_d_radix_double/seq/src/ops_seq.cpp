@@ -1,9 +1,9 @@
 #include "gusev_d_radix_double/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <vector>
-#include <cstdint>
 
 namespace gusev_d_radix_double {
 
@@ -21,12 +21,14 @@ bool GusevDRadixDoubleSEQ::PreProcessingImpl() {
   return true;
 }
 
-void GusevDRadixDoubleSEQ::RadixSort(std::vector<double>& data) {
-  if (data.size() < 2) return;
+void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
+  if (data.size() < 2) {
+    return;
+  }
 
   size_t n = data.size();
   std::vector<uint64_t> raw_data(n);
-  
+
   for (size_t i = 0; i < n; ++i) {
     uint64_t u;
     std::memcpy(&u, &data[i], sizeof(double));
@@ -41,25 +43,25 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double>& data) {
   std::vector<uint64_t> buffer(n);
   for (int shift = 0; shift < 64; shift += 8) {
     size_t count[256] = {0};
-    
+
     for (size_t i = 0; i < n; ++i) {
       uint8_t byte = (raw_data[i] >> shift) & 0xFF;
       count[byte]++;
     }
-    
+
     size_t index = 0;
     for (int i = 0; i < 256; ++i) {
       size_t tmp = count[i];
       count[i] = index;
       index += tmp;
     }
-    
+
     for (size_t i = 0; i < n; ++i) {
       uint8_t byte = (raw_data[i] >> shift) & 0xFF;
       buffer[count[byte]] = raw_data[i];
       count[byte]++;
     }
-    
+
     raw_data = buffer;
   }
 

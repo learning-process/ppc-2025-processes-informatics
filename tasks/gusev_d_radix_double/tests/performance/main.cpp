@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#include <vector>
-#include <random>
+
 #include <algorithm>
+#include <random>
+#include <vector>
 
 #include "gusev_d_radix_double/common/include/common.hpp"
 #include "gusev_d_radix_double/mpi/include/ops_mpi.hpp"
@@ -18,19 +19,19 @@ class GusevDRadixDoublePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   void SetUp() override {
-    size_t count = 1000000; 
+    size_t count = 1000000;
     input_data_ = std::vector<double>(count);
-    
+
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(-10000.0, 10000.0);
-    
+
     for (size_t i = 0; i < count; ++i) {
       input_data_[i] = dis(gen);
     }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-     return std::is_sorted(output_data.begin(), output_data.end());
+    return std::is_sorted(output_data.begin(), output_data.end());
   }
 
   InType GetTestInputData() final {
