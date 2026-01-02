@@ -32,8 +32,8 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     std::string y_min_str = std::to_string(static_cast<int>(abs(y_min)));
     std::string y_max_str = std::to_string(static_cast<int>(abs(y_max)));
 
-    return std::to_string(n) + "__" + x_min_str + "_" + x_max_str + "__"
-      + y_min_str + "_" + y_max_str + "__" + function_names[function_id];
+    return std::to_string(n) + "__" + x_min_str + "_" + x_max_str + "__" + y_min_str + "_" + y_max_str + "__" +
+           function_names[function_id];
   }
 
  protected:
@@ -56,7 +56,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     double sum = 0.0;
     for (int i = 0; i <= n; i++) {
       double x = x_min + (step_x * i);
-      
+
       for (int j = 0; j <= n; j++) {
         double y = y_min + (step_y * j);
         double a = GetWeight(i, n) * GetWeight(j, n) * CallFunction(function_id, x, y);
@@ -111,12 +111,12 @@ const std::array<TestType, 16> kTestParam = {
     std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 1),
     std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 2),
     std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 3),
-    std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 4)
-};
+    std::make_tuple(100, std::make_pair(-1.0, 1.0), std::make_pair(-1.0, 1.0), 4)};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<KutuzovISimpsonIntegrationMPI, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_simpson_integration),
-                   ppc::util::AddFuncTask<KutuzovISimpsonIntegrationSEQ, InType>(kTestParam, PPC_SETTINGS_kutuzov_i_simpson_integration));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<KutuzovISimpsonIntegrationMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_kutuzov_i_simpson_integration),
+                                           ppc::util::AddFuncTask<KutuzovISimpsonIntegrationSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_kutuzov_i_simpson_integration));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

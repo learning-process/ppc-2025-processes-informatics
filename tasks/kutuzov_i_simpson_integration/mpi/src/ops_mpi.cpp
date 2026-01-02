@@ -1,7 +1,10 @@
 #include "kutuzov_i_simpson_integration/mpi/include/ops_mpi.hpp"
+
 #include <mpi.h>
+
 #include <tuple>
 #include <vector>
+
 #include "kutuzov_i_simpson_integration/common/include/common.hpp"
 
 namespace kutuzov_i_simpson_integration {
@@ -84,7 +87,7 @@ bool KutuzovISimpsonIntegrationMPI::RunImpl() {
   double local_sum = 0.0;
   for (int i = task_start; i < task_end; i++) {
     double x = x_min + (step_x * i);
-    
+
     for (int j = 0; j <= n; j++) {
       double y = y_min + (step_y * j);
       double a = GetWeight(i, n) * GetWeight(j, n) * CallFunction(function_id, x, y);

@@ -1,5 +1,7 @@
 #include "kutuzov_i_simpson_integration/seq/include/ops_seq.hpp"
+
 #include <tuple>
+
 #include "kutuzov_i_simpson_integration/common/include/common.hpp"
 
 namespace kutuzov_i_simpson_integration {
@@ -52,7 +54,7 @@ bool KutuzovISimpsonIntegrationSEQ::RunImpl() {
   double sum = 0;
   for (int i = 0; i <= n; i++) {
     double x = x_min + (step_x * i);
-    
+
     for (int j = 0; j <= n; j++) {
       double y = y_min + (step_y * j);
       sum += GetWeight(i, n) * GetWeight(j, n) * CallFunction(function_id, x, y);

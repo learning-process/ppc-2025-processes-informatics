@@ -31,7 +31,7 @@ class KutuzovIRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     double sum = 0;
     for (int i = 0; i <= n; i++) {
       double x = x_min + (step_x * i);
-      
+
       for (int j = 0; j <= n; j++) {
         double y = y_min + (step_y * j);
         sum += GetWeight(i, n) * GetWeight(j, n) * CallFunction(function_id, x, y);
@@ -61,7 +61,8 @@ TEST_P(KutuzovIRunPerfTests, RunPerfModes) {
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, KutuzovISimpsonIntegrationMPI, KutuzovISimpsonIntegrationSEQ>(PPC_SETTINGS_kutuzov_i_simpson_integration);
+    ppc::util::MakeAllPerfTasks<InType, KutuzovISimpsonIntegrationMPI, KutuzovISimpsonIntegrationSEQ>(
+        PPC_SETTINGS_kutuzov_i_simpson_integration);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
