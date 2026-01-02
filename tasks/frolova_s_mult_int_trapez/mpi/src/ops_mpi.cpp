@@ -60,7 +60,7 @@ std::vector<double> FrolovaSMultIntTrapezMPI::GetPointFromNumber(unsigned int nu
   return point;
 }
 
-static bool FrolovaSMultIntTrapezMPI::ValidateInputData(const InType &input) {
+bool FrolovaSMultIntTrapezMPI::ValidateInputData(const InType &input) {
   if (input.limits.empty() || input.number_of_intervals.empty()) {
     return false;
   }
@@ -76,7 +76,7 @@ static bool FrolovaSMultIntTrapezMPI::ValidateInputData(const InType &input) {
   return true;
 }
 
-static bool FrolovaSMultIntTrapezMPI::ValidateLimitsAndIntervals(const InType &input) {
+bool FrolovaSMultIntTrapezMPI::ValidateLimitsAndIntervals(const InType &input) {
   for (size_t i = 0; i < input.limits.size(); i++) {
     if (input.limits[i].first >= input.limits[i].second) {
       return false;
