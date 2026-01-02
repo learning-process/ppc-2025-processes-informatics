@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "agafonov_i_sentence_count/common/include/common.hpp"
 #include "task/include/task.hpp"
 
