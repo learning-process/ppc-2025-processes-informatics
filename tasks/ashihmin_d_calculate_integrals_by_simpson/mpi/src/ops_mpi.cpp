@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "ashihmin_d_calculate_integrals_by_simpson/common/include/common.hpp"
@@ -38,7 +39,7 @@ std::vector<double> CalculatePoint(const std::vector<int> &indices, const std::v
                                    const std::vector<double> &left_bounds) {
   std::vector<double> point(indices.size());
   for (std::size_t dim = 0; dim < indices.size(); ++dim) {
-    point[dim] = left_bounds[dim] + indices[dim] * step_sizes[dim];
+    point[dim] = left_bounds[dim] + (indices[dim] * step_sizes[dim]);
   }
   return point;
 }
@@ -129,7 +130,7 @@ bool AshihminDCalculateIntegralsBySimpsonMPI::RunImpl() {
   const int chunk_size = total_nodes / process_count;
   const int remainder = total_nodes % process_count;
 
-  int start_index = process_rank * chunk_size + std::min(process_rank, remainder);
+  int start_index = (process_rank * chunk_size) + std::min(process_rank, remainder);
   int end_index = start_index + chunk_size - 1;
   if (process_rank < remainder) {
     end_index += 1;

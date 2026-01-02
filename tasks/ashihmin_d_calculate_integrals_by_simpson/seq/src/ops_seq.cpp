@@ -1,6 +1,7 @@
 #include "ashihmin_d_calculate_integrals_by_simpson/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "ashihmin_d_calculate_integrals_by_simpson/common/include/common.hpp"
@@ -35,7 +36,7 @@ std::vector<double> CalculatePoint(const std::vector<int> &indices, const std::v
                                    const std::vector<double> &left_bounds) {
   std::vector<double> point(indices.size());
   for (std::size_t dim = 0; dim < indices.size(); ++dim) {
-    point[dim] = left_bounds[dim] + indices[dim] * step_sizes[dim];
+    point[dim] = left_bounds[dim] + (indices[dim] * step_sizes[dim]);
   }
   return point;
 }
