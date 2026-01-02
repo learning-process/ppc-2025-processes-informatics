@@ -1,10 +1,10 @@
 #include "lifanov_k_trapezoid_method/mpi/include/ops_mpi.hpp"
 
-#include <mpi.h>
-
 #include <cmath>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
+
+#include <mpi.h>
 
 namespace lifanov_k_trapezoid_method {
 

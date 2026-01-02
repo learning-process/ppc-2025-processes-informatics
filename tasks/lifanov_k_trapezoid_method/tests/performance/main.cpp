@@ -37,8 +37,7 @@ TEST_P(LifanovKTrapezoidMethodPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LifanovKTrapezoidMethodMPI, LifanovKTrapezoidMethodSEQ>(
-    PPC_SETTINGS_lifanov_k_trapezoid_method);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LifanovKTrapezoidMethodMPI, LifanovKTrapezoidMethodSEQ>(PPC_SETTINGS_lifanov_k_trapezoid_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
