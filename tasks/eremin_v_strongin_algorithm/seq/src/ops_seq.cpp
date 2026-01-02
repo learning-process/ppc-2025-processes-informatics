@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <tuple>
 #include <functional>
+#include <tuple>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 

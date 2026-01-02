@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <cstddef>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 #include "eremin_v_strongin_algorithm/mpi/include/ops_mpi.hpp"
@@ -69,7 +69,7 @@ const std::array<TestType, 5> kTestParam = {
 
     std::make_tuple(3, 0.0, 8.0, 0.01, 6000, [](double x) { return std::sin(x); }, -1.0),
 
-    std::make_tuple(4, 0.0, 10.0, 0.01, 2000, [](double x) { return (x * x * x * x )- (3 * x * x); }, -2.25),
+    std::make_tuple(4, 0.0, 10.0, 0.01, 2000, [](double x) { return (x * x * x * x) - (3 * x * x); }, -2.25),
 
     std::make_tuple(5, -2.0, 100.0, 0.01, 3000, [](double x) { return std::exp(x); }, std::exp(-2.0))};
 
