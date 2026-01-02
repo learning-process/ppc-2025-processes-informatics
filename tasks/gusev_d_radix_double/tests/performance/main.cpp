@@ -13,20 +13,15 @@ namespace gusev_d_radix_double {
 
 class GusevDRadixDoublePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
-  static std::string CustomPerfTestName(
-      const testing::TestParamInfo<ppc::util::PerfTestParam<InType, OutType>> &param_info) {
-    return std::to_string(param_info.index);
-  }
-
   void SetUp() override {
-    size_t count = 1000000;
+    size_t count = 25000000;
     input_data_ = std::vector<double>(count);
 
     std::mt19937 gen(42);
-    std::uniform_real_distribution<> dis(-10000.0, 10000.0);
+    std::uniform_real_distribution<> dis(-1000000.0, 1000000.0);
 
-    for (size_t i = 0; i < count; ++i) {
-      input_data_[i] = dis(gen);
+    for (auto &val : input_data_) {
+      val = dis(gen);
     }
   }
 

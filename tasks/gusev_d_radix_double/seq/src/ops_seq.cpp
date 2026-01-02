@@ -27,25 +27,27 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
   }
 
   size_t n = data.size();
-  std::vector<uint64_t> raw_data(n);
+
+  uint64_t *ptr = reinterpret_cast<uint64_t *>(data.data());
 
   for (size_t i = 0; i < n; ++i) {
-    uint64_t u;
-    std::memcpy(&u, &data[i], sizeof(double));
+    uint64_t u = ptr[i];
     if ((u & 0x8000000000000000ULL)) {
-      u = ~u;
+      ptr[i] = ~u;
     } else {
-      u |= 0x8000000000000000ULL;
+      ptr[i] |= 0x8000000000000000ULL;
     }
-    raw_data[i] = u;
   }
 
   std::vector<uint64_t> buffer(n);
+  uint64_t *source = ptr;
+  uint64_t *dest = buffer.data();
+
   for (int shift = 0; shift < 64; shift += 8) {
     size_t count[256] = {0};
 
     for (size_t i = 0; i < n; ++i) {
-      uint8_t byte = (raw_data[i] >> shift) & 0xFF;
+      uint8_t byte = (source[i] >> shift) & 0xFF;
       count[byte]++;
     }
 
@@ -57,22 +59,25 @@ void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
     }
 
     for (size_t i = 0; i < n; ++i) {
-      uint8_t byte = (raw_data[i] >> shift) & 0xFF;
-      buffer[count[byte]] = raw_data[i];
-      count[byte]++;
+      uint8_t byte = (source[i] >> shift) & 0xFF;
+      dest[count[byte]++] = source[i];
     }
 
-    raw_data = buffer;
+    std::swap(source, dest);
+  }
+
+  if (source != ptr) {
+    std::memcpy(ptr, source, n * sizeof(uint64_t));
   }
 
   for (size_t i = 0; i < n; ++i) {
-    uint64_t u = raw_data[i];
+    uint64_t u = ptr[i];
     if ((u & 0x8000000000000000ULL)) {
       u ^= 0x8000000000000000ULL;
     } else {
       u = ~u;
     }
-    std::memcpy(&data[i], &u, sizeof(double));
+    ptr[i] = u;
   }
 }
 

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <vector>
 
 #include "gusev_d_radix_double/seq/include/ops_seq.hpp"
@@ -53,49 +54,38 @@ bool GusevDRadixDoubleMPI::RunImpl() {
 
   GusevDRadixDoubleSEQ::RadixSort(local_data);
 
-  std::vector<double> gathered_data;
-  if (rank == 0) {
-    gathered_data.resize(n);
+  int step = 1;
+  while (step < size) {
+    if (rank % (2 * step) == 0) {
+      int source = rank + step;
+      if (source < size) {
+        int recv_count = 0;
+        MPI_Recv(&recv_count, 1, MPI_INT, source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        size_t current_size = local_data.size();
+        local_data.resize(current_size + recv_count);
+
+        MPI_Recv(local_data.data() + current_size, recv_count, MPI_DOUBLE, source, 0, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
+
+        std::inplace_merge(local_data.begin(), local_data.begin() + current_size, local_data.end());
+      }
+    } else if (rank % (2 * step) == step) {
+      int dest = rank - step;
+      int count = static_cast<int>(local_data.size());
+
+      MPI_Send(&count, 1, MPI_INT, dest, 0, MPI_COMM_WORLD);
+      MPI_Send(local_data.data(), count, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);
+
+      local_data.clear();
+      local_data.shrink_to_fit();
+      break;
+    }
+    step *= 2;
   }
 
-  MPI_Gatherv(local_data.data(), send_counts[rank], MPI_DOUBLE, gathered_data.data(), send_counts.data(), displs.data(),
-              MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
   if (rank == 0) {
-    struct Chunk {
-      size_t start;
-      size_t len;
-    };
-
-    std::vector<Chunk> chunks;
-    chunks.reserve(size);
-    for (int i = 0; i < size; ++i) {
-      if (send_counts[i] > 0) {
-        chunks.push_back({(size_t)displs[i], (size_t)send_counts[i]});
-      }
-    }
-
-    while (chunks.size() > 1) {
-      std::vector<Chunk> next_chunks;
-      next_chunks.reserve((chunks.size() + 1) / 2);
-
-      for (size_t i = 0; i < chunks.size(); i += 2) {
-        if (i + 1 < chunks.size()) {
-          auto begin = gathered_data.begin() + chunks[i].start;
-          auto middle = gathered_data.begin() + chunks[i + 1].start;
-          auto end = gathered_data.begin() + chunks[i + 1].start + chunks[i + 1].len;
-
-          std::inplace_merge(begin, middle, end);
-
-          next_chunks.push_back({chunks[i].start, chunks[i].len + chunks[i + 1].len});
-        } else {
-          next_chunks.push_back(chunks[i]);
-        }
-      }
-      chunks = std::move(next_chunks);
-    }
-
-    GetOutput() = std::move(gathered_data);
+    GetOutput() = std::move(local_data);
   }
 
   return true;
