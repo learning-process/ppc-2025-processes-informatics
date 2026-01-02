@@ -3,8 +3,8 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <cstddef>  // std::ptrdiff_t
-#include <utility>  // std::move
+#include <cstddef>
+#include <utility>
 #include <vector>
 
 #include "gusev_d_radix_double/common/include/common.hpp"
@@ -70,8 +70,9 @@ bool GusevDRadixDoubleMPI::RunImpl() {
         MPI_Recv(local_data.data() + current_size, recv_count, MPI_DOUBLE, source, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
 
+        // NOLINTNEXTLINE(modernize-use-ranges)
         std::inplace_merge(local_data.begin(), local_data.begin() + static_cast<std::ptrdiff_t>(current_size),
-                           local_data.end());  // NOLINT(modernize-use-ranges)
+                           local_data.end());
       }
     } else if (rank % (2 * step) == step) {
       int dest = rank - step;
