@@ -55,26 +55,26 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void CompareAndSwapPair(std::vector<int> &arr, int index, int partner_index, bool ascending) {
+void CompareExchange(std::vector<int> &arr, int i, int j, bool ascending) {
   if (ascending) {
-    if (arr[index] > arr[partner_index]) {
-      std::swap(arr[index], arr[partner_index]);
+    if (arr[i] > arr[j]) {
+      std::swap(arr[i], arr[j]);
     }
   } else {
-    if (arr[index] < arr[partner_index]) {
-      std::swap(arr[index], arr[partner_index]);
+    if (arr[i] < arr[j]) {
+      std::swap(arr[i], arr[j]);
     }
   }
 }
 
-void OddEvenMergeNetwork(std::vector<int> &arr, int length) {
-  for (int step = 1; step < length; step <<= 1) {
-    for (int stride = step; stride > 0; stride >>= 1) {
-      for (int idx = 0; idx < length; ++idx) {
-        int partner = idx ^ stride;
-        if (partner > idx) {
-          bool ascending = ((idx & step) == 0);
-          CompareAndSwapPair(arr, idx, partner, ascending);
+void BatcherOddEvenNetwork(std::vector<int> &arr, int length) {
+  for (int p = 1; p < length; p <<= 1) {
+    for (int q = p; q > 0; q >>= 1) {
+      for (int i = 0; i < length; ++i) {
+        int j = i ^ q;
+        if (j > i) {
+          bool ascending = ((i & p) == 0);
+          CompareExchange(arr, i, j, ascending);
         }
       }
     }
@@ -96,7 +96,7 @@ void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> 
   }
   const int sentinel = std::numeric_limits<int>::max();
   out.resize(pow2, sentinel);
-  OddEvenMergeNetwork(out, static_cast<int>(pow2));
+  BatcherOddEvenNetwork(out, static_cast<int>(pow2));
   out.resize(orig_n);
 }
 
@@ -135,19 +135,35 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor, in
   if (neighbor == MPI_PROC_NULL) {
     return;
   }
+
   int send_count = static_cast<int>(local_data.size());
   int recv_count = 0;
+
   MPI_Sendrecv(&send_count, 1, MPI_INT, neighbor, 100, &recv_count, 1, MPI_INT, neighbor, 100, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
-  std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
-  MPI_Sendrecv(local_data.data(), send_count, MPI_INT, neighbor, 101, recv_buf.data(), recv_count, MPI_INT, neighbor,
-               101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  std::vector<int> merged;
-  OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
-  if (merged.empty()) {
-    local_data.clear();
+
+  std::vector<int> recv_buf;
+  if (recv_count > 0) {
+    recv_buf.resize(static_cast<std::size_t>(recv_count));
+    MPI_Sendrecv(local_data.data(), send_count, MPI_INT, neighbor, 101, recv_buf.data(), recv_count, MPI_INT, neighbor,
+                 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  } else {
+    if (send_count > 0) {
+      MPI_Send(local_data.data(), send_count, MPI_INT, neighbor, 101, MPI_COMM_WORLD);
+    }
+  }
+
+  if (recv_buf.empty()) {
     return;
   }
+
+  std::vector<int> merged;
+  OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
+
+  if (merged.size() < static_cast<std::size_t>(send_count + recv_count)) {
+    return;
+  }
+
   KeepBlockFromMerged(local_data, merged, keep_count, rank, neighbor);
 }
 
@@ -159,18 +175,34 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
       if (partner < 0 || partner >= size) {
         continue;
       }
+
       int send_count = static_cast<int>(local_data.size());
       int recv_count = 0;
       const int tag_count = 2000 + (stage * 16) + sub;
       const int tag_data = 3000 + (stage * 16) + sub;
+
       MPI_Sendrecv(&send_count, 1, MPI_INT, partner, tag_count, &recv_count, 1, MPI_INT, partner, tag_count,
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
-      MPI_Sendrecv(local_data.data(), send_count, MPI_INT, partner, tag_data, recv_buf.data(), recv_count, MPI_INT,
-                   partner, tag_data, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      std::vector<int> merged;
-      OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
-      KeepBlockFromMerged(local_data, merged, keep_count, rank, partner);
+
+      std::vector<int> recv_buf;
+      if (recv_count > 0) {
+        recv_buf.resize(static_cast<std::size_t>(recv_count));
+        MPI_Sendrecv(local_data.data(), send_count, MPI_INT, partner, tag_data, recv_buf.data(), recv_count, MPI_INT,
+                     partner, tag_data, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      } else {
+        if (send_count > 0) {
+          MPI_Send(local_data.data(), send_count, MPI_INT, partner, tag_data, MPI_COMM_WORLD);
+        }
+      }
+
+      if (!recv_buf.empty()) {
+        std::vector<int> merged;
+        OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
+        if (!merged.empty()) {
+          KeepBlockFromMerged(local_data, merged, keep_count, rank, partner);
+        }
+      }
+
       MPI_Barrier(MPI_COMM_WORLD);
     }
   }
@@ -212,6 +244,7 @@ bool YurkinGShellBetcherMPI::RunImpl() {
   if (n <= 0) {
     return false;
   }
+
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

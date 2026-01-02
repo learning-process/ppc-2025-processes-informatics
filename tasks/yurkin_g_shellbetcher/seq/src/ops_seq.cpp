@@ -35,26 +35,26 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void CompareAndSwapPair(std::vector<int> &arr, int index, int partner_index, bool ascending) {
+void CompareExchange(std::vector<int> &arr, int i, int j, bool ascending) {
   if (ascending) {
-    if (arr[index] > arr[partner_index]) {
-      std::swap(arr[index], arr[partner_index]);
+    if (arr[i] > arr[j]) {
+      std::swap(arr[i], arr[j]);
     }
   } else {
-    if (arr[index] < arr[partner_index]) {
-      std::swap(arr[index], arr[partner_index]);
+    if (arr[i] < arr[j]) {
+      std::swap(arr[i], arr[j]);
     }
   }
 }
 
-void OddEvenMergeNetwork(std::vector<int> &arr, int length) {
-  for (int step = 1; step < length; step <<= 1) {
-    for (int stride = step; stride > 0; stride >>= 1) {
-      for (int idx = 0; idx < length; ++idx) {
-        int partner = idx ^ stride;
-        if (partner > idx) {
-          bool ascending = ((idx & step) == 0);
-          CompareAndSwapPair(arr, idx, partner, ascending);
+void BatcherOddEvenNetwork(std::vector<int> &arr, int length) {
+  for (int p = 1; p < length; p <<= 1) {
+    for (int q = p; q > 0; q >>= 1) {
+      for (int i = 0; i < length; ++i) {
+        int j = i ^ q;
+        if (j > i) {
+          bool ascending = ((i & p) == 0);
+          CompareExchange(arr, i, j, ascending);
         }
       }
     }
@@ -76,7 +76,7 @@ void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, s
   }
   const int sentinel = std::numeric_limits<int>::max();
   out.resize(pow2, sentinel);
-  OddEvenMergeNetwork(out, static_cast<int>(pow2));
+  BatcherOddEvenNetwork(out, static_cast<int>(pow2));
   out.resize(orig_n);
 }
 
@@ -101,6 +101,7 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   if (n <= 0) {
     return false;
   }
+
   std::vector<int> data;
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));

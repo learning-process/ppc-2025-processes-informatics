@@ -25,9 +25,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   for (int i = 0; i < n; ++i) {
     data.push_back(dist(rng));
   }
-
-  std::ranges::sort(data);
-
+  std::sort(data.begin(), data.end());
   std::int64_t checksum = 0;
   for (int v : data) {
     checksum += static_cast<std::int64_t>(v);
