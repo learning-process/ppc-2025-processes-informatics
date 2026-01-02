@@ -44,6 +44,9 @@ bool ShvetsovaKRadSortBatchMergeSEQ::PostProcessingImpl() {
 
 // LSD Radix Sort для целых чисел в double
 void ShvetsovaKRadSortBatchMergeSEQ::RadixSort(std::vector<double> &vec) {
+  if (vec.empty()) {
+    return;
+  }
   const int base = 10;
   int max_val = 0;
 
