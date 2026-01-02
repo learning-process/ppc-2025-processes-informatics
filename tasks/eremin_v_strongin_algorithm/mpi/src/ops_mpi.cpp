@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <functional>
 #include <tuple>
+#include <vector>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 
@@ -53,6 +54,31 @@ double EreminVStronginAlgorithmMPI::CalculateLipschitzEstimate(int rank, int siz
   return global_lipschitz_estimate;
 }
 
+EreminVStronginAlgorithmMPI::IntervalCharacteristic EreminVStronginAlgorithmMPI::FindBestInterval(
+    int rank, int size, const std::vector<double> &search_points, const std::vector<double> &function_values,
+    double m_parameter) {
+  IntervalCharacteristic local{-1e18, 1};
+
+  for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
+       i += static_cast<std::size_t>(size)) {
+    double interval_width = search_points[i] - search_points[i - 1];
+    double value_difference = function_values[i] - function_values[i - 1];
+
+    double characteristic = (m_parameter * interval_width) +
+                            ((value_difference * value_difference) / (m_parameter * interval_width)) -
+                            (2.0 * (function_values[i] + function_values[i - 1]));
+
+    if (characteristic > local.value) {
+      local.value = characteristic;
+      local.index = static_cast<int>(i);
+    }
+  }
+
+  IntervalCharacteristic global{};
+  MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+  return global;
+}
+
 bool EreminVStronginAlgorithmMPI::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -96,36 +122,8 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
 
     double m_parameter = (lipschitz_estimate > 0.0) ? r_coefficient * lipschitz_estimate : 1.0;
 
-    double max_characteristic = -1e18;
-    std::size_t best_interval_index = 1;
-
-    for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
-         i += static_cast<std::size_t>(size)) {
-      double interval_width = search_points[i] - search_points[i - 1];
-      double value_difference = function_values[i] - function_values[i - 1];
-
-      double characteristic = (m_parameter * interval_width) +
-                              ((value_difference * value_difference) / (m_parameter * interval_width)) -
-                              (2.0 * (function_values[i] + function_values[i - 1]));
-
-      if (characteristic > max_characteristic) {
-        max_characteristic = characteristic;
-        best_interval_index = static_cast<int>(i);
-      }
-    }
-
-    struct {
-      double value;
-      int index;
-    } local{}, global{};
-
-    local.value = max_characteristic;
-    local.index = static_cast<int>(best_interval_index);
-    ;
-
-    MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
-
-    best_interval_index = global.index;
+    auto best_interval = FindBestInterval(rank, size, search_points, function_values, m_parameter);
+    double best_interval_index = best_interval.index;
 
     double left_point = search_points[best_interval_index - 1];
     double right_point = search_points[best_interval_index];

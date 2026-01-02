@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <functional>
 #include <tuple>
+#include <vector>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 
@@ -45,6 +46,26 @@ double EreminVStronginAlgorithmSEQ::CalculateLipschitzEstimate(const std::vector
   return lipschitz_estimate;
 }
 
+EreminVStronginAlgorithmSEQ::IntervalCharacteristic EreminVStronginAlgorithmSEQ::FindBestInterval(
+    const std::vector<double> &search_points, const std::vector<double> &function_values, double m_parameter) {
+  IntervalCharacteristic best{-1e18, 1};
+
+  for (std::size_t i = 1; i < search_points.size(); ++i) {
+    double interval_width = search_points[i] - search_points[i - 1];
+    double characteristic = (m_parameter * interval_width) +
+                            ((function_values[i] - function_values[i - 1]) *
+                             (function_values[i] - function_values[i - 1]) / (m_parameter * interval_width)) -
+                            (2.0 * (function_values[i] + function_values[i - 1]));
+
+    if (characteristic > best.value) {
+      best.value = characteristic;
+      best.index = i;
+    }
+  }
+
+  return best;
+}
+
 bool EreminVStronginAlgorithmSEQ::RunImpl() {
   auto &input = GetInput();
   double lower_bound = std::get<0>(input);
@@ -71,22 +92,8 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
 
     double m_parameter = (lipschitz_estimate > 0.0) ? r_coefficient * lipschitz_estimate : 1.0;
 
-    double max_characteristic = -1e18;
-    std::size_t best_interval_index = 1;
-
-    for (std::size_t i = 1; i < search_points.size(); ++i) {
-      double interval_width = search_points[i] - search_points[i - 1];
-      double value_difference = function_values[i] - function_values[i - 1];
-
-      double characteristic = (m_parameter * interval_width) +
-                              ((value_difference * value_difference) / (m_parameter * interval_width)) -
-                              (2.0 * (function_values[i] + function_values[i - 1]));
-
-      if (characteristic > max_characteristic) {
-        max_characteristic = characteristic;
-        best_interval_index = i;
-      }
-    }
+    auto best_interval = FindBestInterval(search_points, function_values, m_parameter);
+    std::size_t best_interval_index = best_interval.index;
 
     double left_point = search_points[best_interval_index - 1];
     double right_point = search_points[best_interval_index];

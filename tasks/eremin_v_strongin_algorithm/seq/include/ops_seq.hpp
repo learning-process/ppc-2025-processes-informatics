@@ -18,8 +18,15 @@ class EreminVStronginAlgorithmSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double CalculateLipschitzEstimate(const std::vector<double> &search_points,
-                                    const std::vector<double> &function_values);
+  struct IntervalCharacteristic {
+    double value;
+    int index;
+  };
+
+  static double CalculateLipschitzEstimate(const std::vector<double> &search_points,
+                                           const std::vector<double> &function_values);
+  static IntervalCharacteristic FindBestInterval(const std::vector<double> &search_points,
+                                                 const std::vector<double> &function_values, double m_parameter);
 };
 
 }  // namespace eremin_v_strongin_algorithm

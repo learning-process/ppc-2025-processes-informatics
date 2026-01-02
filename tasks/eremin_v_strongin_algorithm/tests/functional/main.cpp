@@ -65,9 +65,9 @@ TEST_P(EreminVRunFuncTestsStronginAlgorithm, StronginAlgorithm) {
 const std::array<TestType, 5> kTestParam = {
     std::make_tuple(1, -5.0, 5.0, 0.01, 1000, [](double x) { return x * x; }, 0.0),
 
-    std::make_tuple(2, 2.0, 14.0, 0.01, 5000, [](double x) { return (x - 2) * (x - 2); }, 0.0),
+    std::make_tuple(2, 2.0, 14.0, 0.01, 2500, [](double x) { return (x - 2) * (x - 2); }, 0.0),
 
-    std::make_tuple(3, 0.0, 8.0, 0.01, 6000, [](double x) { return std::sin(x); }, -1.0),
+    std::make_tuple(3, 0.0, 8.0, 0.01, 3000, [](double x) { return std::sin(x); }, -1.0),
 
     std::make_tuple(4, 0.0, 10.0, 0.01, 2000, [](double x) { return (x * x * x * x) - (3 * x * x); }, -2.25),
 

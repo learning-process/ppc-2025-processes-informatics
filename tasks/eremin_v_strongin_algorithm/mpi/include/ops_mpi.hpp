@@ -18,8 +18,15 @@ class EreminVStronginAlgorithmMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double CalculateLipschitzEstimate(int rank, int size, const std::vector<double> &search_points,
-                                    const std::vector<double> &function_values);
+  struct IntervalCharacteristic {
+    double value;
+    int index;
+  };
+
+  static double CalculateLipschitzEstimate(int rank, int size, const std::vector<double> &search_points,
+                                           const std::vector<double> &function_values);
+  static IntervalCharacteristic FindBestInterval(int rank, int size, const std::vector<double> &search_points,
+                                                 const std::vector<double> &function_values, double m_parameter);
 };
 
 }  // namespace eremin_v_strongin_algorithm
