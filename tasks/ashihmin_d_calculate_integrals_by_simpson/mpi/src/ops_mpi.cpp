@@ -2,7 +2,9 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace ashihmin_d_calculate_integrals_by_simpson {

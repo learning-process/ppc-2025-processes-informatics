@@ -1,6 +1,7 @@
 #include "ashihmin_d_calculate_integrals_by_simpson/seq/include/ops_seq.hpp"
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
