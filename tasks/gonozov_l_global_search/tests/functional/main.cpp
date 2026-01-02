@@ -57,7 +57,7 @@ TEST_P(GonozovLRunGlobalSearchFuncTests, MatmulFromPic) {
 const std::array<TestType, 4> kTestParam = {
     std::make_tuple([](double x) { return x * x; }, 2.0, -50.0, 50.0, 0.01, "minimizing_quadratic_function", 0.0),
     std::make_tuple([](double x) { return std::sin(x); }, 2.0, 3.0, 6.0, 0.01, "minimizing_sine", 4.71404),
-    std::make_tuple([](double x) { return std::exp(x); }, 2.0, -1.0, 1.0, 0.01, "minimizing_exponent", -9.99512),
+    std::make_tuple([](double x) { return std::exp(x); }, 2.0, -1.0, 1.0, 0.01, "minimizing_exponent", -0.996669),
     std::make_tuple([](double x) { return (x * x - 11) * (x * x - 11) + (x - 7) * (x - 7); }, 2.0, -5.0, 5.0, 0.01,
                     "minimizing_himmelblau_function", 3.3965),
 };
