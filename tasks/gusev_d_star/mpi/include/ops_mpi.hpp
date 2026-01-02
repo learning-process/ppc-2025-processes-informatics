@@ -17,9 +17,8 @@ class GusevDStarMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
   void RunAsMaster(int size, int input);
-  void RunAsWorker(int input);
+  static void RunAsWorker(int input);
 };
 
 }  // namespace gusev_d_star

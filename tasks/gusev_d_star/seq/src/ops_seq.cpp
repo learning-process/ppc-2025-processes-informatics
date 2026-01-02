@@ -1,6 +1,6 @@
 #include "gusev_d_star/seq/include/ops_seq.hpp"
 
-#include <vector>
+#include "gusev_d_star/common/include/common.hpp"
 
 namespace gusev_d_star {
 

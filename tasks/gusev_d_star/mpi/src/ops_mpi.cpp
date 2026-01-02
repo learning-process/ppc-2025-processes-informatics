@@ -2,13 +2,15 @@
 
 #include <mpi.h>
 
-#include <algorithm>
-#include <vector>
+#include <array>
+
+#include "gusev_d_star/common/include/common.hpp"
 
 namespace gusev_d_star {
 
-const int kTagTask = 0;
-const int kTagResult = 1;
+constexpr int kTagTask = 0;
+constexpr int kTagResult = 1;
+constexpr int kHubRank = 0;
 
 GusevDStarMPI::GusevDStarMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -47,8 +49,6 @@ bool GusevDStarMPI::RunImpl() {
     return true;
   }
 
-  const int kHubRank = 0;
-
   if (rank == kHubRank) {
     RunAsMaster(size, input);
   } else {
@@ -71,9 +71,10 @@ void GusevDStarMPI::RunAsMaster(int size, int input) {
 
   for (int dst_rank = 1; dst_rank < size; dst_rank++) {
     int count = chunk + (dst_rank <= remainder ? 1 : 0);
-    int task_data[2] = {current_start_index, count};
 
-    MPI_Send(task_data, 2, MPI_INT, dst_rank, kTagTask, MPI_COMM_WORLD);
+    std::array<int, 2> task_data = {current_start_index, count};
+
+    MPI_Send(task_data.data(), 2, MPI_INT, dst_rank, kTagTask, MPI_COMM_WORLD);
     current_start_index += count;
   }
 
@@ -87,11 +88,9 @@ void GusevDStarMPI::RunAsMaster(int size, int input) {
 }
 
 void GusevDStarMPI::RunAsWorker(int input) {
-  int task_data[2];
+  std::array<int, 2> task_data = {};
   MPI_Status status;
-  const int kHubRank = 0;
-
-  MPI_Recv(task_data, 2, MPI_INT, kHubRank, kTagTask, MPI_COMM_WORLD, &status);
+  MPI_Recv(task_data.data(), 2, MPI_INT, kHubRank, kTagTask, MPI_COMM_WORLD, &status);
 
   int start_i = task_data[0];
   int count_i = task_data[1];
@@ -108,7 +107,9 @@ void GusevDStarMPI::RunAsWorker(int input) {
     }
   }
 
-  MPI_Send((void *)&local_res, 1, MPI_INT, kHubRank, kTagResult, MPI_COMM_WORLD);
+  int res_to_send = local_res;
+
+  MPI_Send(static_cast<const void *>(&res_to_send), 1, MPI_INT, kHubRank, kTagResult, MPI_COMM_WORLD);
 }
 
 }  // namespace gusev_d_star
