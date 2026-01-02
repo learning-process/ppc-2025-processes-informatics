@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <limits>
 #include <vector>
@@ -34,7 +35,7 @@ using TestType = std::tuple<std::string, int, double, double, double, double, do
 // 1. Кривая Гильберта: переводит t [0,1] -> (x, y) [0,1]x[0,1]
 inline void d2xy(double t, double &x, double &y) {
   const int n = 1 << 16;  //
-  int curr_t = static_cast<int>(t * (static_cast<double>(n) * n - 1));
+  int curr_t = static_cast<size_t>(t * (static_cast<double>(n) * n - 1));
 
   int rx, ry, s;
   int ix = 0;
