@@ -24,14 +24,14 @@ bool PotashnikMStarTopolSEQ::PreProcessingImpl() {
 bool PotashnikMStarTopolSEQ::RunImpl() {
   // Sequential version just for CI tests to pass
   std::vector<int> tmp;
-  tmp.reserve(500000);
+  tmp.reserve(10000000);
 
-  for (int i = 0; i < 500000; i++) {
+  for (int i = 0; i < 10000000; i++) {
     tmp.push_back(i);
   }
 
   int sum = 0;
-  for (int i = 0; i < 500000; i++) {
+  for (int i = 0; i < 10000000; i++) {
     sum += tmp[i];
   }
 
