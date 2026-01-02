@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -11,67 +12,76 @@
 #include "egorova_l_gauss_filter_vert/mpi/include/ops_mpi.hpp"
 #include "egorova_l_gauss_filter_vert/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace egorova_l_gauss_filter_vert {
 
+using TestType = std::tuple<int, int, int, std::string>;
+
 class EgorovaLGaussFilterRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &test_param) {
-    return std::to_string(std::get<0>(test_param)) + "_" + std::to_string(std::get<1>(test_param)) + "_" +
-           std::to_string(std::get<2>(test_param)) + "_" + std::get<3>(test_param);
+  using ParamType = typename ppc::util::BaseRunFuncTests<InType, OutType, TestType>::ParamType;
+
+  static std::string PrintTestParam(const ::testing::TestParamInfo<ParamType> &info) {
+    const auto &params = info.param;
+    const auto &test_params = std::get<2>(params);
+
+    std::string name = std::get<1>(params) + "_" + std::to_string(std::get<0>(test_params)) + "_" +
+                       std::to_string(std::get<1>(test_params)) + "_" + std::to_string(std::get<2>(test_params)) + "_" +
+                       std::get<3>(test_params);
+
+    std::ranges::replace(name, '-', '_');
+    std::ranges::replace(name, ' ', '_');
+    return name;
   }
 
  protected:
   void SetUp() override {
-    auto test_params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    const auto &test_params = std::get<2>(GetParam());
 
-    int rr = std::get<0>(test_params);
-    int cc = std::get<1>(test_params);
-    int ch = std::get<2>(test_params);
+    input_.rows = std::get<0>(test_params);
+    input_.cols = std::get<1>(test_params);
+    input_.channels = std::get<2>(test_params);
 
-    input_data_.rows = rr;
-    input_data_.cols = cc;
-    input_data_.channels = ch;
-    input_data_.data.assign(static_cast<std::size_t>(rr) * static_cast<size_t>(cc) * static_cast<size_t>(ch), 128);
-  }
+    size_t sz = static_cast<size_t>(input_.rows) * input_.cols * input_.channels;
 
-  bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank != 0) {
-      return true;
+    input_.data.resize(sz);
+    for (size_t i = 0; i < sz; ++i) {
+      input_.data[i] = static_cast<uint8_t>((i * 13) % 255);
     }
-
-    return output_data.rows == input_data_.rows && output_data.cols == input_data_.cols &&
-           output_data.data.size() == input_data_.data.size();
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_;
+  }
+
+  bool CheckTestOutputData(OutType &out) final {
+    const auto &in = input_;
+    if (out.rows != in.rows || out.cols != in.cols || out.channels != in.channels) {
+      return false;
+    }
+
+    return out.data.size() == static_cast<size_t>(in.rows) * in.cols * in.channels;
   }
 
  private:
-  InType input_data_;
+  InType input_;
 };
 
-namespace {
 TEST_P(EgorovaLGaussFilterRunFuncTests, GaussFilterVertical) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 5> kTestParam = {
+const std::array<TestType, 5> kTestParams = {
     std::make_tuple(3, 3, 1, "small_3x3_gray"), std::make_tuple(10, 10, 3, "color_10x10_rgb"),
-    std::make_tuple(20, 15, 1, "non_square_20x15"), std::make_tuple(5, 40, 1, "wide_image"),
-    std::make_tuple(40, 5, 1, "tall_image")};
+    std::make_tuple(20, 15, 1, "non_square"),   std::make_tuple(5, 40, 1, "wide_image"),
+    std::make_tuple(40, 5, 1, "tall_image"),
+};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<EgorovaLGaussFilterVertMPI, InType>(kTestParam, PPC_SETTINGS_egorova_l_gauss_filter_vert),
-    ppc::util::AddFuncTask<EgorovaLGaussFilterVertSEQ, InType>(kTestParam, PPC_SETTINGS_egorova_l_gauss_filter_vert));
+const auto kTasks = std::tuple_cat(
+    ppc::util::AddFuncTask<EgorovaLGaussFilterVertSEQ, InType>(kTestParams, PPC_SETTINGS_egorova_l_gauss_filter_vert),
+    ppc::util::AddFuncTask<EgorovaLGaussFilterVertMPI, InType>(kTestParams, PPC_SETTINGS_egorova_l_gauss_filter_vert));
 
-const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
-const auto kFuncTestName = EgorovaLGaussFilterRunFuncTests::PrintFuncTestName<EgorovaLGaussFilterRunFuncTests>;
+INSTANTIATE_TEST_SUITE_P(EgorovaLGaussFilterFunc, EgorovaLGaussFilterRunFuncTests, ppc::util::ExpandToValues(kTasks),
+                         EgorovaLGaussFilterRunFuncTests::PrintTestParam);
 
-INSTANTIATE_TEST_SUITE_P(EgorovaLGaussFilterFunc, EgorovaLGaussFilterRunFuncTests, kGtestValues, kFuncTestName);
-}  // namespace
 }  // namespace egorova_l_gauss_filter_vert

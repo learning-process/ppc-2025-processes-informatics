@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -11,15 +12,16 @@
 
 namespace egorova_l_gauss_filter_vert {
 
-EgorovaLGaussFilterVertSEQ::EgorovaLGaussFilterVertSEQ(const InType &in) : BaseTask() {
+EgorovaLGaussFilterVertSEQ::EgorovaLGaussFilterVertSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool EgorovaLGaussFilterVertSEQ::ValidationImpl() {
-  const auto &in = GetInput();
-  return in.rows > 0 && in.cols > 0 && in.channels > 0 &&
-         in.data.size() == (static_cast<std::size_t>(in.rows) * in.cols * in.channels);
+  const auto &input = GetInput();
+  return input.rows > 0 && input.cols > 0 && input.channels > 0 &&
+         input.data.size() == static_cast<std::size_t>(input.rows) * static_cast<std::size_t>(input.cols) *
+                                  static_cast<std::size_t>(input.channels);
 }
 
 bool EgorovaLGaussFilterVertSEQ::PreProcessingImpl() {
@@ -27,47 +29,52 @@ bool EgorovaLGaussFilterVertSEQ::PreProcessingImpl() {
 }
 
 bool EgorovaLGaussFilterVertSEQ::RunImpl() {
-  const auto &in = GetInput();
-  auto &out = GetOutput();
-  out.rows = in.rows;
-  out.cols = in.cols;
-  out.channels = in.channels;
+  const auto &input = GetInput();
+  auto &output = GetOutput();
 
-  std::vector<uint8_t> result_data(in.data.size());
+  output.rows = input.rows;
+  output.cols = input.cols;
+  output.channels = input.channels;
 
-  const std::array<float, 9> ker = {0.0625F, 0.125F, 0.0625F, 0.125F, 0.25F, 0.125F, 0.0625F, 0.125F, 0.0625F};
-  const float *ker_ptr = ker.data();
+  static constexpr std::array<float, 9> kKernel = {0.0625F, 0.125F,  0.0625F, 0.125F, 0.25F,
+                                                   0.125F,  0.0625F, 0.125F,  0.0625F};
 
-  for (int yy = 0; yy < in.rows; ++yy) {
-    for (int xx = 0; xx < in.cols; ++xx) {
-      for (int cc = 0; cc < in.channels; ++cc) {
-        float sum = 0.0F;
-        for (int ky = -1; ky <= 1; ++ky) {
-          for (int kx = -1; kx <= 1; ++kx) {
-            int py = std::clamp(yy + ky, 0, in.rows - 1);
-            int px = std::clamp(xx + kx, 0, in.cols - 1);
+  std::vector<uint8_t> result(input.data.size());
 
-            std::size_t in_idx =
-                ((((static_cast<std::size_t>(py) * static_cast<std::size_t>(in.cols)) + static_cast<std::size_t>(px)) *
-                  static_cast<std::size_t>(in.channels)) +
-                 static_cast<std::size_t>(cc));
+  for (int row = 0; row < input.rows; ++row) {
+    for (int col = 0; col < input.cols; ++col) {
+      for (int channel = 0; channel < input.channels; ++channel) {
+        double sum = 0.0;
 
-            std::size_t k_idx = (static_cast<std::size_t>(ky + 1) * 3) + static_cast<std::size_t>(kx + 1);
+        for (int kr = -1; kr <= 1; ++kr) {
+          const int ir = std::clamp(row + kr, 0, input.rows - 1);
 
-            sum += (static_cast<float>(in.data[in_idx]) * ker_ptr[k_idx]);
+          for (int kc = -1; kc <= 1; ++kc) {
+            const int ic = std::clamp(col + kc, 0, input.cols - 1);
+
+            const std::size_t pixel_index =
+                ((static_cast<std::size_t>(ir) * static_cast<std::size_t>(input.cols) + static_cast<std::size_t>(ic)) *
+                 static_cast<std::size_t>(input.channels)) +
+                static_cast<std::size_t>(channel);
+
+            const auto kernel_index = (static_cast<std::size_t>(kr + 1) * 3U) + static_cast<std::size_t>(kc + 1);
+
+            // Используем .at() вместо [] для проверки границ
+            sum += static_cast<double>(input.data[pixel_index]) * static_cast<double>(kKernel.at(kernel_index));
           }
         }
-        std::size_t out_idx =
-            ((((static_cast<std::size_t>(yy) * static_cast<std::size_t>(in.cols)) + static_cast<std::size_t>(xx)) *
-              static_cast<std::size_t>(in.channels)) +
-             static_cast<std::size_t>(cc));
 
-        result_data[out_idx] = static_cast<uint8_t>(sum);
+        const std::size_t out_index =
+            ((static_cast<std::size_t>(row) * static_cast<std::size_t>(input.cols) + static_cast<std::size_t>(col)) *
+             static_cast<std::size_t>(input.channels)) +
+            static_cast<std::size_t>(channel);
+
+        result[out_index] = static_cast<uint8_t>(std::clamp(std::round(sum), 0.0, 255.0));
       }
     }
   }
 
-  out.data = std::move(result_data);
+  output.data = std::move(result);
   return true;
 }
 

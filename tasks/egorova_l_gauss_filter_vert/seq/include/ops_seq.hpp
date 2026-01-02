@@ -1,3 +1,4 @@
+// seq/include/ops_seq.hpp
 #pragma once
 
 #include "egorova_l_gauss_filter_vert/common/include/common.hpp"
@@ -10,6 +11,7 @@ class EgorovaLGaussFilterVertSEQ : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kSEQ;
   }
+
   explicit EgorovaLGaussFilterVertSEQ(const InType &in);
 
  private:
