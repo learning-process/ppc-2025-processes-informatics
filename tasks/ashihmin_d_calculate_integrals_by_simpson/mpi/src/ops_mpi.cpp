@@ -108,7 +108,6 @@ bool AshihminDCalculateIntegralsBySimpsonMPI::RunImpl() {
     GetOutput() = 0.0;
     return true;
   }
-
   std::vector<double> step_sizes(static_cast<std::size_t>(dimensions));
   for (int dim_index = 0; dim_index < dimensions; ++dim_index) {
     step_sizes[static_cast<std::size_t>(dim_index)] = (input.right_bounds[static_cast<std::size_t>(dim_index)] -
@@ -126,11 +125,48 @@ bool AshihminDCalculateIntegralsBySimpsonMPI::RunImpl() {
     end_index += 1;
   }
 
-  std::vector<double> coordinates(static_cast<std::size_t>(dimensions), 0.0);
   double local_sum = 0.0;
 
   if (start_index <= end_index) {
-    RecursiveIntegration(0, coordinates, step_sizes, local_sum, start_index, end_index);
+    std::vector<int> indices(static_cast<std::size_t>(dimensions), 0);
+
+    int total_points = 1;
+    for (int dim = 0; dim < dimensions; ++dim) {
+      total_points *= (partitions + 1);
+    }
+
+    for (int point_idx = 0; point_idx < total_points; ++point_idx) {
+      int temp = point_idx;
+      for (int dim = 0; dim < dimensions; ++dim) {
+        indices[static_cast<std::size_t>(dim)] = temp % (partitions + 1);
+        temp /= (partitions + 1);
+      }
+
+      if (indices[0] < start_index || indices[0] > end_index) {
+        continue;
+      }
+
+      double weight_coefficient = 1.0;
+      for (int dim = 0; dim < dimensions; ++dim) {
+        int node_index = indices[static_cast<std::size_t>(dim)];
+        if (node_index == 0 || node_index == partitions) {
+          weight_coefficient *= 1.0;
+        } else if (node_index % 2 == 0) {
+          weight_coefficient *= 2.0;
+        } else {
+          weight_coefficient *= 4.0;
+        }
+      }
+
+      std::vector<double> point(static_cast<std::size_t>(dimensions));
+      for (int dim = 0; dim < dimensions; ++dim) {
+        point[static_cast<std::size_t>(dim)] =
+            input.left_bounds[static_cast<std::size_t>(dim)] +
+            indices[static_cast<std::size_t>(dim)] * step_sizes[static_cast<std::size_t>(dim)];
+      }
+
+      local_sum += weight_coefficient * IntegrandFunction(point);
+    }
   }
 
   double global_sum = 0.0;
