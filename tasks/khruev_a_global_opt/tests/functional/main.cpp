@@ -31,8 +31,8 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     input_data_.bx = std::get<3>(param);
     input_data_.ay = std::get<4>(param);
     input_data_.by = std::get<5>(param);
-    input_data_.epsilon = 0.0001;
-    input_data_.max_iter = 15;
+    input_data_.epsilon = 0.001;
+    input_data_.max_iter = 25;
     input_data_.r = 2.5;
 
     expected_min_ = std::get<6>(param);
