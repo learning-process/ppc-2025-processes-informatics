@@ -8,7 +8,6 @@
 #include <random>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "util/include/func_test_util.hpp"
 #include "util/include/perf_test_util.hpp"
@@ -64,8 +63,8 @@ class OddEvenSortFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, 
       if (type == TestType::kSingle) {
         input_.assign(1, 42);
       } else {
-        // NOLINTNEXTLINE(cert-msc51-cpp)
-        std::mt19937 gen(42);
+        std::random_device rd;
+        std::mt19937 gen(rd());
 
         if (type == TestType::kDuplicates) {
           std::uniform_int_distribution<int> dist(1, 10);

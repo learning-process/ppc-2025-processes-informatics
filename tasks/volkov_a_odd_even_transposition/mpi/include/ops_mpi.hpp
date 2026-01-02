@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "task/include/task.hpp"
 #include "volkov_a_odd_even_transposition/common/include/common.hpp"
 
 namespace volkov_a_odd_even_transposition {

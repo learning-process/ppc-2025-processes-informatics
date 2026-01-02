@@ -3,8 +3,6 @@
 #include <cstddef>
 #include <random>
 #include <string>
-#include <tuple>
-#include <vector>
 
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
@@ -21,8 +19,8 @@ class OddEvenSortPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> 
       const int k_size = 3000;
       input_.resize(k_size);
 
-      // NOLINTNEXTLINE(cert-msc51-cpp)
-      std::mt19937 gen(1337);
+      std::random_device rd;
+      std::mt19937 gen(rd());
       std::uniform_int_distribution<int> dist(-100000, 100000);
 
       for (auto &x : input_) {
