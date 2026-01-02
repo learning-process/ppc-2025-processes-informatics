@@ -18,12 +18,76 @@ class ChyokotovConvexHullPerfTest : public ppc::util::BaseRunPerfTests<InType, O
   OutType expected_;
 
   void SetUp() override {
-    input_data_.resize(5000, std::vector<int>(5000, 0));
-    for (int i = 1; i < 5000; i++) {
-      input_data_[1][i] = 1;
-      input_data_[2][i] = 1;
+    const int height = 5000;
+    const int width = 5000;
+    input_data_.resize(height);
+    for (auto &row : input_data_) {
+      row.resize(width, 0);
     }
-    expected_ = {{{1, 1}, {1, 2}, {4999, 1}, {4999, 2}}};
+    expected_.clear();
+
+    int rect_top = 1000;
+    int rect_left = 1000;
+    int rect_height = 100;
+    int rect_width = 1000;
+
+    for (int y = rect_top; y < rect_top + rect_height; ++y) {
+      for (int x = rect_left; x < rect_left + rect_width; ++x) {
+        input_data_[y][x] = 1;
+      }
+    }
+    expected_.push_back({{1000, 1000}, {1999, 1000}, {1999, 1099}, {1000, 1099}});
+
+    int cross_center_y = 4500;
+    int cross_center_x = 4500;
+    int cross_size = 50;
+
+    for (int x = cross_center_x - cross_size; x <= cross_center_x + cross_size; ++x) {
+      input_data_[cross_center_y][x] = 1;
+    }
+
+    for (int y = cross_center_y - 50; y <= cross_center_y + 50; ++y) {
+      input_data_[y][cross_center_x] = 1;
+    }
+    expected_.push_back({{4450, 4500}, {4550, 4500}, {4500, 4550}, {4500, 4450}});
+
+    int frame_top = 3000;
+    int frame_left = 200;
+    int frame_size = 100;
+
+    for (int x = frame_left; x < frame_left + frame_size; ++x) {
+      input_data_[frame_top][x] = 1;
+      input_data_[frame_top + frame_size - 1][x] = 1;
+    }
+
+    for (int y = frame_top; y < frame_top + frame_size; ++y) {
+      input_data_[y][frame_left] = 1;
+      input_data_[y][frame_left + frame_size - 1] = 1;
+    }
+    expected_.push_back({{200, 3000}, {299, 3000}, {299, 3099}, {200, 3099}});
+
+    int small_component_count = 100;
+
+    for (int comp = 0; comp < small_component_count; ++comp) {
+      int y = comp * 50;
+      int x = 100 + comp * 40;
+
+      if (comp % 4 == 0) {
+        input_data_[y][x] = input_data_[y][x + 1] = 1;
+        input_data_[y + 1][x] = input_data_[y + 1][x + 1] = 1;
+        expected_.push_back({{x, y}, {x + 1, y}, {x + 1, y + 1}, {x, y + 1}});
+      } else if (comp % 4 == 1) {
+        input_data_[y][x] = input_data_[y][x + 1] = input_data_[y][x + 2] = 1;
+        expected_.push_back({{x, y}, {x + 2, y}});
+      } else if (comp % 4 == 2) {
+        input_data_[y][x] = input_data_[y + 1][x] = input_data_[y + 2][x] = 1;
+        expected_.push_back({{x, y}, {x, y + 2}});
+      } else {
+        input_data_[y][x] = input_data_[y][x + 1] = input_data_[y][x + 2] = 1;
+        input_data_[y + 1][x] = input_data_[y + 1][x + 1] = input_data_[y + 1][x + 2] = 1;
+        expected_.push_back({{x, y}, {x + 2, y}, {x + 2, y + 1}, {x, y + 1}});
+      }
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

@@ -350,6 +350,27 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Gat
   return {};
 }
 
+std::vector<std::vector<std::pair<int, int>>> ReconstructHulls(const std::vector<int> &hull_sizes,
+                                                               const std::vector<int> &flat_points) {
+  std::vector<std::vector<std::pair<int, int>>> result;
+  result.reserve(hull_sizes.size());
+
+  size_t flat_idx = 0;
+  for (int hull_size : hull_sizes) {
+    std::vector<std::pair<int, int>> hull;
+    hull.reserve(static_cast<size_t>(hull_size));
+
+    for (int j = 0; j < hull_size; ++j) {
+      hull.emplace_back(flat_points[flat_idx], flat_points[flat_idx + 1]);
+      flat_idx += 2;
+    }
+
+    result.push_back(std::move(hull));
+  }
+
+  return result;
+}
+
 std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::BroadcastResultToAllRanks(
     int rank, const std::vector<std::vector<std::pair<int, int>>> &global_hulls_on_rank0) {
   int total_hulls = (rank == 0) ? static_cast<int>(global_hulls_on_rank0.size()) : 0;
@@ -386,19 +407,7 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
   }
   MPI_Bcast(flat_points.data(), total_points * 2, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<std::vector<std::pair<int, int>>> result;
-  size_t idx = 0;
-  for (int hull_size : all_sizes) {
-    std::vector<std::pair<int, int>> hull;
-    hull.reserve(static_cast<size_t>(hull_size));
-    for (int j = 0; j < hull_size; ++j) {
-      hull.emplace_back(flat_points[idx], flat_points[idx + 1]);
-      idx += 2;
-    }
-    result.push_back(std::move(hull));
-  }
-
-  return result;
+  return ReconstructHulls(all_sizes, flat_points);
 }
 
 bool ChyokotovConvexHullFindingMPI::RunImpl() {
