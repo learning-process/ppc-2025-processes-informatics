@@ -34,7 +34,7 @@ class GonozovLRunIterationMethodPerfTest : public ppc::util::BaseRunPerfTests<In
     if (desired_result_.size() != output_data.size()) {
       return false;
     }
-    for (int i = 0; std::cmp_less(i, desired_result_.size()); i++) {
+    for (int i = 0; i < static_cast<int>(desired_result_.size()); i++) {
       if (std::abs(desired_result_[i] - output_data[i]) > 0.01) {
         return false;
       }

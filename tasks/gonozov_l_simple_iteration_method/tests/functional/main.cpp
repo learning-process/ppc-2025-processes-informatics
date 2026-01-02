@@ -36,7 +36,7 @@ class GonozovLRunIterationMethodFuncTests : public ppc::util::BaseRunFuncTests<I
     if (static_cast<int>(ordered_data.size()) != static_cast<int>(output_data.size())) {
       return false;
     }
-    for (int i = 0; std::cmp_less(i, ordered_data.size()); i++) {
+    for (int i = 0; i < static_cast<int>(std::get<0>(params)); i++) {
       if (std::abs(ordered_data[i] - output_data[i]) > 0.01) {
         return false;
       }
