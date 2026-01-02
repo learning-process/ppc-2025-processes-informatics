@@ -8,11 +8,11 @@
 #include <unordered_map>
 #include <utility>
 
-#include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/common/include/common.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/mpi/include/ops_mpi.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
 
 namespace nikolaev_d_sparse_matrix_mult_crs_double {
 
@@ -75,11 +75,10 @@ const std::array<TestType, 11> kAllTestParam = {
     std::make_tuple(34, "edge_small"),       std::make_tuple(35, "edge_all_zeros"),
     std::make_tuple(36, "edge_high_density")};
 
-const auto kTestTasksList =
-    std::tuple_cat(ppc::util::AddFuncTask<NikolaevDSparseMatrixMultCrsDoubleMPI, InType>(
-                       kAllTestParam, PPC_SETTINGS_nikolaev_d_sparse_matrix_mult_crs_double),
-                   ppc::util::AddFuncTask<NikolaevDSparseMatrixMultCrsDoubleSEQ, InType>(
-                       kAllTestParam, PPC_SETTINGS_nikolaev_d_sparse_matrix_mult_crs_double));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<NikolaevDSparseMatrixMultCrsDoubleMPI, InType>(
+                                               kAllTestParam, PPC_SETTINGS_nikolaev_d_sparse_matrix_mult_crs_double),
+                                           ppc::util::AddFuncTask<NikolaevDSparseMatrixMultCrsDoubleSEQ, InType>(
+                                               kAllTestParam, PPC_SETTINGS_nikolaev_d_sparse_matrix_mult_crs_double));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "util/include/util.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/common/include/common.hpp"
+#include "util/include/util.hpp"
 
 namespace nikolaev_d_sparse_matrix_mult_crs_double {
 

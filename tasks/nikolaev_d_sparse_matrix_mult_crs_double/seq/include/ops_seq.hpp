@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "task/include/task.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace nikolaev_d_sparse_matrix_mult_crs_double {
 

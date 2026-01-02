@@ -4,10 +4,10 @@
 #include <cmath>
 #include <cstddef>
 
-#include "util/include/perf_test_util.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/common/include/common.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/mpi/include/ops_mpi.hpp"
 #include "nikolaev_d_sparse_matrix_mult_crs_double/seq/include/ops_seq.hpp"
+#include "util/include/perf_test_util.hpp"
 
 namespace nikolaev_d_sparse_matrix_mult_crs_double {
 
@@ -30,9 +30,9 @@ TEST_P(NikolaevDSparseMatrixMultCrsDoublePerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, NikolaevDSparseMatrixMultCrsDoubleMPI,
-                                                       NikolaevDSparseMatrixMultCrsDoubleSEQ>(
-    PPC_SETTINGS_nikolaev_d_sparse_matrix_mult_crs_double);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, NikolaevDSparseMatrixMultCrsDoubleMPI, NikolaevDSparseMatrixMultCrsDoubleSEQ>(
+        PPC_SETTINGS_nikolaev_d_sparse_matrix_mult_crs_double);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
