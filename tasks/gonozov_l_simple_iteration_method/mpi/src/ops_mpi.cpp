@@ -3,6 +3,7 @@
 #include <mpi.h>
 
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 #include "gonozov_l_simple_iteration_method/common/include/common.hpp"

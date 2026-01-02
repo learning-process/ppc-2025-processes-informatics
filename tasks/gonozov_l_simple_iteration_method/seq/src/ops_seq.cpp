@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "gonozov_l_simple_iteration_method/common/include/common.hpp"
@@ -40,26 +41,26 @@ bool GonozovLSimpleIterationMethodSEQ::PreProcessingImpl() {
 
 namespace {
 void CalculatingNewApproximations(std::vector<double> &matrix, std::vector<double> &previous_approximations,
-                                  std::vector<double> &current_approximations, int number_unknowns_,
+                                  std::vector<double> &current_approximations, int number_unknowns,
                                   std::vector<double> &b) {
-  for (int i = 0; i < number_unknowns_; i++) {
+  for (int i = 0; i < number_unknowns; i++) {
     double sum = 0.0;
     // Суммируем все недиагональные элементы
-    for (int j = 0; j < number_unknowns_; j++) {
+    for (int j = 0; j < number_unknowns; j++) {
       if (j != i) {
-        sum += matrix[(i * number_unknowns_) + j] * previous_approximations[j];
+        sum += matrix[(i * number_unknowns) + j] * previous_approximations[j];
       }
     }
 
     // Строим новое приближение
-    current_approximations[i] = (b[i] - sum) / matrix[(i * number_unknowns_) + i];
+    current_approximations[i] = (b[i] - sum) / matrix[(i * number_unknowns) + i];
   }
 }
 
 int ConvergenceCheck(std::vector<double> &current_approximations, std::vector<double> &previous_approximations,
-                     int number_unknowns_) {
+                     int number_unknowns) {
   int converged = 0;
-  for (int i = 0; i < number_unknowns_; i++) {
+  for (int i = 0; i < number_unknowns; i++) {
     double diff = fabs(current_approximations[i] - previous_approximations[i]);
     double norm = fabs(current_approximations[i]);
     if (diff < 0.00001 * (norm + 1e-10)) {
