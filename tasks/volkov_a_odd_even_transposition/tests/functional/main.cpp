@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <random>
 #include <string>
 #include <tuple>
@@ -16,7 +19,7 @@
 
 namespace volkov_a_odd_even_transposition {
 
-enum class TestType { kRandom, kSorted, kReverse, kDuplicates, kSingle };
+enum class TestType : std::uint8_t { kRandom, kSorted, kReverse, kDuplicates, kSingle };
 
 using TestParam = std::tuple<size_t, TestType>;
 
@@ -61,6 +64,7 @@ class OddEvenSortFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, 
       if (type == TestType::kSingle) {
         input_.assign(1, 42);
       } else {
+        // NOLINTNEXTLINE(cert-msc51-cpp)
         std::mt19937 gen(42);
 
         if (type == TestType::kDuplicates) {
@@ -76,14 +80,14 @@ class OddEvenSortFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, 
         }
 
         if (type == TestType::kSorted) {
-          std::sort(input_.begin(), input_.end());
+          std::ranges::sort(input_);
         } else if (type == TestType::kReverse) {
-          std::sort(input_.begin(), input_.end(), std::greater<int>());
+          std::ranges::sort(input_, std::greater<>());
         }
       }
 
       expected_ = input_;
-      std::sort(expected_.begin(), expected_.end());
+      std::ranges::sort(expected_);
     }
   }
 

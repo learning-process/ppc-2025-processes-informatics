@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <cstddef>
 #include <random>
 #include <string>
 #include <tuple>
@@ -18,9 +18,10 @@ class OddEvenSortPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> 
  protected:
   void SetUp() override {
     if (ShouldRun()) {
-      const int kSize = 3000;
-      input_.resize(kSize);
+      const int k_size = 3000;
+      input_.resize(k_size);
 
+      // NOLINTNEXTLINE(cert-msc51-cpp)
       std::mt19937 gen(1337);
       std::uniform_int_distribution<int> dist(-100000, 100000);
 
@@ -53,7 +54,6 @@ class OddEvenSortPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> 
 
   static bool ShouldRun() {
     const auto &name = std::get<1>(GetParam());
-
     if (name.find("mpi") != std::string::npos) {
       return !ppc::util::IsUnderMpirun() || ppc::util::GetMPIRank() == 0;
     }
