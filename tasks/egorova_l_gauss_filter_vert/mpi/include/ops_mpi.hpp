@@ -1,7 +1,4 @@
-// mpi/include/ops_mpi.hpp
 #pragma once
-
-#include <vector>
 
 #include "egorova_l_gauss_filter_vert/common/include/common.hpp"
 #include "task/include/task.hpp"

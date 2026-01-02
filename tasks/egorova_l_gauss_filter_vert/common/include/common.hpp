@@ -1,4 +1,3 @@
-// common/include/common.hpp
 #pragma once
 
 #include <cstdint>
