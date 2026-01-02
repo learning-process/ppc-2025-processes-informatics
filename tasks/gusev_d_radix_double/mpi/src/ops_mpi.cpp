@@ -1,72 +1,99 @@
 #include "gusev_d_radix_double/mpi/include/ops_mpi.hpp"
+#include "gusev_d_radix_double/seq/include/ops_seq.hpp"
 
 #include <mpi.h>
-
-#include <numeric>
+#include <algorithm>
 #include <vector>
-
-#include "gusev_d_radix_double/common/include/common.hpp"
-#include "util/include/util.hpp"
+#include <cmath>
 
 namespace gusev_d_radix_double {
 
 GusevDRadixDoubleMPI::GusevDRadixDoubleMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
-  GetOutput() = 0;
 }
 
 bool GusevDRadixDoubleMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
+  return true;
 }
 
 bool GusevDRadixDoubleMPI::PreProcessingImpl() {
-  GetOutput() = 2 * GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 bool GusevDRadixDoubleMPI::RunImpl() {
-  auto input = GetInput();
-  if (input == 0) {
-    return false;
-  }
-
-  for (InType i = 0; i < GetInput(); i++) {
-    for (InType j = 0; j < GetInput(); j++) {
-      for (InType k = 0; k < GetInput(); k++) {
-        std::vector<InType> tmp(i + j + k, 1);
-        GetOutput() += std::accumulate(tmp.begin(), tmp.end(), 0);
-        GetOutput() -= i + j + k;
-      }
-    }
-  }
-
-  const int num_threads = ppc::util::GetNumThreads();
-  GetOutput() *= num_threads;
-
-  int rank = 0;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  int n = 0;
+  if (rank == 0) {
+    n = GetInput().size();
+  }
+  
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  std::vector<int> send_counts(size);
+  std::vector<int> displs(size);
+  
+  int remainder = n % size;
+  int sum = 0;
+  for (int i = 0; i < size; ++i) {
+    send_counts[i] = n / size + (i < remainder ? 1 : 0);
+    displs[i] = sum;
+    sum += send_counts[i];
+  }
+
+  std::vector<double> local_data(send_counts[rank]);
+
+  MPI_Scatterv(GetInput().data(), send_counts.data(), displs.data(), MPI_DOUBLE,
+               local_data.data(), send_counts[rank], MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+  GusevDRadixDoubleSEQ::RadixSort(local_data);
+
+  std::vector<double> gathered_data;
+  if (rank == 0) {
+    gathered_data.resize(n);
+  }
+
+  MPI_Gatherv(local_data.data(), send_counts[rank], MPI_DOUBLE,
+              gathered_data.data(), send_counts.data(), displs.data(), MPI_DOUBLE,
+              0, MPI_COMM_WORLD);
 
   if (rank == 0) {
-    GetOutput() /= num_threads;
-  } else {
-    int counter = 0;
-    for (int i = 0; i < num_threads; i++) {
-      counter++;
+    GetOutput().clear();
+    GetOutput().reserve(n);
+    
+    std::vector<double> current_merged;
+    
+    if (size > 0) {
+        auto start = gathered_data.begin();
+        auto end = gathered_data.begin() + send_counts[0];
+        current_merged.assign(start, end);
     }
 
-    if (counter != 0) {
-      GetOutput() /= counter;
+    for (int i = 1; i < size; ++i) {
+      if (send_counts[i] == 0) continue;
+      
+      auto start = gathered_data.begin() + displs[i];
+      auto end = gathered_data.begin() + displs[i] + send_counts[i];
+      
+      std::vector<double> temp_res;
+      temp_res.reserve(current_merged.size() + (end - start));
+      std::merge(current_merged.begin(), current_merged.end(),
+                 start, end,
+                 std::back_inserter(temp_res));
+      
+      current_merged = std::move(temp_res);
     }
+    GetOutput() = current_merged;
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  return GetOutput() > 0;
+  return true;
 }
 
 bool GusevDRadixDoubleMPI::PostProcessingImpl() {
-  GetOutput() -= GetInput();
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace gusev_d_radix_double

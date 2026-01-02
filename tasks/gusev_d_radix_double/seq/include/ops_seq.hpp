@@ -12,6 +12,8 @@ class GusevDRadixDoubleSEQ : public BaseTask {
   }
   explicit GusevDRadixDoubleSEQ(const InType &in);
 
+  static void RadixSort(std::vector<double>& data);
+
  private:
   bool ValidationImpl() override;
   bool PreProcessingImpl() override;
