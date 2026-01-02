@@ -2,8 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <tuple>
-#include <vector>
+#include <functional>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 
@@ -32,6 +33,18 @@ bool EreminVStronginAlgorithmSEQ::PreProcessingImpl() {
   return true;
 }
 
+double EreminVStronginAlgorithmSEQ::CalculateLipschitzEstimate(const std::vector<double> &search_points,
+                                                               const std::vector<double> &function_values) {
+  double lipschitz_estimate = 0.0;
+  for (std::size_t i = 1; i < search_points.size(); ++i) {
+    double interval_width = search_points[i] - search_points[i - 1];
+    double value_difference = std::abs(function_values[i] - function_values[i - 1]);
+    double current_slope = value_difference / interval_width;
+    lipschitz_estimate = std::max(current_slope, lipschitz_estimate);
+  }
+  return lipschitz_estimate;
+}
+
 bool EreminVStronginAlgorithmSEQ::RunImpl() {
   auto &input = GetInput();
   double lower_bound = std::get<0>(input);
@@ -44,8 +57,8 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
 
   std::vector<double> search_points = {lower_bound, upper_bound};
   std::vector<double> function_values = {objective_function(lower_bound), objective_function(upper_bound)};
-  // search_points.reserve(max_iterations + 2);
-  // function_values.reserve(max_iterations + 2);
+  search_points.reserve(max_iterations + 2);
+  function_values.reserve(max_iterations + 2);
 
   int current_iteration = 0;
   double r_coefficient = 2.0;
@@ -54,15 +67,7 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
   while (max_interval_width > epsilon && current_iteration < max_iterations) {
     ++current_iteration;
 
-    double lipschitz_estimate = 0.0;
-    for (std::size_t i = 1; i < search_points.size(); ++i) {
-      double interval_width = search_points[i] - search_points[i - 1];
-      double value_difference = std::abs(function_values[i] - function_values[i - 1]);
-      double current_slope = value_difference / interval_width;
-      if (current_slope > lipschitz_estimate) {
-        lipschitz_estimate = current_slope;
-      }
-    }
+    double lipschitz_estimate = CalculateLipschitzEstimate(search_points, function_values);
 
     double m_parameter = (lipschitz_estimate > 0.0) ? r_coefficient * lipschitz_estimate : 1.0;
 
@@ -74,7 +79,7 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
       double value_difference = function_values[i] - function_values[i - 1];
 
       double characteristic = (m_parameter * interval_width) +
-                              (value_difference * value_difference) / (m_parameter * interval_width) -
+                              ((value_difference * value_difference) / (m_parameter * interval_width)) -
                               (2.0 * (function_values[i] + function_values[i - 1]));
 
       if (characteristic > max_characteristic) {
@@ -88,7 +93,7 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
     double left_value = function_values[best_interval_index - 1];
     double right_value = function_values[best_interval_index];
 
-    double new_point = 0.5 * (left_point + right_point) - (right_value - left_value) / (2.0 * m_parameter);
+    double new_point = (0.5 * (left_point + right_point)) - ((right_value - left_value) / (2.0 * m_parameter));
 
     if (new_point <= left_point || new_point >= right_point) {
       new_point = 0.5 * (left_point + right_point);
@@ -102,9 +107,7 @@ bool EreminVStronginAlgorithmSEQ::RunImpl() {
     max_interval_width = 0.0;
     for (std::size_t i = 1; i < search_points.size(); ++i) {
       double current_width = search_points[i] - search_points[i - 1];
-      if (current_width > max_interval_width) {
-        max_interval_width = current_width;
-      }
+      max_interval_width = std::max(current_width, max_interval_width);
     }
   }
 

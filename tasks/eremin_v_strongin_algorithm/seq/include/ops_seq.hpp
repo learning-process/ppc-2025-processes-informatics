@@ -17,6 +17,9 @@ class EreminVStronginAlgorithmSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  double CalculateLipschitzEstimate(const std::vector<double> &search_points,
+                                    const std::vector<double> &function_values);
 };
 
 }  // namespace eremin_v_strongin_algorithm

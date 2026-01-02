@@ -4,17 +4,13 @@
 
 #include <algorithm>
 #include <cmath>
-#include <list>
+#include <cstddef>
 #include <tuple>
+#include <functional>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 
 namespace eremin_v_strongin_algorithm {
-
-struct MaxData {
-  double value;
-  int index;
-};
 
 EreminVStronginAlgorithmMPI::EreminVStronginAlgorithmMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -37,6 +33,24 @@ bool EreminVStronginAlgorithmMPI::ValidationImpl() {
 
 bool EreminVStronginAlgorithmMPI::PreProcessingImpl() {
   return true;
+}
+
+double EreminVStronginAlgorithmMPI::CalculateLipschitzEstimate(int rank, int size,
+                                                               const std::vector<double> &search_points,
+                                                               const std::vector<double> &function_values) {
+  double lipschitz_estimate = 0.0;
+  for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
+       i += static_cast<std::size_t>(size)) {
+    double interval_width = search_points[i] - search_points[i - 1];
+    double value_difference = std::abs(function_values[i] - function_values[i - 1]);
+    double current_slope = value_difference / interval_width;
+    lipschitz_estimate = std::max(current_slope, lipschitz_estimate);
+  }
+
+  double global_lipschitz_estimate = 0.0;
+  MPI_Allreduce(&lipschitz_estimate, &global_lipschitz_estimate, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+  return global_lipschitz_estimate;
 }
 
 bool EreminVStronginAlgorithmMPI::RunImpl() {
@@ -68,8 +82,8 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
 
   std::vector<double> search_points = {lower_bound, upper_bound};
   std::vector<double> function_values = {objective_function(lower_bound), objective_function(upper_bound)};
-  // search_points.reserve(max_iterations + 2);
-  // function_values.reserve(max_iterations + 2);
+  search_points.reserve(max_iterations + 2);
+  function_values.reserve(max_iterations + 2);
 
   int current_iteration = 0;
   double r_coefficient = 2.0;
@@ -78,20 +92,7 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
   while (max_interval_width > epsilon && current_iteration < max_iterations) {
     ++current_iteration;
 
-    double lipschitz_estimate = 0.0;
-    for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
-         i += static_cast<std::size_t>(size)) {
-      double interval_width = search_points[i] - search_points[i - 1];
-      double value_difference = std::abs(function_values[i] - function_values[i - 1]);
-      double current_slope = value_difference / interval_width;
-      if (current_slope > lipschitz_estimate) {
-        lipschitz_estimate = current_slope;
-      }
-    }
-
-    double global_lipschitz_estimate = 0.0;
-    MPI_Allreduce(&lipschitz_estimate, &global_lipschitz_estimate, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-    lipschitz_estimate = global_lipschitz_estimate;
+    double lipschitz_estimate = CalculateLipschitzEstimate(rank, size, search_points, function_values);
 
     double m_parameter = (lipschitz_estimate > 0.0) ? r_coefficient * lipschitz_estimate : 1.0;
 
@@ -104,7 +105,7 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
       double value_difference = function_values[i] - function_values[i - 1];
 
       double characteristic = (m_parameter * interval_width) +
-                              (value_difference * value_difference) / (m_parameter * interval_width) -
+                              ((value_difference * value_difference) / (m_parameter * interval_width)) -
                               (2.0 * (function_values[i] + function_values[i - 1]));
 
       if (characteristic > max_characteristic) {
@@ -116,15 +117,15 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
     struct {
       double value;
       int index;
-    } local, global;
+    } local{}, global{};
 
     local.value = max_characteristic;
-    local.index = best_interval_index;
+    local.index = static_cast<int>(best_interval_index);
+    ;
 
     MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
     best_interval_index = global.index;
-    max_characteristic = global.value;
 
     double left_point = search_points[best_interval_index - 1];
     double right_point = search_points[best_interval_index];
@@ -135,7 +136,7 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
     double new_value = 0.0;
 
     if (rank == 0) {
-      new_point = 0.5 * (left_point + right_point) - (right_value - left_value) / (2.0 * m_parameter);
+      new_point = (0.5 * (left_point + right_point)) - ((right_value - left_value) / (2.0 * m_parameter));
 
       if (new_point <= left_point || new_point >= right_point) {
         new_point = 0.5 * (left_point + right_point);
@@ -153,11 +154,10 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
     for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
          i += static_cast<std::size_t>(size)) {
       double current_width = search_points[i] - search_points[i - 1];
-      if (current_width > max_interval_width) {
-        max_interval_width = current_width;
-      }
+      max_interval_width = std::max(current_width, max_interval_width);
     }
-    MPI_Allreduce(&max_interval_width, &max_interval_width, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    double local_max_interval_width = max_interval_width;
+    MPI_Allreduce(&local_max_interval_width, &max_interval_width, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   }
   GetOutput() = *std::ranges::min_element(function_values);
   return true;

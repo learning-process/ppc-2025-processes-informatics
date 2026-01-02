@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <array>
+
 #include <cmath>
-#include <string>
 #include <tuple>
 
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
@@ -24,15 +22,7 @@ class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // double lower_bound = -5.0;
-    // double upper_bound = 5.0;
-    // double epsilon = 1e-4;
-    // int max_iters = 50000;
-    // std::cout << "Check: lower_bound: " << lower_bound << ", upper_bound: " << upper_bound << ", epsilon: " <<
-    // epsilon
-    //           << ", max_iters: " << max_iters << "\n";
     double tolerance = 1e-2;
-    // std::cout << "Check: output_data: " << output_data << ", expected_result_: " << expected_result_ << "\n\n\n";
     return std::abs(output_data - expected_result_) <= tolerance;
   }
 
@@ -46,7 +36,7 @@ class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<
 
   static double Function(double x) {
     return (0.002 * x * x) + (5.0 * std::sin(30.0 * x)) + std::sin(200.0 * std::sin(50.0 * x)) +
-           0.1 * std::cos(300.0 * x);
+           (0.1 * std::cos(300.0 * x));
     ;
   }
 };
