@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "eremin_v_strongin_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 

@@ -57,7 +57,7 @@ double EreminVStronginAlgorithmMPI::CalculateLipschitzEstimate(int rank, int siz
 EreminVStronginAlgorithmMPI::IntervalCharacteristic EreminVStronginAlgorithmMPI::FindBestInterval(
     int rank, int size, const std::vector<double> &search_points, const std::vector<double> &function_values,
     double m_parameter) {
-  IntervalCharacteristic local{-1e18, 1};
+  IntervalCharacteristic local{.value = -1e18, .index = 1};
 
   for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
        i += static_cast<std::size_t>(size)) {
@@ -123,7 +123,7 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
     double m_parameter = (lipschitz_estimate > 0.0) ? r_coefficient * lipschitz_estimate : 1.0;
 
     auto best_interval = FindBestInterval(rank, size, search_points, function_values, m_parameter);
-    double best_interval_index = best_interval.index;
+    int best_interval_index = best_interval.index;
 
     double left_point = search_points[best_interval_index - 1];
     double right_point = search_points[best_interval_index];

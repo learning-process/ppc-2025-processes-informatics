@@ -48,7 +48,7 @@ double EreminVStronginAlgorithmSEQ::CalculateLipschitzEstimate(const std::vector
 
 EreminVStronginAlgorithmSEQ::IntervalCharacteristic EreminVStronginAlgorithmSEQ::FindBestInterval(
     const std::vector<double> &search_points, const std::vector<double> &function_values, double m_parameter) {
-  IntervalCharacteristic best{-1e18, 1};
+  IntervalCharacteristic best{.value = -1e18, .index = 1};
 
   for (std::size_t i = 1; i < search_points.size(); ++i) {
     double interval_width = search_points[i] - search_points[i - 1];
@@ -59,7 +59,7 @@ EreminVStronginAlgorithmSEQ::IntervalCharacteristic EreminVStronginAlgorithmSEQ:
 
     if (characteristic > best.value) {
       best.value = characteristic;
-      best.index = i;
+      best.index = static_cast<int>(i);
     }
   }
 

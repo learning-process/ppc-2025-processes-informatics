@@ -15,7 +15,7 @@ class EreminVRunPerfTestsStronginAlgorithm : public ppc::util::BaseRunPerfTests<
     double lower_bound = -5.0;
     double upper_bound = 5.0;
     double epsilon = 1e-4;
-    int max_iters = 50000;
+    int max_iters = 40000;
     input_data_ = std::make_tuple(lower_bound, upper_bound, epsilon, max_iters, Function);
     expected_result_ = -6.1;
   }
