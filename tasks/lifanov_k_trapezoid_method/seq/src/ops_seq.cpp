@@ -11,7 +11,7 @@ static double f(double x, double y) {
   return x * x + y * y;  // пример
 }
 
-LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType& in) {
+LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
@@ -19,8 +19,12 @@ LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType& in) {
 
 bool LifanovKTrapezoidMethodSEQ::ValidationImpl() {
   // Ожидаем: a, b, c, d, nx, ny
-  if (GetInput().size() != 6) return false;
-  if (GetInput()[4] <= 0 || GetInput()[5] <= 0) return false;
+  if (GetInput().size() != 6) {
+    return false;
+  }
+  if (GetInput()[4] <= 0 || GetInput()[5] <= 0) {
+    return false;
+  }
   return true;
 }
 

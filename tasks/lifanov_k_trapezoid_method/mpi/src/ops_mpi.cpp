@@ -1,10 +1,10 @@
 #include "lifanov_k_trapezoid_method/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
+
 #include <cmath>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
-
 
 namespace lifanov_k_trapezoid_method {
 
@@ -13,7 +13,7 @@ static double f(double x, double y) {
   return x * x + y * y;  // пример
 }
 
-LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType& in) {
+LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
@@ -21,8 +21,12 @@ LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType& in) {
 
 bool LifanovKTrapezoidMethodMPI::ValidationImpl() {
   // Ожидаем: a, b, c, d, nx, ny
-  if (GetInput().size() != 6) return false;
-  if (GetInput()[4] <= 0 || GetInput()[5] <= 0) return false;
+  if (GetInput().size() != 6) {
+    return false;
+  }
+  if (GetInput()[4] <= 0 || GetInput()[5] <= 0) {
+    return false;
+  }
   return true;
 }
 
