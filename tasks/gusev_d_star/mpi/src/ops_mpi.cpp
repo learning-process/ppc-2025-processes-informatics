@@ -90,6 +90,7 @@ void GusevDStarMPI::RunAsMaster(int size, int input) {
 void GusevDStarMPI::RunAsWorker(int input) {
   std::array<int, 2> task_data = {};
   MPI_Status status;
+
   MPI_Recv(task_data.data(), 2, MPI_INT, kHubRank, kTagTask, MPI_COMM_WORLD, &status);
 
   int start_i = task_data[0];
