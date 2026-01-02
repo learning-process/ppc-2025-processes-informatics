@@ -21,8 +21,6 @@ class AshihminDCalculateIntegralsBySimpsonSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 
   static double IntegrandFunction(const std::vector<double> &coordinates);
-  void RecursiveIntegration(int dimension, std::vector<double> &coordinates, const std::vector<double> &step_sizes,
-                            double &total_sum);
 };
 
 }  // namespace ashihmin_d_calculate_integrals_by_simpson

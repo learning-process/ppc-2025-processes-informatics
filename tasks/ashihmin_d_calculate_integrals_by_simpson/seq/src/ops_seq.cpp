@@ -48,40 +48,28 @@ double AshihminDCalculateIntegralsBySimpsonSEQ::IntegrandFunction(const std::vec
   return Function(coordinates);
 }
 
-void AshihminDCalculateIntegralsBySimpsonSEQ::RecursiveIntegration(int dimension, std::vector<double> &coordinates,
-                                                                   const std::vector<double> &step_sizes,
-                                                                   double &total_sum) {
-  const auto &input = GetInput();
-  int partitions = input.partitions;
-  int total_dimensions = static_cast<int>(coordinates.size());
-
-  if (dimension == total_dimensions) {
-    double weight_coefficient = 1.0;
-    for (const double coordinate : coordinates) {
-      int node_index = static_cast<int>(coordinate);
-
-      if (node_index == 0 || node_index == partitions) {
-        weight_coefficient *= 1.0;
-      } else if (node_index % 2 == 0) {
-        weight_coefficient *= 2.0;
-      } else {
-        weight_coefficient *= 4.0;
-      }
+static double CalculateWeightCoefficient(const std::vector<int> &indices, int partitions) {
+  double weight_coefficient = 1.0;
+  for (std::size_t dim = 0; dim < indices.size(); ++dim) {
+    int node_index = indices[dim];
+    if (node_index == 0 || node_index == partitions) {
+      weight_coefficient *= 1.0;
+    } else if (node_index % 2 == 0) {
+      weight_coefficient *= 2.0;
+    } else {
+      weight_coefficient *= 4.0;
     }
-
-    std::vector<double> point(total_dimensions);
-    for (int dim_index = 0; dim_index < total_dimensions; ++dim_index) {
-      point[dim_index] = input.left_bounds[dim_index] + (coordinates[dim_index] * step_sizes[dim_index]);
-    }
-
-    total_sum += weight_coefficient * IntegrandFunction(point);
-    return;
   }
+  return weight_coefficient;
+}
 
-  for (int node_index = 0; node_index <= partitions; ++node_index) {
-    coordinates[dimension] = static_cast<double>(node_index);
-    RecursiveIntegration(dimension + 1, coordinates, step_sizes, total_sum);
+static std::vector<double> CalculatePoint(const std::vector<int> &indices, const std::vector<double> &step_sizes,
+                                          const std::vector<double> &left_bounds) {
+  std::vector<double> point(indices.size());
+  for (std::size_t dim = 0; dim < indices.size(); ++dim) {
+    point[dim] = left_bounds[dim] + (indices[dim] * step_sizes[dim]);
   }
+  return point;
 }
 
 bool AshihminDCalculateIntegralsBySimpsonSEQ::RunImpl() {
@@ -102,7 +90,6 @@ bool AshihminDCalculateIntegralsBySimpsonSEQ::RunImpl() {
   }
 
   double total_sum = 0.0;
-
   std::vector<int> indices(static_cast<std::size_t>(dimensions), 0);
 
   int total_points = 1;
@@ -117,25 +104,8 @@ bool AshihminDCalculateIntegralsBySimpsonSEQ::RunImpl() {
       temp /= (partitions + 1);
     }
 
-    double weight_coefficient = 1.0;
-    for (int dim = 0; dim < dimensions; ++dim) {
-      int node_index = indices[static_cast<std::size_t>(dim)];
-      if (node_index == 0 || node_index == partitions) {
-        weight_coefficient *= 1.0;
-      } else if (node_index % 2 == 0) {
-        weight_coefficient *= 2.0;
-      } else {
-        weight_coefficient *= 4.0;
-      }
-    }
-
-    std::vector<double> point(static_cast<std::size_t>(dimensions));
-    for (int dim = 0; dim < dimensions; ++dim) {
-      point[static_cast<std::size_t>(dim)] =
-          input.left_bounds[static_cast<std::size_t>(dim)] +
-          indices[static_cast<std::size_t>(dim)] * step_sizes[static_cast<std::size_t>(dim)];
-    }
-
+    double weight_coefficient = CalculateWeightCoefficient(indices, partitions);
+    std::vector<double> point = CalculatePoint(indices, step_sizes, input.left_bounds);
     total_sum += weight_coefficient * IntegrandFunction(point);
   }
 
