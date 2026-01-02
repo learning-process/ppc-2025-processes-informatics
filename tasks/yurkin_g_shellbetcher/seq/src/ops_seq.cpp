@@ -14,9 +14,13 @@ namespace {
 
 void ShellSort(std::vector<int> &a) {
   const std::size_t n = a.size();
-  if (n < 2) return;
+  if (n < 2) {
+    return;
+  }
   std::size_t gap = 1;
-  while (gap < n / 3) gap = (gap * 3) + 1;
+  while (gap < n / 3) {
+    gap = (gap * 3) + 1;
+  }
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
       int tmp = a[i];
@@ -33,9 +37,13 @@ void ShellSort(std::vector<int> &a) {
 
 void CompareExchange(std::vector<int> &arr, int i, int j, bool ascending) {
   if (ascending) {
-    if (arr[i] > arr[j]) std::swap(arr[i], arr[j]);
+    if (arr[i] > arr[j]) {
+      std::swap(arr[i], arr[j]);
+    }
   } else {
-    if (arr[i] < arr[j]) std::swap(arr[i], arr[j]);
+    if (arr[i] < arr[j]) {
+      std::swap(arr[i], arr[j]);
+    }
   }
 }
 
@@ -59,9 +67,13 @@ void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, s
   out.reserve(orig_n);
   out.insert(out.end(), left.begin(), left.end());
   out.insert(out.end(), right.begin(), right.end());
-  if (orig_n == 0) return;
+  if (orig_n == 0) {
+    return;
+  }
   std::size_t pow2 = 1;
-  while (pow2 < orig_n) pow2 <<= 1;
+  while (pow2 < orig_n) {
+    pow2 <<= 1;
+  }
   const int sentinel = std::numeric_limits<int>::max();
   out.resize(pow2, sentinel);
   BatcherOddEvenNetwork(out, static_cast<int>(pow2));
@@ -86,13 +98,17 @@ bool YurkinGShellBetcherSEQ::PreProcessingImpl() {
 
 bool YurkinGShellBetcherSEQ::RunImpl() {
   const InType n = GetInput();
-  if (n <= 0) return false;
+  if (n <= 0) {
+    return false;
+  }
 
   std::vector<int> data;
   data.reserve(static_cast<std::size_t>(n));
   std::mt19937 rng(static_cast<unsigned int>(n));
   std::uniform_int_distribution<int> dist(0, 1000000);
-  for (InType i = 0; i < n; ++i) data.push_back(dist(rng));
+  for (InType i = 0; i < n; ++i) {
+    data.push_back(dist(rng));
+  }
 
   ShellSort(data);
 
@@ -108,7 +124,9 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   ShellSort(merged);
 
   std::int64_t checksum = 0;
-  for (int v : merged) checksum += static_cast<std::int64_t>(v);
+  for (int v : merged) {
+    checksum += static_cast<std::int64_t>(v);
+  }
   GetOutput() = static_cast<OutType>(checksum & 0x7FFFFFFF);
   return true;
 }
