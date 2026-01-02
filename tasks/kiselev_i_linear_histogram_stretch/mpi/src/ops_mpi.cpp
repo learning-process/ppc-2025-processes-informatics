@@ -53,7 +53,7 @@ bool KiselevITestTaskMPI::RunImpl() {
 
   if (rank == kRoot) {
     std::size_t shift = 0;
-    const std::size_t size_sz = static_cast<std::size_t>(size);
+    const auto size_sz = static_cast<std::size_t>(size);
 
     for (std::size_t index = 0; index < size_sz; ++index) {
       const std::size_t add = (index < extra) ? 1 : 0;
