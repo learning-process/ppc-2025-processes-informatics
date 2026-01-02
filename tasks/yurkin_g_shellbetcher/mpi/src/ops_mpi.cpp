@@ -55,14 +55,14 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void CompareAndSwapPair(std::vector<int> &arr, int index, int partnerIndex, bool ascending) {
+void CompareAndSwapPair(std::vector<int> &arr, int index, int partner_index, bool ascending) {
   if (ascending) {
-    if (arr[index] > arr[partnerIndex]) {
-      std::swap(arr[index], arr[partnerIndex]);
+    if (arr[index] > arr[partner_index]) {
+      std::swap(arr[index], arr[partner_index]);
     }
   } else {
-    if (arr[index] < arr[partnerIndex]) {
-      std::swap(arr[index], arr[partnerIndex]);
+    if (arr[index] < arr[partner_index]) {
+      std::swap(arr[index], arr[partner_index]);
     }
   }
 }
