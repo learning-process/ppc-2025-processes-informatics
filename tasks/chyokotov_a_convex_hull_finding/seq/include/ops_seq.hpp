@@ -21,10 +21,10 @@ class ChyokotovConvexHullFindingSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  std::vector<std::pair<int, int>> Bfs(int start_x, int start_y, const std::vector<std::vector<int>> &picture,
-                                       std::vector<std::vector<bool>> &visited);
+  static std::vector<std::pair<int, int>> Bfs(int start_x, int start_y, const std::vector<std::vector<int>> &picture,
+                                              std::vector<std::vector<bool>> &visited);
   std::vector<std::vector<std::pair<int, int>>> FindComponent();
-  int Cross(const std::pair<int, int> &o, const std::pair<int, int> &a, const std::pair<int, int> &b);
+  static int Cross(const std::pair<int, int> &o, const std::pair<int, int> &a, const std::pair<int, int> &b);
   std::vector<std::pair<int, int>> ConvexHull(std::vector<std::pair<int, int>> x);
 };
 

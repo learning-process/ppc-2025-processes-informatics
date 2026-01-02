@@ -6,7 +6,9 @@
 #include <array>
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 #include <queue>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -126,10 +128,10 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Fin
   return FilterLocalComponents(all, start_row, end_row);
 }
 
-long long ChyokotovConvexHullFindingMPI::Cross(const std::pair<int, int> &a, const std::pair<int, int> &b,
-                                               const std::pair<int, int> &c) {
-  return static_cast<long long>(b.first - a.first) * (c.second - a.second) -
-         static_cast<long long>(b.second - a.second) * (c.first - a.first);
+int64_t ChyokotovConvexHullFindingMPI::Cross(const std::pair<int, int> &a, const std::pair<int, int> &b,
+                                             const std::pair<int, int> &c) {
+  return (static_cast<int64_t>(b.first - a.first) * (c.second - a.second)) -
+         (static_cast<int64_t>(b.second - a.second) * (c.first - a.first));
 }
 
 std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ConvexHullAndrew(
@@ -199,14 +201,14 @@ void ChyokotovConvexHullFindingMPI::ExchangeBoundaryRows(bool top, bool bottom, 
     std::vector<int> recv(width);
     MPI_Sendrecv(local.data(), width, MPI_INT, rank - 1, 0, recv.data(), width, MPI_INT, rank - 1, 1, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
-    std::copy(recv.begin(), recv.end(), ext.begin());
+    std::ranges::copy(recv.begin(), recv.end(), ext.begin());
   }
 
   if (bottom && rank + 1 < size) {
     std::vector<int> recv(width);
     MPI_Sendrecv(&local[local.size() - width], width, MPI_INT, rank + 1, 1, recv.data(), width, MPI_INT, rank + 1, 0,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    std::copy(recv.begin(), recv.end(), ext.end() - width);
+    std::ranges::copy(recv.begin(), recv.end(), ext.end() - width);
   }
 }
 
@@ -215,12 +217,12 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Pro
   std::vector<std::vector<bool>> visited(extended_rows, std::vector<bool>(width, false));
   std::vector<std::vector<std::pair<int, int>>> all_components;
 
-  for (int y = 0; y < extended_rows; ++y) {
-    for (int x = 0; x < width; ++x) {
-      size_t idx = static_cast<size_t>(y) * static_cast<size_t>(width) + static_cast<size_t>(x);
+  for (int row = 0; row < extended_rows; ++row) {
+    for (int col = 0; col < width; ++col) {
+      size_t idx = (static_cast<size_t>(row) * static_cast<size_t>(width)) + static_cast<size_t>(col);
 
-      if (extended_pixels[idx] == 1 && !visited[y][x]) {
-        auto component = ExtractComponent(x, y, extended_pixels, visited, width, extended_rows, global_y_offset);
+      if (extended_pixels[idx] == 1 && !visited[row][col]) {
+        auto component = ExtractComponent(col, row, extended_pixels, visited, width, extended_rows, global_y_offset);
         all_components.push_back(std::move(component));
       }
     }

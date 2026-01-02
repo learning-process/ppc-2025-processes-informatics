@@ -42,6 +42,7 @@ bool ChyokotovConvexHullFindingSEQ::ValidationImpl() {
 }
 
 bool ChyokotovConvexHullFindingSEQ::PreProcessingImpl() {
+  GetOutput().clear();
   return true;
 }
 
@@ -66,8 +67,8 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingSEQ::Bfs(int start_x,
       int neighbor_x = current_x + dx;
       int neighbor_y = current_y + dy;
 
-      if (neighbor_x >= 0 && neighbor_x < static_cast<int>(picture[0].size()) && neighbor_y >= 0 &&
-          neighbor_y < static_cast<int>(picture.size())) {
+      if (neighbor_x >= 0 && std::cmp_less(neighbor_x, static_cast<int>(picture[0].size())) && neighbor_y >= 0 &&
+          std::cmp_less(neighbor_y, static_cast<int>(picture.size()))) {
         if (picture[neighbor_y][neighbor_x] == 1 && !visited[neighbor_y][neighbor_x]) {
           visited[neighbor_y][neighbor_x] = true;
           queue.emplace(neighbor_x, neighbor_y);
@@ -105,7 +106,7 @@ int ChyokotovConvexHullFindingSEQ::Cross(const std::pair<int, int> &o, const std
 }
 
 std::vector<std::pair<int, int>> ChyokotovConvexHullFindingSEQ::ConvexHull(std::vector<std::pair<int, int>> x) {
-  int n = x.size();
+  int n = static_cast<int>(x.size());
 
   if (n <= 2) {
     return x;
@@ -123,8 +124,8 @@ std::vector<std::pair<int, int>> ChyokotovConvexHullFindingSEQ::ConvexHull(std::
     hull[k++] = x[i];
   }
 
-  for (int i = n - 2, t = k + 1; i >= 0; i--) {
-    while (k >= t && Cross(hull[k - 2], hull[k - 1], x[i]) <= 0) {
+  for (int i = n - 2, tk = k + 1; i >= 0; i--) {
+    while (k >= tk && Cross(hull[k - 2], hull[k - 1], x[i]) <= 0) {
       k--;
     }
     hull[k++] = x[i];

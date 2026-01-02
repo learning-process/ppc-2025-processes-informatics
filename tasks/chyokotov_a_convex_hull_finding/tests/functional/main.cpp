@@ -89,9 +89,6 @@ const std::vector<std::vector<std::pair<int, int>>> kExpectedOneElement = {{{0, 
 const std::vector<std::vector<int>> kWithoutComponents = {{0, 0}, {0, 0}};
 const std::vector<std::vector<std::pair<int, int>>> kExpectedWithoutComponents = {};
 
-// const std::vector<std::vector<int>> kEdging = {{1, 1, 1}, {1, 1, 0}, {1, 0, 0}};
-// const std::vector<std::vector<std::pair<int, int>>> kExpectedEdging = {{{0,2}, {2,0}, {0,0}}};
-
 const std::vector<std::vector<int>> kTwoComponets = {{1, 1, 0, 0}, {1, 1, 0, 0}, {0, 0, 1, 1}, {0, 0, 1, 1}};
 const std::vector<std::vector<std::pair<int, int>>> kExpectedTwoComponents = {{{0, 0}, {1, 0}, {0, 1}, {1, 1}},
                                                                               {{2, 2}, {2, 3}, {3, 2}, {3, 3}}};
@@ -107,7 +104,6 @@ const std::array<TestType, 6> kTestParam = {
     std::make_tuple(kEmptyMatrix, kExpectedEmpty),
     std::make_tuple(kOneElement, kExpectedOneElement),
     std::make_tuple(kWithoutComponents, kExpectedWithoutComponents),
-    // std::make_tuple(kEdging, kExpectedEdging),
     std::make_tuple(kTwoComponets, kExpectedTwoComponents),
     std::make_tuple(kRectangle, kExpectedRectangle),
     std::make_tuple(kGrid, kExpectedGrid),

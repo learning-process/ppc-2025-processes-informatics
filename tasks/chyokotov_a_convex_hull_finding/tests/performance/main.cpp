@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <climits>
 #include <cstddef>
 #include <set>
@@ -19,7 +18,12 @@ class ChyokotovConvexHullPerfTest : public ppc::util::BaseRunPerfTests<InType, O
   OutType expected_;
 
   void SetUp() override {
-    
+    input_data_.resize(5000, std::vector<int>(5000, 0));
+    for (int i = 1; i < 5000; i++) {
+      input_data_[1][i] = 1;
+      input_data_[2][i] = 1;
+    }
+    expected_ = {{{1, 1}, {1, 2}, {4999, 1}, {4999, 2}}};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
