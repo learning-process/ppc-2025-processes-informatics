@@ -66,7 +66,14 @@ inline void d2xy(double t, double &x, double &y) {
   // Масштабируем t [0, 1] в целое число s [0, 2^64 - 1]
   // Используем (2^64 - 1) как множитель.
   const uint64_t max_dist = static_cast<uint64_t>(-1);  // Все биты 1
-  uint64_t s = static_cast<uint64_t>(t * static_cast<double>(max_dist));
+  const double two_to_64 = ldexp(1.0, 64);              // Exactly 2^64 as double
+  double val = t * two_to_64;
+  uint64_t s;
+  if (val >= two_to_64) {
+    s = max_dist;
+  } else {
+    s = static_cast<uint64_t>(val);
+  }
 
   uint64_t ix = 0;
   uint64_t iy = 0;
