@@ -350,8 +350,8 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Gat
   return {};
 }
 
-std::vector<std::vector<std::pair<int, int>>> ReconstructHulls(const std::vector<int> &hull_sizes,
-                                                               const std::vector<int> &flat_points) {
+std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::ReconstructHulls(
+    const std::vector<int> &hull_sizes, const std::vector<int> &flat_points) {
   std::vector<std::vector<std::pair<int, int>>> result;
   result.reserve(hull_sizes.size());
 
