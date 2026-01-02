@@ -12,7 +12,7 @@ class PotashnikMShortWaysBellfordMPI : public BaseTask {
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
     return ppc::task::TypeOfTask::kMPI;
   }
-  explicit PotashnikMShortWaysBellfordMPI(const InType& in);
+  explicit PotashnikMShortWaysBellfordMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;
@@ -21,28 +21,26 @@ class PotashnikMShortWaysBellfordMPI : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-inline void bellman_ford_algo_iteration_mpi(const Graph& g, const std::vector<int>& dist, std::vector<int>& dist_next,
-                                            int start, int end) {
+inline void BellmanFordAlgoIterationMpi(const Graph &g, const std::vector<int> &dist, std::vector<int> &dist_next,
+                                        int start, int end) {
   dist_next = dist;
   for (int u = start; u < end; u++) {
     if (dist[u] == 1e9) {
       continue;
     }
-    iterate_through_vertex(g, u, dist, dist_next);
+    IterateThroughVertex(g, u, dist, dist_next);
   }
 }
 
-inline void bellman_ford_algo_mpi(const Graph& g, int source, std::vector<int>& dist) {
-  const int INF = 1e9;
-
-  int rank;
+inline void BellmanFordAlgoMpi(const Graph &g, int source, std::vector<int> &dist) {
+  int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  int size;
+  int size = 0;
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int n = g.n;
 
-  dist.assign(n, INF);
+  dist.assign(n, 1e9);
   if (rank == 0) {
     dist[source] = 0;
   }
@@ -55,7 +53,7 @@ inline void bellman_ford_algo_mpi(const Graph& g, int source, std::vector<int>& 
   int end = (rank + 1) * n / size;
 
   for (int i = 0; i < n - 1; i++) {
-    bellman_ford_algo_iteration_mpi(g, dist, dist_next, start, end);
+    BellmanFordAlgoIterationMpi(g, dist, dist_next, start, end);
     MPI_Allreduce(dist_next.data(), dist.data(), n, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
   }
 }

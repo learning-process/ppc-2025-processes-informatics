@@ -16,7 +16,7 @@ class PotashnikMShortWaysBellfordPerfTests : public ppc::util::BaseRunPerfTests<
 
   void SetUp() override {
     TestType params = kCount_;
-    potashnik_m_short_ways_bellford::Graph g = generate_graph(params);
+    potashnik_m_short_ways_bellford::Graph g = GenerateGraph(params);
     input_data_ = g;
   }
 
@@ -26,7 +26,7 @@ class PotashnikMShortWaysBellfordPerfTests : public ppc::util::BaseRunPerfTests<
 
     int source = 0;
     std::vector<int> real_dist;
-    bellman_ford_algo_seq(g, source, real_dist);
+    BellmanFordAlgoSeq(g, source, real_dist);
 
     if (real_dist.size() != res_dist.size()) {
       return false;

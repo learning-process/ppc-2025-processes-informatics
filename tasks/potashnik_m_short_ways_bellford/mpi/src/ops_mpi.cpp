@@ -26,7 +26,7 @@ bool PotashnikMShortWaysBellfordMPI::PreProcessingImpl() {
 
 bool PotashnikMShortWaysBellfordMPI::RunImpl() {
   std::vector<int> dist;
-  potashnik_m_short_ways_bellford::bellman_ford_algo_mpi(GetInput(), 0, dist);
+  potashnik_m_short_ways_bellford::BellmanFordAlgoMpi(GetInput(), 0, dist);
   GetOutput() = dist;
   return true;
 }

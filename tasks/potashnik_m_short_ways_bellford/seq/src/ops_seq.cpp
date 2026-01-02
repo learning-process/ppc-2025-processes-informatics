@@ -24,7 +24,7 @@ bool PotashnikMShortWaysBellfordSEQ::PreProcessingImpl() {
 
 bool PotashnikMShortWaysBellfordSEQ::RunImpl() {
   std::vector<int> dist;
-  potashnik_m_short_ways_bellford::bellman_ford_algo_seq(GetInput(), 0, dist);
+  potashnik_m_short_ways_bellford::BellmanFordAlgoSeq(GetInput(), 0, dist);
   GetOutput() = dist;
   return true;
 }

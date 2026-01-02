@@ -1,8 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <string>
-#include <tuple>
 #include <vector>
 
 #include "task/include/task.hpp"
@@ -20,8 +18,8 @@ class Graph {
   Graph() : n(0) {}
   explicit Graph(int n_vertices) : n(n_vertices), row_ptr(n_vertices + 1, 0) {}
 
-  void build_graph(const std::vector<int>& src, const std::vector<int>& dst, const std::vector<int>& w) {
-    int m = src.size();
+  void BuildGraph(const std::vector<int> &src, const std::vector<int> &dst, const std::vector<int> &w) {
+    int m = static_cast<int>(src.size());
 
     for (int i = 0; i < m; i++) {
       row_ptr[src[i] + 1]++;
@@ -44,16 +42,16 @@ class Graph {
     }
   }
 
-  inline int begin(int u) const {
+  int Begin(int u) const {
     return row_ptr[u];
   }
-  inline int end(int u) const {
+  int End(int u) const {
     return row_ptr[u + 1];
   }
 };
 
-inline void iterate_through_vertex(const Graph& g, int u, const std::vector<int>& dist, std::vector<int>& dist_out) {
-  for (int i = g.begin(u); i < g.end(u); i++) {
+inline void IterateThroughVertex(const Graph &g, int u, const std::vector<int> &dist, std::vector<int> &dist_out) {
+  for (int i = g.Begin(u); i < g.End(u); i++) {
     int v = g.col_ind[i];
     int w = g.weights[i];
 
@@ -64,7 +62,7 @@ inline void iterate_through_vertex(const Graph& g, int u, const std::vector<int>
   }
 }
 
-inline Graph generate_graph(int n) {
+inline Graph GenerateGraph(int n) {
   Graph g(n);
   std::vector<int> src, dst, w;
   int layers = static_cast<int>(std::sqrt(n));
@@ -89,7 +87,7 @@ inline Graph generate_graph(int n) {
       }
     }
   }
-  g.build_graph(src, dst, w);
+  g.BuildGraph(src, dst, w);
   return g;
 }
 
