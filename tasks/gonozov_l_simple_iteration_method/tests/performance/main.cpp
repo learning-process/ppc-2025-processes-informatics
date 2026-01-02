@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstddef>
 #include <tuple>
 #include <vector>
 
@@ -34,7 +35,7 @@ class GonozovLRunIterationMethodPerfTest : public ppc::util::BaseRunPerfTests<In
     if (desired_result_.size() != output_data.size()) {
       return false;
     }
-    for (int i = 0; i < static_cast<int>(desired_result_.size()); i++) {
+    for (unsigned int i = 0; i < desired_result_.size(); i++) {
       if (std::abs(desired_result_[i] - output_data[i]) > 0.01) {
         return false;
       }
