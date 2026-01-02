@@ -115,8 +115,8 @@ x^(k+1) = x^k + tau * (b - Ax^k)
 
 ## 8. Источники
 
-1. MPI Standard Documentation - https://www.mpi-forum.org/docs/
-2. Лекции и практики по параллельному программированию
+1. MPI Standard Documentation - https://www.mpi-forum.org/docs/.
+2. Лекции и практики по параллельному программированию.
 
 ## Приложение
 
