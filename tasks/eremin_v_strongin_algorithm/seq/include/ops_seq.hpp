@@ -17,16 +17,6 @@ class EreminVStronginAlgorithmSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  double lower_bound = 0.0;
-  double upper_bound = 0.0;
-  double epsilon = 0.0;
-  int max_iterations = 0;
-
-  std::function<double(double)> objective_function;
-
-  std::vector<double> search_points{};
-  std::vector<double> function_values{};
 };
 
 }  // namespace eremin_v_strongin_algorithm

@@ -36,13 +36,19 @@ bool EreminVStronginAlgorithmMPI::ValidationImpl() {
 }
 
 bool EreminVStronginAlgorithmMPI::PreProcessingImpl() {
+  return true;
+}
+
+bool EreminVStronginAlgorithmMPI::RunImpl() {
   int rank = 0;
   int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-
-  std::cout << "Process " << rank << " calling PreProcessingImpl()" << std::endl;
+  double lower_bound = 0.0;
+  double upper_bound = 0.0;
+  double epsilon = 0.0;
+  int max_iterations = 0;
 
   if (rank == 0) {
     auto &input = GetInput();
@@ -52,39 +58,22 @@ bool EreminVStronginAlgorithmMPI::PreProcessingImpl() {
     max_iterations = std::get<3>(input);
   }
 
-
   MPI_Bcast(&lower_bound, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&upper_bound, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&epsilon, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   MPI_Bcast(&max_iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  std::function<double(double)> objective_function = std::get<4>(GetInput());
+  ;
 
-  std::cout << "DEBUG RunImpl: lower_bound=" << lower_bound 
-              << ", upper_bound=" << upper_bound 
-              << ", epsilon=" << epsilon 
-              << ", max_iterations=" << max_iterations
-              << ", initial width=" << (upper_bound - lower_bound) << std::endl;
-
-  objective_function = std::get<4>(GetInput());
-
-  search_points.push_back(lower_bound);
-  search_points.push_back(upper_bound);
-  function_values.push_back(objective_function(lower_bound));
-  function_values.push_back(objective_function(upper_bound));
-  return true;
-}
-
-bool EreminVStronginAlgorithmMPI::RunImpl() {
-     int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  std::vector<double> search_points = {lower_bound, upper_bound};
+  std::vector<double> function_values = {objective_function(lower_bound), objective_function(upper_bound)};
+  // search_points.reserve(max_iterations + 2);
+  // function_values.reserve(max_iterations + 2);
 
   int current_iteration = 0;
   double r_coefficient = 2.0;
   double max_interval_width = upper_bound - lower_bound;
-
-  int maxx = 0;
 
   while (max_interval_width > epsilon && current_iteration < max_iterations) {
     ++current_iteration;
@@ -109,8 +98,6 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
     double max_characteristic = -1e18;
     std::size_t best_interval_index = 1;
 
-    
-
     for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
          i += static_cast<std::size_t>(size)) {
       double interval_width = search_points[i] - search_points[i - 1];
@@ -126,27 +113,18 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
       }
     }
 
-    double global_max_characteristic = 0.0;
-    MPI_Allreduce(&max_characteristic, &global_max_characteristic, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    struct {
+      double value;
+      int index;
+    } local, global;
 
-    int process_with_max = size + 10;
-    if (std::abs(max_characteristic - global_max_characteristic) < 1e-12) {
-      process_with_max = rank;
-    }
+    local.value = max_characteristic;
+    local.index = best_interval_index;
 
-    int root_process = 0;
-    MPI_Allreduce(&process_with_max, &root_process, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
 
-    // Шаг 2.3: Рассылаем индекс лучшего интервала от root_process всем
-    int global_best_index = 0;
-    if (rank == root_process) {
-      global_best_index = best_interval_index;
-    }
-    MPI_Bcast(&global_best_index, 1, MPI_INT, root_process, MPI_COMM_WORLD);
-
-    // Обновляем значения
-    max_characteristic = global_max_characteristic;
-    best_interval_index = global_best_index;
+    best_interval_index = global.index;
+    max_characteristic = global.value;
 
     double left_point = search_points[best_interval_index - 1];
     double right_point = search_points[best_interval_index];
@@ -172,15 +150,15 @@ bool EreminVStronginAlgorithmMPI::RunImpl() {
     function_values.insert(function_values.begin() + static_cast<std::ptrdiff_t>(best_interval_index), new_value);
 
     max_interval_width = 0.0;
-    for (std::size_t i = 1; i < search_points.size(); ++i) {
+    for (std::size_t i = 1 + static_cast<std::size_t>(rank); i < search_points.size();
+         i += static_cast<std::size_t>(size)) {
       double current_width = search_points[i] - search_points[i - 1];
       if (current_width > max_interval_width) {
         max_interval_width = current_width;
       }
     }
-    maxx++;
+    MPI_Allreduce(&max_interval_width, &max_interval_width, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
   }
-  std::cout << "maxx: " << maxx<< "\n";
   GetOutput() = *std::ranges::min_element(function_values);
   return true;
 }

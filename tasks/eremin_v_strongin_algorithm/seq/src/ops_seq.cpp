@@ -29,22 +29,24 @@ bool EreminVStronginAlgorithmSEQ::ValidationImpl() {
 }
 
 bool EreminVStronginAlgorithmSEQ::PreProcessingImpl() {
-  auto &input = GetInput();
-    lower_bound = std::get<0>(input);
-    upper_bound = std::get<1>(input);
-    epsilon = std::get<2>(input);
-    max_iterations = std::get<3>(input);
-
-  objective_function = std::get<4>(input);
-
-  search_points.push_back(lower_bound);
-  search_points.push_back(upper_bound);
-  function_values.push_back(objective_function(lower_bound));
-  function_values.push_back(objective_function(upper_bound));
   return true;
 }
 
 bool EreminVStronginAlgorithmSEQ::RunImpl() {
+  auto &input = GetInput();
+  double lower_bound = std::get<0>(input);
+  double upper_bound = std::get<1>(input);
+  double epsilon = std::get<2>(input);
+  int max_iterations = std::get<3>(input);
+
+  std::function<double(double)> objective_function = std::get<4>(GetInput());
+  ;
+
+  std::vector<double> search_points = {lower_bound, upper_bound};
+  std::vector<double> function_values = {objective_function(lower_bound), objective_function(upper_bound)};
+  // search_points.reserve(max_iterations + 2);
+  // function_values.reserve(max_iterations + 2);
+
   int current_iteration = 0;
   double r_coefficient = 2.0;
   double max_interval_width = upper_bound - lower_bound;
