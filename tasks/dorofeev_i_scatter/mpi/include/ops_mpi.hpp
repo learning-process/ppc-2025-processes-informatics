@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dorofeev_i_scatter/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace dorofeev_i_scatter {
 
