@@ -25,7 +25,7 @@ class ChyokotovConvexHullFindingSEQ : public BaseTask {
                                               std::vector<std::vector<bool>> &visited);
   std::vector<std::vector<std::pair<int, int>>> FindComponent();
   static int Cross(const std::pair<int, int> &o, const std::pair<int, int> &a, const std::pair<int, int> &b);
-  std::vector<std::pair<int, int>> ConvexHull(std::vector<std::pair<int, int>> x);
+  static std::vector<std::pair<int, int>> ConvexHull(std::vector<std::pair<int, int>> x);
 };
 
 }  // namespace chyokotov_a_convex_hull_finding

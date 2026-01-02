@@ -8,7 +8,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <queue>
-#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -136,62 +135,34 @@ int64_t ChyokotovConvexHullFindingMPI::Cross(const std::pair<int, int> &a, const
 
 std::vector<std::pair<int, int>> ChyokotovConvexHullFindingMPI::ConvexHullAndrew(
     const std::vector<std::pair<int, int>> &points) {
-  if (points.size() <= 1) {
+  if (points.size() <= 2) {
     return points;
   }
 
   std::vector<std::pair<int, int>> sorted_points = points;
-  std::sort(sorted_points.begin(), sorted_points.end());
+  std::ranges::sort(sorted_points);
 
-  auto last = std::unique(sorted_points.begin(), sorted_points.end());
-  sorted_points.erase(last, sorted_points.end());
-
-  if (sorted_points.size() <= 2) {
-    return sorted_points;
-  }
-
-  std::vector<std::pair<int, int>> lower_hull;
-  std::vector<std::pair<int, int>> upper_hull;
-
-  for (const auto &p : sorted_points) {
-    while (lower_hull.size() >= 2) {
-      const auto &a = lower_hull[lower_hull.size() - 2];
-      const auto &b = lower_hull[lower_hull.size() - 1];
-
-      if (Cross(a, b, p) >= 0) {
-        lower_hull.pop_back();
-      } else {
-        break;
-      }
-    }
-    lower_hull.push_back(p);
-  }
-
-  for (auto it = sorted_points.rbegin(); it != sorted_points.rend(); ++it) {
-    while (upper_hull.size() >= 2) {
-      const auto &a = upper_hull[upper_hull.size() - 2];
-      const auto &b = upper_hull[upper_hull.size() - 1];
-
-      if (Cross(a, b, *it) >= 0) {
-        upper_hull.pop_back();
-      } else {
-        break;
-      }
-    }
-    upper_hull.push_back(*it);
-  }
+  auto [first, last] = std::ranges::unique(sorted_points);
+  sorted_points.erase(first, last);
 
   std::vector<std::pair<int, int>> hull;
-  hull.reserve(lower_hull.size() + upper_hull.size() - 2);
 
-  for (size_t i = 0; i < lower_hull.size() - 1; ++i) {
-    hull.push_back(lower_hull[i]);
+  for (const auto &p : sorted_points) {
+    while (hull.size() >= 2 && Cross(hull[hull.size() - 2], hull.back(), p) >= 0) {
+      hull.pop_back();
+    }
+    hull.push_back(p);
   }
 
-  for (size_t i = 0; i < upper_hull.size() - 1; ++i) {
-    hull.push_back(upper_hull[i]);
+  int lower_size = hull.size();
+  for (const auto &p : std::ranges::reverse_view(sorted_points)) {
+    while (hull.size() > lower_size && Cross(hull[hull.size() - 2], hull.back(), p) >= 0) {
+      hull.pop_back();
+    }
+    hull.push_back(p);
   }
 
+  hull.pop_back();
   return hull;
 }
 
@@ -382,6 +353,7 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
     int rank, const std::vector<std::vector<std::pair<int, int>>> &global_hulls_on_rank0) {
   int total_hulls = (rank == 0) ? static_cast<int>(global_hulls_on_rank0.size()) : 0;
   MPI_Bcast(&total_hulls, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
   if (total_hulls == 0) {
     return {};
   }
@@ -395,16 +367,16 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
   MPI_Bcast(all_sizes.data(), total_hulls, MPI_INT, 0, MPI_COMM_WORLD);
 
   int total_points = 0;
+  std::vector<int> flat_points;
+
   if (rank == 0) {
     for (const auto &hull : global_hulls_on_rank0) {
       total_points += static_cast<int>(hull.size());
     }
-  }
-  MPI_Bcast(&total_points, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> flat_points(static_cast<size_t>(total_points) * 2);
-  if (rank == 0) {
+    flat_points.resize(static_cast<size_t>(total_points) * 2);
     size_t idx = 0;
+
     for (const auto &hull : global_hulls_on_rank0) {
       for (const auto &[x, y] : hull) {
         flat_points[idx++] = x;
@@ -412,6 +384,13 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
       }
     }
   }
+
+  MPI_Bcast(&total_points, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  if (rank != 0) {
+    flat_points.resize(static_cast<size_t>(total_points) * 2);
+  }
+
   MPI_Bcast(flat_points.data(), total_points * 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<std::vector<std::pair<int, int>>> result;
