@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cmath>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -9,7 +10,6 @@
 #include "ashihmin_d_calculate_integrals_by_simpson/mpi/include/ops_mpi.hpp"
 #include "ashihmin_d_calculate_integrals_by_simpson/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
-#include "util/include/util.hpp"
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 

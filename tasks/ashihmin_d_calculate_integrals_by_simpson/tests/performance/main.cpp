@@ -34,13 +34,13 @@ TEST_P(SimpsonPerformanceTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto performance_tasks = ppc::util::MakeAllPerfTasks<InType, AshihminDCalculateIntegralsBySimpsonMPI,
+const auto kPerformanceTasks = ppc::util::MakeAllPerfTasks<InType, AshihminDCalculateIntegralsBySimpsonMPI,
                                                            AshihminDCalculateIntegralsBySimpsonSEQ>(
     PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson);
 
-const auto gtest_values = ppc::util::TupleToGTestValues(performance_tasks);
+const auto kGtestValues = ppc::util::TupleToGTestValues(kPerformanceTasks);
 
-INSTANTIATE_TEST_SUITE_P(PerformanceTests, SimpsonPerformanceTests, gtest_values,
+INSTANTIATE_TEST_SUITE_P(PerformanceTests, SimpsonPerformanceTests, kGtestValues,
                          SimpsonPerformanceTests::CustomPerfTestName);
 
 }  // namespace ashihmin_d_calculate_integrals_by_simpson

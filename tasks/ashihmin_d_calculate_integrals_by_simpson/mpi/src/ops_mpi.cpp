@@ -4,12 +4,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
 namespace {
-double Function(const std::vector<double> &coordinates) {
+static double Function(const std::vector<double> &coordinates) {
   double total = 0.0;
   for (double value : coordinates) {
     total += value * value;
@@ -33,7 +34,7 @@ bool AshihminDCalculateIntegralsBySimpsonMPI::ValidationImpl() {
     return false;
   }
 
-  for (size_t index = 0; index < input.left_bounds.size(); ++index) {
+  for (std::size_t index = 0; index < input.left_bounds.size(); ++index) {
     if (input.right_bounds[index] <= input.left_bounds[index]) {
       return false;
     }
@@ -55,11 +56,12 @@ void AshihminDCalculateIntegralsBySimpsonMPI::RecursiveIntegration(int dimension
                                                                    double &local_sum, int start_index, int end_index) {
   const auto &input = GetInput();
   int partitions = input.partitions;
+  int total_dimensions = static_cast<int>(coordinates.size());
 
-  if (dimension == static_cast<int>(coordinates.size())) {
+  if (dimension == total_dimensions) {
     double weight_coefficient = 1.0;
-    for (int dim_index = 0; dim_index < static_cast<int>(coordinates.size()); ++dim_index) {
-      int node_index = static_cast<int>(coordinates[dim_index]);
+    for (const double coordinate : coordinates) {
+      int node_index = static_cast<int>(coordinate);
 
       if (node_index == 0 || node_index == partitions) {
         weight_coefficient *= 1.0;
@@ -70,9 +72,9 @@ void AshihminDCalculateIntegralsBySimpsonMPI::RecursiveIntegration(int dimension
       }
     }
 
-    std::vector<double> point(coordinates.size());
-    for (size_t dim_index = 0; dim_index < coordinates.size(); ++dim_index) {
-      point[dim_index] = input.left_bounds[dim_index] + coordinates[dim_index] * step_sizes[dim_index];
+    std::vector<double> point(total_dimensions);
+    for (int dim_index = 0; dim_index < total_dimensions; ++dim_index) {
+      point[dim_index] = input.left_bounds[dim_index] + (coordinates[dim_index] * step_sizes[dim_index]);
     }
 
     local_sum += weight_coefficient * IntegrandFunction(point);
@@ -81,12 +83,12 @@ void AshihminDCalculateIntegralsBySimpsonMPI::RecursiveIntegration(int dimension
 
   if (dimension == 0) {
     for (int node_index = start_index; node_index <= end_index; ++node_index) {
-      coordinates[dimension] = node_index;
+      coordinates[dimension] = static_cast<double>(node_index);
       RecursiveIntegration(dimension + 1, coordinates, step_sizes, local_sum, 0, partitions);
     }
   } else {
     for (int node_index = 0; node_index <= partitions; ++node_index) {
-      coordinates[dimension] = node_index;
+      coordinates[dimension] = static_cast<double>(node_index);
       RecursiveIntegration(dimension + 1, coordinates, step_sizes, local_sum, 0, partitions);
     }
   }
@@ -107,22 +109,24 @@ bool AshihminDCalculateIntegralsBySimpsonMPI::RunImpl() {
     return true;
   }
 
-  std::vector<double> step_sizes(dimensions);
+  std::vector<double> step_sizes(static_cast<std::size_t>(dimensions));
   for (int dim_index = 0; dim_index < dimensions; ++dim_index) {
-    step_sizes[dim_index] = (input.right_bounds[dim_index] - input.left_bounds[dim_index]) / partitions;
+    step_sizes[static_cast<std::size_t>(dim_index)] = (input.right_bounds[static_cast<std::size_t>(dim_index)] -
+                                                       input.left_bounds[static_cast<std::size_t>(dim_index)]) /
+                                                      partitions;
   }
 
   int total_nodes_first_dim = partitions + 1;
   int chunk_size = total_nodes_first_dim / process_count;
   int remainder = total_nodes_first_dim % process_count;
 
-  int start_index = process_rank * chunk_size + std::min(process_rank, remainder);
+  int start_index = (process_rank * chunk_size) + std::min(process_rank, remainder);
   int end_index = start_index + chunk_size - 1;
   if (process_rank < remainder) {
     end_index += 1;
   }
 
-  std::vector<double> coordinates(dimensions, 0.0);
+  std::vector<double> coordinates(static_cast<std::size_t>(dimensions), 0.0);
   double local_sum = 0.0;
 
   if (start_index <= end_index) {
@@ -134,7 +138,7 @@ bool AshihminDCalculateIntegralsBySimpsonMPI::RunImpl() {
 
   double volume_element = 1.0;
   for (int dim_index = 0; dim_index < dimensions; ++dim_index) {
-    volume_element *= step_sizes[dim_index];
+    volume_element *= step_sizes[static_cast<std::size_t>(dim_index)];
   }
 
   double result = global_sum * volume_element / std::pow(3.0, dimensions);

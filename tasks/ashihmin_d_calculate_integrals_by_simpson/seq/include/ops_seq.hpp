@@ -1,7 +1,8 @@
 #pragma once
 
+#include <vector>
+
 #include "ashihmin_d_calculate_integrals_by_simpson/common/include/common.hpp"
-#include "task/include/task.hpp"
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
@@ -18,8 +19,9 @@ class AshihminDCalculateIntegralsBySimpsonSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double IntegrandFunction(const std::vector<double> &coords);
-  void RecursiveIntegration(int dim, std::vector<double> &coords, const std::vector<double> &h, double &sum);
+  static double IntegrandFunction(const std::vector<double> &coordinates);
+  void RecursiveIntegration(int dimension, std::vector<double> &coordinates, const std::vector<double> &step_sizes,
+                            double &total_sum);
 };
 
 }  // namespace ashihmin_d_calculate_integrals_by_simpson
