@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <queue>
+#include <ranges>
 #include <utility>
 #include <vector>
 
@@ -353,7 +354,6 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
     int rank, const std::vector<std::vector<std::pair<int, int>>> &global_hulls_on_rank0) {
   int total_hulls = (rank == 0) ? static_cast<int>(global_hulls_on_rank0.size()) : 0;
   MPI_Bcast(&total_hulls, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
   if (total_hulls == 0) {
     return {};
   }
@@ -367,16 +367,16 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
   MPI_Bcast(all_sizes.data(), total_hulls, MPI_INT, 0, MPI_COMM_WORLD);
 
   int total_points = 0;
-  std::vector<int> flat_points;
-
   if (rank == 0) {
-    for (const auto &hull : global_hulls_on_rank0) {
-      total_points += static_cast<int>(hull.size());
+    for (int size : all_sizes) {
+      total_points += size;
     }
+  }
+  MPI_Bcast(&total_points, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    flat_points.resize(static_cast<size_t>(total_points) * 2);
+  std::vector<int> flat_points(static_cast<size_t>(total_points) * 2);
+  if (rank == 0) {
     size_t idx = 0;
-
     for (const auto &hull : global_hulls_on_rank0) {
       for (const auto &[x, y] : hull) {
         flat_points[idx++] = x;
@@ -384,27 +384,17 @@ std::vector<std::vector<std::pair<int, int>>> ChyokotovConvexHullFindingMPI::Bro
       }
     }
   }
-
-  MPI_Bcast(&total_points, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-  if (rank != 0) {
-    flat_points.resize(static_cast<size_t>(total_points) * 2);
-  }
-
   MPI_Bcast(flat_points.data(), total_points * 2, MPI_INT, 0, MPI_COMM_WORLD);
 
   std::vector<std::vector<std::pair<int, int>>> result;
   size_t idx = 0;
-
   for (int hull_size : all_sizes) {
     std::vector<std::pair<int, int>> hull;
     hull.reserve(static_cast<size_t>(hull_size));
-
     for (int j = 0; j < hull_size; ++j) {
       hull.emplace_back(flat_points[idx], flat_points[idx + 1]);
       idx += 2;
     }
-
     result.push_back(std::move(hull));
   }
 
