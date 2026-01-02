@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -34,32 +35,49 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
-  out.resize(a.size() + b.size());
-  auto it = out.begin();
-  auto it1 = a.begin();
-  auto it2 = b.begin();
-  while (it1 != a.end() && it2 != b.end()) {
-    if (*it1 <= *it2) {
-      *it++ = *it1++;
-    } else {
-      *it++ = *it2++;
-    }
-  }
-  while (it1 != a.end()) {
-    *it++ = *it1++;
-  }
-  while (it2 != b.end()) {
-    *it++ = *it2++;
-  }
-  for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
-    for (std::size_t i = start; i + 1 < out.size(); i += 2) {
-      if (out[i] > out[i + 1]) {
-        std::swap(out[i], out[i + 1]);
+void odd_even_merge(std::vector<int> &a, int lo, int n, int r) {
+  if (n > 1) {
+    int m = n / 2;
+    odd_even_merge(a, lo, m, 2 * r);
+    odd_even_merge(a, lo + r, m, 2 * r);
+    for (int i = lo + r; i + r < lo + n; i += 2 * r) {
+      if (a[i] > a[i + r]) {
+        std::swap(a[i], a[i + r]);
       }
     }
   }
+}
+
+void odd_even_merge_sort(std::vector<int> &a, int lo, int n) {
+  if (n > 1) {
+    int m = n / 2;
+    odd_even_merge_sort(a, lo, m);
+    odd_even_merge_sort(a, lo + m, m);
+    odd_even_merge(a, lo, n, 1);
+  }
+}
+
+void BatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
+  const std::size_t orig_n = a.size() + b.size();
+  out.clear();
+  out.reserve(orig_n);
+  out.insert(out.end(), a.begin(), a.end());
+  out.insert(out.end(), b.begin(), b.end());
+
+  std::size_t n = out.size();
+  if (n == 0) {
+    return;
+  }
+  std::size_t pow2 = 1;
+  while (pow2 < n) {
+    pow2 <<= 1;
+  }
+  const int sentinel = std::numeric_limits<int>::max();
+  out.resize(pow2, sentinel);
+
+  odd_even_merge_sort(out, 0, static_cast<int>(pow2));
+
+  out.resize(orig_n);
 }
 
 }  // namespace
@@ -100,7 +118,7 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
 
   std::vector<int> merged;
-  OddEvenBatcherMerge(left, right, merged);
+  BatcherMerge(left, right, merged);
 
   ShellSort(merged);
 

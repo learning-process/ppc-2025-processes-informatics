@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -55,16 +57,51 @@ void ShellSort(std::vector<int> &a) {
 }
 
 void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
-  out.resize(a.size() + b.size());
-  MergeSortedRanges(a.begin(), a.end(), b.begin(), b.end(), out.begin());
-  for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
-    for (std::size_t i = start; i + 1 < out.size(); i += 2) {
-      if (out[i] > out[i + 1]) {
-        std::swap(out[i], out[i + 1]);
+  out.clear();
+  out.reserve(a.size() + b.size());
+  out.insert(out.end(), a.begin(), a.end());
+  out.insert(out.end(), b.begin(), b.end());
+
+  const std::size_t orig_n = out.size();
+  if (orig_n == 0) {
+    return;
+  }
+
+  std::size_t pow2 = 1;
+  while (pow2 < orig_n) {
+    pow2 <<= 1;
+  }
+  const int sentinel = std::numeric_limits<int>::max();
+  out.resize(pow2, sentinel);
+
+  std::function<void(std::vector<int> &, int, int, int)> odd_even_merge;
+  std::function<void(std::vector<int> &, int, int)> odd_even_merge_sort;
+
+  odd_even_merge = [&](std::vector<int> &arr, int lo, int n, int r) {
+    if (n > 1) {
+      int m = n / 2;
+      odd_even_merge(arr, lo, m, 2 * r);
+      odd_even_merge(arr, lo + r, m, 2 * r);
+      for (int i = lo + r; i + r < lo + n; i += 2 * r) {
+        if (arr[i] > arr[i + r]) {
+          std::swap(arr[i], arr[i + r]);
+        }
       }
     }
-  }
+  };
+
+  odd_even_merge_sort = [&](std::vector<int> &arr, int lo, int n) {
+    if (n > 1) {
+      int m = n / 2;
+      odd_even_merge_sort(arr, lo, m);
+      odd_even_merge_sort(arr, lo + m, m);
+      odd_even_merge(arr, lo, n, 1);
+    }
+  };
+
+  odd_even_merge_sort(out, 0, static_cast<int>(pow2));
+
+  out.resize(orig_n);
 }
 
 int ComputeNeighbor(int rank, int phase, int size) {
