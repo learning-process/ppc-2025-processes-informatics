@@ -11,11 +11,12 @@
 namespace lifanov_k_trapezoid_method {
 
 class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int size_ = 20000000;
+ protected:
   InType input_data_;
 
   void SetUp() override {
-    input_data_ = std::vector<int>(size_, 1);
+    // Крупная сетка для perf-теста
+    input_data_ = {0.0, 1.0, 0.0, 1.0, 2000.0, 2000.0};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -24,7 +25,7 @@ class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InTy
     if (rank != 0) {
       return true;
     }
-    return output_data.size() == 1;
+    return output_data > 0.0;
   }
 
   InType GetTestInputData() final {
@@ -32,17 +33,21 @@ class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InTy
   }
 };
 
-TEST_P(LifanovKTrapezoidMethodPerfTests, MyRunPerfModes) {
+TEST_P(LifanovKTrapezoidMethodPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, LifanovKTrapezoidMethodMPI, LifanovKTrapezoidMethodSEQ>(PPC_SETTINGS_lifanov_k_trapezoid_method);
+    ppc::util::MakeAllPerfTasks<InType, LifanovKTrapezoidMethodMPI, LifanovKTrapezoidMethodSEQ>(
+        PPC_SETTINGS_lifanov_k_trapezoid_method);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = LifanovKTrapezoidMethodPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(MyTrapezoidMethodTests, LifanovKTrapezoidMethodPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(MyTrapezoidMethodPerfTests,
+                         LifanovKTrapezoidMethodPerfTests,
+                         kGtestValues,
+                         kPerfTestName);
 
 }  // namespace lifanov_k_trapezoid_method

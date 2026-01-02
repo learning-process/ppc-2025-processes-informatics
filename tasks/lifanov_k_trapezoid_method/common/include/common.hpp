@@ -8,8 +8,8 @@
 
 namespace lifanov_k_trapezoid_method {
 
-using InType = std::vector<int>;
-using OutType = std::vector<int>;
+using InType = std::vector<double>;
+using OutType = double;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
