@@ -48,12 +48,12 @@ void CompareExchange(std::vector<int> &arr, int i, int j, bool ascending) {
 }
 
 void BatcherOddEvenNetwork(std::vector<int> &arr, int length) {
-  for (int p = 1; p < length; p <<= 1) {
-    for (int q = p; q > 0; q >>= 1) {
+  for (int step_val = 1; step_val < length; step_val <<= 1) {
+    for (int stride_val = step_val; stride_val > 0; stride_val >>= 1) {
       for (int i = 0; i < length; ++i) {
-        int j = i ^ q;
+        int j = i ^ stride_val;
         if (j > i) {
-          bool ascending = ((i & p) == 0);
+          bool ascending = ((i & step_val) == 0);
           CompareExchange(arr, i, j, ascending);
         }
       }

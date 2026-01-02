@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
 #include <vector>
 
 #include "util/include/perf_test_util.hpp"
@@ -21,7 +22,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   for (int i = 0; i < n; ++i) {
     data.push_back(dist(rng));
   }
-  std::sort(data.begin(), data.end());
+  std::ranges::sort(data);
   std::int64_t checksum = 0;
   for (int v : data) {
     checksum += static_cast<std::int64_t>(v);
