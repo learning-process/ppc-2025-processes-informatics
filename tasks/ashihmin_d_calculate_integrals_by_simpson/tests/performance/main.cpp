@@ -9,8 +9,7 @@
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
-class SimpsonPerformanceTests
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class SimpsonPerformanceTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
     test_input_.left_bounds = {0.0, 0.0, 0.0};
@@ -18,7 +17,7 @@ class SimpsonPerformanceTests
     test_input_.partitions = 20;
   }
 
-  bool CheckTestOutputData(OutType& output_value) final {
+  bool CheckTestOutputData(OutType &output_value) final {
     const double exact_value = 1.0;
     return std::abs(output_value - exact_value) < 1e-4;
   }
@@ -35,20 +34,13 @@ TEST_P(SimpsonPerformanceTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto performance_tasks =
-    ppc::util::MakeAllPerfTasks<
-        InType,
-        AshihminDCalculateIntegralsBySimpsonMPI,
-        AshihminDCalculateIntegralsBySimpsonSEQ>(
-        PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson);
+const auto performance_tasks = ppc::util::MakeAllPerfTasks<InType, AshihminDCalculateIntegralsBySimpsonMPI,
+                                                           AshihminDCalculateIntegralsBySimpsonSEQ>(
+    PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson);
 
-const auto gtest_values =
-    ppc::util::TupleToGTestValues(performance_tasks);
+const auto gtest_values = ppc::util::TupleToGTestValues(performance_tasks);
 
-INSTANTIATE_TEST_SUITE_P(
-    PerformanceTests,
-    SimpsonPerformanceTests,
-    gtest_values,
-    SimpsonPerformanceTests::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(PerformanceTests, SimpsonPerformanceTests, gtest_values,
+                         SimpsonPerformanceTests::CustomPerfTestName);
 
 }  // namespace ashihmin_d_calculate_integrals_by_simpson

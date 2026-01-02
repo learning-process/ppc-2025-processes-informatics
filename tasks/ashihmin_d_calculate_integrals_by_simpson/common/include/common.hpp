@@ -9,9 +9,9 @@
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
 struct SimpsonInput {
-  std::vector<double> left_bounds; 
-  std::vector<double> right_bounds; 
-  int partitions;                   
+  std::vector<double> left_bounds;
+  std::vector<double> right_bounds;
+  int partitions;
 };
 
 using InType = SimpsonInput;

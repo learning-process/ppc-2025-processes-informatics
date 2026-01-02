@@ -13,8 +13,7 @@
 
 namespace ashihmin_d_calculate_integrals_by_simpson {
 
-class AshihminDCalculateIntegralsBySimpsonFuncTests 
-    : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+class AshihminDCalculateIntegralsBySimpsonFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
     return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
@@ -27,8 +26,8 @@ class AshihminDCalculateIntegralsBySimpsonFuncTests
     test_input_.partitions = 10;
   }
 
-  bool CheckTestOutputData(OutType& output_value) override {
-    const double exact_value = 2.0/3.0;
+  bool CheckTestOutputData(OutType &output_value) override {
+    const double exact_value = 2.0 / 3.0;
     return std::abs(output_value - exact_value) < 1e-4;
   }
 
@@ -46,33 +45,20 @@ TEST_P(AshihminDCalculateIntegralsBySimpsonFuncTests, Correctness) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(1, "small"),
-    std::make_tuple(2, "medium"),
-    std::make_tuple(3, "large")};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "small"), std::make_tuple(2, "medium"),
+                                            std::make_tuple(3, "large")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<
-        AshihminDCalculateIntegralsBySimpsonMPI, InType>(
-        kTestParam,
-        PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson),
-    ppc::util::AddFuncTask<
-        AshihminDCalculateIntegralsBySimpsonSEQ, InType>(
-        kTestParam,
-        PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<AshihminDCalculateIntegralsBySimpsonMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson),
+                                           ppc::util::AddFuncTask<AshihminDCalculateIntegralsBySimpsonSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_ashihmin_d_calculate_integrals_by_simpson));
 
-const auto kGtestValues =
-    ppc::util::ExpandToValues(kTestTasksList);
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName =
-    AshihminDCalculateIntegralsBySimpsonFuncTests::
-        PrintFuncTestName<AshihminDCalculateIntegralsBySimpsonFuncTests>;
+    AshihminDCalculateIntegralsBySimpsonFuncTests::PrintFuncTestName<AshihminDCalculateIntegralsBySimpsonFuncTests>;
 
-INSTANTIATE_TEST_SUITE_P(
-    Correctness,
-    AshihminDCalculateIntegralsBySimpsonFuncTests,
-    kGtestValues,
-    kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(Correctness, AshihminDCalculateIntegralsBySimpsonFuncTests, kGtestValues, kPerfTestName);
 
 }  // namespace
 
