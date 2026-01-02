@@ -1,7 +1,7 @@
 #include "potashnik_m_star_topol/seq/include/ops_seq.hpp"
 
-#include <string>
 #include <tuple>
+#include <vector>
 
 #include "potashnik_m_star_topol/common/include/common.hpp"
 
@@ -14,7 +14,7 @@ PotashnikMStarTopolSEQ::PotashnikMStarTopolSEQ(const InType &in) {
 }
 
 bool PotashnikMStarTopolSEQ::ValidationImpl() {
-  return GetInput().size() != 0;
+  return !GetInput().empty();
 }
 
 bool PotashnikMStarTopolSEQ::PreProcessingImpl() {

@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <tuple>
 #include <vector>
+#include <string>
 
 #include "potashnik_m_star_topol/common/include/common.hpp"
 #include "potashnik_m_star_topol/mpi/include/ops_mpi.hpp"
@@ -24,6 +25,7 @@ class PotashnikMStarTopolFuncTests : public ppc::util::BaseRunFuncTests<InType, 
   void SetUp() override {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
     std::vector<int> data;
+    data.reserve(params);
     for (int i = 0; i < params; i++) {
       data.push_back(i);
     }

@@ -17,7 +17,7 @@ PotashnikMStarTopolMPI::PotashnikMStarTopolMPI(const InType &in) {
 }
 
 bool PotashnikMStarTopolMPI::ValidationImpl() {
-  return GetInput().size() != 0;
+  return !GetInput().empty();
 }
 
 bool PotashnikMStarTopolMPI::PreProcessingImpl() {
@@ -27,7 +27,7 @@ bool PotashnikMStarTopolMPI::PreProcessingImpl() {
 bool PotashnikMStarTopolMPI::RunImpl() {
   auto &input = GetInput();
 
-  int size = input.size();
+  int size = static_cast<int>(input.size());
   int star_center = 0;
 
   int world_size = 0;

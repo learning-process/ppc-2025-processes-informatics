@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <string>
-#include <tuple>
+#include <vector>
+#include <cstddef>
 
 #include "potashnik_m_star_topol/common/include/common.hpp"
 #include "potashnik_m_star_topol/mpi/include/ops_mpi.hpp"
@@ -16,6 +16,7 @@ class PotashnikMStarTopolPerfTests : public ppc::util::BaseRunPerfTests<InType, 
 
   void SetUp() override {
     std::vector<int> data;
+    data.reserve(kCount_);
     for (int i = 0; i < kCount_; i++) {
       data.push_back(i);
     }
