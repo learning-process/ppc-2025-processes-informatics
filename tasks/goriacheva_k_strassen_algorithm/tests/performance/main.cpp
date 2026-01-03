@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "goriacheva_k_strassen_algorithm/common/include/common.hpp"
-#include "goriacheva_k_strassen_algorithm/mpi/include/ops_mpi.hpp"
-#include "goriacheva_k_strassen_algorithm/seq/include/ops_seq.hpp"
+#include "goriacheva_k_Strassen_algorithm/common/include/common.hpp"
+#include "goriacheva_k_Strassen_algorithm/mpi/include/ops_mpi.hpp"
+#include "goriacheva_k_Strassen_algorithm/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace goriacheva_k_strassen_algorithm {
+namespace goriacheva_k_Strassen_algorithm {
 
 class GoriachevaKStrassenAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
@@ -17,8 +17,8 @@ class GoriachevaKStrassenAlgorithmPerfTests : public ppc::util::BaseRunPerfTests
 
  protected:
   void SetUp() override {
-    input_.A.assign(kMatrixSize, std::vector<double>(kMatrixSize, 1.0));
-    input_.B.assign(kMatrixSize, std::vector<double>(kMatrixSize, 2.0));
+    input_.a.assign(kMatrixSize, std::vector<double>(kMatrixSize, 1.0));
+    input_.b.assign(kMatrixSize, std::vector<double>(kMatrixSize, 2.0));
   }
 
   InType GetTestInputData() final {
@@ -26,7 +26,7 @@ class GoriachevaKStrassenAlgorithmPerfTests : public ppc::util::BaseRunPerfTests
   }
 
   bool CheckTestOutputData(OutType & /*output_data*/) final {
-    return true;  // perf-тесты не проверяют корректность
+    return true;
   }
 
  private:
@@ -57,4 +57,4 @@ INSTANTIATE_TEST_SUITE_P(GoriachevaKStrassenAlgorithmPerfomanceTests, Goriacheva
                          kPerfParams, MakePerfName);
 
 }  // namespace
-}  // namespace goriacheva_k_strassen_algorithm
+}  // namespace goriacheva_k_Strassen_algorithm

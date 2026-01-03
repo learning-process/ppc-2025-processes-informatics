@@ -8,13 +8,13 @@
 #include <string>
 #include <vector>
 
-#include "goriacheva_k_strassen_algorithm/common/include/common.hpp"
-#include "goriacheva_k_strassen_algorithm/mpi/include/ops_mpi.hpp"
-#include "goriacheva_k_strassen_algorithm/seq/include/ops_seq.hpp"
+#include "goriacheva_k_Strassen_algorithm/common/include/common.hpp"
+#include "goriacheva_k_Strassen_algorithm/mpi/include/ops_mpi.hpp"
+#include "goriacheva_k_Strassen_algorithm/seq/include/ops_seq.hpp"
 #include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
 
-namespace goriacheva_k_strassen_algorithm {
+namespace goriacheva_k_Strassen_algorithm {
 
 using FuncParam = ppc::util::FuncTestParam<InType, OutType, TestType>;
 
@@ -84,8 +84,8 @@ std::vector<FuncParam> LoadTestParams() {
 
   for (const auto &item : j) {
     InType input;
-    input.A = item.at("input").at("A").get<std::vector<std::vector<double>>>();
-    input.B = item.at("input").at("B").get<std::vector<std::vector<double>>>();
+    input.a = item.at("input").at("A").get<std::vector<std::vector<double>>>();
+    input.b = item.at("input").at("B").get<std::vector<std::vector<double>>>();
 
     OutType expected = item.at("result").get<OutType>();
 
@@ -111,4 +111,4 @@ INSTANTIATE_TEST_SUITE_P(GoriachevaKStrassenAlgorithmFunctionalTests, Goriacheva
                          testing::ValuesIn(kFuncParams), GoriachevaKStrassenAlgorithmFuncTests::PrintTestParam);
 
 }  // namespace
-}  // namespace goriacheva_k_strassen_algorithm
+}  // namespace goriacheva_k_Strassen_algorithm

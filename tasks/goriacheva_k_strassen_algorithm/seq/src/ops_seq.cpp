@@ -1,10 +1,10 @@
-#include "goriacheva_k_strassen_algorithm/seq/include/ops_seq.hpp"
+#include "goriacheva_k_Strassen_algorithm/seq/include/ops_seq.hpp"
 
 #include <cmath>
 
-#include "goriacheva_k_strassen_algorithm/common/include/common.hpp"
+#include "goriacheva_k_Strassen_algorithm/common/include/common.hpp"
 
-namespace goriacheva_k_strassen_algorithm {
+namespace goriacheva_k_Strassen_algorithm {
 
 GoriachevaKStrassenAlgorithmSEQ::GoriachevaKStrassenAlgorithmSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -12,7 +12,7 @@ GoriachevaKStrassenAlgorithmSEQ::GoriachevaKStrassenAlgorithmSEQ(const InType &i
 }
 
 bool GoriachevaKStrassenAlgorithmSEQ::ValidationImpl() {
-  return is_square(GetInput().A) && is_square(GetInput().B) && GetInput().A.size() == GetInput().B.size();
+  return IsSquare(GetInput().a) && IsSquare(GetInput().b) && GetInput().a.size() == GetInput().a.size();
 }
 
 bool GoriachevaKStrassenAlgorithmSEQ::PreProcessingImpl() {
@@ -21,17 +21,17 @@ bool GoriachevaKStrassenAlgorithmSEQ::PreProcessingImpl() {
 }
 
 bool GoriachevaKStrassenAlgorithmSEQ::RunImpl() {
-  const auto &A = input_matrices_.A;
-  const auto &B = input_matrices_.B;
+  const auto &a = input_matrices_.a;
+  const auto &b = input_matrices_.b;
 
-  std::size_t n = A.size();
-  std::size_t m = next_power_of_two(n);
+  std::size_t n = a.size();
+  std::size_t m = NextPowerOfTwo(n);
 
-  Matrix A_pad = (n == m) ? A : pad_matrix(A, m);
-  Matrix B_pad = (n == m) ? B : pad_matrix(B, m);
+  Matrix a_pad = (n == m) ? a : PadMatrix(a, m);
+  Matrix b_pad = (n == m) ? b : PadMatrix(b, m);
 
-  Matrix C_pad = strassen(A_pad, B_pad);
-  result_matrix_ = (n == m) ? C_pad : crop_matrix(C_pad, n);
+  Matrix c_pad = Strassen(a_pad, b_pad);
+  result_matrix_ = (n == m) ? c_pad : CropMatrix(c_pad, n);
 
   return true;
 }
@@ -41,4 +41,4 @@ bool GoriachevaKStrassenAlgorithmSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace goriacheva_k_strassen_algorithm
+}  // namespace goriacheva_k_Strassen_algorithm
