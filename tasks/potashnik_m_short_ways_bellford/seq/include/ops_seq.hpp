@@ -23,7 +23,7 @@ class PotashnikMShortWaysBellfordSEQ : public BaseTask {
 
 inline void BellmanFordAlgoIterationSeq(const Graph &g, const std::vector<int> &dist, std::vector<int> &dist_next) {
   int n = g.n;
-  std::copy(dist.begin(), dist.end(), dist_next.begin());
+  dist_next = dist;
   for (int uidx = 0; uidx < n; uidx++) {
     if (dist[uidx] == 1e9) {
       continue;
