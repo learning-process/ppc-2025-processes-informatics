@@ -34,7 +34,8 @@ bool ShvetsovaKRadSortBatchMergeSEQ::RunImpl() {
   RadixSort(data_);
   BatcherOddEvenMergeSort(data_, 0, static_cast<int>(data_.size()));
 
-  GetOutput() = data_;
+  GetOutput().assign(data_.begin(), data_.end());
+
   return true;
 }
 
