@@ -1,5 +1,9 @@
 #pragma once
 
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "dorofeev_i_ccs_matrix_production/common/include/common.hpp"
 #include "task/include/task.hpp"
 
