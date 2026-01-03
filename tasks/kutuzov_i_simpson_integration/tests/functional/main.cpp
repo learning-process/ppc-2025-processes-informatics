@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
-#include <format>
 #include <iostream>
 #include <string>
 #include <tuple>
