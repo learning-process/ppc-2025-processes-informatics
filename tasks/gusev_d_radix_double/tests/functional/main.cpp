@@ -66,7 +66,7 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     int initialized = 0;
     MPI_Initialized(&initialized);
 
-    if (!initialized) {
+    if (initialized == 0) {
       return output_data == ref_output_data_;
     }
 
