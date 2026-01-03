@@ -11,18 +11,18 @@ namespace khruev_a_global_opt {
 
 class KhruevAGlobalOptPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  InType input_data_;
+  InType input_data{};
 
   void SetUp() override {
-    input_data_.func_id = 1;
-    input_data_.ax = -8.0;
-    input_data_.bx = 8.0;
-    input_data_.ay = -8.0;
-    input_data_.by = 8.0;
+    input_data.func_id = 1;
+    input_data.ax = -8.0;
+    input_data.bx = 8.0;
+    input_data.ay = -8.0;
+    input_data.by = 8.0;
 
-    input_data_.epsilon = 1e-7;
-    input_data_.max_iter = 10000;
-    input_data_.r = 4;
+    input_data.epsilon = 1e-7;
+    input_data.max_iter = 10000;
+    input_data.r = 4;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -30,7 +30,7 @@ class KhruevAGlobalOptPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 

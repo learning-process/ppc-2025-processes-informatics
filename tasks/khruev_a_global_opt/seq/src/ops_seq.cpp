@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
+#include <ranges>
 
 #include "khruev_a_global_opt/common/include/common.hpp"
 
@@ -23,91 +23,98 @@ bool KhruevAGlobalOptSEQ::PreProcessingImpl() {
 }
 
 double KhruevAGlobalOptSEQ::CalculateFunction(double t) {
-  double u, v;
+  double u = 0.0;
+  double v = 0.0;
   D2xy(t, u, v);  // Преобразование Гильберта 1D -> 2D
 
   // Масштабирование из [0,1] в реальную область [ax, bx]
-  double real_x = GetInput().ax + u * (GetInput().bx - GetInput().ax);
-  double real_y = GetInput().ay + v * (GetInput().by - GetInput().ay);
+  double real_x = GetInput().ax + (u * (GetInput().bx - GetInput().ax));
+  double real_y = GetInput().ay + v * ((GetInput().by - GetInput().ay));
 
-  return Target_function(GetInput().func_id, real_x, real_y);
+  return TargetFunction(GetInput().func_id, real_x, real_y);
 }
 
 void KhruevAGlobalOptSEQ::AddTrial(double t, double z) {
-  Trial tr;
+  Trial tr{};
   tr.x = t;
   tr.z = z;
   trials_.push_back(tr);
   // Сортировка по координате x (1)
-  std::sort(trials_.begin(), trials_.end());
+  std::ranges::sort(trials_, [](const Trial &a, const Trial &b) { return a.x < b.x; });
+}
+
+double KhruevAGlobalOptSEQ::ComputeM() {
+  double max_slope = 0.0;
+  for (size_t i = 1; i < trials_.size(); ++i) {
+    double dx = trials_[i].x - trials_[i - 1].x;
+    double dz = std::abs(trials_[i].z - trials_[i - 1].z);
+    if (dx > 1e-15) {
+      max_slope = std::max(max_slope, dz / dx);
+    }
+  }
+  return (max_slope > 0) ? GetInput().r * max_slope : 1.0;
+}
+
+int KhruevAGlobalOptSEQ::FindBestInterval(double M) const {
+  double max_R = -1e18;
+  int best_interval = -1;
+
+  for (size_t i = 1; i < trials_.size(); ++i) {
+    double dx = trials_[i].x - trials_[i - 1].x;
+    double z_r = trials_[i].z;
+    double z_l = trials_[i - 1].z;
+
+    // формула (5)
+    double R = M * dx + ((z_r - z_l) * (z_r - z_l)) / (M * dx) - 2.0 * (z_r + z_l);
+
+    if (R > max_R) {
+      max_R = R;
+      best_interval = (int)i;
+    }
+  }
+  return best_interval;
+}
+
+double KhruevAGlobalOptSEQ::GenerateNewX(int best_interval, double M) const {
+  double x_r = trials_[best_interval].x;
+  double x_l = trials_[best_interval - 1].x;
+  double z_r = trials_[best_interval].z;
+  double z_l = trials_[best_interval - 1].z;
+
+  double new_x = 0.5 * (x_r + x_l) - (z_r - z_l) / (2.0 * M);
+
+  if (new_x < x_l) {
+    new_x = x_l + 1e-9;
+  }
+  if (new_x > x_r) {
+    new_x = x_r - 1e-9;
+  }
+  return new_x;
 }
 
 bool KhruevAGlobalOptSEQ::RunImpl() {
   AddTrial(0.0, CalculateFunction(0.0));
   AddTrial(1.0, CalculateFunction(1.0));
 
-  double M = 1.0;
   int k = 1;
 
   for (k = 1; k < GetInput().max_iter; ++k) {
-    // Пересчет M (2)
-    double max_slope = 0.0;
-    for (size_t i = 1; i < trials_.size(); ++i) {
-      double dx = trials_[i].x - trials_[i - 1].x;
-      double dz = std::abs(trials_[i].z - trials_[i - 1].z);
-      if (dx > 1e-15) {
-        max_slope = std::max(max_slope, dz / dx);
-      }
-    }
-    if (max_slope > 0) {
-      M = GetInput().r * max_slope;
-    } else {
-      M = 1.0;
-    }
+    double M = ComputeM();
 
-    // Вычисление характеристик R(i) (3)
-    double max_R = -1e18;
-    int best_interval = -1;
+    int best_interval = FindBestInterval(M);
 
-    for (size_t i = 1; i < trials_.size(); ++i) {
-      double dx = trials_[i].x - trials_[i - 1].x;
-      double z_r = trials_[i].z;
-      double z_l = trials_[i - 1].z;
-
-      // формула (5)
-      double R = M * dx + ((z_r - z_l) * (z_r - z_l)) / (M * dx) - 2.0 * (z_r + z_l);
-
-      if (R > max_R) {
-        max_R = R;
-        best_interval = (int)i;
-      }
-    }
-
-    if (best_interval != -1) {
-      double dx_best = trials_[best_interval].x - trials_[best_interval - 1].x;
-      if (dx_best < GetInput().epsilon) {
-        break;
-      }
-
-      // вычисление новой точки (формула 7) (5)
-      double x_r = trials_[best_interval].x;
-      double x_l = trials_[best_interval - 1].x;
-      double z_r = trials_[best_interval].z;
-      double z_l = trials_[best_interval - 1].z;
-
-      double new_x = 0.5 * (x_r + x_l) - (z_r - z_l) / (2.0 * M);
-
-      if (new_x < x_l) {
-        new_x = x_l + 1e-9;
-      }
-      if (new_x > x_r) {
-        new_x = x_r - 1e-9;
-      }
-
-      AddTrial(new_x, CalculateFunction(new_x));
-    } else {
+    if (best_interval == -1) {
       break;
     }
+
+    double dx_best = trials_[best_interval].x - trials_[best_interval - 1].x;
+    if (dx_best < GetInput().epsilon) {
+      break;
+    }
+
+    double new_x = GenerateNewX(best_interval, M);
+
+    AddTrial(new_x, CalculateFunction(new_x));
   }
 
   // Поиск минимума среди всех точек

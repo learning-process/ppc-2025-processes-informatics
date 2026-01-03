@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
+#include <array>
 #include <cmath>
-#include <iostream>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "khruev_a_global_opt/common/include/common.hpp"
 #include "khruev_a_global_opt/mpi/include/ops_mpi.hpp"
@@ -49,7 +48,7 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
   }
 
  private:
-  InType input_data_;
+  InType input_data_{};
   double expected_min_;
 };
 

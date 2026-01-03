@@ -4,6 +4,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <functional>
+#include <ranges>
 #include <vector>
 
 #include "khruev_a_global_opt/common/include/common.hpp"
@@ -30,7 +33,7 @@ double KhruevAGlobalOptMPI::CalculateFunction(double t) {
   D2xy(t, u, v);
   double real_x = GetInput().ax + (u * (GetInput().bx - GetInput().ax));
   double real_y = GetInput().ay + (v * (GetInput().by - GetInput().ay));
-  return Target_function(GetInput().func_id, real_x, real_y);
+  return TargetFunction(GetInput().func_id, real_x, real_y);
 }
 
 void KhruevAGlobalOptMPI::AddTrialUnsorted(double t, double z) {
@@ -52,7 +55,7 @@ double KhruevAGlobalOptMPI::ComputeM() {
   return (max_slope > 0) ? GetInput().r * max_slope : 1.0;
 }
 
-std::vector<KhruevAGlobalOptMPI::IntervalInfo> KhruevAGlobalOptMPI::ComputeIntervals(double M) const {
+std::vector<KhruevAGlobalOptMPI::IntervalInfo> KhruevAGlobalOptMPI::ComputeIntervals(double m) const {
   std::vector<IntervalInfo> intervals;
   intervals.reserve(trials_.size() - 1);
   for (size_t i = 1; i < trials_.size(); ++i) {
@@ -61,8 +64,8 @@ std::vector<KhruevAGlobalOptMPI::IntervalInfo> KhruevAGlobalOptMPI::ComputeInter
     double z_l = trials_[i - 1].z;
 
     // Классическая формула Стронгина
-    double R = M * dx + ((z_r - z_l) * (z_r - z_l)) / (M * dx) - 2.0 * (z_r + z_l);
-    intervals.push_back({R, (int)i});
+    double r = (m * dx) + (((z_r - z_l) * (z_r - z_l)) / (m * dx)) - (2.0 * (z_r + z_l));
+    intervals.push_back({r, static_cast<int>(i)});
   }
   return intervals;
 }
@@ -79,14 +82,14 @@ bool KhruevAGlobalOptMPI::LocalShouldStop(const std::vector<IntervalInfo> &inter
   return local_stop;
 }
 
-double KhruevAGlobalOptMPI::GenerateNewX(int idx, double M) const {
+double KhruevAGlobalOptMPI::GenerateNewX(int idx, double m) const {
   double x_r = trials_[idx].x;
   double x_l = trials_[idx - 1].x;
   double z_r = trials_[idx].z;
   double z_l = trials_[idx - 1].z;
 
   // Формула вычисления новой точки испытания
-  double new_x = 0.5 * (x_r + x_l) - (z_r - z_l) / (2.0 * M);
+  double new_x = (0.5 * (x_r + x_l)) - ((z_r - z_l) / (2.0 * m));
 
   // Защита от выхода за границы интервала
   if (new_x <= x_l || new_x >= x_r) {
@@ -96,16 +99,17 @@ double KhruevAGlobalOptMPI::GenerateNewX(int idx, double M) const {
 }
 
 void KhruevAGlobalOptMPI::CollectAndAddPoints(const std::vector<Point> &global_res, int &k) {
-  for (size_t i = 0; i < global_res.size(); ++i) {
-    if (global_res[i].x >= 0.0) {
-      AddTrialUnsorted(global_res[i].x, global_res[i].z);
+  for (auto global_re : global_res) {
+    if (global_re.x >= 0.0) {
+      AddTrialUnsorted(global_re.x, global_re.z);
       k++;
     }
   }
 }
 
 bool KhruevAGlobalOptMPI::RunImpl() {
-  int rank, size;
+  int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -114,38 +118,38 @@ bool KhruevAGlobalOptMPI::RunImpl() {
     AddTrialUnsorted(0.0, CalculateFunction(0.0));
     AddTrialUnsorted(1.0, CalculateFunction(1.0));
   }
-  std::sort(trials_.begin(), trials_.end());
+  std::ranges::sort(trials_, [](const Trial &a, const Trial &b) { return a.x < b.x; });
 
   int k = 2;  // Уже провели 2 испытания
 
   while (k < GetInput().max_iter) {
     // 1. Вычисляем M (одинаково на всех процессах)
-    double M = ComputeM();
+    double m = ComputeM();
 
     // 2. Вычисляем характеристики R
-    auto intervals = ComputeIntervals(M);
+    auto intervals = ComputeIntervals(m);
 
     // 3. Сортируем интервалы по убыванию характеристики
-    std::sort(intervals.begin(), intervals.end(), std::greater<IntervalInfo>());
+    std::ranges::sort(intervals, std::greater<>());
 
     // 4. Проверка критерия остановки (по самому широкому из лучших интервалов)
-    int num_to_check = std::min((int)intervals.size(), size);
+    int num_to_check = std::min(static_cast<int>(intervals.size()), size);
     bool local_stop = LocalShouldStop(intervals, num_to_check);
 
     // Синхронная остановка
     int stop_signal = 0;
     int local_stop_signal = local_stop ? 1 : 0;
     MPI_Allreduce(&local_stop_signal, &stop_signal, 1, MPI_INT, MPI_LAND, MPI_COMM_WORLD);
-    if (stop_signal) {
+    if (stop_signal != 0) {
       break;
     }
 
     // 5. Генерация новых точек
-    Point my_point = {-1.0, 0.0};
+    Point my_point{.x = -1.0, .z = 0.0};
 
-    if (rank < (int)intervals.size()) {
+    if (std::cmp_less(rank, static_cast<int>(intervals.size()))) {
       int idx = intervals[rank].index;
-      double new_x = GenerateNewX(idx, M);
+      double new_x = GenerateNewX(idx, m);
 
       my_point.x = new_x;
       my_point.z = CalculateFunction(new_x);
@@ -157,16 +161,17 @@ bool KhruevAGlobalOptMPI::RunImpl() {
 
     // 7. Обновление списка
     CollectAndAddPoints(global_res, k);
-    std::sort(trials_.begin(), trials_.end());
+    std::ranges::sort(trials_, [](const Trial &a, const Trial &b) { return a.x < b.x; });
   }
 
   // Поиск финального минимума среди всех испытаний
   auto it = std::min_element(trials_.begin(), trials_.end(), [](const Trial &a, const Trial &b) { return a.z < b.z; });
 
-  double u, v;
+  double u = 0;
+  double v = 0;
   D2xy(it->x, u, v);
-  result_.x = GetInput().ax + u * (GetInput().bx - GetInput().ax);
-  result_.y = GetInput().ay + v * (GetInput().by - GetInput().ay);
+  result_.x = GetInput().ax + (u * (GetInput().bx - GetInput().ax));
+  result_.y = GetInput().ay + (v * (GetInput().by - GetInput().ay));
   result_.value = it->z;
   result_.iter_count = k;
 

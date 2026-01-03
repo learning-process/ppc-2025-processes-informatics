@@ -34,15 +34,15 @@ class KhruevAGlobalOptMPI : public BaseTask {
   };
 
   std::vector<Trial> trials_;
-  OutType result_;
+  OutType result_{};
 
   double CalculateFunction(double t);
   void AddTrialUnsorted(double t, double z);
 
   double ComputeM();
-  std::vector<IntervalInfo> ComputeIntervals(double M) const;
+  [[nodiscard]] std::vector<IntervalInfo> ComputeIntervals(double m) const;
   bool LocalShouldStop(const std::vector<IntervalInfo> &intervals, int num_to_check);
-  double GenerateNewX(int idx, double M) const;
+  [[nodiscard]] double GenerateNewX(int idx, double m) const;
   void CollectAndAddPoints(const std::vector<Point> &global_res, int &k);
 };
 

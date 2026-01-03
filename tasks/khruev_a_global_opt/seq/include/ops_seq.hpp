@@ -21,10 +21,14 @@ class KhruevAGlobalOptSEQ : public BaseTask {
 
  private:
   std::vector<Trial> trials_;
-  OutType result_;
+  OutType result_{};
 
   double CalculateFunction(double t);
   void AddTrial(double t, double z);
+
+  double ComputeM();
+  int FindBestInterval(double M) const;
+  double GenerateNewX(int best_interval, double M) const;
 };
 
 }  // namespace khruev_a_global_opt

@@ -2,11 +2,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
-#include <functional>
-#include <limits>
-#include <vector>
+#include <string>
+#include <tuple>
 
 #include "task/include/task.hpp"
 
@@ -95,7 +93,7 @@ inline void D2xy(double t, double &x, double &y) {
   y = static_cast<double>(iy) * scale;
 }
 
-inline double Target_function(int id, double x, double y) {
+inline double TargetFunction(int id, double x, double y) {
   if (id == 1) {
     // квадратичная
     return ((x - 0.5) * (x - 0.5)) + ((y - 0.5) * (y - 0.5));
