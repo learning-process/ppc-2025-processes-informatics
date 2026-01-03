@@ -31,30 +31,6 @@ double Countingm(double M, double r) {
   return (M == 0.0) ? 1.0 : r * M;
 }
 
-// double CountingM(int t, double M, std::vector<double> &testSequence, const auto &function )
-// {
-//   if (M == -std::numeric_limits<double>::infinity())
-//   {
-//     M = abs((function(testSequence[1]) - function(testSequence[0])) / (testSequence[1] - testSequence[0]));
-//   }
-//   else
-//   {
-//     double M1 = abs(function(testSequence.back())- function(testSequence[t - 1])) / (testSequence.back() -
-//     testSequence[t - 1]); double M2 = abs(function(testSequence[t]) - function(testSequence.back())) /
-//     (testSequence[t] - testSequence.back()); return std::max(M, std::max(M1, M2));
-//   }
-//   //M = -numeric_limits<double>::infinity();
-//   //for (int i = 1; i < testSequence.size(); i++)
-//   //{
-//   //	if (abs((testSequence[i].getZ() - testSequence[i - 1].getZ()) / (testSequence[i] - testSequence[i - 1]).getX())
-//   > M)
-//   //	{
-//   //		M = abs((testSequence[i].getZ() - testSequence[i - 1].getZ()) / (testSequence[i] - testSequence[i -
-//   1]).getX());
-//   //	}
-//   //}
-//   return M;
-// }
 double CountingM(int t, double M, std::vector<double> &testSequence, const auto &function) {
   if (M == -std::numeric_limits<double>::infinity()) {
     return std::abs((function(testSequence[1]) - function(testSequence[0])) / (testSequence[1] - testSequence[0]));
@@ -114,11 +90,13 @@ bool GonozovLGlobalSearchSEQ::RunImpl() {
   const int MAX_ITERATIONS = std::numeric_limits<int>::infinity();
   do {
     iteration_count++;
+
     std::sort(testSequence.begin(), testSequence.end());
     M = CountingM(t, M, testSequence, function);
 
     double m = Countingm(M, r);
     t = Countingt(m, testSequence, function);
+
     double newElemSequence = 0.5 * (testSequence[t] + testSequence[t - 1]) -
                              0.5 / m * (function(testSequence[t]) - function(testSequence[t - 1]));
     if (function(newElemSequence) < global_min_value) {
