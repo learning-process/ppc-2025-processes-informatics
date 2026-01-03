@@ -1,8 +1,12 @@
 #include "lifanov_k_trapezoid_method/seq/include/ops_seq.hpp"
 
-#include <cmath>
-
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
+
+namespace {
+double Function(double x, double y) {
+  return (x * x) + (y * y);
+}
+}  // namespace
 
 namespace lifanov_k_trapezoid_method {
 
@@ -32,10 +36,6 @@ bool LifanovKTrapezoidMethodSEQ::ValidationImpl() {
 bool LifanovKTrapezoidMethodSEQ::PreProcessingImpl() {
   GetOutput() = 0.0;
   return true;
-}
-
-double Function(double x, double y) {
-  return (x * x) + (y * y);
 }
 
 bool LifanovKTrapezoidMethodSEQ::RunImpl() {

@@ -22,7 +22,7 @@ double Weight(int ix, int iy, int nx, int ny) {
   return wx * wy;
 }
 
-double ComputeLocalSum(int x_start, int x_end, double nx, double ny, double ax, double ay, double hx, double hy) {
+double ComputeLocalSum(int x_start, int x_end, int nx, int ny, double ax, double ay, double hx, double hy) {
   double local_sum = 0.0;
 
   for (int i = x_start; i <= x_end; ++i) {
@@ -92,7 +92,7 @@ bool LifanovKTrapezoidMethodMPI::RunImpl() {
 
   double local_sum = 0.0;
   if (x_start <= x_end) {
-    local_sum = ComputeLocalSum(x_start, x_end, in[4], in[5], in[0], in[2], hx, hy);
+    local_sum = ComputeLocalSum(x_start, x_end, static_cast<int>(in[4]), static_cast<int>(in[5]), in[0], in[2], hx, hy);
   }
 
   double global_sum = 0.0;
