@@ -25,7 +25,7 @@ class PotashnikMShortWaysBellfordMPI : public BaseTask {
 
 inline void BellmanFordAlgoIterationMpi(const Graph &g, const std::vector<int> &dist, std::vector<int> &dist_next,
                                         int start, int end) {
-  dist_next = dist;
+  std::copy(dist.begin(), dist.end(), dist_next.begin());
   for (int uidx = start; uidx < end; uidx++) {
     if (dist[uidx] == 1e9) {
       continue;
@@ -49,7 +49,7 @@ inline void BellmanFordAlgoMpi(const Graph &g, int source, std::vector<int> &dis
 
   MPI_Bcast(dist.data(), n, MPI_INT, 0, MPI_COMM_WORLD);
 
-  std::vector<int> dist_next;
+  std::vector<int> dist_next(n);
 
   int start = rank * n / size;
   int end = (rank + 1) * n / size;
