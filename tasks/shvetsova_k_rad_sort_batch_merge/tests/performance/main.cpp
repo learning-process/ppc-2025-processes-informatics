@@ -33,8 +33,6 @@ class ShvetsovaKRadSortBatchMergeRunPerfTestProcesses : public ppc::util::BaseRu
       return false;
     }
 
-    // Можно добавить быструю проверку на упорядоченность,
-    // чтобы не тратить время производительности на полную сверку
     for (size_t i = 0; i < output_data.size() - 1; ++i) {
       if (output_data[i] > output_data[i + 1]) {
         return false;
@@ -54,7 +52,7 @@ class ShvetsovaKRadSortBatchMergeRunPerfTestProcesses : public ppc::util::BaseRu
 TEST_P(ShvetsovaKRadSortBatchMergeRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
-// Регистрация задач для теста производительности
+
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, ShvetsovaKRadSortBatchMergeMPI, ShvetsovaKRadSortBatchMergeSEQ>(
         PPC_SETTINGS_shvetsova_k_rad_sort_batch_merge);
@@ -62,8 +60,6 @@ const auto kAllPerfTasks =
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = ShvetsovaKRadSortBatchMergeRunPerfTestProcesses::CustomPerfTestName;
-
-// Основной макрос запуска теста
 
 INSTANTIATE_TEST_SUITE_P(RunModeTests, ShvetsovaKRadSortBatchMergeRunPerfTestProcesses, kGtestValues, kPerfTestName);
 

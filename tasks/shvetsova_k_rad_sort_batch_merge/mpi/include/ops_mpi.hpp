@@ -23,7 +23,7 @@ class ShvetsovaKRadSortBatchMergeMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+  // доп функции //
   static void CreateDistribution(int proc_count, int size, std::vector<int> &counts, std::vector<int> &displs);
 
   static void ScatterData(const std::vector<double> &data, std::vector<double> &local, const std::vector<int> &counts,
@@ -35,6 +35,8 @@ class ShvetsovaKRadSortBatchMergeMPI : public BaseTask {
                                  const std::vector<int> &counts, const std::vector<int> &displs, int rank);
 
   static void RadixSortLocal(std::vector<double> &vec);
+  static int CalculatePartner(int step, int rank, int proc_count);
+  static void PerformMerge(std::vector<double> &local, const std::vector<double> &recv, int rank, int partner);
 };
 
 }  // namespace shvetsova_k_rad_sort_batch_merge

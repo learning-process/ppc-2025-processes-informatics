@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "shvetsova_k_rad_sort_batch_merge/common/include/common.hpp"
@@ -23,10 +24,11 @@ class ShvetsovaKRadSortBatchMergeSEQ : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+  // доп функции //
   static void RadixSort(std::vector<double> &vec);
   static void BatcherOddEvenMergeSort(std::vector<double> &vec, int left, int right);
-  static void OddEvenMerge(std::vector<double> &vec, int left, int right, int step);
+  static void ExecuteBatcherStep(std::vector<double> &vec, int left, int n, int p, int k);
+  static void CompareAndSwap(std::vector<double> &vec, int i, int j);
 };
 
 }  // namespace shvetsova_k_rad_sort_batch_merge

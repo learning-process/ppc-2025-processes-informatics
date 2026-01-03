@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <utility>
 #include <vector>
+
+#include "shvetsova_k_rad_sort_batch_merge/common/include/common.hpp"
 
 namespace shvetsova_k_rad_sort_batch_merge {
 
@@ -14,27 +17,24 @@ ShvetsovaKRadSortBatchMergeSEQ::ShvetsovaKRadSortBatchMergeSEQ(const InType &in)
 }
 
 bool ShvetsovaKRadSortBatchMergeSEQ::ValidationImpl() {
-  data_ = GetInput();
   return true;
 }
 
 bool ShvetsovaKRadSortBatchMergeSEQ::PreProcessingImpl() {
+  data_ = GetInput();
   return true;
 }
 
 bool ShvetsovaKRadSortBatchMergeSEQ::RunImpl() {
   if (data_.empty()) {
-    GetOutput().clear();
+    GetOutput() = OutType{};
     return true;
   }
 
-  // Поразрядная сортировка
   RadixSort(data_);
-
-  // Чётно-нечётное слияние Бэтчера
   BatcherOddEvenMergeSort(data_, 0, static_cast<int>(data_.size()));
 
-  GetOutput().assign(data_.begin(), data_.end());
+  GetOutput() = data_;
   return true;
 }
 
@@ -42,16 +42,21 @@ bool ShvetsovaKRadSortBatchMergeSEQ::PostProcessingImpl() {
   return true;
 }
 
-/* ===================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===================== */
+// доп функции //
 
-// LSD Radix Sort для целых чисел в double
+void ShvetsovaKRadSortBatchMergeSEQ::CompareAndSwap(std::vector<double> &vec, int i, int j) {
+  if (vec.at(i) > vec.at(j)) {
+    std::swap(vec.at(i), vec.at(j));
+  }
+}
+
 void ShvetsovaKRadSortBatchMergeSEQ::RadixSort(std::vector<double> &vec) {
   if (vec.empty()) {
     return;
   }
+
   const int base = 10;
   int max_val = 0;
-
   for (double x : vec) {
     max_val = std::max(max_val, static_cast<int>(std::abs(x)));
   }
@@ -70,7 +75,7 @@ void ShvetsovaKRadSortBatchMergeSEQ::RadixSort(std::vector<double> &vec) {
     }
 
     for (int i = static_cast<int>(vec.size()) - 1; i >= 0; i--) {
-      int digit = (static_cast<int>(std::abs(vec[i])) / exp) % base;
+      int digit = (static_cast<int>(std::abs(vec.at(i))) / exp) % base;
       output.at(--count.at(digit)) = vec.at(i);
     }
 
@@ -78,36 +83,28 @@ void ShvetsovaKRadSortBatchMergeSEQ::RadixSort(std::vector<double> &vec) {
   }
 }
 
-// Сортировка Бэтчера (odd-even merge sort)
+void ShvetsovaKRadSortBatchMergeSEQ::ExecuteBatcherStep(std::vector<double> &vec, int left, int n, int p, int k) {
+  for (int j = k % p; j <= n - 1 - k; j += 2 * k) {
+    int limit = std::min(k, n - j - k);
+    for (int i = 0; i < limit; ++i) {
+      int idx1 = left + j + i;
+      int idx2 = left + j + i + k;
+      if (idx1 / (p * 2) == idx2 / (p * 2)) {
+        CompareAndSwap(vec, idx1, idx2);
+      }
+    }
+  }
+}
+
 void ShvetsovaKRadSortBatchMergeSEQ::BatcherOddEvenMergeSort(std::vector<double> &vec, int left, int right) {
-  if (right - left <= 1) {
+  int n = right - left;
+  if (n <= 1) {
     return;
   }
 
-  int mid = (left + right) / 2;
-
-  BatcherOddEvenMergeSort(vec, left, mid);
-  BatcherOddEvenMergeSort(vec, mid, right);
-
-  OddEvenMerge(vec, left, right, 1);
-}
-
-// Чётно-нечётное слияние
-void ShvetsovaKRadSortBatchMergeSEQ::OddEvenMerge(std::vector<double> &vec, int left, int right, int step) {
-  int dist = step * 2;
-
-  if (dist < right - left) {
-    OddEvenMerge(vec, left, right, dist);
-    OddEvenMerge(vec, left + step, right, dist);
-
-    for (int i = left + step; i + step < right; i += dist) {
-      if (vec.at(i) > vec.at(i + step)) {
-        std::swap(vec.at(i), vec.at(i + step));
-      }
-    }
-  } else {
-    if (left + step < right && vec.at(left) > vec.at(left + step)) {
-      std::swap(vec.at(left), vec.at(left + step));
+  for (int p = 1; p < n; p <<= 1) {
+    for (int k = p; k >= 1; k >>= 1) {
+      ExecuteBatcherStep(vec, left, n, p, k);
     }
   }
 }
