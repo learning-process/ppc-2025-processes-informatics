@@ -1,13 +1,10 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <array>
-#include <cctype>
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -35,9 +32,11 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     int initialized = 0;
     MPI_Initialized(&initialized);
 
-    if (initialized != 0) {
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (initialized == 0) {
+      return output_data == expected_output_;
     }
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     if (rank == 0) {
       return output_data == expected_output_;
