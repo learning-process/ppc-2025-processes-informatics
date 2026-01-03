@@ -15,23 +15,6 @@
 namespace yurkin_g_shellbetcher {
 namespace {
 
-template <typename It1, typename It2, typename OutIt>
-void MergeSortedRanges(It1 first1, It1 last1, It2 first2, It2 last2, OutIt out) {
-  while (first1 != last1 && first2 != last2) {
-    if (*first1 <= *first2) {
-      *out++ = *first1++;
-    } else {
-      *out++ = *first2++;
-    }
-  }
-  while (first1 != last1) {
-    *out++ = *first1++;
-  }
-  while (first2 != last2) {
-    *out++ = *first2++;
-  }
-}
-
 void ShellSort(std::vector<int> &a) {
   const std::size_t n = a.size();
   if (n < 2) {

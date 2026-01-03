@@ -7,8 +7,6 @@
 #include <random>
 #include <vector>
 
-#include "yurkin_g_shellbetcher/common/include/common.hpp"
-
 namespace yurkin_g_shellbetcher {
 namespace {
 
@@ -61,6 +59,8 @@ void BatcherOddEvenNetwork(std::vector<int> &arr, int length) {
   }
 }
 
+}  // namespace
+
 void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out) {
   const std::size_t orig_n = left.size() + right.size();
   out.clear();
@@ -79,8 +79,6 @@ void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, s
   BatcherOddEvenNetwork(out, static_cast<int>(pow2));
   out.resize(orig_n);
 }
-
-}  // namespace
 
 YurkinGShellBetcherSEQ::YurkinGShellBetcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());

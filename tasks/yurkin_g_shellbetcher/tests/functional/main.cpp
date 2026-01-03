@@ -55,6 +55,40 @@ TEST(BatcherMergeUnitTests, HandlesEmptyInputs) {
   ASSERT_TRUE(out.empty());
 }
 
+TEST(BatcherMergeUnitTests, HandlesDuplicatesAndOddSizes) {
+  std::vector<int> a = {1, 1, 3, 5};
+  std::vector<int> b = {1, 2, 2};
+  std::vector<int> out;
+  yurkin_g_shellbetcher::BatcherMerge(a, b, out);
+  ASSERT_EQ(out.size(), a.size() + b.size());
+  ASSERT_TRUE(std::is_sorted(out.begin(), out.end()));
+  std::vector<int> expected;
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(expected));
+  ASSERT_EQ(out, expected);
+}
+
+TEST(BatcherMergeUnitTests, LargeRandomVectorsMatchStdMerge) {
+  std::mt19937 rng(42);
+  std::uniform_int_distribution<int> dist(0, 1000);
+  std::vector<int> a(1000), b(1500);
+  for (auto &v : a) {
+    v = dist(rng);
+  }
+  for (auto &v : b) {
+    v = dist(rng);
+  }
+  std::ranges::sort(a);
+  std::ranges::sort(b);
+  std::vector<int> out;
+  yurkin_g_shellbetcher::BatcherMerge(a, b, out);
+  ASSERT_EQ(out.size(), a.size() + b.size());
+  ASSERT_TRUE(std::is_sorted(out.begin(), out.end()));
+  std::vector<int> expected;
+  expected.reserve(out.size());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(expected));
+  ASSERT_EQ(out, expected);
+}
+
 class YurkinGShellBetcherFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
   static std::string PrintTestParam(const TestType &test_param) {
