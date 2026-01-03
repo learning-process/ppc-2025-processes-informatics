@@ -29,7 +29,7 @@ double KhruevAGlobalOptSEQ::CalculateFunction(double t) {
 
   // Масштабирование из [0,1] в реальную область [ax, bx]
   double real_x = GetInput().ax + (u * (GetInput().bx - GetInput().ax));
-  double real_y = GetInput().ay + v * ((GetInput().by - GetInput().ay));
+  double real_y = GetInput().ay + (v * (GetInput().by - GetInput().ay));
 
   return TargetFunction(GetInput().func_id, real_x, real_y);
 }
@@ -55,8 +55,8 @@ double KhruevAGlobalOptSEQ::ComputeM() {
   return (max_slope > 0) ? GetInput().r * max_slope : 1.0;
 }
 
-int KhruevAGlobalOptSEQ::FindBestInterval(double M) const {
-  double max_R = -1e18;
+int KhruevAGlobalOptSEQ::FindBestInterval(double m) const {
+  double max_r = -1e18;
   int best_interval = -1;
 
   for (size_t i = 1; i < trials_.size(); ++i) {
@@ -65,23 +65,23 @@ int KhruevAGlobalOptSEQ::FindBestInterval(double M) const {
     double z_l = trials_[i - 1].z;
 
     // формула (5)
-    double R = M * dx + ((z_r - z_l) * (z_r - z_l)) / (M * dx) - 2.0 * (z_r + z_l);
+    double r = (m * dx) + (((z_r - z_l) * (z_r - z_l)) / (m * dx)) - (2.0 * (z_r + z_l));
 
-    if (R > max_R) {
-      max_R = R;
-      best_interval = (int)i;
+    if (r > max_r) {
+      max_r = r;
+      best_interval = static_cast<int>(i);
     }
   }
   return best_interval;
 }
 
-double KhruevAGlobalOptSEQ::GenerateNewX(int best_interval, double M) const {
+double KhruevAGlobalOptSEQ::GenerateNewX(int best_interval, double m) const {
   double x_r = trials_[best_interval].x;
   double x_l = trials_[best_interval - 1].x;
   double z_r = trials_[best_interval].z;
   double z_l = trials_[best_interval - 1].z;
 
-  double new_x = 0.5 * (x_r + x_l) - (z_r - z_l) / (2.0 * M);
+  double new_x = (0.5 * (x_r + x_l)) - ((z_r - z_l) / (2.0 * m));
 
   if (new_x < x_l) {
     new_x = x_l + 1e-9;
@@ -99,9 +99,9 @@ bool KhruevAGlobalOptSEQ::RunImpl() {
   int k = 1;
 
   for (k = 1; k < GetInput().max_iter; ++k) {
-    double M = ComputeM();
+    double m = ComputeM();
 
-    int best_interval = FindBestInterval(M);
+    int best_interval = FindBestInterval(m);
 
     if (best_interval == -1) {
       break;
@@ -112,7 +112,7 @@ bool KhruevAGlobalOptSEQ::RunImpl() {
       break;
     }
 
-    double new_x = GenerateNewX(best_interval, M);
+    double new_x = GenerateNewX(best_interval, m);
 
     AddTrial(new_x, CalculateFunction(new_x));
   }
@@ -128,10 +128,11 @@ bool KhruevAGlobalOptSEQ::RunImpl() {
   }
 
   // Восстанавливаем 2D координаты для ответа
-  double u, v;
+  double u = 0.0;
+  double v = 0.0;
   D2xy(best_t, u, v);
-  result_.x = GetInput().ax + u * (GetInput().bx - GetInput().ax);
-  result_.y = GetInput().ay + v * (GetInput().by - GetInput().ay);
+  result_.x = GetInput().ax + (u * (GetInput().bx - GetInput().ax));
+  result_.y = GetInput().ay + (v * (GetInput().by - GetInput().ay));
   result_.value = min_z;
   result_.iter_count = k;
 

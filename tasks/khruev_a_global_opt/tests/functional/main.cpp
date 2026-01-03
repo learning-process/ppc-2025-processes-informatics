@@ -50,7 +50,7 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
  private:
   InType input_data_{};
-  double expected_min_;
+  double expected_min_{};
 };
 
 namespace {

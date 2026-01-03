@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <compare>
 #include <cstddef>
 #include <functional>
 #include <ranges>
@@ -165,7 +166,7 @@ bool KhruevAGlobalOptMPI::RunImpl() {
   }
 
   // Поиск финального минимума среди всех испытаний
-  auto it = std::min_element(trials_.begin(), trials_.end(), [](const Trial &a, const Trial &b) { return a.z < b.z; });
+  auto it = std::ranges::min_element(trials_, {}, &Trial::z);
 
   double u = 0;
   double v = 0;

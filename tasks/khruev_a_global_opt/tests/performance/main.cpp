@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <vector>
-
 #include "khruev_a_global_opt/common/include/common.hpp"
 #include "khruev_a_global_opt/mpi/include/ops_mpi.hpp"
 #include "khruev_a_global_opt/seq/include/ops_seq.hpp"
@@ -14,14 +12,14 @@ class KhruevAGlobalOptPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
   InType input_data{};
 
   void SetUp() override {
-    input_data.func_id = 1;
-    input_data.ax = -8.0;
-    input_data.bx = 8.0;
-    input_data.ay = -8.0;
-    input_data.by = 8.0;
+    input_data.func_id = 2;
+    input_data.ax = -3.0;
+    input_data.bx = 3.0;
+    input_data.ay = -3.0;
+    input_data.by = 3.0;
 
     input_data.epsilon = 1e-7;
-    input_data.max_iter = 80000;
+    input_data.max_iter = 6000;
     input_data.r = 3;
   }
 

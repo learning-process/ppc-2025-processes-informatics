@@ -27,8 +27,8 @@ class KhruevAGlobalOptSEQ : public BaseTask {
   void AddTrial(double t, double z);
 
   double ComputeM();
-  int FindBestInterval(double M) const;
-  double GenerateNewX(int best_interval, double M) const;
+  [[nodiscard]] int FindBestInterval(double m) const;
+  double GenerateNewX(int best_interval, double m) const;
 };
 
 }  // namespace khruev_a_global_opt
