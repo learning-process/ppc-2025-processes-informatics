@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <cmath>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
@@ -13,7 +14,7 @@ class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InTy
   InType input_data;
 
   void SetUp() override {
-    input_data = {0.0, 1.0, 0.0, 1.0, 2000.0,2000.0};
+    input_data = {0.0, 1.0, 0.0, 1.0, 2000.0, 2000.0};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

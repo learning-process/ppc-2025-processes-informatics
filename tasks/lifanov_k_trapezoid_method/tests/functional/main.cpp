@@ -2,9 +2,9 @@
 
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <string>
 #include <tuple>
-#include <cstddef>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
 #include "lifanov_k_trapezoid_method/mpi/include/ops_mpi.hpp"
