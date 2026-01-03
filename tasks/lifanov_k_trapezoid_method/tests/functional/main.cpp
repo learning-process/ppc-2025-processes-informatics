@@ -42,7 +42,6 @@ class LifanovKTrapezoidMethodFuncTests : public ppc::util::BaseRunFuncTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-
     // ∫∫(x² + y²) dx dy на [0,1]×[0,1] = 2/3
     const double exact = 2.0 / 3.0;
     const double eps = 1e-2;
