@@ -42,13 +42,6 @@ class LifanovKTrapezoidMethodFuncTests : public ppc::util::BaseRunFuncTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    // Проверяем результат только на root
-    if (rank != 0) {
-      return true;
-    }
 
     // ∫∫(x² + y²) dx dy на [0,1]×[0,1] = 2/3
     const double exact = 2.0 / 3.0;
