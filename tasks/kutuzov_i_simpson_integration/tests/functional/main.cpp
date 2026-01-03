@@ -5,10 +5,10 @@
 #include <array>
 #include <cmath>
 #include <format>
-#include <utility>
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "kutuzov_i_simpson_integration/common/include/common.hpp"

@@ -24,7 +24,8 @@ inline double FunctionTrigonometric(double x, double y) {
 }
 
 inline double FunctionExponents(double x, double y) {
-  return (1.7 * exp(3.7 * x)) + (exp(3.0 * x * y) * log(pow(x + y, 2) + 1.0)) - log(pow((17.0 * x) - (8.0 * y), 4) + 0.1);
+  return (1.7 * exp(3.7 * x)) + (exp(3.0 * x * y) * log(pow(x + y, 2) + 1.0)) -
+         log(pow((17.0 * x) - (8.0 * y), 4) + 0.1);
 }
 
 inline double FunctionComplex(double x, double y) {
