@@ -58,7 +58,7 @@ class EgashinKRunFuncTestsIterativeSimple : public ppc::util::BaseRunFuncTests<I
 
  private:
   InType input_data_{};
-  OutType expected_data_;
+  OutType expected_data_{};
 };
 
 namespace {
