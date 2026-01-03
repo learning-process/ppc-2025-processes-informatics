@@ -2,12 +2,11 @@
 
 #include <mpi.h>
 
-#include <numeric>
+#include <algorithm>
+#include <cstddef>
 #include <vector>
 
 #include "titaev_m_metod_pryamougolnikov/common/include/common.hpp"
-#include "util/include/util.hpp"
-
 namespace titaev_m_metod_pryamougolnikov {
 
 namespace {
@@ -23,18 +22,18 @@ double Function(const std::vector<double> &coords) {
 double ComputeLocalSum(int start_index, int end_index, int partitions, const std::vector<double> &step_sizes,
                        const std::vector<double> &left_bounds) {
   double local_sum = 0.0;
-  int dimensions = static_cast<int>(left_bounds.size());
+  const int dimensions = static_cast<int>(left_bounds.size());
 
   std::vector<int> indices(dimensions, 0);
   int total_points = 1;
-  for (int d = 0; d < dimensions; ++d) {
+  for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
     total_points *= partitions;
   }
 
   for (int point_idx = 0; point_idx < total_points; ++point_idx) {
     int temp = point_idx;
-    for (int d = 0; d < dimensions; ++d) {
-      indices[d] = temp % partitions;
+    for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+      indices[dimension] = temp % partitions;
       temp /= partitions;
     }
     if (indices[0] < start_index || indices[0] > end_index) {
@@ -42,8 +41,9 @@ double ComputeLocalSum(int start_index, int end_index, int partitions, const std
     }
 
     std::vector<double> point(dimensions);
-    for (int d = 0; d < dimensions; ++d) {
-      point[d] = left_bounds[d] + (indices[d] + 0.5) * step_sizes[d];
+    for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+      point[dimension] =
+          left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]);  // Добавлены скобки
     }
 
     local_sum += Function(point);
@@ -68,7 +68,7 @@ bool TitaevMMetodPryamougolnikovMPI::ValidationImpl() {
   if (input.partitions <= 0) {
     return false;
   }
-  for (size_t i = 0; i < input.left_bounds.size(); ++i) {
+  for (std::size_t i = 0; i < input.left_bounds.size(); ++i) {  // Исправлено на std::size_t
     if (input.right_bounds[i] <= input.left_bounds[i]) {
       return false;
     }
@@ -86,13 +86,14 @@ double TitaevMMetodPryamougolnikovMPI::IntegrandFunction(const std::vector<doubl
 }
 
 bool TitaevMMetodPryamougolnikovMPI::RunImpl() {
-  int rank = 0, size = 1;
+  int rank = 0;
+  int size = 1;  // Раздельное объявление
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   const auto &input = GetInput();
-  int partitions = input.partitions;
-  int dimensions = static_cast<int>(input.left_bounds.size());
+  const int partitions = input.partitions;
+  const int dimensions = static_cast<int>(input.left_bounds.size());
 
   if (dimensions == 0) {
     GetOutput() = 0.0;
@@ -100,14 +101,14 @@ bool TitaevMMetodPryamougolnikovMPI::RunImpl() {
   }
 
   std::vector<double> step_sizes(dimensions);
-  for (int d = 0; d < dimensions; ++d) {
-    step_sizes[d] = (input.right_bounds[d] - input.left_bounds[d]) / partitions;
+  for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+    step_sizes[dimension] = (input.right_bounds[dimension] - input.left_bounds[dimension]) / partitions;
   }
 
-  int chunk_size = partitions / size;
-  int remainder = partitions % size;
-  int start_index = rank * chunk_size + std::min(rank, remainder);
-  int end_index = start_index + chunk_size - 1 + (rank < remainder ? 1 : 0);
+  const int chunk_size = partitions / size;
+  const int remainder = partitions % size;
+  const int start_index = (rank * chunk_size) + std::min(rank, remainder);  // Добавлены скобки
+  const int end_index = start_index + chunk_size - 1 + (rank < remainder ? 1 : 0);
 
   double local_sum = ComputeLocalSum(start_index, end_index, partitions, step_sizes, input.left_bounds);
 
