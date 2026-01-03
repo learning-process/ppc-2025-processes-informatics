@@ -11,6 +11,42 @@
 
 namespace volkov_a_radix_batcher {
 
+namespace {
+int CheckComparator(int rank, int u, int v, int stage) {
+  if ((u / (stage * 2)) != (v / (stage * 2))) {
+    return -1;
+  }
+
+  if (rank == u) {
+    return v;
+  }
+  if (rank == v) {
+    return u;
+  }
+  return -1;
+}
+
+int GetBatcherPartner(int rank, int world_size, int stage, int step) {
+  for (int j = step % stage; j + step < world_size; j += 2 * step) {
+    for (int i = 0; i < step; ++i) {
+      int u = j + i;
+      int v = j + i + step;
+
+      if (u > rank) {
+        return -1;
+      }
+
+      int partner = CheckComparator(rank, u, v, stage);
+      if (partner != -1) {
+        return partner;
+      }
+    }
+  }
+  return -1;
+}
+
+}  // namespace
+
 VolkovARadixBatcherMPI::VolkovARadixBatcherMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -134,6 +170,7 @@ bool VolkovARadixBatcherMPI::RunImpl() {
   }
 
   RadixSortDouble(local_vec);
+
   ParallelMergeSort(rank, world_size, counts, local_vec);
 
   if (rank == 0) {
@@ -158,17 +195,15 @@ void VolkovARadixBatcherMPI::ParallelMergeSort(int rank, int world_size, const s
   std::vector<double> buffer_recv(max_count);
   std::vector<double> buffer_merge(local_vec.size() + max_count);
 
-  for (int phase = 0; phase < world_size; ++phase) {
-    int neighbor = -1;
+  for (int stage = 1; stage < world_size; stage <<= 1) {
+    for (int step = stage; step > 0; step >>= 1) {
+      int partner = GetBatcherPartner(rank, world_size, stage, step);
 
-    if ((rank % 2) == (phase % 2)) {
-      neighbor = rank + 1;
-    } else {
-      neighbor = rank - 1;
-    }
+      if (partner != -1) {
+        ExchangeAndMerge(rank, partner, counts, local_vec, buffer_recv, buffer_merge);
+      }
 
-    if (neighbor >= 0 && neighbor < world_size) {
-      ExchangeAndMerge(rank, neighbor, counts, local_vec, buffer_recv, buffer_merge);
+      MPI_Barrier(MPI_COMM_WORLD);
     }
   }
 }
