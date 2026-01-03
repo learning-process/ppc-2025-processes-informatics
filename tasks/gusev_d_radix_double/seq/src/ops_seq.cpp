@@ -6,6 +6,8 @@
 #include <cstring>
 #include <vector>
 
+#include "gusev_d_radix_double/common/include/common.hpp"
+
 namespace gusev_d_radix_double {
 
 namespace {
@@ -16,7 +18,7 @@ void CountSortPass(const uint64_t *source, uint64_t *dest, size_t n, int shift) 
 
   for (size_t i = 0; i < n; ++i) {
     uint8_t byte = (source[i] >> shift) & 0xFF;
-    count[byte]++;
+    count.at(byte)++;
   }
 
   size_t index = 0;
@@ -28,7 +30,7 @@ void CountSortPass(const uint64_t *source, uint64_t *dest, size_t n, int shift) 
 
   for (size_t i = 0; i < n; ++i) {
     uint8_t byte = (source[i] >> shift) & 0xFF;
-    dest[count[byte]++] = source[i];
+    dest[count.at(byte)++] = source[i];
   }
 }
 

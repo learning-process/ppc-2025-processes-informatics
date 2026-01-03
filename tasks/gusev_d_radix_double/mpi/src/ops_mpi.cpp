@@ -70,8 +70,8 @@ bool GusevDRadixDoubleMPI::RunImpl() {
         MPI_Recv(local_data.data() + current_size, recv_count, MPI_DOUBLE, source, 0, MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
 
-        std::inplace_merge(local_data.begin(), local_data.begin() + static_cast<std::ptrdiff_t>(current_size),
-                           local_data.end());
+        auto mid_iter = local_data.begin() + static_cast<std::ptrdiff_t>(current_size);
+        std::inplace_merge(local_data.begin(), mid_iter, local_data.end());
       }
     } else if (rank % (2 * step) == step) {
       int dest = rank - step;
