@@ -1,5 +1,7 @@
 #pragma once
 
+#include <mpi.h>
+
 #include "dorofeev_i_scatter/common/include/common.hpp"
 #include "task/include/task.hpp"
 

@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstddef>
-#include <numeric>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -36,7 +35,9 @@ class DorofeevIScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     } else if (type == MPI_INT) {
       send_data_int_.resize(static_cast<size_t>(count) * 4, 0);
       recv_data_int_.resize(count, 0);
-      std::ranges::iota(send_data_int_, 0);
+      for (size_t i = 0; i < send_data_int_.size(); ++i) {
+        send_data_int_[i] = static_cast<int>(i);
+      }
 
       input_ =
           std::make_tuple(send_data_int_.data(), count, type, recv_data_int_.data(), count, type, root, MPI_COMM_WORLD);
