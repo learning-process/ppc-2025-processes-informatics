@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstdlib>
+
 #include "dorofeev_i_scatter/common/include/common.hpp"
 #include "dorofeev_i_scatter/mpi/include/ops_mpi.hpp"
 #include "dorofeev_i_scatter/seq/include/ops_seq.hpp"
@@ -11,7 +14,7 @@ class DorofeevIScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
  protected:
   void SetUp() override {
     input_.resize(100000000);
-    std::fill(input_.begin(), input_.end(), 1.0);
+    std::ranges::fill(input_, 1.0);
   }
 
   InType GetTestInputData() override {
