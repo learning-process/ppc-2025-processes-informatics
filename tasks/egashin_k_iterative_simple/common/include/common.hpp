@@ -14,6 +14,7 @@ struct InputData {
   std::vector<double> x0;
   double tolerance{};
   int max_iterations{};
+  int padding_{};
 };
 
 using InType = InputData;

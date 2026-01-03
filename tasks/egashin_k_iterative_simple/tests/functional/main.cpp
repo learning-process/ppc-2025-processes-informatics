@@ -67,7 +67,7 @@ namespace {
 TestType CreateTestCase(const std::vector<std::vector<double>> &matrix, const std::vector<double> &b,
                         const std::vector<double> &x0, double tolerance, int max_iter,
                         const std::vector<double> &expected, const std::string &name) {
-  InType input;
+  InType input{};
   input.A = matrix;
   input.b = b;
   input.x0 = x0;
