@@ -1,4 +1,4 @@
-#include "dorofeev_i_ccs_martrix_production/mpi/include/ops_mpi.hpp"
+#include "dorofeev_i_ccs_matrix_production/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
@@ -8,9 +8,9 @@
 #include <utility>
 #include <vector>
 
-#include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
+#include "dorofeev_i_ccs_matrix_production/common/include/common.hpp"
 
-namespace dorofeev_i_ccs_martrix_production {
+namespace dorofeev_i_ccs_matrix_production {
 
 DorofeevICCSMatrixProductionMPI::DorofeevICCSMatrixProductionMPI(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -49,7 +49,7 @@ bool DorofeevICCSMatrixProductionMPI::PreProcessingImpl() {
   return true;
 }
 
-bool DorofeevICCSMatrixProductionMPI::RunImpl() {  // NOLINT(readability-function-cognitive-complexity)
+bool DorofeevICCSMatrixProductionMPI::RunImpl() {
   int rank = 0;
   int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -178,4 +178,4 @@ bool DorofeevICCSMatrixProductionMPI::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace dorofeev_i_ccs_martrix_production
+}  // namespace dorofeev_i_ccs_matrix_production

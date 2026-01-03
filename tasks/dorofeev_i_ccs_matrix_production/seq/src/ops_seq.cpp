@@ -1,13 +1,13 @@
-#include "dorofeev_i_ccs_martrix_production/seq/include/ops_seq.hpp"
+#include "dorofeev_i_ccs_matrix_production/seq/include/ops_seq.hpp"
 
 #include <algorithm>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
+#include "dorofeev_i_ccs_matrix_production/common/include/common.hpp"
 
-namespace dorofeev_i_ccs_martrix_production {
+namespace dorofeev_i_ccs_matrix_production {
 
 DorofeevICCSMatrixProductionSEQ::DorofeevICCSMatrixProductionSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -77,4 +77,4 @@ bool DorofeevICCSMatrixProductionSEQ::PostProcessingImpl() {
   return true;
 }
 
-}  // namespace dorofeev_i_ccs_martrix_production
+}  // namespace dorofeev_i_ccs_matrix_production

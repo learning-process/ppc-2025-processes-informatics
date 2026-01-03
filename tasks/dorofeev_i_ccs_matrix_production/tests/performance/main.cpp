@@ -3,12 +3,12 @@
 #include <utility>
 #include <vector>
 
-#include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
-#include "dorofeev_i_ccs_martrix_production/mpi/include/ops_mpi.hpp"
-#include "dorofeev_i_ccs_martrix_production/seq/include/ops_seq.hpp"
+#include "dorofeev_i_ccs_matrix_production/common/include/common.hpp"
+#include "dorofeev_i_ccs_matrix_production/mpi/include/ops_mpi.hpp"
+#include "dorofeev_i_ccs_matrix_production/seq/include/ops_seq.hpp"
 #include "util/include/perf_test_util.hpp"
 
-namespace dorofeev_i_ccs_martrix_production {
+namespace dorofeev_i_ccs_matrix_production {
 
 class CCSMatrixPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
@@ -61,7 +61,7 @@ TEST_P(CCSMatrixPerfTests, RunPerfModes) {
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, DorofeevICCSMatrixProductionMPI, DorofeevICCSMatrixProductionSEQ>(
-        PPC_SETTINGS_dorofeev_i_ccs_martrix_production);
+        PPC_SETTINGS_dorofeev_i_ccs_matrix_production);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
@@ -69,4 +69,4 @@ const auto kPerfTestName = CCSMatrixPerfTests::CustomPerfTestName;
 
 INSTANTIATE_TEST_SUITE_P(CCSMatrixRunModeTests, CCSMatrixPerfTests, kGtestValues, kPerfTestName);
 
-}  // namespace dorofeev_i_ccs_martrix_production
+}  // namespace dorofeev_i_ccs_matrix_production

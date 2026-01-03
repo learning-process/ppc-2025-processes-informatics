@@ -1,9 +1,9 @@
 #pragma once
 
-#include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
+#include "dorofeev_i_ccs_matrix_production/common/include/common.hpp"
 #include "task/include/task.hpp"
 
-namespace dorofeev_i_ccs_martrix_production {
+namespace dorofeev_i_ccs_matrix_production {
 
 class DorofeevICCSMatrixProductionSEQ : public BaseTask {
  public:
@@ -20,4 +20,4 @@ class DorofeevICCSMatrixProductionSEQ : public BaseTask {
   bool PostProcessingImpl() override;
 };
 
-}  // namespace dorofeev_i_ccs_martrix_production
+}  // namespace dorofeev_i_ccs_matrix_production

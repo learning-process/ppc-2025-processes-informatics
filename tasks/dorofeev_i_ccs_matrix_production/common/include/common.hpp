@@ -7,7 +7,7 @@
 
 #include "task/include/task.hpp"
 
-namespace dorofeev_i_ccs_martrix_production {
+namespace dorofeev_i_ccs_matrix_production {
 
 struct CCSMatrix {
   int rows = 0;
@@ -22,4 +22,4 @@ using OutType = CCSMatrix;
 using TestType = std::tuple<int, std::string>;
 using BaseTask = ppc::task::Task<InType, OutType>;
 
-}  // namespace dorofeev_i_ccs_martrix_production
+}  // namespace dorofeev_i_ccs_matrix_production

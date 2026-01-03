@@ -9,12 +9,12 @@
 #include <utility>
 #include <vector>
 
-#include "dorofeev_i_ccs_martrix_production/common/include/common.hpp"
-#include "dorofeev_i_ccs_martrix_production/mpi/include/ops_mpi.hpp"
-#include "dorofeev_i_ccs_martrix_production/seq/include/ops_seq.hpp"
+#include "dorofeev_i_ccs_matrix_production/common/include/common.hpp"
+#include "dorofeev_i_ccs_matrix_production/mpi/include/ops_mpi.hpp"
+#include "dorofeev_i_ccs_matrix_production/seq/include/ops_seq.hpp"
 #include "util/include/func_test_util.hpp"
 
-namespace dorofeev_i_ccs_martrix_production {
+namespace dorofeev_i_ccs_matrix_production {
 
 class DorofeevICCSMatrixFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -99,11 +99,11 @@ const std::array<TestType, 1> kTestParams = {
 };
 
 const auto kTaskList = std::tuple_cat(ppc::util::AddFuncTask<DorofeevICCSMatrixProductionMPI, InType>(
-                                          kTestParams, PPC_SETTINGS_dorofeev_i_ccs_martrix_production),
+                                          kTestParams, PPC_SETTINGS_dorofeev_i_ccs_matrix_production),
                                       ppc::util::AddFuncTask<DorofeevICCSMatrixProductionSEQ, InType>(
-                                          kTestParams, PPC_SETTINGS_dorofeev_i_ccs_martrix_production));
+                                          kTestParams, PPC_SETTINGS_dorofeev_i_ccs_matrix_production));
 
 INSTANTIATE_TEST_SUITE_P(CCSMatrixTests, DorofeevICCSMatrixFuncTests, ppc::util::ExpandToValues(kTaskList),
                          DorofeevICCSMatrixFuncTests::PrintFuncTestName<DorofeevICCSMatrixFuncTests>);
 
-}  // namespace dorofeev_i_ccs_martrix_production
+}  // namespace dorofeev_i_ccs_matrix_production
