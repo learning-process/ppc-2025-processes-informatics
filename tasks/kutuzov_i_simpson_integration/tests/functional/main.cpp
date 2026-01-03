@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <format>
+#include <utility>
 #include <iostream>
 #include <string>
 #include <tuple>
@@ -67,7 +69,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     sum *= step_x * step_y / 9;
     bool result = (abs(output_data - sum) < 1e-3);
     if (!result) {
-      std::cout << std::endl << output_data << ", " << sum << ", " << abs(output_data - sum) << std::endl;
+      std::cout << '\n' << output_data << ", " << sum << ", " << abs(output_data - sum) << '\n';
     }
     return result;
   }
@@ -76,7 +78,7 @@ class KutuzovIRunFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType,
     return input_data_;
   }
 
-  double GetWeight(int i, int n) {
+  static double GetWeight(int i, int n) {
     if (i == 0 || i == n) {
       return 1.0;
     }

@@ -45,7 +45,7 @@ class KutuzovIRunPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType>
     return input_data_;
   }
 
-  double GetWeight(int i, int n) {
+  static double GetWeight(int i, int n) {
     if (i == 0 || i == n) {
       return 1.0;
     }

@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include <algorithm>
 #include <tuple>
 #include <vector>
 
@@ -77,8 +78,8 @@ bool KutuzovISimpsonIntegrationMPI::RunImpl() {
   y_max = data_package[3];
 
   int task_per_process = (n + 1) / process_count;
-  int tail = (n + 1) - task_per_process * process_count;
-  int task_start = task_per_process * rank + std::min(rank, tail);
+  int tail = (n + 1) - (task_per_process * process_count);
+  int task_start = (task_per_process * rank) + std::min(rank, tail);
   int task_end = task_start + task_per_process + (rank < tail ? 1 : 0);
 
   double step_x = (x_max - x_min) / n;

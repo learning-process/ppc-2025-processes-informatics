@@ -18,7 +18,7 @@ class KutuzovISimpsonIntegrationMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double GetWeight(int i, int n);
+  static double GetWeight(int i, int n);
 };
 
 }  // namespace kutuzov_i_simpson_integration
