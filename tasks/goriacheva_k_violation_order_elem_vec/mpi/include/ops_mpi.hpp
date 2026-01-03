@@ -21,8 +21,9 @@ class GoriachevaKViolationOrderElemVecMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
   void ScatterInput(int rank, int size, int n, std::vector<int> &local) const;
-  int CountLocalViolations(const std::vector<int> &local) const;
-  int CheckBoundaryViolation(int rank, int size, const std::vector<int> &local) const;
+
+  static [[nodiscard]] int CountLocalViolations(const std::vector<int> &local);
+  static [[nodiscard]] int CheckBoundaryViolation(int rank, int size, const std::vector<int> &local);
 
   std::vector<int> input_vec_;
   int result_ = 0;

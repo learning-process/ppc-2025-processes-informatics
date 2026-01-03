@@ -36,11 +36,11 @@ void GoriachevaKViolationOrderElemVecMPI::ScatterInput(int rank, int size, int n
       std::copy(input_vec_.begin(), input_vec_.begin() + local_size, local.begin());
     }
 
-    for (int r = 1; r < size; ++r) {
-      const int sz = base + (r < rem ? 1 : 0);
+    for (int rank_iter = 1; rank_iter < size; ++rank_iter) {
+      const int sz = base + (rank_iter < rem ? 1 : 0);
       if (sz > 0) {
-        const int offset = r * base + std::min(r, rem);
-        MPI_Send(input_vec_.data() + offset, sz, MPI_INT, r, 0, MPI_COMM_WORLD);
+        const int offset = (rank_iter * base) + std::min(rank_iter, rem);
+        MPI_Send(input_vec_.data() + offset, sz, MPI_INT, rank_iter, 0, MPI_COMM_WORLD);
       }
     }
   } else if (local_size > 0) {
@@ -48,7 +48,7 @@ void GoriachevaKViolationOrderElemVecMPI::ScatterInput(int rank, int size, int n
   }
 }
 
-int GoriachevaKViolationOrderElemVecMPI::CountLocalViolations(const std::vector<int> &local) const {
+int GoriachevaKViolationOrderElemVecMPI::CountLocalViolations(const std::vector<int> &local) {
   int count = 0;
   for (std::size_t i = 0; i + 1 < local.size(); ++i) {
     if (local[i] > local[i + 1]) {
@@ -58,8 +58,7 @@ int GoriachevaKViolationOrderElemVecMPI::CountLocalViolations(const std::vector<
   return count;
 }
 
-int GoriachevaKViolationOrderElemVecMPI::CheckBoundaryViolation(int rank, int size,
-                                                                const std::vector<int> &local) const {
+int GoriachevaKViolationOrderElemVecMPI::CheckBoundaryViolation(int rank, int size, const std::vector<int> &local) {
   int send_val = 0;
   int left_last = 0;
 
