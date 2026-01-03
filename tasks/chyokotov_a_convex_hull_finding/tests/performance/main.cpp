@@ -88,6 +88,17 @@ class ChyokotovConvexHullPerfTest : public ppc::util::BaseRunPerfTests<InType, O
         expected_.push_back({{x, y}, {x + 2, y}, {x + 2, y + 1}, {x, y + 1}});
       }
     }
+    int chess_start_y = 6000;
+    int chess_start_x = 6000;
+
+    for (int yt = chess_start_y; yt < chess_start_y + 500; ++yt) {
+      for (int xt = chess_start_x; xt < chess_start_x + 100; ++xt) {
+        if (((yt - chess_start_y) + (xt - chess_start_x)) % 2 == 0) {
+          input_data_[yt][xt] = 1;
+          expected_.push_back({{xt, yt}});
+        }
+      }
+    }
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
