@@ -63,6 +63,13 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+
+    if (!initialized) {
+      return output_data == ref_output_data_;
+    }
+
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
