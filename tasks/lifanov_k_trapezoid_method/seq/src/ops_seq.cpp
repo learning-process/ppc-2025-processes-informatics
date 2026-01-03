@@ -6,14 +6,14 @@
 
 namespace lifanov_k_trapezoid_method {
 
-LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType& in) {
+LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
 bool LifanovKTrapezoidMethodSEQ::ValidationImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
 
   if (in.size() != 6) {
     return false;
@@ -40,7 +40,7 @@ static double Function(double x, double y) {
 }
 
 bool LifanovKTrapezoidMethodSEQ::RunImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
 
   const double ax = in[0];
   const double bx = in[1];

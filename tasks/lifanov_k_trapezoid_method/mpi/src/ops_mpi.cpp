@@ -38,14 +38,14 @@ double ComputeLocalSum(int x_start, int x_end, int nx, int ny, double ax, double
 
 }  // namespace
 
-LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType& input) {
+LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType &input) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = input;
   GetOutput() = 0.0;
 }
 
 bool LifanovKTrapezoidMethodMPI::ValidationImpl() {
-  const auto& in = GetInput();
+  const auto &in = GetInput();
 
   if (in.size() != 6) {
     return false;
@@ -61,7 +61,6 @@ bool LifanovKTrapezoidMethodMPI::ValidationImpl() {
   return bx > ax && by > ay && nx > 0 && ny > 0;
 }
 
-
 bool LifanovKTrapezoidMethodMPI::PreProcessingImpl() {
   GetOutput() = 0.0;
   return true;
@@ -73,7 +72,7 @@ bool LifanovKTrapezoidMethodMPI::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  const auto& in = GetInput();
+  const auto &in = GetInput();
 
   const int nx = in[4];
   const int ny = in[5];
@@ -83,7 +82,7 @@ bool LifanovKTrapezoidMethodMPI::RunImpl() {
 
   const int total_nodes = nx + 1;
   const int base = total_nodes / size;
-  const int rem  = total_nodes % size;
+  const int rem = total_nodes % size;
 
   const int x_start = rank * base + std::min(rank, rem);
   int x_end = x_start + base - 1;
@@ -93,17 +92,11 @@ bool LifanovKTrapezoidMethodMPI::RunImpl() {
 
   double local_sum = 0.0;
   if (x_start <= x_end) {
-    local_sum = ComputeLocalSum(
-      x_start, x_end,
-      in[4], in[5],
-      in[0], in[2],
-      hx, hy
-    );
+    local_sum = ComputeLocalSum(x_start, x_end, in[4], in[5], in[0], in[2], hx, hy);
   }
 
   double global_sum = 0.0;
-  MPI_Reduce(&local_sum, &global_sum, 1,
-             MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     GetOutput() = global_sum * hx * hy;
