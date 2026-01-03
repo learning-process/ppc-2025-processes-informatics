@@ -1,4 +1,4 @@
-#include "goriacheva_k_Strassen_algorithm/mpi/include/ops_mpi.hpp"
+#include "goriacheva_k_strassen_algorithm/mpi/include/ops_mpi.hpp"
 
 #include <mpi.h>
 
