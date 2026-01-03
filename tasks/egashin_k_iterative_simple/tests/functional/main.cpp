@@ -23,6 +23,8 @@ class EgashinKRunFuncTestsIterativeSimple : public ppc::util::BaseRunFuncTests<I
     return std::get<2>(test_param);
   }
 
+  EgashinKRunFuncTestsIterativeSimple() : expected_data_() {}
+
  protected:
   void SetUp() override {
     TestType param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
@@ -58,7 +60,7 @@ class EgashinKRunFuncTestsIterativeSimple : public ppc::util::BaseRunFuncTests<I
 
  private:
   InType input_data_{};
-  OutType expected_data_{};
+  OutType expected_data_;
 };
 
 namespace {
