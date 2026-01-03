@@ -14,7 +14,7 @@
 namespace egashin_k_radix_batcher_sort {
 
 class EgashinKRunPerfTestRadixBatcherSort : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 1000000;
+  const int kCount_ = 1000001;
   InType input_data_;
 
   void SetUp() override {
