@@ -52,21 +52,21 @@ void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, s
 
 }  // namespace
 
-YurkinGShellBetcherSeq::YurkinGShellBetcherSeq(const InType &in) {
+YurkinGShellBetcherSEQ::YurkinGShellBetcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool YurkinGShellBetcherSeq::ValidationImpl() {
+bool YurkinGShellBetcherSEQ::ValidationImpl() {
   return GetInput() > 0;
 }
 
-bool YurkinGShellBetcherSeq::PreProcessingImpl() {
+bool YurkinGShellBetcherSEQ::PreProcessingImpl() {
   return GetInput() > 0;
 }
 
-bool YurkinGShellBetcherSeq::RunImpl() {
+bool YurkinGShellBetcherSEQ::RunImpl() {
   const InType n = GetInput();
   if (n <= 0) {
     return false;
@@ -106,7 +106,7 @@ bool YurkinGShellBetcherSeq::RunImpl() {
   return true;
 }
 
-bool YurkinGShellBetcherSeq::PostProcessingImpl() {
+bool YurkinGShellBetcherSEQ::PostProcessingImpl() {
   return GetOutput() > 0;
 }
 
