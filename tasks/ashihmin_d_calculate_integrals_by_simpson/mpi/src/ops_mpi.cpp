@@ -49,25 +49,26 @@ double ComputeLocalSum(int start_index, int end_index, int dimensions, int parti
   double local_sum = 0.0;
 
   std::vector<int> indices(static_cast<std::size_t>(dimensions), 0);
-  int total_points = 1;
-  for (int dim = 0; dim < dimensions; ++dim) {
-    total_points *= (partitions + 1);
-  }
 
-  for (int point_idx = 0; point_idx < total_points; ++point_idx) {
-    int temp = point_idx;
-    for (int dim = 0; dim < dimensions; ++dim) {
-      indices[static_cast<std::size_t>(dim)] = temp % (partitions + 1);
-      temp /= (partitions + 1);
+  for (int first_index = start_index; first_index <= end_index; ++first_index) {
+    indices[0] = first_index;
+
+    int inner_points_count = 1;
+    for (int dim = 1; dim < dimensions; ++dim) {
+      inner_points_count *= (partitions + 1);
     }
 
-    if (indices[0] < start_index || indices[0] > end_index) {
-      continue;
-    }
+    for (int inner_index = 0; inner_index < inner_points_count; ++inner_index) {
+      int temp_index = inner_index;
+      for (int dim = 1; dim < dimensions; ++dim) {
+        indices[dim] = temp_index % (partitions + 1);
+        temp_index /= (partitions + 1);
+      }
 
-    const double weight = CalculateWeightCoefficient(indices, partitions);
-    const auto point = CalculatePoint(indices, step_sizes, left_bounds);
-    local_sum += weight * Function(point);
+      const double weight = CalculateWeightCoefficient(indices, partitions);
+      const auto point = CalculatePoint(indices, step_sizes, left_bounds);
+      local_sum += weight * Function(point);
+    }
   }
 
   return local_sum;
