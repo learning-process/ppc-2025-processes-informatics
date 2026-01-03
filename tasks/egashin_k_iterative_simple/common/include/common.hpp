@@ -14,7 +14,8 @@ struct InputData {
   std::vector<double> x0;
   double tolerance{};
   int max_iterations{};
-  int padding_{};
+  // если убрать padding {}, Valgrind ругается, если оставить - clang-tidy, поэтому NOLINT
+  int padding_{};  // NOLINT(readability-identifier-naming)
 };
 
 using InType = InputData;
