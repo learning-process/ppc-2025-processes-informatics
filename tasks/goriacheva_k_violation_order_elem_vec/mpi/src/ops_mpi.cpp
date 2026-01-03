@@ -26,6 +26,57 @@ bool GoriachevaKViolationOrderElemVecMPI::PreProcessingImpl() {
   return true;
 }
 
+void GoriachevaKViolationOrderElemVecMPI::ScatterInput(int rank, int size, int n, std::vector<int> &local) const {
+  const int base = n / size;
+  const int rem = n % size;
+  const int local_size = static_cast<int>(local.size());
+
+  if (rank == 0) {
+    if (local_size > 0) {
+      std::copy(input_vec_.begin(), input_vec_.begin() + local_size, local.begin());
+    }
+
+    for (int r = 1; r < size; ++r) {
+      const int sz = base + (r < rem ? 1 : 0);
+      if (sz > 0) {
+        const int offset = r * base + std::min(r, rem);
+        MPI_Send(input_vec_.data() + offset, sz, MPI_INT, r, 0, MPI_COMM_WORLD);
+      }
+    }
+  } else if (local_size > 0) {
+    MPI_Recv(local.data(), local_size, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
+}
+
+int GoriachevaKViolationOrderElemVecMPI::CountLocalViolations(const std::vector<int> &local) const {
+  int count = 0;
+  for (std::size_t i = 0; i + 1 < local.size(); ++i) {
+    if (local[i] > local[i + 1]) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+int GoriachevaKViolationOrderElemVecMPI::CheckBoundaryViolation(int rank, int size,
+                                                                const std::vector<int> &local) const {
+  int send_val = 0;
+  int left_last = 0;
+
+  if (!local.empty()) {
+    send_val = local.back();
+  }
+
+  MPI_Sendrecv(&send_val, 1, MPI_INT, (rank + 1 < size) ? rank + 1 : MPI_PROC_NULL, 1, &left_last, 1, MPI_INT,
+               (rank > 0) ? rank - 1 : MPI_PROC_NULL, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  if (rank > 0 && !local.empty() && left_last > local.front()) {
+    return 1;
+  }
+
+  return 0;
+}
+
 bool GoriachevaKViolationOrderElemVecMPI::RunImpl() {
   int rank = 0;
   int size = 0;
@@ -41,40 +92,15 @@ bool GoriachevaKViolationOrderElemVecMPI::RunImpl() {
     return true;
   }
 
-  int base = n / size;
-  int rem = n % size;
-  int local_size = base + (rank < rem ? 1 : 0);
+  const int base = n / size;
+  const int rem = n % size;
+  const int local_size = base + (rank < rem ? 1 : 0);
+
   std::vector<int> local(local_size);
+  ScatterInput(rank, size, n, local);
 
-  if (rank == 0) {
-    std::copy(input_vec_.begin(), input_vec_.begin() + local_size, local.begin());
-    for (int rank_iter = 1; rank_iter < size; ++rank_iter) {
-      int sz = base + (rank_iter < rem ? 1 : 0);
-      if (sz != 0) {
-        MPI_Send(input_vec_.data() + static_cast<ptrdiff_t>((rank_iter * base) + std::min(rank_iter, rem)), sz, MPI_INT,
-                 rank_iter, 0, MPI_COMM_WORLD);
-      }
-    }
-  } else if (local_size > 0) {
-    MPI_Recv(local.data(), local_size, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  }
-
-  int local_count = 0;
-  for (int i = 0; i + 1 < local_size; ++i) {
-    if (local[i] > local[i + 1]) {
-      ++local_count;
-    }
-  }
-
-  int send_val = (local_size > 0) ? local.back() : 0;
-  int left_last = 0;
-
-  MPI_Sendrecv(&send_val, 1, MPI_INT, (rank + 1 < size) ? rank + 1 : MPI_PROC_NULL, 1, &left_last, 1, MPI_INT,
-               (rank > 0) ? rank - 1 : MPI_PROC_NULL, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  if (rank > 0 && local_size > 0 && left_last > local.front()) {
-    ++local_count;
-  }
+  int local_count = CountLocalViolations(local);
+  local_count += CheckBoundaryViolation(rank, size, local);
 
   MPI_Reduce(&local_count, &result_, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
   MPI_Bcast(&result_, 1, MPI_INT, 0, MPI_COMM_WORLD);
