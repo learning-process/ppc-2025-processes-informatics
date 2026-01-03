@@ -1,11 +1,8 @@
 #include "yurkin_g_shellbetcher/seq/include/ops_seq.hpp"
 
 #include <algorithm>
-#include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
-#include <stdexcept>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -13,8 +10,8 @@
 namespace yurkin_g_shellbetcher {
 namespace {
 
-void ShellSort(std::vector<int> &a) {
-  const std::size_t n = a.size();
+void ShellSort(std::vector<int> &data) {
+  const std::size_t n = data.size();
   if (n < 2) {
     return;
   }
@@ -26,13 +23,13 @@ void ShellSort(std::vector<int> &a) {
 
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
-      int tmp = a[i];
+      int tmp = data[i];
       std::size_t j = i;
-      while (j >= gap && a[j - gap] > tmp) {
-        a[j] = a[j - gap];
+      while (j >= gap && data[j - gap] > tmp) {
+        data[j] = data[j - gap];
         j -= gap;
       }
-      a[j] = tmp;
+      data[j] = tmp;
     }
     gap = (gap - 1) / 3;
   }
@@ -40,9 +37,11 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::ranges::merge(a, b, out.begin());
+
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
+
   for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
+    std::size_t start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
@@ -53,67 +52,61 @@ void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, s
 
 }  // namespace
 
-YurkinGShellBetcherSEQ::YurkinGShellBetcherSEQ(const InType &in) {
+YurkinGShellBetcherSeq::YurkinGShellBetcherSeq(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
 }
 
-bool YurkinGShellBetcherSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
-
-bool YurkinGShellBetcherSEQ::PreProcessingImpl() {
+bool YurkinGShellBetcherSeq::ValidationImpl() {
   return GetInput() > 0;
 }
 
-bool YurkinGShellBetcherSEQ::RunImpl() {
+bool YurkinGShellBetcherSeq::PreProcessingImpl() {
+  return GetInput() > 0;
+}
+
+bool YurkinGShellBetcherSeq::RunImpl() {
   const InType n = GetInput();
   if (n <= 0) {
     return false;
   }
 
-  std::vector<int> data;
-  data.reserve(static_cast<std::size_t>(n));
-  std::mt19937 rng(static_cast<unsigned int>(n));
-  std::uniform_int_distribution<int> dist(0, 1000000);
-  for (InType i = 0; i < n; ++i) {
-    data.push_back(dist(rng));
+  std::vector<int> data(static_cast<std::size_t>(n));
+
+  std::mt19937 gen(static_cast<unsigned int>(n));
+  std::uniform_int_distribution<int> dist(0, 1'000'000);
+  for (int &v : data) {
+    v = dist(gen);
   }
+
+  std::vector<int> expected = data;
+  std::sort(expected.begin(), expected.end());
 
   ShellSort(data);
 
-  const std::size_t mid = data.size() / 2;
-  std::vector<int> left(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
-  std::vector<int> right(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
+  std::vector<int> merged;
+  OddEvenBatcherMerge(data, std::vector<int>{}, merged);
+  data.swap(merged);
 
-  std::vector<int> merged(left.size() + right.size());
-  std::ranges::merge(left, right, merged.begin());
-
-  for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
-    for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
-      if (merged[i] > merged[i + 1]) {
-        std::swap(merged[i], merged[i + 1]);
-      }
-    }
+  if (!std::is_sorted(data.begin(), data.end())) {
+    return false;
   }
 
-  ShellSort(merged);
-
-  if (!std::ranges::is_sorted(merged)) {
-    throw std::logic_error("SEQ merged array not sorted");
+  if (data != expected) {
+    return false;
   }
 
   std::int64_t checksum = 0;
-  for (int v : merged) {
+  for (int v : data) {
     checksum += static_cast<std::int64_t>(v);
   }
+
   GetOutput() = static_cast<OutType>(checksum & 0x7FFFFFFF);
   return true;
 }
 
-bool YurkinGShellBetcherSEQ::PostProcessingImpl() {
+bool YurkinGShellBetcherSeq::PostProcessingImpl() {
   return GetOutput() > 0;
 }
 
