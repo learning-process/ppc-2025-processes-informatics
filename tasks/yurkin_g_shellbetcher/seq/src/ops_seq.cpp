@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
+#include <stdexcept>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
@@ -16,10 +18,12 @@ void ShellSort(std::vector<int> &a) {
   if (n < 2) {
     return;
   }
+
   std::size_t gap = 1;
   while (gap < n / 3) {
-    gap = gap * 3 + 1;
+    gap = (gap * 3) + 1;
   }
+
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
       int tmp = a[i];
@@ -36,8 +40,7 @@ void ShellSort(std::vector<int> &a) {
 
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
-
+  std::ranges::merge(a, b, out.begin());
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
@@ -84,13 +87,22 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   std::vector<int> left(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
   std::vector<int> right(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
 
-  std::vector<int> merged;
-  OddEvenBatcherMerge(left, right, merged);
+  std::vector<int> merged(left.size() + right.size());
+  std::ranges::merge(left, right, merged.begin());
+
+  for (int phase = 0; phase < 2; ++phase) {
+    auto start = static_cast<std::size_t>(phase);
+    for (std::size_t i = start; i + 1 < merged.size(); i += 2) {
+      if (merged[i] > merged[i + 1]) {
+        std::swap(merged[i], merged[i + 1]);
+      }
+    }
+  }
 
   ShellSort(merged);
 
-  if (!std::is_sorted(merged.begin(), merged.end())) {
-    return false;
+  if (!std::ranges::is_sorted(merged)) {
+    throw std::logic_error("SEQ merged array not sorted");
   }
 
   std::int64_t checksum = 0;

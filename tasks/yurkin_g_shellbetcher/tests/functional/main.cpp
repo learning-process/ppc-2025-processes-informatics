@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <ranges>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -32,7 +34,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
     }
     std::size_t gap = 1;
     while (gap < n_local / 3) {
-      gap = gap * 3 + 1;
+      gap = (gap * 3) + 1;
     }
     while (gap > 0) {
       for (std::size_t i = gap; i < n_local; ++i) {
@@ -55,7 +57,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
   std::vector<int> right(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
 
   std::vector<int> merged(left.size() + right.size());
-  std::merge(left.begin(), left.end(), right.begin(), right.end(), merged.begin());
+  std::ranges::merge(left, right, merged.begin());
 
   for (int phase = 0; phase < 2; ++phase) {
     auto start = static_cast<std::size_t>(phase);
@@ -68,7 +70,7 @@ static std::int64_t ComputeExpectedChecksumSeq(int n) {
 
   shell_sort_local(merged);
 
-  if (!std::is_sorted(merged.begin(), merged.end())) {
+  if (!std::ranges::is_sorted(merged)) {
     throw std::logic_error("SEQ merged array not sorted");
   }
 
