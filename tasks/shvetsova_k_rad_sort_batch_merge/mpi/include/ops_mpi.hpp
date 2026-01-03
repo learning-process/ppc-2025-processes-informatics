@@ -23,20 +23,26 @@ class ShvetsovaKRadSortBatchMergeMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  // доп функции //
+  // вспомогательные функции //
   static void CreateDistribution(int proc_count, int size, std::vector<int> &counts, std::vector<int> &displs);
 
   static void ScatterData(const std::vector<double> &data, std::vector<double> &local, const std::vector<int> &counts,
                           const std::vector<int> &displs, int rank);
 
-  static void OddEvenMerge(std::vector<double> &local, const std::vector<int> &counts, int rank, int proc_count);
+  static void BatcherOddEvenMergeParallel(std::vector<double> &local, const std::vector<int> &counts, int rank,
+                                          int proc_count);
 
   static void GatherAndBroadcast(std::vector<double> &data, const std::vector<double> &local,
                                  const std::vector<int> &counts, const std::vector<int> &displs, int rank);
 
   static void RadixSortLocal(std::vector<double> &vec);
-  static int CalculatePartner(int step, int rank, int proc_count);
-  static void PerformMerge(std::vector<double> &local, const std::vector<double> &recv, int rank, int partner);
+
+  // Batcher's merge вспомогательные функции
+  static void BatcherOddEvenMergeSequential(std::vector<double> &arr1, std::vector<double> &arr2,
+                                            std::vector<double> &result);
+
+  static void ExchangeAndMerge(std::vector<double> &local, const std::vector<int> &counts, int partner,
+                               bool keep_smaller);
 };
 
 }  // namespace shvetsova_k_rad_sort_batch_merge
