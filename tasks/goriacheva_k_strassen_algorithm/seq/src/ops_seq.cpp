@@ -4,19 +4,15 @@
 
 #include "goriacheva_k_strassen_algorithm/common/include/common.hpp"
 
-
 namespace goriacheva_k_strassen_algorithm {
 
-GoriachevaKStrassenAlgorithmSEQ::GoriachevaKStrassenAlgorithmSEQ(
-    const InType& in) {
+GoriachevaKStrassenAlgorithmSEQ::GoriachevaKStrassenAlgorithmSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
 }
 
 bool GoriachevaKStrassenAlgorithmSEQ::ValidationImpl() {
-  return is_square(GetInput().A) &&
-         is_square(GetInput().B) &&
-         GetInput().A.size() == GetInput().B.size();
+  return is_square(GetInput().A) && is_square(GetInput().B) && GetInput().A.size() == GetInput().B.size();
 }
 
 bool GoriachevaKStrassenAlgorithmSEQ::PreProcessingImpl() {
@@ -25,8 +21,8 @@ bool GoriachevaKStrassenAlgorithmSEQ::PreProcessingImpl() {
 }
 
 bool GoriachevaKStrassenAlgorithmSEQ::RunImpl() {
-  const auto& A = input_matrices_.A;
-  const auto& B = input_matrices_.B;
+  const auto &A = input_matrices_.A;
+  const auto &B = input_matrices_.B;
 
   std::size_t n = A.size();
   std::size_t m = next_power_of_two(n);

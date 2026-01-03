@@ -11,8 +11,7 @@
 
 namespace goriacheva_k_strassen_algorithm {
 
-class GoriachevaKStrassenAlgorithmPerfTests
-    : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class GoriachevaKStrassenAlgorithmPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  public:
   static constexpr std::size_t kMatrixSize = 256;
 
@@ -26,7 +25,7 @@ class GoriachevaKStrassenAlgorithmPerfTests
     return input_;
   }
 
-  bool CheckTestOutputData(OutType& /*output_data*/) final {
+  bool CheckTestOutputData(OutType & /*output_data*/) final {
     return true;  // perf-тесты не проверяют корректность
   }
 
@@ -42,10 +41,7 @@ namespace {
 
 auto BuildPerfParams() {
   const auto all_tasks =
-      ppc::util::MakeAllPerfTasks<
-          InType,
-          GoriachevaKStrassenAlgorithmMPI,
-          GoriachevaKStrassenAlgorithmSEQ>(
+      ppc::util::MakeAllPerfTasks<InType, GoriachevaKStrassenAlgorithmMPI, GoriachevaKStrassenAlgorithmSEQ>(
           PPC_SETTINGS_goriacheva_k_strassen_algorithm);
 
   return ppc::util::TupleToGTestValues(all_tasks);
@@ -53,17 +49,12 @@ auto BuildPerfParams() {
 
 const auto kPerfParams = BuildPerfParams();
 
-std::string MakePerfName(
-    const ::testing::TestParamInfo<
-        GoriachevaKStrassenAlgorithmPerfTests::ParamType>& info) {
+std::string MakePerfName(const ::testing::TestParamInfo<GoriachevaKStrassenAlgorithmPerfTests::ParamType> &info) {
   return GoriachevaKStrassenAlgorithmPerfTests::CustomPerfTestName(info);
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    GoriachevaKStrassenAlgorithmPerfomanceTests,
-    GoriachevaKStrassenAlgorithmPerfTests,
-    kPerfParams,
-    MakePerfName);
+INSTANTIATE_TEST_SUITE_P(GoriachevaKStrassenAlgorithmPerfomanceTests, GoriachevaKStrassenAlgorithmPerfTests,
+                         kPerfParams, MakePerfName);
 
 }  // namespace
 }  // namespace goriacheva_k_strassen_algorithm
