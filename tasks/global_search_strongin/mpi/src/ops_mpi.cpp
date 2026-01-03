@@ -16,6 +16,11 @@ namespace {
 
 constexpr double kReliability = 2.0;
 
+struct IntervalCharacteristic {
+  double value = 0.0;
+  int index = -1;
+};
+
 double Evaluate(const InType &input, double x) {
   const auto &objective = std::get<4>(input);
   return objective ? objective(x) : 0.0;
@@ -153,15 +158,10 @@ std::pair<double, int> StronginSearchMpi::EvaluateIntervals(int start, int end, 
     }
   }
 
-  double global_best_value = -std::numeric_limits<double>::infinity();
-  MPI_Allreduce(&local_best_value, &global_best_value, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-
-  const bool is_local_best = std::fabs(local_best_value - global_best_value) < 1e-12;
-  const int local_best_index_or_flag = is_local_best ? local_best_index : -1;
-  int global_best_index = -1;
-  MPI_Allreduce(&local_best_index_or_flag, &global_best_index, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-
-  return {global_best_value, global_best_index};
+  IntervalCharacteristic local{.value = local_best_value, .index = local_best_index};
+  IntervalCharacteristic global{};
+  MPI_Allreduce(&local, &global, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+  return {global.value, global.index};
 }
 
 bool StronginSearchMpi::TryInsertPoint(const InType &input, int best_index, double epsilon, double m, double left_bound,
