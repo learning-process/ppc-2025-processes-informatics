@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
-
-#include <vector>
+#include <cmath>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
 #include "lifanov_k_trapezoid_method/mpi/include/ops_mpi.hpp"
@@ -12,16 +10,10 @@ namespace lifanov_k_trapezoid_method {
 
 class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  InType input_data_;
+  InType input_data;
 
   void SetUp() override {
-    // Большая равномерная сетка
-    input_data_ = {
-        0.0,    1.0,  // ax, bx
-        0.0,    1.0,  // ay, by
-        2000.0,       // nx
-        2000.0        // ny
-    };
+    input_data = {0.0, 1.0, 0.0, 1.0, 2000.0,2000.0};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
@@ -29,7 +21,7 @@ class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InTy
   }
 
   InType GetTestInputData() final {
-    return input_data_;
+    return input_data;
   }
 };
 

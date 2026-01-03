@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
-#include <mpi.h>
 
 #include <array>
 #include <cmath>
 #include <string>
 #include <tuple>
-#include <vector>
+#include <cstddef>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
 #include "lifanov_k_trapezoid_method/mpi/include/ops_mpi.hpp"
@@ -15,7 +14,6 @@
 
 namespace lifanov_k_trapezoid_method {
 
-// nx, ny, test name
 using TestParams = std::tuple<int, int, std::string>;
 
 class LifanovKTrapezoidMethodFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestParams> {
@@ -31,18 +29,10 @@ class LifanovKTrapezoidMethodFuncTests : public ppc::util::BaseRunFuncTests<InTy
     int nx = std::get<0>(params);
     int ny = std::get<1>(params);
 
-    // Входные данные:
-    // ax, bx, ay, by, nx, ny
-    input_data_ = {0.0,
-                   1.0,  // X
-                   0.0,
-                   1.0,  // Y
-                   static_cast<double>(nx),
-                   static_cast<double>(ny)};
+    input_data_ = {0.0, 1.0, 0.0, 1.0, static_cast<double>(nx), static_cast<double>(ny)};
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    // ∫∫(x² + y²) dx dy на [0,1]×[0,1] = 2/3
     const double exact = 2.0 / 3.0;
     const double eps = 1e-2;
 

@@ -13,7 +13,7 @@ namespace lifanov_k_trapezoid_method {
 namespace {
 
 double Function(double x, double y) {
-  return x * x + y * y;
+  return (x * x) + (y * y);
 }
 
 double Weight(int ix, int iy, int nx, int ny) {
@@ -22,13 +22,13 @@ double Weight(int ix, int iy, int nx, int ny) {
   return wx * wy;
 }
 
-double ComputeLocalSum(int x_start, int x_end, int nx, int ny, double ax, double ay, double hx, double hy) {
+double ComputeLocalSum(int x_start, int x_end, double nx, double ny, double ax, double ay, double hx, double hy) {
   double local_sum = 0.0;
 
   for (int i = x_start; i <= x_end; ++i) {
-    const double x = ax + i * hx;
+    const double x = ax + (i * hx);
     for (int j = 0; j <= ny; ++j) {
-      const double y = ay + j * hy;
+      const double y = ay + (j * hy);
       local_sum += Weight(i, j, nx, ny) * Function(x, y);
     }
   }
@@ -74,8 +74,8 @@ bool LifanovKTrapezoidMethodMPI::RunImpl() {
 
   const auto &in = GetInput();
 
-  const int nx = in[4];
-  const int ny = in[5];
+  const int nx = static_cast<int>(in[4]);
+  const int ny = static_cast<int>(in[5]);
 
   const double hx = (in[1] - in[0]) / nx;
   const double hy = (in[3] - in[2]) / ny;
@@ -84,7 +84,7 @@ bool LifanovKTrapezoidMethodMPI::RunImpl() {
   const int base = total_nodes / size;
   const int rem = total_nodes % size;
 
-  const int x_start = rank * base + std::min(rank, rem);
+  const int x_start = (rank * base) + std::min(rank, rem);
   int x_end = x_start + base - 1;
   if (rank < rem) {
     x_end += 1;

@@ -34,9 +34,8 @@ bool LifanovKTrapezoidMethodSEQ::PreProcessingImpl() {
   return true;
 }
 
-// Интегрируемая функция
-static double Function(double x, double y) {
-  return x * x + y * y;
+double Function(double x, double y) {
+  return (x * x) + (y * y);
 }
 
 bool LifanovKTrapezoidMethodSEQ::RunImpl() {
@@ -55,11 +54,11 @@ bool LifanovKTrapezoidMethodSEQ::RunImpl() {
   double integral = 0.0;
 
   for (int i = 0; i <= nx; ++i) {
-    const double x = ax + i * hx;
+    const double x = ax + (i * hx);
     const double wx = (i == 0 || i == nx) ? 0.5 : 1.0;
 
     for (int j = 0; j <= ny; ++j) {
-      const double y = ay + j * hy;
+      const double y = ay + (j * hy);
       const double wy = (j == 0 || j == ny) ? 0.5 : 1.0;
 
       integral += wx * wy * Function(x, y);
