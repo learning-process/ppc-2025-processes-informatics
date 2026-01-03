@@ -29,7 +29,7 @@ void ShellSort(std::vector<int> &a) {
     for (std::size_t i = gap; i < n; ++i) {
       const int tmp = a[i];
       std::size_t j = i;
-      while ((j >= gap) && (a[j - gap] > tmp)) {
+      while (j >= gap && a[j - gap] > tmp) {
         a[j] = a[j - gap];
         j -= gap;
       }
@@ -39,40 +39,25 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-template <typename RandomIt>
-void CompareSwap(RandomIt a, RandomIt b) {
-  if (*b < *a) {
-    std::iter_swap(a, b);
-  }
-}
+void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
+  out.clear();
+  out.reserve(a.size() + b.size());
+  out.insert(out.end(), a.begin(), a.end());
+  out.insert(out.end(), b.begin(), b.end());
 
-template <typename RandomIt>
-void OddEvenMerge(RandomIt first, std::size_t n, std::size_t stride) {
+  const std::size_t n = out.size();
   if (n < 2) {
     return;
   }
 
-  const std::size_t double_stride = stride * 2;
-  if (double_stride < n) {
-    OddEvenMerge(first, n, double_stride);
-    OddEvenMerge(first + stride, n, double_stride);
-
-    for (std::size_t i = stride; i + stride < n; i += double_stride) {
-      CompareSwap(first + i, first + i + stride);
+  for (std::size_t phase = 0; phase < n; ++phase) {
+    const std::size_t start = phase % 2;
+    for (std::size_t i = start; i + 1 < n; i += 2) {
+      if (out[i] > out[i + 1]) {
+        std::swap(out[i], out[i + 1]);
+      }
     }
-  } else {
-    CompareSwap(first, first + stride);
   }
-}
-
-void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
-  out.clear();
-  out.reserve(a.size() + b.size());
-
-  out.insert(out.end(), a.begin(), a.end());
-  out.insert(out.end(), b.begin(), b.end());
-
-  OddEvenMerge(out.begin(), out.size(), 1);
 }
 
 int ComputeNeighbor(int rank, int phase, int size) {
@@ -90,7 +75,7 @@ int ComputeNeighbor(int rank, int phase, int size) {
 
 void KeepBlockFromMerged(std::vector<int> &local_data, std::vector<int> &merged, int keep_count, int rank,
                          int partner) {
-  const auto k = static_cast<std::size_t>(keep_count);
+  const std::size_t k = static_cast<std::size_t>(keep_count);
   if (merged.size() <= k) {
     local_data.swap(merged);
     return;
@@ -111,13 +96,14 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor, in
     return;
   }
 
-  int send_count = static_cast<int>(local_data.size());
+  const int send_count = static_cast<int>(local_data.size());
   int recv_count = 0;
 
   MPI_Sendrecv(&send_count, 1, MPI_INT, neighbor, 100, &recv_count, 1, MPI_INT, neighbor, 100, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
 
   std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
+
   MPI_Sendrecv(local_data.data(), send_count, MPI_INT, neighbor, 101, recv_buf.data(), recv_count, MPI_INT, neighbor,
                101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
@@ -134,8 +120,9 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
         continue;
       }
 
-      int send_count = static_cast<int>(local_data.size());
+      const int send_count = static_cast<int>(local_data.size());
       int recv_count = 0;
+
       const int tag_count = 2000 + (stage * 16) + sub;
       const int tag_data = 3000 + (stage * 16) + sub;
 
@@ -143,6 +130,7 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
                    MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
       std::vector<int> recv_buf(static_cast<std::size_t>(recv_count));
+
       MPI_Sendrecv(local_data.data(), send_count, MPI_INT, partner, tag_data, recv_buf.data(), recv_count, MPI_INT,
                    partner, tag_data, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
@@ -200,9 +188,10 @@ bool YurkinGShellBetcherMPI::RunImpl() {
   local_data.reserve(static_cast<std::size_t>(local_n));
 
   std::mt19937 rng(static_cast<unsigned int>(n));
-  std::uniform_int_distribution<int> dist(0, 1'000'000);
+  std::uniform_int_distribution<int> dist(0, 1000000);
 
-  const InType offset = (base * rank) + std::min(rank, rem);
+  const InType offset = (base * static_cast<InType>(rank)) + std::min(static_cast<InType>(rank), rem);
+
   for (InType i = 0; i < offset; ++i) {
     (void)dist(rng);
   }
@@ -213,6 +202,7 @@ bool YurkinGShellBetcherMPI::RunImpl() {
   ShellSort(local_data);
 
   const int keep_count = static_cast<int>(local_n);
+
   auto is_power_of_two = [](int x) { return x > 0 && ((x & (x - 1)) == 0); };
 
   if (is_power_of_two(size)) {
@@ -229,8 +219,8 @@ bool YurkinGShellBetcherMPI::RunImpl() {
 
   std::int64_t global_checksum = 0;
   MPI_Allreduce(&local_checksum, &global_checksum, 1, MPI_INT64_T, MPI_SUM, MPI_COMM_WORLD);
-  GetOutput() = static_cast<OutType>(global_checksum & 0x7FFFFFFF);
 
+  GetOutput() = static_cast<OutType>(global_checksum & 0x7FFFFFFF);
   MPI_Barrier(MPI_COMM_WORLD);
   return true;
 }
