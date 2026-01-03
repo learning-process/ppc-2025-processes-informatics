@@ -20,10 +20,8 @@ namespace gusev_d_radix_double {
 
 class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(
-      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &param_info) {
-    auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(param_info.param);
-    return std::get<1>(params) + "_" + std::to_string(param_info.index);
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<1>(test_param);
   }
 
  protected:
@@ -83,6 +81,8 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
   OutType ref_output_data_;
 };
 
+namespace {
+
 TEST_P(GusevDRadixDoubleFuncTests, RunTests) {
   ExecuteTest(GetParam());
 }
@@ -107,8 +107,10 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = GusevDRadixDoubleFuncTests::PrintTestParam;
+const auto kPerfTestName = GusevDRadixDoubleFuncTests::PrintFuncTestName<GusevDRadixDoubleFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(RadixSortDoubleTests, GusevDRadixDoubleFuncTests, kGtestValues, kPerfTestName);
+
+}  // namespace
 
 }  // namespace gusev_d_radix_double
