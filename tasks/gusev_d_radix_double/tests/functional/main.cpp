@@ -31,7 +31,7 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     std::string test_name = std::get<1>(params);
 
     input_data_ = std::vector<double>(count);
-    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+    std::mt19937 gen(42);
 
     if (test_name.find("Positive") != std::string::npos) {
       std::uniform_real_distribution<> dis(0.1, 1000.0);
@@ -44,7 +44,7 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
         input_data_[i] = dis(gen);
       }
     } else if (test_name.find("Zero") != std::string::npos) {
-      std::fill(input_data_.begin(), input_data_.end(), 0.0);  // NOLINT(modernize-use-ranges)
+      std::fill(input_data_.begin(), input_data_.end(), 0.0);
     } else {
       std::uniform_real_distribution<> dis(-1000.0, 1000.0);
       for (int i = 0; i < count; ++i) {
@@ -53,13 +53,13 @@ class GusevDRadixDoubleFuncTests : public ppc::util::BaseRunFuncTests<InType, Ou
     }
 
     if (test_name.find("Sorted") != std::string::npos && test_name.find("Reverse") == std::string::npos) {
-      std::sort(input_data_.begin(), input_data_.end());  // NOLINT(modernize-use-ranges)
+      std::sort(input_data_.begin(), input_data_.end());
     } else if (test_name.find("Reverse") != std::string::npos) {
-      std::sort(input_data_.begin(), input_data_.end(), std::greater<>());  // NOLINT(modernize-use-ranges)
+      std::sort(input_data_.begin(), input_data_.end(), std::greater<>());
     }
 
     ref_output_data_ = input_data_;
-    std::sort(ref_output_data_.begin(), ref_output_data_.end());  // NOLINT(modernize-use-ranges)
+    std::sort(ref_output_data_.begin(), ref_output_data_.end());
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

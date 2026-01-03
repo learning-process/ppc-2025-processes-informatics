@@ -18,7 +18,7 @@ class GusevDRadixDoublePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
     size_t count = 25000000;
     input_data_ = std::vector<double>(count);
 
-    std::mt19937 gen(42);  // NOLINT(cert-msc51-cpp)
+    std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(-1000000.0, 1000000.0);
 
     for (auto &val : input_data_) {
@@ -27,7 +27,7 @@ class GusevDRadixDoublePerfTests : public ppc::util::BaseRunPerfTests<InType, Ou
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return std::is_sorted(output_data.begin(), output_data.end());  // NOLINT(modernize-use-ranges)
+    return std::is_sorted(output_data.begin(), output_data.end());
   }
 
   InType GetTestInputData() final {

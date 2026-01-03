@@ -1,7 +1,7 @@
-# Звезда
+# Поразрядная сортировка для вещественных чисел (тип double) с простым слиянием
 - Студент: Гусев Дмитрий Алексеевич, 3823Б1ФИ1
 - Технология: SEQ, MPI 
-- Вариант: 8
+- Вариант: 20
 
 ---
 
@@ -24,7 +24,7 @@
 **Требования**:
 - Реализовать последовательную версию алгоритма, способную корректно сортировать double (включая отрицательные числа).
 - Реализовать параллельную версию на MPI.
-- Реализовать схему "Простое слияние": каждый процесс сортирует свою часть, Root-процесс собирает и сливает части.
+- Реализовать эффективную схему слияния данных от разных процессов.
 - Обеспечить корректную работу при неравномерном распределении данных ($N$ не делится нацело на число процессов).
 
 ---
@@ -32,16 +32,7 @@
 ## 3. Последовательный алгоритм
 Основная сложность сортировки double поразрядным методом заключается в представлении чисел в памяти (IEEE 754). Если просто интерпретировать double как uint64_t, то отрицательные числа окажутся "больше" положительных (из-за знакового бита 1), а порядок отрицательных чисел будет инвертирован.
 
-Алгоритм:
-```cpp
-result = 0
-for i from 0 to N:
-    for j from 0 to N:
-        for k from 0 to N:
-            // Имитация тяжелой работы
-            result += (i + j + k)
-            result -= (i + j + k)
-```
+Алгоритм: Выполняется 8 проходов (так как sizeof(double) == 8 байт). На каждом проходе используется сортировка подсчетом (Counting Sort) по текущему байту.
 
 Временная сложность: $O(N \cdot K)$, где $K$ — количество байт в числе (8). Фактически линейная $O(N)$.
 
@@ -56,9 +47,7 @@ for i from 0 to N:
     - Используются массивы смещений (displs) и размеров (send_counts) для обработки случая, когда $N \% P \neq 0$.
 - **Коммуникация**:
 	- Рассылка (Scatter): MPI_Scatterv распределяет исходный массив по процессам.
-    - Сбор (Gather): MPI_Gatherv собирает локально отсортированные массивы обратно на Rank 0.
-- **Слияние**:
-	- На Rank 0 происходит объединение $P$ отсортированных последовательностей.
+    - Слияние (Merge): Реализовано параллельное древовидное слияние (Parallel Tree Merge). Данные не собираются на одном узле сразу, а сливаются иерархически ($1 \to 0, 3 \to 2$, затем $2 \to 0$ и т.д.).
 
 ---
 
@@ -142,20 +131,31 @@ for i from 0 to N:
 - In-place преобразование в SEQ:
 ```cpp
 void GusevDRadixDoubleSEQ::RadixSort(std::vector<double>& data) {
-  uint64_t* ptr = reinterpret_cast<uint64_t*>(data.data());
+  size_t n = data.size();
+  std::vector<uint64_t> raw_data(n);
+  // Копирование вместо reinterpret_cast для безопасности
+  std::memcpy(raw_data.data(), data.data(), n * sizeof(double));
 
+  // In-place Bit Flipping
   for (size_t i = 0; i < n; ++i) {
-    if ((ptr[i] & 0x8000000000000000ULL)) ptr[i] = ~ptr[i];
-    else ptr[i] |= 0x8000000000000000ULL;
+    uint64_t mask = 0x8000000000000000ULL;
+    if ((raw_data[i] & mask) != 0) {
+        raw_data[i] = ~raw_data[i];
+    } else {
+        raw_data[i] |= mask;
+    }
   }
-
+  
+  // ... Radix Sort logic ...
 }
 ```
 - Zero-allocation Merge в MPI:
 ```cpp
-size_t old_size = local_data.size();
-local_data.resize(old_size + recv_count);
-MPI_Recv(local_data.data() + old_size, recv_count, MPI_DOUBLE, ...);
+// При слиянии расширяем вектор и принимаем данные в конец
+size_t current_size = local_data.size();
+local_data.resize(current_size + recv_count);
+MPI_Recv(local_data.data() + current_size, recv_count, MPI_DOUBLE, ...);
 
-std::inplace_merge(local_data.begin(), local_data.begin() + old_size, local_data.end());
+// Слияние без дополнительного буфера
+std::inplace_merge(local_data.begin(), local_data.begin() + static_cast<std::ptrdiff_t>(current_size), local_data.end());
 ```
