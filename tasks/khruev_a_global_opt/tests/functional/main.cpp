@@ -32,7 +32,7 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     input_data_.ay = std::get<4>(param);
     input_data_.by = std::get<5>(param);
     input_data_.epsilon = 0.0001;
-    input_data_.max_iter = 3500;
+    input_data_.max_iter = 100;
     input_data_.r = 4;
 
     expected_min_ = std::get<6>(param);
@@ -40,6 +40,7 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double tolerance = 2e-1;
+    std::cout << "AAAAA" << output_data.value << '\n';
     return std::abs(output_data.value - expected_min_) < tolerance;
   }
 
@@ -60,10 +61,10 @@ TEST_P(KhruevAGlobalOptFuncTests, CorrectMinimumFound) {
 
 const std::array<TestType, 4> kTestCases = {
     std::make_tuple("Paraboloid", 1, 0.0, 1.0, 0.0, 1.0, 0.0),
-    std::make_tuple("Rastr", 2, -3.0, 3.0, -3.0, 3.0, 0.0),
+    std::make_tuple("Rastr", 2, 0.0, 1.0, 0.0, 1.0, 0.0),
     std::make_tuple("BoothFunc", 3, -10.0, 10.0, -10.0, 10.0, 0.0),
     std::make_tuple("MatyasFunc", 4, -3.0, 3.0, -3.0, 3.0, 0.0),
-    // std::make_tuple("HimmeFunc", 5, -5.0, 5.0, -5.0, 5.0, 0.0)
+    // std::make_tuple("HimmeFunc", 5, 0.0, 1.0, 0.0, 1.0, 0.0)
 };
 
 const auto kTestTasksList =

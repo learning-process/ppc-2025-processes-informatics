@@ -21,7 +21,7 @@ class KhruevAGlobalOptPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
     input_data.by = 8.0;
 
     input_data.epsilon = 1e-7;
-    input_data.max_iter = 7000;
+    input_data.max_iter = 80000;
     input_data.r = 3;
   }
 
