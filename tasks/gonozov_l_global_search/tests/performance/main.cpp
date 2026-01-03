@@ -1,10 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <array>
 #include <cmath>
+#include <functional>
 #include <tuple>
-#include <vector>
 
 #include "gonozov_l_global_search/common/include/common.hpp"
 #include "gonozov_l_global_search/mpi/include/ops_mpi.hpp"
@@ -14,25 +12,23 @@
 namespace gonozov_l_global_search {
 
 class GonozovLRunGlobalSearchPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const double eps = 1e-7;
-  std::function<double(double)> minimized_function = [](double x) {
+  const double eps_ = 1e-7;
+  std::function<double(double)> minimized_function_ = [](double x) {
     double s = 0.0;
     for (int i = 0; i < 32; ++i) {
       s += std::sin(10.0 * x) * std::sin(10.0 * x);
     }
-    return x * x + 0.01 * s;
+    return (x * x) + (0.01 * s);
   };
 
-  double a = -1.0;
-  double b = 1.0;
-  double r = 2.0;
+  double a_ = -1.0;
+  double b_ = 1.0;
+  double r_ = 2.0;
   InType input_data_;
-  OutType desired_result_;
+  OutType desired_result_ = 0.0;
 
   void SetUp() override {
-    input_data_ = std::make_tuple(minimized_function, r, a, b, eps);
-
-    desired_result_ = 0.0;
+    input_data_ = std::make_tuple(minimized_function_, r_, a_, b_, eps_);
   }
 
   bool CheckTestOutputData(OutType &output_data) final {

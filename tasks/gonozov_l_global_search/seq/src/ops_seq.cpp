@@ -2,13 +2,12 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <limits>
-#include <numeric>
 #include <tuple>
 #include <vector>
 
 #include "gonozov_l_global_search/common/include/common.hpp"
-#include "util/include/util.hpp"
 
 namespace gonozov_l_global_search {
 GonozovLGlobalSearchSEQ::GonozovLGlobalSearchSEQ(const InType &in) {
@@ -27,87 +26,103 @@ bool GonozovLGlobalSearchSEQ::PreProcessingImpl() {
 }
 
 namespace {
-double Countingm(double M, double r) {
-  return (M == 0.0) ? 1.0 : r * M;
-}
 
-double CountingM(int t, double M, std::vector<double> &testSequence, const auto &function) {
-  if (M == -std::numeric_limits<double>::infinity()) {
-    return std::abs((function(testSequence[1]) - function(testSequence[0])) / (testSequence[1] - testSequence[0]));
+double CountingM(int t, double &highm, const std::vector<double> &test_sequence, const auto &function) {
+  if (highm == -std::numeric_limits<double>::infinity()) {
+    return std::abs((function(test_sequence[1]) - function(test_sequence[0])) / (test_sequence[1] - test_sequence[0]));
   } else {
-    double M1 = std::abs(function(testSequence.back()) - function(testSequence[t - 1])) /
-                (testSequence.back() - testSequence[t - 1]);
+    double highm1 = std::abs(function(test_sequence.back()) - function(test_sequence[t - 1])) /
+                    (test_sequence.back() - test_sequence[t - 1]);
 
-    double M2 =
-        std::abs(function(testSequence[t]) - function(testSequence.back())) / (testSequence[t] - testSequence.back());
+    double highm2 = std::abs(function(test_sequence[t]) - function(test_sequence.back())) /
+                    (test_sequence[t] - test_sequence.back());
 
-    return std::max(M, std::max(M1, M2));
+    double high = std::max(highm, highm1);
+    return std::max(high, highm2);
   }
 }
 
-int Countingt(double m, std::vector<double> &testSequence, const auto &function) {
+int Countingt(double m, std::vector<double> &test_sequence, const auto &function) {
   int t = 1;
-  double valueRt = -std::numeric_limits<double>::infinity();
-  for (unsigned int i = 1; i < testSequence.size(); i++) {
-    double subX = (testSequence[i] - testSequence[i - 1]);
-    double subZ = (function(testSequence[i]) - function(testSequence[i - 1]));
-    double sumZ = (function(testSequence[i]) + function(testSequence[i - 1]));
-    double interValueRt = m * subX + subZ * subZ / m / subX - 2 * sumZ;
-    if (interValueRt > valueRt) {
-      valueRt = interValueRt;
-      t = i;
+  double value_rt = -std::numeric_limits<double>::infinity();
+  for (unsigned int i = 1; i < test_sequence.size(); i++) {
+    double sub_x = (test_sequence[i] - test_sequence[i - 1]);
+    double sub_z = (function(test_sequence[i]) - function(test_sequence[i - 1]));
+    double sum_z = (function(test_sequence[i]) + function(test_sequence[i - 1]));
+    double inter_value_rt = (m * sub_x) + (sub_z * sub_z / m / sub_x) - (2 * sum_z);
+    if (inter_value_rt > value_rt) {
+      value_rt = inter_value_rt;
+      t = static_cast<int>(i);
     }
   }
   return t;
 }
+
+void InizialzationStartParameters(std::vector<double> &test_sequence, const std::function<double(double)> &function,
+                                  double &global_min_x, double &global_min_value, double a, double b) {
+  test_sequence.push_back(a);
+  test_sequence.push_back(b);
+  if (function(b) < global_min_value) {
+    global_min_x = b;
+    global_min_value = function(b);
+  }
+}
+void FormNewtest_sequence(std::vector<double> &test_sequence) {
+  std::ranges::sort(test_sequence.begin(), test_sequence.end());
+}
+
+void FormNewParameters(double &m, double &highm, double r, int t, const std::vector<double> &test_sequence,
+                       const std::function<double(double)> &function) {
+  highm = CountingM(t, highm, test_sequence, function);
+  m = (highm == 0.0) ? 1.0 : r * highm;
+}
+
+void CountingNewCoordinateContinueIteration(bool &continue_iteration, std::vector<double> &test_sequence, int &t,
+                                            const std::function<double(double)> &function, double &global_min_x,
+                                            double &global_min_value, double m, double epsilon) {
+  double new_elem_sequence = (0.5 * (test_sequence[t] + test_sequence[t - 1])) -
+                             ((0.5 / m) * (function(test_sequence[t]) - function(test_sequence[t - 1])));
+  if (function(new_elem_sequence) < global_min_value) {
+    global_min_x = new_elem_sequence;
+    global_min_value = function(new_elem_sequence);
+  }
+  test_sequence.push_back(new_elem_sequence);
+
+  continue_iteration = abs(test_sequence[t] - test_sequence[t - 1]) > epsilon;
+}
+
 }  // namespace
 
 bool GonozovLGlobalSearchSEQ::RunImpl() {
-  std::vector<double> testSequence;
+  std::vector<double> test_sequence;
   const std::function<double(double)> &function = std::get<0>(GetInput());
   double r = std::get<1>(GetInput());
   double a = std::get<2>(GetInput());
   double b = std::get<3>(GetInput());
   double epsilon = std::get<4>(GetInput());
 
-  testSequence.push_back(a);
-  testSequence.push_back(b);
-
   int t = 1;
-  double M = -std::numeric_limits<double>::infinity();
+  double highm = -std::numeric_limits<double>::infinity();
 
-  double global_min_x;
-  double global_min_value;
-  if (function(a) < function(b)) {
-    global_min_x = a;
-    global_min_value = function(a);
-  } else {
-    global_min_x = b;
-    global_min_value = function(b);
+  double global_min_x = a;
+  double global_min_value = function(a);
+
+  InizialzationStartParameters(test_sequence, function, global_min_x, global_min_value, a, b);
+  bool continue_iteration = true;
+  while (continue_iteration) {
+    FormNewtest_sequence(test_sequence);
+
+    // std::sort(test_sequence.begin(), test_sequence.end());
+    // M = CountingM(t, M, test_sequence, function);
+
+    double m = 0.0;
+    FormNewParameters(m, highm, r, t, test_sequence, function);
+
+    t = Countingt(m, test_sequence, function);
+
+    CountingNewCoordinateContinueIteration(continue_iteration, test_sequence, t, function, global_min_x,
+                                           global_min_value, m, epsilon);
   }
-
-  int iteration_count = 0;
-  const int MAX_ITERATIONS = std::numeric_limits<int>::infinity();
-  do {
-    iteration_count++;
-
-    std::sort(testSequence.begin(), testSequence.end());
-    M = CountingM(t, M, testSequence, function);
-
-    double m = Countingm(M, r);
-    t = Countingt(m, testSequence, function);
-
-    double newElemSequence = 0.5 * (testSequence[t] + testSequence[t - 1]) -
-                             0.5 / m * (function(testSequence[t]) - function(testSequence[t - 1]));
-    if (function(newElemSequence) < global_min_value) {
-      global_min_x = newElemSequence;
-      global_min_value = function(newElemSequence);
-    }
-    testSequence.push_back(newElemSequence);
-    if (iteration_count == MAX_ITERATIONS) {
-      break;
-    }
-  } while (abs(testSequence[t] - testSequence[t - 1]) > epsilon);
 
   GetOutput() = global_min_x;
 

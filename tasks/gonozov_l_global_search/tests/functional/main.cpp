@@ -1,17 +1,11 @@
 #include <gtest/gtest.h>
 #include <stb/stb_image.h>
 
-#include <algorithm>
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <numeric>
-#include <stdexcept>
 #include <string>
 #include <tuple>
-#include <utility>
-#include <vector>
 
 #include "gonozov_l_global_search/common/include/common.hpp"
 #include "gonozov_l_global_search/mpi/include/ops_mpi.hpp"
@@ -36,8 +30,8 @@ class GonozovLRunGlobalSearchFuncTests : public ppc::util::BaseRunFuncTests<InTy
 
   bool CheckTestOutputData(OutType &output_data) final {
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    double ordered_data_ = static_cast<OutType>(std::get<6>(params));
-    return std::abs(ordered_data_ - output_data) < 0.01;
+    auto ordered_data = static_cast<OutType>(std::get<6>(params));
+    return std::abs(ordered_data - output_data) < 0.01;
   }
 
   InType GetTestInputData() final {
@@ -58,7 +52,7 @@ const std::array<TestType, 4> kTestParam = {
     std::make_tuple([](double x) { return x * x; }, 2.0, -10.0, 10.0, 0.01, "minimizing_quadratic_function", 0.0),
     std::make_tuple([](double x) { return std::sin(x); }, 2.0, 3.0, 6.0, 0.01, "minimizing_sine", 4.71404),
     std::make_tuple([](double x) { return std::exp(x); }, 2.0, -1.0, 1.0, 0.01, "minimizing_exponent", -0.996669),
-    std::make_tuple([](double x) { return (x * x - 11) * (x * x - 11) + (x - 7) * (x - 7); }, 2.0, -5.0, 5.0, 0.01,
+    std::make_tuple([](double x) { return ((x * x - 11) * (x * x - 11)) + ((x - 7) * (x - 7)); }, 2.0, -5.0, 5.0, 0.01,
                     "minimizing_himmelblau_function", 3.3965),
 };
 

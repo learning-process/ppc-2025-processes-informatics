@@ -1,9 +1,5 @@
 #pragma once
 
-#include <cstddef>
-#include <functional>
-#include <vector>
-
 #include "gonozov_l_global_search/common/include/common.hpp"
 #include "task/include/task.hpp"
 
