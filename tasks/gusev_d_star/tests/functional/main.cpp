@@ -27,15 +27,13 @@ class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
+    int rank = 0;
     int initialized = 0;
     MPI_Initialized(&initialized);
 
-    if (initialized == 0) {
-      return input_data_ == output_data;
+    if (initialized != 0) {
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
-
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     if (rank == 0) {
       return input_data_ == output_data;
