@@ -50,9 +50,9 @@ inline void IterateThroughVertex(const Graph &g, int u, const std::vector<int> &
 
 Инициализация: dist[source] = 0, все остальные dist[v] = 1e9
 Повторить (n-1) раз:
-  Для каждой вершины u с dist[u] != 1e9:
-  Для каждого ребра u->v с весом w:
-  dist[v] = min(dist[v], dist[u] + w)
+- Для каждой вершины u с dist[u] != 1e9:
+- Для каждого ребра u->v с весом w:
+- dist[v] = min(dist[v], dist[u] + w)
 Результат: dist[v] содержит кратчайшее расстояние от вершины source до v для каждой вершины v
 
 SEQ Алгоритм:
