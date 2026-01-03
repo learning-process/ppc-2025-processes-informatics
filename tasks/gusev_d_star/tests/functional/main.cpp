@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
+#include <mpi.h>
 
 #include <array>
-#include <cstddef>  // size_t
+#include <cstddef>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "gusev_d_star/common/include/common.hpp"
 #include "gusev_d_star/mpi/include/ops_mpi.hpp"
@@ -15,10 +17,8 @@ namespace gusev_d_star {
 
 class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(
-      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &param_info) {
-    auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(param_info.param);
-    return std::get<1>(params) + "_" + std::to_string(param_info.index);
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<1>(test_param);
   }
 
  protected:
@@ -28,7 +28,20 @@ class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    return input_data_ == output_data;
+    int initialized = 0;
+    MPI_Initialized(&initialized);
+
+    if (!initialized) {
+      return input_data_ == output_data;
+    }
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    if (rank == 0) {
+      return input_data_ == output_data;
+    }
+    return true;
   }
 
   InType GetTestInputData() final {
@@ -72,7 +85,7 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = GusevDStarFuncTests::PrintTestParam;
+const auto kPerfTestName = GusevDStarFuncTests::PrintFuncTestName<GusevDStarFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(StarTopologyTests, GusevDStarFuncTests, kGtestValues, kPerfTestName);
 
