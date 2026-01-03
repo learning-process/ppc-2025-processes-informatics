@@ -30,16 +30,15 @@ namespace {
 double CountingM(int t, double &highm, const std::vector<double> &test_sequence, const auto &function) {
   if (highm == -std::numeric_limits<double>::infinity()) {
     return std::abs((function(test_sequence[1]) - function(test_sequence[0])) / (test_sequence[1] - test_sequence[0]));
-  } else {
-    double highm1 = std::abs(function(test_sequence.back()) - function(test_sequence[t - 1])) /
-                    (test_sequence.back() - test_sequence[t - 1]);
-
-    double highm2 = std::abs(function(test_sequence[t]) - function(test_sequence.back())) /
-                    (test_sequence[t] - test_sequence.back());
-
-    double high = std::max(highm, highm1);
-    return std::max(high, highm2);
   }
+  double highm1 = std::abs(function(test_sequence.back()) - function(test_sequence[t - 1])) /
+                  (test_sequence.back() - test_sequence[t - 1]);
+
+  double highm2 =
+      std::abs(function(test_sequence[t]) - function(test_sequence.back())) / (test_sequence[t] - test_sequence.back());
+
+  double high = std::max(highm, highm1);
+  return std::max(high, highm2);
 }
 
 int Countingt(double m, std::vector<double> &test_sequence, const auto &function) {

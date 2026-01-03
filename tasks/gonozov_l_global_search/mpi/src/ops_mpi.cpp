@@ -7,6 +7,7 @@
 #include <functional>
 #include <limits>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 #include "gonozov_l_global_search/common/include/common.hpp"
@@ -52,7 +53,6 @@ void InizialzationStartParameters(int proc_rank, std::vector<double> &test_seque
                                   double &global_min_value, double a, double b) {
   if (proc_rank == 0) {
     test_sequence = {a, b};
-    // test_sequence[1] = b;
     if (function(b) < global_min_value) {
       global_min_x = b;
       global_min_value = function(b);
@@ -60,9 +60,9 @@ void InizialzationStartParameters(int proc_rank, std::vector<double> &test_seque
   }
 }
 
-void FormNewtest_sequence(int proc_rank, std::vector<double> &test_sequence, unsigned int &n) {
+void FormNewtestSequence(int proc_rank, std::vector<double> &test_sequence, int &n) {
   if (proc_rank == 0) {
-    n = test_sequence.size();
+    n = static_cast<int>(test_sequence.size());
   }
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -75,7 +75,7 @@ void FormNewtest_sequence(int proc_rank, std::vector<double> &test_sequence, uns
   std::ranges::sort(test_sequence.begin(), test_sequence.end());
 }
 
-void FormNewParameters(int proc_rank, double &m, double &highm, double r, double t,
+void FormNewParameters(int proc_rank, double &m, double &highm, double r, int t,
                        const std::vector<double> &test_sequence, const std::function<double(double)> &function) {
   if (proc_rank == 0) {
     highm = CountM(t, highm, test_sequence, function);
@@ -138,30 +138,12 @@ bool GonozovLGlobalSearchMPI::RunImpl() {
   bool continue_iteration = true;
 
   while (continue_iteration) {
-    unsigned int n = 0;
-    FormNewtest_sequence(proc_rank, test_sequence, n);
-    // int n = 0;
-    // if (proc_rank == 0) {
-    //   n = test_sequence.size();
-    // }
-    // MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-    // if (proc_rank != 0) {
-    //   test_sequence.resize(n);
-    // }
-
-    // MPI_Bcast(test_sequence.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    // std::sort(test_sequence.begin(), test_sequence.end());
+    int n = 0;
+    FormNewtestSequence(proc_rank, test_sequence, n);
 
     double m = 0.0;
 
     FormNewParameters(proc_rank, m, highm, r, t, test_sequence, function);
-    // if (proc_rank == 0) {
-    //   M = CountM(t, M, test_sequence, function);
-    //   m = Countingm(M, r);
-    // }
-    // MPI_Bcast(&m, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     int intervals = static_cast<int>(n) - 1;
     int per_proc = intervals / proc_num;
@@ -193,30 +175,6 @@ bool GonozovLGlobalSearchMPI::RunImpl() {
 
     MPI_Reduce(&loc, &glob, 1, MPI_DOUBLE_INT, MPI_MAXLOC, 0, MPI_COMM_WORLD);
 
-    // if (proc_rank == 0) {
-    //   if (glob.idx <= 0 || glob.idx >= static_cast<int>(test_sequence.size())) {
-    //     continue_iteration = false;
-    //   } else {
-    //     t = glob.idx;
-    //     if (t < 1) {
-    //       break;
-    //     }
-
-    //     double x_new = 0.5 * (test_sequence[t] + test_sequence[t - 1]) -
-    //                    (function(test_sequence[t]) - function(test_sequence[t - 1])) / (2.0 * m);
-
-    //     double fx = function(x_new);
-    //     if (fx < global_min_value) {
-    //       global_min_value = fx;
-    //       global_min_x = x_new;
-    //     }
-    //     test_sequence.push_back(x_new);
-    //   }
-
-    //   continue_iteration = std::abs(test_sequence[t] - test_sequence[t - 1]) > eps;
-    // }
-
-    // MPI_Bcast(&continue_iteration, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
     CountingNewCoordinateContinueIteration(proc_rank, glob.idx, continue_iteration, test_sequence, t, function,
                                            global_min_x, global_min_value, m, eps);
   }
