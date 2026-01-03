@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <cmath>
 
 #include "titaev_m_metod_pryamougolnikov/common/include/common.hpp"
@@ -34,8 +35,8 @@ TEST_P(RectanglePerformanceTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kPerformanceTasks = ppc::util::MakeAllPerfTasks<InType,
-    TitaevMMetodPryamougolnikovMPI, TitaevMMetodPryamougolnikovSEQ>(
+const auto kPerformanceTasks =
+    ppc::util::MakeAllPerfTasks<InType, TitaevMMetodPryamougolnikovMPI, TitaevMMetodPryamougolnikovSEQ>(
         PPC_SETTINGS_titaev_m_metod_pryamougolnikov);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kPerformanceTasks);

@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include <array>
 #include <cmath>
 #include <string>
@@ -45,22 +46,18 @@ TEST_P(TitaevMMetodPryamougolnikovFuncTests, Correctness) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestParam = {
-    std::make_tuple(1, "small"), 
-    std::make_tuple(2, "medium"), 
-    std::make_tuple(3, "large")
-};
+const std::array<TestType, 3> kTestParam = {std::make_tuple(1, "small"), std::make_tuple(2, "medium"),
+                                            std::make_tuple(3, "large")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<TitaevMMetodPryamougolnikovMPI, InType>(kTestParam, PPC_SETTINGS_titaev_m_metod_pryamougolnikov),
-    ppc::util::AddFuncTask<TitaevMMetodPryamougolnikovSEQ, InType>(kTestParam, PPC_SETTINGS_titaev_m_metod_pryamougolnikov)
-);
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<TitaevMMetodPryamougolnikovMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_titaev_m_metod_pryamougolnikov),
+                                           ppc::util::AddFuncTask<TitaevMMetodPryamougolnikovSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_titaev_m_metod_pryamougolnikov));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = TitaevMMetodPryamougolnikovFuncTests::PrintFuncTestName<
-    TitaevMMetodPryamougolnikovFuncTests
->;
+const auto kPerfTestName =
+    TitaevMMetodPryamougolnikovFuncTests::PrintFuncTestName<TitaevMMetodPryamougolnikovFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(Correctness, TitaevMMetodPryamougolnikovFuncTests, kGtestValues, kPerfTestName);
 

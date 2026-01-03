@@ -14,18 +14,22 @@ namespace {
 
 double Function(const std::vector<double> &coords) {
   double sum = 0.0;
-  for (double x : coords) sum += x;  // f(x1,x2,..xn) = x1+x2+...+xn
+  for (double x : coords) {
+    sum += x;  // f(x1,x2,..xn) = x1+x2+...+xn
+  }
   return sum;
 }
 
-double ComputeLocalSum(int start_index, int end_index, int partitions,
-                       const std::vector<double> &step_sizes, const std::vector<double> &left_bounds) {
+double ComputeLocalSum(int start_index, int end_index, int partitions, const std::vector<double> &step_sizes,
+                       const std::vector<double> &left_bounds) {
   double local_sum = 0.0;
   int dimensions = static_cast<int>(left_bounds.size());
 
   std::vector<int> indices(dimensions, 0);
   int total_points = 1;
-  for (int d = 0; d < dimensions; ++d) total_points *= partitions;
+  for (int d = 0; d < dimensions; ++d) {
+    total_points *= partitions;
+  }
 
   for (int point_idx = 0; point_idx < total_points; ++point_idx) {
     int temp = point_idx;
@@ -33,11 +37,14 @@ double ComputeLocalSum(int start_index, int end_index, int partitions,
       indices[d] = temp % partitions;
       temp /= partitions;
     }
-    if (indices[0] < start_index || indices[0] > end_index) continue;
+    if (indices[0] < start_index || indices[0] > end_index) {
+      continue;
+    }
 
     std::vector<double> point(dimensions);
-    for (int d = 0; d < dimensions; ++d)
+    for (int d = 0; d < dimensions; ++d) {
       point[d] = left_bounds[d] + (indices[d] + 0.5) * step_sizes[d];
+    }
 
     local_sum += Function(point);
   }
@@ -55,10 +62,17 @@ TitaevMMetodPryamougolnikovMPI::TitaevMMetodPryamougolnikovMPI(const InType &inp
 
 bool TitaevMMetodPryamougolnikovMPI::ValidationImpl() {
   const auto &input = GetInput();
-  if (input.left_bounds.size() != input.right_bounds.size()) return false;
-  if (input.partitions <= 0) return false;
-  for (size_t i = 0; i < input.left_bounds.size(); ++i)
-    if (input.right_bounds[i] <= input.left_bounds[i]) return false;
+  if (input.left_bounds.size() != input.right_bounds.size()) {
+    return false;
+  }
+  if (input.partitions <= 0) {
+    return false;
+  }
+  for (size_t i = 0; i < input.left_bounds.size(); ++i) {
+    if (input.right_bounds[i] <= input.left_bounds[i]) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -86,8 +100,9 @@ bool TitaevMMetodPryamougolnikovMPI::RunImpl() {
   }
 
   std::vector<double> step_sizes(dimensions);
-  for (int d = 0; d < dimensions; ++d)
+  for (int d = 0; d < dimensions; ++d) {
     step_sizes[d] = (input.right_bounds[d] - input.left_bounds[d]) / partitions;
+  }
 
   int chunk_size = partitions / size;
   int remainder = partitions % size;
@@ -100,9 +115,13 @@ bool TitaevMMetodPryamougolnikovMPI::RunImpl() {
   MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   double volume_element = 1.0;
-  for (double h : step_sizes) volume_element *= h;
+  for (double h : step_sizes) {
+    volume_element *= h;
+  }
 
-  if (rank == 0) GetOutput() = global_sum * volume_element;
+  if (rank == 0) {
+    GetOutput() = global_sum * volume_element;
+  }
 
   MPI_Bcast(&GetOutput(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   return true;

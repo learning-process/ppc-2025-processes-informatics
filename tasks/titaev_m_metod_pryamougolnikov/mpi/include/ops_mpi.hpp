@@ -1,7 +1,7 @@
 #pragma once
 
-#include "titaev_m_metod_pryamougolnikov/common/include/common.hpp"
 #include "task/include/task.hpp"
+#include "titaev_m_metod_pryamougolnikov/common/include/common.hpp"
 
 namespace titaev_m_metod_pryamougolnikov {
 
