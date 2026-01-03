@@ -4,7 +4,9 @@
 
 #include <algorithm>
 #include <array>
-#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -53,16 +55,16 @@ bool ShvetsovaKRadSortBatchMergeMPI::RunImpl() {
   ScatterData(data_, local, counts, displs, rank);
 
   RadixSortLocal(local);
-
-  // Используем Batcher's odd-even merge
   BatcherOddEvenMergeParallel(local, counts, rank, proc_count);
 
-  data_.resize(size);
+  data_.resize(static_cast<std::size_t>(size));
   GatherAndBroadcast(data_, local, counts, displs, rank);
 
   GetOutput() = data_;
   return true;
 }
+
+// распределение
 
 void ShvetsovaKRadSortBatchMergeMPI::CreateDistribution(int proc_count, int size, std::vector<int> &counts,
                                                         std::vector<int> &displs) {
@@ -84,63 +86,46 @@ void ShvetsovaKRadSortBatchMergeMPI::ScatterData(const std::vector<double> &data
                static_cast<int>(local.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-void ShvetsovaKRadSortBatchMergeMPI::BatcherOddEvenMergeSequential(std::vector<double> &arr1, std::vector<double> &arr2,
+void ShvetsovaKRadSortBatchMergeMPI::BatcherOddEvenMergeSequential(std::vector<double> &a, std::vector<double> &b,
                                                                    std::vector<double> &result) {
-  result.resize(arr1.size() + arr2.size());
-  std::ranges::merge(arr1, arr2, result.begin());
+  result.resize(a.size() + b.size());
+  std::ranges::merge(a, b, result.begin());
 }
 
-// Batcher's odd-even merge
+// Бэтчер
+
+int ShvetsovaKRadSortBatchMergeMPI::ComputePartner(int step, int rank, int proc_count) {
+  if (step % 2 == 0) {
+    return (rank % 2 == 0 && rank + 1 < proc_count) ? rank + 1 : (rank % 2 == 1) ? rank - 1 : -1;
+  }
+  return (rank % 2 == 0 && rank > 0) ? rank - 1 : (rank % 2 == 1 && rank + 1 < proc_count) ? rank + 1 : -1;
+}
+
 void ShvetsovaKRadSortBatchMergeMPI::BatcherOddEvenMergeParallel(std::vector<double> &local,
                                                                  const std::vector<int> &counts, int rank,
                                                                  int proc_count) {
   for (int step = 0; step < proc_count; ++step) {
-    int partner = -1;
+    int partner = ComputePartner(step, rank, proc_count);
 
-    if (step % 2 == 0) {
-      // Четный шаг: пары (0-1, 2-3, ...)
-      if (rank % 2 == 0 && rank + 1 < proc_count) {
-        partner = rank + 1;
-      } else if (rank % 2 == 1) {
-        partner = rank - 1;
-      }
-    } else {
-      // Нечетный шаг: пары (1-2, 3-4, ...)
-      if (rank % 2 == 0 && rank > 0) {
-        partner = rank - 1;
-      } else if (rank % 2 == 1 && rank + 1 < proc_count) {
-        partner = rank + 1;
-      }
+    if (partner >= 0 && partner < proc_count) {
+      ExchangeAndMerge(local, counts, partner, rank < partner);
     }
 
-    if (partner != -1 && partner >= 0 && partner < proc_count) {
-      bool keep_smaller = (rank < partner);
-      ExchangeAndMerge(local, counts, partner, keep_smaller);
-    }
-
-    // Синхронизация всех процессов
     MPI_Barrier(MPI_COMM_WORLD);
   }
 }
 
 void ShvetsovaKRadSortBatchMergeMPI::ExchangeAndMerge(std::vector<double> &local, const std::vector<int> &counts,
                                                       int partner, bool keep_smaller) {
-  if (partner < 0 || partner >= static_cast<int>(counts.size())) {
-    return;
-  }
-
   int partner_size = counts.at(partner);
   std::vector<double> recv(partner_size);
 
-  // Обмен данными
   MPI_Sendrecv(local.data(), static_cast<int>(local.size()), MPI_DOUBLE, partner, 0, recv.data(), partner_size,
                MPI_DOUBLE, partner, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  // Слияние двух отсортированных массивов
   std::vector<double> merged;
   BatcherOddEvenMergeSequential(local, recv, merged);
 
-  // Выбираем нужную половину
   if (keep_smaller) {
     std::ranges::copy(merged | std::views::take(local.size()), local.begin());
   } else {
@@ -157,64 +142,61 @@ void ShvetsovaKRadSortBatchMergeMPI::GatherAndBroadcast(std::vector<double> &dat
   MPI_Bcast(data.data(), static_cast<int>(data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
+// поразрядная сортировка
+
+static std::int64_t Abs64(std::int64_t x) {
+  return std::llabs(x);
+}
+
+static int GetDigit(std::int64_t x, std::int64_t exp, int base) {
+  int digit = static_cast<int>((Abs64(x) / exp) % base);
+  return (x < 0) ? (base - 1 - digit) : digit;
+}
+
 void ShvetsovaKRadSortBatchMergeMPI::RadixSortLocal(std::vector<double> &vec) {
   if (vec.empty()) {
     return;
   }
 
-  // Для целых чисел, представленных как double
-  std::vector<long long> int_vec(vec.size());
-  for (size_t i = 0; i < vec.size(); ++i) {
-    int_vec[i] = static_cast<long long>(vec[i]);
+  std::vector<std::int64_t> values(vec.size());
+  for (std::size_t i = 0; i < vec.size(); ++i) {
+    values[i] = static_cast<std::int64_t>(vec[i]);
   }
 
-  // Находим максимальное значение по модулю
-  long long max_val = 0;
-  for (long long x : int_vec) {
-    long long abs_x = std::llabs(x);
-    if (abs_x > max_val) {
-      max_val = abs_x;
-    }
+  std::int64_t max_val = 0;
+  for (std::int64_t x : values) {
+    max_val = std::max(max_val, Abs64(x));
   }
 
-  // Поразрядная сортировка по основанию 256 (байтовая)
-  const int base = 256;
-  for (long long exp = 1; max_val / exp > 0; exp *= base) {
-    std::vector<long long> output(int_vec.size());
+  constexpr int base = 256;
+
+  for (std::int64_t exp = 1; max_val / exp > 0; exp *= base) {
+    std::vector<std::int64_t> output(values.size());
     std::array<int, base> count{};
+    count.fill(0);
 
-    // Подсчет цифр
-    for (long long x : int_vec) {
-      int digit = (std::llabs(x) / exp) % base;
-      if (x < 0) {
-        digit = base - 1 - digit;  // Инвертируем для отрицательных
-      }
-      count[digit]++;
+    for (std::int64_t x : values) {
+      ++count.at(GetDigit(x, exp, base));
     }
 
-    // Префиксная сумма
     for (int i = 1; i < base; ++i) {
-      count[i] += count[i - 1];
+      count.at(i) += count.at(i - 1);
     }
 
-    // Распределение
-    for (int i = static_cast<int>(int_vec.size()) - 1; i >= 0; --i) {
-      long long x = int_vec[i];
-      int digit = (std::llabs(x) / exp) % base;
-      if (x < 0) {
-        digit = base - 1 - digit;
-      }
-      output[--count[digit]] = x;
+    for (std::size_t i = values.size(); i-- > 0;) {
+      std::int64_t x = values[i];
+      int d = GetDigit(x, exp, base);
+      output.at(static_cast<std::size_t>(--count.at(d))) = x;
     }
 
-    int_vec = std::move(output);
+    values = std::move(output);
   }
 
-  // Копируем обратно в double
-  for (size_t i = 0; i < vec.size(); ++i) {
-    vec[i] = static_cast<double>(int_vec[i]);
+  for (std::size_t i = 0; i < vec.size(); ++i) {
+    vec[i] = static_cast<double>(values[i]);
   }
 }
+
 bool ShvetsovaKRadSortBatchMergeMPI::PostProcessingImpl() {
   return true;
 }
