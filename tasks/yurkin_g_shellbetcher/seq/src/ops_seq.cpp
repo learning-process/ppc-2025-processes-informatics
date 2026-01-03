@@ -61,7 +61,8 @@ void BatcherOddEvenNetwork(std::vector<int> &arr, int length) {
 
 }  // namespace
 
-void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out) {
+void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right,
+                  std::vector<int> &out) {  // NOLINT(misc-use-internal-linkage)
   const std::size_t orig_n = left.size() + right.size();
   out.clear();
   out.reserve(orig_n);

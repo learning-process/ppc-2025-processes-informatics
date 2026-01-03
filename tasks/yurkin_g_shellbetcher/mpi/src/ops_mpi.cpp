@@ -15,6 +15,23 @@
 namespace yurkin_g_shellbetcher {
 namespace {
 
+template <typename It1, typename It2, typename OutIt>
+void MergeSortedRanges(It1 first1, It1 last1, It2 first2, It2 last2, OutIt out) {
+  while (first1 != last1 && first2 != last2) {
+    if (*first1 <= *first2) {
+      *out++ = *first1++;
+    } else {
+      *out++ = *first2++;
+    }
+  }
+  while (first1 != last1) {
+    *out++ = *first1++;
+  }
+  while (first2 != last2) {
+    *out++ = *first2++;
+  }
+}
+
 void ShellSort(std::vector<int> &a) {
   const std::size_t n = a.size();
   if (n < 2) {
@@ -98,7 +115,7 @@ int ComputeNeighbor(int rank, int phase, int size) {
 
 void KeepBlockFromMerged(std::vector<int> &local_data, std::vector<int> &merged, int keep_count, int rank,
                          int partner) {
-  const std::size_t k = static_cast<std::size_t>(keep_count);
+  const auto k = static_cast<std::size_t>(keep_count);
   if (merged.size() <= k) {
     local_data.swap(merged);
     return;

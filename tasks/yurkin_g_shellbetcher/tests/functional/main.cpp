@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <random>
 #include <ranges>
 #include <string>
@@ -16,6 +17,7 @@
 #include "yurkin_g_shellbetcher/mpi/include/ops_mpi.hpp"
 #include "yurkin_g_shellbetcher/seq/include/ops_seq.hpp"
 
+// Forward declaration to make BatcherMerge visible to tests without changing headers
 namespace yurkin_g_shellbetcher {
 void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out);
 }
@@ -44,10 +46,10 @@ TEST(BatcherMergeUnitTests, MergesTwoSortedVectorsCorrectly) {
   std::vector<int> out;
   yurkin_g_shellbetcher::BatcherMerge(a, b, out);
   ASSERT_EQ(out.size(), a.size() + b.size());
-  ASSERT_TRUE(std::is_sorted(out.begin(), out.end()));
+  ASSERT_TRUE(std::ranges::is_sorted(out));
   std::vector<int> expected;
   expected.reserve(out.size());
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(expected));
+  std::ranges::merge(a, b, std::back_inserter(expected));
   ASSERT_EQ(out, expected);
 }
 
@@ -65,16 +67,17 @@ TEST(BatcherMergeUnitTests, HandlesDuplicatesAndOddSizes) {
   std::vector<int> out;
   yurkin_g_shellbetcher::BatcherMerge(a, b, out);
   ASSERT_EQ(out.size(), a.size() + b.size());
-  ASSERT_TRUE(std::is_sorted(out.begin(), out.end()));
+  ASSERT_TRUE(std::ranges::is_sorted(out));
   std::vector<int> expected;
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(expected));
+  std::ranges::merge(a, b, std::back_inserter(expected));
   ASSERT_EQ(out, expected);
 }
 
 TEST(BatcherMergeUnitTests, LargeRandomVectorsMatchStdMerge) {
-  std::mt19937 rng(42);
+  std::mt19937 rng(std::random_device{}());  // NOLINT(cert-msc51-cpp)
   std::uniform_int_distribution<int> dist(0, 1000);
-  std::vector<int> a(1000), b(1500);
+  std::vector<int> a(1000);
+  std::vector<int> b(1500);
   for (auto &v : a) {
     v = dist(rng);
   }
@@ -86,10 +89,10 @@ TEST(BatcherMergeUnitTests, LargeRandomVectorsMatchStdMerge) {
   std::vector<int> out;
   yurkin_g_shellbetcher::BatcherMerge(a, b, out);
   ASSERT_EQ(out.size(), a.size() + b.size());
-  ASSERT_TRUE(std::is_sorted(out.begin(), out.end()));
+  ASSERT_TRUE(std::ranges::is_sorted(out));
   std::vector<int> expected;
   expected.reserve(out.size());
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), std::back_inserter(expected));
+  std::ranges::merge(a, b, std::back_inserter(expected));
   ASSERT_EQ(out, expected);
 }
 
