@@ -35,7 +35,6 @@ class StronginPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     input_.reliability = 2.0;
     input_.max_iterations = 500;
     input_.objective = [](double x) {
-
       double acc = 0.0;
       for (int i = 1; i <= 3000; ++i) {
         const double t = x * static_cast<double>(i);
