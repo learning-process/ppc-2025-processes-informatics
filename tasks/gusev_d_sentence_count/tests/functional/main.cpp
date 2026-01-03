@@ -5,9 +5,9 @@
 #include <array>
 #include <cctype>
 #include <cstddef>
-#include <ranges>  // NOLINT(misc-include-cleaner) - required for std::ranges::transform
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include "gusev_d_sentence_count/common/include/common.hpp"
 #include "gusev_d_sentence_count/mpi/include/ops_mpi.hpp"
@@ -19,26 +19,8 @@ namespace gusev_d_sentence_count {
 
 class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  GusevDSentenceCountFuncTests() = default;
-
-  static std::string PrintTestParam(
-      const testing::TestParamInfo<ppc::util::FuncTestParam<InType, OutType, TestType>> &param_info) {
-    auto params = std::get<static_cast<size_t>(ppc::util::GTestParamIndex::kTestParams)>(param_info.param);
-
-    std::string text = std::get<0>(params);
-
-    std::ranges::transform(text, text.begin(), [](unsigned char c) {
-      if (std::isalnum(c) || c == '_') {
-        return static_cast<char>(c);
-      }
-      return '_';
-    });
-
-    if (text.empty()) {
-      text = "Empty";
-    }
-
-    return text + "_Exp" + std::to_string(std::get<1>(params)) + "_" + std::to_string(param_info.index);
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::get<2>(test_param);
   }
 
  protected:
@@ -52,6 +34,7 @@ class GusevDSentenceCountFuncTests : public ppc::util::BaseRunFuncTests<InType, 
     int rank = 0;
     int initialized = 0;
     MPI_Initialized(&initialized);
+
     if (initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
@@ -78,26 +61,22 @@ TEST_P(GusevDSentenceCountFuncTests, SentenceBoundaryTests) {
 }
 
 const std::array<TestType, 16> kTestParam = {
-    std::make_tuple(std::string(""), 0),
-    std::make_tuple(std::string("No terminators here"), 0),
-    std::make_tuple(std::string("Sentence one. Sentence two! Sentence three?"), 3),
-    std::make_tuple(std::string("Is this a question?"), 1),
-
-    std::make_tuple(std::string("This is the end."), 1),
-    std::make_tuple(std::string("Wow!"), 1),
-    std::make_tuple(std::string("Wait, what?"), 1),
-
-    std::make_tuple(std::string("Wait... What?! Stop!"), 3),
-    std::make_tuple(std::string("Really?? No!"), 2),
-
-    std::make_tuple(std::string("Test. Another one! Last?"), 3),
-    std::make_tuple(std::string("Symbols? @ # $ %"), 1),
-    std::make_tuple(std::string("!Start with terminator. End."), 3),
-
-    std::make_tuple(std::string("The end is near..."), 1),
-    std::make_tuple(std::string("A!B.C?"), 3),
-    std::make_tuple(std::string(R"(Only terminators???!!!)"), 1),
-    std::make_tuple(std::string("A..B.C"), 2)};
+    TestType{"", 0, "EmptyString"},
+    TestType{"No terminators here", 0, "NoTerminators"},
+    TestType{"Sentence one. Sentence two! Sentence three?", 3, "ThreeSentences"},
+    TestType{"Is this a question?", 1, "QuestionOnly"},
+    TestType{"This is the end.", 1, "PeriodOnly"},
+    TestType{"Wow!", 1, "ExclamationOnly"},
+    TestType{"Wait, what?", 1, "QuestionWithComma"},
+    TestType{"Wait... What?! Stop!", 3, "MixedTerminators"},
+    TestType{"Really?? No!", 2, "DoubleQuestion"},
+    TestType{"Test. Another one! Last?", 3, "StandardSet"},
+    TestType{"Symbols? @ # $ %", 1, "WithSymbols"},
+    TestType{"!Start with terminator. End.", 3, "StartWithTerminator"},
+    TestType{"The end is near...", 1, "Ellipsis"},
+    TestType{"A!B.C?", 3, "SingleChars"},
+    TestType{R"(Only terminators???!!!)", 1, "OnlyTerminators"},
+    TestType{"A..B.C", 2, "DoublePeriod"}};
 
 const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<GusevDSentenceCountMPI, InType>(kTestParam, PPC_SETTINGS_gusev_d_sentence_count),
@@ -105,7 +84,7 @@ const auto kTestTasksList = std::tuple_cat(
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintTestParam;
+const auto kPerfTestName = GusevDSentenceCountFuncTests::PrintFuncTestName<GusevDSentenceCountFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(SentenceCountBoundaryTests, GusevDSentenceCountFuncTests, kGtestValues, kPerfTestName);
 
