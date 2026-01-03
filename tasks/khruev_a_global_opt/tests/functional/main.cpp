@@ -33,7 +33,7 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
     input_data_.ay = std::get<4>(param);
     input_data_.by = std::get<5>(param);
     input_data_.epsilon = 0.0001;
-    input_data_.max_iter = 100;
+    input_data_.max_iter = 3500;
     input_data_.r = 4;
 
     expected_min_ = std::get<6>(param);
@@ -59,9 +59,11 @@ TEST_P(KhruevAGlobalOptFuncTests, CorrectMinimumFound) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 3> kTestCases = {std::make_tuple("Paraboloid", 1, 0.0, 1.0, 0.0, 1.0, 0.0),
+const std::array<TestType, 5> kTestCases = {std::make_tuple("Paraboloid", 1, 0.0, 1.0, 0.0, 1.0, 0.0),
+                                            std::make_tuple("Rastr", 2, -3.0, 3.0, -3.0, 3.0, 0.0),
                                             std::make_tuple("BoothFunc", 3, -10.0, 10.0, -10.0, 10.0, 0.0),
-                                            std::make_tuple("MatyasFunc", 4, -3.0, 3.0, -3.0, 3.0, 0.0)};
+                                            std::make_tuple("MatyasFunc", 4, -3.0, 3.0, -3.0, 3.0, 0.0),
+                                            std::make_tuple("HimmeFunc", 5, -5.0, 5.0, -5.0, 5.0, 0.0)};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<KhruevAGlobalOptMPI, InType>(kTestCases, PPC_SETTINGS_khruev_a_global_opt),

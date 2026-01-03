@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "khruev_a_global_opt/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace khruev_a_global_opt {
 
@@ -19,11 +20,30 @@ class KhruevAGlobalOptMPI : public BaseTask {
   bool PostProcessingImpl() override;
 
  private:
+  struct IntervalInfo {
+    double R;
+    int index;  // индекс в массиве trials_ (указывает на правый конец интервала)
+
+    bool operator>(const IntervalInfo &other) const {
+      return R > other.R;  // Для сортировки по убыванию
+    }
+  };
+
+  struct Point {
+    double x, z;
+  };
+
   std::vector<Trial> trials_;
   OutType result_;
 
   double CalculateFunction(double t);
   void AddTrialUnsorted(double t, double z);
+
+  double ComputeM();
+  std::vector<IntervalInfo> ComputeIntervals(double M) const;
+  bool LocalShouldStop(const std::vector<IntervalInfo> &intervals, int num_to_check);
+  double GenerateNewX(int idx, double M) const;
+  void CollectAndAddPoints(const std::vector<Point> &global_res, int &k);
 };
 
 }  // namespace khruev_a_global_opt

@@ -38,7 +38,7 @@ using TestType = std::tuple<std::string, int, double, double, double, double, do
 // n: размер текущего квадрата (степень двойки)
 // x, y: координаты
 // rx, ry: биты, определяющие квадрант
-inline void rotate(uint64_t n, uint64_t &x, uint64_t &y, uint64_t rx, uint64_t ry) {
+inline void Rotate(uint64_t n, uint64_t &x, uint64_t &y, uint64_t rx, uint64_t ry) {
   if (ry == 0) {
     if (rx == 1) {
       x = n - 1 - x;
@@ -53,22 +53,18 @@ inline void rotate(uint64_t n, uint64_t &x, uint64_t &y, uint64_t rx, uint64_t r
 
 // 1. Кривая Гильберта: переводит t [0,1] -> (x, y) [0,1]x[0,1]
 // Используем 32-битный порядок кривой (сетка 2^32 x 2^32), что покрывает точность double
-inline void d2xy(double t, double &x, double &y) {
+inline void D2xy(double t, double &x, double &y) {
   // Ограничиваем t диапазоном [0, 1]
-  if (t < 0.0) {
-    t = 0.0;
-  }
-  if (t > 1.0) {
-    t = 1.0;
-  }
+  t = std::max(t, 0.0);
+  t = std::min(t, 1.0);
 
   // Порядок кривой N = 32. Всего точек 2^64 (влезает в uint64_t).
   // Масштабируем t [0, 1] в целое число s [0, 2^64 - 1]
   // Используем (2^64 - 1) как множитель.
-  const uint64_t max_dist = static_cast<uint64_t>(-1);
+  const auto max_dist = static_cast<uint64_t>(-1);
   const double two_to_64 = ldexp(1.0, 64);
   double val = t * two_to_64;
-  uint64_t s;
+  uint64_t s = 0;
   if (val >= two_to_64) {
     s = max_dist;
   } else {
@@ -80,14 +76,14 @@ inline void d2xy(double t, double &x, double &y) {
 
   // Итеративный алгоритм от младших битов к старшим (bottom-up)
   // n - это размер под-квадрата на текущем уровне
-  for (uint64_t n = 1; n < (1ULL << 32); n <<= 1) {
+  for (uint64_t nn = 1; nn < (1ULL << 32); nn <<= 1) {
     uint64_t rx = 1 & (s / 2);
     uint64_t ry = 1 & (s ^ rx);
 
-    rotate(n, ix, iy, rx, ry);
+    Rotate(nn, ix, iy, rx, ry);
 
-    ix += n * rx;
-    iy += n * ry;
+    ix += nn * rx;
+    iy += nn * ry;
 
     s /= 4;
   }
@@ -99,24 +95,31 @@ inline void d2xy(double t, double &x, double &y) {
   y = static_cast<double>(iy) * scale;
 }
 
-inline double target_function(int id, double x, double y) {
+inline double Target_function(int id, double x, double y) {
   if (id == 1) {
     // квадратичная
-    return (x - 0.5) * (x - 0.5) + (y - 0.5) * (y - 0.5);
-  } else if (id == 2) {
-    // Rastrigin-like (многоэкстремальная)
-    // Масштабируем [0,1] -> [-2, 2] для наглядности
-    double sx = (x - 0.5) * 4.0;
-    double sy = (y - 0.5) * 4.0;
-    return (sx * sx - 10 * std::cos(2 * 3.14159 * sx)) + (sy * sy - 10 * std::cos(2 * 3.14159 * sy)) + 20;
-  } else if (id == 3) {
+    return ((x - 0.5) * (x - 0.5)) + ((y - 0.5) * (y - 0.5));
+  }
+  if (id == 2) {
+    // Rastrigin-like
+    constexpr double kA = 10.0;
+    constexpr double kTwoPi = 6.2831853071795864769;
+    return (2.0 * kA) + ((x * x) - (kA * std::cos(kTwoPi * x))) + ((y * y) - (kA * std::cos(kTwoPi * y)));
+  }
+  if (id == 3) {
     // BoothFunc
     const double t1 = x + (2.0 * y) - 7.0;
     const double t2 = (2.0 * x) + y - 5.0;
     return (t1 * t1) + (t2 * t2);
-  } else if (id == 4) {
+  }
+  if (id == 4) {
     // MatyasFunc
     return (0.26 * ((x * x) + (y * y))) - (0.48 * x * y);
+  }
+  if (id == 5) {  // Himme
+    const double t1 = ((x * x) + y - 11.0);
+    const double t2 = (x + (y * y) - 7.0);
+    return (t1 * t1) + (t2 * t2);
   }
 
   return 0.0;
@@ -131,6 +134,6 @@ struct Trial {
   bool operator<(const Trial &other) const {
     return x < other.x;
   }
-};  //
+};
 
 }  // namespace khruev_a_global_opt

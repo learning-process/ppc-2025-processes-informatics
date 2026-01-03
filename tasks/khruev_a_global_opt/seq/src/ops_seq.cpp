@@ -24,13 +24,13 @@ bool KhruevAGlobalOptSEQ::PreProcessingImpl() {
 
 double KhruevAGlobalOptSEQ::CalculateFunction(double t) {
   double u, v;
-  d2xy(t, u, v);  // Преобразование Гильберта 1D -> 2D
+  D2xy(t, u, v);  // Преобразование Гильберта 1D -> 2D
 
   // Масштабирование из [0,1] в реальную область [ax, bx]
   double real_x = GetInput().ax + u * (GetInput().bx - GetInput().ax);
   double real_y = GetInput().ay + v * (GetInput().by - GetInput().ay);
 
-  return target_function(GetInput().func_id, real_x, real_y);
+  return Target_function(GetInput().func_id, real_x, real_y);
 }
 
 void KhruevAGlobalOptSEQ::AddTrial(double t, double z) {
@@ -122,7 +122,7 @@ bool KhruevAGlobalOptSEQ::RunImpl() {
 
   // Восстанавливаем 2D координаты для ответа
   double u, v;
-  d2xy(best_t, u, v);
+  D2xy(best_t, u, v);
   result_.x = GetInput().ax + u * (GetInput().bx - GetInput().ax);
   result_.y = GetInput().ay + v * (GetInput().by - GetInput().ay);
   result_.value = min_z;
