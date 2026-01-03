@@ -1,6 +1,5 @@
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include "shvetsova_k_rad_sort_batch_merge/common/include/common.hpp"

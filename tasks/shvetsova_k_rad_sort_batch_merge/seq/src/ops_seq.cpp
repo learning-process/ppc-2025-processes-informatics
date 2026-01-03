@@ -103,9 +103,9 @@ void ShvetsovaKRadSortBatchMergeSEQ::BatcherOddEvenMergeSort(std::vector<double>
     return;
   }
 
-  for (int p = 1; p < n; p <<= 1) {
-    for (int k = p; k >= 1; k >>= 1) {
-      ExecuteBatcherStep(vec, left, n, p, k);
+  for (int pp = 1; pp < n; pp <<= 1) {
+    for (int k = pp; k >= 1; k >>= 1) {
+      ExecuteBatcherStep(vec, left, n, pp, k);
     }
   }
 }
