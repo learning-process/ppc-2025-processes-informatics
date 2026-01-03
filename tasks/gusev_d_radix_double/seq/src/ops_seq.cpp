@@ -8,6 +8,37 @@
 
 namespace gusev_d_radix_double {
 
+namespace {
+
+// Вспомогательная функция для одного прохода сортировки подсчетом (Counting Sort)
+// Помещена в анонимное пространство имен, чтобы избежать ошибки missing-declarations
+void CountSortPass(const uint64_t *source, uint64_t *dest, size_t n, int shift) {
+  std::array<size_t, 256> count{};
+  count.fill(0);
+
+  // Подсчет частот
+  for (size_t i = 0; i < n; ++i) {
+    uint8_t byte = (source[i] >> shift) & 0xFF;
+    count[byte]++;
+  }
+
+  // Префиксные суммы
+  size_t index = 0;
+  for (size_t &i : count) {
+    size_t tmp = i;
+    i = index;
+    index += tmp;
+  }
+
+  // Распределение элементов
+  for (size_t i = 0; i < n; ++i) {
+    uint8_t byte = (source[i] >> shift) & 0xFF;
+    dest[count[byte]++] = source[i];
+  }
+}
+
+}  // namespace
+
 GusevDRadixDoubleSEQ::GusevDRadixDoubleSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
@@ -20,28 +51,6 @@ bool GusevDRadixDoubleSEQ::ValidationImpl() {
 bool GusevDRadixDoubleSEQ::PreProcessingImpl() {
   GetOutput() = GetInput();
   return true;
-}
-
-void CountSortPass(const uint64_t *source, uint64_t *dest, size_t n, int shift) {
-  std::array<size_t, 256> count{};
-  count.fill(0);
-
-  for (size_t i = 0; i < n; ++i) {
-    uint8_t byte = (source[i] >> shift) & 0xFF;
-    count[byte]++;
-  }
-
-  size_t index = 0;
-  for (size_t &i : count) {
-    size_t tmp = i;
-    i = index;
-    index += tmp;
-  }
-
-  for (size_t i = 0; i < n; ++i) {
-    uint8_t byte = (source[i] >> shift) & 0xFF;
-    dest[count[byte]++] = source[i];
-  }
 }
 
 void GusevDRadixDoubleSEQ::RadixSort(std::vector<double> &data) {
