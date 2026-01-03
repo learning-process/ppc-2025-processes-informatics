@@ -81,8 +81,7 @@ bool TitaevMMetodPryamougolnikovSEQ::RunImpl() {
 
     std::vector<double> point(dimensions);
     for (int dimension = 0; dimension < dimensions; ++dimension) {
-      point[dimension] =
-          input.left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]); 
+      point[dimension] = input.left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]);
     }
 
     total_sum += Function(point);

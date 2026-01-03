@@ -14,7 +14,7 @@ namespace {
 double Function(const std::vector<double> &coords) {
   double sum = 0.0;
   for (double x : coords) {
-    sum += x;  
+    sum += x;
   }
   return sum;
 }
@@ -42,8 +42,7 @@ double ComputeLocalSum(int start_index, int end_index, int partitions, const std
 
     std::vector<double> point(dimensions);
     for (int dimension = 0; dimension < dimensions; ++dimension) {
-      point[dimension] =
-          left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]);
+      point[dimension] = left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]);
     }
 
     local_sum += Function(point);
@@ -101,7 +100,7 @@ bool TitaevMMetodPryamougolnikovMPI::RunImpl() {
   }
 
   std::vector<double> step_sizes(dimensions);
-  for (int dimension = 0; dimension < dimensions; ++dimension) { 
+  for (int dimension = 0; dimension < dimensions; ++dimension) {
     step_sizes[dimension] = (input.right_bounds[dimension] - input.left_bounds[dimension]) / partitions;
   }
 

@@ -18,7 +18,6 @@ class RectanglePerformanceTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_value) final {
-
     const double exact_value = 1.5;
     return std::abs(output_value - exact_value) < 1e-4;
   }
