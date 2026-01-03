@@ -18,7 +18,7 @@ class RectanglePerformanceTests : public ppc::util::BaseRunPerfTests<InType, Out
   }
 
   bool CheckTestOutputData(OutType &output_value) final {
-    // интеграл f(x,y,z) = x+y+z по [0,1]^3 = 3/2 = 1.5
+
     const double exact_value = 1.5;
     return std::abs(output_value - exact_value) < 1e-4;
   }

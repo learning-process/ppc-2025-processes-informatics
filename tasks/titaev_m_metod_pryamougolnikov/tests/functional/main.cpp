@@ -27,7 +27,6 @@ class TitaevMMetodPryamougolnikovFuncTests : public ppc::util::BaseRunFuncTests<
   }
 
   bool CheckTestOutputData(OutType &output_value) override {
-    // интеграл f(x,y) = x+y по [0,1]^2 = 1.0
     const double exact_value = 1.0;
     return std::abs(output_value - exact_value) < 1e-4;
   }

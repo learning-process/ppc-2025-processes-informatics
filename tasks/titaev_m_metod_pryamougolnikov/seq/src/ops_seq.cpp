@@ -61,28 +61,28 @@ bool TitaevMMetodPryamougolnikovSEQ::RunImpl() {
   }
 
   std::vector<double> step_sizes(dimensions);
-  for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+  for (int dimension = 0; dimension < dimensions; ++dimension) {
     step_sizes[dimension] = (input.right_bounds[dimension] - input.left_bounds[dimension]) / partitions;
   }
 
   std::vector<int> indices(dimensions, 0);
   int total_points = 1;
-  for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+  for (int dimension = 0; dimension < dimensions; ++dimension) {
     total_points *= partitions;
   }
 
   double total_sum = 0.0;
   for (int point_idx = 0; point_idx < total_points; ++point_idx) {
     int temp = point_idx;
-    for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+    for (int dimension = 0; dimension < dimensions; ++dimension) {
       indices[dimension] = temp % partitions;
       temp /= partitions;
     }
 
     std::vector<double> point(dimensions);
-    for (int dimension = 0; dimension < dimensions; ++dimension) {  // Изменено имя переменной
+    for (int dimension = 0; dimension < dimensions; ++dimension) {
       point[dimension] =
-          input.left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]);  // Добавлены скобки
+          input.left_bounds[dimension] + ((indices[dimension] + 0.5) * step_sizes[dimension]); 
     }
 
     total_sum += Function(point);
