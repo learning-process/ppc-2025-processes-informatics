@@ -1,34 +1,66 @@
 #include "lifanov_k_trapezoid_method/mpi/include/ops_mpi.hpp"
 
+#include <mpi.h>
+
+#include <algorithm>
 #include <cmath>
+#include <vector>
 
 #include "lifanov_k_trapezoid_method/common/include/common.hpp"
 
-#include <mpi.h>
-
 namespace lifanov_k_trapezoid_method {
 
-// Интегрируемая функция
-static double f(double x, double y) {
-  return x * x + y * y;  // пример
+namespace {
+
+double Function(double x, double y) {
+  return x * x + y * y;
 }
 
-LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType &in) {
+double Weight(int ix, int iy, int nx, int ny) {
+  double wx = (ix == 0 || ix == nx) ? 0.5 : 1.0;
+  double wy = (iy == 0 || iy == ny) ? 0.5 : 1.0;
+  return wx * wy;
+}
+
+double ComputeLocalSum(int x_start, int x_end, int nx, int ny, double ax, double ay, double hx, double hy) {
+  double local_sum = 0.0;
+
+  for (int i = x_start; i <= x_end; ++i) {
+    const double x = ax + i * hx;
+    for (int j = 0; j <= ny; ++j) {
+      const double y = ay + j * hy;
+      local_sum += Weight(i, j, nx, ny) * Function(x, y);
+    }
+  }
+
+  return local_sum;
+}
+
+}  // namespace
+
+LifanovKTrapezoidMethodMPI::LifanovKTrapezoidMethodMPI(const InType& input) {
   SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
+  GetInput() = input;
   GetOutput() = 0.0;
 }
 
 bool LifanovKTrapezoidMethodMPI::ValidationImpl() {
-  // Ожидаем: a, b, c, d, nx, ny
-  if (GetInput().size() != 6) {
+  const auto& in = GetInput();
+
+  if (in.size() != 6) {
     return false;
   }
-  if (GetInput()[4] <= 0 || GetInput()[5] <= 0) {
-    return false;
-  }
-  return true;
+
+  const double ax = in[0];
+  const double bx = in[1];
+  const double ay = in[2];
+  const double by = in[3];
+  const int nx = static_cast<int>(in[4]);
+  const int ny = static_cast<int>(in[5]);
+
+  return bx > ax && by > ay && nx > 0 && ny > 0;
 }
+
 
 bool LifanovKTrapezoidMethodMPI::PreProcessingImpl() {
   GetOutput() = 0.0;
@@ -36,49 +68,48 @@ bool LifanovKTrapezoidMethodMPI::PreProcessingImpl() {
 }
 
 bool LifanovKTrapezoidMethodMPI::RunImpl() {
-  int rank = 0, size = 0;
+  int rank = 0;
+  int size = 1;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  // Чтение входных данных
-  const double a = GetInput()[0];
-  const double b = GetInput()[1];
-  const double c = GetInput()[2];
-  const double d = GetInput()[3];
-  const int nx = static_cast<int>(GetInput()[4]);
-  const int ny = static_cast<int>(GetInput()[5]);
+  const auto& in = GetInput();
 
-  const double hx = (b - a) / nx;
-  const double hy = (d - c) / ny;
+  const int nx = in[4];
+  const int ny = in[5];
 
-  // Разбиение по x
-  const int base = nx / size;
-  const int rem = nx % size;
+  const double hx = (in[1] - in[0]) / nx;
+  const double hy = (in[3] - in[2]) / ny;
 
-  const int i_start = rank * base + std::min(rank, rem);
-  const int i_end = i_start + base - 1 + (rank < rem ? 1 : 0);
+  const int total_nodes = nx + 1;
+  const int base = total_nodes / size;
+  const int rem  = total_nodes % size;
+
+  const int x_start = rank * base + std::min(rank, rem);
+  int x_end = x_start + base - 1;
+  if (rank < rem) {
+    x_end += 1;
+  }
 
   double local_sum = 0.0;
-
-  for (int i = i_start; i <= i_end; ++i) {
-    double x = a + i * hx;
-    double wx = (i == 0 || i == nx) ? 0.5 : 1.0;
-
-    for (int j = 0; j <= ny; ++j) {
-      double y = c + j * hy;
-      double wy = (j == 0 || j == ny) ? 0.5 : 1.0;
-
-      local_sum += wx * wy * f(x, y);
-    }
+  if (x_start <= x_end) {
+    local_sum = ComputeLocalSum(
+      x_start, x_end,
+      in[4], in[5],
+      in[0], in[2],
+      hx, hy
+    );
   }
 
   double global_sum = 0.0;
-  MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&local_sum, &global_sum, 1,
+             MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
   if (rank == 0) {
     GetOutput() = global_sum * hx * hy;
   }
 
+  MPI_Bcast(&GetOutput(), 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   return true;
 }
 

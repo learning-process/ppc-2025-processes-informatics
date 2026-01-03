@@ -10,22 +10,32 @@
 
 namespace lifanov_k_trapezoid_method {
 
-class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class LifanovKTrapezoidMethodPerfTests
+    : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   InType input_data_;
 
   void SetUp() override {
-    // Крупная сетка для perf-теста
-    input_data_ = {0.0, 1.0, 0.0, 1.0, 2000.0, 2000.0};
+    // Большая равномерная сетка
+    input_data_ = {
+        0.0, 1.0,   // ax, bx
+        0.0, 1.0,   // ay, by
+        2000.0,     // nx
+        2000.0      // ny
+    };
   }
 
-  bool CheckTestOutputData(OutType &output_data) final {
+  bool CheckTestOutputData(OutType& output_data) final {
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // Проверяем только на root
     if (rank != 0) {
       return true;
     }
-    return output_data > 0.0;
+
+    // Значение интеграла должно быть положительным и конечным
+    return std::isfinite(output_data) && output_data > 0.0;
   }
 
   InType GetTestInputData() final {
@@ -37,12 +47,23 @@ TEST_P(LifanovKTrapezoidMethodPerfTests, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, LifanovKTrapezoidMethodMPI, LifanovKTrapezoidMethodSEQ>(PPC_SETTINGS_lifanov_k_trapezoid_method);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<
+        InType,
+        LifanovKTrapezoidMethodMPI,
+        LifanovKTrapezoidMethodSEQ>(
+        PPC_SETTINGS_lifanov_k_trapezoid_method);
 
-const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
+const auto kGtestValues =
+    ppc::util::TupleToGTestValues(kAllPerfTasks);
 
-const auto kPerfTestName = LifanovKTrapezoidMethodPerfTests::CustomPerfTestName;
+const auto kPerfTestName =
+    LifanovKTrapezoidMethodPerfTests::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(MyTrapezoidMethodPerfTests, LifanovKTrapezoidMethodPerfTests, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(
+    LifanovKTrapezoidMethodPerfTests,
+    LifanovKTrapezoidMethodPerfTests,
+    kGtestValues,
+    kPerfTestName);
 
 }  // namespace lifanov_k_trapezoid_method

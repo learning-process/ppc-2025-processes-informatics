@@ -6,26 +6,27 @@
 
 namespace lifanov_k_trapezoid_method {
 
-// Интегрируемая функция (та же, что в MPI)
-static double f(double x, double y) {
-  return x * x + y * y;  // пример
-}
-
-LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType &in) {
+LifanovKTrapezoidMethodSEQ::LifanovKTrapezoidMethodSEQ(const InType& in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0.0;
 }
 
 bool LifanovKTrapezoidMethodSEQ::ValidationImpl() {
-  // Ожидаем: a, b, c, d, nx, ny
-  if (GetInput().size() != 6) {
+  const auto& in = GetInput();
+
+  if (in.size() != 6) {
     return false;
   }
-  if (GetInput()[4] <= 0 || GetInput()[5] <= 0) {
-    return false;
-  }
-  return true;
+
+  const double ax = in[0];
+  const double bx = in[1];
+  const double ay = in[2];
+  const double by = in[3];
+  const int nx = static_cast<int>(in[4]);
+  const int ny = static_cast<int>(in[5]);
+
+  return (bx > ax) && (by > ay) && (nx > 0) && (ny > 0);
 }
 
 bool LifanovKTrapezoidMethodSEQ::PreProcessingImpl() {
@@ -33,32 +34,39 @@ bool LifanovKTrapezoidMethodSEQ::PreProcessingImpl() {
   return true;
 }
 
+// Интегрируемая функция
+static double Function(double x, double y) {
+  return x * x + y * y;
+}
+
 bool LifanovKTrapezoidMethodSEQ::RunImpl() {
-  const double a = GetInput()[0];
-  const double b = GetInput()[1];
-  const double c = GetInput()[2];
-  const double d = GetInput()[3];
-  const int nx = static_cast<int>(GetInput()[4]);
-  const int ny = static_cast<int>(GetInput()[5]);
+  const auto& in = GetInput();
 
-  const double hx = (b - a) / nx;
-  const double hy = (d - c) / ny;
+  const double ax = in[0];
+  const double bx = in[1];
+  const double ay = in[2];
+  const double by = in[3];
+  const int nx = static_cast<int>(in[4]);
+  const int ny = static_cast<int>(in[5]);
 
-  double sum = 0.0;
+  const double hx = (bx - ax) / nx;
+  const double hy = (by - ay) / ny;
+
+  double integral = 0.0;
 
   for (int i = 0; i <= nx; ++i) {
-    const double x = a + i * hx;
+    const double x = ax + i * hx;
     const double wx = (i == 0 || i == nx) ? 0.5 : 1.0;
 
     for (int j = 0; j <= ny; ++j) {
-      const double y = c + j * hy;
+      const double y = ay + j * hy;
       const double wy = (j == 0 || j == ny) ? 0.5 : 1.0;
 
-      sum += wx * wy * f(x, y);
+      integral += wx * wy * Function(x, y);
     }
   }
 
-  GetOutput() = sum * hx * hy;
+  GetOutput() = integral * hx * hy;
   return true;
 }
 

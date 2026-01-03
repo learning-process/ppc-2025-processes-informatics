@@ -19,8 +19,6 @@ class LifanovKTrapezoidMethodMPI : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-
-  std::vector<double> local_input_;
 };
 
 }  // namespace lifanov_k_trapezoid_method
