@@ -18,6 +18,8 @@ class DorofeevIScatterSEQ : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
+
+  static int GetTypeSize(MPI_Datatype type);
 };
 
 }  // namespace dorofeev_i_scatter
