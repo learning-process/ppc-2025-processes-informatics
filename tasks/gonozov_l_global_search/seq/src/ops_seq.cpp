@@ -66,7 +66,7 @@ void InizialzationStartParameters(std::vector<double> &test_sequence, const std:
     global_min_value = function(b);
   }
 }
-void FormNewtest_sequence(std::vector<double> &test_sequence) {
+void FormNewtestSequence(std::vector<double> &test_sequence) {
   std::ranges::sort(test_sequence.begin(), test_sequence.end());
 }
 
@@ -109,10 +109,7 @@ bool GonozovLGlobalSearchSEQ::RunImpl() {
   InizialzationStartParameters(test_sequence, function, global_min_x, global_min_value, a, b);
   bool continue_iteration = true;
   while (continue_iteration) {
-    FormNewtest_sequence(test_sequence);
-
-    // std::sort(test_sequence.begin(), test_sequence.end());
-    // M = CountingM(t, M, test_sequence, function);
+    FormNewtestSequence(test_sequence);
 
     double m = 0.0;
     FormNewParameters(m, highm, r, t, test_sequence, function);

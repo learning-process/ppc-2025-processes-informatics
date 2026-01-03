@@ -60,9 +60,9 @@ void InizialzationStartParameters(int proc_rank, std::vector<double> &test_seque
   }
 }
 
-void FormNewtestSequence(int proc_rank, std::vector<double> &test_sequence, int &n) {
+void FormNewtestSequence(int proc_rank, std::vector<double> &test_sequence, int *n) {
   if (proc_rank == 0) {
-    n = static_cast<int>(test_sequence.size());
+    *n = static_cast<int>(test_sequence.size());
   }
   MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -139,13 +139,13 @@ bool GonozovLGlobalSearchMPI::RunImpl() {
 
   while (continue_iteration) {
     int n = 0;
-    FormNewtestSequence(proc_rank, test_sequence, n);
+    FormNewtestSequence(proc_rank, test_sequence, &n);
 
     double m = 0.0;
 
     FormNewParameters(proc_rank, m, highm, r, t, test_sequence, function);
 
-    int intervals = static_cast<int>(n) - 1;
+    int intervals = n - 1;
     int per_proc = intervals / proc_num;
     int rem = intervals % proc_num;
 
