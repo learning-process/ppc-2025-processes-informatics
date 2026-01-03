@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include "gusev_d_star/common/include/common.hpp"
 #include "gusev_d_star/mpi/include/ops_mpi.hpp"
@@ -31,7 +30,7 @@ class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
     int initialized = 0;
     MPI_Initialized(&initialized);
 
-    if (!initialized) {
+    if (initialized == 0) {
       return input_data_ == output_data;
     }
 
