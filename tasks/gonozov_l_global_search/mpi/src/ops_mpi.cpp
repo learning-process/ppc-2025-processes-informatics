@@ -64,13 +64,13 @@ void FormNewtestSequence(int proc_rank, std::vector<double> &test_sequence, int 
   if (proc_rank == 0) {
     *n = static_cast<int>(test_sequence.size());
   }
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(n, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
   if (proc_rank != 0) {
-    test_sequence.resize(n);
+    test_sequence.resize(*n);
   }
 
-  MPI_Bcast(test_sequence.data(), n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Bcast(test_sequence.data(), *n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
   std::ranges::sort(test_sequence.begin(), test_sequence.end());
 }
