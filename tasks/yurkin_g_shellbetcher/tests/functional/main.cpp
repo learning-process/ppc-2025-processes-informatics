@@ -17,6 +17,10 @@
 #include "yurkin_g_shellbetcher/seq/include/ops_seq.hpp"
 
 namespace yurkin_g_shellbetcher {
+void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right, std::vector<int> &out);
+}
+
+namespace yurkin_g_shellbetcher {
 
 static std::int64_t ComputeExpectedChecksumSeq(int n) {
   std::vector<int> data;
