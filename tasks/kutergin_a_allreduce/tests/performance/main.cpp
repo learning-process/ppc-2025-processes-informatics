@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
+#include <array>
 #include <cstddef>
 #include <numeric>
 #include <random>
@@ -15,7 +16,7 @@
 
 namespace kutergin_a_allreduce {
 
-class AllreducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
+class KuterginAllreducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
     int rank = 0;
@@ -26,7 +27,6 @@ class AllreducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     }
 
     size_t total_elements = 100'000'000;
-
     size_t elements_per_process = total_elements / world_size;
 
     input_data_.elements.resize(elements_per_process);
@@ -78,15 +78,15 @@ class AllreducePerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
 
 namespace {
 
-TEST_P(AllreducePerfTests, PerfTest) {
+TEST_P(KuterginAllreducePerfTests, PerfTest) {
   ExecuteTest(GetParam());
 }
 
 const auto kAllPerfTasks =
     ppc::util::MakeAllPerfTasks<InType, AllreduceMPI, AllreduceSequential>(PPC_SETTINGS_kutergin_a_allreduce);
 
-INSTANTIATE_TEST_SUITE_P(AllreducePerf, AllreducePerfTests, ppc::util::TupleToGTestValues(kAllPerfTasks),
-                         AllreducePerfTests::CustomPerfTestName);
+INSTANTIATE_TEST_SUITE_P(KuterginAllreducePerf, KuterginAllreducePerfTests,
+                         ppc::util::TupleToGTestValues(kAllPerfTasks), KuterginAllreducePerfTests::CustomPerfTestName);
 
 }  // namespace
 }  // namespace kutergin_a_allreduce
