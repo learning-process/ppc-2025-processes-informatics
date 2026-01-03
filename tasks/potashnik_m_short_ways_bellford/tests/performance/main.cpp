@@ -11,7 +11,7 @@
 namespace potashnik_m_short_ways_bellford {
 
 class PotashnikMShortWaysBellfordPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
-  const int kCount_ = 6700;
+  const int kCount_ = 7000;
   InType input_data_;
 
   void SetUp() override {
