@@ -25,7 +25,7 @@ class DorofeevIScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
     // Create test data based on type
     if (type == MPI_DOUBLE) {
-      send_data_double_.resize(static_cast<size_t>(count * 4), 0.0);  // 4 processes
+      send_data_double_.resize(static_cast<size_t>(count) * 4, 0.0);  // 4 processes
       recv_data_double_.resize(count, 0.0);
       for (size_t i = 0; i < send_data_double_.size(); ++i) {
         send_data_double_[i] = static_cast<double>(i);
@@ -34,14 +34,14 @@ class DorofeevIScatterFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
       input_ = std::make_tuple(send_data_double_.data(), count, type, recv_data_double_.data(), count, type, root,
                                MPI_COMM_WORLD);
     } else if (type == MPI_INT) {
-      send_data_int_.resize(static_cast<size_t>(count * 4), 0);
+      send_data_int_.resize(static_cast<size_t>(count) * 4, 0);
       recv_data_int_.resize(count, 0);
       std::ranges::iota(send_data_int_, 0);
 
       input_ =
           std::make_tuple(send_data_int_.data(), count, type, recv_data_int_.data(), count, type, root, MPI_COMM_WORLD);
     } else if (type == MPI_FLOAT) {
-      send_data_float_.resize(static_cast<size_t>(count * 4), 0.0F);
+      send_data_float_.resize(static_cast<size_t>(count) * 4, 0.0F);
       recv_data_float_.resize(count, 0.0F);
       for (size_t i = 0; i < send_data_float_.size(); ++i) {
         send_data_float_[i] = static_cast<float>(i);
