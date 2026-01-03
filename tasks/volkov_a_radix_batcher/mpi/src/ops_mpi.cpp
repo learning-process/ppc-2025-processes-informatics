@@ -12,6 +12,7 @@
 namespace volkov_a_radix_batcher {
 
 namespace {
+
 int CheckComparator(int rank, int u, int v, int stage) {
   if ((u / (stage * 2)) != (v / (stage * 2))) {
     return -1;
@@ -31,6 +32,10 @@ int GetBatcherPartner(int rank, int world_size, int stage, int step) {
     for (int i = 0; i < step; ++i) {
       int u = j + i;
       int v = j + i + step;
+
+      if (v >= world_size) {
+        continue;
+      }
 
       if (u > rank) {
         return -1;
@@ -216,7 +221,6 @@ void VolkovARadixBatcherMPI::ExchangeAndMerge(int rank, int neighbor, const std:
 
   std::merge(local_vec.begin(), local_vec.end(), buffer_recv.begin(), buffer_recv.begin() + counts[neighbor],
              buffer_merge.begin());
-
   if (rank < neighbor) {
     std::copy(buffer_merge.begin(), buffer_merge.begin() + counts[rank], local_vec.begin());
   } else {

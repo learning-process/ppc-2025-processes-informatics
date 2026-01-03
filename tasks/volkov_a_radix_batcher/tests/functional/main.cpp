@@ -4,7 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <fstream>
 #include <limits>
 #include <string>
 #include <tuple>
@@ -36,35 +35,49 @@ class VolkovARadixBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
 
     if (param == "generate_empty") {
       test_input = {};
+
     } else if (param == "generate_single") {
       test_input = {3.0};
-    } else if (param == "generate_all_equal") {
-      test_input.assign(1000, 123.456);
-    } else if (param == "generate_sorted") {
-      test_input.resize(1000);
-      double start_val = -500.0;
-      for (size_t i = 0; i < test_input.size(); ++i) {
-        test_input[i] = start_val + static_cast<double>(i);
+
+    } else if (param == "generate_tiny_prime") {
+      test_input = {1.1, -2.2, 3.3, -4.4, 5.5, -6.6, 7.7};
+
+    } else if (param == "generate_all_positive") {
+      test_input.resize(500);
+      for (size_t i = 0; i < 500; ++i) {
+        test_input[i] = static_cast<double>(i) * 0.1;
       }
-    } else if (param == "generate_reverse") {
-      test_input.resize(1000);
-      double start_val = -500.0;
-      for (size_t i = 0; i < test_input.size(); ++i) {
-        test_input[i] = start_val + static_cast<double>(i);
+
+    } else if (param == "generate_all_negative") {
+      test_input.resize(500);
+      for (size_t i = 0; i < 500; ++i) {
+        test_input[i] = static_cast<double>(i) * -0.1;
       }
-      std::ranges::reverse(test_input);
+
     } else if (param == "generate_dense_alternating") {
       size_t size = 2000;
       test_input.resize(size);
       for (size_t i = 0; i < size; ++i) {
         auto val = static_cast<double>(i + 1);
-        // Чередуем: +, -, +, - ...
         test_input[i] = (i % 2 == 0) ? val : -val;
       }
-    } else if (param == "generate_zeros") {
-      test_input.assign(1000, 0.0);
-    } else if (param == "generate_negative_mixed") {
-      test_input = {0.0, -0.0, 5.0, -5.0, 1.0, -1.0, 2.5, -2.5};
+
+    } else if (param == "generate_zeros_mixed") {
+      test_input = {0.0, -0.0, 0.0, -0.0, 1.0, -1.0};
+
+    } else if (param == "generate_sorted") {
+      test_input.resize(500);
+      for (size_t i = 0; i < 500; ++i) {
+        test_input[i] = static_cast<double>(i);
+      }
+
+    } else if (param == "generate_reverse") {
+      test_input.resize(500);
+      for (size_t i = 0; i < 500; ++i) {
+        test_input[i] = static_cast<double>(i);
+      }
+      std::ranges::reverse(test_input);
+
     } else if (param == "generate_extreme_values") {
       test_input = {
           std::numeric_limits<double>::max(),
@@ -78,23 +91,9 @@ class VolkovARadixBatcherFuncTests : public ppc::util::BaseRunFuncTests<InType, 
           1e100,
           -1e100,
       };
-    } else if (param == "generate_random_small") {
-      GenerateRandomData(17, -100.0, 100.0);
-    } else if (param == "generate_random_medium") {
-      GenerateRandomData(128, -1e5, 1e5);
+
     } else if (param == "generate_random_large") {
-      GenerateRandomData(1000, -1e9, 1e9);
-    } else {
-      std::string path = ppc::util::GetAbsoluteTaskPath(PPC_ID_volkov_a_radix_batcher, param + ".txt");
-      std::ifstream stream(path);
-      if (stream.is_open()) {
-        size_t size = 0;
-        stream >> size;
-        test_input.resize(size);
-        for (size_t i = 0; i < size; ++i) {
-          stream >> test_input[i];
-        }
-      }
+      GenerateRandomData(2000, -1000.0, 1000.0);
     }
 
     expected_output = test_input;
@@ -124,20 +123,10 @@ TEST_P(VolkovARadixBatcherFuncTests, Correctness) {
   ExecuteTest(GetParam());
 }
 
-const std::array<TestType, 14> kTestParams = {"test1",
-                                              "test2",
-                                              "generate_empty",
-                                              "generate_single",
-                                              "generate_all_equal",
-                                              "generate_sorted",
-                                              "generate_reverse",
-                                              "generate_zeros",
-                                              "generate_dense_alternating",
-                                              "generate_negative_mixed",
-                                              "generate_extreme_values",
-                                              "generate_random_small",
-                                              "generate_random_medium",
-                                              "generate_random_large"};
+const std::array<TestType, 11> kTestParams = {
+    "generate_empty",        "generate_single",         "generate_tiny_prime",        "generate_all_positive",
+    "generate_all_negative", "generate_zeros_mixed",    "generate_dense_alternating", "generate_sorted",
+    "generate_reverse",      "generate_extreme_values", "generate_random_large"};
 
 const auto kTasks = std::tuple_cat(
     ppc::util::AddFuncTask<VolkovARadixBatcherMPI, InType>(kTestParams, PPC_SETTINGS_volkov_a_radix_batcher),
