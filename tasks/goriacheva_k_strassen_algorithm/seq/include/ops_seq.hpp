@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "goriacheva_k_Strassen_algorithm/common/include/common.hpp"
+#include "goriacheva_k_strassen_algorithm/common/include/common.hpp"
 #include "task/include/task.hpp"
 
 namespace goriacheva_k_Strassen_algorithm {

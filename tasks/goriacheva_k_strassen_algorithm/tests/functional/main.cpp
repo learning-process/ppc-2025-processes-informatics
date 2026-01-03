@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
-#include "goriacheva_k_Strassen_algorithm/common/include/common.hpp"
-#include "goriacheva_k_Strassen_algorithm/mpi/include/ops_mpi.hpp"
-#include "goriacheva_k_Strassen_algorithm/seq/include/ops_seq.hpp"
+#include "goriacheva_k_strassen_algorithm/common/include/common.hpp"
+#include "goriacheva_k_strassen_algorithm/mpi/include/ops_mpi.hpp"
+#include "goriacheva_k_strassen_algorithm/seq/include/ops_seq.hpp"
 #include "task/include/task.hpp"
 #include "util/include/func_test_util.hpp"
 
