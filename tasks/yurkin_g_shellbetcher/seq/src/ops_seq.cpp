@@ -3,9 +3,10 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <random>
 #include <vector>
+
+#include "yurkin_g_shellbetcher/common/include/common.hpp"
 
 namespace yurkin_g_shellbetcher {
 namespace {
@@ -17,7 +18,7 @@ void ShellSort(std::vector<int> &a) {
   }
   std::size_t gap = 1;
   while (gap < n / 3) {
-    gap = (gap * 3) + 1;
+    gap = gap * 3 + 1;
   }
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
@@ -33,53 +34,21 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void CompareExchange(std::vector<int> &arr, int i, int j, bool ascending) {
-  if (ascending) {
-    if (arr[i] > arr[j]) {
-      std::swap(arr[i], arr[j]);
-    }
-  } else {
-    if (arr[i] < arr[j]) {
-      std::swap(arr[i], arr[j]);
-    }
-  }
-}
+void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
+  out.resize(a.size() + b.size());
+  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
 
-void BatcherOddEvenNetwork(std::vector<int> &arr, int length) {
-  for (int step_val = 1; step_val < length; step_val <<= 1) {
-    for (int stride_val = step_val; stride_val > 0; stride_val >>= 1) {
-      for (int idx = 0; idx < length; ++idx) {
-        int partner = idx ^ stride_val;
-        if (partner > idx) {
-          bool ascending = ((idx & step_val) == 0);
-          CompareExchange(arr, idx, partner, ascending);
-        }
+  for (int phase = 0; phase < 2; ++phase) {
+    auto start = static_cast<std::size_t>(phase);
+    for (std::size_t i = start; i + 1 < out.size(); i += 2) {
+      if (out[i] > out[i + 1]) {
+        std::swap(out[i], out[i + 1]);
       }
     }
   }
 }
 
 }  // namespace
-
-void BatcherMerge(const std::vector<int> &left, const std::vector<int> &right,
-                  std::vector<int> &out) {  // NOLINT(misc-use-internal-linkage)
-  const std::size_t orig_n = left.size() + right.size();
-  out.clear();
-  out.reserve(orig_n);
-  out.insert(out.end(), left.begin(), left.end());
-  out.insert(out.end(), right.begin(), right.end());
-  if (orig_n == 0) {
-    return;
-  }
-  std::size_t pow2 = 1;
-  while (pow2 < orig_n) {
-    pow2 <<= 1;
-  }
-  const int sentinel = std::numeric_limits<int>::max();
-  out.resize(pow2, sentinel);
-  BatcherOddEvenNetwork(out, static_cast<int>(pow2));
-  out.resize(orig_n);
-}
 
 YurkinGShellBetcherSEQ::YurkinGShellBetcherSEQ(const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
@@ -112,15 +81,17 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   ShellSort(data);
 
   const std::size_t mid = data.size() / 2;
-  std::vector<int> left;
-  std::vector<int> right;
-  left.assign(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
-  right.assign(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
+  std::vector<int> left(data.begin(), data.begin() + static_cast<std::vector<int>::difference_type>(mid));
+  std::vector<int> right(data.begin() + static_cast<std::vector<int>::difference_type>(mid), data.end());
 
   std::vector<int> merged;
-  BatcherMerge(left, right, merged);
+  OddEvenBatcherMerge(left, right, merged);
 
   ShellSort(merged);
+
+  if (!std::is_sorted(merged.begin(), merged.end())) {
+    return false;
+  }
 
   std::int64_t checksum = 0;
   for (int v : merged) {
