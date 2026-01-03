@@ -22,7 +22,7 @@ class KhruevAGlobalOptPerfTests : public ppc::util::BaseRunPerfTests<InType, Out
 
     input_data.epsilon = 1e-7;
     input_data.max_iter = 7000;
-    input_data.r = 4;
+    input_data.r = 3;
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
