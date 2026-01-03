@@ -1,6 +1,7 @@
 #include "yurkin_g_shellbetcher/seq/include/ops_seq.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -38,10 +39,10 @@ void ShellSort(std::vector<int> &data) {
 void OddEvenBatcherMerge(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
   out.resize(a.size() + b.size());
 
-  std::merge(a.begin(), a.end(), b.begin(), b.end(), out.begin());
+  std::ranges::merge(a, b, out.begin());
 
   for (int phase = 0; phase < 2; ++phase) {
-    std::size_t start = static_cast<std::size_t>(phase);
+    auto start = static_cast<std::size_t>(phase);
     for (std::size_t i = start; i + 1 < out.size(); i += 2) {
       if (out[i] > out[i + 1]) {
         std::swap(out[i], out[i + 1]);
@@ -63,7 +64,7 @@ bool YurkinGShellBetcherSEQ::ValidationImpl() {
 }
 
 bool YurkinGShellBetcherSEQ::PreProcessingImpl() {
-  return GetInput() > 0;
+  return true;
 }
 
 bool YurkinGShellBetcherSEQ::RunImpl() {
@@ -81,15 +82,15 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
   }
 
   std::vector<int> expected = data;
-  std::sort(expected.begin(), expected.end());
+  std::ranges::sort(expected);
 
   ShellSort(data);
 
   std::vector<int> merged;
-  OddEvenBatcherMerge(data, std::vector<int>{}, merged);
+  OddEvenBatcherMerge(data, {}, merged);
   data.swap(merged);
 
-  if (!std::is_sorted(data.begin(), data.end())) {
+  if (!std::ranges::is_sorted(data)) {
     return false;
   }
 
@@ -107,7 +108,7 @@ bool YurkinGShellBetcherSEQ::RunImpl() {
 }
 
 bool YurkinGShellBetcherSEQ::PostProcessingImpl() {
-  return GetOutput() > 0;
+  return true;
 }
 
 }  // namespace yurkin_g_shellbetcher
