@@ -25,10 +25,10 @@ class StronginSearchMpi : public BaseTask {
   [[nodiscard]] double ComputeGlobalSlope() const;
   [[nodiscard]] std::pair<int, int> IntervalRange(int intervals) const;
   [[nodiscard]] std::pair<double, int> EvaluateIntervals(int start, int end, double m) const;
-  bool TryInsertPoint(const InType &input, int best_index, double epsilon, double m, int &insert_index,
-                      double &new_point, double &new_value);
+  bool TryInsertPoint(const InType &input, int best_index, double epsilon, double m, double left_bound,
+                      double right_bound, int &insert_index, double &new_point, double &new_value);
   static void BroadcastInsertionData(int &continue_flag, int &insert_index, double &new_point, double &new_value);
-  bool ProcessIteration(const InType &input, double reliability, double epsilon);
+  bool ProcessIteration(const InType &input, double epsilon, double left_bound, double right_bound);
 
   int rank_ = 0;
   int world_size_ = 1;

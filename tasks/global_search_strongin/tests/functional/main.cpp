@@ -4,7 +4,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <functional>
 #include <string>
 #include <tuple>
 
@@ -16,44 +15,32 @@
 
 namespace global_search_strongin {
 
-struct StronginCase {
-  double left = 0.0;
-  double right = 1.0;
-  double epsilon = 1e-3;
-  double reliability = 2.0;
-  int max_iterations = 200;
-  std::function<double(double)> objective;
-};
-
-using TestType = StronginCase;
+using TestType = std::tuple<int, double, double, double, int, std::function<double(double)>, double>;
 
 class StronginFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  static std::string PrintTestParam(const TestType &param) {
-    const auto to_gtest_name_int = [](double v) {
-      const int iv = static_cast<int>(v);
-      if (iv < 0) {
-        return std::string("m") + std::to_string(-iv);
-      }
-      return std::to_string(iv);
-    };
-
-    const auto l = to_gtest_name_int(param.left);
-    const auto r = to_gtest_name_int(param.right);
-    const auto it = std::to_string(param.max_iterations);
-    return l + "_" + r + "_" + it;
+  static std::string PrintTestParam(const TestType &test_param) {
+    std::string result = "test_" + std::to_string(std::get<0>(test_param)) + "_from_" +
+                         std::to_string(std::get<1>(test_param)) + "_to_" + std::to_string(std::get<2>(test_param)) +
+                         "_epsilon_" + std::to_string(std::get<3>(test_param)) + "_max_iters_" +
+                         std::to_string(std::get<4>(test_param));
+    std::ranges::replace(result, '.', '_');
+    std::ranges::replace(result, '-', 'm');
+    return result;
   }
 
  protected:
   void SetUp() override {
-    const auto &param = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_.left = param.left;
-    input_.right = param.right;
-    input_.epsilon = param.epsilon;
-    input_.reliability = param.reliability;
-    input_.max_iterations = param.max_iterations;
-    input_.objective = param.objective;
-    reference_min_ = ComputeReferenceMin(input_);
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+
+    const double left = std::get<1>(params);
+    const double right = std::get<2>(params);
+    const double epsilon = std::get<3>(params);
+    const int max_iters = std::get<4>(params);
+    const auto function = std::get<5>(params);
+
+    expected_result_ = std::get<6>(params);
+    input_ = std::make_tuple(left, right, epsilon, max_iters, function);
   }
 
   InType GetTestInputData() final {
@@ -61,50 +48,20 @@ class StronginFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Te
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (!std::isfinite(output_data.best_point) || !std::isfinite(output_data.best_value)) {
-      return false;
-    }
-    if (output_data.best_point < input_.left || output_data.best_point > input_.right) {
-      return false;
-    }
-    if (output_data.iterations < 0 || output_data.iterations > input_.max_iterations) {
-      return false;
-    }
-
-    const double f_at_best = input_.objective(output_data.best_point);
-    if (!std::isfinite(f_at_best)) {
-      return false;
-    }
-    if (std::fabs(f_at_best - output_data.best_value) > 1e-9) {
-      return false;
-    }
-
-    // Allow some slack vs. dense sampling reference.
-    return output_data.best_value <= reference_min_ + 1e-2;
-  }
-
- private:
-  static double ComputeReferenceMin(const InType &input) {
-    constexpr std::size_t kSamples = 20000;
-    const double step = (input.right - input.left) / static_cast<double>(kSamples);
-    double best = input.objective(input.left);
-    for (std::size_t i = 1; i <= kSamples; ++i) {
-      const double x = input.left + (step * static_cast<double>(i));
-      best = std::min(best, input.objective(x));
-    }
-    return best;
+    constexpr double kTolerance = 1e-2;
+    return std::abs(output_data - expected_result_) <= kTolerance;
   }
 
   InType input_{};
-  double reference_min_ = 0.0;
+  OutType expected_result_{};
 };
 
 namespace {
 
 const std::array<TestType, 3> kTestParams = {
-    TestType{-5.0, 5.0, 1e-3, 2.0, 250, [](double x) { return (x - 2.0) * (x - 2.0); }},
-    TestType{-10.0, 10.0, 1e-3, 2.0, 300, [](double x) { return std::sin(x) + (0.1 * x); }},
-    TestType{-3.0, 3.0, 1e-3, 2.0, 300, [](double x) { return std::fabs(x) + (0.2 * std::cos(10.0 * x)); }},
+    std::make_tuple(1, -5.0, 5.0, 0.1, 500, [](double x) { return x * x; }, 0.0),
+    std::make_tuple(2, 2.0, 14.0, 0.1, 500, [](double x) { return (x - 2) * (x - 2); }, 0.0),
+    std::make_tuple(3, 0.0, 8.0, 0.1, 1000, [](double x) { return std::sin(x); }, -1.0),
 };
 
 const auto kTaskList =

@@ -12,9 +12,11 @@ namespace global_search_strongin {
 namespace {
 
 constexpr double kNearEps = 1e-12;
+constexpr double kReliability = 2.0;
 
 double Evaluate(const InType &input, double x) {
-  return input.objective ? input.objective(x) : 0.0;
+  const auto &objective = std::get<4>(input);
+  return objective ? objective(x) : 0.0;
 }
 
 bool Comparator(const SamplePoint &lhs, const SamplePoint &rhs) {
@@ -31,24 +33,33 @@ StronginSearchSeq::StronginSearchSeq(const InType &in) {
 
 bool StronginSearchSeq::ValidationImpl() {
   const auto &input = GetInput();
-  if (!input.objective) {
+  const auto &objective = std::get<4>(input);
+  const double left = std::get<0>(input);
+  const double right = std::get<1>(input);
+  const double epsilon = std::get<2>(input);
+  const int max_iterations = std::get<3>(input);
+
+  if (!objective) {
     return false;
   }
-  if (!(input.left < input.right)) {
+  if (!(left < right)) {
     return false;
   }
-  if (input.epsilon <= 0.0 || input.reliability <= 0.0) {
+  if (epsilon <= 0.0) {
     return false;
   }
-  return input.max_iterations > 0;
+  return max_iterations > 0;
 }
 
 bool StronginSearchSeq::PreProcessingImpl() {
   points_.clear();
   const auto &input = GetInput();
 
-  const SamplePoint left{.x = input.left, .value = Evaluate(input, input.left)};
-  const SamplePoint right{.x = input.right, .value = Evaluate(input, input.right)};
+  const double left_bound = std::get<0>(input);
+  const double right_bound = std::get<1>(input);
+
+  const SamplePoint left{.x = left_bound, .value = Evaluate(input, left_bound)};
+  const SamplePoint right{.x = right_bound, .value = Evaluate(input, right_bound)};
   points_.push_back(left);
   points_.push_back(right);
   if (!std::ranges::is_sorted(points_, Comparator)) {
@@ -64,19 +75,24 @@ bool StronginSearchSeq::PreProcessingImpl() {
 bool StronginSearchSeq::RunImpl() {
   const auto &input = GetInput();
 
-  while (iterations_done_ < input.max_iterations) {
+  const double left_bound = std::get<0>(input);
+  const double right_bound = std::get<1>(input);
+  const double epsilon = std::get<2>(input);
+  const int max_iterations = std::get<3>(input);
+
+  while (iterations_done_ < max_iterations) {
     if (points_.size() < 2) {
       break;
     }
 
     const double max_slope = ComputeMaxSlope();
-    const double m = max_slope > 0.0 ? input.reliability * max_slope : 1.0;
+    const double m = max_slope > 0.0 ? kReliability * max_slope : 1.0;
     const auto interval_index = SelectInterval(m);
     if (!interval_index.has_value()) {
       break;
     }
 
-    if (!InsertPoint(input, *interval_index, input.epsilon, m)) {
+    if (!InsertPoint(input, *interval_index, epsilon, m, left_bound, right_bound)) {
       break;
     }
 
@@ -87,11 +103,7 @@ bool StronginSearchSeq::RunImpl() {
 }
 
 bool StronginSearchSeq::PostProcessingImpl() {
-  OutType out{};
-  out.best_point = best_x_;
-  out.best_value = best_value_;
-  out.iterations = iterations_done_;
-  GetOutput() = out;
+  GetOutput() = best_value_;
   return true;
 }
 
@@ -144,7 +156,8 @@ std::optional<std::size_t> StronginSearchSeq::SelectInterval(double m) const {
   return best_index;
 }
 
-bool StronginSearchSeq::InsertPoint(const InType &input, std::size_t interval_index, double epsilon, double m) {
+bool StronginSearchSeq::InsertPoint(const InType &input, std::size_t interval_index, double epsilon, double m,
+                                    double left_bound, double right_bound) {
   if (interval_index == 0 || interval_index >= points_.size()) {
     return false;
   }
@@ -157,13 +170,13 @@ bool StronginSearchSeq::InsertPoint(const InType &input, std::size_t interval_in
   }
 
   double x_new = (0.5 * (left.x + right.x)) - ((right.value - left.value) / (2.0 * m));
-  x_new = std::clamp(x_new, input.left, input.right);
+  x_new = std::clamp(x_new, left_bound, right_bound);
 
   if (x_new <= left.x + kNearEps || x_new >= right.x - kNearEps) {
     x_new = 0.5 * (left.x + right.x);
   }
 
-  if (x_new <= input.left || x_new >= input.right) {
+  if (x_new <= left_bound || x_new >= right_bound) {
     return false;
   }
 

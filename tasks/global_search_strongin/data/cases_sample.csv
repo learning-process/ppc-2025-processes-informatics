@@ -1,4 +1,0 @@
-case,left,right,epsilon,reliability,max_iterations,objective
-quadratic,-5.0,5.0,0.001,2.0,250,(x-2)^2
-sin_linear,-10.0,10.0,0.001,2.0,300,sin(x)+0.1*x
-abs_cos,-3.0,3.0,0.001,2.0,300,abs(x)+0.2*cos(10*x)

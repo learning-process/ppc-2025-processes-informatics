@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
 #include <cmath>
-#include <cstddef>
+#include <tuple>
 
 #include "global_search_strongin/common/include/common.hpp"
 #include "global_search_strongin/mpi/include/ops_mpi.hpp"
@@ -11,41 +10,15 @@
 
 namespace global_search_strongin {
 
-namespace {
-
-double ComputeReferenceMin(const InType &input) {
-  constexpr std::size_t kSamples = 50000;
-  const double step = (input.right - input.left) / static_cast<double>(kSamples);
-  double best = input.objective(input.left);
-  for (std::size_t i = 1; i <= kSamples; ++i) {
-    const double x = input.left + (step * static_cast<double>(i));
-    best = std::min(best, input.objective(x));
-  }
-  return best;
-}
-
-}  // namespace
-
 class StronginPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    input_.left = -10.0;
-    input_.right = 10.0;
-    input_.epsilon = 1e-3;
-    input_.reliability = 2.0;
-    input_.max_iterations = 500;
-    input_.objective = [](double x) {
-      double acc = 0.0;
-      for (int i = 1; i <= 3000; ++i) {
-        const double t = x * static_cast<double>(i);
-        acc += std::sin(t) * std::cos(t / (static_cast<double>(i) + 1.0));
-      }
-
-      const double base = std::sin(x) + (0.25 * std::sin(3.0 * x)) + (0.01 * x);
-      volatile double sink = acc;
-      return base + (static_cast<double>(sink) * 1e-12);
-    };
-    reference_min_ = ComputeReferenceMin(input_);
+    const double left = -5.0;
+    const double right = 5.0;
+    const double epsilon = 1e-4;
+    const int max_iters = 40000;
+    input_ = std::make_tuple(left, right, epsilon, max_iters, Function);
+    expected_result_ = -6.1;
   }
 
   InType GetTestInputData() final {
@@ -53,18 +26,18 @@ class StronginPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    if (!std::isfinite(output_data.best_point) || !std::isfinite(output_data.best_value)) {
-      return false;
-    }
-    if (output_data.best_point < input_.left || output_data.best_point > input_.right) {
-      return false;
-    }
-    return output_data.best_value <= reference_min_ + 5e-2;
+    constexpr double kTolerance = 1e-2;
+    return std::abs(output_data - expected_result_) <= kTolerance;
   }
 
  private:
   InType input_{};
-  double reference_min_ = 0.0;
+  OutType expected_result_{};
+
+  static double Function(double x) {
+    return (0.002 * x * x) + (5.0 * std::sin(30.0 * x)) + std::sin(200.0 * std::sin(50.0 * x)) +
+           (0.1 * std::cos(300.0 * x));
+  }
 };
 
 namespace {

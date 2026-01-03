@@ -14,8 +14,11 @@
 namespace global_search_strongin {
 namespace {
 
+constexpr double kReliability = 2.0;
+
 double Evaluate(const InType &input, double x) {
-  return input.objective ? input.objective(x) : 0.0;
+  const auto &objective = std::get<4>(input);
+  return objective ? objective(x) : 0.0;
 }
 
 bool Comparator(const SamplePoint &lhs, const SamplePoint &rhs) {
@@ -32,16 +35,22 @@ StronginSearchMpi::StronginSearchMpi(const InType &in) {
 
 bool StronginSearchMpi::ValidationImpl() {
   const auto &input = GetInput();
-  if (!input.objective) {
+  const auto &objective = std::get<4>(input);
+  const double left = std::get<0>(input);
+  const double right = std::get<1>(input);
+  const double epsilon = std::get<2>(input);
+  const int max_iterations = std::get<3>(input);
+
+  if (!objective) {
     return false;
   }
-  if (!(input.left < input.right)) {
+  if (!(left < right)) {
     return false;
   }
-  if (input.epsilon <= 0.0 || input.reliability <= 0.0) {
+  if (epsilon <= 0.0) {
     return false;
   }
-  return input.max_iterations > 0;
+  return max_iterations > 0;
 }
 
 bool StronginSearchMpi::PreProcessingImpl() {
@@ -50,8 +59,11 @@ bool StronginSearchMpi::PreProcessingImpl() {
 
   points_.clear();
   const auto &input = GetInput();
-  const SamplePoint left{.x = input.left, .value = Evaluate(input, input.left)};
-  const SamplePoint right{.x = input.right, .value = Evaluate(input, input.right)};
+
+  const double left_bound = std::get<0>(input);
+  const double right_bound = std::get<1>(input);
+  const SamplePoint left{.x = left_bound, .value = Evaluate(input, left_bound)};
+  const SamplePoint right{.x = right_bound, .value = Evaluate(input, right_bound)};
   points_.push_back(left);
   points_.push_back(right);
   if (!std::ranges::is_sorted(points_, Comparator)) {
@@ -65,12 +77,14 @@ bool StronginSearchMpi::PreProcessingImpl() {
 
 bool StronginSearchMpi::RunImpl() {
   const auto &input = GetInput();
-  const double reliability = input.reliability;
-  const double epsilon = input.epsilon;
-  const int max_iterations = input.max_iterations;
+
+  const double left_bound = std::get<0>(input);
+  const double right_bound = std::get<1>(input);
+  const double epsilon = std::get<2>(input);
+  const int max_iterations = std::get<3>(input);
 
   while (iterations_done_ < max_iterations) {
-    if (!ProcessIteration(input, reliability, epsilon)) {
+    if (!ProcessIteration(input, epsilon, left_bound, right_bound)) {
       break;
     }
     ++iterations_done_;
@@ -80,24 +94,13 @@ bool StronginSearchMpi::RunImpl() {
 }
 
 bool StronginSearchMpi::PostProcessingImpl() {
-  OutType out{};
   if (rank_ == 0) {
-    out.best_point = best_x_;
-    out.best_value = best_value_;
-    out.iterations = iterations_done_;
-    GetOutput() = out;
+    GetOutput() = best_value_;
   }
 
-  std::array<double, 2> point_value_data{best_x_, best_value_};
-  MPI_Bcast(point_value_data.data(), static_cast<int>(point_value_data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  int iterations = iterations_done_;
-  MPI_Bcast(&iterations, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
+  MPI_Bcast(&best_value_, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   if (rank_ != 0) {
-    auto &output = GetOutput();
-    output.best_point = point_value_data[0];
-    output.best_value = point_value_data[1];
-    output.iterations = iterations;
+    GetOutput() = best_value_;
   }
   return true;
 }
@@ -161,8 +164,8 @@ std::pair<double, int> StronginSearchMpi::EvaluateIntervals(int start, int end, 
   return {global_best_value, global_best_index};
 }
 
-bool StronginSearchMpi::TryInsertPoint(const InType &input, int best_index, double epsilon, double m, int &insert_index,
-                                       double &new_point, double &new_value) {
+bool StronginSearchMpi::TryInsertPoint(const InType &input, int best_index, double epsilon, double m, double left_bound,
+                                       double right_bound, int &insert_index, double &new_point, double &new_value) {
   const auto left_index = static_cast<std::size_t>(best_index);
   const auto &left = points_[left_index];
   const auto &right = points_[left_index + 1];
@@ -172,7 +175,7 @@ bool StronginSearchMpi::TryInsertPoint(const InType &input, int best_index, doub
   }
 
   new_point = (0.5 * (left.x + right.x)) - ((right.value - left.value) / (2.0 * m));
-  new_point = std::clamp(new_point, input.left, input.right);
+  new_point = std::clamp(new_point, left_bound, right_bound);
   const bool already_used = std::ranges::any_of(points_, [new_point](const SamplePoint &point) {
     return std::fabs(point.x - new_point) < std::numeric_limits<double>::epsilon();
   });
@@ -202,13 +205,13 @@ void StronginSearchMpi::BroadcastInsertionData(int &continue_flag, int &insert_i
   MPI_Bcast(&new_value, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 }
 
-bool StronginSearchMpi::ProcessIteration(const InType &input, double reliability, double epsilon) {
+bool StronginSearchMpi::ProcessIteration(const InType &input, double epsilon, double left_bound, double right_bound) {
   if (points_.size() < 2) {
     return false;
   }
   const int intervals = static_cast<int>(points_.size()) - 1;
   const double global_max_slope = ComputeGlobalSlope();
-  const double m = global_max_slope > 0.0 ? reliability * global_max_slope : 1.0;
+  const double m = global_max_slope > 0.0 ? kReliability * global_max_slope : 1.0;
   const auto [start, end] = IntervalRange(intervals);
   const auto interval_selection = EvaluateIntervals(start, end, m);
   const int best_index = interval_selection.second;
@@ -221,7 +224,9 @@ bool StronginSearchMpi::ProcessIteration(const InType &input, double reliability
   double new_value = 0.0;
   int continue_flag = 0;
   if (rank_ == 0) {
-    continue_flag = TryInsertPoint(input, best_index, epsilon, m, insert_index, new_point, new_value) ? 1 : 0;
+    continue_flag =
+        TryInsertPoint(input, best_index, epsilon, m, left_bound, right_bound, insert_index, new_point, new_value) ? 1
+                                                                                                                   : 0;
   }
 
   BroadcastInsertionData(continue_flag, insert_index, new_point, new_value);
@@ -237,10 +242,7 @@ bool StronginSearchMpi::ProcessIteration(const InType &input, double reliability
     }
   }
 
-  std::array<double, 2> best_data{best_x_, best_value_};
-  MPI_Bcast(best_data.data(), static_cast<int>(best_data.size()), MPI_DOUBLE, 0, MPI_COMM_WORLD);
-  best_x_ = best_data[0];
-  best_value_ = best_data[1];
+  MPI_Bcast(&best_value_, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   return true;
 }
 

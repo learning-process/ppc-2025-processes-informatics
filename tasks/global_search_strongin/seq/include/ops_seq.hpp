@@ -25,7 +25,8 @@ class StronginSearchSeq : public BaseTask {
 
   [[nodiscard]] double ComputeMaxSlope() const;
   [[nodiscard]] std::optional<std::size_t> SelectInterval(double m) const;
-  bool InsertPoint(const InType &input, std::size_t interval_index, double epsilon, double m);
+  bool InsertPoint(const InType &input, std::size_t interval_index, double epsilon, double m, double left_bound,
+                   double right_bound);
 
   std::vector<SamplePoint> points_;
   double best_x_ = 0.0;
