@@ -1,12 +1,10 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <array>
 #include <cstddef>
 #include <numeric>
 #include <random>
 #include <string>
-#include <vector>
 
 #include "../../common/include/common.hpp"
 #include "../../mpi/include/ops_mpi.hpp"
