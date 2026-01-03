@@ -25,15 +25,6 @@ class LifanovKTrapezoidMethodPerfTests : public ppc::util::BaseRunPerfTests<InTy
   }
 
   bool CheckTestOutputData(OutType &output_data) final {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-    // Проверяем только на root
-    if (rank != 0) {
-      return true;
-    }
-
-    // Значение интеграла должно быть положительным и конечным
     return std::isfinite(output_data) && output_data > 0.0;
   }
 
