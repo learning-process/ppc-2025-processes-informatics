@@ -4,10 +4,9 @@
 
 #include <algorithm>
 #include <cmath>
-#include <compare>
 #include <cstddef>
 #include <functional>
-#include <ranges>
+#include <utility>
 #include <vector>
 
 #include "khruev_a_global_opt/common/include/common.hpp"

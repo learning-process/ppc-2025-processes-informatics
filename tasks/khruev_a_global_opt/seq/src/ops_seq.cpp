@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <ranges>
+#include <cstddef>
 
 #include "khruev_a_global_opt/common/include/common.hpp"
 

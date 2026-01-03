@@ -40,7 +40,6 @@ class KhruevAGlobalOptFuncTests : public ppc::util::BaseRunFuncTests<InType, Out
 
   bool CheckTestOutputData(OutType &output_data) final {
     const double tolerance = 2e-1;
-    std::cout << "AAAAA" << output_data.value << '\n';
     return std::abs(output_data.value - expected_min_) < tolerance;
   }
 
