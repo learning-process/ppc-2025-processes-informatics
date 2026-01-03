@@ -7,18 +7,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
-#include <ranges>
 #include <vector>
 
 #include "yurkin_g_shellbetcher/common/include/common.hpp"
 
 namespace yurkin_g_shellbetcher {
 namespace {
-
-template <typename It1, typename It2, typename OutIt>
-void MergeSortedRanges(It1 first1, It1 last1, It2 first2, It2 last2, OutIt out) {
-  std::ranges::merge(std::ranges::subrange(first1, last1), std::ranges::subrange(first2, last2), out);
-}
 
 void ShellSort(std::vector<int> &a) {
   const std::size_t n = a.size();
@@ -33,9 +27,9 @@ void ShellSort(std::vector<int> &a) {
 
   while (gap > 0) {
     for (std::size_t i = gap; i < n; ++i) {
-      int tmp = a[i];
+      const int tmp = a[i];
       std::size_t j = i;
-      while (j >= gap && a[j - gap] > tmp) {
+      while ((j >= gap) && (a[j - gap] > tmp)) {
         a[j] = a[j - gap];
         j -= gap;
       }
@@ -45,17 +39,40 @@ void ShellSort(std::vector<int> &a) {
   }
 }
 
-void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
-  out.resize(a.size() + b.size());
-  MergeSortedRanges(a.begin(), a.end(), b.begin(), b.end(), out.begin());
-  for (int phase = 0; phase < 2; ++phase) {
-    auto start = static_cast<std::size_t>(phase);
-    for (std::size_t i = start; i + 1 < out.size(); i += 2) {
-      if (out[i] > out[i + 1]) {
-        std::swap(out[i], out[i + 1]);
-      }
-    }
+template <typename RandomIt>
+void CompareSwap(RandomIt a, RandomIt b) {
+  if (*b < *a) {
+    std::iter_swap(a, b);
   }
+}
+
+template <typename RandomIt>
+void OddEvenMerge(RandomIt first, std::size_t n, std::size_t stride) {
+  if (n < 2) {
+    return;
+  }
+
+  const std::size_t double_stride = stride * 2;
+  if (double_stride < n) {
+    OddEvenMerge(first, n, double_stride);
+    OddEvenMerge(first + stride, n, double_stride);
+
+    for (std::size_t i = stride; i + stride < n; i += double_stride) {
+      CompareSwap(first + i, first + i + stride);
+    }
+  } else {
+    CompareSwap(first, first + stride);
+  }
+}
+
+void OddEvenBatcherMergeLocal(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &out) {
+  out.clear();
+  out.reserve(a.size() + b.size());
+
+  out.insert(out.end(), a.begin(), a.end());
+  out.insert(out.end(), b.begin(), b.end());
+
+  OddEvenMerge(out.begin(), out.size(), 1);
 }
 
 int ComputeNeighbor(int rank, int phase, int size) {
@@ -73,11 +90,12 @@ int ComputeNeighbor(int rank, int phase, int size) {
 
 void KeepBlockFromMerged(std::vector<int> &local_data, std::vector<int> &merged, int keep_count, int rank,
                          int partner) {
-  auto k = static_cast<std::size_t>(keep_count);
+  const auto k = static_cast<std::size_t>(keep_count);
   if (merged.size() <= k) {
     local_data.swap(merged);
     return;
   }
+
   if (rank < partner) {
     merged.resize(k);
     local_data.swap(merged);
@@ -95,6 +113,7 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor, in
 
   int send_count = static_cast<int>(local_data.size());
   int recv_count = 0;
+
   MPI_Sendrecv(&send_count, 1, MPI_INT, neighbor, 100, &recv_count, 1, MPI_INT, neighbor, 100, MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
 
@@ -110,8 +129,7 @@ void ExchangeAndMergeWithNeighbor(std::vector<int> &local_data, int neighbor, in
 void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int stages, int keep_count) {
   for (int stage = 0; stage < stages; ++stage) {
     for (int sub = stage; sub >= 0; --sub) {
-      const int partner_distance = 1 << sub;
-      const int partner = rank ^ partner_distance;
+      const int partner = rank ^ (1 << sub);
       if (partner < 0 || partner >= size) {
         continue;
       }
@@ -131,6 +149,7 @@ void DoPowerOfTwoMergeStep(std::vector<int> &local_data, int rank, int size, int
       std::vector<int> merged;
       OddEvenBatcherMergeLocal(local_data, recv_buf, merged);
       KeepBlockFromMerged(local_data, merged, keep_count, rank, partner);
+
       MPI_Barrier(MPI_COMM_WORLD);
     }
   }
@@ -181,8 +200,9 @@ bool YurkinGShellBetcherMPI::RunImpl() {
   local_data.reserve(static_cast<std::size_t>(local_n));
 
   std::mt19937 rng(static_cast<unsigned int>(n));
-  std::uniform_int_distribution<int> dist(0, 1000000);
-  const InType offset = (base * static_cast<InType>(rank)) + std::min(static_cast<InType>(rank), rem);
+  std::uniform_int_distribution<int> dist(0, 1'000'000);
+
+  const InType offset = (base * rank) + std::min(rank, rem);
   for (InType i = 0; i < offset; ++i) {
     (void)dist(rng);
   }
@@ -193,8 +213,8 @@ bool YurkinGShellBetcherMPI::RunImpl() {
   ShellSort(local_data);
 
   const int keep_count = static_cast<int>(local_n);
-
   auto is_power_of_two = [](int x) { return x > 0 && ((x & (x - 1)) == 0); };
+
   if (is_power_of_two(size)) {
     const int stages = static_cast<int>(std::log2(size));
     DoPowerOfTwoMergeStep(local_data, rank, size, stages, keep_count);
