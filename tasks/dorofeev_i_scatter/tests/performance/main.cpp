@@ -10,15 +10,16 @@ namespace dorofeev_i_scatter {
 class DorofeevIScatterPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
   void SetUp() override {
-    input_.resize(100000);
+    input_.resize(100000000);
+    std::fill(input_.begin(), input_.end(), 1.0);
   }
 
   InType GetTestInputData() override {
     return input_;
   }
 
-  bool CheckTestOutputData(OutType & /*output_data*/) override {
-    return true;
+  bool CheckTestOutputData(OutType &output_data) override {
+    return std::abs(output_data - 100000000.0) < 1e-6;
   }
 
  private:

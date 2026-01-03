@@ -21,7 +21,12 @@ bool DorofeevIScatterSEQ::PreProcessingImpl() {
 }
 
 bool DorofeevIScatterSEQ::RunImpl() {
-  GetOutput() = GetInput()[0];
+  const auto &input = GetInput();
+  double sum = 0.0;
+  for (double val : input) {
+    sum += val;
+  }
+  GetOutput() = sum;
   return true;
 }
 

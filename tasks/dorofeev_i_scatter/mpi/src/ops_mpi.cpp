@@ -21,8 +21,12 @@ bool DorofeevIScatterMPI::PreProcessingImpl() {
 }
 
 bool DorofeevIScatterMPI::RunImpl() {
-  // Placeholder: just take the first element like seq
-  GetOutput() = GetInput()[0];
+  const auto &input = GetInput();
+  double sum = 0.0;
+  for (double val : input) {
+    sum += val;
+  }
+  GetOutput() = sum;
   return true;
 }
 
