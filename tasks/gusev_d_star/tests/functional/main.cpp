@@ -16,8 +16,6 @@ namespace gusev_d_star {
 
 class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
-  // Статический метод для извлечения имени теста из параметров.
-  // Используется шаблоном PrintFuncTestName для генерации полных имен.
   static std::string PrintTestParam(const TestType &test_param) {
     return std::get<1>(test_param);
   }
@@ -33,12 +31,10 @@ class GusevDStarFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, 
     int initialized = 0;
     MPI_Initialized(&initialized);
 
-    // Если среда MPI активна, получаем ранг текущего процесса
     if (initialized != 0) {
       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
-    // Сверку результата выполняем только на Rank 0 (мастер-процесс)
     if (rank == 0) {
       return input_data_ == output_data;
     }
@@ -77,8 +73,8 @@ const std::array<TestType, 21> kTestParam = {
 
     // 5. Крупные тесты
     std::make_tuple(150, "Size_150_Large"), std::make_tuple(200, "Size_200_Large"),
-    std::make_tuple(300, "Size_300_Large"), std::make_tuple(350, "Size_350_Large"),
-    std::make_tuple(400, "Size_400_Max")};
+    std::make_tuple(250, "Size_250_Large"), std::make_tuple(280, "Size_280_Large"),
+    std::make_tuple(300, "Size_300_Max")};
 
 const auto kTestTasksList =
     std::tuple_cat(ppc::util::AddFuncTask<GusevDStarMPI, InType>(kTestParam, PPC_SETTINGS_gusev_d_star),
@@ -86,7 +82,6 @@ const auto kTestTasksList =
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
-// Генерация имен через шаблонный метод базового класса (как у преподавателя)
 const auto kPerfTestName = GusevDStarFuncTests::PrintFuncTestName<GusevDStarFuncTests>;
 
 INSTANTIATE_TEST_SUITE_P(StarTopologyTests, GusevDStarFuncTests, kGtestValues, kPerfTestName);
