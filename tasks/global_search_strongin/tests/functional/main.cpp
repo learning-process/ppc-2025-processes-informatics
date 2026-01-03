@@ -89,7 +89,7 @@ class StronginFuncTests : public ppc::util::BaseRunFuncTests<InType, OutType, Te
     const double step = (input.right - input.left) / static_cast<double>(kSamples);
     double best = input.objective(input.left);
     for (std::size_t i = 1; i <= kSamples; ++i) {
-      const double x = input.left + step * static_cast<double>(i);
+      const double x = input.left + (step * static_cast<double>(i));
       best = std::min(best, input.objective(x));
     }
     return best;
@@ -103,8 +103,8 @@ namespace {
 
 const std::array<TestType, 3> kTestParams = {
     TestType{-5.0, 5.0, 1e-3, 2.0, 250, [](double x) { return (x - 2.0) * (x - 2.0); }},
-    TestType{-10.0, 10.0, 1e-3, 2.0, 300, [](double x) { return std::sin(x) + 0.1 * x; }},
-    TestType{-3.0, 3.0, 1e-3, 2.0, 300, [](double x) { return std::fabs(x) + 0.2 * std::cos(10.0 * x); }},
+    TestType{-10.0, 10.0, 1e-3, 2.0, 300, [](double x) { return std::sin(x) + (0.1 * x); }},
+    TestType{-3.0, 3.0, 1e-3, 2.0, 300, [](double x) { return std::fabs(x) + (0.2 * std::cos(10.0 * x)); }},
 };
 
 const auto kTaskList =

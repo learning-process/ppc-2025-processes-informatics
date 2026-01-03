@@ -18,7 +18,7 @@ double ComputeReferenceMin(const InType &input) {
   const double step = (input.right - input.left) / static_cast<double>(kSamples);
   double best = input.objective(input.left);
   for (std::size_t i = 1; i <= kSamples; ++i) {
-    const double x = input.left + step * static_cast<double>(i);
+    const double x = input.left + (step * static_cast<double>(i));
     best = std::min(best, input.objective(x));
   }
   return best;
@@ -35,17 +35,16 @@ class StronginPerfTests : public ppc::util::BaseRunPerfTests<InType, OutType> {
     input_.reliability = 2.0;
     input_.max_iterations = 500;
     input_.objective = [](double x) {
-      // Slightly heavier function to get stable (non-microsecond) timings,
-      // but still safe for CI time limits.
+
       double acc = 0.0;
       for (int i = 1; i <= 3000; ++i) {
         const double t = x * static_cast<double>(i);
         acc += std::sin(t) * std::cos(t / (static_cast<double>(i) + 1.0));
       }
 
-      const double base = std::sin(x) + 0.25 * std::sin(3.0 * x) + 0.01 * x;
+      const double base = std::sin(x) + (0.25 * std::sin(3.0 * x)) + (0.01 * x);
       volatile double sink = acc;
-      return base + static_cast<double>(sink) * 1e-12;
+      return base + (static_cast<double>(sink) * 1e-12);
     };
     reference_min_ = ComputeReferenceMin(input_);
   }

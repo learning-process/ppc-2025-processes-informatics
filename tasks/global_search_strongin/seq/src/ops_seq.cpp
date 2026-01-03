@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <limits>
 #include <optional>
-#include <ranges>
 
 #include "global_search_strongin/common/include/common.hpp"
 
@@ -187,4 +186,3 @@ bool StronginSearchSeq::InsertPoint(const InType &input, std::size_t interval_in
 }
 
 }  // namespace global_search_strongin
-

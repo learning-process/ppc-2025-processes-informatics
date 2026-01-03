@@ -23,8 +23,8 @@ class StronginSearchSeq : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 
-  double ComputeMaxSlope() const;
-  std::optional<std::size_t> SelectInterval(double m) const;
+  [[nodiscard]] double ComputeMaxSlope() const;
+  [[nodiscard]] std::optional<std::size_t> SelectInterval(double m) const;
   bool InsertPoint(const InType &input, std::size_t interval_index, double epsilon, double m);
 
   std::vector<SamplePoint> points_;
